@@ -1,0 +1,22 @@
+<phyphox version="1.0">
+    <title>Linear Acceleration</title>
+    <category>Raw Sensors</category>
+    <input>
+        <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="fastest" />
+    </input>
+    <views>
+        <view name="Raw Data">
+            <graph label="Linear Acceleration X" inputX="acc_time" inputY="accX" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Linear Acceleration Y" inputX="acc_time" inputY="accY" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Linear Acceleration Z" inputX="acc_time" inputY="accZ" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+        </view>
+    </views>
+    <export>
+        <set name="Raw Data">
+            <data name="Time (s)" source="acc_time" />
+            <data name="Linear Acceleration x (m/s^2)" source="accX" />
+            <data name="Linear Acceleration y (m/s^2)" source="accY" />
+            <data name="Linear Acceleration z (m/s^2)" source="accZ" />
+        </set>
+    </export>
+</phyphox>

@@ -1,0 +1,18 @@
+<phyphox version="1.0">
+    <title>Pressure</title>
+    <category>Raw Sensors</category>
+    <input>
+        <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="500" rate="fastest" />
+    </input>
+    <views>
+        <view name="Raw Data">
+            <graph label="Pressure" inputX="p_time" inputY="pressure" labelX="t (s)" labelY="p (hPa)" partialUpdate="true" />
+        </view>
+    </views>
+    <export>
+        <set name="Raw Data">
+            <data name="Time (s)" source="p_time" />
+            <data name="Pressure (hPa)" source="pressure" />
+        </set>
+    </export>
+</phyphox>

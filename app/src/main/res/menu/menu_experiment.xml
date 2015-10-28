@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools" tools:context="de.rwth_aachen.phyphox.Experiment">
+    <item android:id="@+id/action_play" android:title="@string/start" android:icon="@drawable/play"
+        android:orderInCategory="1" app:showAsAction="always" />
+    <item android:id="@+id/action_pause" android:title="@string/stop" android:icon="@drawable/pause"
+        android:orderInCategory="2" app:showAsAction="always" />
+    <item android:id="@+id/action_timedRun" android:title="@string/timedRun" android:icon="@drawable/timer"
+        android:orderInCategory="20" app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_export" android:title="@string/export" android:icon="@drawable/download"
+        android:orderInCategory="50" app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_remoteServer" android:title="@string/remoteServer"
+        android:orderInCategory="100" app:showAsAction="ifRoom" android:checkable="true" />
+</menu>

@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">phyphox</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="warning">Warning</string>
+    <string name="donotshowagain">Do not show again</string>
+    <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
+
+    <string name="credits">Credits</string>
+    <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics A at the RWTH Aachen University.</string>
+    <string name="creditsNames">
+        <![CDATA[
+            Development:<br /><b>Dr. Sebastian Kuhlen</b><br />Head of Institute:<br /><b>Prof. Christoph Stampfer</b><br />Design:<br /><b>Frank Posthoff (A.NikoPol)</b>
+        ]]>
+    </string>
+    <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
+
+    <string name="sensorLinearAcceleration">Linear Acceleration</string>
+    <string name="sensorLight">Light</string>
+    <string name="sensorGyroscope">Gyroscope</string>
+    <string name="sensorAccelerometer">Accelerometer</string>
+    <string name="sensorMagneticField">Magnetic Field</string>
+    <string name="sensorPressure">Pressure</string>
+
+    <string name="sensorNotAvailableWarningTitle">Sensor not available</string>
+    <string name="sensorNotAvailableWarningText1">The sensor</string>
+    <string name="sensorNotAvailableWarningText2">is not available. Usually this means, that your device does not have this type of sensor, but it might also be blocked by some other process. Therefore, the experiment might not work as expected.</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Close</string>
+    <string name="next">Next</string>
+    <string name="cancel">Cancel</string>
+    <string name="unknown">unknown</string>
+
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
+
+    <string name="export">Export</string>
+    <string name="export_subject">Data from phyPhox</string>
+    <string name="export_pick_share">Pick an export method</string>
+
+    <string name="remoteServer">Allow remote access</string>
+    <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nWhen enabled, you can access your measurement by accessing the following address from any web browser on the same network:</string>
+    <string name="remoteServerWarningTitle">Security warning!</string>
+
+    <string name="timedRun">Timed run</string>
+
+    <string name="pick_exportSets">Pick the data sets to export.</string>
+    <string name="pick_exportFormat">Choose the data format.</string>
+</resources>

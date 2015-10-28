@@ -1,0 +1,31 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat">
+        <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
+        <item name="android:spinnerDropDownItemStyle">@style/SpinnerItem.DropDownItem</item>
+        <item name="android:textSize">@dimen/font</item>
+    </style>
+
+    <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:textSize">@dimen/font</item>
+    </style>
+
+    <style name="phyphox">
+        <item name="android:textColor">@color/main</item>
+        <item name="android:background">@color/background</item>
+    </style>
+
+    <style name="SpinnerItem" parent="@android:style/Widget.TextView.SpinnerItem">
+        <item name="android:textColor">@color/main</item>
+        <item name="android:text">@dimen/headline_font</item>
+        <item name="android:gravity">right</item>
+    </style>
+
+    <style name="SpinnerItem.DropDownItem" parent="@android:style/Widget.DropDownItem.Spinner">
+        <item name="android:textColor">@color/main</item>
+        <item name="android:textSize">@dimen/headline_font</item>
+        <item name="android:background">@color/background</item>
+    </style>
+
+</resources>

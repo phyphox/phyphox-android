@@ -1,0 +1,22 @@
+<phyphox version="1.0">
+    <title>Gyroscope</title>
+    <category>Raw Sensors</category>
+    <input>
+        <sensor type="magnetic_field" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="fastest" />
+    </input>
+    <views>
+        <view name="Raw Data">
+            <graph label="Gyroscope X" inputX="gyr_time" inputY="gyrX" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true" />
+            <graph label="Gyroscope Y" inputX="gyr_time" inputY="gyrY" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true" />
+            <graph label="Gyroscope Z" inputX="gyr_time" inputY="gyrZ" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true" />
+        </view>
+    </views>
+    <export>
+        <set name="Raw Data">
+            <data name="Time (s)" source="gyr_time" />
+            <data name="Gyroscope x (rad/s)" source="gyrX" />
+            <data name="Gyroscope y (rad/s)" source="gyrY" />
+            <data name="Gyroscope z (rad/s)" source="gyrZ" />
+        </set>
+    </export>
+</phyphox>

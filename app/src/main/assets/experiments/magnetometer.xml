@@ -1,0 +1,22 @@
+<phyphox version="1.0">
+    <title>Magnetometer</title>
+    <category>Raw Sensors</category>
+    <input>
+        <sensor type="magnetic_field" outputX="magX" outputY="magY" outputZ="magZ" outputT="mag_time" buffer="500" rate="fastest" />
+    </input>
+    <views>
+        <view name="Raw Data">
+            <graph label="Magnetometer X" inputX="mag_time" inputY="magX" labelX="t (s)" labelY="B (µT)" partialUpdate="true" />
+            <graph label="Magnetometer Y" inputX="mag_time" inputY="magY" labelX="t (s)" labelY="B (µT)" partialUpdate="true" />
+            <graph label="Magnetometer Z" inputX="mag_time" inputY="magZ" labelX="t (s)" labelY="B (µT)" partialUpdate="true" />
+        </view>
+    </views>
+    <export>
+        <set name="Raw Data">
+            <data name="Time (s)" source="mag_time" />
+            <data name="Magnetic Field x (µT)" source="magX" />
+            <data name="Magnetic Field y (µT)" source="magY" />
+            <data name="Magnetic Field z (µT)" source="magZ" />
+        </set>
+    </export>
+</phyphox>
