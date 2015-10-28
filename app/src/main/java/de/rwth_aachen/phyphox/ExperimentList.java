@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,8 +15,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.Base64;
 import android.util.TypedValue;
@@ -37,8 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
 
-
-public class ExperimentList extends ActionBarActivity {
+public class ExperimentList extends AppCompatActivity {
 
     public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
     public static final String PREFS_NAME = "phyphox";
@@ -76,8 +77,8 @@ public class ExperimentList extends ActionBarActivity {
             categoryHeadline.setText(name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
             categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
-            categoryHeadline.setBackgroundColor(res.getColor(R.color.highlight));
-            categoryHeadline.setTextColor(res.getColor(R.color.main));
+            categoryHeadline.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.highlight));
+            categoryHeadline.setTextColor(ContextCompat.getColor(parentContext, R.color.main));
             categoryHeadline.setPadding(res.getDimensionPixelOffset(R.dimen.headline_font)/2, res.getDimensionPixelOffset(R.dimen.headline_font)/10, res.getDimensionPixelOffset(R.dimen.headline_font)/2, res.getDimensionPixelOffset(R.dimen.headline_font)/10);
 
 
@@ -92,11 +93,11 @@ public class ExperimentList extends ActionBarActivity {
         public void addExperiment(String exp, Bitmap image, final String xmlFile) {
             experimentButtons.add(new Button(parentContext));
             experimentButtons.lastElement().setText(exp);
-            experimentButtons.lastElement().setTextColor(res.getColor(R.color.main));
+            experimentButtons.lastElement().setTextColor(ContextCompat.getColor(parentContext, R.color.main));
             experimentButtons.lastElement().setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
 
             Drawable [] d = new Drawable[2];
-            d[0] = res.getDrawable(R.drawable.experiment_border);
+            d[0] = ContextCompat.getDrawable(parentContext, R.drawable.experiment_border);
             d[1] = new BitmapDrawable(res, image);
             LayerDrawable ld = new LayerDrawable(d);
             ld.setLayerInset(1, res.getDimensionPixelOffset(R.dimen.expElementBorderWidth), res.getDimensionPixelOffset(R.dimen.expElementBorderWidth), res.getDimensionPixelOffset(R.dimen.expElementBorderWidth), res.getDimensionPixelOffset(R.dimen.expElementBorderWidth));
@@ -117,7 +118,13 @@ public class ExperimentList extends ActionBarActivity {
                 public void onClick(View v) {
                     Intent intent = new Intent(v.getContext(), Experiment.class);
                     intent.putExtra(EXPERIMENT_XML, xmlFile);
-                    v.getContext().startActivity(intent);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
+                                0, v.getWidth(), v.getHeight());
+                        v.getContext().startActivity(intent, options.toBundle());
+                    } else {
+                        v.getContext().startActivity(intent);
+                    }
                 }
             });
 
@@ -193,7 +200,7 @@ public class ExperimentList extends ActionBarActivity {
                     } else {
                         Bitmap image;
                         if (icon.equals(""))
-                            image = BitmapFactory.decodeResource(getResources(), R.drawable.abc_btn_check_material);//TODO: no-image
+                            image = null;
                         else
                             image = decodeBase64(icon);
                         addExperiment(title, category, image, experimentXML);

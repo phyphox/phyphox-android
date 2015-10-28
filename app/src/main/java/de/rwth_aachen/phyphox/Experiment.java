@@ -9,8 +9,9 @@ import android.hardware.SensorManager;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Xml;
 import android.view.Menu;
@@ -32,8 +33,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+//TODO Auto-Pause / Auto-Start
+//TODO User-Input view
+//TODO Raw-Experiment
+//TODO Inputs/Outputs: Audio
+//TODO Translation of Experiment-Texts
 
-public class Experiment extends ActionBarActivity {
+public class Experiment extends AppCompatActivity {
 
 
     boolean measuring = false;
@@ -51,8 +57,6 @@ public class Experiment extends ActionBarActivity {
     public final Map<String, Integer> dataMap = new HashMap<>();
     private Vector<Analysis.analysisModule> analysis = new Vector<>();
     private Resources res;
-
-    private Spinner viewSelector;
 
     private boolean serverEnabled = false;
 
@@ -384,7 +388,9 @@ public class Experiment extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experiment);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar ab = getSupportActionBar();
+        if (ab != null)
+            ab.setDisplayHomeAsUpEnabled(true);
 
         res = getResources();
         exporter = new dataExport(this);
@@ -409,7 +415,7 @@ public class Experiment extends ActionBarActivity {
                 viewChoices.add(v.name);
             }
 
-            viewSelector = (Spinner) findViewById(R.id.viewSelector);
+            Spinner viewSelector = (Spinner) findViewById(R.id.viewSelector);
 
             ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, viewChoices);
             spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -483,7 +489,7 @@ public class Experiment extends ActionBarActivity {
         if (id == android.R.id.home) {
             Intent upIntent = new Intent(this, ExperimentList.class);
             if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-                TaskStackBuilder.from(this)
+                TaskStackBuilder.create(this)
                         .addNextIntent(upIntent)
                         .startActivities();
                 finish();
@@ -545,6 +551,7 @@ public class Experiment extends ActionBarActivity {
         shutdown = true;
         stopMeasurement();
         super.onPause();
+        overridePendingTransition(R.anim.hold, R.anim.exit_experiment);
     }
 
     @Override
