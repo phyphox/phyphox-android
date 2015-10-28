@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_root"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <CheckBox
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/timedRunEnabled"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/enableTimedRun"
+        android:checked="false">
+    </CheckBox>
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:stretchColumns="1"
+        android:shrinkColumns="1">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_column="0">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/timedRunStartDelay"
+                android:id="@+id/textView"
+                android:labelFor="@+id/timedRunStartDelay" />
+
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:ems="10"
+                android:id="@id/timedRunStartDelay"
+                android:editable="false"
+                android:enabled="true"
+                android:text="3" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_column="0" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/timedRunStopDelay"
+                android:id="@+id/textView2"
+                android:labelFor="@+id/timedRunStopDelay" />
+
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:ems="10"
+                android:id="@id/timedRunStopDelay"
+                android:editable="false"
+                android:enabled="true"
+                android:text="10" />
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>

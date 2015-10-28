@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.hardware.SensorManager;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
@@ -14,11 +15,14 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Xml;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -33,11 +37,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-//TODO Auto-Pause / Auto-Start
+//TODO Show timed run in web interface
+//TODO t0 does not match first sensor event. No idea why and how to fix this...
 //TODO User-Input view
 //TODO Raw-Experiment
 //TODO Inputs/Outputs: Audio
 //TODO Translation of Experiment-Texts
+//TODO Allow user to control buffer size and aquisition rate
 
 public class Experiment extends AppCompatActivity {
 
@@ -45,6 +51,11 @@ public class Experiment extends AppCompatActivity {
     boolean measuring = false;
     boolean updateState = false;
     boolean shutdown = false;
+    boolean timedRun = false;
+    double timedRunStartDelay = 0.;
+    double timedRunStopDelay = 0.;
+    CountDownTimer cdTimer = null;
+    long millisUntilFinished = 0;
     final Handler updateViewsHandler = new Handler();
 
     String title = "";
@@ -474,10 +485,33 @@ public class Experiment extends AppCompatActivity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem timed_play = menu.findItem(R.id.action_timed_play);
+        MenuItem timed_pause = menu.findItem(R.id.action_timed_pause);
         MenuItem play = menu.findItem(R.id.action_play);
         MenuItem pause = menu.findItem(R.id.action_pause);
-        play.setVisible(!measuring);
-        pause.setVisible(measuring);
+        MenuItem timer = menu.findItem(R.id.timer);
+        MenuItem timed_run = menu.findItem(R.id.action_timedRun);
+        MenuItem remote = menu.findItem(R.id.action_remoteServer);
+
+        timed_play.setVisible(!measuring && cdTimer != null);
+        timed_pause.setVisible(measuring && cdTimer != null);
+        play.setVisible(!measuring && cdTimer == null);
+        pause.setVisible(measuring && cdTimer == null);
+        timer.setVisible(timedRun);
+
+        timed_run.setChecked(timedRun);
+        remote.setChecked(serverEnabled);
+
+        if (timedRun) {
+            if (cdTimer != null) {
+                timer.setTitle(String.valueOf(millisUntilFinished / 1000 + 1) + "s");
+            } else {
+                if (measuring)
+                    timer.setTitle(String.valueOf(Math.round(timedRunStopDelay))+"s");
+                else
+                    timer.setTitle(String.valueOf(Math.round(timedRunStartDelay))+"s");
+            }
+        }
         super.onPrepareOptionsMenu(menu);
         return true;
     }
@@ -500,12 +534,89 @@ public class Experiment extends AppCompatActivity {
         }
 
         if (id == R.id.action_play) {
-            startMeasurement();
+            if (timedRun) {
+                millisUntilFinished = Math.round(timedRunStartDelay*1000);
+                cdTimer = new CountDownTimer(millisUntilFinished, 100) {
+
+                    public void onTick(long muf) {
+                        millisUntilFinished = muf;
+                        invalidateOptionsMenu();
+                    }
+
+                    public void onFinish() {
+                        startMeasurement();
+                    }
+                }.start();
+                invalidateOptionsMenu();
+            } else
+                startMeasurement();
             return true;
         }
 
         if (id == R.id.action_pause) {
             stopMeasurement();
+            return true;
+        }
+
+        if (id == R.id.action_timed_play) {
+            if (cdTimer != null) {
+                cdTimer.cancel();
+                cdTimer = null;
+            }
+            invalidateOptionsMenu();
+            return true;
+        }
+
+        if (id == R.id.action_timed_pause) {
+            stopMeasurement();
+            return true;
+        }
+
+        if (id == R.id.action_timedRun) {
+            final MenuItem itemRef = item;
+            LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
+            View vLayout = inflater.inflate(R.layout.timed_run_layout, null);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            final CheckBox cbTimedRunEnabled = (CheckBox) vLayout.findViewById(R.id.timedRunEnabled);
+            cbTimedRunEnabled.setChecked(timedRun);
+            final EditText etTimedRunStartDelay = (EditText) vLayout.findViewById(R.id.timedRunStartDelay);
+            etTimedRunStartDelay.setText(String.valueOf(timedRunStartDelay));
+            final EditText etTimedRunStopDelay = (EditText) vLayout.findViewById(R.id.timedRunStopDelay);
+            etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
+            builder.setView(vLayout)
+                    .setTitle(R.string.timedRunDialogTitle)
+                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            timedRun = cbTimedRunEnabled.isChecked();
+                            itemRef.setChecked(timedRun);
+
+                            String startDelayRaw = etTimedRunStartDelay.getText().toString();
+                            try {
+                                timedRunStartDelay = Double.valueOf(startDelayRaw);
+                            } catch (Exception e) {
+                                timedRunStartDelay = 0.;
+                            }
+
+                            String stopDelayRaw = etTimedRunStopDelay.getText().toString();
+                            try {
+                                timedRunStopDelay = Double.valueOf(stopDelayRaw);
+                            } catch (Exception e) {
+                                timedRunStopDelay = 0.;
+                            }
+
+                            if (timedRun && measuring)
+                                stopMeasurement();
+                            else
+                                invalidateOptionsMenu();
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
             return true;
         }
 
@@ -631,12 +742,30 @@ public class Experiment extends AppCompatActivity {
                 sensor.start(t0);
         }
         measuring = true;
+        if (timedRun) {
+            millisUntilFinished = Math.round(timedRunStopDelay * 1000);
+            cdTimer = new CountDownTimer(millisUntilFinished, 100) {
+
+                public void onTick(long muf) {
+                    millisUntilFinished = muf;
+                    invalidateOptionsMenu();
+                }
+
+                public void onFinish() {
+                    stopMeasurement();
+                }
+            }.start();
+        }
         invalidateOptionsMenu();
     //    titleText.setBackgroundColor(res.getColor(R.color.highlight));
     }
 
     public void stopMeasurement() {
         measuring = false;
+        if (cdTimer != null) {
+            cdTimer.cancel();
+            cdTimer = null;
+        }
         for (sensorInput sensor : inputSensors)
             sensor.stop();
         invalidateOptionsMenu();

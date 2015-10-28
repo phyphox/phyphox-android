@@ -35,6 +35,13 @@
 
     <string name="stop">Stop</string>
     <string name="start">Start</string>
+    <string name="timed_stop">Stop timed run</string>
+    <string name="timed_start">Start timed run</string>
+
+    <string name="timedRunDialogTitle">Timed Run</string>
+    <string name="timedRunStartDelay">Start delay (s)</string>
+    <string name="timedRunStopDelay">Stop delay (s)</string>
+    <string name="enableTimedRun">Do a timed run</string>
 
     <string name="export">Export</string>
     <string name="export_subject">Data from phyPhox</string>
