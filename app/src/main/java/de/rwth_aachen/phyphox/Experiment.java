@@ -37,18 +37,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-//TODO Show timed run in web interface
-//TODO t0 does not match first sensor event. No idea why and how to fix this...
 //TODO User-Input view
-//TODO Raw-Experiment
+//TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
 //TODO Inputs/Outputs: Audio
 //TODO Translation of Experiment-Texts
-//TODO Allow user to control buffer size and aquisition rate
 
 public class Experiment extends AppCompatActivity {
 
 
     boolean measuring = false;
+    boolean remoteIntentMeasuring = false;
     boolean updateState = false;
     boolean shutdown = false;
     boolean timedRun = false;
@@ -515,7 +513,7 @@ public class Experiment extends AppCompatActivity {
         super.onPrepareOptionsMenu(menu);
         return true;
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -535,19 +533,7 @@ public class Experiment extends AppCompatActivity {
 
         if (id == R.id.action_play) {
             if (timedRun) {
-                millisUntilFinished = Math.round(timedRunStartDelay*1000);
-                cdTimer = new CountDownTimer(millisUntilFinished, 100) {
-
-                    public void onTick(long muf) {
-                        millisUntilFinished = muf;
-                        invalidateOptionsMenu();
-                    }
-
-                    public void onFinish() {
-                        startMeasurement();
-                    }
-                }.start();
-                invalidateOptionsMenu();
+                startTimedMeasurement();
             } else
                 startMeasurement();
             return true;
@@ -559,11 +545,7 @@ public class Experiment extends AppCompatActivity {
         }
 
         if (id == R.id.action_timed_play) {
-            if (cdTimer != null) {
-                cdTimer.cancel();
-                cdTimer = null;
-            }
-            invalidateOptionsMenu();
+            stopMeasurement();
             return true;
         }
 
@@ -668,7 +650,6 @@ public class Experiment extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        startMeasurement();
         startRemoteServer();
     }
 
@@ -677,9 +658,12 @@ public class Experiment extends AppCompatActivity {
         public void run() {
             try{
                 if (updateState) {
-                    if (measuring)
-                        startMeasurement();
-                    else
+                    if (remoteIntentMeasuring) {
+                        if (timedRun)
+                            startTimedMeasurement();
+                        else
+                            startMeasurement();
+                    } else
                         stopMeasurement();
                     updateState = false;
                 }
@@ -760,11 +744,28 @@ public class Experiment extends AppCompatActivity {
     //    titleText.setBackgroundColor(res.getColor(R.color.highlight));
     }
 
+    public void startTimedMeasurement() {
+        millisUntilFinished = Math.round(timedRunStartDelay*1000);
+        cdTimer = new CountDownTimer(millisUntilFinished, 100) {
+
+            public void onTick(long muf) {
+                millisUntilFinished = muf;
+                invalidateOptionsMenu();
+            }
+
+            public void onFinish() {
+                startMeasurement();
+            }
+        }.start();
+        invalidateOptionsMenu();
+    }
+
     public void stopMeasurement() {
         measuring = false;
         if (cdTimer != null) {
             cdTimer.cancel();
             cdTimer = null;
+            millisUntilFinished = 0;
         }
         for (sensorInput sensor : inputSensors)
             sensor.stop();
@@ -773,12 +774,12 @@ public class Experiment extends AppCompatActivity {
     }
 
     public void remoteStopMeasurement() {
-        measuring = false;
+        remoteIntentMeasuring = false;
         updateState = true;
     }
 
     public void remoteStartMeasurement() {
-        measuring = true;
+        remoteIntentMeasuring = true;
         updateState = true;
     }
 

@@ -100,31 +100,42 @@ if(yrange.from==null)yrange.from=yrange.axis.min;if(yrange.to==null)yrange.to=yr
                     data[index] = jsonData["buffer"][index]["buffer"];
             }
             updateViews();
-            updateMeasuring(jsonData["status"]["measuring"]);
+            updateMeasuring(jsonData["status"]);
         }).always(function() {
             if (measuring)
                 setTimeout(updateData, 30);
             else
-                setTimeout(updateData, 500);
+                setTimeout(updateData, 250);
         });
     }
 
     function toggleMeasuring() {
-        if (measuring)
+        if (measuring || countDown != 0)
             $.getJSON("control?cmd=stop");
-        else {
+        else
             $.getJSON("control?cmd=start");
-        }
     }
 
-    function updateMeasuring(m) {
-        measuring = m;
-        if (m) {
+    function updateMeasuring(s) {
+        measuring = s["measuring"];
+        timedRun = s["timedRun"];
+        countDown = s["countDown"];
+        if (measuring) {
             $("#header").addClass("active");
         } else {
             $("#header").removeClass("active");
             forceFull = true;
         }
+        if (countDown != 0) {
+            $("#header").addClass("countdown");
+        } else {
+            $("#header").removeClass("countdown");
+            forceFull = true;
+        }
+        if (countDown == 0)
+            $("#export").text("");
+        else
+            $("#export").text(Math.ceil(countDown/1000) + "s");
     }
 
     function updateViews() {
@@ -149,7 +160,8 @@ if(yrange.from==null)yrange.from=yrange.axis.min;if(yrange.to==null)yrange.to=yr
     }
 
     function exportData() {
-        $("#exportDialog").fadeIn(500);
+        if (countDown == 0)
+            $("#exportDialog").fadeIn(500);
     }
 
     function hideExport() {

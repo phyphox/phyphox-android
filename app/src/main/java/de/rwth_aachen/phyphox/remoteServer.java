@@ -88,8 +88,12 @@ public class remoteServer extends Thread {
                 line = line.replace("###highlight-color###", "#"+String.format("%06x", res.getColor(R.color.highlight)).substring(2));
                 if (line.contains("###drawablePlay###"))
                     line = line.replace("###drawablePlay###", getBase64PNG(res.getDrawable(R.drawable.play)));
+                if (line.contains("###drawableTimedPlay###"))
+                    line = line.replace("###drawableTimedPlay###", getBase64PNG(res.getDrawable(R.drawable.timed_play)));
                 if (line.contains("###drawablePause###"))
                     line = line.replace("###drawablePause###", getBase64PNG(res.getDrawable(R.drawable.pause)));
+                if (line.contains("###drawableTimedPause###"))
+                    line = line.replace("###drawableTimedPause###", getBase64PNG(res.getDrawable(R.drawable.timed_pause)));
                 if (line.contains("###drawableExport###"))
                     line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
                 sb.append(line);
@@ -503,6 +507,13 @@ public class remoteServer extends Thread {
                     sb.append("true");
                 else
                     sb.append("false");
+                sb.append(", \"timedRun\":");
+                if (callActivity.timedRun)
+                    sb.append("true");
+                else
+                    sb.append("false");
+                sb.append(", \"countDown\":");
+                sb.append(String.valueOf(callActivity.millisUntilFinished));
                 sb.append("\n}\n}\n");
             }
 

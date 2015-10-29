@@ -45,7 +45,7 @@ ul {
     background-size: 80%;
     color: ###main-color###;
     padding: 0.5vw;
-    width: 3.5vw;
+    min-width: 3.5vw;
     height: 3.5vw;
     text-align: center;
     cursor: pointer;
@@ -66,11 +66,19 @@ ul {
     background-image: url(data:image/png;base64,###drawablePlay###);
 }
 
+.countdown #measuring {
+    background-image: url(data:image/png;base64,###drawableTimedPlay###);
+}
+
 .active #measuring {
     background-image: url(data:image/png;base64,###drawablePause###);
 }
 
-#export {
+.countdown.active #measuring {
+    background-image: url(data:image/png;base64,###drawableTimedPause###);
+}
+
+#export:empty {
     background-image: url(data:image/png;base64,###drawableExport###);
 }
 
