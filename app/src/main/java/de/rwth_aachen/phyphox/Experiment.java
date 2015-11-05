@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-//TODO User-Input view
 //TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
 //TODO Inputs/Outputs: Audio
 //TODO Translation of Experiment-Texts
@@ -74,6 +73,8 @@ public class Experiment extends AppCompatActivity {
     private SensorManager sensorManager;
 
     private remoteServer remote = null;
+    public boolean remoteInput = false;
+    public boolean shouldDefocus = false;
 
     private boolean loadExperiment(InputStream xml) {
         try {
@@ -109,7 +110,7 @@ public class Experiment extends AppCompatActivity {
                                                             case XmlPullParser.START_TAG:
                                                                 switch (xpp.getName()) {
                                                                     case "value":
-                                                                        expView.valueElement ve = newView.new valueElement(xpp.getAttributeValue(null, "label"), xpp.getAttributeValue(null, "input"), null, null, getResources());
+                                                                        expView.valueElement ve = newView.new valueElement(xpp.getAttributeValue(null, "label"), null, xpp.getAttributeValue(null, "input"), null, null, getResources());
                                                                         if (xpp.getAttributeValue(null, "labelsize") != null)
                                                                             ve.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
                                                                         else
@@ -125,7 +126,7 @@ public class Experiment extends AppCompatActivity {
                                                                         newView.elements.add(ve);
                                                                         break;
                                                                     case "graph":
-                                                                        expView.graphElement ge = newView.new graphElement(xpp.getAttributeValue(null, "label"), null, xpp.getAttributeValue(null, "inputX"), xpp.getAttributeValue(null, "inputY"), getResources());
+                                                                        expView.graphElement ge = newView.new graphElement(xpp.getAttributeValue(null, "label"), null, null, xpp.getAttributeValue(null, "inputX"), xpp.getAttributeValue(null, "inputY"), getResources());
                                                                         if (xpp.getAttributeValue(null, "labelsize") != null)
                                                                             ge.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
                                                                         else
@@ -138,6 +139,28 @@ public class Experiment extends AppCompatActivity {
                                                                             ge.setHistoryLength(Integer.valueOf(xpp.getAttributeValue(null, "history")));
                                                                         ge.setLabel(xpp.getAttributeValue(null, "labelX"), xpp.getAttributeValue(null, "labelY"));
                                                                         newView.elements.add(ge);
+                                                                        break;
+                                                                    case "input":
+                                                                        expView.inputElement ie = newView.new inputElement(xpp.getAttributeValue(null, "label"), xpp.getAttributeValue(null, "output"), null, null, null, getResources());
+                                                                        if (xpp.getAttributeValue(null, "labelsize") != null)
+                                                                            ie.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
+                                                                        else
+                                                                            ie.setLabelSize(res.getDimension(R.dimen.font));
+                                                                        if (xpp.getAttributeValue(null, "unit") != null)
+                                                                            ie.setUnit(xpp.getAttributeValue(null, "unit"));
+                                                                        double factor = 1.;
+                                                                        if (xpp.getAttributeValue(null, "factor") != null) {
+                                                                            factor = Double.valueOf(xpp.getAttributeValue(null, "factor"));
+                                                                            ie.setFactor(factor);
+                                                                        }
+                                                                        ie.setSigned((xpp.getAttributeValue(null, "signed") == null || xpp.getAttributeValue(null, "signed").equals("true")));
+                                                                        ie.setDecimal((xpp.getAttributeValue(null, "decimal") == null || xpp.getAttributeValue(null, "decimal").equals("true")));
+                                                                        if (xpp.getAttributeValue(null, "default") != null)
+                                                                            ie.setDefaultValue(Float.valueOf(xpp.getAttributeValue(null, "default")));
+                                                                        newView.elements.add(ie);
+                                                                        dataBuffer output = new dataBuffer(xpp.getAttributeValue(null, "output"), 1);
+                                                                        dataBuffers.add(output);
+                                                                        dataMap.put(xpp.getAttributeValue(null, "output"), dataBuffers.size() - 1);
                                                                         break;
                                                                 }
                                                         }
@@ -657,6 +680,10 @@ public class Experiment extends AppCompatActivity {
         @Override
         public void run() {
             try{
+                if (shouldDefocus) {
+                    defocus();
+                    shouldDefocus = false;
+                }
                 if (updateState) {
                     if (remoteIntentMeasuring) {
                         if (timedRun)
@@ -667,8 +694,25 @@ public class Experiment extends AppCompatActivity {
                         stopMeasurement();
                     updateState = false;
                 }
-                if (measuring) {
-                    synchronized (dataBuffers) {
+
+                synchronized (dataBuffers) {
+                    if (!remoteInput) {
+                        for (dataBuffer buffer : dataBuffers) {
+                            for (expView.expViewElement eve : currentView.elements) {
+                                try {
+                                    if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) {
+                                        Double v = eve.getValue();
+                                        if (!Double.isNaN(v))
+                                            buffer.append(v);
+                                    }
+                                } catch (Exception e) {
+                                    Log.e("updateViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
+                                }
+                            }
+                        }
+                    } else
+                        remoteInput = false;
+                    if (measuring) {
                         for (Analysis.analysisModule mod : analysis) {
                             try {
                                 mod.update();
@@ -711,7 +755,7 @@ public class Experiment extends AppCompatActivity {
                     if (measuring)
                         updateViewsHandler.postDelayed(this, 40);
                     else
-                        updateViewsHandler.postDelayed(this, 500);
+                        updateViewsHandler.postDelayed(this, 400);
                 }
             }
         }
@@ -781,6 +825,14 @@ public class Experiment extends AppCompatActivity {
     public void remoteStartMeasurement() {
         remoteIntentMeasuring = true;
         updateState = true;
+    }
+
+    public void requestDefocus() {
+        shouldDefocus = true;
+    }
+
+    public void defocus() {
+        ((LinearLayout) findViewById(R.id.experimentView)).requestFocus();
     }
 
 }

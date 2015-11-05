@@ -3,9 +3,15 @@ package de.rwth_aachen.phyphox;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Typeface;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -16,18 +22,26 @@ public class expView{
     public abstract class expViewElement {
         protected String label;
         protected float labelSize;
+        protected String valueOutput;
         protected String valueInput;
         protected String dataXInput;
         protected String dataYInput;
         protected int htmlID;
         protected Resources res;
 
-        protected expViewElement(String label, String valueInput, String dataXInput, String dataYInput, Resources res) {
+        protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             this.label = label;
             this.labelSize = 25;
+            this.valueOutput = valueOutput;
             this.valueInput = valueInput;
             this.dataXInput = dataXInput;
             this.dataYInput = dataYInput;
+
+            //If not set otherwise, set the input buffer to be identical to the output buffer
+            //This allows to receive the old user-set value after the view has changed
+            if (this.valueInput == null && this.valueOutput != null)
+                this.valueInput = this.getValueOutput();
+
             this.res = res;
         }
 
@@ -43,6 +57,10 @@ public class expView{
         }
 
         protected abstract String getUpdateMode();
+
+        protected double getValue() {
+            return 0.;
+        }
 
         protected void setValue(double x) {
 
@@ -76,6 +94,10 @@ public class expView{
             return "function() {}";
         }
 
+        protected String getValueOutput() {
+            return this.valueOutput;
+        }
+
         protected String getValueInput() {
             return this.valueInput;
         }
@@ -97,8 +119,8 @@ public class expView{
         private String formatter;
         private String unit;
 
-        valueElement(String label, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueInput, dataXInput, dataYInput, res);
+        valueElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
             this.scientificNotation = false;
             this.precision = 2;
             updateFormatter();
@@ -176,8 +198,8 @@ public class expView{
         @Override
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"valueElement\" id=\"element"+htmlID+"\">" +
-                    "<span class=\"label\" \">"+this.label+"</span>" +
-                    "<span class=\"value\" \"></span>" +
+                    "<span class=\"label\">"+this.label+"</span>" +
+                    "<span class=\"value\"></span>" +
                     "</div>";
         }
 
@@ -199,6 +221,161 @@ public class expView{
         }
     }
 
+    public class inputElement extends expViewElement {
+        private EditText iv;
+        private double factor;
+        private String unit;
+        private double defaultValue;
+        private boolean signed = true;
+        private boolean decimal = true;
+        private boolean focused = false;
+
+        inputElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+            this.unit = "";
+            this.factor = 1.;
+        }
+
+        protected void setFactor(double factor) {
+            this.factor = factor;
+        }
+        protected void setDefaultValue(double v) {
+            this.defaultValue = v;
+        }
+
+        protected void setUnit(String unit) {
+            if (unit == null || unit.equals(""))
+                this.unit = "";
+            else
+                this.unit = unit;
+        }
+
+        protected void setSigned(boolean signed) {
+            this.signed = signed;
+        }
+
+        protected void setDecimal(boolean decimal) {
+            this.decimal = decimal;
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return "input";
+        }
+
+        @Override
+        protected void createView(LinearLayout ll, Context c){
+            LinearLayout row = new LinearLayout(c);
+            row.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+
+            LinearLayout valueUnit = new LinearLayout(c);
+            valueUnit.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f));
+            valueUnit.setOrientation(LinearLayout.HORIZONTAL);
+
+            TextView labelView = new TextView(c);
+            labelView.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f));
+            labelView.setText(this.label);
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            labelView.setPadding(0, 0, (int) labelSize / 2, 0);
+            labelView.setTextColor(res.getColor(R.color.main));
+
+            iv = new EditText(c);
+            iv.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.7f));
+            iv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            iv.setPadding((int) labelSize / 2, 0, 0, 0);
+            iv.setTypeface(null, Typeface.BOLD);
+            iv.setTextColor(res.getColor(R.color.main));
+            int inputType = InputType.TYPE_CLASS_NUMBER;
+            if (signed)
+                inputType |= InputType.TYPE_NUMBER_FLAG_SIGNED;
+            if (decimal)
+                inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
+            iv.setInputType(inputType);
+
+            TextView unitView = new TextView(c);
+            unitView.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.3f));
+            unitView.setText(this.unit);
+            unitView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            unitView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            unitView.setPadding(0, 0, (int) labelSize / 2, 0);
+            unitView.setTextColor(res.getColor(R.color.main));
+            unitView.setTypeface(null, Typeface.BOLD);
+
+            valueUnit.addView(iv);
+            valueUnit.addView(unitView);
+
+            row.addView(labelView);
+            row.addView(valueUnit);
+            ll.addView(row);
+
+            iv.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                public void onFocusChange(View v, boolean hasFocus) {
+                    focused = hasFocus;
+                }
+            });
+        }
+
+        @Override
+        protected String createViewHTML(){
+            String restrictions = "";
+            if (!signed)
+                restrictions += "min=\"0\" ";
+            if (!decimal)
+                restrictions += "step=\"1\" ";
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"inputElement\" id=\"element"+htmlID+"\">" +
+                    "<span class=\"label\">"+this.label+"</span>" +
+                    "<input onchange=\"$.getJSON('control?cmd=set&buffer="+valueOutput+"&value='+$(this).val()/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
+                    "<span class=\"unit\">"+this.unit+"</span>" +
+                    "</div>";
+        }
+
+        @Override
+        protected double getValue() {
+            try {
+                return Double.valueOf(iv.getText().toString())/factor;
+            } catch (Exception e) {
+                return Double.NaN;
+            }
+
+        }
+
+        @Override
+        protected void setValue(double v) {
+            //Enter value from buffer if it has not been changed by the user
+            //This ensures, that the old value is restored if the view has to be created after the views have been switched.
+            if (!focused) {
+                if (Double.isNaN(v))
+                    iv.setText(String.valueOf(defaultValue));
+                else
+                    iv.setText(String.valueOf(v * factor));
+            }
+        }
+
+        @Override
+        protected String setValueHTML() {
+            return "function (x) {" +
+                    "if (!$(\"#element"+htmlID+" .value\").is(':focus'))" +
+                        "$(\"#element"+htmlID+" .value\").val((x*"+factor+"))" +
+                    "}";
+        }
+    }
+
     public class graphElement extends expViewElement {
         private graphView gv = null;
         private int height;
@@ -210,8 +387,8 @@ public class expView{
         private String labelY = null;
         private boolean partialUpdate = false;
 
-        graphElement(String label, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueInput, dataXInput, dataYInput, res);
+        graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
             height = 300;
         }
 
@@ -285,8 +462,8 @@ public class expView{
         @Override
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
-                    "<span class=\"label\" \">"+this.label+"</span>" +
-                    "<div class=\"graph\" style=\"height:"+this.height/10.+"vh;\" \"></div>" +
+                    "<span class=\"label\">"+this.label+"</span>" +
+                    "<div class=\"graph\" style=\"height:"+this.height/10.+"vh;\"></div>" +
                     "</div>";
         }
 

@@ -1,5 +1,7 @@
 package de.rwth_aachen.phyphox;
 
+import android.util.Log;
+
 import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -25,6 +27,7 @@ public class dataBuffer {
 
     public void clear() {
         buffer.clear();
+        value = Double.NaN;
     }
 
     public Iterator getIterator() {

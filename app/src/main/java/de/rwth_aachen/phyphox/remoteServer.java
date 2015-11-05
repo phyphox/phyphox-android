@@ -555,6 +555,27 @@ public class remoteServer extends Thread {
                 } else if (cmd.equals("stop")) {
                     callActivity.remoteStopMeasurement();
                     result = "{\"result\" = true}";
+                } else if (cmd.equals("set")) {
+                    String buffer = uri.getQueryParameter("buffer");
+                    String value = uri.getQueryParameter("value");
+                    if (buffer != null && value != null) {
+                        double v = Double.NaN;
+                        try {
+                            v = Double.valueOf(value);
+                        } catch (Exception e) {
+                        }
+                        if (Double.isNaN(v)) {
+                            result = "{\"result\" = false}";
+                        } else {
+                            callActivity.requestDefocus();
+                            synchronized(dataBuffers) {
+                                callActivity.remoteInput = true;
+                                dataBuffers.get(dataMap.get(buffer)).append(v);
+                            }
+                            result = "{\"result\" = true}";
+                        }
+                    } else
+                        result = "{\"result\" = false}";
                 } else
                     result = "{\"result\" = false}";
             } else

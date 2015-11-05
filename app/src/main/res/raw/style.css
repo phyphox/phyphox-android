@@ -123,23 +123,34 @@ ul {
     width: 100%;
 }
 
-.valueElement {
+.valueElement, .inputElement {
     display: block;
     width: 100%;
 }
 
-.valueElement .label {
+.label {
     display: inline-block;
     text-align: right;
     width: 49%;
     padding: 0.5%;
 }
 
-.valueElement .value {
+.value {
     display: inline-block;
     font-weight: bold;
     width: 49%;
     padding: 0.5%;
+}
+
+.unit {
+    font-weight: bold;
+    padding: 0 0.5%;
+}
+
+.inputElement .value {
+    font-size: 100%;
+    width: 15vw;
+    padding: 0 0.5%;
 }
 
 .graphElement {

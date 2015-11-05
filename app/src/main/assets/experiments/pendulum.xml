@@ -306,32 +306,17 @@
     <input>
         <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="fastest" />
     </input>
-    <analysis>
-        <multiply input1="accX" input2="accX" output1="accX2" />
-        <multiply input1="accY" input2="accY" output1="accY2" />
-        <multiply input1="accZ" input2="accZ" output1="accZ2" />
-        <add input1="accX2" input2="accY2" input3="accZ2" output1="accR2" />
-        <autocorrelation input1="accR2" input2="acc_time" output1="autocorrelation" output2="autoco_t" mint="0.25" maxt="2.5" />
-        <max input1="autoco_t" output1="max_t" />
-        <divide input1="autoco_t" input2="max_t" input3="5" type3="value" output1="weightsTemp" />
-        <subtract input1="1" type1="value" input2="weightsTemp" output1="weights" />
-        <multiply input1="autocorrelation" input2="weights" output1="autocorrelation_weighted" />
-        <max input1="autocorrelation_weighted" input2="autoco_t" output1="max" output2="period/2" buffer="200" />
-        <multiply input1="period/2" input2="2" type2="value" output1="period" />
-        <divide input1="1" type1="value" input2="period" output1="frequency" />
-        <divide input1="period" input2="2" type2="value" input3="3.14159" type3="value" output1="period/2pi" />
-        <multiply input1="period/2pi" input2="period/2pi" input3="9.81" type3="value" output1="length" />
-    </analysis>
     <views>
         <view name="Results">
             <value label="Period" input="period" unit="s" />
             <value label="Frequency" input="frequency" unit="Hz" />
-            <value label="Length" input="length" unit="cm" factor="100" />
+            <input label="Length" output="length" unit="cm" factor="100" default="50" signed="false" />
+            <value label="g" input="g" unit="m/s²" />
         </view>
         <view name="History">
             <graph label="Period" inputY="period" labelX="result index" labelY="Period (s)" />
             <graph label="Frequency" inputY="frequency" labelX="result index" labelY="frequency (Hz)" />
-            <graph label="Length" inputY="length" labelX="result index" labelY="length (m)" />
+            <graph label="g" inputY="g" labelX="result index" labelY="g (m/s²)" />
         </view>
         <view name="Autocorrelation">
             <graph label="Autocorrelation" inputX="autoco_t" inputY="autocorrelation" labelX="Δt (s)" labelY="correlation (a.u.)" />
@@ -346,6 +331,22 @@
             <graph label="Accelerometer Z" inputX="acc_time" inputY="accZ" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
         </view>
     </views>
+    <analysis>
+        <multiply input1="accX" input2="accX" output1="accX2" />
+        <multiply input1="accY" input2="accY" output1="accY2" />
+        <multiply input1="accZ" input2="accZ" output1="accZ2" />
+        <add input1="accX2" input2="accY2" input3="accZ2" output1="accR2" />
+        <autocorrelation input1="accR2" input2="acc_time" output1="autocorrelation" output2="autoco_t" mint="0.25" maxt="2.5" />
+        <max input1="autoco_t" output1="max_t" />
+        <divide input1="autoco_t" input2="max_t" input3="5" type3="value" output1="weightsTemp" />
+        <subtract input1="1" type1="value" input2="weightsTemp" output1="weights" />
+        <multiply input1="autocorrelation" input2="weights" output1="autocorrelation_weighted" />
+        <max input1="autocorrelation_weighted" input2="autoco_t" output1="max" output2="period/2" buffer="200" />
+        <multiply input1="period/2" input2="2" type2="value" output1="period" />
+        <divide input1="1" type1="value" input2="period" output1="frequency" />
+        <multiply input1="6.283185307" type1="value" input2="frequency" output1="2pif" />
+        <multiply input1="2pif" input2="2pif" input3="length" output1="g" />
+    </analysis>
     <export>
         <set name="Raw Data">
             <data name="Time (s)" source="acc_time" />
@@ -364,7 +365,7 @@
             <data name="Correlation peak (s)" source="period/2" />
             <data name="Period (s)" source="period" />
             <data name="Frequency (Hz)" source="frequency" />
-            <data name="Length (m)" source="length" />
+            <data name="g (m/s²)" source="g" />
         </set>
     </export>
 </phyphox>
