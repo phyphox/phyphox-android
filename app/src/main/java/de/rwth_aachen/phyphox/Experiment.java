@@ -8,7 +8,9 @@ import android.content.res.Resources;
 import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaRecorder;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
@@ -42,8 +44,10 @@ import java.util.Map;
 import java.util.Vector;
 
 //TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
-//TODO Inputs/Outputs: Audio
 //TODO Translation of Experiment-Texts
+//TODO Sonar needs fine-tuning
+//TODO FFT for audio-analyzis
+//TODO Doppler-effect
 
 public class Experiment extends AppCompatActivity {
 
@@ -59,8 +63,8 @@ public class Experiment extends AppCompatActivity {
     long millisUntilFinished = 0;
     final Handler updateViewsHandler = new Handler();
 
-    double outputPeriod = 0.;
-    long outputStart = 0;
+    double analysisPeriod = 0.;
+    long analysisStart = 0;
 
     String title = "";
     String category = "";
@@ -71,10 +75,16 @@ public class Experiment extends AppCompatActivity {
     public final Vector<dataBuffer> dataBuffers = new Vector<>();
     public final Map<String, Integer> dataMap = new HashMap<>();
     private Vector<Analysis.analysisModule> analysis = new Vector<>();
+
     AudioTrack audioTrack = null;
     String audioSource;
     int audioRate = 48000;
     int audioBufferSize = 0;
+    AudioRecord audioRecord = null;
+    String micOutput;
+    int micRate = 48000;
+    int micBufferSize = 0;
+
     private Resources res;
 
     private boolean serverEnabled = false;
@@ -242,6 +252,29 @@ public class Experiment extends AppCompatActivity {
                                                     } else
                                                         Toast.makeText(this, "Undefined sensor ignored.", Toast.LENGTH_LONG).show();
                                                     break;
+                                                case "audio":
+                                                    micRate = 48000;
+                                                    if (xpp.getAttributeValue(null, "rate") != null)
+                                                        micRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));
+                                                    micBufferSize = micRate;
+                                                    if (xpp.getAttributeValue(null, "buffer") != null)
+                                                        micBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
+                                                    int minBufferSize = AudioRecord.getMinBufferSize(micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                                                    if (minBufferSize < 0)
+                                                        Toast.makeText(this, "Could not initialize recording. (" + minBufferSize + ")", Toast.LENGTH_LONG).show();
+
+                                                    if (minBufferSize > micBufferSize)
+                                                        micBufferSize = minBufferSize;
+
+                                                    if (xpp.getAttributeValue(null, "output") != null) {
+                                                        micOutput = xpp.getAttributeValue(null, "output");
+                                                        dataBuffer output = new dataBuffer(micOutput, micBufferSize);
+                                                        dataBuffers.add(output);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output"), dataBuffers.size() - 1);
+                                                    }
+
+                                                    audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize*2);
+                                                    break;
                                             }
                                             break;
                                     }
@@ -252,6 +285,8 @@ public class Experiment extends AppCompatActivity {
                                 while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("analysis"))) && eventType != XmlPullParser.END_DOCUMENT) {
                                     switch (eventType) {
                                         case XmlPullParser.START_TAG:
+                                            if (xpp.getAttributeValue(null, "period") != null)
+                                                analysisPeriod = Double.valueOf(xpp.getAttributeValue(null, "period"));
                                             int i = 1;
                                             int maxBufferSize = 1;
                                             int totalBufferSize = 0;
@@ -397,6 +432,21 @@ public class Experiment extends AppCompatActivity {
                                                     acAM.setMinMaxT(mint, maxt);
                                                     analysis.add(acAM);
                                                     break;
+                                                case "crosscorrelation":
+                                                    if (xpp.getAttributeValue(null, "input1") == null || xpp.getAttributeValue(null, "input2") == null) {
+                                                        Toast.makeText(this, "Crosscorrelation needs two inputs.", Toast.LENGTH_LONG).show();
+                                                        return false;
+                                                    }
+                                                    int outSize = Math.abs(dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input1"))).size-dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input2"))).size);
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), outSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    Analysis.crosscorrelationAM ccAM = new Analysis.crosscorrelationAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                    analysis.add(ccAM);
+                                                    break;
                                                 case "rangefilter":
                                                     int j = 1;
                                                     Vector<String> min = new Vector<>();
@@ -463,7 +513,6 @@ public class Experiment extends AppCompatActivity {
                                 }
                                 break;
                             case "output":
-                                outputPeriod = Double.valueOf(xpp.getAttributeValue(null, "period"));
                                 while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("export"))) && eventType != XmlPullParser.END_DOCUMENT) {
                                     switch (eventType) {
                                         case XmlPullParser.START_TAG:
@@ -840,7 +889,17 @@ public class Experiment extends AppCompatActivity {
                         }
                     } else
                         remoteInput = false;
-                    if (measuring && System.currentTimeMillis() - outputStart > outputPeriod * 1000) {
+
+                    if (measuring && System.currentTimeMillis() - analysisStart > analysisPeriod * 1000) {
+                        if (audioRecord != null) {
+                            audioRecord.stop();
+                            int bytesRead = 1;
+                            short[] buffer = new short[1024];
+                            while (bytesRead > 0) {
+                                bytesRead = audioRecord.read(buffer, 0, 1024);
+                                dataBuffers.get(dataMap.get(micOutput)).append(buffer, bytesRead);
+                            }
+                        }
                         for (Analysis.analysisModule mod : analysis) {
                             try {
                                 mod.updateIfNotStatic();
@@ -849,16 +908,24 @@ public class Experiment extends AppCompatActivity {
                             }
                         }
                         if (audioTrack != null) {
-                            short[] data = dataBuffers.get(dataMap.get(audioSource)).getShortArray();
                             if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
                                 audioTrack.stop();
-                            int result = audioTrack.write(data, 0, audioBufferSize);
-                            if (result < audioBufferSize)
-                                Log.d("debug", "Unexpected audio write: " + result + " written / " + audioBufferSize + " buffer size");
-                            audioTrack.reloadStaticData();
+                            if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && dataBuffers.get(dataMap.get(audioSource)).isStatic)) {
+                                short[] data = dataBuffers.get(dataMap.get(audioSource)).getShortArray();
+                                int result = audioTrack.write(data, 0, audioBufferSize);
+                                if (result < audioBufferSize)
+                                    Log.d("updateViews", "Unexpected audio write result: " + result + " written / " + audioBufferSize + " buffer size");
+                                audioTrack.reloadStaticData();
+                            } else
+                                audioTrack.setPlaybackHeadPosition(0);
+                        }
+                        if (audioRecord != null) {
+                            audioRecord.startRecording();
+                        }
+                        if (audioTrack != null) {
                             audioTrack.play();
                         }
-                        outputStart = System.currentTimeMillis();
+                        analysisStart = System.currentTimeMillis();
                     }
                 }
                 for (dataBuffer buffer : dataBuffers) {
@@ -949,6 +1016,10 @@ public class Experiment extends AppCompatActivity {
             cdTimer = null;
             millisUntilFinished = 0;
         }
+        if (audioRecord != null)
+            audioRecord.stop();
+        if (audioTrack != null)
+            audioTrack.stop();
         for (sensorInput sensor : inputSensors)
             sensor.stop();
         invalidateOptionsMenu();

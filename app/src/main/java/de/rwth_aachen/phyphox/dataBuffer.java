@@ -26,6 +26,16 @@ public class dataBuffer {
         buffer.add(value);
     }
 
+    public void append(double value[], int count) {
+        for (int i = 0; i < count; i++)
+            append(value[i]);
+    }
+
+    public void append(short value[], int count) {
+        for (int i = 0; i < count; i++)
+            append((double)value[i]/(double)Short.MAX_VALUE);
+    }
+
     public void setStatic(boolean isStatic) {
         this.isStatic = isStatic;
     }

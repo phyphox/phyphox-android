@@ -1,5 +1,7 @@
 package de.rwth_aachen.phyphox;
 
+import android.util.Log;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
@@ -40,7 +42,7 @@ public class Analysis {
         }
 
         protected void updateIfNotStatic() {
-            if (isStatic && !executed) {
+            if (!(isStatic && executed)) {
                 update();
                 executed = true;
             }
@@ -445,32 +447,73 @@ public class Analysis {
         }
     }
 
-    public static class rangefilterAM extends analysisModule {
-        private double[] min;
-        private double[] max;
-
-        protected rangefilterAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+    public static class crosscorrelationAM extends analysisModule {
+        protected crosscorrelationAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
             super(dataBuffers, dataMap, inputs, isValue, outputs);
-        }
-
-        protected rangefilterAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs, Vector<String> min, Vector<String> max) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
-            this.min = new double[inputs.size()];
-            this.max = new double[inputs.size()];
-            for(int i = 0; i < inputs.size(); i++) {
-                if (min.get(i) == null)
-                    this.min[i] = Double.NEGATIVE_INFINITY;
-                else
-                    this.min[i] = Double.valueOf(min.get(i));
-                if (max.get(i) == null)
-                    this.max[i] = Double.POSITIVE_INFINITY;
-                else
-                    this.max[i] = Double.valueOf(max.get(i));
-            }
         }
 
         @Override
         protected void update() {
+            Double a[], b[];
+            if (dataBuffers.get(dataMap.get(inputs.get(0))).size > dataBuffers.get(dataMap.get(inputs.get(1))).size) {
+                a = dataBuffers.get(dataMap.get(inputs.get(0))).getArray();
+                b = dataBuffers.get(dataMap.get(inputs.get(1))).getArray();
+            } else {
+                b = dataBuffers.get(dataMap.get(inputs.get(0))).getArray();
+                a = dataBuffers.get(dataMap.get(inputs.get(1))).getArray();
+            }
+
+            outputs.get(0).clear();
+
+            int compRange = a.length - b.length;
+            for (int i = 0; i < compRange; i++) {
+                double sum = 0.;
+                for (int j = 0; j < b.length; j++) {
+                    sum += a[j+i]*b[j];
+                }
+                sum /= (double)(compRange);
+                outputs.get(0).append(sum);
+            }
+        }
+    }
+
+    public static class rangefilterAM extends analysisModule {
+        private Vector<String> min;
+        private Vector<String> max;
+
+        protected rangefilterAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs, Vector<String> min, Vector<String> max) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+            this.min = min;
+            this.max = max;
+        }
+
+        @Override
+        protected void update() {
+            double[] min;
+            double[] max;
+
+            min = new double[inputs.size()];
+            max = new double[inputs.size()];
+            for(int i = 0; i < inputs.size(); i++) {
+                if (this.min.get(i) == null)
+                    min[i] = Double.NEGATIVE_INFINITY;
+                else {
+                    if (dataBuffers.get(dataMap.get(this.min.get(i))) != null)
+                        min[i] = dataBuffers.get(dataMap.get(this.min.get(i))).value;
+                    else
+                        min[i] = Double.valueOf(this.min.get(i));
+                }
+                if (this.max.get(i) == null)
+                    max[i] = Double.POSITIVE_INFINITY;
+                else {
+                    if (dataBuffers.get(dataMap.get(this.max.get(i))) != null)
+                        max[i] = dataBuffers.get(dataMap.get(this.max.get(i))).value;
+                    else
+                        max[i] = Double.valueOf(this.max.get(i));
+                }
+
+            }
+
             Vector<Iterator> its = new Vector<>();
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
@@ -497,8 +540,9 @@ public class Analysis {
                     for (int i = 0; i < inputs.size(); i++) {
                         if (its.get(i).hasNext()) {
                             data[i] = (double) its.get(i).next();
-                            if (data[i] < min[i] || data[i] > max[i])
+                            if (data[i] < min[i] || data[i] > max[i]) {
                                 filter = true;
+                            }
                         } else
                             data[i] = Double.NaN;
                     }

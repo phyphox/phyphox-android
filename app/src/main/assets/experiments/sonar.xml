@@ -2,22 +2,34 @@
     <title>Sonar</title>
     <category>Acoustics</category>
     <input>
+        <audio output="recording" rate="48000" buffer="9600" />
     </input>
     <views>
         <view name="Chirp">
             <value label="Max-Frequency" input="chirp_f" unit="Hz" />
+            <input label="Speed of Sound" output="speedofsound" unit="m/s" default="343" />
+            <graph label="Echo location" inputX="distance" inputY="relative_ccsquare" labelX="distance (cm)" labelY="A (a.u.)" />
+            <graph label="Chirp" inputX="chirp_t" inputY="chirp" labelX="Time (s)" labelY="A (a.u.)" />
         </view>
     </views>
-    <analysis>
-        <ramp start="0" stop="0.5" buffer="24000" output1="chirp_t" static="true" />
-        <power input1="100" type1="value" input2="chirp_t" output1="chirp_exp" static="true" />
-        <subtract input1="chirp_exp" input2="1" type2="value" output1="chirp_exp1" static="true" />
-        <multiply input1="chirp_exp1" input2="400" type2="value" output1="chirp_f" static="true" />
+    <analysis period="0.3">
+        <ramp start="0" stop="0.2" buffer="9600" output1="recording_t" static="true" />
+        <ramp start="0" stop="0.025" buffer="1200" output1="chirp_t" static="true" />
+        <ramp start="100" stop="2000" buffer="1200" output1="chirp_f" static="true" />
+        <ramp start="0" stop="0.175" buffer="8400" output1="cc_t" static="true" />
         <multiply input1="chirp_f" input2="chirp_t" input3="6.283185307" type3="value" output1="chirp_arg" static="true" />
         <sin input1="chirp_arg" output1="chirp" static="true" />
+        <crosscorrelation input1="recording" input2="chirp" output1="crosscorrelation" />
+        <multiply input1="crosscorrelation" input2="crosscorrelation" output1="ccsquare" />
+        <max input1="ccsquare" input2="cc_t" output1="ccmax" output2="t0" />
+        <add input1="t0" input2="0.0015" type2="value" output1="t1" />
+        <add input1="t0" input2="0.015" type2="value" output1="t2" />
+        <rangefilter input1="cc_t" input2="ccsquare" min1="t1" max1="t2" output1="cut_t" output2="relative_ccsquare" />
+        <subtract input1="cut_t" input2="t0" output1="relative_t" />
+        <multiply input1="relative_t" input2="speedofsound" input3="50" type3="value" output1="distance" />
     </analysis>
-    <output period="2">
-        <audio input="chirp" rate="48000" buffer="24000" />
+    <output>
+        <audio input="chirp" rate="48000" buffer="1200" />
     </output>
     <export>
     </export>
