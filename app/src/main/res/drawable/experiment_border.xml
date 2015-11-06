@@ -2,11 +2,5 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle" >
 <solid android:color="@color/background" />
 <stroke android:width="@dimen/expElementBorderWidth" android:color="@color/main"/>
-    <gradient
-        android:centerX="0.5"
-        android:centerY="0.5"
-        android:gradientRadius="50%"
-        android:endColor="@color/background"
-        android:startColor="@color/highlight"
-        android:type="radial" />
+
 </shape>

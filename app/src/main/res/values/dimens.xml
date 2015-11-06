@@ -5,10 +5,13 @@
     <dimen name="activity_horizontal_padding">8dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="activity_vertical_padding">1dp</dimen>
+
     <dimen name="font">20sp</dimen>
+    <dimen name="experiment_icon_font">16sp</dimen>
     <dimen name="headline_font">20sp</dimen>
     <dimen name="graph_font">14sp</dimen>
     <dimen name="credit_font">13sp</dimen>
+
     <dimen name="expElementWidth">150dp</dimen>
     <dimen name="expElementHeight">100dp</dimen>
     <dimen name="expElementBorderWidth">2dp</dimen>

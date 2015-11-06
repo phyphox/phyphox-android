@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.hardware.SensorManager;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
@@ -33,6 +36,7 @@ import org.xmlpull.v1.XmlPullParser;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -55,6 +59,9 @@ public class Experiment extends AppCompatActivity {
     long millisUntilFinished = 0;
     final Handler updateViewsHandler = new Handler();
 
+    double outputPeriod = 0.;
+    long outputStart = 0;
+
     String title = "";
     String category = "";
     String icon = "";
@@ -64,6 +71,10 @@ public class Experiment extends AppCompatActivity {
     public final Vector<dataBuffer> dataBuffers = new Vector<>();
     public final Map<String, Integer> dataMap = new HashMap<>();
     private Vector<Analysis.analysisModule> analysis = new Vector<>();
+    AudioTrack audioTrack = null;
+    String audioSource;
+    int audioRate = 48000;
+    int audioBufferSize = 0;
     private Resources res;
 
     private boolean serverEnabled = false;
@@ -148,9 +159,8 @@ public class Experiment extends AppCompatActivity {
                                                                             ie.setLabelSize(res.getDimension(R.dimen.font));
                                                                         if (xpp.getAttributeValue(null, "unit") != null)
                                                                             ie.setUnit(xpp.getAttributeValue(null, "unit"));
-                                                                        double factor = 1.;
                                                                         if (xpp.getAttributeValue(null, "factor") != null) {
-                                                                            factor = Double.valueOf(xpp.getAttributeValue(null, "factor"));
+                                                                            double factor = Double.valueOf(xpp.getAttributeValue(null, "factor"));
                                                                             ie.setFactor(factor);
                                                                         }
                                                                         ie.setSigned((xpp.getAttributeValue(null, "signed") == null || xpp.getAttributeValue(null, "signed").equals("true")));
@@ -244,12 +254,14 @@ public class Experiment extends AppCompatActivity {
                                         case XmlPullParser.START_TAG:
                                             int i = 1;
                                             int maxBufferSize = 1;
+                                            int totalBufferSize = 0;
                                             Vector <String> inputs = new Vector<>();
                                             Vector <Boolean> isValue = new Vector<>();
                                             while (xpp.getAttributeValue(null, "input"+i) != null) {
                                                 isValue.add(xpp.getAttributeValue(null, "type"+i) != null && xpp.getAttributeValue(null, "type"+i).equals("value"));
                                                 if (!isValue.lastElement()) {
                                                     int inputSize = dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input" + i))).size;
+                                                    totalBufferSize += inputSize;
                                                     if (inputSize > maxBufferSize)
                                                         maxBufferSize = inputSize;
                                                 }
@@ -262,7 +274,9 @@ public class Experiment extends AppCompatActivity {
 
                                             Vector <dataBuffer> outputs = new Vector<>();
 
-                                            switch (xpp.getName()) {
+                                            String tag = xpp.getName();
+                                            boolean handled = true;
+                                            switch (tag) {
                                                 case "add":
                                                     if (xpp.getAttributeValue(null, "output1") != null) {
                                                         dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
@@ -299,6 +313,42 @@ public class Experiment extends AppCompatActivity {
                                                     }
                                                     analysis.add(new Analysis.divideAM(dataBuffers, dataMap, inputs, isValue, outputs));
                                                     break;
+                                                case "power":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    analysis.add(new Analysis.powerAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                    break;
+                                                case "sin":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    analysis.add(new Analysis.sinAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                    break;
+                                                case "cos":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    analysis.add(new Analysis.cosAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                    break;
+                                                case "tan":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    analysis.add(new Analysis.tanAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                    break;
                                                 case "max":
                                                     if (xpp.getAttributeValue(null, "output1") != null) {
                                                         dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
@@ -313,6 +363,16 @@ public class Experiment extends AppCompatActivity {
                                                         outputs.add(output2);
                                                     }
                                                     analysis.add(new Analysis.maxAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                    break;
+                                                case "append":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), totalBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    Analysis.appendAM appendAM = new Analysis.appendAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                    analysis.add(appendAM);
                                                     break;
                                                 case "autocorrelation":
                                                     if (xpp.getAttributeValue(null, "output1") != null) {
@@ -351,6 +411,74 @@ public class Experiment extends AppCompatActivity {
                                                         j++;
                                                     }
                                                     analysis.add(new Analysis.rangefilterAM(dataBuffers, dataMap, inputs, isValue, outputs, min, max));
+                                                    break;
+                                                case "ramp":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    Analysis.rampGeneratorAM rampAM = new Analysis.rampGeneratorAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                    double start = 0;
+                                                    double stop = 100;
+                                                    int length = -1;
+                                                    if (xpp.getAttributeValue(null, "start") != null)
+                                                        start = Double.valueOf(xpp.getAttributeValue(null, "start"));
+                                                    if (xpp.getAttributeValue(null, "stop") != null)
+                                                        stop = Double.valueOf(xpp.getAttributeValue(null, "stop"));
+                                                    if (xpp.getAttributeValue(null, "length") != null)
+                                                        length = Integer.valueOf(xpp.getAttributeValue(null, "length"));
+                                                    rampAM.setParameters(start, stop, length);
+                                                    analysis.add(rampAM);
+                                                    break;
+                                                case "const":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                    double value = 0;
+                                                    int clength = -1;
+                                                    if (xpp.getAttributeValue(null, "value") != null)
+                                                        value = Double.valueOf(xpp.getAttributeValue(null, "value"));
+                                                    if (xpp.getAttributeValue(null, "length") != null)
+                                                        clength = Integer.valueOf(xpp.getAttributeValue(null, "length"));
+                                                    constAM.setParameters(value, clength);
+                                                    analysis.add(constAM);
+                                                    break;
+                                                default:
+                                                    handled = false;
+
+                                            }
+                                            if (handled) {
+                                                boolean isStatic = Boolean.valueOf(xpp.getAttributeValue(null, "static"));
+                                                analysis.lastElement().setStatic(isStatic);
+                                            }
+                                            break;
+                                    }
+                                    eventType = xpp.next();
+                                }
+                                break;
+                            case "output":
+                                outputPeriod = Double.valueOf(xpp.getAttributeValue(null, "period"));
+                                while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("export"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                    switch (eventType) {
+                                        case XmlPullParser.START_TAG:
+                                            switch (xpp.getName()) {
+                                                case "audio":
+                                                    audioSource = xpp.getAttributeValue(null, "input");
+                                                    if (xpp.getAttributeValue(null, "rate") != null)
+                                                        audioRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));
+                                                    audioBufferSize = audioRate;
+                                                    if (xpp.getAttributeValue(null, "buffer") != null)
+                                                        audioBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
+                                                    audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2*audioBufferSize, AudioTrack.MODE_STATIC);
+                                                    if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
+                                                        Toast.makeText(this, "Could not initialize audio. (" + audioTrack.getState() + ")", Toast.LENGTH_LONG).show();
+                                                    }
                                                     break;
                                             }
                                             break;
@@ -712,14 +840,25 @@ public class Experiment extends AppCompatActivity {
                         }
                     } else
                         remoteInput = false;
-                    if (measuring) {
+                    if (measuring && System.currentTimeMillis() - outputStart > outputPeriod * 1000) {
                         for (Analysis.analysisModule mod : analysis) {
                             try {
-                                mod.update();
+                                mod.updateIfNotStatic();
                             } catch (Exception e) {
                                 Log.e("updateViews", "Unhandled exception in analysis module " + mod.toString() + ".", e);
                             }
                         }
+                        if (audioTrack != null) {
+                            short[] data = dataBuffers.get(dataMap.get(audioSource)).getShortArray();
+                            if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
+                                audioTrack.stop();
+                            int result = audioTrack.write(data, 0, audioBufferSize);
+                            if (result < audioBufferSize)
+                                Log.d("debug", "Unexpected audio write: " + result + " written / " + audioBufferSize + " buffer size");
+                            audioTrack.reloadStaticData();
+                            audioTrack.play();
+                        }
+                        outputStart = System.currentTimeMillis();
                     }
                 }
                 for (dataBuffer buffer : dataBuffers) {
@@ -785,7 +924,6 @@ public class Experiment extends AppCompatActivity {
             }.start();
         }
         invalidateOptionsMenu();
-    //    titleText.setBackgroundColor(res.getColor(R.color.highlight));
     }
 
     public void startTimedMeasurement() {
@@ -832,7 +970,7 @@ public class Experiment extends AppCompatActivity {
     }
 
     public void defocus() {
-        ((LinearLayout) findViewById(R.id.experimentView)).requestFocus();
+        findViewById(R.id.experimentView).requestFocus();
     }
 
 }

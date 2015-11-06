@@ -11,11 +11,12 @@ public class dataBuffer {
     private BlockingQueue<Double> buffer;
     public int size;
     public double value;
+    public boolean isStatic = false;
 
     protected dataBuffer(String name, int size) {
         this.size = size;
         this.name = name;
-        this.buffer = new ArrayBlockingQueue<Double>(size);
+        this.buffer = new ArrayBlockingQueue<>(size);
     }
 
     public void append(double value) {
@@ -25,7 +26,13 @@ public class dataBuffer {
         buffer.add(value);
     }
 
+    public void setStatic(boolean isStatic) {
+        this.isStatic = isStatic;
+    }
+
     public void clear() {
+        if (isStatic)
+            return;
         buffer.clear();
         value = Double.NaN;
     }
@@ -37,5 +44,16 @@ public class dataBuffer {
     public Double[] getArray() {
         Double ret[] = new Double[buffer.size()];
         return buffer.toArray(ret);
+    }
+
+    public short[] getShortArray() {
+        short ret[] = new short[buffer.size()];
+        Iterator it = getIterator();
+        int i = 0;
+        while (it.hasNext()) {
+            ret[i] = (short)(((double)it.next())*(Short.MAX_VALUE));
+            i++;
+        }
+        return ret;
     }
 }

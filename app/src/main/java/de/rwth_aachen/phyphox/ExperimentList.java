@@ -94,7 +94,7 @@ public class ExperimentList extends AppCompatActivity {
             experimentButtons.add(new Button(parentContext));
             experimentButtons.lastElement().setText(exp);
             experimentButtons.lastElement().setTextColor(ContextCompat.getColor(parentContext, R.color.main));
-            experimentButtons.lastElement().setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
+            experimentButtons.lastElement().setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.experiment_icon_font));
 
             Drawable [] d = new Drawable[2];
             d[0] = ContextCompat.getDrawable(parentContext, R.drawable.experiment_border);
@@ -166,6 +166,7 @@ public class ExperimentList extends AppCompatActivity {
             AssetManager assetManager = getAssets();
             final String[] experimentXMLs = assetManager.list("experiments");
             for (String experimentXML : experimentXMLs) {
+                boolean hidden = false;
                 try {
                     InputStream input = assetManager.open("experiments/" + experimentXML);
                     XmlPullParser xpp = Xml.newPullParser();
@@ -186,6 +187,9 @@ public class ExperimentList extends AppCompatActivity {
                                         icon = xpp.nextText();
                                         break;
                                     case "category":
+                                        if (xpp.getAttributeValue(null, "hidden") != null && xpp.getAttributeValue(null, "hidden").equals("true")) {
+                                            hidden = true;
+                                        }
                                         category = xpp.nextText();
                                         break;
                                 }
@@ -197,7 +201,7 @@ public class ExperimentList extends AppCompatActivity {
                         Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a title.", Toast.LENGTH_LONG).show();
                     } else if (category.equals("")) {
                         Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a category.", Toast.LENGTH_LONG).show();
-                    } else {
+                    } else if (!hidden) {
                         Bitmap image;
                         if (icon.equals(""))
                             image = null;

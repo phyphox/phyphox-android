@@ -13,6 +13,8 @@ public class Analysis {
         protected Vector<Double> values;
         protected Vector<dataBuffer> dataBuffers;
         protected Map<String, Integer> dataMap;
+        protected boolean isStatic = false;
+        protected boolean executed = false;
 
         protected analysisModule(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
             this.dataBuffers = dataBuffers;
@@ -27,6 +29,20 @@ public class Analysis {
                     this.inputs.set(i, null);
                 } else
                     this.values.add(0.);
+            }
+        }
+
+        protected void setStatic(boolean isStatic) {
+            this.isStatic = isStatic;
+            for (dataBuffer output : outputs) {
+                output.setStatic(isStatic);
+            }
+        }
+
+        protected void updateIfNotStatic() {
+            if (isStatic && !executed) {
+                update();
+                executed = true;
             }
         }
 
@@ -193,6 +209,128 @@ public class Analysis {
         }
     }
 
+    public static class powerAM extends analysisModule {
+
+        protected powerAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Vector<Iterator> its = new Vector<>();
+            Vector<Double> lastValues = new Vector<>();
+            for (int i = 0; i < inputs.size(); i++) {
+                if (inputs.get(i) == null) {
+                    lastValues.add(values.get(i));
+                    its.add(null);
+                } else {
+                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    lastValues.add(0.);
+                }
+            }
+            outputs.get(0).clear();
+            for (int i = 0; i < outputs.get(0).size; i++) {
+                double power = 1.;
+                boolean anyInput = false;
+                for (int j = 0; j < its.size(); j++) {
+                    if (its.get(j) != null && its.get(j).hasNext()) {
+                        lastValues.set(j, (double)its.get(j).next());
+                        anyInput = true;
+                    }
+                    if (j == 0)
+                        power = lastValues.get(j);
+                    else
+                        power = Math.pow(power, lastValues.get(j));
+                }
+                if (anyInput)
+                    outputs.get(0).append(power);
+                else
+                    break;
+            }
+        }
+    }
+
+    public static class sinAM extends analysisModule {
+
+        protected sinAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Iterator it;
+            double lastValue;
+            if (inputs.get(0) == null) {
+                lastValue = values.get(0);
+                it = null;
+            } else {
+                it = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+                lastValue = 0.;
+            }
+            outputs.get(0).clear();
+            for (int i = 0; i < outputs.get(0).size; i++) {
+                if (it != null && it.hasNext()) {
+                    lastValue = (double)it.next();
+                }
+                outputs.get(0).append(Math.sin(lastValue));
+            }
+        }
+    }
+
+    public static class cosAM extends analysisModule {
+
+        protected cosAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Iterator it;
+            double lastValue;
+            if (inputs.get(0) == null) {
+                lastValue = values.get(0);
+                it = null;
+            } else {
+                it = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+                lastValue = 0.;
+            }
+            outputs.get(0).clear();
+            for (int i = 0; i < outputs.get(0).size; i++) {
+                if (it != null && it.hasNext()) {
+                    lastValue = (double)it.next();
+                }
+            }
+            outputs.get(0).append(Math.cos(lastValue));
+        }
+    }
+
+    public static class tanAM extends analysisModule {
+
+        protected tanAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Iterator it;
+            double lastValue;
+            if (inputs.get(0) == null) {
+                lastValue = values.get(0);
+                it = null;
+            } else {
+                it = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+                lastValue = 0.;
+            }
+            outputs.get(0).clear();
+            for (int i = 0; i < outputs.get(0).size; i++) {
+                if (it != null && it.hasNext()) {
+                    lastValue = (double)it.next();
+                }
+            }
+            outputs.get(0).append(Math.tan(lastValue));
+        }
+    }
+
     public static class maxAM extends analysisModule {
 
         protected maxAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
@@ -227,6 +365,29 @@ public class Analysis {
             outputs.get(0).append(max);
             if (outputs.size() > 1) {
                 outputs.get(1).append(x);
+            }
+
+        }
+    }
+
+    public static class appendAM extends analysisModule {
+
+        protected appendAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        }
+
+        @Override
+        protected void update() {
+
+            outputs.get(0).clear();
+
+            for (int i = 0; i < inputs.size(); i++) {
+                Iterator it = dataBuffers.get(dataMap.get(inputs.get(i))).getIterator();
+                if (it == null)
+                    continue;
+                while (it.hasNext()) {
+                    outputs.get(0).append((double)it.next());
+                }
             }
 
         }
@@ -351,4 +512,57 @@ public class Analysis {
             }
         }
     }
+
+    public static class rampGeneratorAM extends analysisModule {
+        private double start = 0;
+        private double stop = 100;
+        private int length = -1;
+
+        protected rampGeneratorAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        }
+
+        protected void setParameters(double start, double stop, int length) {
+            this.start = start;
+            this.stop = stop;
+            this.length = length;
+        }
+
+        @Override
+        protected void update() {
+            outputs.get(0).clear();
+            if (this.length < 0)
+                this.length = outputs.get(0).size;
+
+            for (int i = 0; i < this.length; i++) {
+                outputs.get(0).append(start+(stop-start)/(length-1)*i);
+            }
+        }
+    }
+
+    public static class constGeneratorAM extends analysisModule {
+        private double value = 0;
+        private int length = -1;
+
+        protected constGeneratorAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        }
+
+        protected void setParameters(double value, int length) {
+            this.value = value;
+            this.length = length;
+        }
+
+        @Override
+        protected void update() {
+            outputs.get(0).clear();
+            if (this.length < 0)
+                this.length = outputs.get(0).size;
+
+            for (int i = 0; i < this.length; i++) {
+                outputs.get(0).append(value);
+            }
+        }
+    }
+
 }

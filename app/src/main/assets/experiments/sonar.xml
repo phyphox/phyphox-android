@@ -1,0 +1,24 @@
+<phyphox version="1.0">
+    <title>Sonar</title>
+    <category>Acoustics</category>
+    <input>
+    </input>
+    <views>
+        <view name="Chirp">
+            <value label="Max-Frequency" input="chirp_f" unit="Hz" />
+        </view>
+    </views>
+    <analysis>
+        <ramp start="0" stop="0.5" buffer="24000" output1="chirp_t" static="true" />
+        <power input1="100" type1="value" input2="chirp_t" output1="chirp_exp" static="true" />
+        <subtract input1="chirp_exp" input2="1" type2="value" output1="chirp_exp1" static="true" />
+        <multiply input1="chirp_exp1" input2="400" type2="value" output1="chirp_f" static="true" />
+        <multiply input1="chirp_f" input2="chirp_t" input3="6.283185307" type3="value" output1="chirp_arg" static="true" />
+        <sin input1="chirp_arg" output1="chirp" static="true" />
+    </analysis>
+    <output period="2">
+        <audio input="chirp" rate="48000" buffer="24000" />
+    </output>
+    <export>
+    </export>
+</phyphox>

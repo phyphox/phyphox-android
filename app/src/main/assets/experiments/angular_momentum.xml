@@ -1,0 +1,24 @@
+<phyphox version="1.0">
+    <title>Angular Momentum</title>
+    <category>Mechanics</category>
+    <input>
+        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="2000" rate="fastest" />
+    </input>
+    <analysis>
+    </analysis>
+    <views>
+        <view name="Raw Data">
+            <graph label="Accelerometer X" inputX="acc_time" inputY="accX" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Accelerometer Y" inputX="acc_time" inputY="accY" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Accelerometer Z" inputX="acc_time" inputY="accZ" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+        </view>
+    </views>
+    <export>
+        <set name="Raw Data">
+            <data name="Time (s)" source="acc_time" />
+            <data name="Acceleration x (m/s^2)" source="accX" />
+            <data name="Acceleration y (m/s^2)" source="accY" />
+            <data name="Acceleration z (m/s^2)" source="accZ" />
+        </set>
+    </export>
+</phyphox>
