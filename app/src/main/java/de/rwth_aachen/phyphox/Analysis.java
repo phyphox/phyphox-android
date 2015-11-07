@@ -477,6 +477,43 @@ public class Analysis {
         }
     }
 
+    public static class gaussSmoothAM extends analysisModule {
+        private double sigma;
+        int calcWidth;
+        double[] gauss;
+
+        protected gaussSmoothAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+            setSigma(3);
+        }
+
+        protected void setSigma(double sigma) {
+            this.sigma = sigma;
+            this.calcWidth = (int)Math.round(sigma*3);
+
+            gauss = new double[calcWidth*2+1];
+            for (int i = -calcWidth; i <= calcWidth; i++) {
+                gauss[i+calcWidth] = Math.exp(-(i/sigma*i/sigma)/2.)/(sigma*Math.sqrt(2.*Math.PI));
+            }
+        }
+
+        @Override
+        protected void update() {
+            Double y[] = dataBuffers.get(dataMap.get(inputs.get(0))).getArray();
+            outputs.get(0).clear();
+
+            for (int i = 0; i < y.length; i++) {
+                double sum = 0;
+                for (int j = -calcWidth; j <= calcWidth; j++) {
+                    int k = i+j;
+                    if (k >= 0 && k < y.length)
+                        sum += gauss[j+calcWidth]*y[k];
+                }
+                outputs.get(0).append(sum);
+            }
+        }
+    }
+
     public static class rangefilterAM extends analysisModule {
         private Vector<String> min;
         private Vector<String> max;

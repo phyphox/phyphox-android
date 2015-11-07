@@ -447,6 +447,18 @@ public class Experiment extends AppCompatActivity {
                                                     Analysis.crosscorrelationAM ccAM = new Analysis.crosscorrelationAM(dataBuffers, dataMap, inputs, isValue, outputs);
                                                     analysis.add(ccAM);
                                                     break;
+                                                case "gausssmooth":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    Analysis.gaussSmoothAM gsAM = new Analysis.gaussSmoothAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                    if (xpp.getAttributeValue(null, "sigma") != null)
+                                                        gsAM.setSigma(Double.valueOf(xpp.getAttributeValue(null, "sigma")));
+                                                    analysis.add(gsAM);
+                                                    break;
                                                 case "rangefilter":
                                                     int j = 1;
                                                     Vector<String> min = new Vector<>();
