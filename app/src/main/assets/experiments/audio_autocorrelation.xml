@@ -1,0 +1,29 @@
+<phyphox version="1.0">
+    <title>Audio Autocorrelation</title>
+    <category>Acoustics</category>
+    <input>
+        <audio output="recording" rate="48000" buffer="4800" />
+    </input>
+    <views>
+        <view name="Autocorrelation">
+            <value label="Period" input="period" unit="ms" factor="1000" />
+            <value label="Frequency" input="frequency" unit="Hz" />
+            <graph label="Autocorrelation" inputX="autoco_t" inputY="autocorrelation" labelX="Δt (ms)" labelY="correlation (a.u.)" />
+        </view>
+    </views>
+    <analysis period="0.1">
+        <ramp start="0" stop="100" buffer="4800" output1="time" static="true" />
+        <rangefilter input1="time" input2="recording" min1="20" output1="offtime" output2="offdata" />
+        <autocorrelation input1="offdata" input2="offtime" output1="autocorrelation" output2="autoco_t" mint="0" maxt="20" />
+        <threshold input2="autoco_t" input1="autocorrelation" falling="true" threshold="0" output1="t0" />
+        <multiply input1="t0" input2="2" type2="value" output1="dt" />
+        <add input1="t0" input2="dt" output1="t1" />
+        <add input1="t1" input2="dt" output1="t2" />
+        <rangefilter input1="autoco_t" input2="autocorrelation" min1="t1" max1="t2" output1="search_t" output2="search_y" />
+        <max input1="search_y" input2="search_t" output1="max" output2="period_1000" buffer="200" />
+        <multiply input1="period_1000" input2="0.001" type2="value" output1="period" />
+        <divide input1="1" type1="value" input2="period" output1="frequency" />
+    </analysis>
+    <export>
+    </export>
+</phyphox>

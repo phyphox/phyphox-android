@@ -1,8 +1,10 @@
 package de.rwth_aachen.phyphox;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.hardware.SensorManager;
@@ -13,9 +15,11 @@ import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -43,11 +47,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+//TODO Redesign main screen
+//TODO Screen rotation
 //TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
 //TODO Translation of Experiment-Texts
 //TODO Sonar needs fine-tuning
-//TODO FFT for audio-analyzis
-//TODO Doppler-effect
 
 public class Experiment extends AppCompatActivity {
 
@@ -159,6 +163,9 @@ public class Experiment extends AppCompatActivity {
                                                                         if (xpp.getAttributeValue(null, "history") != null)
                                                                             ge.setHistoryLength(Integer.valueOf(xpp.getAttributeValue(null, "history")));
                                                                         ge.setLabel(xpp.getAttributeValue(null, "labelX"), xpp.getAttributeValue(null, "labelY"));
+                                                                        boolean logX = Boolean.valueOf(xpp.getAttributeValue(null, "logX"));
+                                                                        boolean logY = Boolean.valueOf(xpp.getAttributeValue(null, "logY"));
+                                                                        ge.setLogScale(logX, logY);
                                                                         newView.elements.add(ge);
                                                                         break;
                                                                     case "input":
@@ -253,6 +260,10 @@ public class Experiment extends AppCompatActivity {
                                                         Toast.makeText(this, "Undefined sensor ignored.", Toast.LENGTH_LONG).show();
                                                     break;
                                                 case "audio":
+                                                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                                                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 0);
+                                                        return false;
+                                                    }
                                                     micRate = 48000;
                                                     if (xpp.getAttributeValue(null, "rate") != null)
                                                         micRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));
@@ -263,8 +274,10 @@ public class Experiment extends AppCompatActivity {
                                                     if (minBufferSize < 0)
                                                         Toast.makeText(this, "Could not initialize recording. (" + minBufferSize + ")", Toast.LENGTH_LONG).show();
 
-                                                    if (minBufferSize > micBufferSize)
+                                                    if (minBufferSize > micBufferSize) {
                                                         micBufferSize = minBufferSize;
+                                                        Toast.makeText(this, "Warning: Audio buffer size had to be adjusted to " + minBufferSize, Toast.LENGTH_LONG).show();
+                                                    }
 
                                                     if (xpp.getAttributeValue(null, "output") != null) {
                                                         micOutput = xpp.getAttributeValue(null, "output");
@@ -399,6 +412,19 @@ public class Experiment extends AppCompatActivity {
                                                     }
                                                     analysis.add(new Analysis.maxAM(dataBuffers, dataMap, inputs, isValue, outputs));
                                                     break;
+                                                case "threshold":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    double threshold = 0.;
+                                                    if (xpp.getAttributeValue(null, "threshold") != null)
+                                                        threshold = Double.valueOf(xpp.getAttributeValue(null, "threshold"));
+                                                    boolean falling = Boolean.valueOf(xpp.getAttributeValue(null, "falling"));
+                                                    analysis.add(new Analysis.thresholdAM(dataBuffers, dataMap, inputs, isValue, outputs, threshold, falling));
+                                                    break;
                                                 case "append":
                                                     if (xpp.getAttributeValue(null, "output1") != null) {
                                                         dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), totalBufferSize);
@@ -408,6 +434,22 @@ public class Experiment extends AppCompatActivity {
                                                     }
                                                     Analysis.appendAM appendAM = new Analysis.appendAM(dataBuffers, dataMap, inputs, isValue, outputs);
                                                     analysis.add(appendAM);
+                                                    break;
+                                                case "fft":
+                                                    if (xpp.getAttributeValue(null, "output1") != null) {
+                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                        dataBuffers.add(output1);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                        outputs.add(output1);
+                                                    }
+                                                    if (xpp.getAttributeValue(null, "output2") != null) {
+                                                        dataBuffer output2 = new dataBuffer(xpp.getAttributeValue(null, "output2"), maxBufferSize);
+                                                        dataBuffers.add(output2);
+                                                        dataMap.put(xpp.getAttributeValue(null, "output2"), dataBuffers.size()-1);
+                                                        outputs.add(output2);
+                                                    }
+                                                    Analysis.fftAM fftAM = new Analysis.fftAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                    analysis.add(fftAM);
                                                     break;
                                                 case "autocorrelation":
                                                     if (xpp.getAttributeValue(null, "output1") != null) {

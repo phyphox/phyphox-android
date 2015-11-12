@@ -304,7 +304,7 @@
         OjAwOjAwOjE5+wOfsQAAAABJRU5ErkJggg==
     </icon>
     <input>
-        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="fastest" />
+        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="fastest" />
     </input>
     <views>
         <view name="Results">
@@ -320,49 +320,45 @@
         </view>
         <view name="Autocorrelation">
             <graph label="Autocorrelation" inputX="autoco_t" inputY="autocorrelation" labelX="Δt (s)" labelY="correlation (a.u.)" />
-            <graph label="Weighted autocorrelation" inputX="autoco_t" inputY="autocorrelation_weighted" labelX="Δt (s)" labelY="correlation (a.u.)" />
-            <value label="Max-Position" input="period/2" unit="s" />
             <value label="Period" input="period" unit="s" />
             <value label="Frequency" input="frequency" unit="Hz" />
         </view>
         <view name="Raw Data">
-            <graph label="Accelerometer X" inputX="acc_time" inputY="accX" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
-            <graph label="Accelerometer Y" inputX="acc_time" inputY="accY" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
-            <graph label="Accelerometer Z" inputX="acc_time" inputY="accZ" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Gyroscope X" inputX="gyr_time" inputY="gyrX" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Gyroscope Y" inputX="gyr_time" inputY="gyrY" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+            <graph label="Gyroscope Z" inputX="gyr_time" inputY="gyrZ" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
         </view>
     </views>
     <analysis>
-        <multiply input1="accX" input2="accX" output1="accX2" />
-        <multiply input1="accY" input2="accY" output1="accY2" />
-        <multiply input1="accZ" input2="accZ" output1="accZ2" />
-        <add input1="accX2" input2="accY2" input3="accZ2" output1="accR2" />
-        <autocorrelation input1="accR2" input2="acc_time" output1="autocorrelation" output2="autoco_t" mint="0.25" maxt="2.5" />
-        <max input1="autoco_t" output1="max_t" />
-        <divide input1="autoco_t" input2="max_t" input3="5" type3="value" output1="weightsTemp" />
-        <subtract input1="1" type1="value" input2="weightsTemp" output1="weights" />
-        <multiply input1="autocorrelation" input2="weights" output1="autocorrelation_weighted" />
-        <max input1="autocorrelation_weighted" input2="autoco_t" output1="max" output2="period/2" buffer="200" />
-        <multiply input1="period/2" input2="2" type2="value" output1="period" />
+        <autocorrelation input1="gyrX" input2="gyr_time" output1="autocorrelation_x" output2="autoco_t" mint="0" maxt="2.5" />
+        <autocorrelation input1="gyrY" input2="gyr_time" output1="autocorrelation_y" output2="autoco_t2" mint="0" maxt="2.5" />
+        <autocorrelation input1="gyrZ" input2="gyr_time" output1="autocorrelation_z" output2="autoco_t3" mint="0" maxt="2.5" />
+        <add input1="autocorrelation_x" input2="autocorrelation_y" input3="autocorrelation_z" output1="autocorrelation" />
+        <threshold input2="autoco_t" input1="autocorrelation" falling="true" threshold="0" output1="t0" />
+        <multiply input1="t0" input2="2" type2="value" output1="dt" />
+        <add input1="t0" input2="dt" output1="t1" />
+        <add input1="t1" input2="dt" output1="t2" />
+        <rangefilter input1="autoco_t" input2="autocorrelation" min1="t1" max1="t2" output1="search_t" output2="search_y" />
+        <max input1="search_y" input2="search_t" output1="max" output2="period" buffer="200" />
         <divide input1="1" type1="value" input2="period" output1="frequency" />
         <multiply input1="6.283185307" type1="value" input2="frequency" output1="2pif" />
         <multiply input1="2pif" input2="2pif" input3="length" output1="g" />
     </analysis>
     <export>
         <set name="Raw Data">
-            <data name="Time (s)" source="acc_time" />
-            <data name="Acceleration x (m/s^2)" source="accX" />
-            <data name="Acceleration y (m/s^2)" source="accY" />
-            <data name="Acceleration z (m/s^2)" source="accZ" />
-            <data name="Acceleration x^2+y^2+z^2 (m^2/s^4)" source="accR2" />
+            <data name="Time (s)" source="gyr_time" />
+            <data name="Rotation x (rad/s)" source="gyrX" />
+            <data name="Rotation y (rad/s)" source="gyrY" />
+            <data name="Rotation z (rad/s)" source="gyrZ" />
         </set>
         <set name="Autocorrelation">
             <data name="Time shift (s)" source="autoco_t" />
-            <data name="Autocorrelation" source="autocorrelation" />
-            <data name="Weighted Autocorrelation" source="autocorrelation_weighted" />
-            <data name="Weights" source="weights" />
+            <data name="Autocorrelation x" source="autocorrelation_x" />
+            <data name="Autocorrelation y" source="autocorrelation_y" />
+            <data name="Autocorrelation z" source="autocorrelation_z" />
+            <data name="Autocorrelation Sum" source="autocorrelation" />
         </set>
         <set name="Result History">
-            <data name="Correlation peak (s)" source="period/2" />
             <data name="Period (s)" source="period" />
             <data name="Frequency (Hz)" source="frequency" />
             <data name="g (m/s²)" source="g" />

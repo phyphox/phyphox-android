@@ -1,0 +1,22 @@
+<phyphox version="1.0">
+    <title>Audio Scope</title>
+    <category>Acoustics</category>
+    <input>
+        <audio output="recording" rate="48000" buffer="4800" />
+    </input>
+    <views>
+        <view name="Spectrum">
+            <graph label="Audio Data" inputX="reltime" inputY="subdata" labelX="Time (ms)" labelY="Amplitude (a.u.)" />
+        </view>
+    </views>
+    <analysis period="0.1">
+        <ramp start="0" stop="100" buffer="4800" output1="time" static="true" />
+        <ramp start="0" stop="10" buffer="480" output1="reltime" static="true" />
+        <rangefilter input1="time" input2="recording" min1="20" output1="offtime" output2="offdata" />
+        <threshold input1="offdata" input2="offtime" threshold="0" falling="false" output1="triggerT" />
+        <add input1="triggerT" input2="10" type2="value" output1="triggerTend" />
+        <rangefilter input1="offtime" input2="offdata" min1="triggerT" max1="triggerTend" output1="subtime" output2="subdata" />
+    </analysis>
+    <export>
+    </export>
+</phyphox>

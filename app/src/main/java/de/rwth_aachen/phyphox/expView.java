@@ -386,6 +386,9 @@ public class expView{
         private String labelX = null;
         private String labelY = null;
         private boolean partialUpdate = false;
+        private boolean logX = false;
+        private boolean logY = false;
+
 
         graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
@@ -413,6 +416,11 @@ public class expView{
             this.labelY = labelY;
             if (gv != null)
                 gv.setLabel(labelX, labelY);
+        }
+
+        protected void setLogScale(boolean logX, boolean logY) {
+            this.logX = logX;
+            this.logY = logY;
         }
 
         protected void setPartialUpdate(boolean pu) {
@@ -452,6 +460,7 @@ public class expView{
             gv.setLine(line);
             gv.setHistoryLength(historyLength);
             gv.setLabel(labelX, labelY);
+            gv.setLogScale(logX, logY);
 
             row.addView(labelView);
             row.addView(gv);
@@ -504,7 +513,16 @@ public class expView{
         }
 
         @Override
-        protected String dataCompleteHTML() {
+        protected String dataCompleteHTML() {//TODO: Create intelligent function to setup ticks on log scales
+            String transformX, transformY;
+            if (logX)
+                transformX = "ticks: [0.1,1,10,100,1000,10000], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, ";
+            else
+                transformX = "\"ticks\": 3, ";
+            if (logY)
+                transformY = "ticks: [0.01,0.1,1,10], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, ";
+            else
+                transformY = "\"ticks\": 3, ";
             return "function () {" +
                         "var d = [];" +
                         "if (!elementData["+htmlID+"].hasOwnProperty(\"y\"))" +
@@ -516,7 +534,7 @@ public class expView{
                         "}" +
                         "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {\"axisLabel\": \""+this.labelX+"\", \"ticks\": 3, \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {\"axisLabel\": \""+this.labelY+"\", \"ticks\": 3, \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.main)).substring(2) +"\"}});" +
+                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.main)).substring(2) +"\"}});" +
                     "}";
         }
     }

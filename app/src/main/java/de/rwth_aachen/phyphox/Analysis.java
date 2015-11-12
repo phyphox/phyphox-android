@@ -372,6 +372,53 @@ public class Analysis {
         }
     }
 
+    public static class thresholdAM extends analysisModule {
+        double threshold;
+        boolean falling = false;
+
+        protected thresholdAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs, double threshold, boolean falling) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+            this.threshold = threshold;
+            this.falling = falling;
+        }
+
+        @Override
+        protected void update() {
+            Vector<Iterator> its = new Vector<>();
+            for (int i = 0; i < inputs.size(); i++) {
+                if (inputs.get(i) == null) {
+                    its.add(null);
+                } else {
+                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                }
+            }
+
+            double last = Double.NaN;
+            double currentX = -1;
+            while (its.get(0).hasNext()) {
+                double v = (double)its.get(0).next();
+                if (inputs.size() > 1 && its.get(1).hasNext())
+                    currentX = (double)its.get(1).next();
+                else
+                    currentX += 1;
+                if (!(Double.isNaN(last) || Double.isNaN(v))) {
+                    if (falling) {
+                        if (last > threshold && v < threshold) {
+                            break;
+                        }
+                    } else {
+                        if (last < threshold && v > threshold) {
+                            break;
+                        }
+                    }
+                }
+                last = v;
+            }
+            outputs.get(0).append(currentX);
+
+        }
+    }
+
     public static class appendAM extends analysisModule {
 
         protected appendAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
@@ -392,6 +439,129 @@ public class Analysis {
                 }
             }
 
+        }
+    }
+
+    public static class fftAM extends analysisModule {
+        private int n, np2, logn;
+        private double [] cos, sin;
+
+        protected fftAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
+            super(dataBuffers, dataMap, inputs, isValue, outputs);
+
+            n = dataBuffers.get(dataMap.get(inputs.get(0))).size;
+            logn = (int)(Math.log(n)/Math.log(2));
+            if (n != (1 << logn)) {
+                logn++;
+                np2 = (1 << logn);
+            } else
+                np2 = n;
+
+            cos = new double[np2/2];
+            sin = new double[np2/2];
+
+            for (int i = 0; i < np2 / 2; i++) {
+                cos[i] = Math.cos(-2 * Math.PI * i / np2);
+                sin[i] = Math.sin(-2 * Math.PI * i / np2);
+            }
+        }
+
+        @Override
+        protected void update() {
+
+            double x[] = new double[np2];
+            double y[] = new double[np2];
+            Iterator ix = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+            int i = 0;
+            while (ix.hasNext())
+                x[i++] = (double)ix.next();
+            if (inputs.size() > 1) {
+                Iterator iy = dataBuffers.get(dataMap.get(inputs.get(1))).getIterator();
+                i = 0;
+                while (iy.hasNext())
+                    y[i++] = (double)iy.next();
+            } else {
+                for (i = 0; i < np2; i++)
+                    y[i] = 0.;
+            }
+
+
+            /***************************************************************
+             * fft.c
+             * Douglas L. Jones
+             * University of Illinois at Urbana-Champaign
+             * January 19, 1992
+             * http://cnx.rice.edu/content/m12016/latest/
+             *
+             *   fft: in-place radix-2 DIT DFT of a complex input
+             *
+             *   input:
+             * n: length of FFT: must be a power of two
+             * m: n = 2**m
+             *   input/output
+             * x: double array of length n with real part of data
+             * y: double array of length n with imag part of data
+             *
+             *   Permission to copy and use this program is granted
+             *   as long as this header is included.
+             ****************************************************************/
+
+            int j,k,n1,n2,a;
+            double c,s,t1,t2;
+
+            j = 0; /* bit-reverse */
+            n2 = np2/2;
+            for (i=1; i < np2 - 1; i++) {
+                n1 = n2;
+                while ( j >= n1 ) {
+                    j = j - n1;
+                    n1 = n1/2;
+                }
+                j = j + n1;
+
+                if (i < j) {
+                    t1 = x[i];
+                    x[i] = x[j];
+                    x[j] = t1;
+                    t1 = y[i];
+                    y[i] = y[j];
+                    y[j] = t1;
+                }
+            }
+
+
+            n1 = 0; /* FFT */
+            n2 = 1;
+
+            for (i=0; i < logn; i++)
+            {
+                n1 = n2;
+                n2 = n2 + n2;
+                a = 0;
+
+                for (j=0; j < n1; j++)
+                {
+                    c = cos[a];
+                    s = sin[a];
+                    a += 1 << (logn - i - 1);
+
+                    for (k=j; k < np2; k=k+n2)
+                    {
+                        t1 = c*x[k+n1] - s*y[k+n1];
+                        t2 = s*x[k+n1] + c*y[k+n1];
+                        x[k+n1] = x[k] - t1;
+                        y[k+n1] = y[k] - t2;
+                        x[k] = x[k] + t1;
+                        y[k] = y[k] + t2;
+                    }
+                }
+            }
+
+            for (i = 0; i < n; i++) {
+                outputs.get(0).append(x[i]);
+                if (outputs.size() > 1)
+                    outputs.get(1).append(y[i]);
+            }
         }
     }
 
@@ -535,7 +705,7 @@ public class Analysis {
                 if (this.min.get(i) == null)
                     min[i] = Double.NEGATIVE_INFINITY;
                 else {
-                    if (dataBuffers.get(dataMap.get(this.min.get(i))) != null)
+                    if (dataMap.get(this.min.get(i)) != null && dataBuffers.get(dataMap.get(this.min.get(i))) != null)
                         min[i] = dataBuffers.get(dataMap.get(this.min.get(i))).value;
                     else
                         min[i] = Double.valueOf(this.min.get(i));
@@ -543,7 +713,7 @@ public class Analysis {
                 if (this.max.get(i) == null)
                     max[i] = Double.POSITIVE_INFINITY;
                 else {
-                    if (dataBuffers.get(dataMap.get(this.max.get(i))) != null)
+                    if (dataMap.get(this.max.get(i)) != null && dataBuffers.get(dataMap.get(this.max.get(i))) != null)
                         max[i] = dataBuffers.get(dataMap.get(this.max.get(i))).value;
                     else
                         max[i] = Double.valueOf(this.max.get(i));

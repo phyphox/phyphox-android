@@ -1,0 +1,25 @@
+<phyphox version="1.0">
+    <title>Audio Spectrum</title>
+    <category>Acoustics</category>
+    <input>
+        <audio output="recording" rate="48000" buffer="8192" />
+    </input>
+    <views>
+        <view name="Spectrum">
+            <value label="Peak-Frequency" input="f0" unit="Hz" />
+            <graph label="Fourier Transform" inputX="display_frequency" inputY="fft" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)" />
+        </view>
+    </views>
+    <analysis period="0.2">
+        <ramp start="0" stop="47994" buffer="8192" output1="frequency" static="true" />
+        <fft input1="recording" output1="fftx" output2="ffty" />
+        <rangefilter input1="frequency" input2="fftx" input3="ffty" min1="1" max1="23994" output1="display_frequency" output2="display_fftx" output3="display_ffty" />
+        <multiply input1="display_fftx" input2="display_fftx" output1="fftx2" />
+        <multiply input1="display_ffty" input2="display_ffty" output1="ffty2" />
+        <add input1="fftx2" input2="ffty2" output1="fft2" />
+        <power input1="fft2" input2="0.5" type2="value" output1="fft" />
+        <max input1="fft" input2="display_frequency" output1="max" output2="f0" />
+    </analysis>
+    <export>
+    </export>
+</phyphox>

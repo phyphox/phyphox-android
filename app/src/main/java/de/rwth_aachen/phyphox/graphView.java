@@ -5,6 +5,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Region;
+import android.util.Log;
 import android.view.View;
 
 public class graphView extends View {
@@ -20,6 +21,8 @@ public class graphView extends View {
     private int maxYTics = 6;
     private String labelX = null;
     private String labelY = null;
+    private boolean logX = false;
+    private boolean logY = false;
     Paint paint;
 
     public graphView(Context context) {
@@ -102,11 +105,42 @@ public class graphView extends View {
         this.labelY = labelY;
     }
 
-    private double[] getTics(double min, double max, int maxTics){
+    public void setLogScale(boolean logX, boolean logY) {
+        this.logX = logX;
+        this.logY = logY;
+    }
+
+    private double[] getTics(double min, double max, int maxTics, boolean log){
         if (!(max > min))
             return new double[0];
         if (Double.isInfinite(min) || Double.isNaN(min) || Double.isInfinite(max) || Double.isNaN(max))
             return new double[0];
+        if (log) {
+            if (min < 0)
+                return new double[0];
+            double logMax = Math.log10(max);
+            double logMin = Math.log10(min);
+
+            int digitRange = (int)(Math.floor(logMax)-Math.ceil(logMin));
+
+            if (digitRange < 1)
+                return new double[0];
+
+            int magStep = 1;
+            while (digitRange+1 > maxTics * magStep)
+                magStep++;
+
+            double first = Math.pow(10, Math.ceil(logMin));
+            double[] tics = new double[(digitRange+1)/magStep];
+
+            for (int i = 0; i < (digitRange+1)/magStep; i++) {
+                tics[i] = first;
+                first *= 10;
+            }
+
+            return tics;
+        }
+
         double range = max-min;
         double stepFactor = Math.pow(10,Math.floor(Math.log10(range))-1);
         double step = 1.;
@@ -164,14 +198,21 @@ public class graphView extends View {
             effectiveMaxY = rangeMaxY;
 
         //Stretch y slightly to give a little headroom... Also force a range if it is zero
-        double extraY = (effectiveMaxY-effectiveMinY)*0.05;
-        if (extraY == 0)
-            extraY = effectiveMaxY*0.05;
-        effectiveMaxY += extraY;
-        effectiveMinY -= extraY;
+        if (!logY) {
+            double extraY = (effectiveMaxY - effectiveMinY) * 0.05;
+            if (extraY == 0)
+                extraY = effectiveMaxY * 0.05;
+            effectiveMaxY += extraY;
+            effectiveMinY -= extraY;
+        }
 
-        double[] xTics = getTics(effectiveMinX, effectiveMaxX, maxXTics);
-        double[] yTics = getTics(effectiveMinY, effectiveMaxY, maxYTics);
+        if (logX && effectiveMinX < 0.001)
+            effectiveMinX = 0.001;
+        if (logY && effectiveMinY < 0.001)
+            effectiveMinY = 0.001;
+
+        double[] xTics = getTics(effectiveMinX, effectiveMaxX, maxXTics, logX);
+        double[] yTics = getTics(effectiveMinY, effectiveMaxY, maxYTics, logY);
 
         //Calculate area...
         int w = this.getWidth();
@@ -202,14 +243,22 @@ public class graphView extends View {
         for (double tic : xTics) {
             if (tic < effectiveMinX || tic > effectiveMaxX)
                 continue;
-            double x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
+            double x;
+            if (logX)
+                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL;
+            else
+                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
             canvas.drawText(String.format("%.3g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (double tic : yTics) {
             if (tic < effectiveMinY || tic > effectiveMaxY)
                 continue;
-            double y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
+            double y;
+            if (logY)
+                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*graphH-graphB;
+            else
+                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
             canvas.drawText(String.format("%.3g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.5)), paint);
         }
 
@@ -233,11 +282,19 @@ public class graphView extends View {
         paint.setStrokeCap(Paint.Cap.SQUARE);
 
         for (double tic : xTics) {
-            double x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
+            double x;
+            if (logX)
+                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL;
+            else
+                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
             canvas.drawLine((float)x, 0, (float)x, h-graphB, paint);
         }
         for (double tic : yTics) {
-            double y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
+            double y;
+            if (logY)
+                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*graphH-graphB;
+            else
+                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
             canvas.drawLine(graphL, (float)y, w, (float)y, paint);
         }
 
@@ -258,18 +315,24 @@ public class graphView extends View {
                     double lastX = Double.NaN;
                     double lastY = Double.NaN;
                     for (int i = 0; i < graphX[j].length && i < graphY[j].length; i++) {
+                        double thisX;
+                        double thisY;
+                        if (logX)
+                            thisX = (Math.log(graphX[j][i]/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL;
+                        else
+                            thisX = (graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
+                        if (logY)
+                            thisY = h-(Math.log(graphY[j][i]/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*graphH-graphB;
+                        else
+                            thisY = h-(graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
                         if (this.line) {
-                            double thisX = (graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
-                            double thisY = h-(graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
                             if (!(Double.isNaN(lastX) || Double.isNaN(lastY))) {
                                 canvas.drawLine((float)lastX, (float)lastY, (float)thisX, (float)thisY, paint);
                             }
                             lastX = thisX;
                             lastY = thisY;
                         } else {
-                            canvas.drawPoint((float)((graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL),
-                                             (float)((graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB),
-                                             paint);
+                            canvas.drawPoint((float)thisX, (float)thisY, paint);
                         }
                     }
                 }
