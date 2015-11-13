@@ -2,10 +2,14 @@ package de.rwth_aachen.phyphox;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.hardware.SensorManager;
 import android.media.AudioFormat;
@@ -13,6 +17,7 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
@@ -24,10 +29,14 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Xml;
+import android.view.ContextThemeWrapper;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
@@ -55,6 +64,12 @@ import java.util.Vector;
 
 public class Experiment extends AppCompatActivity {
 
+    private static final String STATE_CURRENT_VIEW = "current_view";
+    private static final String STATE_DATA_BUFFERS = "data_buffers";
+    private static final String STATE_REMOTE_SERVER = "remote_server";
+    private static final String STATE_TIMED_RUN = "timed_run";
+    private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay";
+    private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay";
 
     boolean measuring = false;
     boolean remoteIntentMeasuring = false;
@@ -73,8 +88,9 @@ public class Experiment extends AppCompatActivity {
     String title = "";
     String category = "";
     String icon = "";
+    String description = "There is no description available for this experiment.";
     private Vector<expView> experimentViews = new Vector<>();
-    private expView currentView;
+    private int currentView;
     private Vector<sensorInput> inputSensors = new Vector<>();
     public final Vector<dataBuffer> dataBuffers = new Vector<>();
     public final Map<String, Integer> dataMap = new HashMap<>();
@@ -101,7 +117,7 @@ public class Experiment extends AppCompatActivity {
     public boolean remoteInput = false;
     public boolean shouldDefocus = false;
 
-    private boolean loadExperiment(InputStream xml) {
+    private boolean loadExperiment(InputStream xml, boolean noWarning) {
         try {
             XmlPullParser xpp = Xml.newPullParser();
             xpp.setInput(xml, "UTF-8");
@@ -117,6 +133,9 @@ public class Experiment extends AppCompatActivity {
                                 break;
                             case "icon":
                                 icon = xpp.nextText();
+                                break;
+                            case "description":
+                                description = xpp.nextText();
                                 break;
                             case "category":
                                 category = xpp.nextText();
@@ -245,7 +264,7 @@ public class Experiment extends AppCompatActivity {
                                                         }
                                                         inputSensors.add(new sensorInput(sensorManager, xpp.getAttributeValue(null, "type"), rate,
                                                                 dataX, dataY, dataZ, dataT));
-                                                        if (!inputSensors.lastElement().isAvailable()) {
+                                                        if (!inputSensors.lastElement().isAvailable() && !noWarning) {
                                                             new AlertDialog.Builder(this)
                                                                 .setTitle(res.getString(R.string.sensorNotAvailableWarningTitle))
                                                                 .setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(inputSensors.lastElement().getDescriptionRes()) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
@@ -637,10 +656,10 @@ public class Experiment extends AppCompatActivity {
         return true;
     }
 
-    private void setupView(expView newView) {
+    private void setupView(int newView) {
         LinearLayout ll = (LinearLayout) findViewById(R.id.experimentView);
         ll.removeAllViews();
-        for (expView.expViewElement element : newView.elements) {
+        for (expView.expViewElement element : experimentViews.elementAt(newView).elements) {
             element.createView(ll, this);
         }
         currentView = newView;
@@ -671,7 +690,7 @@ public class Experiment extends AppCompatActivity {
 
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 
-        if (loadExperiment(input)) {
+        if (loadExperiment(input, savedInstanceState != null)) {
             List<String> viewChoices = new ArrayList<>();
 
             for (expView v : experimentViews) {
@@ -687,7 +706,7 @@ public class Experiment extends AppCompatActivity {
             viewSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    setupView(experimentViews.elementAt(position));
+                    setupView(position);
                 }
 
                 @Override
@@ -699,10 +718,48 @@ public class Experiment extends AppCompatActivity {
 
             ((TextView) findViewById(R.id.titleText)).setText(title);
 
-            setupView(experimentViews.elementAt(viewSelector.getSelectedItemPosition()));
-
-            startMeasurement();
+            if (savedInstanceState != null) {
+                serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false);
+                timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false);
+                timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY);
+                timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY);
+                Vector<dataBuffer> oldData = (Vector<dataBuffer>)savedInstanceState.getSerializable(STATE_DATA_BUFFERS);
+                for (int i = 0; i < dataBuffers.size(); i++) {
+                    dataBuffers.get(i).clear();
+                    Iterator it = oldData.get(i).getIterator();
+                    while (it.hasNext())
+                        dataBuffers.get(i).append((double)it.next());
+                }
+                currentView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
+                viewSelector.setSelection(currentView);
+            }
+            setupView(viewSelector.getSelectedItemPosition());
             updateViewsHandler.postDelayed(updateViews, 40);
+
+            ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.AppTheme);
+            AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
+            LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+            View startInfoLayout = adbInflater.inflate(R.layout.donotshowagain, null);
+            final CheckBox dontShowAgain = (CheckBox) startInfoLayout.findViewById(R.id.donotshowagain);
+            adb.setView(startInfoLayout);
+            adb.setTitle(R.string.info);
+            adb.setMessage(R.string.startInfo);
+            adb.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    Boolean skipStartInfo = false;
+                    if (dontShowAgain.isChecked())
+                        skipStartInfo = true;
+                    SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                    SharedPreferences.Editor editor = settings.edit();
+                    editor.putBoolean("skipStartInfo", skipStartInfo);
+                    editor.apply();
+                }
+            });
+
+            SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+            Boolean skipStartInfo = settings.getBoolean("skipStartInfo", false);
+            if (!skipStartInfo)
+                adb.show();
 
         } else
             finish();
@@ -889,6 +946,19 @@ public class Experiment extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.action_description) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(description)
+                    .setTitle(R.string.show_description)
+                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -904,6 +974,7 @@ public class Experiment extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        shutdown = false;
         startRemoteServer();
     }
 
@@ -929,7 +1000,7 @@ public class Experiment extends AppCompatActivity {
                 synchronized (dataBuffers) {
                     if (!remoteInput) {
                         for (dataBuffer buffer : dataBuffers) {
-                            for (expView.expViewElement eve : currentView.elements) {
+                            for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
                                 try {
                                     if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) {
                                         Double v = eve.getValue();
@@ -983,7 +1054,7 @@ public class Experiment extends AppCompatActivity {
                     }
                 }
                 for (dataBuffer buffer : dataBuffers) {
-                    for (expView.expViewElement eve : currentView.elements) {
+                    for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
                         try {
                             if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
                                 eve.setValue(buffer.value);
@@ -999,7 +1070,7 @@ public class Experiment extends AppCompatActivity {
                         }
                     }
                 }
-                for (expView.expViewElement eve : currentView.elements) {
+                for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
                     try {
                         eve.dataComplete();
                     } catch (Exception e) {
@@ -1021,6 +1092,31 @@ public class Experiment extends AppCompatActivity {
         }
     };
 
+    private void lockScreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+        } else {
+            Display display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            int rotation = display.getRotation();
+            int tempOrientation = this.getResources().getConfiguration().orientation;
+            int orientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
+            switch (tempOrientation) {
+                case Configuration.ORIENTATION_LANDSCAPE:
+                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_90)
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                    else
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                    break;
+                case Configuration.ORIENTATION_PORTRAIT:
+                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270)
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                    else
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+            }
+            setRequestedOrientation(orientation);
+        }
+    }
+
     public void startMeasurement() {
         synchronized (dataBuffers) {
             for (dataBuffer buffer : dataBuffers)
@@ -1029,7 +1125,12 @@ public class Experiment extends AppCompatActivity {
             for (sensorInput sensor : inputSensors)
                 sensor.start(t0);
         }
+
         measuring = true;
+
+        lockScreen();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         if (timedRun) {
             millisUntilFinished = Math.round(timedRunStopDelay * 1000);
             cdTimer = new CountDownTimer(millisUntilFinished, 100) {
@@ -1048,6 +1149,7 @@ public class Experiment extends AppCompatActivity {
     }
 
     public void startTimedMeasurement() {
+        lockScreen();
         millisUntilFinished = Math.round(timedRunStartDelay*1000);
         cdTimer = new CountDownTimer(millisUntilFinished, 100) {
 
@@ -1065,14 +1167,17 @@ public class Experiment extends AppCompatActivity {
 
     public void stopMeasurement() {
         measuring = false;
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+
         if (cdTimer != null) {
             cdTimer.cancel();
             cdTimer = null;
             millisUntilFinished = 0;
         }
-        if (audioRecord != null)
+        if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
             audioRecord.stop();
-        if (audioTrack != null)
+        if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
             audioTrack.stop();
         for (sensorInput sensor : inputSensors)
             sensor.stop();
@@ -1096,6 +1201,17 @@ public class Experiment extends AppCompatActivity {
 
     public void defocus() {
         findViewById(R.id.experimentView).requestFocus();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_CURRENT_VIEW, currentView);
+        outState.putSerializable(STATE_DATA_BUFFERS, dataBuffers);
+        outState.putBoolean(STATE_REMOTE_SERVER, serverEnabled);
+        outState.putBoolean(STATE_TIMED_RUN, timedRun);
+        outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay);
+        outState.putDouble(STATE_TIMED_RUN_STOP_DELAY, timedRunStopDelay);
     }
 
 }

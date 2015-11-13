@@ -304,6 +304,7 @@ public class expView{
             if (decimal)
                 inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
             iv.setInputType(inputType);
+            iv.setText("NaN");
 
             TextView unitView = new TextView(c);
             unitView.setLayoutParams(new TableRow.LayoutParams(

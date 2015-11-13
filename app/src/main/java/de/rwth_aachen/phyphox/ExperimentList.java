@@ -90,7 +90,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
 
-        public void addExperiment(String exp, Bitmap image, final String xmlFile) {
+        public void addExperiment(String exp, Bitmap image, String description, final String xmlFile) {
             experimentButtons.add(new Button(parentContext));
             experimentButtons.lastElement().setText(exp);
             experimentButtons.lastElement().setTextColor(ContextCompat.getColor(parentContext, R.color.main));
@@ -138,16 +138,16 @@ public class ExperimentList extends AppCompatActivity {
 
     private Vector<category> categories = new Vector<>();
 
-    private void addExperiment(String exp, String cat, Bitmap image, String xmlFile) {
+    private void addExperiment(String exp, String cat, Bitmap image, String description, String xmlFile) {
         for (category icat : categories) {
             if (icat.hasName(cat)) {
-                icat.addExperiment(exp, image, xmlFile);
+                icat.addExperiment(exp, image, description, xmlFile);
                 return;
             }
         }
         LinearLayout catList = (LinearLayout)findViewById(R.id.categoryList);
         categories.add(new category(cat, catList, this));
-        categories.lastElement().addExperiment(exp, image, xmlFile);
+        categories.lastElement().addExperiment(exp, image, description, xmlFile);
     }
 
     public static Bitmap decodeBase64(String input) {
@@ -176,6 +176,7 @@ public class ExperimentList extends AppCompatActivity {
                     String title = "";
                     String category = "";
                     String icon = "";
+                    String description = "";
                     while (eventType != XmlPullParser.END_DOCUMENT){
                         switch (eventType) {
                             case XmlPullParser.START_TAG:
@@ -185,6 +186,9 @@ public class ExperimentList extends AppCompatActivity {
                                         break;
                                     case "icon":
                                         icon = xpp.nextText();
+                                        break;
+                                    case "description":
+                                        description = xpp.nextText();
                                         break;
                                     case "category":
                                         if (xpp.getAttributeValue(null, "hidden") != null && xpp.getAttributeValue(null, "hidden").equals("true")) {
@@ -207,7 +211,7 @@ public class ExperimentList extends AppCompatActivity {
                             image = null;
                         else
                             image = decodeBase64(icon);
-                        addExperiment(title, category, image, experimentXML);
+                        addExperiment(title, category, image, description, experimentXML);
                     }
                 } catch (Exception e) {
                     Toast.makeText(this, "Error loading " + experimentXML, Toast.LENGTH_LONG).show();

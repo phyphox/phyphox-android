@@ -17,4 +17,6 @@
         android:orderInCategory="70" app:showAsAction="ifRoom" android:checkable="true"/>
     <item android:id="@+id/action_remoteServer" android:title="@string/remoteServer"
         android:orderInCategory="100" app:showAsAction="ifRoom" android:checkable="true" />
+    <item android:id="@+id/action_description" android:title="@string/show_description"
+        android:orderInCategory="300" app:showAsAction="ifRoom" />
 </menu>

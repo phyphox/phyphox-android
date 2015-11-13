@@ -1,6 +1,14 @@
 <phyphox version="1.0">
     <title>Pendulum</title>
     <category>Mechanics</category>
+    <description>
+        Determine the gravity constant (g=9.81m/s²) by using your phone as a pendulum.
+
+        This experiment uses the gyroscope to determine measure the pendulum movement and calculates the oscillation period T. The user has to enter the length L of the string used for the pendulum, so phyphox can calculate g = 4π²/T² L.
+
+        Further details:
+        The oscillation period is obtained through the autocorrelation of each gyroscope component. The sum of three autocorrelations is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate as the pendulum gives a sine function. Through this assumption we extract the position of the first full maximum to be in the range 3 t0 to 5 t0 in which we look for the maximum value.
+    </description>
     <icon>
         iVBORw0KGgoAAAANSUhEUgAAAlgAAAGQCAMAAABF6+6qAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
         AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAC/VBMVEVAQEBDQT+NWDOTWjJl

@@ -7,6 +7,9 @@
     <string name="donotshowagain">Do not show again</string>
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
 
+    <string name="info">Info</string>
+    <string name="startInfo">Welcome to the experiment screen. Just press the Start-Button in the menu at the top and the experiment will begin.</string>
+
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics A at the RWTH Aachen University.</string>
     <string name="creditsNames">
@@ -48,8 +51,10 @@
     <string name="export_pick_share">Pick an export method</string>
 
     <string name="remoteServer">Allow remote access</string>
-    <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nWhen enabled, you can access your measurement by accessing the following address from any web browser on the same network:</string>
+    <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement by accessing the following address from any web browser on the same network:</string>
     <string name="remoteServerWarningTitle">Security warning!</string>
+
+    <string name="show_description">Show Description</string>
 
     <string name="timedRun">Timed run</string>
 

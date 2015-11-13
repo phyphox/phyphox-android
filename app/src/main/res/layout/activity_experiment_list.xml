@@ -31,6 +31,7 @@
         android:layout_marginRight="@dimen/activity_horizontal_margin"
         android:adjustViewBounds="true"
         android:layout_alignParentStart="false"
+        android:layout_alignParentLeft="false"
         android:layout_alignTop="@+id/imageView" />
 
     <HorizontalScrollView

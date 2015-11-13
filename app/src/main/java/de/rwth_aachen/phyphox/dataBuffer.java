@@ -17,6 +17,7 @@ public class dataBuffer {
         this.size = size;
         this.name = name;
         this.buffer = new ArrayBlockingQueue<>(size);
+        this.value = Double.NaN;
     }
 
     public void append(double value) {
