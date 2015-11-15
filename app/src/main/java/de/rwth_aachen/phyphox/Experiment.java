@@ -56,8 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-//TODO Redesign main screen
-//TODO Screen rotation
 //TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
 //TODO Translation of Experiment-Texts
 //TODO Sonar needs fine-tuning
