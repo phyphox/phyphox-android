@@ -1,6 +1,7 @@
 <phyphox version="1.0">
     <title>Pressure</title>
     <category>Raw Sensors</category>
+    <description>Get raw data from the barometer.</description>
     <input>
         <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="500" rate="fastest" />
     </input>

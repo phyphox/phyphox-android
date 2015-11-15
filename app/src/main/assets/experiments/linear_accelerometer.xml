@@ -1,6 +1,8 @@
 <phyphox version="1.0">
     <title>Linear Acceleration</title>
     <category>Raw Sensors</category>
+    <icon>LAc</icon>
+    <description>Get raw data from the linear accelerometer, which gives the actual acceleration without earth's acceleration. This sensor gives (0, 0, 0) when the device is resting.</description>
     <input>
         <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="fastest" />
     </input>

@@ -10,6 +10,11 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -19,14 +24,19 @@ import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
+import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -47,28 +57,187 @@ public class ExperimentList extends AppCompatActivity {
 
     Resources res;
 
+    public class TextIcon extends Drawable {
+
+        private final String text;
+        private final Paint paint;
+        private final Paint paintBG;
+
+        public TextIcon(String text) {
+
+            this.text = text;
+
+            this.paint = new Paint();
+            paint.setColor(getColor(R.color.main));
+            paint.setTextSize(res.getDimension(R.dimen.expElementIconSize)*0.5f);
+            paint.setAntiAlias(true);
+            paint.setFakeBoldText(true);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setTextAlign(Paint.Align.CENTER);
+
+            this.paintBG = new Paint();
+            paintBG.setColor(getColor(R.color.highlight));
+            paintBG.setStyle(Paint.Style.FILL);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            canvas.drawRect(new Rect(0, 0, (int)res.getDimension(R.dimen.expElementIconSize), (int)res.getDimension(R.dimen.expElementIconSize)), paintBG);
+            canvas.drawText(text, (int)res.getDimension(R.dimen.expElementIconSize)/2, (int)res.getDimension(R.dimen.expElementIconSize)*2/3, paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter cf) {
+            paint.setColorFilter(cf);
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
+    }
+
+    private class experimentItemAdapter extends BaseAdapter {
+        private Context c;
+        Vector<Drawable> icons = new Vector<>();
+        Vector<String> titles = new Vector<>();
+        Vector<String> infos = new Vector<>();
+        Vector<String> xmlFiles = new Vector<>();
+
+        public experimentItemAdapter(Context c) {
+            this.c = c;
+        }
+
+        public int getCount() {
+            return icons.size();
+        }
+
+        public Object getItem(int position) {
+            return null;
+        }
+
+        public long getItemId(int position) {
+            return position;
+        }
+
+        public void start(int position, View v) {
+            Intent intent = new Intent(v.getContext(), Experiment.class);
+            intent.putExtra(EXPERIMENT_XML, xmlFiles.get(position));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
+                        0, v.getWidth(), v.getHeight());
+                v.getContext().startActivity(intent, options.toBundle());
+            } else {
+                v.getContext().startActivity(intent);
+            }
+        }
+
+        public void addExperiment(Drawable icon, String title, String info, String xmlFile) {
+            icons.add(icon);
+            titles.add(title);
+            infos.add(info);
+            xmlFiles.add(xmlFile);
+            this.notifyDataSetChanged();
+        }
+
+        public class Holder {
+            ImageView icon;
+            TextView title;
+            TextView info;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Holder holder;
+            if(convertView == null) {
+                holder = new Holder();
+                convertView = LayoutInflater.from(c).inflate(R.layout.experiment_item, null);
+                holder.icon = (ImageView) convertView.findViewById(R.id.expIcon);
+                holder.title = (TextView) convertView.findViewById(R.id.expTitle);
+                holder.info = (TextView) convertView.findViewById(R.id.expInfo);
+                convertView.setTag(holder);
+            } else {
+                holder = (Holder) convertView.getTag();
+            }
+            holder.icon.setImageDrawable(icons.get(position));
+            holder.title.setText(titles.get(position));
+            holder.info.setText(infos.get(position));
+
+            return convertView;
+        }
+    }
+
     private class category {
         private Context parentContext;
         public String name;
-        private ScrollView catView;
         private LinearLayout catLayout;
-        private Vector<Button> experimentButtons = new Vector<>();
+        private ExpandableHeightGridView experimentSubList;
         private TextView categoryHeadline;
+        private experimentItemAdapter experiments;
+
+        private class ExpandableHeightGridView extends GridView
+        {
+
+            boolean expanded = false;
+
+            public ExpandableHeightGridView(Context context)
+            {
+                super(context);
+            }
+
+            public ExpandableHeightGridView(Context context, AttributeSet attrs)
+            {
+                super(context, attrs);
+            }
+
+            public ExpandableHeightGridView(Context context, AttributeSet attrs,
+                                            int defStyle) {
+                super(context, attrs, defStyle);
+            }
+
+            public boolean isExpanded()
+            {
+                return expanded;
+            }
+
+            @Override
+            public void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                // HACK! TAKE THAT ANDROID!
+                if (isExpanded())
+                {
+                    // Calculate entire height by providing a very large height hint.
+                    // View.MEASURED_SIZE_MASK represents the largest height possible.
+                    int expandSpec = MeasureSpec.makeMeasureSpec(MEASURED_SIZE_MASK,
+                            MeasureSpec.AT_MOST);
+                    super.onMeasure(widthMeasureSpec, expandSpec);
+
+                    ViewGroup.LayoutParams params = getLayoutParams();
+                    params.height = getMeasuredHeight();
+                }
+                else
+                {
+                    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                }
+            }
+
+            public void setExpanded(boolean expanded) {
+                this.expanded = expanded;
+            }
+        }
 
         public category(String name, LinearLayout parentLayout, Context c) {
             this.name = name;
             parentContext = c;
-            catView = new ScrollView(parentContext);
-            catView.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
-
             catLayout = new LinearLayout(parentContext);
             catLayout.setOrientation(LinearLayout.VERTICAL);
             catLayout.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT));
-            catLayout.setPadding(0, res.getDimensionPixelOffset(R.dimen.activity_vertical_margin), res.getDimensionPixelOffset(R.dimen.activity_horizontal_margin), res.getDimensionPixelOffset(R.dimen.activity_vertical_margin));
 
             categoryHeadline = new TextView(parentContext);
             categoryHeadline.setLayoutParams(new LinearLayout.LayoutParams(
@@ -79,56 +248,36 @@ public class ExperimentList extends AppCompatActivity {
             categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
             categoryHeadline.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.highlight));
             categoryHeadline.setTextColor(ContextCompat.getColor(parentContext, R.color.main));
-            categoryHeadline.setPadding(res.getDimensionPixelOffset(R.dimen.headline_font)/2, res.getDimensionPixelOffset(R.dimen.headline_font)/10, res.getDimensionPixelOffset(R.dimen.headline_font)/2, res.getDimensionPixelOffset(R.dimen.headline_font)/10);
+            categoryHeadline.setPadding(res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10, res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10);
 
+            experimentSubList = new ExpandableHeightGridView(parentContext);
+            experimentSubList.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            experimentSubList.setColumnWidth(res.getDimensionPixelOffset(R.dimen.expElementWidth));
+            experimentSubList.setNumColumns(ExpandableHeightGridView.AUTO_FIT);
+            experimentSubList.setStretchMode(ExpandableHeightGridView.STRETCH_COLUMN_WIDTH);
+            experimentSubList.setExpanded(true);
+            experimentSubList.setPadding(0, 0, 0, res.getDimensionPixelOffset(R.dimen.activity_vertical_margin));
 
-            catLayout.addView(categoryHeadline);
+            experiments = new experimentItemAdapter(c);
+            experimentSubList.setAdapter(experiments);
 
-            catView.addView(catLayout);
-
-            parentLayout.addView(catView);
-        }
-
-
-        public void addExperiment(String exp, Bitmap image, String description, final String xmlFile) {
-            experimentButtons.add(new Button(parentContext));
-            experimentButtons.lastElement().setText(exp);
-            experimentButtons.lastElement().setTextColor(ContextCompat.getColor(parentContext, R.color.main));
-            experimentButtons.lastElement().setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.experiment_icon_font));
-
-            Drawable [] d = new Drawable[2];
-            d[0] = ContextCompat.getDrawable(parentContext, R.drawable.experiment_border);
-            d[1] = new BitmapDrawable(res, image);
-            LayerDrawable ld = new LayerDrawable(d);
-            ld.setLayerInset(1, res.getDimensionPixelOffset(R.dimen.expElementBorderWidth), res.getDimensionPixelOffset(R.dimen.expElementBorderWidth), res.getDimensionPixelOffset(R.dimen.expElementBorderWidth), res.getDimensionPixelOffset(R.dimen.expElementBorderWidth));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                experimentButtons.lastElement().setBackground(ld);
-            } else {
-                experimentButtons.lastElement().setBackgroundDrawable(ld);
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                experimentButtons.lastElement().setAllCaps(false);
-            }
-
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(res.getDimensionPixelOffset(R.dimen.expElementWidth), res.getDimensionPixelOffset(R.dimen.expElementHeight));
-            lp.setMargins(0, res.getDimensionPixelOffset(R.dimen.activity_vertical_margin), 0, 0);
-            experimentButtons.lastElement().setLayoutParams(lp);
-
-            experimentButtons.lastElement().setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    Intent intent = new Intent(v.getContext(), Experiment.class);
-                    intent.putExtra(EXPERIMENT_XML, xmlFile);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
-                                0, v.getWidth(), v.getHeight());
-                        v.getContext().startActivity(intent, options.toBundle());
-                    } else {
-                        v.getContext().startActivity(intent);
-                    }
+            experimentSubList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                    experiments.start(position, v);
                 }
             });
 
-            catLayout.addView(experimentButtons.lastElement());
+            catLayout.addView(categoryHeadline);
+            catLayout.addView(experimentSubList);
+
+            parentLayout.addView(catLayout);
+        }
+
+
+        public void addExperiment(String exp, Drawable image, String description, final String xmlFile) {
+            experiments.addExperiment(image, exp, description, xmlFile);
         }
 
         public boolean hasName(String cat) {
@@ -138,14 +287,14 @@ public class ExperimentList extends AppCompatActivity {
 
     private Vector<category> categories = new Vector<>();
 
-    private void addExperiment(String exp, String cat, Bitmap image, String description, String xmlFile) {
+    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile) {
         for (category icat : categories) {
             if (icat.hasName(cat)) {
                 icat.addExperiment(exp, image, description, xmlFile);
                 return;
             }
         }
-        LinearLayout catList = (LinearLayout)findViewById(R.id.categoryList);
+        LinearLayout catList = (LinearLayout)findViewById(R.id.experimentList);
         categories.add(new category(cat, catList, this));
         categories.lastElement().addExperiment(exp, image, description, xmlFile);
     }
@@ -185,10 +334,10 @@ public class ExperimentList extends AppCompatActivity {
                                         title = xpp.nextText();
                                         break;
                                     case "icon":
-                                        icon = xpp.nextText();
+                                        icon = xpp.nextText().trim();
                                         break;
                                     case "description":
-                                        description = xpp.nextText();
+                                        description = xpp.nextText().trim();
                                         break;
                                     case "category":
                                         if (xpp.getAttributeValue(null, "hidden") != null && xpp.getAttributeValue(null, "hidden").equals("true")) {
@@ -206,11 +355,13 @@ public class ExperimentList extends AppCompatActivity {
                     } else if (category.equals("")) {
                         Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a category.", Toast.LENGTH_LONG).show();
                     } else if (!hidden) {
-                        Bitmap image;
+                        Drawable image;
                         if (icon.equals(""))
-                            image = null;
+                            image = new TextIcon(title.substring(0, 3));
+                        else if (icon.length() <= 3)
+                            image = new TextIcon(icon);
                         else
-                            image = decodeBase64(icon);
+                            image = new BitmapDrawable(res, decodeBase64(icon));
                         addExperiment(title, category, image, description, experimentXML);
                     }
                 } catch (Exception e) {

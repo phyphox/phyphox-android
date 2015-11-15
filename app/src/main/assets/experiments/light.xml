@@ -1,6 +1,7 @@
 <phyphox version="1.0">
     <title>Light</title>
     <category>Raw Sensors</category>
+    <description>Get raw data from the light sensor.</description>
     <input>
         <sensor type="light" outputX="illum" outputT="illum_time" buffer="500" rate="fastest" />
     </input>
