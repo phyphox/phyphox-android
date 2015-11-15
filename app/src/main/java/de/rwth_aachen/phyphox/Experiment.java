@@ -1,7 +1,10 @@
 package de.rwth_aachen.phyphox;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,6 +20,8 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -48,7 +53,11 @@ import android.widget.Toast;
 
 import org.xmlpull.v1.XmlPullParser;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,6 +65,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+//TODO Clean-up loading-code and make it more error-proof
+//TODO Asynchronous rights management
+//TODO Fix crash when switching away from an experiment to another app
+//TODO Allow user to store an experiment in his library
 //TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
 //TODO Translation of Experiment-Texts
 //TODO Sonar needs fine-tuning
@@ -115,543 +128,706 @@ public class Experiment extends AppCompatActivity {
     public boolean remoteInput = false;
     public boolean shouldDefocus = false;
 
-    private boolean loadExperiment(InputStream xml, boolean noWarning) {
-        try {
-            XmlPullParser xpp = Xml.newPullParser();
-            xpp.setInput(xml, "UTF-8");
+    Intent intent;
+    ProgressDialog progress;
 
-            int eventType = xpp.getEventType();
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startActivity(intent);
+        }
+    }
 
-            while (eventType != XmlPullParser.END_DOCUMENT){
-                switch (eventType) {
-                    case XmlPullParser.START_TAG:
-                        switch (xpp.getName()) {
-                            case "title":
-                                title = xpp.nextText();
-                                break;
-                            case "icon":
-                                icon = xpp.nextText();
-                                break;
-                            case "description":
-                                description = xpp.nextText();
-                                break;
-                            case "category":
-                                category = xpp.nextText();
-                                break;
-                            case "views":
-                                while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("views"))) && eventType != XmlPullParser.END_DOCUMENT) {
-                                    switch (eventType) {
-                                        case XmlPullParser.START_TAG:
-                                            switch (xpp.getName()) {
-                                                case "view":
-                                                    expView newView = new expView();
-                                                    newView.name = xpp.getAttributeValue(null, "name");
+    private class DownloadXMLTask extends AsyncTask<String, Void, Boolean> {
+        private Intent intent;
+        private boolean noWarning;
+        private Activity parent;
+        private Bundle savedInstanceState;
 
-                                                    while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("view"))) && eventType != XmlPullParser.END_DOCUMENT) {
-                                                        switch (eventType) {
-                                                            case XmlPullParser.START_TAG:
-                                                                switch (xpp.getName()) {
-                                                                    case "value":
-                                                                        expView.valueElement ve = newView.new valueElement(xpp.getAttributeValue(null, "label"), null, xpp.getAttributeValue(null, "input"), null, null, getResources());
-                                                                        if (xpp.getAttributeValue(null, "labelsize") != null)
-                                                                            ve.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
-                                                                        else
-                                                                            ve.setLabelSize(res.getDimension(R.dimen.font));
-                                                                        if (xpp.getAttributeValue(null, "precision") != null)
-                                                                            ve.setPrecision(Integer.valueOf(xpp.getAttributeValue(null, "precision")));
-                                                                        if (xpp.getAttributeValue(null, "scientific") != null)
-                                                                            ve.setScientificNotation(xpp.getAttributeValue(null, "scientific").equals("true"));
-                                                                        if (xpp.getAttributeValue(null, "unit") != null)
-                                                                            ve.setUnit(xpp.getAttributeValue(null, "unit"));
-                                                                        if (xpp.getAttributeValue(null, "factor") != null)
-                                                                            ve.setFactor(Double.valueOf(xpp.getAttributeValue(null, "factor")));
-                                                                        newView.elements.add(ve);
-                                                                        break;
-                                                                    case "graph":
-                                                                        expView.graphElement ge = newView.new graphElement(xpp.getAttributeValue(null, "label"), null, null, xpp.getAttributeValue(null, "inputX"), xpp.getAttributeValue(null, "inputY"), getResources());
-                                                                        if (xpp.getAttributeValue(null, "labelsize") != null)
-                                                                            ge.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
-                                                                        else
-                                                                            ge.setLabelSize(res.getDimension(R.dimen.font));
-                                                                        if (xpp.getAttributeValue(null, "height") != null)
-                                                                            ge.setHeight(Integer.valueOf(xpp.getAttributeValue(null, "height")));
-                                                                        ge.setLine(!(xpp.getAttributeValue(null, "style") != null && xpp.getAttributeValue(null, "style").equals("dots")));
-                                                                        ge.setPartialUpdate((xpp.getAttributeValue(null, "partialUpdate") != null && xpp.getAttributeValue(null, "partialUpdate").equals("true")));
-                                                                        if (xpp.getAttributeValue(null, "history") != null)
-                                                                            ge.setHistoryLength(Integer.valueOf(xpp.getAttributeValue(null, "history")));
-                                                                        ge.setLabel(xpp.getAttributeValue(null, "labelX"), xpp.getAttributeValue(null, "labelY"));
-                                                                        boolean logX = Boolean.valueOf(xpp.getAttributeValue(null, "logX"));
-                                                                        boolean logY = Boolean.valueOf(xpp.getAttributeValue(null, "logY"));
-                                                                        ge.setLogScale(logX, logY);
-                                                                        newView.elements.add(ge);
-                                                                        break;
-                                                                    case "input":
-                                                                        expView.inputElement ie = newView.new inputElement(xpp.getAttributeValue(null, "label"), xpp.getAttributeValue(null, "output"), null, null, null, getResources());
-                                                                        if (xpp.getAttributeValue(null, "labelsize") != null)
-                                                                            ie.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
-                                                                        else
-                                                                            ie.setLabelSize(res.getDimension(R.dimen.font));
-                                                                        if (xpp.getAttributeValue(null, "unit") != null)
-                                                                            ie.setUnit(xpp.getAttributeValue(null, "unit"));
-                                                                        if (xpp.getAttributeValue(null, "factor") != null) {
-                                                                            double factor = Double.valueOf(xpp.getAttributeValue(null, "factor"));
-                                                                            ie.setFactor(factor);
-                                                                        }
-                                                                        ie.setSigned((xpp.getAttributeValue(null, "signed") == null || xpp.getAttributeValue(null, "signed").equals("true")));
-                                                                        ie.setDecimal((xpp.getAttributeValue(null, "decimal") == null || xpp.getAttributeValue(null, "decimal").equals("true")));
-                                                                        if (xpp.getAttributeValue(null, "default") != null)
-                                                                            ie.setDefaultValue(Float.valueOf(xpp.getAttributeValue(null, "default")));
-                                                                        newView.elements.add(ie);
-                                                                        dataBuffer output = new dataBuffer(xpp.getAttributeValue(null, "output"), 1);
-                                                                        dataBuffers.add(output);
-                                                                        dataMap.put(xpp.getAttributeValue(null, "output"), dataBuffers.size() - 1);
-                                                                        break;
-                                                                }
-                                                        }
-                                                        eventType = xpp.next();
-                                                    }
+        DownloadXMLTask(Intent intent, boolean noWarning, Activity parent, Bundle savedInstanceState) {
+            this.intent = intent;
+            this.noWarning = noWarning;
+            this.parent = parent;
+            this.savedInstanceState = savedInstanceState;
+        }
 
-                                                    if (newView.name != null && newView.elements.size() > 0)
-                                                        experimentViews.add(newView);
-                                                    else
-                                                        Toast.makeText(this, "Invalid view ignored.", Toast.LENGTH_LONG).show();
-                                                    break;
-                                            }
-                                            break;
-                                    }
-                                    eventType = xpp.next();
-                                }
-                                break;
-                            case "input":
-                                while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("input"))) && eventType != XmlPullParser.END_DOCUMENT) {
-                                    switch (eventType) {
-                                        case XmlPullParser.START_TAG:
-                                            switch (xpp.getName()) {
-                                                case "sensor":
-                                                    int bufferSize = 100;
-                                                    String rate = "fastest";
-                                                    if (xpp.getAttributeValue(null, "buffer") != null)
-                                                        bufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
-                                                    if (xpp.getAttributeValue(null, "rate") != null) {
-                                                        rate = xpp.getAttributeValue(null, "rate");
-                                                    }
-                                                    if (xpp.getAttributeValue(null, "type") != null) {
-                                                        dataBuffer dataX = null;
-                                                        dataBuffer dataY = null;
-                                                        dataBuffer dataZ = null;
-                                                        dataBuffer dataT = null;
-                                                        if (xpp.getAttributeValue(null, "outputX") != null) {
-                                                            dataX = new dataBuffer(xpp.getAttributeValue(null, "outputX"), bufferSize);
-                                                            dataBuffers.add(dataX);
-                                                            dataMap.put(xpp.getAttributeValue(null, "outputX"), dataBuffers.size() - 1);
-                                                        }
-                                                        if (xpp.getAttributeValue(null, "outputY") != null) {
-                                                            dataY = new dataBuffer(xpp.getAttributeValue(null, "outputY"), bufferSize);
-                                                            dataBuffers.add(dataY);
-                                                            dataMap.put(xpp.getAttributeValue(null, "outputY"), dataBuffers.size()-1);
-                                                        }
-                                                        if (xpp.getAttributeValue(null, "outputZ") != null) {
-                                                            dataZ = new dataBuffer(xpp.getAttributeValue(null, "outputZ"), bufferSize);
-                                                            dataBuffers.add(dataZ);
-                                                            dataMap.put(xpp.getAttributeValue(null, "outputZ"), dataBuffers.size()-1);
-                                                        }
-                                                        if (xpp.getAttributeValue(null, "outputT") != null) {
-                                                            dataT = new dataBuffer(xpp.getAttributeValue(null, "outputT"), bufferSize);
-                                                            dataBuffers.add(dataT);
-                                                            dataMap.put(xpp.getAttributeValue(null, "outputT"), dataBuffers.size()-1);
-                                                        }
-                                                        inputSensors.add(new sensorInput(sensorManager, xpp.getAttributeValue(null, "type"), rate,
-                                                                dataX, dataY, dataZ, dataT));
-                                                        if (!inputSensors.lastElement().isAvailable() && !noWarning) {
-                                                            new AlertDialog.Builder(this)
-                                                                .setTitle(res.getString(R.string.sensorNotAvailableWarningTitle))
-                                                                .setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(inputSensors.lastElement().getDescriptionRes()) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
-                                                                .setCancelable(false)
-                                                                .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                                                                    @Override
-                                                                    public void onClick(DialogInterface dialog, int which) {
-                                                                    }
-                                                                }).create().show();
-                                                        }
-                                                    } else
-                                                        Toast.makeText(this, "Undefined sensor ignored.", Toast.LENGTH_LONG).show();
-                                                    break;
-                                                case "audio":
-                                                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                                                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 0);
-                                                        return false;
-                                                    }
-                                                    micRate = 48000;
-                                                    if (xpp.getAttributeValue(null, "rate") != null)
-                                                        micRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));
-                                                    micBufferSize = micRate;
-                                                    if (xpp.getAttributeValue(null, "buffer") != null)
-                                                        micBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
-                                                    int minBufferSize = AudioRecord.getMinBufferSize(micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-                                                    if (minBufferSize < 0)
-                                                        Toast.makeText(this, "Could not initialize recording. (" + minBufferSize + ")", Toast.LENGTH_LONG).show();
-
-                                                    if (minBufferSize > micBufferSize) {
-                                                        micBufferSize = minBufferSize;
-                                                        Toast.makeText(this, "Warning: Audio buffer size had to be adjusted to " + minBufferSize, Toast.LENGTH_LONG).show();
-                                                    }
-
-                                                    if (xpp.getAttributeValue(null, "output") != null) {
-                                                        micOutput = xpp.getAttributeValue(null, "output");
-                                                        dataBuffer output = new dataBuffer(micOutput, micBufferSize);
-                                                        dataBuffers.add(output);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output"), dataBuffers.size() - 1);
-                                                    }
-
-                                                    audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize*2);
-                                                    break;
-                                            }
-                                            break;
-                                    }
-                                    eventType = xpp.next();
-                                }
-                                break;
-                            case "analysis":
-                                while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("analysis"))) && eventType != XmlPullParser.END_DOCUMENT) {
-                                    switch (eventType) {
-                                        case XmlPullParser.START_TAG:
-                                            if (xpp.getAttributeValue(null, "period") != null)
-                                                analysisPeriod = Double.valueOf(xpp.getAttributeValue(null, "period"));
-                                            int i = 1;
-                                            int maxBufferSize = 1;
-                                            int totalBufferSize = 0;
-                                            Vector <String> inputs = new Vector<>();
-                                            Vector <Boolean> isValue = new Vector<>();
-                                            while (xpp.getAttributeValue(null, "input"+i) != null) {
-                                                isValue.add(xpp.getAttributeValue(null, "type"+i) != null && xpp.getAttributeValue(null, "type"+i).equals("value"));
-                                                if (!isValue.lastElement()) {
-                                                    int inputSize = dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input" + i))).size;
-                                                    totalBufferSize += inputSize;
-                                                    if (inputSize > maxBufferSize)
-                                                        maxBufferSize = inputSize;
-                                                }
-                                                inputs.add(xpp.getAttributeValue(null, "input"+i));
-                                                i++;
-                                            }
-                                            int singleBufferSize = 1;
-                                            if (xpp.getAttributeValue(null, "buffer") != null)
-                                                singleBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
-
-                                            Vector <dataBuffer> outputs = new Vector<>();
-
-                                            String tag = xpp.getName();
-                                            boolean handled = true;
-                                            switch (tag) {
-                                                case "add":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.addAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "subtract":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.subtractAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "multiply":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.multiplyAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "divide":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.divideAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "power":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.powerAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "sin":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.sinAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "cos":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.cosAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "tan":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    analysis.add(new Analysis.tanAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "max":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    if (xpp.getAttributeValue(null, "output2") != null) {
-                                                        dataBuffer output2 = new dataBuffer(xpp.getAttributeValue(null, "output2"), singleBufferSize);
-                                                        dataBuffers.add(output2);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output2"), dataBuffers.size()-1);
-                                                        outputs.add(output2);
-                                                    }
-                                                    analysis.add(new Analysis.maxAM(dataBuffers, dataMap, inputs, isValue, outputs));
-                                                    break;
-                                                case "threshold":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    double threshold = 0.;
-                                                    if (xpp.getAttributeValue(null, "threshold") != null)
-                                                        threshold = Double.valueOf(xpp.getAttributeValue(null, "threshold"));
-                                                    boolean falling = Boolean.valueOf(xpp.getAttributeValue(null, "falling"));
-                                                    analysis.add(new Analysis.thresholdAM(dataBuffers, dataMap, inputs, isValue, outputs, threshold, falling));
-                                                    break;
-                                                case "append":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), totalBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    Analysis.appendAM appendAM = new Analysis.appendAM(dataBuffers, dataMap, inputs, isValue, outputs);
-                                                    analysis.add(appendAM);
-                                                    break;
-                                                case "fft":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    if (xpp.getAttributeValue(null, "output2") != null) {
-                                                        dataBuffer output2 = new dataBuffer(xpp.getAttributeValue(null, "output2"), maxBufferSize);
-                                                        dataBuffers.add(output2);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output2"), dataBuffers.size()-1);
-                                                        outputs.add(output2);
-                                                    }
-                                                    Analysis.fftAM fftAM = new Analysis.fftAM(dataBuffers, dataMap, inputs, isValue, outputs);
-                                                    analysis.add(fftAM);
-                                                    break;
-                                                case "autocorrelation":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    if (xpp.getAttributeValue(null, "output2") != null) {
-                                                        dataBuffer output2 = new dataBuffer(xpp.getAttributeValue(null, "output2"), maxBufferSize);
-                                                        dataBuffers.add(output2);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output2"), dataBuffers.size()-1);
-                                                        outputs.add(output2);
-                                                    }
-                                                    Analysis.autocorrelationAM acAM = new Analysis.autocorrelationAM(dataBuffers, dataMap, inputs, isValue, outputs);
-                                                    double mint = Double.NEGATIVE_INFINITY;
-                                                    if (xpp.getAttributeValue(null, "mint") != null)
-                                                        mint = Double.valueOf(xpp.getAttributeValue(null, "mint"));
-                                                    double maxt = Double.POSITIVE_INFINITY;
-                                                    if (xpp.getAttributeValue(null, "maxt") != null)
-                                                        maxt = Double.valueOf(xpp.getAttributeValue(null, "maxt"));
-                                                    acAM.setMinMaxT(mint, maxt);
-                                                    analysis.add(acAM);
-                                                    break;
-                                                case "crosscorrelation":
-                                                    if (xpp.getAttributeValue(null, "input1") == null || xpp.getAttributeValue(null, "input2") == null) {
-                                                        Toast.makeText(this, "Crosscorrelation needs two inputs.", Toast.LENGTH_LONG).show();
-                                                        return false;
-                                                    }
-                                                    int outSize = Math.abs(dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input1"))).size-dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input2"))).size);
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), outSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    Analysis.crosscorrelationAM ccAM = new Analysis.crosscorrelationAM(dataBuffers, dataMap, inputs, isValue, outputs);
-                                                    analysis.add(ccAM);
-                                                    break;
-                                                case "gausssmooth":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    Analysis.gaussSmoothAM gsAM = new Analysis.gaussSmoothAM(dataBuffers, dataMap, inputs, isValue, outputs);
-                                                    if (xpp.getAttributeValue(null, "sigma") != null)
-                                                        gsAM.setSigma(Double.valueOf(xpp.getAttributeValue(null, "sigma")));
-                                                    analysis.add(gsAM);
-                                                    break;
-                                                case "rangefilter":
-                                                    int j = 1;
-                                                    Vector<String> min = new Vector<>();
-                                                    Vector<String> max = new Vector<>();
-                                                    while (xpp.getAttributeValue(null, "output"+j) != null) {
-                                                        dataBuffer output = new dataBuffer(xpp.getAttributeValue(null, "output"+j), maxBufferSize);
-                                                        dataBuffers.add(output);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output"+j), dataBuffers.size()-1);
-                                                        outputs.add(output);
-                                                        min.add(xpp.getAttributeValue(null, "min"+j));
-                                                        max.add(xpp.getAttributeValue(null, "max"+j));
-                                                        j++;
-                                                    }
-                                                    analysis.add(new Analysis.rangefilterAM(dataBuffers, dataMap, inputs, isValue, outputs, min, max));
-                                                    break;
-                                                case "ramp":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    Analysis.rampGeneratorAM rampAM = new Analysis.rampGeneratorAM(dataBuffers, dataMap, inputs, isValue, outputs);
-                                                    double start = 0;
-                                                    double stop = 100;
-                                                    int length = -1;
-                                                    if (xpp.getAttributeValue(null, "start") != null)
-                                                        start = Double.valueOf(xpp.getAttributeValue(null, "start"));
-                                                    if (xpp.getAttributeValue(null, "stop") != null)
-                                                        stop = Double.valueOf(xpp.getAttributeValue(null, "stop"));
-                                                    if (xpp.getAttributeValue(null, "length") != null)
-                                                        length = Integer.valueOf(xpp.getAttributeValue(null, "length"));
-                                                    rampAM.setParameters(start, stop, length);
-                                                    analysis.add(rampAM);
-                                                    break;
-                                                case "const":
-                                                    if (xpp.getAttributeValue(null, "output1") != null) {
-                                                        dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
-                                                        dataBuffers.add(output1);
-                                                        dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
-                                                        outputs.add(output1);
-                                                    }
-                                                    Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(dataBuffers, dataMap, inputs, isValue, outputs);
-                                                    double value = 0;
-                                                    int clength = -1;
-                                                    if (xpp.getAttributeValue(null, "value") != null)
-                                                        value = Double.valueOf(xpp.getAttributeValue(null, "value"));
-                                                    if (xpp.getAttributeValue(null, "length") != null)
-                                                        clength = Integer.valueOf(xpp.getAttributeValue(null, "length"));
-                                                    constAM.setParameters(value, clength);
-                                                    analysis.add(constAM);
-                                                    break;
-                                                default:
-                                                    handled = false;
-
-                                            }
-                                            if (handled) {
-                                                boolean isStatic = Boolean.valueOf(xpp.getAttributeValue(null, "static"));
-                                                analysis.lastElement().setStatic(isStatic);
-                                            }
-                                            break;
-                                    }
-                                    eventType = xpp.next();
-                                }
-                                break;
-                            case "output":
-                                while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("export"))) && eventType != XmlPullParser.END_DOCUMENT) {
-                                    switch (eventType) {
-                                        case XmlPullParser.START_TAG:
-                                            switch (xpp.getName()) {
-                                                case "audio":
-                                                    audioSource = xpp.getAttributeValue(null, "input");
-                                                    if (xpp.getAttributeValue(null, "rate") != null)
-                                                        audioRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));
-                                                    audioBufferSize = audioRate;
-                                                    if (xpp.getAttributeValue(null, "buffer") != null)
-                                                        audioBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
-                                                    audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2*audioBufferSize, AudioTrack.MODE_STATIC);
-                                                    if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
-                                                        Toast.makeText(this, "Could not initialize audio. (" + audioTrack.getState() + ")", Toast.LENGTH_LONG).show();
-                                                    }
-                                                    break;
-                                            }
-                                            break;
-                                    }
-                                    eventType = xpp.next();
-                                }
-                                break;
-                            case "export":
-                                while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("export"))) && eventType != XmlPullParser.END_DOCUMENT) {
-                                    switch (eventType) {
-                                        case XmlPullParser.START_TAG:
-                                            switch (xpp.getName()) {
-                                                case "set":
-                                                    dataExport.exportSet set = exporter.new exportSet(xpp.getAttributeValue(null, "name"));
-                                                    while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("set"))) && eventType != XmlPullParser.END_DOCUMENT) {
-                                                        switch (eventType) {
-                                                            case XmlPullParser.START_TAG:
-                                                                switch (xpp.getName()) {
-                                                                    case "data":
-                                                                        set.addSource(xpp.getAttributeValue(null, "name"), xpp.getAttributeValue(null, "source"));
-                                                                        break;
-                                                                }
-                                                                break;
-                                                        }
-                                                        eventType = xpp.next();
-                                                    }
-                                                    exporter.addSet(set);
-                                                    break;
-                                            }
-                                            break;
-                                    }
-                                    eventType = xpp.next();
-                                }
-                                break;
-                        }
-                        break;
+        protected Boolean doInBackground(String... params) {
+            String action = intent.getAction();
+            InputStream input = null;
+            if (action.equals(Intent.ACTION_VIEW)) {
+                String scheme = intent.getScheme();
+                if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) {
+                    AssetManager assetManager = getAssets();
+                    try {
+                        input = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                    } catch (Exception e) {
+                        Log.e("onCreate", "Error loading this experiment from assests: " + e);
+                        Toast.makeText(parent, "Error loading this experiment from assets.", Toast.LENGTH_LONG).show();
+                        finish();
+                        return false;
+                    }
+                } else if (scheme.equals(ContentResolver.SCHEME_FILE )) {
+                    Uri uri = intent.getData();
+                    ContentResolver resolver = getContentResolver();
+                    if (ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                        finish();
+                        return false;
+                    }
+                    try {
+                        input = resolver.openInputStream(uri);
+                    } catch (Exception e) {
+                        Log.e("onCreate", "Error loading experiment from file: " + e);
+                        Toast.makeText(parent, "Error loading experiment from file.", Toast.LENGTH_LONG).show();
+                        finish();
+                        return false;
+                    }
+                } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
+                    Uri uri = intent.getData();
+                    ContentResolver resolver = getContentResolver();
+                    try {
+                        input = resolver.openInputStream(uri);
+                    } catch (Exception e) {
+                        Log.e("onCreate", "Error loading experiment from file: " + e);
+                        Toast.makeText(parent, "Error loading experiment from file.", Toast.LENGTH_LONG).show();
+                        finish();
+                        return false;
+                    }
+                } else if (scheme.equals("http") || scheme.equals("https")) {
+                    try {
+                        Uri uri = intent.getData();
+                        URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPath());
+                        input = url.openStream();
+                    } catch (Exception e) {
+                        Log.e("onCreate", "Error loading experiment from http: " + e);
+                        Toast.makeText(parent, "Error loading experiment from http.", Toast.LENGTH_LONG).show();
+                        finish();
+                        return false;
+                    }
                 }
-                eventType = xpp.next();
+            } else {
+                Toast.makeText(parent, "No run-intent.", Toast.LENGTH_LONG).show();
+                return false;
             }
 
-        } catch (Exception e) {
-            Toast.makeText(this, "Error loading this experiment.", Toast.LENGTH_LONG).show();
-            Log.e("loadExperiment", "Error loading this experiment.", e);
-            return false;
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+
+                XmlPullParser xpp = Xml.newPullParser();
+                xpp.setInput(reader);
+
+                int eventType = xpp.getEventType();
+
+                while (eventType != XmlPullParser.END_DOCUMENT){
+                    switch (eventType) {
+                        case XmlPullParser.START_TAG:
+                            switch (xpp.getName()) {
+                                case "title":
+                                    title = xpp.nextText();
+                                    break;
+                                case "icon":
+                                    icon = xpp.nextText();
+                                    break;
+                                case "description":
+                                    description = xpp.nextText();
+                                    break;
+                                case "category":
+                                    category = xpp.nextText();
+                                    break;
+                                case "views":
+                                    while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("views"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                        switch (eventType) {
+                                            case XmlPullParser.START_TAG:
+                                                switch (xpp.getName()) {
+                                                    case "view":
+                                                        expView newView = new expView();
+                                                        newView.name = xpp.getAttributeValue(null, "name");
+
+                                                        while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("view"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                                            switch (eventType) {
+                                                                case XmlPullParser.START_TAG:
+                                                                    switch (xpp.getName()) {
+                                                                        case "value":
+                                                                            expView.valueElement ve = newView.new valueElement(xpp.getAttributeValue(null, "label"), null, xpp.getAttributeValue(null, "input"), null, null, getResources());
+                                                                            if (xpp.getAttributeValue(null, "labelsize") != null)
+                                                                                ve.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
+                                                                            else
+                                                                                ve.setLabelSize(res.getDimension(R.dimen.font));
+                                                                            if (xpp.getAttributeValue(null, "precision") != null)
+                                                                                ve.setPrecision(Integer.valueOf(xpp.getAttributeValue(null, "precision")));
+                                                                            if (xpp.getAttributeValue(null, "scientific") != null)
+                                                                                ve.setScientificNotation(xpp.getAttributeValue(null, "scientific").equals("true"));
+                                                                            if (xpp.getAttributeValue(null, "unit") != null)
+                                                                                ve.setUnit(xpp.getAttributeValue(null, "unit"));
+                                                                            if (xpp.getAttributeValue(null, "factor") != null)
+                                                                                ve.setFactor(Double.valueOf(xpp.getAttributeValue(null, "factor")));
+                                                                            newView.elements.add(ve);
+                                                                            break;
+                                                                        case "graph":
+                                                                            expView.graphElement ge = newView.new graphElement(xpp.getAttributeValue(null, "label"), null, null, xpp.getAttributeValue(null, "inputX"), xpp.getAttributeValue(null, "inputY"), getResources());
+                                                                            if (xpp.getAttributeValue(null, "labelsize") != null)
+                                                                                ge.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
+                                                                            else
+                                                                                ge.setLabelSize(res.getDimension(R.dimen.font));
+                                                                            if (xpp.getAttributeValue(null, "height") != null)
+                                                                                ge.setHeight(Integer.valueOf(xpp.getAttributeValue(null, "height")));
+                                                                            ge.setLine(!(xpp.getAttributeValue(null, "style") != null && xpp.getAttributeValue(null, "style").equals("dots")));
+                                                                            ge.setPartialUpdate((xpp.getAttributeValue(null, "partialUpdate") != null && xpp.getAttributeValue(null, "partialUpdate").equals("true")));
+                                                                            if (xpp.getAttributeValue(null, "history") != null)
+                                                                                ge.setHistoryLength(Integer.valueOf(xpp.getAttributeValue(null, "history")));
+                                                                            ge.setLabel(xpp.getAttributeValue(null, "labelX"), xpp.getAttributeValue(null, "labelY"));
+                                                                            boolean logX = Boolean.valueOf(xpp.getAttributeValue(null, "logX"));
+                                                                            boolean logY = Boolean.valueOf(xpp.getAttributeValue(null, "logY"));
+                                                                            ge.setLogScale(logX, logY);
+                                                                            newView.elements.add(ge);
+                                                                            break;
+                                                                        case "input":
+                                                                            expView.inputElement ie = newView.new inputElement(xpp.getAttributeValue(null, "label"), xpp.getAttributeValue(null, "output"), null, null, null, getResources());
+                                                                            if (xpp.getAttributeValue(null, "labelsize") != null)
+                                                                                ie.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
+                                                                            else
+                                                                                ie.setLabelSize(res.getDimension(R.dimen.font));
+                                                                            if (xpp.getAttributeValue(null, "unit") != null)
+                                                                                ie.setUnit(xpp.getAttributeValue(null, "unit"));
+                                                                            if (xpp.getAttributeValue(null, "factor") != null) {
+                                                                                double factor = Double.valueOf(xpp.getAttributeValue(null, "factor"));
+                                                                                ie.setFactor(factor);
+                                                                            }
+                                                                            ie.setSigned((xpp.getAttributeValue(null, "signed") == null || xpp.getAttributeValue(null, "signed").equals("true")));
+                                                                            ie.setDecimal((xpp.getAttributeValue(null, "decimal") == null || xpp.getAttributeValue(null, "decimal").equals("true")));
+                                                                            if (xpp.getAttributeValue(null, "default") != null)
+                                                                                ie.setDefaultValue(Float.valueOf(xpp.getAttributeValue(null, "default")));
+                                                                            newView.elements.add(ie);
+                                                                            dataBuffer output = new dataBuffer(xpp.getAttributeValue(null, "output"), 1);
+                                                                            dataBuffers.add(output);
+                                                                            dataMap.put(xpp.getAttributeValue(null, "output"), dataBuffers.size() - 1);
+                                                                            break;
+                                                                    }
+                                                            }
+                                                            eventType = xpp.next();
+                                                        }
+
+                                                        if (newView.name != null && newView.elements.size() > 0)
+                                                            experimentViews.add(newView);
+                                                        else
+                                                            Toast.makeText(parent, "Invalid view ignored.", Toast.LENGTH_LONG).show();
+                                                        break;
+                                                }
+                                                break;
+                                        }
+                                        eventType = xpp.next();
+                                    }
+                                    break;
+                                case "input":
+                                    while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("input"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                        switch (eventType) {
+                                            case XmlPullParser.START_TAG:
+                                                switch (xpp.getName()) {
+                                                    case "sensor":
+                                                        int bufferSize = 100;
+                                                        String rate = "fastest";
+                                                        if (xpp.getAttributeValue(null, "buffer") != null)
+                                                            bufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
+                                                        if (xpp.getAttributeValue(null, "rate") != null) {
+                                                            rate = xpp.getAttributeValue(null, "rate");
+                                                        }
+                                                        if (xpp.getAttributeValue(null, "type") != null) {
+                                                            dataBuffer dataX = null;
+                                                            dataBuffer dataY = null;
+                                                            dataBuffer dataZ = null;
+                                                            dataBuffer dataT = null;
+                                                            if (xpp.getAttributeValue(null, "outputX") != null) {
+                                                                dataX = new dataBuffer(xpp.getAttributeValue(null, "outputX"), bufferSize);
+                                                                dataBuffers.add(dataX);
+                                                                dataMap.put(xpp.getAttributeValue(null, "outputX"), dataBuffers.size() - 1);
+                                                            }
+                                                            if (xpp.getAttributeValue(null, "outputY") != null) {
+                                                                dataY = new dataBuffer(xpp.getAttributeValue(null, "outputY"), bufferSize);
+                                                                dataBuffers.add(dataY);
+                                                                dataMap.put(xpp.getAttributeValue(null, "outputY"), dataBuffers.size()-1);
+                                                            }
+                                                            if (xpp.getAttributeValue(null, "outputZ") != null) {
+                                                                dataZ = new dataBuffer(xpp.getAttributeValue(null, "outputZ"), bufferSize);
+                                                                dataBuffers.add(dataZ);
+                                                                dataMap.put(xpp.getAttributeValue(null, "outputZ"), dataBuffers.size()-1);
+                                                            }
+                                                            if (xpp.getAttributeValue(null, "outputT") != null) {
+                                                                dataT = new dataBuffer(xpp.getAttributeValue(null, "outputT"), bufferSize);
+                                                                dataBuffers.add(dataT);
+                                                                dataMap.put(xpp.getAttributeValue(null, "outputT"), dataBuffers.size()-1);
+                                                            }
+                                                            inputSensors.add(new sensorInput(sensorManager, xpp.getAttributeValue(null, "type"), rate,
+                                                                    dataX, dataY, dataZ, dataT));
+                                                            if (!inputSensors.lastElement().isAvailable() && !noWarning) {
+                                                                new AlertDialog.Builder(parent)
+                                                                        .setTitle(res.getString(R.string.sensorNotAvailableWarningTitle))
+                                                                        .setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(inputSensors.lastElement().getDescriptionRes()) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
+                                                                        .setCancelable(false)
+                                                                        .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                                                                            @Override
+                                                                            public void onClick(DialogInterface dialog, int which) {
+                                                                            }
+                                                                        }).create().show();
+                                                            }
+                                                        } else
+                                                            Toast.makeText(parent, "Undefined sensor ignored.", Toast.LENGTH_LONG).show();
+                                                        break;
+                                                    case "audio":
+                                                        if (ContextCompat.checkSelfPermission(parent, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                                                            ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.RECORD_AUDIO}, 0);
+                                                            return false;
+                                                        }
+                                                        micRate = 48000;
+                                                        if (xpp.getAttributeValue(null, "rate") != null)
+                                                            micRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));
+                                                        micBufferSize = micRate;
+                                                        if (xpp.getAttributeValue(null, "buffer") != null)
+                                                            micBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
+                                                        int minBufferSize = AudioRecord.getMinBufferSize(micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                                                        if (minBufferSize < 0)
+                                                            Toast.makeText(parent, "Could not initialize recording. (" + minBufferSize + ")", Toast.LENGTH_LONG).show();
+
+                                                        if (minBufferSize > micBufferSize) {
+                                                            micBufferSize = minBufferSize;
+                                                            Toast.makeText(parent, "Warning: Audio buffer size had to be adjusted to " + minBufferSize, Toast.LENGTH_LONG).show();
+                                                        }
+
+                                                        if (xpp.getAttributeValue(null, "output") != null) {
+                                                            micOutput = xpp.getAttributeValue(null, "output");
+                                                            dataBuffer output = new dataBuffer(micOutput, micBufferSize);
+                                                            dataBuffers.add(output);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output"), dataBuffers.size() - 1);
+                                                        }
+
+                                                        audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize*2);
+                                                        break;
+                                                }
+                                                break;
+                                        }
+                                        eventType = xpp.next();
+                                    }
+                                    break;
+                                case "analysis":
+                                    while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("analysis"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                        switch (eventType) {
+                                            case XmlPullParser.START_TAG:
+                                                if (xpp.getAttributeValue(null, "period") != null)
+                                                    analysisPeriod = Double.valueOf(xpp.getAttributeValue(null, "period"));
+                                                int i = 1;
+                                                int maxBufferSize = 1;
+                                                int totalBufferSize = 0;
+                                                Vector <String> inputs = new Vector<>();
+                                                Vector <Boolean> isValue = new Vector<>();
+                                                while (xpp.getAttributeValue(null, "input"+i) != null) {
+                                                    isValue.add(xpp.getAttributeValue(null, "type"+i) != null && xpp.getAttributeValue(null, "type"+i).equals("value"));
+                                                    if (!isValue.lastElement()) {
+                                                        int inputSize = dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input" + i))).size;
+                                                        totalBufferSize += inputSize;
+                                                        if (inputSize > maxBufferSize)
+                                                            maxBufferSize = inputSize;
+                                                    }
+                                                    inputs.add(xpp.getAttributeValue(null, "input"+i));
+                                                    i++;
+                                                }
+                                                int singleBufferSize = 1;
+                                                if (xpp.getAttributeValue(null, "buffer") != null)
+                                                    singleBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
+
+                                                Vector <dataBuffer> outputs = new Vector<>();
+
+                                                String tag = xpp.getName();
+                                                boolean handled = true;
+                                                switch (tag) {
+                                                    case "add":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.addAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "subtract":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.subtractAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "multiply":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.multiplyAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "divide":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.divideAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "power":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.powerAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "sin":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.sinAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "cos":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.cosAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "tan":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        analysis.add(new Analysis.tanAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "max":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        if (xpp.getAttributeValue(null, "output2") != null) {
+                                                            dataBuffer output2 = new dataBuffer(xpp.getAttributeValue(null, "output2"), singleBufferSize);
+                                                            dataBuffers.add(output2);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output2"), dataBuffers.size()-1);
+                                                            outputs.add(output2);
+                                                        }
+                                                        analysis.add(new Analysis.maxAM(dataBuffers, dataMap, inputs, isValue, outputs));
+                                                        break;
+                                                    case "threshold":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        double threshold = 0.;
+                                                        if (xpp.getAttributeValue(null, "threshold") != null)
+                                                            threshold = Double.valueOf(xpp.getAttributeValue(null, "threshold"));
+                                                        boolean falling = Boolean.valueOf(xpp.getAttributeValue(null, "falling"));
+                                                        analysis.add(new Analysis.thresholdAM(dataBuffers, dataMap, inputs, isValue, outputs, threshold, falling));
+                                                        break;
+                                                    case "append":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), totalBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        Analysis.appendAM appendAM = new Analysis.appendAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                        analysis.add(appendAM);
+                                                        break;
+                                                    case "fft":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        if (xpp.getAttributeValue(null, "output2") != null) {
+                                                            dataBuffer output2 = new dataBuffer(xpp.getAttributeValue(null, "output2"), maxBufferSize);
+                                                            dataBuffers.add(output2);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output2"), dataBuffers.size()-1);
+                                                            outputs.add(output2);
+                                                        }
+                                                        Analysis.fftAM fftAM = new Analysis.fftAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                        analysis.add(fftAM);
+                                                        break;
+                                                    case "autocorrelation":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        if (xpp.getAttributeValue(null, "output2") != null) {
+                                                            dataBuffer output2 = new dataBuffer(xpp.getAttributeValue(null, "output2"), maxBufferSize);
+                                                            dataBuffers.add(output2);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output2"), dataBuffers.size()-1);
+                                                            outputs.add(output2);
+                                                        }
+                                                        Analysis.autocorrelationAM acAM = new Analysis.autocorrelationAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                        double mint = Double.NEGATIVE_INFINITY;
+                                                        if (xpp.getAttributeValue(null, "mint") != null)
+                                                            mint = Double.valueOf(xpp.getAttributeValue(null, "mint"));
+                                                        double maxt = Double.POSITIVE_INFINITY;
+                                                        if (xpp.getAttributeValue(null, "maxt") != null)
+                                                            maxt = Double.valueOf(xpp.getAttributeValue(null, "maxt"));
+                                                        acAM.setMinMaxT(mint, maxt);
+                                                        analysis.add(acAM);
+                                                        break;
+                                                    case "crosscorrelation":
+                                                        if (xpp.getAttributeValue(null, "input1") == null || xpp.getAttributeValue(null, "input2") == null) {
+                                                            Toast.makeText(parent, "Crosscorrelation needs two inputs.", Toast.LENGTH_LONG).show();
+                                                            return false;
+                                                        }
+                                                        int outSize = Math.abs(dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input1"))).size-dataBuffers.get(dataMap.get(xpp.getAttributeValue(null, "input2"))).size);
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), outSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        Analysis.crosscorrelationAM ccAM = new Analysis.crosscorrelationAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                        analysis.add(ccAM);
+                                                        break;
+                                                    case "gausssmooth":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        Analysis.gaussSmoothAM gsAM = new Analysis.gaussSmoothAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                        if (xpp.getAttributeValue(null, "sigma") != null)
+                                                            gsAM.setSigma(Double.valueOf(xpp.getAttributeValue(null, "sigma")));
+                                                        analysis.add(gsAM);
+                                                        break;
+                                                    case "rangefilter":
+                                                        int j = 1;
+                                                        Vector<String> min = new Vector<>();
+                                                        Vector<String> max = new Vector<>();
+                                                        while (xpp.getAttributeValue(null, "output"+j) != null) {
+                                                            dataBuffer output = new dataBuffer(xpp.getAttributeValue(null, "output"+j), maxBufferSize);
+                                                            dataBuffers.add(output);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output"+j), dataBuffers.size()-1);
+                                                            outputs.add(output);
+                                                            min.add(xpp.getAttributeValue(null, "min"+j));
+                                                            max.add(xpp.getAttributeValue(null, "max"+j));
+                                                            j++;
+                                                        }
+                                                        analysis.add(new Analysis.rangefilterAM(dataBuffers, dataMap, inputs, isValue, outputs, min, max));
+                                                        break;
+                                                    case "ramp":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        Analysis.rampGeneratorAM rampAM = new Analysis.rampGeneratorAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                        double start = 0;
+                                                        double stop = 100;
+                                                        int length = -1;
+                                                        if (xpp.getAttributeValue(null, "start") != null)
+                                                            start = Double.valueOf(xpp.getAttributeValue(null, "start"));
+                                                        if (xpp.getAttributeValue(null, "stop") != null)
+                                                            stop = Double.valueOf(xpp.getAttributeValue(null, "stop"));
+                                                        if (xpp.getAttributeValue(null, "length") != null)
+                                                            length = Integer.valueOf(xpp.getAttributeValue(null, "length"));
+                                                        rampAM.setParameters(start, stop, length);
+                                                        analysis.add(rampAM);
+                                                        break;
+                                                    case "const":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), singleBufferSize);
+                                                            dataBuffers.add(output1);
+                                                            dataMap.put(xpp.getAttributeValue(null, "output1"), dataBuffers.size()-1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(dataBuffers, dataMap, inputs, isValue, outputs);
+                                                        double value = 0;
+                                                        int clength = -1;
+                                                        if (xpp.getAttributeValue(null, "value") != null)
+                                                            value = Double.valueOf(xpp.getAttributeValue(null, "value"));
+                                                        if (xpp.getAttributeValue(null, "length") != null)
+                                                            clength = Integer.valueOf(xpp.getAttributeValue(null, "length"));
+                                                        constAM.setParameters(value, clength);
+                                                        analysis.add(constAM);
+                                                        break;
+                                                    default:
+                                                        handled = false;
+
+                                                }
+                                                if (handled) {
+                                                    boolean isStatic = Boolean.valueOf(xpp.getAttributeValue(null, "static"));
+                                                    analysis.lastElement().setStatic(isStatic);
+                                                }
+                                                break;
+                                        }
+                                        eventType = xpp.next();
+                                    }
+                                    break;
+                                case "output":
+                                    while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("export"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                        switch (eventType) {
+                                            case XmlPullParser.START_TAG:
+                                                switch (xpp.getName()) {
+                                                    case "audio":
+                                                        audioSource = xpp.getAttributeValue(null, "input");
+                                                        if (xpp.getAttributeValue(null, "rate") != null)
+                                                            audioRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));
+                                                        audioBufferSize = audioRate;
+                                                        if (xpp.getAttributeValue(null, "buffer") != null)
+                                                            audioBufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
+                                                        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2*audioBufferSize, AudioTrack.MODE_STATIC);
+                                                        if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
+                                                            Toast.makeText(parent, "Could not initialize audio. (" + audioTrack.getState() + ")", Toast.LENGTH_LONG).show();
+                                                        }
+                                                        break;
+                                                }
+                                                break;
+                                        }
+                                        eventType = xpp.next();
+                                    }
+                                    break;
+                                case "export":
+                                    while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("export"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                        switch (eventType) {
+                                            case XmlPullParser.START_TAG:
+                                                switch (xpp.getName()) {
+                                                    case "set":
+                                                        dataExport.exportSet set = exporter.new exportSet(xpp.getAttributeValue(null, "name"));
+                                                        while ((!(eventType ==  XmlPullParser.END_TAG && xpp.getName().equals("set"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                                            switch (eventType) {
+                                                                case XmlPullParser.START_TAG:
+                                                                    switch (xpp.getName()) {
+                                                                        case "data":
+                                                                            set.addSource(xpp.getAttributeValue(null, "name"), xpp.getAttributeValue(null, "source"));
+                                                                            break;
+                                                                    }
+                                                                    break;
+                                                            }
+                                                            eventType = xpp.next();
+                                                        }
+                                                        exporter.addSet(set);
+                                                        break;
+                                                }
+                                                break;
+                                        }
+                                        eventType = xpp.next();
+                                    }
+                                    break;
+                            }
+                            break;
+                    }
+                    eventType = xpp.next();
+                }
+
+            } catch (Exception e) {
+                Toast.makeText(parent, "Error loading this experiment.", Toast.LENGTH_LONG).show();
+                Log.e("loadExperiment", "Error loading this experiment.", e);
+                return false;
+            }
+
+            if (experimentViews.size() == 0) {
+                Toast.makeText(parent, "No valid view found.", Toast.LENGTH_LONG).show();
+                return false;
+            }
+
+
+            return true;
+
         }
 
-        if (experimentViews.size() == 0) {
-            Toast.makeText(this, "No valid view found.", Toast.LENGTH_LONG).show();
-            return false;
+        @Override
+        protected void onPostExecute(Boolean result) {
+            progress.dismiss();
+            if (result) {
+                List<String> viewChoices = new ArrayList<>();
+
+                for (expView v : experimentViews) {
+                    viewChoices.add(v.name);
+                }
+
+                Spinner viewSelector = (Spinner) findViewById(R.id.viewSelector);
+
+                ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(parent, android.R.layout.simple_spinner_item, viewChoices);
+                spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                viewSelector.setAdapter(spinnerArrayAdapter);
+
+                viewSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                        setupView(position);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parentView) {
+
+                    }
+
+                });
+
+                ((TextView) findViewById(R.id.titleText)).setText(title);
+
+                if (savedInstanceState != null) {
+                    serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false);
+                    timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false);
+                    timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY);
+                    timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY);
+                    Vector<dataBuffer> oldData = (Vector<dataBuffer>)savedInstanceState.getSerializable(STATE_DATA_BUFFERS);
+                    for (int i = 0; i < dataBuffers.size(); i++) {
+                        dataBuffers.get(i).clear();
+                        Iterator it = oldData.get(i).getIterator();
+                        while (it.hasNext())
+                            dataBuffers.get(i).append((double)it.next());
+                    }
+                    currentView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
+                    viewSelector.setSelection(currentView);
+                }
+                setupView(viewSelector.getSelectedItemPosition());
+                updateViewsHandler.postDelayed(updateViews, 40);
+
+                ContextThemeWrapper ctw = new ContextThemeWrapper( parent, R.style.AppTheme);
+                AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
+                LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+                View startInfoLayout = adbInflater.inflate(R.layout.donotshowagain, null);
+                final CheckBox dontShowAgain = (CheckBox) startInfoLayout.findViewById(R.id.donotshowagain);
+                adb.setView(startInfoLayout);
+                adb.setTitle(R.string.info);
+                adb.setMessage(R.string.startInfo);
+                adb.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Boolean skipStartInfo = false;
+                        if (dontShowAgain.isChecked())
+                            skipStartInfo = true;
+                        SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putBoolean("skipStartInfo", skipStartInfo);
+                        editor.apply();
+                    }
+                });
+
+                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                Boolean skipStartInfo = settings.getBoolean("skipStartInfo", false);
+                if (!skipStartInfo)
+                    adb.show();
+
+            } else
+                finish();
         }
-
-
-        return true;
     }
 
     private void setupView(int newView) {
@@ -665,6 +841,7 @@ public class Experiment extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        intent = getIntent();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experiment);
 
@@ -675,92 +852,10 @@ public class Experiment extends AppCompatActivity {
         res = getResources();
         exporter = new dataExport(this);
 
-        Intent intent = getIntent();
-        AssetManager assetManager = getAssets();
-        InputStream input;
-        try {
-            input = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-        } catch (Exception e) {
-            Toast.makeText(this, "Error loading this experiment from assets.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 
-        if (loadExperiment(input, savedInstanceState != null)) {
-            List<String> viewChoices = new ArrayList<>();
-
-            for (expView v : experimentViews) {
-                viewChoices.add(v.name);
-            }
-
-            Spinner viewSelector = (Spinner) findViewById(R.id.viewSelector);
-
-            ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, viewChoices);
-            spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            viewSelector.setAdapter(spinnerArrayAdapter);
-
-            viewSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    setupView(position);
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-
-                }
-
-            });
-
-            ((TextView) findViewById(R.id.titleText)).setText(title);
-
-            if (savedInstanceState != null) {
-                serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false);
-                timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false);
-                timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY);
-                timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY);
-                Vector<dataBuffer> oldData = (Vector<dataBuffer>)savedInstanceState.getSerializable(STATE_DATA_BUFFERS);
-                for (int i = 0; i < dataBuffers.size(); i++) {
-                    dataBuffers.get(i).clear();
-                    Iterator it = oldData.get(i).getIterator();
-                    while (it.hasNext())
-                        dataBuffers.get(i).append((double)it.next());
-                }
-                currentView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
-                viewSelector.setSelection(currentView);
-            }
-            setupView(viewSelector.getSelectedItemPosition());
-            updateViewsHandler.postDelayed(updateViews, 40);
-
-            ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.AppTheme);
-            AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
-            LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-            View startInfoLayout = adbInflater.inflate(R.layout.donotshowagain, null);
-            final CheckBox dontShowAgain = (CheckBox) startInfoLayout.findViewById(R.id.donotshowagain);
-            adb.setView(startInfoLayout);
-            adb.setTitle(R.string.info);
-            adb.setMessage(R.string.startInfo);
-            adb.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    Boolean skipStartInfo = false;
-                    if (dontShowAgain.isChecked())
-                        skipStartInfo = true;
-                    SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-                    SharedPreferences.Editor editor = settings.edit();
-                    editor.putBoolean("skipStartInfo", skipStartInfo);
-                    editor.apply();
-                }
-            });
-
-            SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-            Boolean skipStartInfo = settings.getBoolean("skipStartInfo", false);
-            if (!skipStartInfo)
-                adb.show();
-
-        } else
-            finish();
+        progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+        new DownloadXMLTask(intent, savedInstanceState != null, this, savedInstanceState).execute();
     }
 
     @Override

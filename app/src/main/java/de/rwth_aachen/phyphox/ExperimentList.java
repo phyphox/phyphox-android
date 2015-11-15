@@ -63,12 +63,12 @@ public class ExperimentList extends AppCompatActivity {
         private final Paint paint;
         private final Paint paintBG;
 
-        public TextIcon(String text) {
+        public TextIcon(String text, Context c) {
 
             this.text = text;
 
             this.paint = new Paint();
-            paint.setColor(getColor(R.color.main));
+            paint.setColor(ContextCompat.getColor(c, R.color.main));
             paint.setTextSize(res.getDimension(R.dimen.expElementIconSize)*0.5f);
             paint.setAntiAlias(true);
             paint.setFakeBoldText(true);
@@ -76,7 +76,7 @@ public class ExperimentList extends AppCompatActivity {
             paint.setTextAlign(Paint.Align.CENTER);
 
             this.paintBG = new Paint();
-            paintBG.setColor(getColor(R.color.highlight));
+            paintBG.setColor(ContextCompat.getColor(c, R.color.highlight));
             paintBG.setStyle(Paint.Style.FILL);
         }
 
@@ -128,6 +128,7 @@ public class ExperimentList extends AppCompatActivity {
         public void start(int position, View v) {
             Intent intent = new Intent(v.getContext(), Experiment.class);
             intent.putExtra(EXPERIMENT_XML, xmlFiles.get(position));
+            intent.setAction(Intent.ACTION_VIEW);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
                         0, v.getWidth(), v.getHeight());
@@ -357,9 +358,9 @@ public class ExperimentList extends AppCompatActivity {
                     } else if (!hidden) {
                         Drawable image;
                         if (icon.equals(""))
-                            image = new TextIcon(title.substring(0, 3));
+                            image = new TextIcon(title.substring(0, 3), this);
                         else if (icon.length() <= 3)
-                            image = new TextIcon(icon);
+                            image = new TextIcon(icon, this);
                         else
                             image = new BitmapDrawable(res, decodeBase64(icon));
                         addExperiment(title, category, image, description, experimentXML);
