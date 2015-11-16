@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:paddingTop="@dimen/activity_vertical_padding">
+    android:paddingTop="@dimen/activity_vertical_padding"
+    android:clickable="false">
 
     <ImageView
         android:layout_width="@dimen/expElementIconSize"
@@ -21,10 +22,11 @@
         android:id="@+id/expTitle"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/expIcon"
-        android:layout_toEndOf="@+id/expIcon"
         android:textSize="@dimen/experiment_title_font"
         android:singleLine="true"
-        android:textColor="@color/main" />
+        android:textColor="@color/main"
+        android:layout_toLeftOf="@+id/deleteButton"
+        android:layout_toStartOf="@+id/deleteButton" />
 
     <TextView
         android:layout_width="match_parent"
@@ -34,7 +36,19 @@
         android:id="@+id/expInfo"
         android:layout_below="@+id/expTitle"
         android:layout_toRightOf="@+id/expIcon"
-        android:layout_toEndOf="@+id/expIcon"
         android:textSize="@dimen/experiment_info_font"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:layout_toLeftOf="@+id/deleteButton"
+        android:layout_toStartOf="@+id/deleteButton" />
+
+    <ImageButton
+        android:layout_width="@dimen/expElementIconSize"
+        android:layout_height="@dimen/expElementIconSize"
+        android:id="@+id/deleteButton"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:src="@drawable/delete"
+        android:layout_alignTop="@+id/expTitle"
+        android:layout_alignBottom="@+id/expInfo"
+        android:clickable="true" />
 </RelativeLayout>

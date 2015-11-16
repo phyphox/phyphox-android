@@ -24,7 +24,11 @@
         <activity
             android:name="de.rwth_aachen.phyphox.Experiment"
             android:label="@string/title_activity_experiment"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme"
+            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.rwth_aachen.phyphox.ExperimentList" />
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

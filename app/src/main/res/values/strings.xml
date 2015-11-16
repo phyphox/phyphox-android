@@ -36,6 +36,10 @@
     <string name="cancel">Cancel</string>
     <string name="unknown">unknown</string>
 
+    <string name="delete">Delete</string>
+    <string name="confirmDelete">Do you want to delete this experiment from your library?</string>
+    <string name="confirmDeleteTitle">Confirm delete?</string>
+
     <string name="stop">Stop</string>
     <string name="start">Start</string>
     <string name="timed_stop">Stop timed run</string>
@@ -58,6 +62,8 @@
     <string name="remoteServerWarningTitle">Security warning!</string>
 
     <string name="show_description">Show Description</string>
+    <string name="save_locally">Add experiment to collection</string>
+    <string name="save_locally_done">Experiment successfully added to collection</string>
 
     <string name="timedRun">Timed run</string>
 

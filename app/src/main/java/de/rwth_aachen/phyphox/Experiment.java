@@ -54,21 +54,25 @@ import android.widget.Toast;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Vector;
 
-//TODO Clean-up loading-code and make it more error-proof
+//TODO Correctly use action bar as "up" navigation even when experiment was loaded externally. Also: Update main list if experiment has been added
+//TODO Clean-up loading-code and make it more error-proof (Especially: Get error messages to main thread as they cannot be displayed in second thread)
 //TODO Asynchronous rights management
 //TODO Fix crash when switching away from an experiment to another app
-//TODO Allow user to store an experiment in his library
 //TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
 //TODO Translation of Experiment-Texts
 //TODO Sonar needs fine-tuning
@@ -100,6 +104,7 @@ public class Experiment extends AppCompatActivity {
     String category = "";
     String icon = "";
     String description = "There is no description available for this experiment.";
+    boolean isLocal = true;
     private Vector<expView> experimentViews = new Vector<>();
     private int currentView;
     private Vector<sensorInput> inputSensors = new Vector<>();
@@ -134,7 +139,124 @@ public class Experiment extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            startActivity(intent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+                this.recreate();
+            else {
+                finish();
+                startActivity(intent);
+            }
+        } else
+            finish();
+    }
+
+    InputStream getXMLInputStream(Intent intent, Activity parent) {
+        String action = intent.getAction();
+        if (action.equals(Intent.ACTION_VIEW)) {
+            String scheme = intent.getScheme();
+            if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) {
+                isLocal = true;
+                if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISASSET, true)) {
+                    AssetManager assetManager = getAssets();
+                    try {
+                        return assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                    } catch (Exception e) {
+                        Log.e("onCreate", "Error loading this experiment from assests: " + e);
+                        Toast.makeText(parent, "Error loading this experiment from assets.", Toast.LENGTH_LONG).show();
+                        finish();
+                        return null;
+                    }
+                } else {
+                    try {
+                        return openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                    } catch (Exception e) {
+                        Log.e("onCreate", "Error loading this experiment from assests: " + e);
+                        Toast.makeText(parent, "Error loading this experiment from assets.", Toast.LENGTH_LONG).show();
+                        finish();
+                        return null;
+                    }
+                }
+            } else if (scheme.equals(ContentResolver.SCHEME_FILE )) {
+                isLocal = false;
+                Uri uri = intent.getData();
+                ContentResolver resolver = getContentResolver();
+                if (ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                    return null;
+                }
+                try {
+                    return resolver.openInputStream(uri);
+                } catch (Exception e) {
+                    Log.e("onCreate", "Error loading experiment from file: " + e);
+                    Toast.makeText(parent, "Error loading experiment from file.", Toast.LENGTH_LONG).show();
+                    finish();
+                    return null;
+                }
+            } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
+                isLocal = false;
+                Uri uri = intent.getData();
+                ContentResolver resolver = getContentResolver();
+                try {
+                    return resolver.openInputStream(uri);
+                } catch (Exception e) {
+                    Log.e("onCreate", "Error loading experiment from file: " + e);
+                    Toast.makeText(parent, "Error loading experiment from file.", Toast.LENGTH_LONG).show();
+                    finish();
+                    return null;
+                }
+            } else if (scheme.equals("http") || scheme.equals("https")) {
+                isLocal = false;
+                try {
+                    Uri uri = intent.getData();
+                    URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPath());
+                    return url.openStream();
+                } catch (Exception e) {
+                    Log.e("onCreate", "Error loading experiment from http: " + e);
+                    Toast.makeText(parent, "Error loading experiment from http.", Toast.LENGTH_LONG).show();
+                    finish();
+                    return null;
+                }
+            }
+            Toast.makeText(parent, "Unknown scheme.", Toast.LENGTH_LONG).show();
+            return null;
+        } else {
+            Toast.makeText(parent, "No run-intent.", Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
+    private class CopyXMLTask extends AsyncTask<String, Void, Boolean> {
+        private Intent intent;
+        private Activity parent;
+
+        CopyXMLTask(Intent intent, Activity parent) {
+            this.intent = intent;
+            this.parent = parent;
+        }
+
+        protected Boolean doInBackground(String... params) {
+            InputStream input = getXMLInputStream(intent, parent);
+            try {
+                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox";
+                FileOutputStream output = parent.openFileOutput(file, MODE_PRIVATE);
+                byte[] buffer = new byte[1024];
+                int count;
+                while ((count = input.read(buffer)) != -1)
+                    output.write(buffer, 0, count);
+                output.close();
+                input.close();
+            } catch (Exception e) {
+                Toast.makeText(parent, "Error loading the original XML file again.", Toast.LENGTH_LONG).show();
+                Log.e("loadExperiment", "Error loading this experiment to local memory.", e);
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            progress.dismiss();
+            if (result)
+                Toast.makeText(parent, R.string.save_locally_done, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -152,63 +274,10 @@ public class Experiment extends AppCompatActivity {
         }
 
         protected Boolean doInBackground(String... params) {
-            String action = intent.getAction();
-            InputStream input = null;
-            if (action.equals(Intent.ACTION_VIEW)) {
-                String scheme = intent.getScheme();
-                if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) {
-                    AssetManager assetManager = getAssets();
-                    try {
-                        input = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                    } catch (Exception e) {
-                        Log.e("onCreate", "Error loading this experiment from assests: " + e);
-                        Toast.makeText(parent, "Error loading this experiment from assets.", Toast.LENGTH_LONG).show();
-                        finish();
-                        return false;
-                    }
-                } else if (scheme.equals(ContentResolver.SCHEME_FILE )) {
-                    Uri uri = intent.getData();
-                    ContentResolver resolver = getContentResolver();
-                    if (ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
-                        finish();
-                        return false;
-                    }
-                    try {
-                        input = resolver.openInputStream(uri);
-                    } catch (Exception e) {
-                        Log.e("onCreate", "Error loading experiment from file: " + e);
-                        Toast.makeText(parent, "Error loading experiment from file.", Toast.LENGTH_LONG).show();
-                        finish();
-                        return false;
-                    }
-                } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
-                    Uri uri = intent.getData();
-                    ContentResolver resolver = getContentResolver();
-                    try {
-                        input = resolver.openInputStream(uri);
-                    } catch (Exception e) {
-                        Log.e("onCreate", "Error loading experiment from file: " + e);
-                        Toast.makeText(parent, "Error loading experiment from file.", Toast.LENGTH_LONG).show();
-                        finish();
-                        return false;
-                    }
-                } else if (scheme.equals("http") || scheme.equals("https")) {
-                    try {
-                        Uri uri = intent.getData();
-                        URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPath());
-                        input = url.openStream();
-                    } catch (Exception e) {
-                        Log.e("onCreate", "Error loading experiment from http: " + e);
-                        Toast.makeText(parent, "Error loading experiment from http.", Toast.LENGTH_LONG).show();
-                        finish();
-                        return false;
-                    }
-                }
-            } else {
-                Toast.makeText(parent, "No run-intent.", Toast.LENGTH_LONG).show();
+            InputStream input = getXMLInputStream(intent, parent);
+
+            if (input == null)
                 return false;
-            }
 
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input));
@@ -894,12 +963,15 @@ public class Experiment extends AppCompatActivity {
         MenuItem timer = menu.findItem(R.id.timer);
         MenuItem timed_run = menu.findItem(R.id.action_timedRun);
         MenuItem remote = menu.findItem(R.id.action_remoteServer);
+        MenuItem saveLocally = menu.findItem(R.id.action_saveLocally);
 
         timed_play.setVisible(!measuring && cdTimer != null);
         timed_pause.setVisible(measuring && cdTimer != null);
         play.setVisible(!measuring && cdTimer == null);
         pause.setVisible(measuring && cdTimer == null);
         timer.setVisible(timedRun);
+
+        saveLocally.setVisible(!isLocal);
 
         timed_run.setChecked(timedRun);
         remote.setChecked(serverEnabled);
@@ -1050,6 +1122,11 @@ public class Experiment extends AppCompatActivity {
             AlertDialog dialog = builder.create();
             dialog.show();
             return true;
+        }
+
+        if (id == R.id.action_saveLocally) {
+            progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+            new CopyXMLTask(intent, this).execute();
         }
 
         return super.onOptionsItemSelected(item);
