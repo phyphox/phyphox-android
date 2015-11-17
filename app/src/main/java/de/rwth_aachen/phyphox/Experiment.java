@@ -25,6 +25,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
@@ -57,9 +59,6 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,10 +68,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 
-//TODO Correctly use action bar as "up" navigation even when experiment was loaded externally. Also: Update main list if experiment has been added
 //TODO Clean-up loading-code and make it more error-proof (Especially: Get error messages to main thread as they cannot be displayed in second thread)
-//TODO Asynchronous rights management
-//TODO Fix crash when switching away from an experiment to another app
 //TODO Raw-Experiment (Select inputs, buffer length and aquisition rate)
 //TODO Translation of Experiment-Texts
 //TODO Sonar needs fine-tuning
@@ -89,6 +85,7 @@ public class Experiment extends AppCompatActivity {
     boolean measuring = false;
     boolean remoteIntentMeasuring = false;
     boolean updateState = false;
+    boolean loadCompleted = false;
     boolean shutdown = false;
     boolean timedRun = false;
     double timedRunStartDelay = 0.;
@@ -137,7 +134,7 @@ public class Experiment extends AppCompatActivity {
     ProgressDialog progress;
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
                 this.recreate();
@@ -145,8 +142,7 @@ public class Experiment extends AppCompatActivity {
                 finish();
                 startActivity(intent);
             }
-        } else
-            finish();
+        }
     }
 
     InputStream getXMLInputStream(Intent intent, Activity parent) {
@@ -255,8 +251,14 @@ public class Experiment extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean result) {
             progress.dismiss();
-            if (result)
+            if (result) {
                 Toast.makeText(parent, R.string.save_locally_done, Toast.LENGTH_LONG).show();
+                Intent upIntent = NavUtils.getParentActivityIntent(parent);
+                TaskStackBuilder.create(parent)
+                           .addNextIntent(upIntent)
+                           .startActivities();
+                finish();
+            }
         }
     }
 
@@ -852,22 +854,28 @@ public class Experiment extends AppCompatActivity {
                 ((TextView) findViewById(R.id.titleText)).setText(title);
 
                 if (savedInstanceState != null) {
-                    serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false);
-                    timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false);
-                    timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY);
-                    timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY);
                     Vector<dataBuffer> oldData = (Vector<dataBuffer>)savedInstanceState.getSerializable(STATE_DATA_BUFFERS);
-                    for (int i = 0; i < dataBuffers.size(); i++) {
-                        dataBuffers.get(i).clear();
-                        Iterator it = oldData.get(i).getIterator();
-                        while (it.hasNext())
-                            dataBuffers.get(i).append((double)it.next());
+                    if (oldData != null) {
+                        serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false);
+                        timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false);
+                        timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY);
+                        timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY);
+                        for (int i = 0; i < dataBuffers.size() && i < oldData.size(); i++) {
+                            if (oldData.get(i) == null)
+                                continue;
+                            dataBuffers.get(i).clear();
+                            Iterator it = oldData.get(i).getIterator();
+                            while (it.hasNext())
+                                dataBuffers.get(i).append((double) it.next());
+                        }
+                        currentView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
+                        viewSelector.setSelection(currentView);
                     }
-                    currentView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
-                    viewSelector.setSelection(currentView);
                 }
                 setupView(viewSelector.getSelectedItemPosition());
                 updateViewsHandler.postDelayed(updateViews, 40);
+
+                loadCompleted = true;
 
                 ContextThemeWrapper ctw = new ContextThemeWrapper( parent, R.style.AppTheme);
                 AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
@@ -894,8 +902,10 @@ public class Experiment extends AppCompatActivity {
                 if (!skipStartInfo)
                     adb.show();
 
-            } else
-                finish();
+            } else {
+                //finish();
+                //TODO create blocked app with error message
+            }
         }
     }
 
@@ -995,7 +1005,7 @@ public class Experiment extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == android.R.id.home) {
-            Intent upIntent = new Intent(this, ExperimentList.class);
+            Intent upIntent = NavUtils.getParentActivityIntent(this);
             if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
                 TaskStackBuilder.create(this)
                         .addNextIntent(upIntent)
@@ -1376,12 +1386,20 @@ public class Experiment extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(STATE_CURRENT_VIEW, currentView);
-        outState.putSerializable(STATE_DATA_BUFFERS, dataBuffers);
-        outState.putBoolean(STATE_REMOTE_SERVER, serverEnabled);
-        outState.putBoolean(STATE_TIMED_RUN, timedRun);
-        outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay);
-        outState.putDouble(STATE_TIMED_RUN_STOP_DELAY, timedRunStopDelay);
+        if (!loadCompleted)
+            return;
+        try {
+            outState.putInt(STATE_CURRENT_VIEW, currentView);
+            synchronized (dataBuffers) {
+                outState.putSerializable(STATE_DATA_BUFFERS, dataBuffers);
+            }
+            outState.putBoolean(STATE_REMOTE_SERVER, serverEnabled);
+            outState.putBoolean(STATE_TIMED_RUN, timedRun);
+            outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay);
+            outState.putDouble(STATE_TIMED_RUN_STOP_DELAY, timedRunStopDelay);
+        } catch (Exception e) {
+            outState.clear();
+        }
     }
 
 }

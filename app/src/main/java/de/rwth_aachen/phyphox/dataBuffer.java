@@ -2,11 +2,12 @@ package de.rwth_aachen.phyphox;
 
 import android.util.Log;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class dataBuffer {
+public class dataBuffer implements Serializable {
     public String name;
     private BlockingQueue<Double> buffer;
     public int size;
