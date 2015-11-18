@@ -18,7 +18,6 @@
         android:paddingLeft="@dimen/activity_horizontal_padding"
         android:paddingRight="@dimen/activity_horizontal_padding"
         android:paddingTop="@dimen/activity_vertical_padding"
-        android:paddingBottom="1dp"
         android:textSize="@dimen/headline_font"
         android:textStyle="bold"
         android:clickable="false"
@@ -29,7 +28,8 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginRight="@dimen/activity_horizontal_margin" />
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:paddingBottom="@dimen/activity_vertical_padding" />
 
     <Spinner
         android:layout_width="wrap_content"
@@ -40,7 +40,8 @@
         android:layout_alignRight="@+id/titleText"
         android:layout_alignEnd="@+id/titleText"
         android:layout_alignLeft="@+id/titleText"
-        android:layout_alignStart="@+id/titleText" />
+        android:layout_alignStart="@+id/titleText"
+        android:gravity="center_vertical" />
 
     <ScrollView
         android:layout_width="wrap_content"

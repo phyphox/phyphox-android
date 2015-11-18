@@ -1,8 +1,5 @@
 package de.rwth_aachen.phyphox;
 
-//TODO Matlab format
-//TODO Excel format
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -12,8 +9,19 @@ import android.support.v4.app.ShareCompat;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
@@ -50,7 +58,7 @@ public class dataExport {
 
         @Override
         protected File export (Vector<exportSet> sets, File exportPath) {
-            File file = new File(exportPath, "/phyPhox.zip");
+            File file = new File(exportPath, "/phyphox.zip");
 
             try {
                 FileOutputStream stream = new FileOutputStream(file);
@@ -103,7 +111,75 @@ public class dataExport {
         }
     }
 
-    public final exportFormat[] exportFormats = {new csvFormat(), new csvFormat("\t", "Tab-separated values (CSV)")};
+    protected class excelFormat extends exportFormat {
+        excelFormat() {
+
+        }
+
+        @Override
+        protected String getName() {
+            return "Excel";
+        }
+
+        @Override
+        protected File export (Vector<exportSet> sets, File exportPath) {
+            Workbook wb = new HSSFWorkbook();
+            File file = new File(exportPath, "/phyphox.xls");
+
+            try {
+                for (exportSet set : sets) {
+                    Sheet sheet = wb.createSheet(set.name);
+
+                    Font font= wb.createFont();
+                    font.setBold(true);
+
+                    CellStyle cs = wb.createCellStyle();
+                    cs.setFont(font);
+                    Row row = sheet.createRow(0);
+                    for (int j = 0; j < set.data.length; j++) {
+                        Cell c = row.createCell(j);
+                        c.setCellValue(set.sources.get(j).name);
+                        c.setCellStyle(cs);
+                    }
+
+
+                    for (int i = 0; i < set.data[0].length; i++) {
+                        row = sheet.createRow(i+1);
+                        for (int j = 0; j < set.data.length; j++) {
+                            Cell c = row.createCell(j);
+                            if (i < set.data[j].length)
+                                c.setCellValue(set.data[j][i]);
+                            else
+                                c.setCellValue("NaN");
+                        }
+                    }
+
+                    FileOutputStream os = null;
+                    try {
+                        os = new FileOutputStream(file);
+                        wb.write(os);
+                    } catch (Exception e) {
+                        Log.d("excelExport", "Unhandled exception during write.", e);
+                    } finally {
+                        if (os != null)
+                            os.close();
+                    }
+                }
+
+            } catch (Exception e) {
+                Log.d("excelExport", "Unhandled exception.", e);
+            }
+
+            return file;
+        }
+
+        @Override
+        protected String getType () {
+            return "application/vnd.ms-excel";
+        }
+    }
+
+    public final exportFormat[] exportFormats = {new csvFormat(), new csvFormat("\t", "Tab-separated values (CSV)"), new excelFormat()};
 
     public class exportSet {
         String name;

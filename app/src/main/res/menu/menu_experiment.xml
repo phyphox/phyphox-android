@@ -11,14 +11,17 @@
         android:orderInCategory="4" app:showAsAction="always" />
     <item android:id="@+id/timer" android:title="0s"
         android:orderInCategory="5" app:showAsAction="always" />
+    <item android:id="@+id/action_description" android:title="@string/show_description" android:icon="@drawable/info"
+        android:orderInCategory="30" app:showAsAction="ifRoom" />
     <item android:id="@+id/action_export" android:title="@string/export" android:icon="@drawable/download"
         android:orderInCategory="50" app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_share" android:title="@string/share" android:icon="@drawable/share"
+        android:orderInCategory="60" app:showAsAction="ifRoom" />
     <item android:id="@+id/action_timedRun" android:title="@string/timedRun" android:icon="@drawable/timer"
         android:orderInCategory="70" app:showAsAction="ifRoom" android:checkable="true"/>
     <item android:id="@+id/action_remoteServer" android:title="@string/remoteServer"
         android:orderInCategory="100" app:showAsAction="ifRoom" android:checkable="true" />
-    <item android:id="@+id/action_description" android:title="@string/show_description"
-        android:orderInCategory="300" app:showAsAction="ifRoom" />
+
     <item android:id="@+id/action_saveLocally" android:title="@string/save_locally" android:icon="@drawable/save_locally"
         android:orderInCategory="400" app:showAsAction="ifRoom" />
 </menu>

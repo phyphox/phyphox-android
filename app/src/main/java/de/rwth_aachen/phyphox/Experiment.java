@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -29,9 +30,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
+import android.support.v4.app.ShareCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -56,6 +59,7 @@ import android.widget.Toast;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -1093,6 +1097,37 @@ public class Experiment extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.action_share) {
+            View screenView = findViewById(R.id.rootLayout).getRootView();
+            screenView.setDrawingCacheEnabled(true);
+            Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
+            screenView.setDrawingCacheEnabled(false);
+
+            File file = new File(this.getCacheDir(), "/phyphox.png");
+            try {
+                FileOutputStream out = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 85, out);
+                out.flush();
+                out.close();
+
+                final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
+                grantUriPermission(getPackageName(), uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                final Intent intent = ShareCompat.IntentBuilder.from(this)
+                        .setType("image/png")
+                        .setSubject(getString(R.string.share_subject))
+                        .setStream(uri)
+                        .setChooserTitle(R.string.share_pick_share)
+                        .createChooserIntent()
+                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                startActivity(intent);
+            } catch (Exception e) {
+                Log.e("action_share", "Unhandled exception", e);
+            }
+        }
+
         if (id == R.id.action_remoteServer) {
             if (item.isChecked()) {
                 item.setChecked(false);
@@ -1401,5 +1436,6 @@ public class Experiment extends AppCompatActivity {
             outState.clear();
         }
     }
+
 
 }

@@ -12,6 +12,7 @@
     <dimen name="headline_font">22sp</dimen>
     <dimen name="graph_font">14sp</dimen>
     <dimen name="credit_font">13sp</dimen>
+    <dimen name="credit_font_main">16sp</dimen>
 
 
     <dimen name="expElementWidth">250dp</dimen>

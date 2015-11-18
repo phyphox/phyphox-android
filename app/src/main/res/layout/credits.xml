@@ -36,14 +36,14 @@
                 android:layout_height="wrap_content"
                 android:text="@string/creditsRWTH"
                 android:id="@+id/creditRWTH"
-                android:textSize="@dimen/credit_font"/>
+                android:textSize="@dimen/credit_font_main"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/creditsNames"
                 android:id="@+id/creditNames"
-                android:textSize="@dimen/credit_font"
+                android:textSize="@dimen/credit_font_main"
                 android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:layout_marginBottom="@dimen/activity_vertical_margin"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
@@ -59,6 +59,18 @@
                 android:text="@string/creditsLibs"
                 android:id="@+id/creditLibs"
                 android:textSize="@dimen/credit_font"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/creditsApache"
+                android:id="@+id/creditsApache"
+                android:textSize="@dimen/credit_font"
+                android:layout_alignBottom="@+id/scrollView2"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="@dimen/activity_vertical_margin" />
         </LinearLayout>
     </ScrollView>
+
 </RelativeLayout>

@@ -63,7 +63,7 @@
         </activity>
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="com.dicon.phyphox.exportProvider"
+            android:authorities="de.rwth_aachen.phyphox.exportProvider"
             android:exported="false"
             android:grantUriPermissions="true">
 

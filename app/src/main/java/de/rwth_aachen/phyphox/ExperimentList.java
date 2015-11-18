@@ -473,6 +473,8 @@ public class ExperimentList extends AppCompatActivity {
                 View creditLayout = creditsInflater.inflate(R.layout.credits, null);
                 TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
                 tv.setText(Html.fromHtml(res.getString(R.string.creditsNames)));
+                TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
+                tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
                 credits.setView(creditLayout);
                 credits.setTitle(R.string.credits);
                 credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
