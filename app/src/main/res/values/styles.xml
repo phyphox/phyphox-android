@@ -9,11 +9,16 @@
 
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
         <item name="android:textSize">@dimen/font</item>
+        <item name="buttonStyle">@style/phyphox_button</item>
     </style>
 
     <style name="phyphox">
         <item name="android:textColor">@color/main</item>
         <item name="android:background">@color/background</item>
+    </style>
+
+    <style name="phyphox_button" parent="Widget.AppCompat.Button">
+        <item name="android:textAllCaps">false</item>
     </style>
 
     <style name="SpinnerItem" parent="@android:style/Widget.TextView.SpinnerItem">

@@ -3,6 +3,13 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_experiment">phyphox</string>
 
+    <string name="newExperiment">Add simple experiment</string>
+    <string name="newExperimentPhyphoxInfo">Visit phyphox.com to create more advanced experiments including data analysis and share them with colleagues, students and friends.</string>
+    <string name="newExperimentInputTitle">Title</string>
+    <string name="newExperimentInputBufferSize">Buffer size</string>
+    <string name="newExperimentInputRate">Sensor rate</string>
+    <string name="newExperimentInputSensors">Active sensors</string>
+
     <string name="warning">Warning</string>
     <string name="donotshowagain">Do not show again</string>
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
@@ -46,7 +53,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="sensorNotAvailableWarningTitle">Sensor not available</string>
     <string name="sensorNotAvailableWarningText1">The sensor</string>
-    <string name="sensorNotAvailableWarningText2">is not available. Usually this means, that your device does not have this type of sensor, but it might also be blocked by some other process. Therefore, the experiment might not work as expected.</string>
+    <string name="sensorNotAvailableWarningText2">is not available. Usually this means, that your device simply does not have this type of sensor.</string>
 
     <string name="ok">OK</string>
     <string name="close">Close</string>

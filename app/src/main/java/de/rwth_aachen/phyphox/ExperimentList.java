@@ -27,6 +27,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.AttributeSet;
 import android.util.Base64;
+import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.ContextThemeWrapper;
@@ -37,20 +38,24 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 import java.util.Vector;
 
 public class ExperimentList extends AppCompatActivity {
@@ -201,13 +206,7 @@ public class ExperimentList extends AppCompatActivity {
                                 .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
                                         deleteFile(xmlFiles.get(position));
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-                                        parentActivity.recreate();
-                                        else {
-                                            Intent intent = parentActivity.getIntent();
-                                            finish();
-                                            startActivity(intent);
-                                        }
+                                        loadExperimentList();
                                     }
                                 })
                                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -406,13 +405,9 @@ public class ExperimentList extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_experiment_list);
-
-        res = getResources();
-
+    private void loadExperimentList() {
+        categories.clear();
+        ((LinearLayout)findViewById(R.id.experimentList)).removeAllViews();
         try {
             AssetManager assetManager = getAssets();
             final String[] experimentXMLs = assetManager.list("experiments");
@@ -439,6 +434,20 @@ public class ExperimentList extends AppCompatActivity {
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadExperimentList();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_experiment_list);
+
+        res = getResources();
 
         ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.AppTheme);
         AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
@@ -487,6 +496,192 @@ public class ExperimentList extends AppCompatActivity {
 
         ImageView creditsV = (ImageView) findViewById(R.id.credits);
         creditsV.setOnClickListener(ocl);
+
+        final Context c = this;
+
+        Button.OnClickListener neocl = new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder neDialog = new AlertDialog.Builder(ExperimentList.this);
+                LayoutInflater neInflater = LayoutInflater.from(ExperimentList.this);
+                View neLayout = neInflater.inflate(R.layout.new_experiment, null);
+                final EditText neTitle = (EditText) neLayout.findViewById(R.id.neTitle);
+                final EditText neBuffer = (EditText) neLayout.findViewById(R.id.neBuffer);
+                final SeekBar neRate = (SeekBar) neLayout.findViewById(R.id.neRate);
+                final CheckBox neAccelerometer = (CheckBox) neLayout.findViewById(R.id.neAccelerometer);
+                final CheckBox neGyroscope = (CheckBox) neLayout.findViewById(R.id.neGyroscope);
+                final CheckBox neLight = (CheckBox) neLayout.findViewById(R.id.neLight);
+                final CheckBox neLinearAcceleration = (CheckBox) neLayout.findViewById(R.id.neLinearAcceleration);
+                final CheckBox neMagneticField = (CheckBox) neLayout.findViewById(R.id.neMagneticField);
+                final CheckBox nePressure = (CheckBox) neLayout.findViewById(R.id.nePressure);
+                neDialog.setView(neLayout);
+                neDialog.setTitle(R.string.newExperiment);
+                neDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        String title = neTitle.getText().toString();
+                        int bufferSize;
+                        try {
+                            bufferSize = Integer.valueOf(neBuffer.getText().toString());
+                        } catch (Exception e) {
+                            bufferSize = 0;
+                        }
+                        if (bufferSize <= 0 || bufferSize > 1e6) {
+                            bufferSize = 500;
+                            Toast.makeText(ExperimentList.this, "Invaid buffer size. Set to default of 500.", Toast.LENGTH_LONG).show();
+                        }
+                        String rate;
+                        switch(neRate.getProgress()) {
+                            case 0: rate = "ui";
+                                break;
+                            case 1: rate = "normal";
+                                break;
+                            case 2: rate = "game";
+                                break;
+                            default: rate = "fastest";
+                                break;
+                        }
+                        boolean acc = neAccelerometer.isChecked();
+                        boolean gyr = neGyroscope.isChecked();
+                        boolean light = neLight.isChecked();
+                        boolean lin = neLinearAcceleration.isChecked();
+                        boolean mag = neMagneticField.isChecked();
+                        boolean pressure = nePressure.isChecked();
+                        if (!(acc || gyr || light || lin || mag || pressure)) {
+                            acc = true;
+                            Toast.makeText(ExperimentList.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
+                        }
+
+                        String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox";
+                        try {
+                            FileOutputStream output = c.openFileOutput(file, MODE_PRIVATE);
+                            output.write("<phyphox version=\"1.0\">".getBytes());
+                            output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());
+                            output.write("<category>Raw Sensors</category>".getBytes());
+                            output.write("<description>Get raw data from selected sensors.</description>".getBytes());
+                            output.write("<input>".getBytes());
+                            if (acc)
+                                output.write(("<sensor type=\"accelerometer\" outputX=\"accX\" outputY=\"accY\" outputZ=\"accZ\" outputT=\"acc_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                            if (gyr)
+                                output.write(("<sensor type=\"gyroscope\" outputX=\"gyrX\" outputY=\"gyrY\" outputZ=\"gyrZ\" outputT=\"gyr_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                            if (light)
+                                output.write(("<sensor type=\"light\" outputX=\"light\" outputT=\"light_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                            if (lin)
+                                output.write(("<sensor type=\"linear_acceleration\" outputX=\"linX\" outputY=\"linY\" outputZ=\"linZ\" outputT=\"lin_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                            if (mag)
+                                output.write(("<sensor type=\"magnetic_field\" outputX=\"magX\" outputY=\"magY\" outputZ=\"magZ\" outputT=\"mag_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                            if (pressure)
+                                output.write(("<sensor type=\"pressure\" outputX=\"pressure\" outputT=\"pressure_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                            output.write("</input>".getBytes());
+                            output.write("<views>".getBytes());
+                            if (acc) {
+                                output.write("<view name=\"Accelerometer\">".getBytes());
+                                output.write(("<graph label=\"Acceleration X\" inputX=\"acc_time\" inputY=\"accX\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Acceleration Y\" inputX=\"acc_time\" inputY=\"accY\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Acceleration Z\" inputX=\"acc_time\" inputY=\"accZ\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                                output.write("</view>".getBytes());
+                            }
+                            if (gyr) {
+                                output.write("<view name=\"Gyroscope\">".getBytes());
+                                output.write(("<graph label=\"Gyroscope X\" inputX=\"gyr_time\" inputY=\"gyrX\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Gyroscope Y\" inputX=\"gyr_time\" inputY=\"gyrY\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Gyroscope Z\" inputX=\"gyr_time\" inputY=\"gyrZ\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\" />").getBytes());
+                                output.write("</view>".getBytes());
+                            }
+                            if (light) {
+                                output.write("<view name=\"Light\">".getBytes());
+                                output.write(("<graph label=\"Illumination\" inputX=\"light_time\" inputY=\"light\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\" />").getBytes());
+                                output.write("</view>".getBytes());
+                            }
+                            if (lin) {
+                                output.write("<view name=\"Linear Acceleration\">".getBytes());
+                                output.write(("<graph label=\"Linear Acceleration X\" inputX=\"lin_time\" inputY=\"linX\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Linear Acceleration Y\" inputX=\"lin_time\" inputY=\"linY\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Linear Acceleration Z\" inputX=\"lin_time\" inputY=\"linZ\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                                output.write("</view>".getBytes());
+                            }
+                            if (mag) {
+                                output.write("<view name=\"Magnetometer\">".getBytes());
+                                output.write(("<graph label=\"Magnetic field X\" inputX=\"mag_time\" inputY=\"magX\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Magnetic field Y\" inputX=\"mag_time\" inputY=\"magY\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\" />").getBytes());
+                                output.write(("<graph label=\"Magnetic field Z\" inputX=\"mag_time\" inputY=\"magZ\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\" />").getBytes());
+                                output.write("</view>".getBytes());
+                            }
+                            if (pressure) {
+                                output.write("<view name=\"Pressure\">".getBytes());
+                                output.write(("<graph label=\"Pressure\" inputX=\"pressure_time\" inputY=\"pressure\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\" />").getBytes());
+                                output.write("</view>".getBytes());
+                            }
+                            output.write("</views>".getBytes());
+                            output.write("<export>".getBytes());
+                            if (acc) {
+                                output.write("<set name=\"Accelerometer\">".getBytes());
+                                output.write("<data name=\"Time (s)\" source=\"acc_time\" />".getBytes());
+                                output.write("<data name=\"Acceleration x (m/s^2)\" source=\"accX\" />".getBytes());
+                                output.write("<data name=\"Acceleration y (m/s^2)\" source=\"accY\" />".getBytes());
+                                output.write("<data name=\"Acceleration z (m/s^2)\" source=\"accZ\" />".getBytes());
+                                output.write("</set>".getBytes());
+                            }
+                            if (gyr) {
+                                output.write("<set name=\"Gyroscope\">".getBytes());
+                                output.write("<data name=\"Time (s)\" source=\"gyr_time\" />".getBytes());
+                                output.write("<data name=\"Gyroscope x (rad/s)\" source=\"gyrX\" />".getBytes());
+                                output.write("<data name=\"Gyroscope y (rad/s)\" source=\"gyrY\" />".getBytes());
+                                output.write("<data name=\"Gyroscope z (rad/s)\" source=\"gyrZ\" />".getBytes());
+                                output.write("</set>".getBytes());
+                            }
+                            if (light) {
+                                output.write("<set name=\"Light\">".getBytes());
+                                output.write("<data name=\"Time (s)\" source=\"light_time\" />".getBytes());
+                                output.write("<data name=\"Illumination (lx)\" source=\"light\" />".getBytes());
+                                output.write("</set>".getBytes());
+                            }
+                            if (lin) {
+                                output.write("<set name=\"Linear Acceleration\">".getBytes());
+                                output.write("<data name=\"Time (s)\" source=\"lin_time\" />".getBytes());
+                                output.write("<data name=\"Linear Acceleration x (m/s^2)\" source=\"linX\" />".getBytes());
+                                output.write("<data name=\"Linear Acceleration y (m/s^2)\" source=\"linY\" />".getBytes());
+                                output.write("<data name=\"Linear Acceleration z (m/s^2)\" source=\"linZ\" />".getBytes());
+                                output.write("</set>".getBytes());
+                            }
+                            if (mag) {
+                                output.write("<set name=\"Magnetometer\">".getBytes());
+                                output.write("<data name=\"Time (s)\" source=\"mag_time\" />".getBytes());
+                                output.write("<data name=\"Magnetic field x (µT)\" source=\"magX\" />".getBytes());
+                                output.write("<data name=\"Magnetic field y (µT)\" source=\"magY\" />".getBytes());
+                                output.write("<data name=\"Magnetic field z (µT)\" source=\"magZ\" />".getBytes());
+                                output.write("</set>".getBytes());
+                            }
+                            if (pressure) {
+                                output.write("<set name=\"Pressure\">".getBytes());
+                                output.write("<data name=\"Time (s)\" source=\"pressure_time\" />".getBytes());
+                                output.write("<data name=\"Pressure (hPa)\" source=\"pressure\" />".getBytes());
+                                output.write("</set>".getBytes());
+                            }
+                            output.write("</export>".getBytes());
+                            output.write("</phyphox>".getBytes());
+
+                            output.close();
+
+                            Intent intent = new Intent(c, Experiment.class);
+                            intent.putExtra(EXPERIMENT_XML, file);
+                            intent.putExtra(EXPERIMENT_ISASSET, false);
+                            intent.setAction(Intent.ACTION_VIEW);
+                            c.startActivity(intent);
+                        } catch (Exception e) {
+                            Log.e("newExperiment", "Could not create new experiment.", e);
+                        }
+                    }
+                });
+                neDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+                neDialog.show();
+            }
+        };
+
+        Button newExperimentB = (Button) findViewById(R.id.newExperiment);
+        newExperimentB.setOnClickListener(neocl);
     }
 
 }

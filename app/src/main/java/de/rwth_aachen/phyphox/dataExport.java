@@ -36,6 +36,7 @@ public class dataExport {
         protected abstract String getName();
         protected abstract File export (Vector<exportSet> sets, File exportPath);
         protected abstract String getType();
+        protected abstract String getFilename();
     }
 
     protected class csvFormat extends exportFormat {
@@ -58,7 +59,7 @@ public class dataExport {
 
         @Override
         protected File export (Vector<exportSet> sets, File exportPath) {
-            File file = new File(exportPath, "/phyphox.zip");
+            File file = new File(exportPath, "/"+getFilename());
 
             try {
                 FileOutputStream stream = new FileOutputStream(file);
@@ -109,6 +110,10 @@ public class dataExport {
         protected String getType () {
             return "application/zip";
         }
+        @Override
+        protected String getFilename () {
+            return "phyphox.zip";
+        }
     }
 
     protected class excelFormat extends exportFormat {
@@ -124,7 +129,7 @@ public class dataExport {
         @Override
         protected File export (Vector<exportSet> sets, File exportPath) {
             Workbook wb = new HSSFWorkbook();
-            File file = new File(exportPath, "/phyphox.xls");
+            File file = new File(exportPath, "/"+getFilename());
 
             try {
                 for (exportSet set : sets) {
@@ -176,6 +181,11 @@ public class dataExport {
         @Override
         protected String getType () {
             return "application/vnd.ms-excel";
+        }
+
+        @Override
+        protected String getFilename () {
+            return "phyphox.xlsx";
         }
     }
 

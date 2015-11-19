@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+@SuppressWarnings( "deprecation" )
 public class remoteServer extends Thread {
 
     private String title;
@@ -195,11 +196,11 @@ public class remoteServer extends Thread {
                         sb.append("</option>\n");
                     }
                 } else if (line.contains("<!-- [[exportSetSelectors]] -->")) {
-                    for (int i = 0; i < callActivity.exporter.exportSets.size(); i++)
-                        sb.append("<div class=\"setSelector\"><input type=\"checkbox\" id=\"set"+i+"\" name=\"set"+i+"\" /><label for=\"set"+i+"\">"+callActivity.exporter.exportSets.get(i).name+"</label></div>\n");
+                    for (int i = 0; i < callActivity.experiment.exporter.exportSets.size(); i++)
+                        sb.append("<div class=\"setSelector\"><input type=\"checkbox\" id=\"set"+i+"\" name=\"set"+i+"\" /><label for=\"set"+i+"\">"+callActivity.experiment.exporter.exportSets.get(i).name+"</label></div>\n");
                 } else if (line.contains("<!-- [[exportFormatOptions]] -->")) {
-                    for (int i = 0; i < callActivity.exporter.exportFormats.length; i++)
-                        sb.append("<option value=\""+i+"\">"+callActivity.exporter.exportFormats[i].getName()+"</option>\n");
+                    for (int i = 0; i < callActivity.experiment.exporter.exportFormats.length; i++)
+                        sb.append("<option value=\""+i+"\">"+callActivity.experiment.exporter.exportFormats[i].getName()+"</option>\n");
                 } else {
                     sb.append(line);
                     sb.append("\n");
@@ -611,7 +612,7 @@ public class remoteServer extends Thread {
             HttpEntity httpEntity;
 
             int formatInt = Integer.parseInt(format);
-            if (formatInt < 0 || formatInt >= callActivity.exporter.exportFormats.length) {
+            if (formatInt < 0 || formatInt >= callActivity.experiment.exporter.exportFormats.length) {
                 final String result = "{\"error\" = \"Format out of range.\"}";
                 httpEntity = new EntityTemplate(
                         new ContentProducer() {
@@ -628,14 +629,14 @@ public class remoteServer extends Thread {
                 response.setHeader("Content-Type", "application/json");
                 response.setEntity(httpEntity);
             } else {
-                String type = callActivity.exporter.exportFormats[formatInt].getType();
+                String type = callActivity.experiment.exporter.exportFormats[formatInt].getType();
                 ArrayList<Integer> selectedItems = new ArrayList<>();
-                for (int i = 0; i < callActivity.exporter.exportSets.size(); i++) {
+                for (int i = 0; i < callActivity.experiment.exporter.exportSets.size(); i++) {
                     if (uri.getQueryParameter("set"+i) != null) {
                         selectedItems.add(i);
                     }
                 }
-                final File exportFile = callActivity.exporter.exportDirect(callActivity.dataBuffers, callActivity.dataMap, selectedItems, callActivity.exporter.exportFormats[formatInt]);
+                final File exportFile = callActivity.experiment.exporter.exportDirect(callActivity.experiment.dataBuffers, callActivity.experiment.dataMap, selectedItems, callActivity.experiment.exporter.exportFormats[formatInt]);
                 httpEntity = new EntityTemplate(
                         new ContentProducer() {
                             public void writeTo(final OutputStream outstream)
@@ -652,6 +653,7 @@ public class remoteServer extends Thread {
                             }
                         });
                 response.setHeader("Content-Type", type);
+                response.setHeader("Content-Disposition", "attachment; filename="+callActivity.experiment.exporter.exportFormats[formatInt].getFilename());
             }
 
             response.setEntity(httpEntity);
