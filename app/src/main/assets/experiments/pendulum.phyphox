@@ -343,14 +343,14 @@
         <autocorrelation input1="gyrZ" input2="gyr_time" output1="autocorrelation_z" output2="autoco_t3" mint="0" maxt="2.5" />
         <add input1="autocorrelation_x" input2="autocorrelation_y" input3="autocorrelation_z" output1="autocorrelation" />
         <threshold input2="autoco_t" input1="autocorrelation" falling="true" threshold="0" output1="t0" />
-        <multiply input1="t0" input2="2" type2="value" output1="dt" />
+        <multiply input1="t0" input2="2" output1="dt" />
         <add input1="t0" input2="dt" output1="t1" />
         <add input1="t1" input2="dt" output1="t2" />
         <rangefilter input1="autoco_t" input2="autocorrelation" min1="t1" max1="t2" output1="search_t" output2="search_y" />
         <max input1="search_y" input2="search_t" output1="max" output2="period" buffer="200" />
-        <divide input1="1" type1="value" input2="period" output1="frequency" />
-        <multiply input1="6.283185307" type1="value" input2="frequency" output1="2pif" />
-        <multiply input1="2pif" input2="2pif" input3="length" output1="g" />
+        <divide input1="1" input2="period" output1="frequency" />
+        <multiply input1="6.283185307" input2="frequency" output1="pi2f" />
+        <multiply input1="pi2f" input2="pi2f" input3="length" output1="g" />
     </analysis>
     <export>
         <set name="Raw Data">

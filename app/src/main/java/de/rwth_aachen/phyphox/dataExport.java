@@ -30,7 +30,7 @@ import java.util.zip.ZipOutputStream;
 
 public class dataExport {
     public Vector<exportSet> exportSets = new Vector<>();
-    protected Activity c;
+    private phyphoxExperiment experiment;
 
     protected abstract class exportFormat {
         protected abstract String getName();
@@ -225,24 +225,24 @@ public class dataExport {
         }
     }
 
-    dataExport(Activity c) {
-        this.c = c;
+    dataExport(phyphoxExperiment experiment) {
+        this.experiment = experiment;
     }
 
     public void addSet(exportSet set) {
         this.exportSets.add(set);
     }
 
-    public void export(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap) {
+    public void export(Activity c) {
 
         for (int i = 0; i < exportSets.size(); i++) {
-            exportSets.get(i).getData(dataBuffers, dataMap);
+            exportSets.get(i).getData(experiment.dataBuffers, experiment.dataMap);
         }
 
-        showDialog(exportSets);
+        showDialog(exportSets, c);
     }
 
-    protected void showDialog(final Vector<exportSet> exportSets) {
+    protected void showDialog(final Vector<exportSet> exportSets, final Activity c) {
         final ArrayList<Integer> mSelectedItems = new ArrayList<>();
         AlertDialog.Builder builder = new AlertDialog.Builder(c);
 
@@ -274,7 +274,7 @@ public class dataExport {
                             if (mSelectedItems.contains(i))
                                 chosenSets.add(exportSets.get(i));
                         }
-                        showFormatDialog(chosenSets);
+                        showFormatDialog(chosenSets, c);
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -290,7 +290,7 @@ public class dataExport {
         public int value;
     }
 
-    protected void showFormatDialog(final Vector<exportSet> chosenSets) {
+    protected void showFormatDialog(final Vector<exportSet> chosenSets, final Activity c) {
         final CharSequence[] options = new CharSequence[exportFormats.length];
 
         final mutableInteger selected = new mutableInteger();
@@ -337,15 +337,15 @@ public class dataExport {
         builder.create().show();
     }
 
-    protected File exportDirect(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, ArrayList<Integer> selectedItems, exportFormat format) {
+    protected File exportDirect(ArrayList<Integer> selectedItems, exportFormat format, File cacheDir) {
         Vector<exportSet> chosenSets = new Vector<>();
         for (int i = 0; i < exportSets.size(); i++) {
             if (selectedItems.contains(i)) {
-                exportSets.get(i).getData(dataBuffers, dataMap);
+                exportSets.get(i).getData(experiment.dataBuffers, experiment.dataMap);
                 chosenSets.add(exportSets.get(i));
             }
         }
-        return format.export(chosenSets, c.getCacheDir());
+        return format.export(chosenSets, cacheDir);
     }
 
 }

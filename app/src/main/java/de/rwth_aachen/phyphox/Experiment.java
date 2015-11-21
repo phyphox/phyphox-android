@@ -83,7 +83,7 @@ public class Experiment extends AppCompatActivity {
 
     long analysisStart = 0;
 
-    phyphoxFile.phyphoxExperiment experiment;
+    phyphoxExperiment experiment;
 
     private int currentView;
 
@@ -167,7 +167,7 @@ public class Experiment extends AppCompatActivity {
         currentView = newView;
     }
 
-    public void onExperimentLoaded(phyphoxFile.phyphoxExperiment experiment) {
+    public void onExperimentLoaded(phyphoxExperiment experiment) {
         progress.dismiss();
         this.experiment = experiment;
         if (experiment.loaded) {
@@ -288,7 +288,7 @@ public class Experiment extends AppCompatActivity {
     private void startRemoteServer() {
         if (remote != null || !serverEnabled)
             return;
-        remote = new remoteServer(experiment.experimentViews, experiment.dataBuffers, experiment.dataMap, getResources(), experiment.title, this);
+        remote = new remoteServer(experiment, this);
         remote.start();
         Toast.makeText(this, "Remote access server started.", Toast.LENGTH_LONG).show();
     }
@@ -434,7 +434,7 @@ public class Experiment extends AppCompatActivity {
         }
 
         if (id == R.id.action_export) {
-            experiment.exporter.export(experiment.dataBuffers, experiment.dataMap);
+            experiment.export(this);
             return true;
         }
 
@@ -555,84 +555,16 @@ public class Experiment extends AppCompatActivity {
 
                 synchronized (experiment.dataBuffers) {
                     if (!remoteInput) {
-                        for (dataBuffer buffer : experiment.dataBuffers) {
-                            for (expView.expViewElement eve : experiment.experimentViews.elementAt(currentView).elements) {
-                                try {
-                                    if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) {
-                                        Double v = eve.getValue();
-                                        if (!Double.isNaN(v))
-                                            buffer.append(v);
-                                    }
-                                } catch (Exception e) {
-                                    Log.e("updateViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
-                                }
-                            }
-                        }
+                        experiment.handleInputViews(currentView);
                     } else
                         remoteInput = false;
 
                     if (measuring && System.currentTimeMillis() - analysisStart > experiment.analysisPeriod * 1000) {
-                        if (experiment.audioRecord != null) {
-                            experiment.audioRecord.stop();
-                            int bytesRead = 1;
-                            short[] buffer = new short[1024];
-                            while (bytesRead > 0) {
-                                bytesRead = experiment.audioRecord.read(buffer, 0, 1024);
-                                experiment.dataBuffers.get(experiment.dataMap.get(experiment.micOutput)).append(buffer, bytesRead);
-                            }
-                        }
-                        for (Analysis.analysisModule mod : experiment.analysis) {
-                            try {
-                                mod.updateIfNotStatic();
-                            } catch (Exception e) {
-                                Log.e("updateViews", "Unhandled exception in analysis module " + mod.toString() + ".", e);
-                            }
-                        }
-                        if (experiment.audioTrack != null) {
-                            if (experiment.audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
-                                experiment.audioTrack.stop();
-                            if (!(experiment.audioTrack.getState() == AudioTrack.STATE_INITIALIZED && experiment.dataBuffers.get(experiment.dataMap.get(experiment.audioSource)).isStatic)) {
-                                short[] data = experiment.dataBuffers.get(experiment.dataMap.get(experiment.audioSource)).getShortArray();
-                                int result = experiment.audioTrack.write(data, 0, experiment.audioBufferSize);
-                                if (result < experiment.audioBufferSize)
-                                    Log.d("updateViews", "Unexpected audio write result: " + result + " written / " + experiment.audioBufferSize + " buffer size");
-                                experiment.audioTrack.reloadStaticData();
-                            } else
-                                experiment.audioTrack.setPlaybackHeadPosition(0);
-                        }
-                        if (experiment.audioRecord != null) {
-                            experiment.audioRecord.startRecording();
-                        }
-                        if (experiment.audioTrack != null) {
-                            experiment.audioTrack.play();
-                        }
+                        experiment.processAnalysis();
                         analysisStart = System.currentTimeMillis();
                     }
                 }
-                for (dataBuffer buffer : experiment.dataBuffers) {
-                    for (expView.expViewElement eve : experiment.experimentViews.elementAt(currentView).elements) {
-                        try {
-                            if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
-                                eve.setValue(buffer.value);
-                            }
-                            if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
-                                eve.setDataX(buffer);
-                            }
-                            if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
-                                eve.setDataY(buffer);
-                            }
-                        } catch (Exception e) {
-                            Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
-                        }
-                    }
-                }
-                for (expView.expViewElement eve : experiment.experimentViews.elementAt(currentView).elements) {
-                    try {
-                        eve.dataComplete();
-                    } catch (Exception e) {
-                        Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " on data completion.", e);
-                    }
-                }
+                experiment.updateViews(currentView);
             }
             catch (Exception e) {
                 Log.e("updateViews", "Unhandled exception.", e);

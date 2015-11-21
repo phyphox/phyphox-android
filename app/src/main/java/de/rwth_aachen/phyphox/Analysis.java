@@ -1,39 +1,47 @@
 package de.rwth_aachen.phyphox;
 
-import android.util.Log;
-
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Vector;
 
+// The analysis class is used to to do math operations on dataBuffers
 
 public class Analysis {
-    public static class analysisModule {
-        protected Vector<String> inputs;
-        protected Vector<dataBuffer> outputs;
-        protected Vector<Boolean> isValue;
-        protected Vector<Double> values;
-        protected Vector<dataBuffer> dataBuffers;
-        protected Map<String, Integer> dataMap;
-        protected boolean isStatic = false;
-        protected boolean executed = false;
 
-        protected analysisModule(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            this.dataBuffers = dataBuffers;
-            this.dataMap = dataMap;
+    //analysisModule is is the prototype from which each analysis module inherits its interface
+    public static class analysisModule {
+        protected Vector<String> inputs; //The key of input dataBuffers
+        protected Vector<dataBuffer> outputs; //The keys of outputBuffers
+        protected Vector<Double> values; //Fixed numeric values if inputs are null
+        protected phyphoxExperiment experiment; //experiment reference to access buffers
+        protected boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
+        protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
+
+        //Main contructor
+        protected analysisModule(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            this.experiment = experiment;
             this.inputs = inputs;
             this.outputs = outputs;
-            this.isValue = isValue;
+
+            //Interpret the input strings. If it is not a valid identifier (not starting with a number and only consisting of [a-zA-Z0-9_] try to interpret it as a number
             this.values = new Vector<>();
             for (int i = 0; i < inputs.size(); i++) {
-                if (isValue.get(i)) {
-                    this.values.add(Double.valueOf(inputs.get(i)));
+                if (!phyphoxFile.isValidIdentifier(inputs.get(i))) {
+                    try {
+                        //Try to interpret the input as a number
+                        this.values.add(Double.valueOf(inputs.get(i)));
+                    } catch (Exception e) {
+                        //No number and no valid buffer - set to NaN
+                        this.values.add(Double.NaN);
+                    }
+                    //This is interpreted as a fixed value, so set the input to null to indicate that there is no buffer behind it.
                     this.inputs.set(i, null);
                 } else
+                    //This is a buffer. Just fill the values list with a dummy value.
                     this.values.add(0.);
             }
         }
 
+        //Interface to set the module to static mode. In this mode, the module will only be executed once to initialize the buffer - no updates to save performance
         protected void setStatic(boolean isStatic) {
             this.isStatic = isStatic;
             for (dataBuffer output : outputs) {
@@ -41,6 +49,7 @@ public class Analysis {
             }
         }
 
+        //Wrapper to update the module only if it is not static or has never been executed
         protected void updateIfNotStatic() {
             if (!(isStatic && executed)) {
                 update();
@@ -48,230 +57,304 @@ public class Analysis {
             }
         }
 
+        //Read a single value from an input string.
+        protected double getSingleValueFromUserString(String key) {
+            //Try to read the buffer
+            dataBuffer db = experiment.getBuffer(key);
+            if (db != null)
+                return db.value;
+            else {
+                //Buffer could not be read. Is the string numeric?
+                try {
+                    return Double.valueOf(key);
+                } catch (Exception e) {
+                    //Neither a buffer nor numeric. Return NaN
+                    return Double.NaN;
+                }
+            }
+        }
+
+        //The main update function has to be overridden by the modules
         protected void update() {
 
         }
     }
 
+    //Add input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class addAM extends analysisModule {
 
-        protected addAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected addAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
-            Vector<Iterator> its = new Vector<>();
-            Vector<Double> lastValues = new Vector<>();
+            Vector<Iterator> its = new Vector<>(); //Iterators for all input buffers
+            Vector<Double> lastValues = new Vector<>(); //Buffer to hold last value if buffer is shorter than expected
+
+            //Get iterators and fill history with fixed value if an input is not a buffer
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
+                    //Not a buffer: Fixed value
                     lastValues.add(values.get(i));
                     its.add(null);
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    //Buffer: Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                     lastValues.add(0.);
                 }
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
                 double sum = 0;
-                boolean anyInput = false;
-                for (int j = 0; j < its.size(); j++) {
-                    if (its.get(j) != null && its.get(j).hasNext()) {
+                boolean anyInput = false; //Is there any buffer left with values?
+                for (int j = 0; j < its.size(); j++) { //For each input buffer
+                    if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
                         lastValues.set(j, (double)its.get(j).next());
                         anyInput = true;
                     }
-                    sum += lastValues.get(j);
+                    sum += lastValues.get(j); //Get value even if there is no value left in the buffer
                 }
-                if (anyInput)
+                if (anyInput) //There was a new value. Append the result.
                     outputs.get(0).append(sum);
-                else
+                else //No values left. Let's stop here...
                     break;
             }
         }
     }
 
+    //Subtract input values (i1-i2-i3-i4...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class subtractAM extends analysisModule {
 
-        protected subtractAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected subtractAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
-            Vector<Iterator> its = new Vector<>();
-            Vector<Double> lastValues = new Vector<>();
+            Vector<Iterator> its = new Vector<>(); //Iterators for all input buffers
+            Vector<Double> lastValues = new Vector<>(); //Buffer to hold last value if buffer is shorter than expected
+
+            //Get iterators and fill history with fixed value if an input is not a buffer
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
+                    //Not a buffer: Fixed value
                     lastValues.add(values.get(i));
                     its.add(null);
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    //Buffer: Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                     lastValues.add(0.);
                 }
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
                 double sum = 0.;
-                boolean anyInput = false;
-                for (int j = 0; j < its.size(); j++) {
-                    if (its.get(j) != null && its.get(j).hasNext()) {
+                boolean anyInput = false; //Is there any buffer left with values?
+                for (int j = 0; j < its.size(); j++) { //For each input buffer
+                    if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
                         lastValues.set(j, (double)its.get(j).next());
                         anyInput = true;
                     }
                     if (j == 0)
-                        sum = lastValues.get(j);
+                        sum = lastValues.get(j); //First value: Get value even if there is no value left in the buffer
                     else
-                        sum -= lastValues.get(j);
+                        sum -= lastValues.get(j); //Subtracted values: Get value even if there is no value left in the buffer
                 }
-                if (anyInput)
+                if (anyInput) //There was a new value. Append the result.
                     outputs.get(0).append(sum);
-                else
+                else //No values left. Let's stop here...
                     break;
             }
         }
     }
 
+    //Multiply input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class multiplyAM extends analysisModule {
 
-        protected multiplyAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected multiplyAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
-            Vector<Iterator> its = new Vector<>();
-            Vector<Double> lastValues = new Vector<>();
+            Vector<Iterator> its = new Vector<>();  //Iterators for all input buffers
+            Vector<Double> lastValues = new Vector<>();  //Buffer to hold last value if buffer is shorter than expected
+
+            //Get iterators and fill history with fixed value if an input is not a buffer
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
+                    //Not a buffer: Fixed value
                     lastValues.add(values.get(i));
                     its.add(null);
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    //Buffer: Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                     lastValues.add(0.);
                 }
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
                 double product = 1.;
-                boolean anyInput = false;
-                for (int j = 0; j < its.size(); j++) {
-                    if (its.get(j) != null && its.get(j).hasNext()) {
+                boolean anyInput = false; //Is there any buffer left with values?
+                for (int j = 0; j < its.size(); j++) { //For each input buffer
+                    if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
                         lastValues.set(j, (double)its.get(j).next());
                         anyInput = true;
                     }
-                    product *= lastValues.get(j);
+                    product *= lastValues.get(j); //Get value even if there is no value left in the buffer
                 }
-                if (anyInput)
+                if (anyInput) //There was a new value. Append the result.
                     outputs.get(0).append(product);
-                else
+                else //No values left. Let's stop here...
                     break;
             }
         }
     }
 
+
+    //Divide input values (i1/i2/i3/...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class divideAM extends analysisModule {
 
-        protected divideAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected divideAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
-            Vector<Iterator> its = new Vector<>();
-            Vector<Double> lastValues = new Vector<>();
+            Vector<Iterator> its = new Vector<>(); //Iterators for all input buffers
+            Vector<Double> lastValues = new Vector<>(); //Buffer to hold last value if buffer is shorter than expected
+
+            //Get iterators and fill history with fixed value if an input is not a buffer
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
+                    //Not a buffer: Fixed value
                     lastValues.add(values.get(i));
                     its.add(null);
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    //Buffer: Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                     lastValues.add(0.);
                 }
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
                 double product = 1.;
-                boolean anyInput = false;
-                for (int j = 0; j < its.size(); j++) {
-                    if (its.get(j) != null && its.get(j).hasNext()) {
+                boolean anyInput = false; //Is there any buffer left with values?
+                for (int j = 0; j < its.size(); j++) { //For each input buffer
+                    if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
                         lastValues.set(j, (double)its.get(j).next());
                         anyInput = true;
                     }
                     if (j == 0)
-                        product = lastValues.get(j);
+                        product = lastValues.get(j); //First value: Get value even if there is no value left in the buffer
                     else
-                        product /= lastValues.get(j);
+                        product /= lastValues.get(j); //Divisor values: Get value even if there is no value left in the buffer
                 }
-                if (anyInput)
+                if (anyInput) //There was a new value. Append the result.
                     outputs.get(0).append(product);
-                else
+                else //No values left. Let's stop here...
                     break;
             }
         }
     }
 
+    // Calculate the power of input values. ((i1^i2)^i3)^..., but you probably only want two inputs here...
+    // The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller).
+    // Missing values in shorter buffers are filled from the last value.
     public static class powerAM extends analysisModule {
 
-        protected powerAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected powerAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
-            Vector<Iterator> its = new Vector<>();
-            Vector<Double> lastValues = new Vector<>();
+            Vector<Iterator> its = new Vector<>(); //Iterators for all input buffers
+            Vector<Double> lastValues = new Vector<>(); //Buffer to hold last value if buffer is shorter than expected
+
+            //Get iterators and fill history with fixed value if an input is not a buffer
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
+                    //Not a buffer: Fixed value
                     lastValues.add(values.get(i));
                     its.add(null);
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    //Buffer: Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                     lastValues.add(0.);
                 }
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
                 double power = 1.;
-                boolean anyInput = false;
-                for (int j = 0; j < its.size(); j++) {
-                    if (its.get(j) != null && its.get(j).hasNext()) {
+                boolean anyInput = false; //Is there any buffer left with values?
+                for (int j = 0; j < its.size(); j++) { //For each input buffer
+                    if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
                         lastValues.set(j, (double)its.get(j).next());
                         anyInput = true;
                     }
                     if (j == 0)
-                        power = lastValues.get(j);
+                        power = lastValues.get(j); //First value: Get value even if there is no value left in the buffer
                     else
-                        power = Math.pow(power, lastValues.get(j));
+                        power = Math.pow(power, lastValues.get(j)); //power values: Get value even if there is no value left in the buffer
                 }
-                if (anyInput)
+                if (anyInput) //There was a new value. Append the result.
                     outputs.get(0).append(power);
-                else
+                else //No values left. Let's stop here...
                     break;
             }
         }
     }
 
+    // Calculate the sine of a single input value.
+    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
     public static class sinAM extends analysisModule {
 
-        protected sinAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected sinAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
             Iterator it;
             double lastValue;
+
+            //Get value or iterator
             if (inputs.get(0) == null) {
+                //value
                 lastValue = values.get(0);
                 it = null;
             } else {
-                it = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+                //iterator
+                it = experiment.getBuffer(inputs.get(0)).getIterator();
                 lastValue = 0.;
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
                 if (it != null && it.hasNext()) {
+                    //Update lastValue if a new value exists in input buffer
                     lastValue = (double)it.next();
                 }
                 outputs.get(0).append(Math.sin(lastValue));
@@ -279,26 +362,36 @@ public class Analysis {
         }
     }
 
+    // Calculate the cosine of a single input value.
+    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
     public static class cosAM extends analysisModule {
 
-        protected cosAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected cosAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
             Iterator it;
             double lastValue;
+
+            //Get value or iterator
             if (inputs.get(0) == null) {
+                //value
                 lastValue = values.get(0);
                 it = null;
             } else {
-                it = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+                //iterator
+                it = experiment.getBuffer(inputs.get(0)).getIterator();
                 lastValue = 0.;
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
                 if (it != null && it.hasNext()) {
+                    //Update lastValue if a new value exists in input buffer
                     lastValue = (double)it.next();
                 }
             }
@@ -306,26 +399,37 @@ public class Analysis {
         }
     }
 
+
+    // Calculate the tangens of a single input value.
+    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
     public static class tanAM extends analysisModule {
 
-        protected tanAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected tanAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
             Iterator it;
             double lastValue;
+
+            //Get value or iterator
             if (inputs.get(0) == null) {
+                //value
                 lastValue = values.get(0);
                 it = null;
             } else {
-                it = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+                //iterator
+                it = experiment.getBuffer(inputs.get(0)).getIterator();
                 lastValue = 0.;
             }
+
+            //Clear output
             outputs.get(0).clear();
-            for (int i = 0; i < outputs.get(0).size; i++) {
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
                 if (it != null && it.hasNext()) {
+                    //Update lastValue if a new value exists in input buffer
                     lastValue = (double)it.next();
                 }
             }
@@ -333,37 +437,53 @@ public class Analysis {
         }
     }
 
+    //Get the maximum of the whole dataset.
+    //input1 is y
+    //input2 is x (if ommitted, it will be filled with 1, 2, 3, ...)
+    //output1 will receive a single value, the maximum y
+    //output2 (if used) will receive a single value, the x of the maximum
+    //input1 and output1 are mandatory, input1 and input2 are optional.
     public static class maxAM extends analysisModule {
 
-        protected maxAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected maxAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
+
+            //Get iterators, values do not make sense here.
             Vector<Iterator> its = new Vector<>();
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
                     its.add(null);
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                 }
             }
 
-            double max = Double.NEGATIVE_INFINITY;
-            double x = Double.NEGATIVE_INFINITY;
-            double currentX = -1;
-            while (its.get(0).hasNext()) {
+            double max = Double.NEGATIVE_INFINITY; //This will hold the maximum value
+            double x = Double.NEGATIVE_INFINITY; //The x location of the maximum
+            double currentX = -1; //Current x during iteration
+
+            while (its.get(0).hasNext()) { //For each value of input1
                 double v = (double)its.get(0).next();
+
+                //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
                 if (outputs.size() > 1 && its.get(1).hasNext())
                     currentX = (double)its.get(1).next();
                 else
                     currentX += 1;
+
+                //Is the current value bigger then the previous maximum?
                 if (v > max) {
+                    //Set maximum and location of maximum
                     max = v;
                     x = currentX;
                 }
             }
+
+            //Done. Append result to output1 and output2 if used.
             outputs.get(0).append(max);
             if (outputs.size() > 1) {
                 outputs.get(1).append(x);
@@ -372,68 +492,89 @@ public class Analysis {
         }
     }
 
+    //Find the x value where the input crosses a given threshold.
+    //input1 is y
+    //input2 is x (if ommitted, it will be filled with 1, 2, 3, ...)
+    //output1 will receive the x value of the point the threshold is crossed
+    //The threshold is set in the contructor (in the loading code it defaults to 0)
+    //The constructor parameter falling select positive or negative edge triggering (loaded with rising as default)
     public static class thresholdAM extends analysisModule {
-        double threshold;
-        boolean falling = false;
+        String threshold; //Threshold as string as it might be a buffer reference
+        boolean falling = false; //Falling or rising trigger?
 
-        protected thresholdAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs, double threshold, boolean falling) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        //Extended constructor which receives the threshold and falling as well.
+        protected thresholdAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs, String threshold, boolean falling) {
+            super(experiment, inputs, outputs);
             this.threshold = threshold;
             this.falling = falling;
         }
 
         @Override
         protected void update() {
+            //Update the threshold from buffer or convert numerical string
+            double vthreshold = getSingleValueFromUserString(threshold);
+
+            //Get iterators
             Vector<Iterator> its = new Vector<>();
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
                     its.add(null);
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                 }
             }
 
-            double last = Double.NaN;
-            double currentX = -1;
-            while (its.get(0).hasNext()) {
+            double last = Double.NaN; //Last value that did not trigger. Start with a NaN as result
+            double currentX = -1; //Position of last no-trigger value.
+            while (its.get(0).hasNext()) { //For each value of input1
                 double v = (double)its.get(0).next();
+
+                //if input2 exists, use this as x value, otherwise generate x by incrementing by 1
                 if (inputs.size() > 1 && its.get(1).hasNext())
                     currentX = (double)its.get(1).next();
                 else
                     currentX += 1;
+
+                //Only trigger if the last and the current value are valid,
                 if (!(Double.isNaN(last) || Double.isNaN(v))) {
                     if (falling) {
-                        if (last > threshold && v < threshold) {
+                        if (last > vthreshold && v < vthreshold) {
+                            //Falling trigger and value went below threshold -> break
                             break;
                         }
                     } else {
-                        if (last < threshold && v > threshold) {
+                        if (last < vthreshold && v > vthreshold) {
+                            //Rising trigger and value went above threshold -> break
                             break;
                         }
                     }
                 }
                 last = v;
             }
-            outputs.get(0).append(currentX);
+            outputs.get(0).append(currentX); //Append final x position to output1
 
         }
     }
 
+    //Append all inputs to the output.
     public static class appendAM extends analysisModule {
 
-        protected appendAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected appendAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
 
+            //Clear output buffer
             outputs.get(0).clear();
 
-            for (int i = 0; i < inputs.size(); i++) {
-                Iterator it = dataBuffers.get(dataMap.get(inputs.get(i))).getIterator();
-                if (it == null)
+            for (int i = 0; i < inputs.size(); i++) { //For each input
+                //Get iterator
+                Iterator it = experiment.getBuffer(inputs.get(i)).getIterator();
+                if (it == null) //non-buffer values are ignored
                     continue;
+                //Append all data from input to the output buffer
                 while (it.hasNext()) {
                     outputs.get(0).append((double)it.next());
                 }
@@ -442,24 +583,26 @@ public class Analysis {
         }
     }
 
+    //Calculate FFT of single input
+    //If the input length is not a power of two the input will be filled with zeros until it is a power of two
     public static class fftAM extends analysisModule {
-        private int n, np2, logn;
-        private double [] cos, sin;
+        private int n, np2, logn; //input size, power-of-two filled size, log2 of input size (integer)
+        private double [] cos, sin; //Lookup table
 
-        protected fftAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected fftAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
 
-            n = dataBuffers.get(dataMap.get(inputs.get(0))).size;
-            logn = (int)(Math.log(n)/Math.log(2));
+            n = experiment.getBuffer(inputs.get(0)).size; //Actual input size
+            logn = (int)(Math.log(n)/Math.log(2)); //log of input size
             if (n != (1 << logn)) {
                 logn++;
-                np2 = (1 << logn);
+                np2 = (1 << logn); //power of two after zero filling
             } else
-                np2 = n;
+                np2 = n; //n is already power of two
 
+            //Create buffer of sine and cosine values
             cos = new double[np2/2];
             sin = new double[np2/2];
-
             for (int i = 0; i < np2 / 2; i++) {
                 cos[i] = Math.cos(-2 * Math.PI * i / np2);
                 sin[i] = Math.sin(-2 * Math.PI * i / np2);
@@ -469,21 +612,27 @@ public class Analysis {
         @Override
         protected void update() {
 
+            //Create arrays for random access
             double x[] = new double[np2];
             double y[] = new double[np2];
-            Iterator ix = dataBuffers.get(dataMap.get(inputs.get(0))).getIterator();
+
+            //Iterator of first input -> Re(z)
+            Iterator ix = experiment.getBuffer(inputs.get(0)).getIterator();
             int i = 0;
             while (ix.hasNext())
                 x[i++] = (double)ix.next();
-            if (inputs.size() > 1) {
-                Iterator iy = dataBuffers.get(dataMap.get(inputs.get(1))).getIterator();
+            if (inputs.size() > 1) { //Is there imaginary input?
+                //Iterator of second input -> Im(z)
+                Iterator iy = experiment.getBuffer(inputs.get(1)).getIterator();
                 i = 0;
                 while (iy.hasNext())
                     y[i++] = (double)iy.next();
-            } else {
-                for (i = 0; i < np2; i++)
-                    y[i] = 0.;
-            }
+            }// else {
+                //Fill y with zeros if there is no imaginary input
+                //Not explicitly needed as java initializes double arrays to zero anyway
+//                for (i = 0; i < np2; i++)
+//                    y[i] = 0.;
+//            }
 
 
             /***************************************************************
@@ -529,8 +678,6 @@ public class Analysis {
                 }
             }
 
-
-            n1 = 0; /* FFT */
             n2 = 1;
 
             for (i=0; i < logn; i++)
@@ -557,6 +704,7 @@ public class Analysis {
                 }
             }
 
+            //Append the real part of the result to output1 and the imaginary part to output2 (if used)
             for (i = 0; i < n; i++) {
                 outputs.get(0).append(x[i]);
                 if (outputs.size() > 1)
@@ -565,51 +713,76 @@ public class Analysis {
         }
     }
 
+    //Calculate the autocorrelation
+    //input1 is y values
+    //input2 is x values (optional, set to 0,1,2,3,4... if left out)
+    //output1 is y of autocorrelation
+    //output2 is relative x (displacement of autocorrelation in units of input2)
+    //A min and max can be set through setMinMaxT which limit the x-range used for calculation
     public static class autocorrelationAM extends analysisModule {
-        private double mint = Double.NEGATIVE_INFINITY;
-        private double maxt = Double.POSITIVE_INFINITY;
+        private String smint = "";
+        private String smaxt = "";
 
-        protected autocorrelationAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected autocorrelationAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
-        protected void setMinMaxT(double mint, double maxt) {
-            this.mint = mint;
-            this.maxt = maxt;
+        //Optionally, a min and max of the used x-range can be set (same effect as a rangefilter but more efficient as it is done in one loop)
+        protected void setMinMax(String mint, String maxt) {
+            this.smint = mint;
+            this.smaxt = maxt;
         }
 
         @Override
         protected void update() {
+            double mint, maxt;
 
-            Double y[] = dataBuffers.get(dataMap.get(inputs.get(0))).getArray();
-            Double x[] = new Double[y.length];
+            //Update min and max as they might come from a dataBuffer
+            if (smint.equals(""))
+                mint = Double.NEGATIVE_INFINITY; //not set by user, set to -inf so it has no effect
+            else
+                mint = getSingleValueFromUserString(smint);
+
+            if (smaxt.equals(""))
+                maxt = Double.POSITIVE_INFINITY; //not set by user, set to +inf so it has no effect
+            else
+                maxt = getSingleValueFromUserString(smint);
+
+            //Get arrays for random access
+            Double y[] = experiment.getBuffer(inputs.get(0)).getArray();
+            Double x[] = new Double[y.length]; //Relative x (the displacement in the autocorrelation). This has to be filled from input2 or manually with 1,2,3...
             if (inputs.size() > 1) {
-                Double xraw[] = dataBuffers.get(dataMap.get(inputs.get(1))).getArray();
+                //There is a second input, let's use it.
+                Double xraw[] = experiment.getBuffer(inputs.get(1)).getArray();
                 for (int i = 0; i < x.length; i++) {
                     if (i < xraw.length)
-                        x[i] = xraw[i]-xraw[0];
+                        x[i] = xraw[i]-xraw[0]; //There is still input left. Use it and calculate the relative x
                     else
-                        x[i] = xraw[xraw.length - 1]-xraw[0];
+                        x[i] = xraw[xraw.length - 1]-xraw[0]; //No input left. This probably leads to wrong results, but let's use the last value
                 }
             } else {
+                //There is no input2. Let's fill it with 0,1,2,3,4....
                 for (int i = 0; i < x.length; i++) {
                     x[i] = (double)i;
                 }
             }
 
+            //Clear outputs
             outputs.get(0).clear();
             if (outputs.size() > 1)
                 outputs.get(1).clear();
 
-
-            for (int i = 0; i < y.length; i++) {
-                if (x[i] < mint || x[i] > maxt)
+            //The actual calculation
+            for (int i = 0; i < y.length; i++) { //Displacement i for each value of input1
+                if (x[i] < mint || x[i] > maxt) //Skip this, if it should be filtered
                     continue;
                 double sum = 0.;
-                for (int j = 0; j < y.length-i; j++) {
-                    sum += y[j]*y[j+i];
+                for (int j = 0; j < y.length-i; j++) { //For each value of input1 minus the current displacement
+                    sum += y[j]*y[j+i]; //Product of normal and displaced data
                 }
-                sum /= (double)(y.length-i);
+                sum /= (double)(y.length-i); //Normalize to the number of values at this displacement
+
+                //Append y output to output1 and x to output2 (if used)
                 outputs.get(0).append(sum);
                 if (outputs.size() > 1)
                     outputs.get(1).append(x[i]);
@@ -617,143 +790,162 @@ public class Analysis {
         }
     }
 
+    //Calculate the cross correlation of two inputs
+    //input1 and input2 represent the y values, there is no x input and only one output
+    //The indices of the output match the offset between the inputs
+    //There is no zero-padding. The smaller input is moved "along" the larger input.
+    //This does not work if both have the same size. Pad one input to match the target total size first.
+    //The size of the output is the difference of both input sizes.
     public static class crosscorrelationAM extends analysisModule {
-        protected crosscorrelationAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected crosscorrelationAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
             Double a[], b[];
-            if (dataBuffers.get(dataMap.get(inputs.get(0))).size > dataBuffers.get(dataMap.get(inputs.get(1))).size) {
-                a = dataBuffers.get(dataMap.get(inputs.get(0))).getArray();
-                b = dataBuffers.get(dataMap.get(inputs.get(1))).getArray();
+            //Put the larger input in a and the smaller one in b
+            if (experiment.getBuffer(inputs.get(0)).size > experiment.getBuffer(inputs.get(1)).size) {
+                a = experiment.getBuffer(inputs.get(0)).getArray();
+                b = experiment.getBuffer(inputs.get(1)).getArray();
             } else {
-                b = dataBuffers.get(dataMap.get(inputs.get(0))).getArray();
-                a = dataBuffers.get(dataMap.get(inputs.get(1))).getArray();
+                b = experiment.getBuffer(inputs.get(0)).getArray();
+                a = experiment.getBuffer(inputs.get(1)).getArray();
             }
 
+            //Clear output
             outputs.get(0).clear();
 
+            //The actual calculation
             int compRange = a.length - b.length;
             for (int i = 0; i < compRange; i++) {
                 double sum = 0.;
                 for (int j = 0; j < b.length; j++) {
                     sum += a[j+i]*b[j];
                 }
-                sum /= (double)(compRange);
+                sum /= (double)(compRange); //Normalize bynumber of values
                 outputs.get(0).append(sum);
             }
         }
     }
 
+    //Smooth data using a gauss distribution
+    //Sigma defaults to 3 but can be changed.
+    //Note that sigma cannot be set by a dataBuffer
     public static class gaussSmoothAM extends analysisModule {
-        private double sigma;
-        int calcWidth;
-        double[] gauss;
+        int calcWidth; //range to which the gauss is calculated
+        double[] gauss; //Gauss-weight look-up-table
 
-        protected gaussSmoothAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
-            setSigma(3);
+        protected gaussSmoothAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
+            setSigma(3); //default
         }
 
+        //Change sigma
         protected void setSigma(double sigma) {
-            this.sigma = sigma;
-            this.calcWidth = (int)Math.round(sigma*3);
+            this.calcWidth = (int)Math.round(sigma*3); //Adapt calculation range: 3x sigma should be plenty
 
             gauss = new double[calcWidth*2+1];
             for (int i = -calcWidth; i <= calcWidth; i++) {
-                gauss[i+calcWidth] = Math.exp(-(i/sigma*i/sigma)/2.)/(sigma*Math.sqrt(2.*Math.PI));
+                gauss[i+calcWidth] = Math.exp(-(i/sigma*i/sigma)/2.)/(sigma*Math.sqrt(2.*Math.PI)); //Gauß!
             }
         }
 
         @Override
         protected void update() {
-            Double y[] = dataBuffers.get(dataMap.get(inputs.get(0))).getArray();
+            //Get array for random access
+            Double y[] = experiment.getBuffer(inputs.get(0)).getArray();
+
+            //Clear output
             outputs.get(0).clear();
 
-            for (int i = 0; i < y.length; i++) {
+            for (int i = 0; i < y.length; i++) { //For each data-point
                 double sum = 0;
-                for (int j = -calcWidth; j <= calcWidth; j++) {
-                    int k = i+j;
+                for (int j = -calcWidth; j <= calcWidth; j++) { //For each step in the look-up-table
+                    int k = i+j; //index in input that corresponds to the step in the look-up-table
                     if (k >= 0 && k < y.length)
-                        sum += gauss[j+calcWidth]*y[k];
+                        sum += gauss[j+calcWidth]*y[k]; //Add weighted contribution
                 }
-                outputs.get(0).append(sum);
+                outputs.get(0).append(sum); //Append the result to the output buffer
             }
         }
     }
 
+
+    //Filter a couple of inputs with some max and min values per input
+    //For each input you can set a min and max value.
+    // If tha value of any input falls outside min and max, the data at this index if discarded for all inputs
+    //You need exactly as many outputs as there are inputs.
     public static class rangefilterAM extends analysisModule {
-        private Vector<String> min;
+        private Vector<String> min; //Hold min and max as string as it might be a dataBuffer
         private Vector<String> max;
 
-        protected rangefilterAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs, Vector<String> min, Vector<String> max) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        //Constructor also takes arrays of min and max values
+        protected rangefilterAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs, Vector<String> min, Vector<String> max) {
+            super(experiment, inputs, outputs);
             this.min = min;
             this.max = max;
         }
 
         @Override
         protected void update() {
-            double[] min;
+            double[] min; //Double-valued min and max. Filled from String value / dataBuffer
             double[] max;
 
             min = new double[inputs.size()];
             max = new double[inputs.size()];
             for(int i = 0; i < inputs.size(); i++) {
                 if (this.min.get(i) == null)
-                    min[i] = Double.NEGATIVE_INFINITY;
+                    min[i] = Double.NEGATIVE_INFINITY; //Not set by user, set to -inf so it has no influence
                 else {
-                    if (dataMap.get(this.min.get(i)) != null && dataBuffers.get(dataMap.get(this.min.get(i))) != null)
-                        min[i] = dataBuffers.get(dataMap.get(this.min.get(i))).value;
-                    else
-                        min[i] = Double.valueOf(this.min.get(i));
+                    min[i] = getSingleValueFromUserString(this.min.get(i)); //Get value from string: numeric or buffer
                 }
                 if (this.max.get(i) == null)
-                    max[i] = Double.POSITIVE_INFINITY;
+                    max[i] = Double.POSITIVE_INFINITY; //Not set by user, set to +inf so it has no influence
                 else {
-                    if (dataMap.get(this.max.get(i)) != null && dataBuffers.get(dataMap.get(this.max.get(i))) != null)
-                        max[i] = dataBuffers.get(dataMap.get(this.max.get(i))).value;
-                    else
-                        max[i] = Double.valueOf(this.max.get(i));
+                    max[i] = getSingleValueFromUserString(this.max.get(i)); //Get value from string: numeric or buffer
                 }
 
             }
 
+            //Get iterators of all inputs (numeric string not allowed here as it makes no sense to filter static input)
             Vector<Iterator> its = new Vector<>();
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null) {
-                    its.add(null);
+                    its.add(null); //input does not exist
                 } else {
-                    its.add(dataBuffers.get(dataMap.get(inputs.get(i))).getIterator());
+                    //Valid buffer. Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
                 }
             }
 
+            //Clear all outputs
             for (dataBuffer output : outputs) {
                 output.clear();
             }
 
-            double []data = new double[inputs.size()];
-            boolean hasNext = true;
+            double []data = new double[inputs.size()]; //Will hold values of all inputs at same index
+            boolean hasNext = true; //Will be set to true if ANY of the iterators has a next item (not neccessarily all of them)
             while (hasNext) {
+                //Check if any input has a value left
                 hasNext = false;
                 for (Iterator it : its) {
                     if (it.hasNext())
                         hasNext = true;
                 }
+
                 if (hasNext) {
-                    boolean filter = false;
-                    for (int i = 0; i < inputs.size(); i++) {
-                        if (its.get(i).hasNext()) {
+                    boolean filter = false; //Will be set to true if any input falls outside its min/max
+                    for (int i = 0; i < inputs.size(); i++) { //For each input...
+                        if (its.get(i).hasNext()) { //This input has a value left. Get it!
                             data[i] = (double) its.get(i).next();
-                            if (data[i] < min[i] || data[i] > max[i]) {
-                                filter = true;
+                            if (data[i] < min[i] || data[i] > max[i]) { //Is this value outside its min/max?
+                                filter = true; //Yepp, filter this index
                             }
                         } else
-                            data[i] = Double.NaN;
+                            data[i] = Double.NaN; //No value left in input. Set this value to NaN and do not filter it
                     }
-                    if (!filter) {
+                    if (!filter) { //Filter not triggered? Append the values of each input to the corresponding outputs.
                         for (int i = 0; i < inputs.size(); i++) {
                             outputs.get(i).append(data[i]);
                         }
@@ -764,16 +956,23 @@ public class Analysis {
         }
     }
 
+    //Create a linear ramp.
+    //No input needed. The length of the output matches "length" or, if not set, the size of the output buffer
+    //Defaults to a ramp from 0 to 100
+    //You can set start, stop and length. The first value will match start, the last value will match stop
+    //Databuffers allowed for all parameters
     public static class rampGeneratorAM extends analysisModule {
-        private double start = 0;
-        private double stop = 100;
-        private int length = -1;
+        //Defaults as string values as this might be set to a dataBuffer
+        private String start = "0";
+        private String stop = "100";
+        private String length = "-1";
 
-        protected rampGeneratorAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected rampGeneratorAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
-        protected void setParameters(double start, double stop, int length) {
+        //Set start, stop and length
+        protected void setParameters(String start, String stop, String length) {
             this.start = start;
             this.stop = stop;
             this.length = length;
@@ -781,37 +980,59 @@ public class Analysis {
 
         @Override
         protected void update() {
-            outputs.get(0).clear();
-            if (this.length < 0)
-                this.length = outputs.get(0).size;
+            double vstart = getSingleValueFromUserString(start); //Get value from numeric string or buffer
+            double vstop = getSingleValueFromUserString(stop); //Get value from numeric string or buffer
+            int vlength = (int)getSingleValueFromUserString(length); //Get value from numeric string or buffer
 
-            for (int i = 0; i < this.length; i++) {
-                outputs.get(0).append(start+(stop-start)/(length-1)*i);
+            //Clear output
+            outputs.get(0).clear();
+
+            //If length is not set, use the size of the output buffer
+            if (vlength < 0)
+                vlength = outputs.get(0).size;
+
+            //Write ramp to output buffer
+            for (int i = 0; i < vlength; i++) {
+                outputs.get(0).append(vstart+(vstop-vstart)/(vlength-1)*i);
             }
         }
     }
 
+    //Generate a constant function (you could also say: Initialize buffer to a fixed value)
+    //No input needed. The length of the output matches "length" or, if not set, the size of the output buffer
+    //Defaults to a value of zero
+    //You can set the value and length.
+    //Databuffers allowed for all parameters
     public static class constGeneratorAM extends analysisModule {
-        private double value = 0;
-        private int length = -1;
+        //Defaults as string values as this might be set to a dataBuffer
+        private String value = "0";
+        private String length = "-1";
 
-        protected constGeneratorAM(Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Vector<String> inputs, Vector<Boolean> isValue, Vector<dataBuffer> outputs) {
-            super(dataBuffers, dataMap, inputs, isValue, outputs);
+        protected constGeneratorAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
         }
 
-        protected void setParameters(double value, int length) {
+        //Set value and length
+        protected void setParameters(String value, String length) {
             this.value = value;
             this.length = length;
         }
 
         @Override
         protected void update() {
-            outputs.get(0).clear();
-            if (this.length < 0)
-                this.length = outputs.get(0).size;
+            double vvalue = getSingleValueFromUserString(value); //Get value from numeric string or buffer
+            int vlength = (int)getSingleValueFromUserString(length); //Get value from numeric string or buffer
 
-            for (int i = 0; i < this.length; i++) {
-                outputs.get(0).append(value);
+            //Clear output
+            outputs.get(0).clear();
+
+            //If length is not set, use the size of the output buffer
+            if (vlength < 0)
+                vlength = outputs.get(0).size;
+
+            //Write values to output
+            for (int i = 0; i < vlength; i++) {
+                outputs.get(0).append(vvalue);
             }
         }
     }

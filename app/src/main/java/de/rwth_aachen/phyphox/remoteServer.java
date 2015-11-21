@@ -53,18 +53,12 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 @SuppressWarnings( "deprecation" )
 public class remoteServer extends Thread {
 
-    private String title;
-
-    private final Vector<expView> experimentViews;
-    private final Vector<dataBuffer> dataBuffers;
-    private final Map<String, Integer> dataMap;
+    private final phyphoxExperiment experiment;
 
     ServerSocket serverSocket;
     Socket socket;
@@ -134,51 +128,51 @@ public class remoteServer extends Thread {
         try {
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) {
-                    sb.append(line.replace("<!-- [[title]] -->", "phyPhoX: "+title));
+                    sb.append(line.replace("<!-- [[title]] -->", "phyPhoX: "+experiment.title));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     sb.append("var views = [");
                     int id = 0;
-                    for (int i = 0; i < experimentViews.size(); i++) {
+                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
                         if (i > 0)
                             sb.append(",\n");
                         sb.append("{\"name\": \"");
-                        sb.append(experimentViews.get(i).name.replace("\"","\\\""));
+                        sb.append(experiment.experimentViews.get(i).name.replace("\"","\\\""));
                         sb.append("\", \"elements\":[\n");
-                        for (int j = 0; j < experimentViews.get(i).elements.size(); j++) {
+                        for (int j = 0; j < experiment.experimentViews.get(i).elements.size(); j++) {
                             if (j > 0)
                                 sb.append(",");
                             sb.append("{\"label\":\"");
-                            sb.append(experimentViews.get(i).elements.get(j).label.replace("\"","\\\""));
+                            sb.append(experiment.experimentViews.get(i).elements.get(j).label.replace("\"","\\\""));
                             sb.append("\",\"index\":\"");
                             sb.append(id);
                             sb.append("\",\"partialUpdate\":\"");
-                            sb.append(experimentViews.get(i).elements.get(j).getUpdateMode());
+                            sb.append(experiment.experimentViews.get(i).elements.get(j).getUpdateMode());
                             sb.append("\",\"labelSize\":\"");
-                            sb.append(experimentViews.get(i).elements.get(j).labelSize);
+                            sb.append(experiment.experimentViews.get(i).elements.get(j).labelSize);
                             sb.append("\",\"html\":\"");
-                            sb.append(experimentViews.get(i).elements.get(j).getViewHTML(id).replace("\"","\\\""));
+                            sb.append(experiment.experimentViews.get(i).elements.get(j).getViewHTML(id).replace("\"","\\\""));
                             sb.append("\",\"dataCompleteFunction\":");
-                            sb.append(experimentViews.get(i).elements.get(j).dataCompleteHTML());
-                            if (experimentViews.get(i).elements.get(j).getValueInput() != null) {
+                            sb.append(experiment.experimentViews.get(i).elements.get(j).dataCompleteHTML());
+                            if (experiment.experimentViews.get(i).elements.get(j).getValueInput() != null) {
                                 sb.append(",\"valueInput\":\"");
-                                sb.append(experimentViews.get(i).elements.get(j).getValueInput().replace("\"","\\\""));
+                                sb.append(experiment.experimentViews.get(i).elements.get(j).getValueInput().replace("\"","\\\""));
                                 sb.append("\",\"valueInputFunction\":\n");
-                                sb.append(experimentViews.get(i).elements.get(j).setValueHTML());
+                                sb.append(experiment.experimentViews.get(i).elements.get(j).setValueHTML());
                                 sb.append("\n");
                             }
-                            if (experimentViews.get(i).elements.get(j).getDataXInput() != null) {
+                            if (experiment.experimentViews.get(i).elements.get(j).getDataXInput() != null) {
                                 sb.append(",\"dataXInput\":\"");
-                                sb.append(experimentViews.get(i).elements.get(j).getDataXInput().replace("\"","\\\""));
+                                sb.append(experiment.experimentViews.get(i).elements.get(j).getDataXInput().replace("\"","\\\""));
                                 sb.append("\",\"dataXInputFunction\":\n");
-                                sb.append(experimentViews.get(i).elements.get(j).setDataXHTML());
+                                sb.append(experiment.experimentViews.get(i).elements.get(j).setDataXHTML());
                                 sb.append("\n");
                             }
-                            if (experimentViews.get(i).elements.get(j).getDataYInput() != null) {
+                            if (experiment.experimentViews.get(i).elements.get(j).getDataYInput() != null) {
                                 sb.append(",\"dataYInput\":\"");
-                                sb.append(experimentViews.get(i).elements.get(j).getDataYInput().replace("\"","\\\""));
+                                sb.append(experiment.experimentViews.get(i).elements.get(j).getDataYInput().replace("\"","\\\""));
                                 sb.append("\",\"dataYInputFunction\":\n");
-                                sb.append(experimentViews.get(i).elements.get(j).setDataYHTML());
+                                sb.append(experiment.experimentViews.get(i).elements.get(j).setDataYHTML());
                                 sb.append("\n");
                             }
                             sb.append("}");
@@ -188,19 +182,19 @@ public class remoteServer extends Thread {
                     }
                     sb.append("\n];\n");
                 } else if (line.contains("<!-- [[viewOptions]] -->")) {
-                    for (int i = 0; i < experimentViews.size(); i++) {
+                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
                         sb.append("<option value=\"");
                         sb.append(i);
                         sb.append("\">");
-                        sb.append(experimentViews.get(i).name);
+                        sb.append(experiment.experimentViews.get(i).name);
                         sb.append("</option>\n");
                     }
                 } else if (line.contains("<!-- [[exportSetSelectors]] -->")) {
-                    for (int i = 0; i < callActivity.experiment.exporter.exportSets.size(); i++)
-                        sb.append("<div class=\"setSelector\"><input type=\"checkbox\" id=\"set"+i+"\" name=\"set"+i+"\" /><label for=\"set"+i+"\">"+callActivity.experiment.exporter.exportSets.get(i).name+"</label></div>\n");
+                    for (int i = 0; i < experiment.exporter.exportSets.size(); i++)
+                        sb.append("<div class=\"setSelector\"><input type=\"checkbox\" id=\"set"+i+"\" name=\"set"+i+"\" /><label for=\"set"+i+"\">"+experiment.exporter.exportSets.get(i).name+"</label></div>\n");
                 } else if (line.contains("<!-- [[exportFormatOptions]] -->")) {
-                    for (int i = 0; i < callActivity.experiment.exporter.exportFormats.length; i++)
-                        sb.append("<option value=\""+i+"\">"+callActivity.experiment.exporter.exportFormats[i].getName()+"</option>\n");
+                    for (int i = 0; i < experiment.exporter.exportFormats.length; i++)
+                        sb.append("<option value=\""+i+"\">"+experiment.exporter.exportFormats[i].getName()+"</option>\n");
                 } else {
                     sb.append(line);
                     sb.append("\n");
@@ -213,12 +207,8 @@ public class remoteServer extends Thread {
         }
     }
 
-    remoteServer(Vector<expView> experimentViews, Vector<dataBuffer> dataBuffers, Map<String, Integer> dataMap, Resources res, String title, Experiment callActivity) {
-        this.experimentViews = experimentViews;
-        this.dataBuffers = dataBuffers;
-        this.dataMap = dataMap;
-        this.title = title;
-        this.res = res;
+    remoteServer(phyphoxExperiment experiment, Experiment callActivity) {
+        this.experiment = experiment;
         this.callActivity = callActivity;
 
         buildStyleCSS();
@@ -443,11 +433,11 @@ public class remoteServer extends Thread {
 
             StringBuilder sb;
 
-            synchronized(dataBuffers) {
+            synchronized(experiment.dataBuffers) {
                 int sizeEstimate = 0;
                 for (bufferRequest buffer : bufferList) {
-                    if (dataMap.containsKey(buffer.name)) {
-                        sizeEstimate += 14 * dataBuffers.get(dataMap.get(buffer.name)).size + 100;
+                    if (experiment.dataMap.containsKey(buffer.name)) {
+                        sizeEstimate += 14 * experiment.dataBuffers.get(experiment.dataMap.get(buffer.name)).size + 100;
                     }
                 }
 
@@ -457,17 +447,17 @@ public class remoteServer extends Thread {
                 DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
                 format.applyPattern("0.#######E0");
                 for (bufferRequest buffer : bufferList) {
-                    if (dataMap.containsKey(buffer.name)) {
+                    if (experiment.dataMap.containsKey(buffer.name)) {
                         if (firstBuffer)
                             firstBuffer = false;
                         else
                             sb.append(",\n");
-                        dataBuffer db = dataBuffers.get(dataMap.get(buffer.name));
+                        dataBuffer db = experiment.dataBuffers.get(experiment.dataMap.get(buffer.name));
                         dataBuffer db_dependent;
                         if (buffer.dependent.equals(""))
                             db_dependent = db;
                         else
-                            db_dependent = dataBuffers.get(dataMap.get(buffer.dependent));
+                            db_dependent = experiment.dataBuffers.get(experiment.dataMap.get(buffer.dependent));
                         sb.append("\"");
                         sb.append(db.name);
                         sb.append("\":{\"size\":");
@@ -569,9 +559,9 @@ public class remoteServer extends Thread {
                             result = "{\"result\" = false}";
                         } else {
                             callActivity.requestDefocus();
-                            synchronized(dataBuffers) {
+                            synchronized(experiment.dataBuffers) {
                                 callActivity.remoteInput = true;
-                                dataBuffers.get(dataMap.get(buffer)).append(v);
+                                experiment.dataBuffers.get(experiment.dataMap.get(buffer)).append(v);
                             }
                             result = "{\"result\" = true}";
                         }
@@ -612,7 +602,7 @@ public class remoteServer extends Thread {
             HttpEntity httpEntity;
 
             int formatInt = Integer.parseInt(format);
-            if (formatInt < 0 || formatInt >= callActivity.experiment.exporter.exportFormats.length) {
+            if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
                 final String result = "{\"error\" = \"Format out of range.\"}";
                 httpEntity = new EntityTemplate(
                         new ContentProducer() {
@@ -629,14 +619,14 @@ public class remoteServer extends Thread {
                 response.setHeader("Content-Type", "application/json");
                 response.setEntity(httpEntity);
             } else {
-                String type = callActivity.experiment.exporter.exportFormats[formatInt].getType();
+                String type = experiment.exporter.exportFormats[formatInt].getType();
                 ArrayList<Integer> selectedItems = new ArrayList<>();
-                for (int i = 0; i < callActivity.experiment.exporter.exportSets.size(); i++) {
+                for (int i = 0; i < experiment.exporter.exportSets.size(); i++) {
                     if (uri.getQueryParameter("set"+i) != null) {
                         selectedItems.add(i);
                     }
                 }
-                final File exportFile = callActivity.experiment.exporter.exportDirect(callActivity.experiment.dataBuffers, callActivity.experiment.dataMap, selectedItems, callActivity.experiment.exporter.exportFormats[formatInt]);
+                final File exportFile = experiment.exporter.exportDirect(selectedItems, experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir());
                 httpEntity = new EntityTemplate(
                         new ContentProducer() {
                             public void writeTo(final OutputStream outstream)
@@ -653,7 +643,7 @@ public class remoteServer extends Thread {
                             }
                         });
                 response.setHeader("Content-Type", type);
-                response.setHeader("Content-Disposition", "attachment; filename="+callActivity.experiment.exporter.exportFormats[formatInt].getFilename());
+                response.setHeader("Content-Disposition", "attachment; filename="+experiment.exporter.exportFormats[formatInt].getFilename());
             }
 
             response.setEntity(httpEntity);

@@ -19,19 +19,19 @@
         <ramp start="0" stop="0.1875" buffer="9120" output1="cc_t" static="true" />
         <ramp start="0" stop="3.14159" buffer="480" output1="chirp_weight_base" static="true" />
         <sin input1="chirp_weight_base" output1="chirp_weight_sin" static="true" />
-        <power input1="chirp_weight_sin" input2="0.25" type2="value" output1="chirp_weight" static="true" />
-        <multiply input1="chirp_f" input2="chirp_t" input3="6.283185307" type3="value" output1="chirp_arg" static="true" />
+        <power input1="chirp_weight_sin" input2="0.25" output1="chirp_weight" static="true" />
+        <multiply input1="chirp_f" input2="chirp_t" input3="6.283185307" output1="chirp_arg" static="true" />
         <sin input1="chirp_arg" output1="chirp" static="true" />
         <multiply input1="chirp" input2="chirp_weight" output1="wchirp" static="true" />
         <crosscorrelation input1="recording" input2="wchirp" output1="crosscorrelation" />
         <multiply input1="crosscorrelation" input2="crosscorrelation" output1="ccsquare" />
         <gausssmooth input1="ccsquare" output1="ccsmooth" sigma="5" />
         <max input1="ccsmooth" input2="cc_t" output1="ccmax" output2="t0" />
-        <add input1="t0" input2="0.002" type2="value" output1="t1" />
-        <add input1="t0" input2="0.02" type2="value" output1="t2" />
+        <add input1="t0" input2="0.002" output1="t1" />
+        <add input1="t0" input2="0.02" output1="t2" />
         <rangefilter input1="cc_t" input2="ccsmooth" min1="t1" max1="t2" output1="cut_t" output2="relative_ccsmooth" />
         <subtract input1="cut_t" input2="t0" output1="relative_t" />
-        <multiply input1="relative_t" input2="speedofsound" input3="50" type3="value" output1="distance" />
+        <multiply input1="relative_t" input2="speedofsound" input3="50" output1="distance" />
     </analysis>
     <output>
         <audio input="wchirp" rate="48000" buffer="480" />

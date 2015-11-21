@@ -343,12 +343,12 @@
         <autocorrelation input1="accZ" input2="acc_time" output1="autocorrelation_z" output2="autoco_t3" mint="0" maxt="2.5" />
         <add input1="autocorrelation_x" input2="autocorrelation_y" input3="autocorrelation_z" output1="autocorrelation" />
         <threshold input2="autoco_t" input1="autocorrelation" falling="true" threshold="0" output1="t0" />
-        <multiply input1="t0" input2="2" type2="value" output1="dt" />
+        <multiply input1="t0" input2="2" output1="dt" />
         <add input1="t0" input2="dt" output1="t1" />
         <add input1="t1" input2="dt" output1="t2" />
         <rangefilter input1="autoco_t" input2="autocorrelation" min1="t1" max1="t2" output1="search_t" output2="search_y" />
         <max input1="search_y" input2="search_t" output1="max" output2="period" buffer="200" />
-        <divide input1="1" type1="value" input2="period" output1="frequency" />
+        <divide input1="1" input2="period" output1="frequency" />
     </analysis>
     <views>
         <view name="Results">

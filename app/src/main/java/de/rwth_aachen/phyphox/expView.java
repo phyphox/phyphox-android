@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Typeface;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -178,7 +179,7 @@ public class expView{
             labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(res.getColor(R.color.main));
+            labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
 
             tv = new TextView(c);
             tv.setLayoutParams(new TableRow.LayoutParams(
@@ -188,7 +189,7 @@ public class expView{
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
-            tv.setTextColor(res.getColor(R.color.main));
+            tv.setTextColor(ContextCompat.getColor(c, R.color.main));
 
             row.addView(labelView);
             row.addView(tv);
@@ -287,7 +288,7 @@ public class expView{
             labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(res.getColor(R.color.main));
+            labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
 
             iv = new EditText(c);
             iv.setLayoutParams(new TableRow.LayoutParams(
@@ -297,7 +298,7 @@ public class expView{
             iv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             iv.setPadding((int) labelSize / 2, 0, 0, 0);
             iv.setTypeface(null, Typeface.BOLD);
-            iv.setTextColor(res.getColor(R.color.main));
+            iv.setTextColor(ContextCompat.getColor(c, R.color.main));
             int inputType = InputType.TYPE_CLASS_NUMBER;
             if (signed)
                 inputType |= InputType.TYPE_NUMBER_FLAG_SIGNED;
@@ -315,7 +316,7 @@ public class expView{
             unitView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             unitView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             unitView.setPadding(0, 0, (int) labelSize / 2, 0);
-            unitView.setTextColor(res.getColor(R.color.main));
+            unitView.setTextColor(ContextCompat.getColor(c, R.color.main));
             unitView.setTypeface(null, Typeface.BOLD);
 
             valueUnit.addView(iv);
@@ -384,6 +385,7 @@ public class expView{
         private Double[] dataY;
         private boolean line = false;
         private int historyLength = 1;
+        private boolean forceFullDataset = false;
         private String labelX = null;
         private String labelY = null;
         private boolean partialUpdate = false;
@@ -410,6 +412,12 @@ public class expView{
             this.historyLength = hl;
             if (gv != null)
                 gv.setHistoryLength(hl);
+        }
+
+        protected void setForceFullDataset(boolean forceFullDataset) {
+            this.forceFullDataset = forceFullDataset;
+            if (gv != null)
+                gv.setForceFullDataset(forceFullDataset);
         }
 
         protected void setLabel(String labelX, String labelY) {
@@ -451,7 +459,7 @@ public class expView{
             labelView.setText(this.label);
             labelView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            labelView.setTextColor(res.getColor(R.color.main));
+            labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
 
             gv = new graphView(c);
             gv.setLayoutParams(new TableRow.LayoutParams(
@@ -460,6 +468,7 @@ public class expView{
 
             gv.setLine(line);
             gv.setHistoryLength(historyLength);
+            gv.setForceFullDataset(forceFullDataset);
             gv.setLabel(labelX, labelY);
             gv.setLogScale(logX, logY);
 

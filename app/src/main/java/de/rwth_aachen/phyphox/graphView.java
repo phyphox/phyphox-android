@@ -5,12 +5,12 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Region;
-import android.util.Log;
 import android.view.View;
 
 public class graphView extends View {
     private int historyLength;
     private int historyFilled;
+    private boolean forceFullDataset = false;
     private Double[][] graphX;
     private Double[][] graphY;
     private double rangeMinX, rangeMaxX, rangeMinY, rangeMaxY;
@@ -43,6 +43,10 @@ public class graphView extends View {
         this.historyFilled = 0;
         graphX = new Double[historyLength][];
         graphY = new Double[historyLength][];
+    }
+
+    public void setForceFullDataset(boolean forceFullDataset) {
+        this.forceFullDataset = forceFullDataset;
     }
 
     public void rescale() {
@@ -314,7 +318,12 @@ public class graphView extends View {
                     }
                     double lastX = Double.NaN;
                     double lastY = Double.NaN;
-                    for (int i = 0; i < graphX[j].length && i < graphY[j].length; i++) {
+                    int increment = 1;
+                    if (!forceFullDataset)
+                        increment = graphX[j].length/graphW;
+                    if (increment < 1)
+                        increment = 1;
+                    for (int i = 0; i < graphX[j].length && i < graphY[j].length; i+=increment) {
                         double thisX;
                         double thisY;
                         if (logX)

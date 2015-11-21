@@ -7,7 +7,7 @@
     <views>
         <view name="Spectrum">
             <value label="Peak-Frequency" input="f0" unit="Hz" />
-            <graph label="Fourier Transform" inputX="display_frequency" inputY="fft" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)" />
+            <graph label="Fourier Transform" forceFullDataset="true" inputX="display_frequency" inputY="fft" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)" />
         </view>
     </views>
     <analysis period="0.2">
@@ -17,7 +17,7 @@
         <multiply input1="display_fftx" input2="display_fftx" output1="fftx2" />
         <multiply input1="display_ffty" input2="display_ffty" output1="ffty2" />
         <add input1="fftx2" input2="ffty2" output1="fft2" />
-        <power input1="fft2" input2="0.5" type2="value" output1="fft" />
+        <power input1="fft2" input2="0.5" output1="fft" />
         <max input1="fft" input2="display_frequency" output1="max" output2="f0" />
     </analysis>
     <export>

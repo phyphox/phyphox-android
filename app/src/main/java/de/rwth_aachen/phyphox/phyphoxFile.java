@@ -30,38 +30,25 @@ import java.util.Vector;
 
 public class phyphoxFile {
 
+    public static boolean isValidIdentifier(String s) {
+        if (s.isEmpty()) {
+            return false;
+        }
+        if (!Character.isJavaIdentifierStart(s.charAt(0))) {
+            return false;
+        }
+        for (int i = 1; i < s.length(); i++) {
+            if (!Character.isJavaIdentifierPart(s.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static class PhyphoxStream {
         boolean isLocal;
         InputStream inputStream = null;
         String message = "";
-    }
-
-    public static class phyphoxExperiment {
-        boolean loaded = false;
-        boolean isLocal;
-        String message = "";
-        String title = "";
-        String category = "";
-        String icon = "";
-        String description = "There is no description available for this experiment.";
-        public Vector<expView> experimentViews = new Vector<>();
-        public Vector<sensorInput> inputSensors = new Vector<>();
-        public final Vector<dataBuffer> dataBuffers = new Vector<>();
-        public final Map<String, Integer> dataMap = new HashMap<>();
-        public Vector<Analysis.analysisModule> analysis = new Vector<>();
-
-        double analysisPeriod = 0.;
-
-        AudioTrack audioTrack = null;
-        String audioSource;
-        int audioRate = 48000;
-        int audioBufferSize = 0;
-        AudioRecord audioRecord = null;
-        String micOutput;
-        int micRate = 48000;
-        int micBufferSize = 0;
-
-        public dataExport exporter;
     }
 
     public static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
@@ -151,7 +138,6 @@ public class phyphoxFile {
 
         protected phyphoxExperiment doInBackground(String... params) {
             phyphoxExperiment experiment = new phyphoxExperiment();
-            experiment.exporter = new dataExport(parent);
             PhyphoxStream input = openXMLInputStream(intent, parent);
 
             if (input.inputStream == null) {
@@ -222,6 +208,7 @@ public class phyphoxFile {
                                                                                 ge.setHeight(Integer.valueOf(xpp.getAttributeValue(null, "height")));
                                                                             ge.setLine(!(xpp.getAttributeValue(null, "style") != null && xpp.getAttributeValue(null, "style").equals("dots")));
                                                                             ge.setPartialUpdate((xpp.getAttributeValue(null, "partialUpdate") != null && xpp.getAttributeValue(null, "partialUpdate").equals("true")));
+                                                                            ge.setForceFullDataset((xpp.getAttributeValue(null, "forceFullDataset") != null && xpp.getAttributeValue(null, "forceFullDataset").equals("true")));
                                                                             if (xpp.getAttributeValue(null, "history") != null)
                                                                                 ge.setHistoryLength(Integer.valueOf(xpp.getAttributeValue(null, "history")));
                                                                             ge.setLabel(xpp.getAttributeValue(null, "labelX"), xpp.getAttributeValue(null, "labelY"));
@@ -366,10 +353,8 @@ public class phyphoxFile {
                                                 int maxBufferSize = 1;
                                                 int totalBufferSize = 0;
                                                 Vector<String> inputs = new Vector<>();
-                                                Vector<Boolean> isValue = new Vector<>();
                                                 while (xpp.getAttributeValue(null, "input" + i) != null) {
-                                                    isValue.add(xpp.getAttributeValue(null, "type" + i) != null && xpp.getAttributeValue(null, "type" + i).equals("value"));
-                                                    if (!isValue.lastElement()) {
+                                                    if (phyphoxFile.isValidIdentifier(xpp.getAttributeValue(null, "input" + i))) {
                                                         int inputSize = experiment.dataBuffers.get(experiment.dataMap.get(xpp.getAttributeValue(null, "input" + i))).size;
                                                         totalBufferSize += inputSize;
                                                         if (inputSize > maxBufferSize)
@@ -394,7 +379,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.addAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.addAM(experiment, inputs, outputs));
                                                         break;
                                                     case "subtract":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -403,7 +388,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.subtractAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.subtractAM(experiment, inputs, outputs));
                                                         break;
                                                     case "multiply":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -412,7 +397,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.multiplyAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.multiplyAM(experiment, inputs, outputs));
                                                         break;
                                                     case "divide":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -421,7 +406,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.divideAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.divideAM(experiment, inputs, outputs));
                                                         break;
                                                     case "power":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -430,7 +415,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.powerAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.powerAM(experiment, inputs, outputs));
                                                         break;
                                                     case "sin":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -439,7 +424,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.sinAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.sinAM(experiment, inputs, outputs));
                                                         break;
                                                     case "cos":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -448,7 +433,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.cosAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.cosAM(experiment, inputs, outputs));
                                                         break;
                                                     case "tan":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -457,7 +442,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        experiment.analysis.add(new Analysis.tanAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.tanAM(experiment, inputs, outputs));
                                                         break;
                                                     case "max":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -472,7 +457,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output2"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output2);
                                                         }
-                                                        experiment.analysis.add(new Analysis.maxAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs));
+                                                        experiment.analysis.add(new Analysis.maxAM(experiment, inputs, outputs));
                                                         break;
                                                     case "threshold":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -485,7 +470,7 @@ public class phyphoxFile {
                                                         if (xpp.getAttributeValue(null, "threshold") != null)
                                                             threshold = Double.valueOf(xpp.getAttributeValue(null, "threshold"));
                                                         boolean falling = Boolean.valueOf(xpp.getAttributeValue(null, "falling"));
-                                                        experiment.analysis.add(new Analysis.thresholdAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs, threshold, falling));
+                                                        experiment.analysis.add(new Analysis.thresholdAM(experiment, inputs, outputs, String.valueOf(threshold), falling));
                                                         break;
                                                     case "append":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -494,7 +479,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        Analysis.appendAM appendAM = new Analysis.appendAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs);
+                                                        Analysis.appendAM appendAM = new Analysis.appendAM(experiment, inputs, outputs);
                                                         experiment.analysis.add(appendAM);
                                                         break;
                                                     case "fft":
@@ -510,7 +495,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output2"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output2);
                                                         }
-                                                        Analysis.fftAM fftAM = new Analysis.fftAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs);
+                                                        Analysis.fftAM fftAM = new Analysis.fftAM(experiment, inputs, outputs);
                                                         experiment.analysis.add(fftAM);
                                                         break;
                                                     case "autocorrelation":
@@ -526,14 +511,14 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output2"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output2);
                                                         }
-                                                        Analysis.autocorrelationAM acAM = new Analysis.autocorrelationAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs);
+                                                        Analysis.autocorrelationAM acAM = new Analysis.autocorrelationAM(experiment, inputs, outputs);
                                                         double mint = Double.NEGATIVE_INFINITY;
                                                         if (xpp.getAttributeValue(null, "mint") != null)
                                                             mint = Double.valueOf(xpp.getAttributeValue(null, "mint"));
                                                         double maxt = Double.POSITIVE_INFINITY;
                                                         if (xpp.getAttributeValue(null, "maxt") != null)
                                                             maxt = Double.valueOf(xpp.getAttributeValue(null, "maxt"));
-                                                        acAM.setMinMaxT(mint, maxt);
+                                                        acAM.setMinMax(String.valueOf(mint), String.valueOf(maxt));
                                                         experiment.analysis.add(acAM);
                                                         break;
                                                     case "crosscorrelation":
@@ -548,7 +533,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        Analysis.crosscorrelationAM ccAM = new Analysis.crosscorrelationAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs);
+                                                        Analysis.crosscorrelationAM ccAM = new Analysis.crosscorrelationAM(experiment, inputs, outputs);
                                                         experiment.analysis.add(ccAM);
                                                         break;
                                                     case "gausssmooth":
@@ -558,7 +543,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        Analysis.gaussSmoothAM gsAM = new Analysis.gaussSmoothAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs);
+                                                        Analysis.gaussSmoothAM gsAM = new Analysis.gaussSmoothAM(experiment, inputs, outputs);
                                                         if (xpp.getAttributeValue(null, "sigma") != null)
                                                             gsAM.setSigma(Double.valueOf(xpp.getAttributeValue(null, "sigma")));
                                                         experiment.analysis.add(gsAM);
@@ -576,7 +561,7 @@ public class phyphoxFile {
                                                             max.add(xpp.getAttributeValue(null, "max" + j));
                                                             j++;
                                                         }
-                                                        experiment.analysis.add(new Analysis.rangefilterAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs, min, max));
+                                                        experiment.analysis.add(new Analysis.rangefilterAM(experiment, inputs, outputs, min, max));
                                                         break;
                                                     case "ramp":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
@@ -585,7 +570,7 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        Analysis.rampGeneratorAM rampAM = new Analysis.rampGeneratorAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs);
+                                                        Analysis.rampGeneratorAM rampAM = new Analysis.rampGeneratorAM(experiment, inputs, outputs);
                                                         double start = 0;
                                                         double stop = 100;
                                                         int length = -1;
@@ -595,7 +580,7 @@ public class phyphoxFile {
                                                             stop = Double.valueOf(xpp.getAttributeValue(null, "stop"));
                                                         if (xpp.getAttributeValue(null, "length") != null)
                                                             length = Integer.valueOf(xpp.getAttributeValue(null, "length"));
-                                                        rampAM.setParameters(start, stop, length);
+                                                        rampAM.setParameters(String.valueOf(start), String.valueOf(stop), String.valueOf(length));
                                                         experiment.analysis.add(rampAM);
                                                         break;
                                                     case "const":
@@ -605,14 +590,14 @@ public class phyphoxFile {
                                                             experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
                                                             outputs.add(output1);
                                                         }
-                                                        Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(experiment.dataBuffers, experiment.dataMap, inputs, isValue, outputs);
+                                                        Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(experiment, inputs, outputs);
                                                         double value = 0;
                                                         int clength = -1;
                                                         if (xpp.getAttributeValue(null, "value") != null)
                                                             value = Double.valueOf(xpp.getAttributeValue(null, "value"));
                                                         if (xpp.getAttributeValue(null, "length") != null)
                                                             clength = Integer.valueOf(xpp.getAttributeValue(null, "length"));
-                                                        constAM.setParameters(value, clength);
+                                                        constAM.setParameters(String.valueOf(value), String.valueOf(clength));
                                                         experiment.analysis.add(constAM);
                                                         break;
                                                     default:
