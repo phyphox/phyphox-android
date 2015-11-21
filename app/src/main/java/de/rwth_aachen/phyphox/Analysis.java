@@ -1,5 +1,7 @@
 package de.rwth_aachen.phyphox;
 
+import android.util.Log;
+
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -746,7 +748,7 @@ public class Analysis {
             if (smaxt.equals(""))
                 maxt = Double.POSITIVE_INFINITY; //not set by user, set to +inf so it has no effect
             else
-                maxt = getSingleValueFromUserString(smint);
+                maxt = getSingleValueFromUserString(smaxt);
 
             //Get arrays for random access
             Double y[] = experiment.getBuffer(inputs.get(0)).getArray();
@@ -776,6 +778,7 @@ public class Analysis {
             for (int i = 0; i < y.length; i++) { //Displacement i for each value of input1
                 if (x[i] < mint || x[i] > maxt) //Skip this, if it should be filtered
                     continue;
+
                 double sum = 0.;
                 for (int j = 0; j < y.length-i; j++) { //For each value of input1 minus the current displacement
                     sum += y[j]*y[j+i]; //Product of normal and displaced data

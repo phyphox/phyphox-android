@@ -133,4 +133,13 @@ public class phyphoxExperiment {
             }
         }
     }
+
+    public void stopAll() {
+        if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
+            audioRecord.stop();
+        if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
+            audioTrack.stop();
+        for (sensorInput sensor : inputSensors)
+            sensor.stop();
+    }
 }

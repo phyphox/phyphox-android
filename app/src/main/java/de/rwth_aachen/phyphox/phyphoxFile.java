@@ -14,18 +14,21 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Xml;
+import android.widget.Toast;
 
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 import java.util.Vector;
 
 public class phyphoxFile {
@@ -689,6 +692,41 @@ public class phyphoxFile {
         @Override
         protected void onPostExecute(phyphoxExperiment experiment) {
             parent.onExperimentLoaded(experiment);
+        }
+    }
+
+    protected static class CopyXMLTask extends AsyncTask<String, Void, String> {
+        private Intent intent;
+        private Experiment parent;
+
+        CopyXMLTask(Intent intent, Experiment parent) {
+            this.intent = intent;
+            this.parent = parent;
+        }
+
+        protected String doInBackground(String... params) {
+            phyphoxFile.PhyphoxStream input = phyphoxFile.openXMLInputStream(intent, parent);
+            if (!input.message.equals(""))
+                return input.message;
+            try {
+                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox";
+                FileOutputStream output = parent.openFileOutput(file, Activity.MODE_PRIVATE);
+                byte[] buffer = new byte[1024];
+                int count;
+                while ((count = input.inputStream.read(buffer)) != -1)
+                    output.write(buffer, 0, count);
+                output.close();
+                input.inputStream.close();
+            } catch (Exception e) {
+                Log.e("loadExperiment", "Error loading this experiment to local memory.", e);
+                return "Error loading the original XML file again.";
+            }
+            return "";
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            parent.onCopyXMLCompleted(result);
         }
     }
 }
