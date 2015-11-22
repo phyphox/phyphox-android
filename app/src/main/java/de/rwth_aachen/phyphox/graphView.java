@@ -7,37 +7,49 @@ import android.graphics.Paint;
 import android.graphics.Region;
 import android.view.View;
 
-public class graphView extends View {
-    private int historyLength;
-    private int historyFilled;
-    private boolean forceFullDataset = false;
-    private Double[][] graphX;
-    private Double[][] graphY;
-    private double rangeMinX, rangeMaxX, rangeMinY, rangeMaxY;
-    private double minX, maxX, minY, maxY;
-    private Resources res;
-    boolean line = false;
-    private int maxXTics = 6;
-    private int maxYTics = 6;
-    private String labelX = null;
-    private String labelY = null;
-    private boolean logX = false;
-    private boolean logY = false;
-    Paint paint;
+//The graphView class implements an Android view which displays a data graph
 
+public class graphView extends View {
+    private Double[][] graphX; //The x data to be displayed
+    private Double[][] graphY; //The y data to be displayed
+
+    private boolean forceFullDataset = false; //If true, all data points are shown. If false, some datapoints will be skipped if much more data is availbale than required by the resolution
+
+    private int historyLength; //If set to n > 1 the graph will also show the last n sets in a different color
+    private int historyFilled; //Tracks the number of entries in the history
+
+    private double rangeMinX, rangeMaxX, rangeMinY, rangeMaxY; //User defined fixed ranges. Min and max for x- and y-axis
+    private double minX, maxX, minY, maxY; //If a rescale is triggered, the global min and max for x and y values is stored here
+
+    boolean line = false; //Show lines instead of points?
+
+    private final static int maxXTics = 6; //Constant to set a target number of tics on the x axis
+    private final static int maxYTics = 6; //Constant to set a target number of tics on the y axis
+    private String labelX = null; //Label for the x-axis
+    private String labelY = null; //Label for the y-axis
+    private boolean logX = false; //logarithmic scale for the x-axis?
+    private boolean logY = false; //logarithmic scale for the y-axis?
+
+    Paint paint; //Anti-Aliased paint used all over this class
+    private Resources res; //Reference to resources (for strings and colors)
+
+    //Simple constructor just needs a context to call the View constructor
+    //Initialize some stuff...
     public graphView(Context context) {
         super(context);
         res = getResources();
         setHistoryLength(1);
-        setRange(Double.NaN, Double.NaN, Double.NaN, Double.NaN);
-        rescale();
+        setRange(Double.NaN, Double.NaN, Double.NaN, Double.NaN); //No fixed range
+        rescale(); //Calculate initial scale. At this point it will just set all min and max to +inf and -inf
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     }
 
+    //Interface to switch between lines and points
     public void setLine(boolean line) {
         this.line = line;
     }
 
+    //Interface to set the history length
     public void setHistoryLength(int length) {
         this.historyLength = length;
         this.historyFilled = 0;
@@ -45,26 +57,28 @@ public class graphView extends View {
         graphY = new Double[historyLength][];
     }
 
+    //Interface to force the display the full data set vs. skipping datapoints if there are more than neccessary at the current resolution
     public void setForceFullDataset(boolean forceFullDataset) {
         this.forceFullDataset = forceFullDataset;
     }
 
+    //Rescale any non-fixed ranges (those set to NaN)
     public void rescale() {
         minX = Double.POSITIVE_INFINITY;
         maxX = Double.NEGATIVE_INFINITY;
         minY = Double.POSITIVE_INFINITY;
         maxY = Double.NEGATIVE_INFINITY;
-        for (int i = 0; i < historyFilled; i++) {
-            for (int j = 0; j < graphX[i].length; j++) {
-                if (Double.isInfinite(graphX[i][j]) || Double.isNaN(graphX[i][j]))
+        for (int i = 0; i < historyFilled; i++) { //Consider every history entry
+            for (int j = 0; j < graphX[i].length; j++) { //Consider all the x-data
+                if (Double.isInfinite(graphX[i][j]) || Double.isNaN(graphX[i][j])) //Finite data only
                     continue;
                 if (graphX[i][j] < minX)
                     minX = graphX[i][j];
                 if (graphX[i][j] > maxX)
                     maxX = graphX[i][j];
             }
-            for (int j = 0; j < graphY[i].length; j++) {
-                if (Double.isInfinite(graphY[i][j]) || Double.isNaN(graphY[i][j]))
+            for (int j = 0; j < graphY[i].length; j++) { //Consider all the y-data
+                if (Double.isInfinite(graphY[i][j]) || Double.isNaN(graphY[i][j])) //Finite data only
                     continue;
                 if (graphY[i][j] < minY)
                     minY = graphY[i][j];
@@ -74,81 +88,103 @@ public class graphView extends View {
         }
     }
 
+    //Add a new graph and (if enabled) push the old graphs back into history
     public void addGraphData(Double[] graphY, Double[] graphX) {
+        //Push back data in the history
         for (int i = historyFilled-1; i > 0; i--) {
             this.graphY[i] = this.graphY[i-1];
             this.graphX[i] = this.graphX[i-1];
         }
+
+        //set new graph
         this.graphY[0] = graphY;
         this.graphX[0] = graphX;
+
+        //History increases
         historyFilled++;
-        if (historyFilled > historyLength)
+        if (historyFilled > historyLength) //History full? Limit it.
             historyFilled = historyLength;
+
+        //Rescale and invalidate to update everything
         this.rescale();
         this.invalidate();
     }
 
+    //This overloads addGraphData to take pure y-data without x data
     public void addGraphData(Double[] graphY) {
+        //Create standard x data with indices
         Double [] graphX = new Double[graphY.length];
         for (int i = 0; i < graphY.length; i++)
             if (!Double.isNaN(graphY[i]))
                 graphX[i] = (double)i;
+
+        //Call the full addGraphData with the artificial x data
         addGraphData(graphY, graphX);
     }
 
+    //Interface to set fixed ranges
     public void setRange(double minX, double maxX, double minY, double maxY) {
         rangeMinX = minX;
         rangeMaxX = maxX;
         rangeMinY = minY;
         rangeMaxY = maxY;
-        this.invalidate();
+        this.invalidate(); //Invalidate to redraw
     }
 
+    //Interface to set axis labels
     public void setLabel(String labelX, String labelY) {
         this.labelX = labelX;
         this.labelY = labelY;
     }
 
+    //Interface to configure logarithmic scales
     public void setLogScale(boolean logX, boolean logY) {
         this.logX = logX;
         this.logY = logY;
     }
 
+    //Helper function that figures out where to put tics on an axis
+    //Takes the min and max of that axis, a maximum count of tics and whether the axis is supposed
+    // to be logarithmic
     private double[] getTics(double min, double max, int maxTics, boolean log){
         if (!(max > min))
-            return new double[0];
+            return new double[0]; //Invalid axis. No tics
         if (Double.isInfinite(min) || Double.isNaN(min) || Double.isInfinite(max) || Double.isNaN(max))
-            return new double[0];
-        if (log) {
-            if (min < 0)
+            return new double[0];  //Invalid axis. No tics
+        if (log) { //Logarithmic axis. This needs logic of its own...
+            if (min < 0) //negative values do not work for logarithmic axes
                 return new double[0];
-            double logMax = Math.log10(max);
+            double logMax = Math.log10(max); //Store the log of the max and min value
             double logMin = Math.log10(min);
 
-            int digitRange = (int)(Math.floor(logMax)-Math.ceil(logMin));
+            int digitRange = (int)(Math.floor(logMax)-Math.ceil(logMin)); //The range of the axis in terms of the number of digits its labels have (well, actually it's the exponent, you know what I mean..?)
 
-            if (digitRange < 1)
+            //we will just set up tics at powers of ten: 0.1, 1, 10, 100 etc.
+            if (digitRange < 1) //Range to short for this naive tic algorithm
                 return new double[0];
 
-            int magStep = 1;
-            while (digitRange+1 > maxTics * magStep)
+            int magStep = 1; //If we cover huge scales we might want to do larger steps...
+            while (digitRange+1 > maxTics * magStep) //Do we have more than max tics? Increase step size then.
                 magStep++;
 
-            double first = Math.pow(10, Math.ceil(logMin));
-            double[] tics = new double[(digitRange+1)/magStep];
+            double first = Math.pow(10, Math.ceil(logMin)); //The first tic above min
+            double[] tics = new double[(digitRange+1)/magStep]; //The array to hold the tics
 
-            for (int i = 0; i < (digitRange+1)/magStep; i++) {
+            for (int i = 0; i < (digitRange+1)/magStep; i++) { //Fill the array with powers of ten
                 tics[i] = first;
                 first *= 10;
             }
 
-            return tics;
+            return tics; //Done
         }
 
-        double range = max-min;
-        double stepFactor = Math.pow(10,Math.floor(Math.log10(range))-1);
-        double step = 1.;
-        double steps = range/stepFactor;
+        //Basic non-logarithmic algorithm
+        double range = max-min; //axis range
+        double stepFactor = Math.pow(10,Math.floor(Math.log10(range))-1); //First estimate how large the steps between our tics should be as a power of ten
+        double step = 1.; //The finer step size within the power of ten
+        double steps = range/stepFactor; //How many steps would there be with step times stepfactor?
+
+        //Depending on how many steps we would have, increase the step factor to stay within maxTics
         if (steps <= maxTics)
             step = 1*stepFactor;
         else if (steps <= maxTics * 2)
@@ -164,25 +200,28 @@ public class graphView extends View {
         else if (steps <= maxTics * 100)
             step = 100*stepFactor;
 
+        //ok how many (integer) steps exactly?
         int iSteps = (int)Math.ceil(range/step);
 
-        double first = Math.ceil(min/step)*step;
-        double[] tics = new double[iSteps];
+        double first = Math.ceil(min/step)*step; //Value of the first tic
+        double[] tics = new double[iSteps]; //Array to hold the tics
 
+        //Generate the tics by stepping up from the first tic
         for (int i = 0; i < iSteps; i++) {
             tics[i] = first + i * step;
         }
 
-        return tics;
+        return tics; //Done
     }
 
     @Override
+    //Draw the graph!
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         paint.setTextSize(res.getDimension(R.dimen.graph_font));
 
-        //Set limits
+        //Set limits - range[Min|Max][X|Y] is the user set one - if it is not set (NaN) use [min|max][X|Y] from rescaling
         double effectiveMinX, effectiveMaxX, effectiveMinY, effectiveMaxY;
         if (Double.isNaN(rangeMinX))
             effectiveMinX = minX;
@@ -210,11 +249,14 @@ public class graphView extends View {
             effectiveMinY -= extraY;
         }
 
+        //On log scales zero is a problem. We just set a minimum which works for most plots.
+        //However, this is a compromise.
         if (logX && effectiveMinX < 0.001)
             effectiveMinX = 0.001;
         if (logY && effectiveMinY < 0.001)
             effectiveMinY = 0.001;
 
+        //Generate the tics
         double[] xTics = getTics(effectiveMinX, effectiveMaxX, maxXTics, logX);
         double[] yTics = getTics(effectiveMinY, effectiveMaxY, maxYTics, logY);
 
@@ -222,6 +264,7 @@ public class graphView extends View {
         int w = this.getWidth();
         int h = this.getHeight();
 
+        //Consider room for the labels and the tics
         int graphB = (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2);
         if (labelX != null)
             graphB += (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2);
@@ -237,7 +280,7 @@ public class graphView extends View {
         int graphW = w-graphL;
         int graphH = h-graphB;
 
-        //Label tics
+        //Labels for the tics
         paint.setColor(res.getColor(R.color.main));
         paint.setStrokeWidth(1);
         paint.setAlpha(255);

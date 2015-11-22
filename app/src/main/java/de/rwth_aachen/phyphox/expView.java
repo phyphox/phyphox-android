@@ -4,10 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.support.v4.content.ContextCompat;
-import android.text.Editable;
 import android.text.InputType;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -19,17 +16,38 @@ import android.widget.TextView;
 
 import java.util.Vector;
 
-public class expView{
-    public abstract class expViewElement {
-        protected String label;
-        protected float labelSize;
-        protected String valueOutput;
-        protected String valueInput;
-        protected String dataXInput;
-        protected String dataYInput;
-        protected int htmlID;
-        protected Resources res;
+// expView implements experiment views, which are collections of displays and graphs that form a
+// specific way to show the results of an element.
 
+// Each view consists of one or more expViewElements, which is a base class of an element that shows
+// dataBuffer data, like a simple textDisplay showing a single value or a more complex graph.
+// Hence, these elements (for example graphElement or valueElement) inherit from the abstract
+// expViewElement class. expViewElements may even take data from the user and report it back to a
+// dataBuffer to create interactive experiments (inputElement).
+
+//Example:
+//A pendulum experiment may consist of three expViews, showing (1) raw data, (2) an autocorrelation
+//analysis and (3) the result values. The raw data expView would consist of three graphElements to
+//show x, y and z data. The autocorrelation would consist of a graph element showing the
+//autocorrelation and a valueElement showing the time of the first maximum. The result values
+//finally only consist of two values showing the results of the analysis: A frequency and a period.
+
+
+public class expView{
+
+    //Abstract expViewElement class defining the interface for any element of an experiment view
+    public abstract class expViewElement {
+        protected String label; //Each element has a label. Usually naming the data shown
+        protected float labelSize; //Size of the label
+        protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
+        protected String valueInput; //Single valued data from this input can be displayed to the user
+        protected String dataXInput; //Array data from this input can be displayed to the user, usually used for x-axis
+        protected String dataYInput; //Array data from this input can be displayed to the user, usually used for y-axis
+
+        protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
+        protected Resources res; //Access to resources
+
+        //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             this.label = label;
             this.labelSize = 25;
@@ -46,80 +64,130 @@ public class expView{
             this.res = res;
         }
 
+        //Interface to change the label size
         protected void setLabelSize(float size) {
             this.labelSize = size;
         }
 
+        //Abstract function to force child classes to implement createView
+        //This will take a linear layout, which should be filled by this function
         protected abstract void createView(LinearLayout ll, Context c);
+
+        //Abstract function to force child classes to implement createViewHTML
+        //This will return HTML code representing the element
         protected abstract String createViewHTML();
+
+        //This function should be called from the outside. It will take the unique HTML id and store
+        //it before calling createViewHTML to create the actual HTML markup. This way createViewHTML
+        //can use the ID, which only has to be set up once.
         protected String getViewHTML(int id) {
             this.htmlID = id;
             return createViewHTML();
         }
 
+        //getUpdateMode is a helper for the webinterface. It returns a string explaining how the
+        //element should be updated. This helps to keep network load at bay. The string will be
+        // interpreted in JavaScript and currently supports:
+        //  single      the element takes a single value
+        //  full        the element always needs a full array
+        //  partial     the element takes an array, but new values are only appended, so the element
+        //              only needs those elements of its array, that have not already been
+        //              transferred
+        //  input       the element is a single value input element and will also return a single
+        //              value
         protected abstract String getUpdateMode();
 
+        //getValue is the function that retrieves a value from an input element so the main process
+        //can append it to the output buffer
         protected double getValue() {
             return 0.;
         }
 
+        //setValue is the function through which the main process can write a single value that
+        //should be shown to the user
         protected void setValue(double x) {
 
         }
 
+        //This function returns a JavaScript function. The argument of this function will receive
+        //a single value that should be shown to the user
         protected String setValueHTML() {
             return "function(x) {}";
         }
 
+        //setDataX is the function through which the main process can write a full dataBuffer
+        // (array) that should be shown to the user. Usually used for x-data
         protected void setDataX(dataBuffer x) {
 
         }
 
+        //This function returns a JavaScript function. The argument of this function will receive
+        //an array that should be shown to the user. Usually used for x-data
         protected String setDataXHTML() {
             return "function(x) {}";
         }
 
+        //setDataY is the function through which the main process can write a full dataBuffer
+        // (array) that should be shown to the user. Usually used for y-data
         protected void setDataY(dataBuffer y) {
 
         }
 
+        //This function returns a JavaScript function. The argument of this function will receive
+        //an array that should be shown to the user. Usually used for y-data
         protected String setDataYHTML() {
             return "function(y) {}";
         }
 
+        //dataComplete will be called after all set-function have been called. This signifies that
+        //the element has a full dataset and may update
         protected void dataComplete() {
 
         }
 
+        //This function returns a JavaScript function. it will be called when all data-set-functions
+        //have been called and the element may be updated
         protected String dataCompleteHTML() {
             return "function() {}";
         }
 
+        //This returns the key name of the output dataBuffer. Called by the main loop to figure out
+        //where to store user input
         protected String getValueOutput() {
             return this.valueOutput;
         }
 
+        //This returns the key name of the valueInput dataBuffer. Called by the main loop to figure
+        // out which values to write to this element
         protected String getValueInput() {
             return this.valueInput;
         }
 
+        //This returns the key name of the dataXInput dataBuffer. Called by the main loop to figure
+        // out which buffer to write to this element as x
         protected String getDataXInput() {
             return this.dataXInput;
         }
 
+        //This returns the key name of the dataYInput dataBuffer. Called by the main loop to figure
+        // out which buffer to write to this element as y
         protected String getDataYInput() {
             return this.dataYInput;
         }
     }
 
+    //valueElement implements a simple text display for a single value with an unit and a given
+    //format.
     public class valueElement extends expViewElement {
-        private TextView tv;
-        private double factor;
-        private boolean scientificNotation;
-        private int precision;
-        private String formatter;
-        private String unit;
+        private TextView tv; //Holds the Android textView
+        private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
+        private boolean scientificNotation; //Show scientific notation instead of fixed point (1e-3 instead of 0.001)
+        private int precision; //The number of significant digits
+        private String formatter; //This formatter is created when scientificNotation and precision are set
+        private String unit; //A string to display as unit
 
+        //Constructor takes the same arguments as the expViewElement constructor
+        //It sets a precision of 2 with fixed point notation as default and creates the formatter
         valueElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
             this.scientificNotation = false;
@@ -129,6 +197,7 @@ public class expView{
             this.factor = 1.;
         }
 
+        //Create the formatter for the notation and precision: for example  %.2e or %.2f
         protected void updateFormatter() {
             if (scientificNotation)
                 formatter = "%."+precision+"e";
@@ -136,21 +205,26 @@ public class expView{
                 formatter = "%."+precision+"f";
         }
 
+        //Interface to set scientific notation
         protected void setScientificNotation(boolean sn) {
             this.scientificNotation = sn;
             updateFormatter();
         }
 
+        //Interface to set precision
         protected void setPrecision(int p) {
             this.precision = p;
             updateFormatter();
         }
 
+        //Interface to set conversion factor. The element will show inputValue times this factor
         protected void setFactor(double factor) {
             this.factor = factor;
         }
 
+        //Interface to set the unit string
         protected void setUnit(String unit) {
+            //If there is a unit we will save the space in this string as well...
             if (unit == null || unit.equals(""))
                 this.unit = "";
             else
@@ -158,45 +232,57 @@ public class expView{
         }
 
         @Override
+        //This is a single value. So the updateMode is "single"
         protected String getUpdateMode() {
             return "single";
         }
 
         @Override
+        //Append the Android vews we need to the linear layout
         protected void createView(LinearLayout ll, Context c){
+            //Create a row consisting of label and value
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
             row.setOrientation(LinearLayout.HORIZONTAL);
 
+            //Create the label as textView
             TextView labelView = new TextView(c);
             labelView.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0.5f));
+                    0.5f)); //left half should be label
             labelView.setText(this.label);
-            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
             labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
 
+            //Create the value (and unit) as textView
             tv = new TextView(c);
             tv.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0.5f));
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+                    0.5f)); //right half should be value+unit
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
             tv.setTextColor(ContextCompat.getColor(c, R.color.main));
 
+            //Add label and value to the row
             row.addView(labelView);
             row.addView(tv);
+
+            //Add the row to the linear layout
             ll.addView(row);
         }
 
         @Override
+        //Creat the HTML version of this view:
+        //<div>
+        //  <span>Label</span><span>Value</span>
+        //</div>
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"valueElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
@@ -205,12 +291,15 @@ public class expView{
         }
 
         @Override
+        //We just have to send calculated value and the unit to the textView
         protected void setValue(double x) {
             tv.setText(String.format(this.formatter, x*this.factor)+this.unit);
         }
 
         @Override
+        //In Javascript we just have to set the content of the value <span> to the value using jquery
         protected String setValueHTML() {
+            //In JavaScript we have to use "toExponential" or "toFixed" isntead of a formatter
             if (scientificNotation)
                 return "function (x) {" +
                         "$(\"#element"+htmlID+" .value\").text((x*"+factor+").toExponential("+precision+")+\" "+unit+"\")" +
@@ -222,28 +311,34 @@ public class expView{
         }
     }
 
+    //inputElement implements a simple edit box which takes a single value from the user
     public class inputElement extends expViewElement {
-        private EditText iv;
-        private double factor;
-        private String unit;
-        private double defaultValue;
-        private boolean signed = true;
-        private boolean decimal = true;
-        private boolean focused = false;
+        private EditText iv; //Holds the Android EditText
+        private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
+        private String unit; //A string to display as unit
+        private double defaultValue; //This value is filled into the dataBuffer before the user enters a custom value
+        private boolean signed = true; //Is the user allowed to give negative values?
+        private boolean decimal = true; //Is the user allowed to give non-integer values?
+        private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
+        //No special constructor. Just some defaults.
         inputElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
             this.unit = "";
             this.factor = 1.;
         }
 
+        //Interface to set the conversion factor
         protected void setFactor(double factor) {
             this.factor = factor;
         }
+
+        //Interface to set a default value
         protected void setDefaultValue(double v) {
             this.defaultValue = v;
         }
 
+        //Interface to set the unit string
         protected void setUnit(String unit) {
             if (unit == null || unit.equals(""))
                 this.unit = "";
@@ -251,67 +346,81 @@ public class expView{
                 this.unit = unit;
         }
 
+        //Interface to allow signed values
         protected void setSigned(boolean signed) {
             this.signed = signed;
         }
 
+        //Interface to allow non-integer values
         protected void setDecimal(boolean decimal) {
             this.decimal = decimal;
         }
 
         @Override
+        //This is an input, so the updateMode should be "input"
         protected String getUpdateMode() {
             return "input";
         }
 
         @Override
+        //Create the view in Android and append it to the linear layout
         protected void createView(LinearLayout ll, Context c){
+            //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
             row.setOrientation(LinearLayout.HORIZONTAL);
 
-            LinearLayout valueUnit = new LinearLayout(c);
-            valueUnit.setLayoutParams(new TableRow.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0.5f));
-            valueUnit.setOrientation(LinearLayout.HORIZONTAL);
-
+            //Create the label in the left half of the row
             TextView labelView = new TextView(c);
             labelView.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0.5f));
+                    0.5f)); //Left half of the whole row
             labelView.setText(this.label);
             labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
             labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
 
+            //Create a horizontal linear layout, which seperates the right half into the edit field
+            //and a textView to show the unit next to the user input
+            LinearLayout valueUnit = new LinearLayout(c);
+            valueUnit.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //right half of the whole row
+            valueUnit.setOrientation(LinearLayout.HORIZONTAL);
+
+            //The edit box
             iv = new EditText(c);
             iv.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0.7f));
+                    0.7f)); //Most of the right half
             iv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             iv.setPadding((int) labelSize / 2, 0, 0, 0);
             iv.setTypeface(null, Typeface.BOLD);
             iv.setTextColor(ContextCompat.getColor(c, R.color.main));
+
+            //Construct the inputType flags from our own state
             int inputType = InputType.TYPE_CLASS_NUMBER;
             if (signed)
                 inputType |= InputType.TYPE_NUMBER_FLAG_SIGNED;
             if (decimal)
                 inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
             iv.setInputType(inputType);
+
+            //Start with NaN
             iv.setText("NaN");
 
+            //The unit next to the edit box
             TextView unitView = new TextView(c);
             unitView.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0.3f));
+                    0.3f)); //Smaller part of the right half
             unitView.setText(this.unit);
             unitView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             unitView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
@@ -319,13 +428,18 @@ public class expView{
             unitView.setTextColor(ContextCompat.getColor(c, R.color.main));
             unitView.setTypeface(null, Typeface.BOLD);
 
+            //Add edit box and unit to the horizontal linear layout that makes up the right half of the row
             valueUnit.addView(iv);
             valueUnit.addView(unitView);
 
+            //Add label and the horizontal linear layout (edit box and unit) to the row
             row.addView(labelView);
             row.addView(valueUnit);
+
+            //Add the row to the main linear layout passed to this function
             ll.addView(row);
 
+            //Add a listener to the edit box to keep track of the focus
             iv.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 public void onFocusChange(View v, boolean hasFocus) {
                     focused = hasFocus;
@@ -334,12 +448,20 @@ public class expView{
         }
 
         @Override
+        //Create the HTML markup for this element
+        //<div>
+        //  <span>Label</span> <input /> <span>unit</span>
+        //</div>
+        //Note that the input is send from here as well as the AJAX-request is placed in the
+        //onchange-listener in the markup
         protected String createViewHTML(){
+            //Construct value restrictions in HTML5
             String restrictions = "";
             if (!signed)
                 restrictions += "min=\"0\" ";
             if (!decimal)
                 restrictions += "step=\"1\" ";
+
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"inputElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
                     "<input onchange=\"$.getJSON('control?cmd=set&buffer="+valueOutput+"&value='+$(this).val()/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
@@ -348,6 +470,8 @@ public class expView{
         }
 
         @Override
+        //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
+        //use that is consistent with that of the valueElement
         protected double getValue() {
             try {
                 return Double.valueOf(iv.getText().toString())/factor;
@@ -358,11 +482,12 @@ public class expView{
         }
 
         @Override
+        //Set the value if the element is not focused
         protected void setValue(double v) {
             //Enter value from buffer if it has not been changed by the user
             //This ensures, that the old value is restored if the view has to be created after the views have been switched.
             if (!focused) {
-                if (Double.isNaN(v))
+                if (Double.isNaN(v)) //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
                     iv.setText(String.valueOf(defaultValue));
                 else
                     iv.setText(String.valueOf(v * factor));
@@ -370,6 +495,7 @@ public class expView{
         }
 
         @Override
+        //The javascript function which updates the content of the input as it is updated on the phone
         protected String setValueHTML() {
             return "function (x) {" +
                     "if (!$(\"#element"+htmlID+" .value\").is(':focus'))" +
@@ -378,48 +504,56 @@ public class expView{
         }
     }
 
+    //graphElement implements a graph that displays y vs. x arrays from the dataBuffer
+    //This class mostly wraps the graphView, which (being rather complex) is implemented in its own
+    //class. See graphView.java...
     public class graphElement extends expViewElement {
-        private graphView gv = null;
-        private int height;
-        private Double[] dataX;
-        private Double[] dataY;
-        private boolean line = false;
-        private int historyLength = 1;
-        private boolean forceFullDataset = false;
-        private String labelX = null;
-        private String labelY = null;
-        private boolean partialUpdate = false;
-        private boolean logX = false;
-        private boolean logY = false;
+        private graphView gv = null; //Holds and GraphView isntance
+        private int height; //The height of the graph view
+        private Double[] dataX; //The x data to be displayed
+        private Double[] dataY; //The y data to be displayed
+        private boolean line = false; //Show lines instead of points?
+        private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
+        private boolean forceFullDataset = false; //If true, all data points are shown. If false, some datapoints will be skipped if much more data is availbale than required by the resolution
+        private String labelX = null; //Label for the x-axis
+        private String labelY = null; //Label for the y-axis
+        private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
+        private boolean logX = false; //logarithmic scale for the x-axis?
+        private boolean logY = false; //logarithmic scale for the y-axis?
 
-
+        //Quite usual constructor...
         graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
             height = 300;
         }
 
+        //Interface to change the height of the graph
         protected void setHeight(int height) {
             this.height = height;
         }
 
+        //Interface to switch between points and lines
         protected void setLine(boolean line) {
             this.line = line;
             if (gv != null)
                 gv.setLine(line);
         }
 
+        //Interface to set a history length
         protected void setHistoryLength(int hl) {
             this.historyLength = hl;
             if (gv != null)
                 gv.setHistoryLength(hl);
         }
 
+        //Interface to force the display the full data set vs. skipping datapoints if there are more than neccessary at the current resolution
         protected void setForceFullDataset(boolean forceFullDataset) {
             this.forceFullDataset = forceFullDataset;
             if (gv != null)
                 gv.setForceFullDataset(forceFullDataset);
         }
 
+        //Interface to set the axis labels.
         protected void setLabel(String labelX, String labelY) {
             this.labelX = labelX;
             this.labelY = labelY;
@@ -427,16 +561,20 @@ public class expView{
                 gv.setLabel(labelX, labelY);
         }
 
+        //Interface to set log scales
         protected void setLogScale(boolean logX, boolean logY) {
             this.logX = logX;
             this.logY = logY;
         }
 
+        //Interface to set partial updates vs. full updates of the data sets
         protected void setPartialUpdate(boolean pu) {
             this.partialUpdate = pu;
         }
 
         @Override
+        //The update mode is "partial" or "full" as this element uses arrays. The experiment may
+        //decide if partial updates are sufficient
         protected String getUpdateMode() {
             if (partialUpdate)
                 return "partial";
@@ -445,13 +583,17 @@ public class expView{
         }
 
         @Override
+        //Create the actual view in Android
         protected void createView(LinearLayout ll, Context c){
-            LinearLayout row = new LinearLayout(c);
-            row.setLayoutParams(new ViewGroup.LayoutParams(
+            //We need a label and want to put the graph below. So we wrap everything into a vertical
+            //linear layout (Axis labels are handled by the graphView)
+            LinearLayout gvll = new LinearLayout(c);
+            gvll.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
-            row.setOrientation(LinearLayout.VERTICAL);
+            gvll.setOrientation(LinearLayout.VERTICAL);
 
+            //Create the label
             TextView labelView = new TextView(c);
             labelView.setLayoutParams(new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -461,24 +603,35 @@ public class expView{
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
 
+            //Create the graphView
             gv = new graphView(c);
             gv.setLayoutParams(new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     height));
 
+            //Send our parameters to the graphView isntance
             gv.setLine(line);
             gv.setHistoryLength(historyLength);
             gv.setForceFullDataset(forceFullDataset);
             gv.setLabel(labelX, labelY);
             gv.setLogScale(logX, logY);
 
-            row.addView(labelView);
-            row.addView(gv);
-            ll.addView(row);
+            //Add label and graphView to our own wrapper linear layout
+            gvll.addView(labelView);
+            gvll.addView(gv);
+
+            //Add the wrapper layout to the linear layout given to this function
+            ll.addView(gvll);
 
         }
 
         @Override
+        //Create the HTML markup. We use the flot library to plot in JavaScript, so there is not
+        //as much to do here as one might expect
+        //<div>
+        //<span>Label</span>
+        //<div>graph</div>
+        //</div>
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
@@ -487,11 +640,13 @@ public class expView{
         }
 
         @Override
+        //Store the x data array until we update
         protected void setDataX(dataBuffer x) {
             dataX = x.getArray();
         }
 
         @Override
+        //Return a javascript function which stores the x data array for later use
         protected String setDataXHTML() {
             return "function (x) {"+
                         "elementData["+htmlID+"][\"x\"] = x" +
@@ -499,11 +654,13 @@ public class expView{
         }
 
         @Override
+        //Store the y data array until we update
         protected void setDataY(dataBuffer y) {
             dataY = y.getArray();
         }
 
         @Override
+        //Return a javascript function which stores the y data array for later use
         protected String setDataYHTML() {
             return "function (y) {"+
                         "elementData["+htmlID+"][\"y\"] = y" +
@@ -511,6 +668,9 @@ public class expView{
         }
 
         @Override
+        //Data complete, let's send it to the graphView
+        //Also clear the data afterwards to avoid sending it multiple times if it is not updated for
+        //some reason
         protected void dataComplete() {
             if (dataY != null) {
                 if (dataX != null) {
@@ -523,6 +683,11 @@ public class expView{
         }
 
         @Override
+        //This looks pretty ugly and indeed needs a clean-up...
+        //This function returns a javascript function which updates the flot chart.
+        //So we have to set-up some JSON objects to define the graph, put it into the JavaScript
+        //function (which has to setup some JSON itself) and return the whole nightmare. There
+        //certainly is a way to beautify this, but it's not too obvious...
         protected String dataCompleteHTML() {//TODO: Create intelligent function to setup ticks on log scales
             String transformX, transformY;
             if (logX)
@@ -549,6 +714,8 @@ public class expView{
         }
     }
 
+    //Remember? We are in the expView class.
+    //An experiment view has a name and holds a bunch of expViewElement instances
     public String name;
     public Vector<expViewElement> elements = new Vector<>();
 }

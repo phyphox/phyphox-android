@@ -51,8 +51,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-//TODO Clean-up loading-code and make it more error-proof
-//TODO Clean-up and annotate everything
 //TODO Translation of Experiment-Texts
 //TODO Sonar needs fine-tuning
 
@@ -663,9 +661,7 @@ public class Experiment extends AppCompatActivity {
         synchronized (experiment.dataBuffers) { //Synced, do not allow another thread to meddle here...
             for (dataBuffer buffer : experiment.dataBuffers)
                 buffer.clear();
-            long t0 = System.nanoTime();
-            for (sensorInput sensor : experiment.inputSensors)
-                sensor.start(t0);
+            experiment.startAllIO();
         }
 
         //Set measurement state
@@ -735,7 +731,7 @@ public class Experiment extends AppCompatActivity {
         //Stop any inputs (Sensors, microphone) or outputs (speaker) that might still be running
         //be careful as stopMeasurement might be called without a valid experiment
         if (experiment != null) {
-            experiment.stopAll();
+            experiment.stopAllIO();
         }
 
         //refresh the options menu

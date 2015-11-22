@@ -19,7 +19,6 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
@@ -34,7 +33,6 @@ import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -43,7 +41,6 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,6 +54,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 import java.util.Vector;
+
+//TODO clean-up and comment ExperimentList class
 
 public class ExperimentList extends AppCompatActivity {
 

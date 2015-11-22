@@ -55,6 +55,8 @@ import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 
+//TODO clean-up and comment remoteServer class
+
 @SuppressWarnings( "deprecation" )
 public class remoteServer extends Thread {
 

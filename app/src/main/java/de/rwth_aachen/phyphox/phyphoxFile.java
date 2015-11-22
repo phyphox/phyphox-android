@@ -31,6 +31,8 @@ import java.net.URL;
 import java.util.UUID;
 import java.util.Vector;
 
+//TODO clean-up and comment phyphoxFile class
+
 public class phyphoxFile {
 
     public static boolean isValidIdentifier(String s) {
