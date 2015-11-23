@@ -212,6 +212,7 @@ public class remoteServer extends Thread {
     remoteServer(phyphoxExperiment experiment, Experiment callActivity) {
         this.experiment = experiment;
         this.callActivity = callActivity;
+        this.res = callActivity.getResources();
 
         buildStyleCSS();
         buildIndexHTML();
