@@ -185,8 +185,7 @@ public class phyphoxExperiment {
             return;
         //We will not start audio recording and output here as it will be triggered by the analysis
         //  modules.
-        long t0 = System.nanoTime();
         for (sensorInput sensor : inputSensors)
-            sensor.start(t0);
+            sensor.start();
     }
 }

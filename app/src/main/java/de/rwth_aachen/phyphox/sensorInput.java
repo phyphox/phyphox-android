@@ -4,6 +4,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 //The sensorInput class encapsulates a sensor, maps their name from the phyphox-file format to
 //  the android identifiers and handles their output, which is written to the dataBuffers
@@ -82,10 +83,9 @@ public class sensorInput implements SensorEventListener {
         return R.string.unknown;
     }
 
-    //Start the data aquisition by registering a listener for this sensor. t0 has to be set by the
-    // caller, so it can set the same time base for all sensors
-    public void start(long t0) {
-        this.t0 = t0;
+    //Start the data aquisition by registering a listener for this sensor.
+    public void start() {
+        this.t0 = 0; //Reset t0. This will be set by the first sensor event
 
         //Reset averaging
         this.lastReading = 0;
@@ -109,6 +109,10 @@ public class sensorInput implements SensorEventListener {
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(SensorEvent event) {
+        if (t0 == 0)
+            t0 = event.timestamp; //Any event sets the same t0 for all sensors
+
+        //From here only listen to "this" sensor
         if (event.sensor.getType() == type) {
             if (average) {
                 //We want averages, so sum up all the data and count the aquisitions
@@ -135,6 +139,7 @@ public class sensorInput implements SensorEventListener {
                 if (dataT != null)
                     dataT.append((event.timestamp-t0)*1e-9); //We want seconds since t0
                 //Reset averaging
+                Log.d("Test", "t0:" + t0 + ", timestamp:" + event.timestamp);
                 avgX = 0.;
                 avgY = 0.;
                 avgZ = 0.;
