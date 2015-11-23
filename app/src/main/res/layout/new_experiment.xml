@@ -93,12 +93,15 @@
                     android:id="@+id/textView5"
                     android:labelFor="@+id/neRate" />
 
-                <SeekBar
+                <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@id/neRate"
-                    android:max="3"
-                    android:progress="3" />
+                    android:inputType="number|numberDecimal"
+                    android:ems="10"
+                    android:id="@+id/neRate"
+                    android:hint="@string/newExperimentInputRate"
+                    android:text="0" />
+
             </LinearLayout>
 
             <LinearLayout

@@ -65,6 +65,8 @@ public class phyphoxExperiment {
 
     //This function gets called in the main loop and takes care of any inputElements in the current experiment view
     public void handleInputViews(int currentView) {
+        if (!loaded)
+            return;
         for (dataBuffer buffer : dataBuffers) { //Compare each databuffer name...
             for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each expViewElement
                 try {
@@ -82,6 +84,8 @@ public class phyphoxExperiment {
 
     //called by th main loop to initialize the analysis process
     public void processAnalysis() {
+        if (!loaded)
+            return;
         //Get the data from the audio recording if used
         if (audioRecord != null) {
             audioRecord.stop(); //Stop the recording first
@@ -128,6 +132,8 @@ public class phyphoxExperiment {
 
     //called by the main loop after everything is processed. Here we have to send all the analysis results to the appropriate views
     public void updateViews(int currentView) {
+        if (!loaded)
+            return;
         for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
             for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each view.
                 try {
@@ -160,6 +166,8 @@ public class phyphoxExperiment {
 
     //Helper to stop all I/O of this experiment (i.e. when it should be stopped)
     public void stopAllIO() {
+        if (!loaded)
+            return;
         //Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
             audioRecord.stop();
@@ -173,6 +181,8 @@ public class phyphoxExperiment {
 
     //Helper to start all I/O of this experiment (i.e. when it should be started)
     public void startAllIO() {
+        if (!loaded)
+            return;
         //We will not start audio recording and output here as it will be triggered by the analysis
         //  modules.
         long t0 = System.nanoTime();

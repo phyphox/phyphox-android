@@ -668,7 +668,7 @@
         U2NlbmXlIV2WAAAAEHRFWHRUaW1lADAwOjAwOjAxOjEzo2oRygAAAABJRU5ErkJggg==
     </icon>
     <input>
-        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="2000" rate="fastest" />
+        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="2000" />
     </input>
     <analysis>
     </analysis>

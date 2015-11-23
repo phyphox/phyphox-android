@@ -312,7 +312,7 @@
         OjAwOjAwOjE5+wOfsQAAAABJRU5ErkJggg==
     </icon>
     <input>
-        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="fastest" />
+        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="20" />
     </input>
     <views>
         <view name="Results">

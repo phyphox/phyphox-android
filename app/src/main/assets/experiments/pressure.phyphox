@@ -3,7 +3,7 @@
     <category>Raw Sensors</category>
     <description>Get raw data from the barometer.</description>
     <input>
-        <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="500" rate="fastest" />
+        <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="500" />
     </input>
     <views>
         <view name="Raw Data">

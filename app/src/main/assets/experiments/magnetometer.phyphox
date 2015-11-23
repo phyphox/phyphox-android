@@ -3,7 +3,7 @@
     <category>Raw Sensors</category>
     <description>Get raw data from the magnetometer.</description>
     <input>
-        <sensor type="magnetic_field" outputX="magX" outputY="magY" outputZ="magZ" outputT="mag_time" buffer="500" rate="fastest" />
+        <sensor type="magnetic_field" outputX="magX" outputY="magY" outputZ="magZ" outputT="mag_time" buffer="500" />
     </input>
     <views>
         <view name="Raw Data">

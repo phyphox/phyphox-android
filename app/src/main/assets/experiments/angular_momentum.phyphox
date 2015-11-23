@@ -2,7 +2,7 @@
     <title>Angular Momentum</title>
     <category>Mechanics</category>
     <input>
-        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="2000" rate="fastest" />
+        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="2000" />
     </input>
     <analysis>
     </analysis>

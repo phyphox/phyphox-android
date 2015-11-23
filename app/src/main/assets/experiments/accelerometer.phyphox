@@ -3,7 +3,7 @@
     <category>Raw Sensors</category>
     <description>Get raw data from the accelerometer.</description>
     <input>
-        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="fastest" />
+        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" />
     </input>
     <views>
         <view name="Raw Data">

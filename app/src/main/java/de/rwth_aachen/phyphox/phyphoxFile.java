@@ -268,11 +268,15 @@ public class phyphoxFile {
                                                 switch (xpp.getName()) {
                                                     case "sensor":
                                                         int bufferSize = 100;
-                                                        String rate = "fastest";
+                                                        double rate = 0.;
+                                                        boolean average = false;
                                                         if (xpp.getAttributeValue(null, "buffer") != null)
                                                             bufferSize = Integer.valueOf(xpp.getAttributeValue(null, "buffer"));
                                                         if (xpp.getAttributeValue(null, "rate") != null) {
-                                                            rate = xpp.getAttributeValue(null, "rate");
+                                                            rate = Double.valueOf(xpp.getAttributeValue(null, "rate"));
+                                                        }
+                                                        if (xpp.getAttributeValue(null, "average") != null) {
+                                                            average = Boolean.valueOf(xpp.getAttributeValue(null, "average"));
                                                         }
                                                         if (xpp.getAttributeValue(null, "type") != null) {
                                                             dataBuffer dataX = null;
@@ -299,7 +303,7 @@ public class phyphoxFile {
                                                                 experiment.dataBuffers.add(dataT);
                                                                 experiment.dataMap.put(xpp.getAttributeValue(null, "outputT"), experiment.dataBuffers.size() - 1);
                                                             }
-                                                            experiment.inputSensors.add(new sensorInput(parent.sensorManager, xpp.getAttributeValue(null, "type"), rate,
+                                                            experiment.inputSensors.add(new sensorInput(parent.sensorManager, xpp.getAttributeValue(null, "type"), rate, average,
                                                                     dataX, dataY, dataZ, dataT));
                                                             if (!experiment.inputSensors.lastElement().isAvailable()) {
                                                                 experiment.message = parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(experiment.inputSensors.lastElement().getDescriptionRes()) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2);

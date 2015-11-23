@@ -506,7 +506,7 @@ public class ExperimentList extends AppCompatActivity {
                 View neLayout = neInflater.inflate(R.layout.new_experiment, null);
                 final EditText neTitle = (EditText) neLayout.findViewById(R.id.neTitle);
                 final EditText neBuffer = (EditText) neLayout.findViewById(R.id.neBuffer);
-                final SeekBar neRate = (SeekBar) neLayout.findViewById(R.id.neRate);
+                final EditText neRate = (EditText) neLayout.findViewById(R.id.neRate);
                 final CheckBox neAccelerometer = (CheckBox) neLayout.findViewById(R.id.neAccelerometer);
                 final CheckBox neGyroscope = (CheckBox) neLayout.findViewById(R.id.neGyroscope);
                 final CheckBox neLight = (CheckBox) neLayout.findViewById(R.id.neLight);
@@ -528,16 +528,12 @@ public class ExperimentList extends AppCompatActivity {
                             bufferSize = 500;
                             Toast.makeText(ExperimentList.this, "Invaid buffer size. Set to default of 500.", Toast.LENGTH_LONG).show();
                         }
-                        String rate;
-                        switch(neRate.getProgress()) {
-                            case 0: rate = "ui";
-                                break;
-                            case 1: rate = "normal";
-                                break;
-                            case 2: rate = "game";
-                                break;
-                            default: rate = "fastest";
-                                break;
+                        double rate;
+                        try {
+                            rate = Double.valueOf(neRate.getText().toString());
+                        } catch (Exception e) {
+                            rate = 0;
+                            Toast.makeText(ExperimentList.this, "Invaid sensor rate. Fall back to fastest rate.", Toast.LENGTH_LONG).show();
                         }
                         boolean acc = neAccelerometer.isChecked();
                         boolean gyr = neGyroscope.isChecked();

@@ -9,7 +9,7 @@ import android.hardware.SensorManager;
 //  the android identifiers and handles their output, which is written to the dataBuffers
 public class sensorInput implements SensorEventListener {
     public int type; //Sensor type (Android identifier)
-    public int rate; //Sensor rate (Android constants: UI, normal, game or fastest)
+    public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
     public dataBuffer dataX; //Data-buffer for x
     public dataBuffer dataY; //Data-buffer for y (3D sensors only)
@@ -17,27 +17,23 @@ public class sensorInput implements SensorEventListener {
     public dataBuffer dataT; //Data-buffer for t
     private SensorManager sensorManager; //Hold the sensor manager
 
+    private long lastReading; //Remember the time of the last reading to fullfill the rate
+    private double avgX, avgY, avgZ; //Used for averaging
+    private boolean average = false; //Avergae over aquisition period?
+    private int aquisitions; //Number of aquisitions for this average
+
     //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
-    //desired aquisition rate (as string from the phyphox file: "ui", "normal", "game", "fastest"),
-    //and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    protected sensorInput(SensorManager sensorManager, String type, String rate, dataBuffer bDataX, dataBuffer bDataY, dataBuffer bDataZ, dataBuffer bTime) {
+    //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
+    //be null to be left unused.
+    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, dataBuffer bDataX, dataBuffer bDataY, dataBuffer bDataZ, dataBuffer bTime) {
         this.sensorManager = sensorManager; //Store the sensorManager reference
 
-        //Interpret the rate string
-        switch (rate) {
-            case "fastest":
-                this.rate = SensorManager.SENSOR_DELAY_FASTEST;
-                break;
-            case "game":
-                this.rate = SensorManager.SENSOR_DELAY_GAME;
-                break;
-            case "normal":
-                this.rate = SensorManager.SENSOR_DELAY_NORMAL;
-                break;
-            case "ui":
-                this.rate = SensorManager.SENSOR_DELAY_UI;
-                break;
-        }
+        if (rate <= 0)
+            this.period = 0;
+        else
+            this.period = (long)((1/rate)*1e9); //Period in ns
+
+        this.average = average;
 
         //Interpret the type string
         switch (type) {
@@ -90,7 +86,15 @@ public class sensorInput implements SensorEventListener {
     // caller, so it can set the same time base for all sensors
     public void start(long t0) {
         this.t0 = t0;
-        this.sensorManager.registerListener(this, sensorManager.getDefaultSensor(type), rate);
+
+        //Reset averaging
+        this.lastReading = 0;
+        this.avgX = 0.;
+        this.avgY = 0.;
+        this.avgZ = 0.;
+        this.aquisitions = 0;
+
+        this.sensorManager.registerListener(this, sensorManager.getDefaultSensor(type), SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     //Stop the data aquisition by unregistering the listener for this sensor
@@ -106,14 +110,37 @@ public class sensorInput implements SensorEventListener {
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == type) {
-            if (dataX != null)
-                dataX.append(event.values[0]);
-            if (dataY != null)
-                dataY.append(event.values[1]);
-            if (dataZ != null)
-                dataZ.append(event.values[2]);
-            if (dataT != null)
-                dataT.append((event.timestamp-t0)*1e-9); //We want seconds since t0
+            if (average) {
+                //We want averages, so sum up all the data and count the aquisitions
+                avgX += event.values[0];
+                avgY += event.values[1];
+                avgZ += event.values[2];
+                aquisitions++;
+            } else {
+                //No averaging. Just keep the last result
+                avgX = event.values[0];
+                avgY = event.values[1];
+                avgZ = event.values[2];
+                aquisitions = 1;
+            }
+            if (lastReading + period <= event.timestamp) {
+                //Average/waiting period is over
+                //Append the data to available buffers
+                if (dataX != null)
+                    dataX.append(avgX/aquisitions);
+                if (dataY != null)
+                    dataY.append(avgY/aquisitions);
+                if (dataZ != null)
+                    dataZ.append(avgZ/aquisitions);
+                if (dataT != null)
+                    dataT.append((event.timestamp-t0)*1e-9); //We want seconds since t0
+                //Reset averaging
+                avgX = 0.;
+                avgY = 0.;
+                avgZ = 0.;
+                lastReading = event.timestamp;
+                aquisitions = 0;
+            }
         }
     }
 }
