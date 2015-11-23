@@ -150,6 +150,8 @@ public class phyphoxFile {
                 return experiment;
             }
 
+            experiment.isLocal = input.isLocal;
+
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
 
