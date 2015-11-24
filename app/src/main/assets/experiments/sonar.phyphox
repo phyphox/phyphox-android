@@ -1,8 +1,26 @@
 <phyphox version="1.0">
     <title>Sonar</title>
     <category>Acoustics</category>
+    <description>
+    Measure distances through echos and the speed of sound.
+
+    A sonar sends bursts of short sounds, which get reflected by the object you want to measure. As sound travels at a speed of approximately 340 m/s, the time until the reflection reaches the microphone of your phone can be used to calculate the distance of this object.
+
+    This experiments generates a &quot;chirp&quot;, sends it out through the speaker and starts a recording. A crosscorrelation of the chirp and the recorded data gives information about the timing at which echoes occur. This timing can then be multiplied with the speed of sound (and divided by 2 as the sound has to travel forth and back) and you get the distance at which the echoe originated.
+
+    However, there are a few problems to this simple idea, that you have to consider:
+
+    1. Your phone may have an unfortunate layout for this kind of measurement.
+    In the best case the speaker and the microphone are aligned into the same direction. But the designers of your phone obviously place the microphone near your mouth and a speaker close to your ear or even an additional speaker on the back (for ringtones and music playback). Therefore the reflection of any sound may not reach the microphone directly.
+
+    2. Some objects absorb the sound instead of reflecting it.
+    It is hard to measure the distance to any &quot;soft&quot; objects like a sofa or human beings. Instead measure the distance to hard surfaces like stone walls or windows.
+
+    3. You get reflections by many objects.
+    Sound usually travels in every direction, which is good for speakers that are meant to play ringtones. But for a sonar this means, that when targeting a wall, you also get reflections from the floor, the ceiling, another wall nearby, a post and simply from every suitable &quot;hard&quot; surface nearby. Therefore this sonar gives you all the reflections and it is up to you to interpret the result and to figure out, which reflection corresponds to the target you intended to measure. So start with a small hard target and try to screen all other directions with some foam material.
+    </description>
     <input>
-        <audio output="recording" rate="48000" buffer="9600" />
+        <audio output="recording" rate="48000" buffer="19200" />
     </input>
     <views>
         <view name="Chirp">
@@ -12,20 +30,20 @@
             <graph label="Chirp" inputX="chirp_t" inputY="wchirp" labelX="Time (s)" labelY="A (a.u.)" />
         </view>
     </views>
-    <analysis period="0.3">
-        <ramp start="0" stop="0.2" buffer="9600" output1="recording_t" static="true" />
-        <ramp start="0" stop="0.01" buffer="480" output1="chirp_t" static="true" />
-        <ramp start="400" stop="4000" buffer="480" output1="chirp_f" static="true" />
-        <ramp start="0" stop="0.1875" buffer="9120" output1="cc_t" static="true" />
-        <ramp start="0" stop="3.14159" buffer="480" output1="chirp_weight_base" static="true" />
+    <analysis period="0.5">
+        <ramp start="0" stop="0.4" buffer="19200" output1="recording_t" static="true" />
+        <ramp start="0" stop="0.005" buffer="240" output1="chirp_t" static="true" />
+        <ramp start="1000" stop="4000" buffer="240" output1="chirp_f" static="true" />
+        <ramp start="0" stop="0.395" buffer="18960" output1="cc_t" static="true" />
+        <ramp start="0" stop="3.14159" buffer="240" output1="chirp_weight_base" static="true" />
         <sin input1="chirp_weight_base" output1="chirp_weight_sin" static="true" />
         <power input1="chirp_weight_sin" input2="0.25" output1="chirp_weight" static="true" />
         <multiply input1="chirp_f" input2="chirp_t" input3="6.283185307" output1="chirp_arg" static="true" />
         <sin input1="chirp_arg" output1="chirp" static="true" />
         <multiply input1="chirp" input2="chirp_weight" output1="wchirp" static="true" />
         <crosscorrelation input1="recording" input2="wchirp" output1="crosscorrelation" />
-        <multiply input1="crosscorrelation" input2="crosscorrelation" output1="ccsquare" />
-        <gausssmooth input1="ccsquare" output1="ccsmooth" sigma="5" />
+        <multiply input1="crosscorrelation" input2="crosscorrelation" input3="1e10" output1="ccsquare" />
+        <gausssmooth input1="ccsquare" output1="ccsmooth" sigma="3" />
         <max input1="ccsmooth" input2="cc_t" output1="ccmax" output2="t0" />
         <add input1="t0" input2="0.002" output1="t1" />
         <add input1="t0" input2="0.02" output1="t2" />
@@ -33,9 +51,21 @@
         <subtract input1="cut_t" input2="t0" output1="relative_t" />
         <multiply input1="relative_t" input2="speedofsound" input3="50" output1="distance" />
     </analysis>
-    <output>
-        <audio input="wchirp" rate="48000" buffer="480" />
-    </output>
     <export>
+        <set name="Echo location">
+            <data name="Distance (cm)" source="distance" />
+            <data name="Crosscorrelation (a.u.)" source="relative_ccsmooth" />
+        </set>
+        <set name="Chirp">
+            <data name="Time (s)" source="chirp_t" />
+            <data name="Amplitude (a.u.)" source="wchirp" />
+        </set>
+        <set name="Recording">
+            <data name="Time (s)" source="recording_t" />
+            <data name="Amplitude (a.u.)" source="recording" />
+        </set>
     </export>
+    <output>
+        <audio input="wchirp" rate="48000" buffer="240" />
+    </output>
 </phyphox>

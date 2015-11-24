@@ -139,7 +139,6 @@ public class sensorInput implements SensorEventListener {
                 if (dataT != null)
                     dataT.append((event.timestamp-t0)*1e-9); //We want seconds since t0
                 //Reset averaging
-                Log.d("Test", "t0:" + t0 + ", timestamp:" + event.timestamp);
                 avgX = 0.;
                 avgY = 0.;
                 avgZ = 0.;

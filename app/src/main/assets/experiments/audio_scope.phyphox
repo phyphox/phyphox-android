@@ -1,11 +1,17 @@
 <phyphox version="1.0">
     <title>Audio Scope</title>
     <category>Acoustics</category>
+    <icon>ASc</icon>
+    <description>
+            Show recorded audio data.
+
+            This experiment just records short periods of audio data and displays them. To achieve a steady image, a zero crossing is used as a trigger and t=0 is shifted to the first (positive) crossing.
+        </description>
     <input>
         <audio output="recording" rate="48000" buffer="4800" />
     </input>
     <views>
-        <view name="Spectrum">
+        <view name="Scope">
             <graph label="Audio Data" inputX="reltime" inputY="subdata" labelX="Time (ms)" labelY="Amplitude (a.u.)" />
         </view>
     </views>
@@ -18,5 +24,9 @@
         <rangefilter input1="offtime" input2="offdata" min1="triggerT" max1="triggerTend" output1="subtime" output2="subdata" />
     </analysis>
     <export>
+        <set name="Audio data">
+            <data name="Time (ms)" source="reltime" />
+            <data name="Recording (a.u.)" source="subdata" />
+        </set>
     </export>
 </phyphox>

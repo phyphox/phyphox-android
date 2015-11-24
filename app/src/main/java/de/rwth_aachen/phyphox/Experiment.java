@@ -600,14 +600,28 @@ public class Experiment extends AppCompatActivity {
                         //Get values from input views only if there isn't fresh data from the remote server which might get overridden
                         if (!remoteInput) {
                             experiment.handleInputViews(currentView);
-                        } else
-                            remoteInput = false;
+                        }
 
                         //time for some analysis?
-                        if (measuring && System.currentTimeMillis() - analysisStart > experiment.analysisPeriod * 1000) {
-                            experiment.processAnalysis(); //Do the math.
-                            analysisStart = System.currentTimeMillis(); //Remember when we were done this time
+                        if (measuring) {
+                            if (experiment.analysisOnUserInput) {
+                                //If set by the experiment, the analysis is only done when there is new input from the user
+                                if (experiment.newUserInput) {
+                                    experiment.processAnalysis(); //Do the math.
+                                    experiment.newUserInput = false; //Reset user input tracking
+                                }
+                            } else if (System.currentTimeMillis() - analysisStart > experiment.analysisPeriod * 1000) {
+                                //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
+                                experiment.processAnalysis(); //Do the math.
+                                analysisStart = System.currentTimeMillis(); //Remember when we were done this time
+                            }
                         }
+                    }
+                    if (remoteInput) {
+                        //If there has been remote input, we may reset it not as from here the buffers will not be changed by us anymore
+                        //This also means, that there is new input from the user
+                        remoteInput = false;
+                        experiment.newUserInput = true;
                     }
                     //Update all the views currently visible
                     experiment.updateViews(currentView);

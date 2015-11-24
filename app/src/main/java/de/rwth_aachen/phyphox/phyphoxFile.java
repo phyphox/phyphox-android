@@ -355,11 +355,12 @@ public class phyphoxFile {
                                     }
                                     break;
                                 case "analysis":
+                                    if (xpp.getAttributeValue(null, "period") != null)
+                                        experiment.analysisPeriod = Double.valueOf(xpp.getAttributeValue(null, "period"));
+                                    experiment.analysisOnUserInput = Boolean.valueOf(xpp.getAttributeValue(null, "onUserInput"));
                                     while ((!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("analysis"))) && eventType != XmlPullParser.END_DOCUMENT) {
                                         switch (eventType) {
                                             case XmlPullParser.START_TAG:
-                                                if (xpp.getAttributeValue(null, "period") != null)
-                                                    experiment.analysisPeriod = Double.valueOf(xpp.getAttributeValue(null, "period"));
                                                 int i = 1;
                                                 int maxBufferSize = 1;
                                                 int totalBufferSize = 0;
@@ -532,6 +533,16 @@ public class phyphoxFile {
                                                         acAM.setMinMax(String.valueOf(mint), String.valueOf(maxt));
                                                         experiment.analysis.add(acAM);
                                                         break;
+                                                    case "differentiate":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize-1);
+                                                            experiment.dataBuffers.add(output1);
+                                                            experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        Analysis.differentiateAM diffAM = new Analysis.differentiateAM(experiment, inputs, outputs);
+                                                        experiment.analysis.add(diffAM);
+                                                        break;
                                                     case "crosscorrelation":
                                                         if (xpp.getAttributeValue(null, "input1") == null || xpp.getAttributeValue(null, "input2") == null) {
                                                             experiment.message = "Bad experiment definition: Crosscorrelation needs two inputs.";
@@ -630,6 +641,7 @@ public class phyphoxFile {
                                             case XmlPullParser.START_TAG:
                                                 switch (xpp.getName()) {
                                                     case "audio":
+                                                        experiment.audioLoop = Boolean.valueOf(xpp.getAttributeValue(null, "loop"));
                                                         experiment.audioSource = xpp.getAttributeValue(null, "input");
                                                         if (xpp.getAttributeValue(null, "rate") != null)
                                                             experiment.audioRate = Integer.valueOf(xpp.getAttributeValue(null, "rate"));

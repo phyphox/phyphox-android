@@ -372,7 +372,7 @@ public class ExperimentList extends AppCompatActivity {
                                 icon = xpp.nextText().trim();
                                 break;
                             case "description":
-                                description = xpp.nextText().trim();
+                                description = xpp.nextText().trim().split("\n", 2)[0]; //Remove any whitespaces and take the first line until the first line break
                                 break;
                             case "category":
                                 if (xpp.getAttributeValue(null, "hidden") != null && xpp.getAttributeValue(null, "hidden").equals("true")) {
@@ -401,6 +401,7 @@ public class ExperimentList extends AppCompatActivity {
             }
         } catch (Exception e) {
             Toast.makeText(this, "Error loading " + experimentXML, Toast.LENGTH_LONG).show();
+            Log.e("list:loadExperiment", "Error loading " + experimentXML, e);
         }
     }
 

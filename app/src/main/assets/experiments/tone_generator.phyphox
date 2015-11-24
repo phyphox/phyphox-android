@@ -1,0 +1,44 @@
+<phyphox version="1.0">
+    <title>Tone generator</title>
+    <category>Acoustics</category>
+    <description>
+        Generate a tone of one or two frequencies.
+
+        Note: The total signal will be normalized, so the amplitudes describe ratios.
+    </description>
+    <input>
+    </input>
+    <views>
+        <view name="Signal">
+            <input label="Amplitude 1" output="a1" unit="0..1" default="1" signed="false" />
+            <input label="Frequency 1" output="f1" unit="Hz" default="495" signed="false" />
+            <input label="Amplitude 2" output="a2" unit="0..1" default="1" signed="false" />
+            <input label="Frequency 2" output="f2" unit="Hz" default="505" signed="false" />
+            <graph label="Signal" inputX="tdisplay" inputY="signaldisplay" labelX="Time (s)" labelY="A (a.u.)" />
+        </view>
+    </views>
+    <analysis onUserInput="true">
+        <ramp start="0" stop="2" buffer="48000" output1="t" static="true" />
+        <multiply input1="f1" input2="t" input3="6.283185307" output1="arg1" />
+        <multiply input1="f2" input2="t" input3="6.283185307" output1="arg2" />
+        <sin input1="arg1" output1="sin1" />
+        <sin input1="arg2" output1="sin2" />
+        <multiply input1="sin1" input2="a1" output1="sig1" />
+        <multiply input1="sin2" input2="a2" output1="sig2" />
+        <add input1="sig1" input2="sig2" output1="signal" />
+        <max input1="signal" output1="max" />
+        <divide input1="signal" input2="max" output1="signal_normalized" />
+        <rangefilter input1="t" input2="signal" max1="0.1" output1="tdisplay" output2="signaldisplay" />
+    </analysis>
+    <export>
+        <set name="Signal">
+            <data name="Time (s)" source="t" />
+            <data name="Signal 1" source="sig1" />
+            <data name="Signal 2" source="sig2" />
+            <data name="Signal sum" source="signal" />
+        </set>
+    </export>
+    <output>
+        <audio loop="true" input="signal_normalized" rate="48000" buffer="48000" />
+    </output>
+</phyphox>

@@ -793,6 +793,40 @@ public class Analysis {
         }
     }
 
+    //Simple differentiation by calculating the difference of neighboring points
+    //The resulting array has exactly one element less than the input array
+    public static class differentiateAM extends analysisModule {
+
+        protected differentiateAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            double v, last = Double.NaN;
+            boolean first = true;
+
+            //Clear output
+            outputs.get(0).clear();
+
+            //The actual calculation
+            Iterator it = experiment.getBuffer(inputs.get(0)).getIterator();
+            if (it == null) //non-buffer values are ignored
+                return;
+            //Calculate difference of neighbors
+            while (it.hasNext()) {
+                if (first) { //The first value is just stored
+                    last = (double)it.next();
+                    first = false;
+                    continue;
+                }
+                v = (double)it.next();
+                outputs.get(0).append(v-last);
+                last = v;
+            }
+        }
+    }
+
     //Calculate the cross correlation of two inputs
     //input1 and input2 represent the y values, there is no x input and only one output
     //The indices of the output match the offset between the inputs

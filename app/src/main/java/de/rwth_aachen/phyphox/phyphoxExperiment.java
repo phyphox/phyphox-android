@@ -26,12 +26,15 @@ public class phyphoxExperiment {
     public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
 
     double analysisPeriod = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
+    boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
+    boolean newUserInput = false; //Will be set to true if the user changed any values
 
     //Parameters for audio playback
     AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
     String audioSource; //The key name of the buffer which holds the data that should be played back through the speaker.
     int audioRate = 48000; //The playback rate (in Hz)
     int audioBufferSize = 0; //The size of the audio buffer
+    boolean audioLoop = false; //Loop the track?
 
     //Parameters for audio record
     AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
@@ -72,8 +75,10 @@ public class phyphoxExperiment {
                 try {
                     if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
                         Double v = eve.getValue(); //...get the value
-                        if (!Double.isNaN(v)) //Only send it to the buffer if it is valid
+                        if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
                             buffer.append(v);
+                            newUserInput = true;
+                        }
                     }
                 } catch (Exception e) {
                     Log.e("updateViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
@@ -112,11 +117,13 @@ public class phyphoxExperiment {
                 audioTrack.stop(); //Stop the playback first
             if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && dataBuffers.get(dataMap.get(audioSource)).isStatic)) {
                 //If the data is not static, or the audio track not yet initialized, we have to push our data to the audioTrack
-                short[] data = dataBuffers.get(dataMap.get(audioSource)).getShortArray();
+                short[] data = getBuffer(audioSource).getShortArray();
                 int result = audioTrack.write(data, 0, audioBufferSize);
                 if (result < audioBufferSize)
                     Log.d("updateViews", "Unexpected audio write result: " + result + " written / " + audioBufferSize + " buffer size");
                 audioTrack.reloadStaticData();
+                if (audioLoop) //If looping is enabled, loop from the end of the data
+                    audioTrack.setLoopPoints(0, data.length/2, -1);
             } else //If the data is static and already loaded, we just have to rewind...
                 audioTrack.setPlaybackHeadPosition(0);
         }
@@ -185,6 +192,8 @@ public class phyphoxExperiment {
             return;
         //We will not start audio recording and output here as it will be triggered by the analysis
         //  modules.
+
+        newUserInput = true; //Set this to true to execute analysis at least ones with default values.
         for (sensorInput sensor : inputSensors)
             sensor.start();
     }

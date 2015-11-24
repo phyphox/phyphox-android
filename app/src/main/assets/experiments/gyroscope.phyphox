@@ -3,7 +3,7 @@
     <category>Raw Sensors</category>
     <description>Get raw data from the gyroscope.</description>
     <input>
-        <sensor type="magnetic_field" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" />
+        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" />
     </input>
     <views>
         <view name="Raw Data">
