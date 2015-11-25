@@ -179,8 +179,9 @@ public class phyphoxExperiment {
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
             audioRecord.stop();
         //Playback
-        if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
-            audioTrack.stop();
+        if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
+            audioTrack.pause();
+        }
         //Sensors
         for (sensorInput sensor : inputSensors)
             sensor.stop();

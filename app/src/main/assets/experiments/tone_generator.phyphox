@@ -10,9 +10,9 @@
     </input>
     <views>
         <view name="Signal">
-            <input label="Amplitude 1" output="a1" unit="0..1" default="1" signed="false" />
+            <input label="Amplitude 1" output="a1" default="1" signed="false" />
             <input label="Frequency 1" output="f1" unit="Hz" default="495" signed="false" />
-            <input label="Amplitude 2" output="a2" unit="0..1" default="1" signed="false" />
+            <input label="Amplitude 2" output="a2" default="1" signed="false" />
             <input label="Frequency 2" output="f2" unit="Hz" default="505" signed="false" />
             <graph label="Signal" inputX="tdisplay" inputY="signaldisplay" labelX="Time (s)" labelY="A (a.u.)" />
         </view>
