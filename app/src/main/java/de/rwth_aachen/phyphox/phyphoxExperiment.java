@@ -114,7 +114,8 @@ public class phyphoxExperiment {
         //Send the results to audio playback if used
         if (audioTrack != null) {
             if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
-                audioTrack.stop(); //Stop the playback first
+                audioTrack.pause(); //Stop the playback first
+                audioTrack.flush();
             if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && dataBuffers.get(dataMap.get(audioSource)).isStatic)) {
                 //If the data is not static, or the audio track not yet initialized, we have to push our data to the audioTrack
                 short[] data = getBuffer(audioSource).getShortArray();
