@@ -776,7 +776,7 @@ public class Experiment extends AppCompatActivity {
         try {
             remote.join();
         } catch (Exception e) {
-            Log.d("stopRemoteServer", "Exception on join.", e);
+            Log.e("stopRemoteServer", "Exception on join.", e);
         }
         remote = null;
 

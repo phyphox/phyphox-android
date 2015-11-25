@@ -120,8 +120,8 @@ public class phyphoxExperiment {
                 //If the data is not static, or the audio track not yet initialized, we have to push our data to the audioTrack
                 short[] data = getBuffer(audioSource).getShortArray();
                 int result = audioTrack.write(data, 0, audioBufferSize);
-                if (result < audioBufferSize)
-                    Log.d("updateViews", "Unexpected audio write result: " + result + " written / " + audioBufferSize + " buffer size");
+                if (result <= 0)
+                    Log.e("updateViews", "Unexpected audio write result: " + result + " written / " + audioBufferSize + " buffer size");
                 audioTrack.reloadStaticData();
                 if (audioLoop) //If looping is enabled, loop from the end of the data
                     audioTrack.setLoopPoints(0, data.length/2, -1);

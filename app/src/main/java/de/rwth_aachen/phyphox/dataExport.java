@@ -152,13 +152,13 @@ public class dataExport {
                     }
                 } catch (Exception e) {
                     //This could be done better. Any error during CSV/ZIP compiling ends up here
-                    Log.d("csvExport", "Unhandled exception during write.", e);
+                    Log.e("csvExport", "Unhandled exception during write.", e);
                 } finally {
                     zstream.close();
                 }
             } catch (Exception e) {
                 //This could be done better. Any error during file opening ends up here
-                Log.d("csvExport", "Unhandled exception.", e);
+                Log.e("csvExport", "Unhandled exception.", e);
             }
 
             return file;
@@ -227,7 +227,7 @@ public class dataExport {
                         os = new FileOutputStream(file);
                         wb.write(os);
                     } catch (Exception e) {
-                        Log.d("excelExport", "Unhandled exception during write.", e);
+                        Log.e("excelExport", "Unhandled exception during write.", e);
                     } finally {
                         if (os != null)
                             os.close();
@@ -235,7 +235,7 @@ public class dataExport {
                 }
 
             } catch (Exception e) {
-                Log.d("excelExport", "Unhandled exception.", e);
+                Log.e("excelExport", "Unhandled exception.", e);
             }
 
             return file;

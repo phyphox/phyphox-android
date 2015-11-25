@@ -429,6 +429,15 @@ public class phyphoxFile {
                                                         }
                                                         experiment.analysis.add(new Analysis.powerAM(experiment, inputs, outputs));
                                                         break;
+                                                    case "abs":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            experiment.dataBuffers.add(output1);
+                                                            experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        experiment.analysis.add(new Analysis.absAM(experiment, inputs, outputs));
+                                                        break;
                                                     case "sin":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
                                                             dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);

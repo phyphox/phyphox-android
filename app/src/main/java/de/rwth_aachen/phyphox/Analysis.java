@@ -326,6 +326,44 @@ public class Analysis {
         }
     }
 
+    // Calculate the absolute of a single input value.
+    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
+    public static class absAM extends analysisModule {
+
+        protected absAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Iterator it;
+            double lastValue;
+
+            //Get value or iterator
+            if (inputs.get(0) == null) {
+                //value
+                lastValue = values.get(0);
+                it = null;
+            } else {
+                //iterator
+                it = experiment.getBuffer(inputs.get(0)).getIterator();
+                lastValue = 0.;
+            }
+
+            //Clear output
+            outputs.get(0).clear();
+
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
+                if (it != null && it.hasNext()) {
+                    //Update lastValue if a new value exists in input buffer
+                    lastValue = (double)it.next();
+                }
+                outputs.get(0).append(Math.abs(lastValue));
+            }
+        }
+    }
+
     // Calculate the sine of a single input value.
     // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
     public static class sinAM extends analysisModule {

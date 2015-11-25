@@ -97,7 +97,7 @@ public class remoteServer extends Thread {
                 sb.append("\n");
             }
         } catch (Exception e) {
-            Log.d("remoteServer","Error loading style.css", e);
+            Log.e("remoteServer","Error loading style.css", e);
         } finally {
             styleCSS = sb.toString();
         }
@@ -203,7 +203,7 @@ public class remoteServer extends Thread {
                 }
             }
         } catch (Exception e) {
-            Log.d("remoteServer","Error loading index.html", e);
+            Log.e("remoteServer","Error loading index.html", e);
         } finally {
             indexHTML = sb.toString();
         }
@@ -241,7 +241,7 @@ public class remoteServer extends Thread {
             }
 
         } catch (SocketException e) {
-            Log.d("getAdresses", "Error getting the IP.", e);
+            Log.e("getAdresses", "Error getting the IP.", e);
         }
         return ret;
     }

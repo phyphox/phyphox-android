@@ -18,7 +18,7 @@
         </view>
     </views>
     <analysis onUserInput="true">
-        <ramp start="0" stop="2" buffer="48000" output1="t" static="true" />
+        <ramp start="0" stop="1" buffer="48000" output1="t" static="true" />
         <multiply input1="f1" input2="t" input3="6.283185307" output1="arg1" />
         <multiply input1="f2" input2="t" input3="6.283185307" output1="arg2" />
         <sin input1="arg1" output1="sin1" />
