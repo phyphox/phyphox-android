@@ -326,8 +326,123 @@ public class Analysis {
         }
     }
 
+    // Calculate the greatest common divisor (GCD), takes exactly two inputs.
+    // The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller).
+    // Missing values in shorter buffers are filled from the last value.
+    public static class gcdAM extends analysisModule {
+
+        protected gcdAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Vector<Iterator> its = new Vector<>(); //Iterators for all input buffers
+            Vector<Double> lastValues = new Vector<>(); //Buffer to hold last value if buffer is shorter than expected
+
+            //Get iterators and fill history with fixed value if an input is not a buffer
+            for (int i = 0; i < 2; i++) {
+                if (inputs.get(i) == null) {
+                    //Not a buffer: Fixed value
+                    lastValues.add(values.get(i));
+                    its.add(null);
+                } else {
+                    //Buffer: Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
+                    lastValues.add(0.);
+                }
+            }
+
+            //Clear output
+            outputs.get(0).clear();
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+                boolean anyInput = false; //Is there any buffer left with values?
+                for (int j = 0; j < its.size(); j++) { //For each input buffer
+                    if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
+                        lastValues.set(j, (double) its.get(j).next());
+                        anyInput = true;
+                    }
+                }
+                long a = Math.round(lastValues.get(0)); //First input
+                long b = Math.round(lastValues.get(1)); //Second input
+
+                //Euclid's algorithm (modern iterative version
+                while (b > 0) {
+                    long tmp = b;
+                    b = a % b;
+                    a = tmp;
+                }
+
+                if (anyInput) //There was a new value. Append the result.
+                    outputs.get(0).append(a);
+                else //No values left. Let's stop here...
+                    break;
+            }
+        }
+    }
+
+    // Calculate the least common multiple (GCD), takes exactly two inputs.
+    // The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller).
+    // Missing values in shorter buffers are filled from the last value.
+    public static class lcmAM extends analysisModule {
+
+        protected lcmAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Vector<Iterator> its = new Vector<>(); //Iterators for all input buffers
+            Vector<Double> lastValues = new Vector<>(); //Buffer to hold last value if buffer is shorter than expected
+
+            //Get iterators and fill history with fixed value if an input is not a buffer
+            for (int i = 0; i < 2; i++) {
+                if (inputs.get(i) == null) {
+                    //Not a buffer: Fixed value
+                    lastValues.add(values.get(i));
+                    its.add(null);
+                } else {
+                    //Buffer: Get iterator
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
+                    lastValues.add(0.);
+                }
+            }
+
+            //Clear output
+            outputs.get(0).clear();
+
+            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+                boolean anyInput = false; //Is there any buffer left with values?
+                for (int j = 0; j < its.size(); j++) { //For each input buffer
+                    if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
+                        lastValues.set(j, (double) its.get(j).next());
+                        anyInput = true;
+                    }
+                }
+                long a = Math.round(lastValues.get(0)); //First input
+                long b = Math.round(lastValues.get(1)); //Second input
+
+                long a0 = a;
+                long b0 = b;
+
+                //calculate lcm from gcd: Euclid's algorithm (modern iterative version)
+                while (b > 0) {
+                    long tmp = b;
+                    b = a % b;
+                    a = tmp;
+                }
+
+                if (anyInput) //There was a new value. Append the result.
+                    outputs.get(0).append(a0*(b0/a)); //lcd from gcd: a*b = gcd(a,b) * lcm(a.b)
+                else //No values left. Let's stop here...
+                    break;
+            }
+        }
+    }
+
     // Calculate the absolute of a single input value.
-    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
+    // The output has the length of the input buffer or at 1 for a value.
     public static class absAM extends analysisModule {
 
         protected absAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
@@ -354,18 +469,20 @@ public class Analysis {
             outputs.get(0).clear();
 
 
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
+            while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
                     //Update lastValue if a new value exists in input buffer
                     lastValue = (double)it.next();
                 }
                 outputs.get(0).append(Math.abs(lastValue));
+                if (it == null)
+                    break;
             }
         }
     }
 
     // Calculate the sine of a single input value.
-    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
+    // The output has the length of the input buffer or at 1 for a value.
     public static class sinAM extends analysisModule {
 
         protected sinAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
@@ -391,19 +508,20 @@ public class Analysis {
             //Clear output
             outputs.get(0).clear();
 
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
+            while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
                     //Update lastValue if a new value exists in input buffer
                     lastValue = (double)it.next();
                 }
                 outputs.get(0).append(Math.sin(lastValue));
+                if (it == null)
+                    break;
             }
         }
     }
 
     // Calculate the cosine of a single input value.
-    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
+    // The output has the length of the input buffer or at 1 for a value.
     public static class cosAM extends analysisModule {
 
         protected cosAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
@@ -429,19 +547,21 @@ public class Analysis {
             //Clear output
             outputs.get(0).clear();
 
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
+            while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
                     //Update lastValue if a new value exists in input buffer
                     lastValue = (double)it.next();
                 }
+                outputs.get(0).append(Math.cos(lastValue));
+                if (it == null)
+                    break;
             }
-            outputs.get(0).append(Math.cos(lastValue));
         }
     }
 
 
     // Calculate the tangens of a single input value.
-    // The output has the length of the output buffer missing values in the input buffer are filled from the last value.
+    // The output has the length of the input buffer or at 1 for a value.
     public static class tanAM extends analysisModule {
 
         protected tanAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
@@ -467,13 +587,15 @@ public class Analysis {
             //Clear output
             outputs.get(0).clear();
 
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each output value
+            while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
                     //Update lastValue if a new value exists in input buffer
                     lastValue = (double)it.next();
                 }
+                outputs.get(0).append(Math.tan(lastValue));
+                if (it == null)
+                    break;
             }
-            outputs.get(0).append(Math.tan(lastValue));
         }
     }
 

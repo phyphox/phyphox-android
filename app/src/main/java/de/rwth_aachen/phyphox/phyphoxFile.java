@@ -361,6 +361,7 @@ public class phyphoxFile {
                                     while ((!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("analysis"))) && eventType != XmlPullParser.END_DOCUMENT) {
                                         switch (eventType) {
                                             case XmlPullParser.START_TAG:
+                                                String tag = xpp.getName();
                                                 int i = 1;
                                                 int maxBufferSize = 1;
                                                 int totalBufferSize = 0;
@@ -381,7 +382,6 @@ public class phyphoxFile {
 
                                                 Vector<dataBuffer> outputs = new Vector<>();
 
-                                                String tag = xpp.getName();
                                                 boolean handled = true;
                                                 switch (tag) {
                                                     case "add":
@@ -428,6 +428,24 @@ public class phyphoxFile {
                                                             outputs.add(output1);
                                                         }
                                                         experiment.analysis.add(new Analysis.powerAM(experiment, inputs, outputs));
+                                                        break;
+                                                    case "gcd":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            experiment.dataBuffers.add(output1);
+                                                            experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        experiment.analysis.add(new Analysis.gcdAM(experiment, inputs, outputs));
+                                                        break;
+                                                    case "lcm":
+                                                        if (xpp.getAttributeValue(null, "output1") != null) {
+                                                            dataBuffer output1 = new dataBuffer(xpp.getAttributeValue(null, "output1"), maxBufferSize);
+                                                            experiment.dataBuffers.add(output1);
+                                                            experiment.dataMap.put(xpp.getAttributeValue(null, "output1"), experiment.dataBuffers.size() - 1);
+                                                            outputs.add(output1);
+                                                        }
+                                                        experiment.analysis.add(new Analysis.lcmAM(experiment, inputs, outputs));
                                                         break;
                                                     case "abs":
                                                         if (xpp.getAttributeValue(null, "output1") != null) {
