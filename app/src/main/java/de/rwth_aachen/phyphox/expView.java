@@ -311,6 +311,57 @@ public class expView{
         }
     }
 
+    //infoElement implements a simple static text display, which gives additional info to the user
+    public class infoElement extends expViewElement {
+        private TextView tv; //Holds the Android textView
+
+        //Constructor takes the same arguments as the expViewElement constructor
+        infoElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        }
+
+        @Override
+        //This does not display anything. Do not update.
+        protected String getUpdateMode() {
+            return "none";
+        }
+
+        @Override
+        //Append the Android views we need to the linear layout
+        protected void createView(LinearLayout ll, Context c){
+
+            //Create the text as textView
+            TextView textView = new TextView(c);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+            textView.setText(this.label);
+            textView.setGravity(Gravity.CENTER);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            textView.setTextColor(ContextCompat.getColor(c, R.color.main));
+
+            //Add it to the linear layout
+            ll.addView(textView);
+        }
+
+        @Override
+        //Creat the HTML version of this view:
+        //<div>
+        //  <p>text</p>
+        //</div>
+        protected String createViewHTML(){
+            return "<div style=\"font-size:\"+this.labelSize/.4+\"%;\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
+                    "<p>"+this.label+"</p>" +
+                    "</div>";
+        }
+
+        @Override
+        //In Javascript we don't have to do anything
+        protected String setValueHTML() {
+            return "function (x) {}";
+        }
+    }
+
     //inputElement implements a simple edit box which takes a single value from the user
     public class inputElement extends expViewElement {
         private EditText iv; //Holds the Android EditText

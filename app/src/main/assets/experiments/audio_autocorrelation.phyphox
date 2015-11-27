@@ -10,22 +10,21 @@
         The analysis is done by calculating the autocorrelation of the audio signal, which is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate periodically about zero. Through this assumption we extract the position of the first full maximum to be in the range 3x t0 to 5x t0 in which we look for the maximum value.
     </description>
     <input>
-        <audio output="recording" rate="48000" buffer="9600" />
+        <audio output="recording" rate="48000" buffer="4800" />
     </input>
     <views>
-        <view name="Autocorrelation">
+        <view name="Autocorr.">
             <value label="Period" input="period" unit="ms" factor="1000" />
             <value label="Frequency" input="frequency" unit="Hz" />
             <graph label="Autocorrelation" inputX="autoco_t" inputY="autocorrelation" labelX="Δt (ms)" labelY="correlation (a.u.)" />
         </view>
         <view name="Raw data">
-            <graph label="Recording" inputX="offtime" inputY="offdata" labelX="t (ms)" labelY="Recording (a.u.)" />
+            <graph label="Recording" inputX="time" inputY="recording" labelX="t (ms)" labelY="Recording (a.u.)" />
         </view>
     </views>
-    <analysis period="0.3">
-        <ramp start="0" stop="200" buffer="9600" output1="time" static="true" />
-        <rangefilter input1="time" input2="recording" min1="100" output1="offtime" output2="offdata" />
-        <autocorrelation input1="offdata" input2="offtime" output1="autocorrelation" output2="autoco_t" mint="0" maxt="20" />
+    <analysis period="0.1">
+        <ramp start="0" stop="100" buffer="4800" output1="time" static="true" />
+        <autocorrelation input1="recording" input2="time" output1="autocorrelation" output2="autoco_t" mint="0" maxt="20" />
         <threshold input2="autoco_t" input1="autocorrelation" falling="true" threshold="0" output1="t0" />
         <multiply input1="t0" input2="2" output1="dt" />
         <add input1="t0" input2="dt" output1="t1" />
@@ -41,8 +40,8 @@
             <data name="Autocorrelation (a.u.)" source="autocorrelation" />
         </set>
         <set name="Raw data">
-            <data name="Time (ms)" source="offtime" />
-            <data name="Recording (a.u.)" source="offdata" />
+            <data name="Time (ms)" source="time" />
+            <data name="Recording (a.u.)" source="recording" />
         </set>
     </export>
 </phyphox>

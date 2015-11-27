@@ -69,7 +69,7 @@ public class graphView extends View {
         minY = Double.POSITIVE_INFINITY;
         maxY = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < historyFilled; i++) { //Consider every history entry
-            for (int j = 0; j < graphX[i].length; j++) { //Consider all the x-data
+            for (int j = 0; graphX[i] != null && j < graphX[i].length; j++) { //Consider all the x-data
                 if (Double.isInfinite(graphX[i][j]) || Double.isNaN(graphX[i][j])) //Finite data only
                     continue;
                 if (graphX[i][j] < minX)
@@ -77,7 +77,7 @@ public class graphView extends View {
                 if (graphX[i][j] > maxX)
                     maxX = graphX[i][j];
             }
-            for (int j = 0; j < graphY[i].length; j++) { //Consider all the y-data
+            for (int j = 0; graphY[i] != null && j < graphY[i].length; j++) { //Consider all the y-data
                 if (Double.isInfinite(graphY[i][j]) || Double.isNaN(graphY[i][j])) //Finite data only
                     continue;
                 if (graphY[i][j] < minY)

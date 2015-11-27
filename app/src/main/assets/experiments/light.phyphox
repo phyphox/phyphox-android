@@ -8,6 +8,7 @@
     <views>
         <view name="Raw Data">
             <graph label="Illumination" inputX="illum_time" inputY="illum" labelX="t (s)" labelY="Ev (lx)" partialUpdate="true" />
+            <info label="Note: On some devices the light sensor is only updated when there is a coarse change in illumination." />
         </view>
     </views>
     <export>

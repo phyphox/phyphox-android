@@ -1002,7 +1002,7 @@ public class Analysis {
         protected void update() {
             Double a[], b[];
             //Put the larger input in a and the smaller one in b
-            if (experiment.getBuffer(inputs.get(0)).size > experiment.getBuffer(inputs.get(1)).size) {
+            if (experiment.getBuffer(inputs.get(0)).getFilledSize() > experiment.getBuffer(inputs.get(1)).getFilledSize()) {
                 a = experiment.getBuffer(inputs.get(0)).getArray();
                 b = experiment.getBuffer(inputs.get(1)).getArray();
             } else {

@@ -32,6 +32,11 @@ public class dataBuffer implements Serializable {
         buffer.add(value);
     }
 
+    //Get the number of elements actually filled into the buffer
+    public int getFilledSize() {
+        return buffer.size();
+    }
+
     //Append a double-array with [count] entries.
     public void append(double value[], int count) {
         for (int i = 0; i < count; i++)

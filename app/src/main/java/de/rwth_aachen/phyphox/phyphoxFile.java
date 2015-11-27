@@ -205,6 +205,14 @@ public class phyphoxFile {
                                                                                 ve.setFactor(Double.valueOf(xpp.getAttributeValue(null, "factor")));
                                                                             newView.elements.add(ve);
                                                                             break;
+                                                                        case "info":
+                                                                            expView.infoElement infoe = newView.new infoElement(xpp.getAttributeValue(null, "label"), null, null, null, null, parent.getResources());
+                                                                            if (xpp.getAttributeValue(null, "labelsize") != null)
+                                                                                infoe.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
+                                                                            else
+                                                                                infoe.setLabelSize(parent.getResources().getDimension(R.dimen.font));
+                                                                            newView.elements.add(infoe);
+                                                                            break;
                                                                         case "graph":
                                                                             expView.graphElement ge = newView.new graphElement(xpp.getAttributeValue(null, "label"), null, null, xpp.getAttributeValue(null, "inputX"), xpp.getAttributeValue(null, "inputY"), parent.getResources());
                                                                             if (xpp.getAttributeValue(null, "labelsize") != null)
@@ -347,6 +355,10 @@ public class phyphoxFile {
                                                         }
 
                                                         experiment.audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, experiment.micBufferSize * 2);
+                                                        if (experiment.audioRecord == null) {
+                                                            experiment.message = "Could not instantiate the audio recording class.";
+                                                            return experiment;
+                                                        }
                                                         break;
                                                 }
                                                 break;

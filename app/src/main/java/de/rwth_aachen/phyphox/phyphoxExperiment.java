@@ -26,8 +26,10 @@ public class phyphoxExperiment {
     public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
 
     double analysisPeriod = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
+    long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
     boolean newUserInput = false; //Will be set to true if the user changed any values
+    boolean newData = true; //Will be set to true if we have fresh data to present
 
     //Parameters for audio playback
     AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
@@ -71,17 +73,19 @@ public class phyphoxExperiment {
         if (!loaded)
             return;
         for (dataBuffer buffer : dataBuffers) { //Compare each databuffer name...
-            for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each expViewElement
-                try {
-                    if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
-                        Double v = eve.getValue(); //...get the value
-                        if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
-                            buffer.append(v);
-                            newUserInput = true;
+            synchronized (dataBuffers) {
+                for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each expViewElement
+                    try {
+                        if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
+                            Double v = eve.getValue(); //...get the value
+                            if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
+                                buffer.append(v);
+                                newUserInput = true;
+                            }
                         }
+                    } catch (Exception e) {
+                        Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                     }
-                } catch (Exception e) {
-                    Log.e("updateViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                 }
             }
         }
@@ -91,77 +95,122 @@ public class phyphoxExperiment {
     public void processAnalysis() {
         if (!loaded)
             return;
+
         //Get the data from the audio recording if used
         if (audioRecord != null) {
-            audioRecord.stop(); //Stop the recording first
-            int bytesRead = 1;
-            short[] buffer = new short[1024];
-            while (bytesRead > 0) {
-                bytesRead = audioRecord.read(buffer, 0, 1024);
-                dataBuffers.get(dataMap.get(micOutput)).append(buffer, bytesRead);
+            dataBuffer recording = getBuffer(micOutput);
+            final int readBufferSize = recording.size; //The dataBuffer for the recording
+            synchronized (dataBuffers) {
+                short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
+                recording.clear(); //We only want fresh data
+                int bytesRead = audioRecord.read(buffer, 0, recording.size);
+                recording.append(buffer, bytesRead);
             }
         }
 
-        //Call all the analysis modules and let them do their work.
-        for (Analysis.analysisModule mod : analysis) {
-            try {
-                mod.updateIfNotStatic();
-            } catch (Exception e) {
-                Log.e("updateViews", "Unhandled exception in analysis module " + mod.toString() + ".", e);
+        //Check if the actual math should be done
+        if (analysisOnUserInput) {
+            //If set by the experiment, the analysis is only done when there is new input from the user
+            if (!newUserInput) {
+                return; //No new input. Nothing to do.
+            }
+        } else if (System.currentTimeMillis() - lastAnalysis <= analysisPeriod * 1000) {
+            //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
+            return; //Too soon. Nothing to do
+        }
+
+        newUserInput = false;
+
+        synchronized (dataBuffers) {
+            //Call all the analysis modules and let them do their work.
+            for (Analysis.analysisModule mod : analysis) {
+                try {
+                    mod.updateIfNotStatic();
+                } catch (Exception e) {
+                    Log.e("processAnalysis", "Unhandled exception in analysis module " + mod.toString() + ".", e);
+                }
             }
         }
 
         //Send the results to audio playback if used
         if (audioTrack != null) {
-            if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
-                audioTrack.pause(); //Stop the playback first
-                audioTrack.flush();
-            if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && dataBuffers.get(dataMap.get(audioSource)).isStatic)) {
+            if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && getBuffer(audioSource).isStatic)) {
                 //If the data is not static, or the audio track not yet initialized, we have to push our data to the audioTrack
+
+                if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
+                    audioTrack.pause(); //Stop the playback first
+                audioTrack.flush(); //Empty the buffer
+
+
+                //Get the data to output
                 short[] data = getBuffer(audioSource).getShortArray();
-                int result = audioTrack.write(data, 0, data.length);
+                int result = 0; //Will hold the write result to log errors
+                if (audioLoop) {
+                    //In case of loops we want to repeat the data buffer. However, some
+                    //  implementations do not allow short loops. So as a workaround we fill the
+                    //  whole audio buffer with the repeated data buffer, so if the device does not
+                    //  accept the loop period, we still have some looping. (Unfortunately, there
+                    //  will be a discontinuity as the full buffer most likely will not have a
+                    //  length that is a multiple of the data buffer.)
+                    short[] filledBuffer = new short[audioBufferSize];
+                    for (int i = 0; i < audioBufferSize; i++)
+                        filledBuffer[i] = data[i % data.length];
+                    result = audioTrack.write(filledBuffer, 0, audioBufferSize);
+                } else //Usually, just write the small buffer...
+                    result = audioTrack.write(data, 0, data.length);
+
                 if (result <= 0)
-                    Log.e("updateViews", "Unexpected audio write result: " + result + " written / " + audioBufferSize + " buffer size");
+                    Log.e("processAnalysis", "Unexpected audio write result: " + result + " written / " + audioBufferSize + " buffer size");
+
                 audioTrack.reloadStaticData();
                 if (audioLoop) //If looping is enabled, loop from the end of the data
                     audioTrack.setLoopPoints(0, data.length-1, -1);
-            } else //If the data is static and already loaded, we just have to rewind...
-                audioTrack.setPlaybackHeadPosition(0);
-        }
-
-        //Restart recording and playback if they are used.
-        if (audioRecord != null) {
-            audioRecord.startRecording();
-        }
-        if (audioTrack != null) {
-            audioTrack.play();
-        }
-    }
-
-    //called by the main loop after everything is processed. Here we have to send all the analysis results to the appropriate views
-    public void updateViews(int currentView) {
-        if (!loaded)
-            return;
-        for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
-            for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each view.
-                try {
-                    //Set single value if the input buffer of the view matches the dataBuffer
-                    if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
-                        eve.setValue(buffer.value);
-                    }
-                    //Set x array data if the input buffer of the view matches the dataBuffer
-                    if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
-                        eve.setDataX(buffer);
-                    }
-                    //Set y array data if the input buffer of the view matches the dataBuffer
-                    if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
-                        eve.setDataY(buffer);
-                    }
-                } catch (Exception e) {
-                    Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
+            } else { //If the data is static and already loaded, we just have to rewind...
+                if (!audioLoop) { //We only want to pause and rewind if we are not looping
+                    audioTrack.pause();
+                    audioTrack.setPlaybackHeadPosition(0);
                 }
             }
         }
+
+        //Restart if used.
+        if (audioTrack != null) {
+            audioTrack.play();
+        }
+
+        newData = true; //We have fresh data to present.
+        lastAnalysis = System.currentTimeMillis(); //Remember when we were done this time
+    }
+
+    //called by the main loop after everything is processed. Here we have to send all the analysis results to the appropriate views
+    public void updateViews(int currentView, boolean force) {
+        if (!loaded)
+            return;
+        if (!(newData || force)) //New data to present? If not: Nothing to do, unless an update is forced
+            return;
+        synchronized (dataBuffers) {
+            for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
+                for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each view.
+                    try {
+                        //Set single value if the input buffer of the view matches the dataBuffer
+                        if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
+                            eve.setValue(buffer.value);
+                        }
+                        //Set x array data if the input buffer of the view matches the dataBuffer
+                        if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
+                            eve.setDataX(buffer);
+                        }
+                        //Set y array data if the input buffer of the view matches the dataBuffer
+                        if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
+                            eve.setDataY(buffer);
+                        }
+                    } catch (Exception e) {
+                        Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
+                    }
+                }
+            }
+        }
+        newData = false;
         //Finally call dataComplete on every view to notify them that the data has been sent
         for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
             try {
@@ -192,11 +241,15 @@ public class phyphoxExperiment {
     public void startAllIO() {
         if (!loaded)
             return;
-        //We will not start audio recording and output here as it will be triggered by the analysis
-        //  modules.
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
         for (sensorInput sensor : inputSensors)
             sensor.start();
+
+        //Audio Recording
+        if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
+            audioRecord.startRecording();
+
+        //We will not start audio output here as it will be triggered by the analysis modules.
     }
 }

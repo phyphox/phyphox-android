@@ -93,7 +93,6 @@ public class Experiment extends AppCompatActivity {
     //The experiment
     phyphoxExperiment experiment; //The experiment (definition and functionality) after it has been loaded.
     private int currentView; //An experiment may define multiple view layouts. This is the index of the currently used one.
-    long analysisStart = 0; //This variable holds the system time of the moment, an analysis (math modules) process started. This is necessary for experiments, which do analysis after given intervals
 
     //Others...
     private Resources res; //Helper to easily access resources
@@ -179,6 +178,7 @@ public class Experiment extends AppCompatActivity {
 
         //Store the index of the current view
         currentView = newView;
+        experiment.updateViews(currentView, true);
     }
 
     //This is called from the CopyXML thread in onPostExecute, so the copying process of a remote
@@ -567,9 +567,40 @@ public class Experiment extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    //The runnable, which is our "main loop" (although this feels like a function, technically it is
-    //   an instance of the Runnable class with our function being the overridden version of the
-    //   run() function. But it feels better to write the whole thing down like a function...
+    //Below follow two runnable, which act as our "main loop" (although this feels like a function,
+    //   technically these are instances of the Runnable class with our function being the
+    //   overridden version of the run() function. But it feels better to write the whole thing down
+    //   like a function...
+
+    //The updateData runnable runs on a second thread and performs the heavy math (if defined in the
+    // experiment)
+    Runnable updateData = new Runnable() {
+        @Override
+        public void run() {
+            //Do the analysis and update the views. All of these elements might fire exceptions,
+            // especially on badly defined experiments. So let's be save and catch anything that
+            // gets through to here.
+            if (experiment != null) { //This only makes sense if there is an experiment
+                try {
+                    //time for some analysis?
+                    if (measuring) {
+                        experiment.processAnalysis(); //Do the math.
+                    }
+                } catch (Exception e) {
+                    Log.e("updateData", "Unhandled exception.", e);
+                } finally {
+                    //If we are not supposed to stop, let's do it again in a short while
+                    if (!shutdown) {
+                        if (measuring)
+                            updateViewsHandler.postDelayed(this, 40);
+                        //else: This thread is no longer needed if we are not measuring
+                    }
+                }
+            }
+        }
+    };
+
+    //The updateViews runnable does everything UI related and hence runs on the UI thread
     Runnable updateViews = new Runnable() {
         @Override
         public void run() {
@@ -591,40 +622,20 @@ public class Experiment extends AppCompatActivity {
                 updateState = false;
             }
 
-            //Do the analysis and update the views. All of these elements might fire exceptions,
-            // especially on badly defined experiments. So let's be save and catch anything that
-            // gets through to here.
-            if (experiment != null) { //This only makes sense if there is an experiment
+            if (experiment != null) {
                 try {
-                    synchronized (experiment.dataBuffers) { //Syncronize!!! Make sure that no other thread manipulates the buffers we are working on
-                        //Get values from input views only if there isn't fresh data from the remote server which might get overridden
-                        if (!remoteInput) {
-                            experiment.handleInputViews(currentView);
-                        }
-
-                        //time for some analysis?
-                        if (measuring) {
-                            if (experiment.analysisOnUserInput) {
-                                //If set by the experiment, the analysis is only done when there is new input from the user
-                                if (experiment.newUserInput) {
-                                    experiment.processAnalysis(); //Do the math.
-                                    experiment.newUserInput = false; //Reset user input tracking
-                                }
-                            } else if (System.currentTimeMillis() - analysisStart > experiment.analysisPeriod * 1000) {
-                                //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
-                                experiment.processAnalysis(); //Do the math.
-                                analysisStart = System.currentTimeMillis(); //Remember when we were done this time
-                            }
-                        }
+                    //Get values from input views only if there isn't fresh data from the remote server which might get overridden
+                    if (!remoteInput) {
+                        experiment.handleInputViews(currentView);
                     }
+                    //Update all the views currently visible
+                    experiment.updateViews(currentView, false);
                     if (remoteInput) {
-                        //If there has been remote input, we may reset it not as from here the buffers will not be changed by us anymore
+                        //If there has been remote input, we may reset it as updateViews will have taken care of this
                         //This also means, that there is new input from the user
                         remoteInput = false;
                         experiment.newUserInput = true;
                     }
-                    //Update all the views currently visible
-                    experiment.updateViews(currentView);
                 } catch (Exception e) {
                     Log.e("updateViews", "Unhandled exception.", e);
                 } finally {
@@ -684,6 +695,10 @@ public class Experiment extends AppCompatActivity {
         //Lock the screen and keep it on. No more screen rotation or turning off during the measurement
         lockScreen();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        //Start the analysis "loop"
+        Thread t = new Thread(updateData);
+        t.start();
 
         //If this is a timed run, we have to start the countdown which stops it again later.
         if (timedRun) {
