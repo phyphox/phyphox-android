@@ -13,7 +13,7 @@
     <views>
         <view name="Spectrum">
             <value label="Peak-Frequency" input="f0" unit="Hz" />
-            <graph label="Fourier Transform" forceFullDataset="true" inputX="display_frequency" inputY="fft" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)" />
+            <graph label="Fourier Transform" inputX="display_frequency" inputY="fft" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)" />
         </view>
         <view name="Raw data">
             <graph label="Recording" inputX="time" inputY="recording" labelX="t (ms)" labelY="Recording (a.u.)" />

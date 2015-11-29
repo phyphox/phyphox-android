@@ -361,31 +361,72 @@ public class graphView extends View {
                     }
                     double lastX = Double.NaN;
                     double lastY = Double.NaN;
-                    int increment = 1;
-                    if (!forceFullDataset)
-                        increment = graphX[j].length/graphW;
-                    if (increment < 1)
-                        increment = 1;
-                    for (int i = 0; i < graphX[j].length && i < graphY[j].length; i+=increment) {
+
+                    double avgX = Double.NaN; //Average for single x-axis pixel
+                    double avgY = Double.NaN; //Average for single y-axis pixel
+                    int avgCount = 0; //Keeps track of the number of points that have been added
+                                      //to the same x-axis pixel for averaging
+
+                    for (int i = 0; i < graphX[j].length && i < graphY[j].length; i++) {
+                        //Calculate x/y in display coordinates
                         double thisX;
                         double thisY;
                         if (logX)
-                            thisX = (Math.log(graphX[j][i]/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL;
+                            thisX = Math.round((Math.log(graphX[j][i]/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL);
                         else
-                            thisX = (graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
+                            thisX = Math.round((graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL);
                         if (logY)
                             thisY = h-(Math.log(graphY[j][i]/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*graphH-graphB;
                         else
                             thisY = h-(graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
-                        if (this.line) {
-                            if (!(Double.isNaN(lastX) || Double.isNaN(lastY))) {
-                                canvas.drawLine((float)lastX, (float)lastY, (float)thisX, (float)thisY, paint);
-                            }
-                            lastX = thisX;
-                            lastY = thisY;
+
+                        if (forceFullDataset) {
+                            //We shall draw every single point.
+                            avgX = thisX;
+                            avgY = thisY;
                         } else {
-                            canvas.drawPoint((float)thisX, (float)thisY, paint);
+                            if (Double.isNaN(thisX) || Double.isNaN(thisY))
+                                continue;
+                            if (thisX == avgX) {
+                                //This has to be part of the current average. Add it and continue
+                                avgY += thisY;
+                                avgCount++;
+                                if (i < graphX[j].length-1 && i < graphY[j].length-1)
+                                    continue; //There might be another point for this average...
+                            }
+                            //So we are done with this x pixel (Either because we found a new one or
+                            //because this is the last point in the data set.
+                            if (avgCount == 0)
+                                avgY = Double.NaN;
+                            else
+                                avgY /= (double)avgCount; //Average
                         }
+
+                        //Now draw a line or a point
+                        if (this.line) {
+                            if (!(Double.isNaN(lastX) || Double.isNaN(lastY) || Double.isNaN(avgX) || Double.isNaN(avgY))) {
+                                canvas.drawLine((float)lastX, (float)lastY, (float)avgX, (float)avgY, paint);
+                            }
+                        } else {
+                            if (!(Double.isNaN(avgX) || Double.isNaN(avgY))) {
+                                canvas.drawPoint((float) avgX, (float) avgY, paint);
+                            }
+                        }
+
+                        //Remember this point for next iteration (to draw a line and to know which
+                        // points to average)
+                        lastX = avgX;
+                        lastY = avgY;
+
+                        //And reset averaging
+                        if (!Double.isNaN(thisY)) {
+                            avgCount = 1;
+                            avgY = thisY;
+                        } else {
+                            avgCount = 0;
+                            avgY = 0.;
+                        }
+                        avgX = thisX;
                     }
                 }
             }
@@ -403,7 +444,7 @@ public class graphView extends View {
         paint.setAlpha(255);
         paint.setStrokeCap(Paint.Cap.SQUARE);
         paint.setStyle(Paint.Style.STROKE);
-        canvas.drawRect(graphL+1, 1, w-1, h - graphB-1, paint);
+        canvas.drawRect(graphL + 1, 1, w - 1, h - graphB - 1, paint);
 
     }
 }
