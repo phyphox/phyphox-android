@@ -155,7 +155,7 @@ if(yrange.from==null)yrange.from=yrange.axis.min;if(yrange.to==null)yrange.to=yr
         updateUsedVarStr();
         $("#views").html("");
         views[currentView]["elements"].forEach(function(ve) {
-            $("#views").append(ve["html"]);
+            $("#views").append("<div class=\"elementBlock\">" + ve["html"] + "</div>");
         });
     }
 
@@ -168,8 +168,23 @@ if(yrange.from==null)yrange.from=yrange.axis.min;if(yrange.to==null)yrange.to=yr
         $("#exportDialog").fadeOut(500);
     }
 
+    var columns = 1;
+
+    function setColumns(n) {
+        columns = n;
+        $("body").removeClass("columns1 columns2 columns3").addClass("columns"+columns);
+    }
+
+    function switchColumns() {
+        columns++;
+        if (columns > 3)
+            columns = 1;
+        setColumns(columns);
+    }
+
     $(function() {
         switchView();
+        setColumns(1);
 		updateData();
 		$("#viewSelector").change(switchView);
 		$("#exportDialog form").submit(function() {
@@ -188,7 +203,7 @@ if(yrange.from==null)yrange.from=yrange.axis.min;if(yrange.to==null)yrange.to=yr
         </select>
         <h1 id="title"><!-- [[title]] --></h1>
     </div><div id="buttons">
-        <div id="measuring" onclick="toggleMeasuring()"></div><div id="export" onclick="exportData()"></div>
+        <div id="measuring" onclick="toggleMeasuring()"></div><div id="export" onclick="exportData()"></div><div id="columns" onclick="switchColumns()"></div>
     </div>
 </div>
 <div id="views"></div>

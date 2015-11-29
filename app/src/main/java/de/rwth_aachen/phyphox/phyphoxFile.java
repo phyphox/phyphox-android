@@ -274,7 +274,7 @@ public class phyphoxFile {
                                                                             else
                                                                                 ge.setLabelSize(parent.getResources().getDimension(R.dimen.font));
                                                                             if (xpp.getAttributeValue(null, "height") != null)
-                                                                                ge.setHeight(Integer.valueOf(xpp.getAttributeValue(null, "height")));
+                                                                                ge.setAspectRatio(Double.valueOf(xpp.getAttributeValue(null, "aspectRatio")));
                                                                             ge.setLine(!(xpp.getAttributeValue(null, "style") != null && xpp.getAttributeValue(null, "style").equals("dots")));
                                                                             ge.setPartialUpdate((xpp.getAttributeValue(null, "partialUpdate") != null && xpp.getAttributeValue(null, "partialUpdate").equals("true")));
                                                                             ge.setForceFullDataset((xpp.getAttributeValue(null, "forceFullDataset") != null && xpp.getAttributeValue(null, "forceFullDataset").equals("true")));

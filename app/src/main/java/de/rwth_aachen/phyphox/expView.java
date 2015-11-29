@@ -560,7 +560,7 @@ public class expView{
     //class. See graphView.java...
     public class graphElement extends expViewElement {
         private graphView gv = null; //Holds and GraphView isntance
-        private int height; //The height of the graph view
+        private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
         private Double[] dataX; //The x data to be displayed
         private Double[] dataY; //The y data to be displayed
         private boolean line = false; //Show lines instead of points?
@@ -575,12 +575,12 @@ public class expView{
         //Quite usual constructor...
         graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
-            height = 300;
+            aspectRatio = 3.;
         }
 
         //Interface to change the height of the graph
-        protected void setHeight(int height) {
-            this.height = height;
+        protected void setAspectRatio(double aspectRatio) {
+            this.aspectRatio = aspectRatio;
         }
 
         //Interface to switch between points and lines
@@ -658,7 +658,7 @@ public class expView{
             gv = new graphView(c);
             gv.setLayoutParams(new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    height));
+                    (int)Math.round(ll.getWidth()/aspectRatio)));
 
             //Send our parameters to the graphView isntance
             gv.setLine(line);
@@ -686,7 +686,7 @@ public class expView{
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "<div class=\"graph\" style=\"height:"+this.height/10.+"vh;\"></div>" +
+                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"></div></div>" +
                     "</div>";
         }
 

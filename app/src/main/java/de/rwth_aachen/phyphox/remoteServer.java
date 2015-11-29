@@ -93,6 +93,8 @@ public class remoteServer extends Thread {
                     line = line.replace("###drawableTimedPause###", getBase64PNG(res.getDrawable(R.drawable.timed_pause)));
                 if (line.contains("###drawableExport###"))
                     line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
+                if (line.contains("###drawableColumns###"))
+                    line = line.replace("###drawableColumns###", getBase64PNG(res.getDrawable(R.drawable.columns)));
                 sb.append(line);
                 sb.append("\n");
             }

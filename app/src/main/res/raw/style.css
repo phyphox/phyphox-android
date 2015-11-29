@@ -82,9 +82,13 @@ ul {
     background-image: url(data:image/png;base64,###drawableExport###);
 }
 
+#columns:empty {
+    background-image: url(data:image/png;base64,###drawableColumns###);
+}
+
 #titleBar {
     display: inline-block;
-    width: 76.5vw;
+    width: 73.0vw;
     padding: 0.5vw;
     height: 3.5vw;
     background: ###highlight-color###;
@@ -94,8 +98,8 @@ ul {
 }
 
 #title, #viewSelector {
-    font-size: 3vw;
     height: 3.5vw;
+    font-size: 3vw;
     display: block;
     background: ###highlight-color###;
     color: ###main-color###;
@@ -121,6 +125,23 @@ ul {
 
 #views {
     width: 100%;
+}
+
+.elementBlock {
+    display: inline-block;
+    width: 100%;
+}
+
+.columns2 .elementBlock {
+    display: inline-block;
+    width: 50%;
+    font-size: 50%;
+}
+
+.columns3 .elementBlock {
+    display: inline-block;
+    width: 33%;
+    font-size: 33%;
 }
 
 .valueElement, .inputElement {
@@ -149,7 +170,7 @@ ul {
 
 .inputElement .value {
     font-size: 100%;
-    width: 15vw;
+    width: 15%;
     padding: 0 0.5%;
 }
 
@@ -165,9 +186,22 @@ ul {
     padding: 0.5%;
 }
 
+.graphElement .graphBox {
+    position: relative;
+    width: 100%;
+}
+
+.graphElement .graphRatio {
+    display: block;
+}
+
 .graphElement .graph {
     display: block;
-    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .tickLabel, .axisLabels {
@@ -194,7 +228,7 @@ ul {
     color: black;
     font-size: initial;
     text-align: left;
-    padding: 1vw;
+    padding: 1%;
 }
 
 #exportDialog form .setSelector {
