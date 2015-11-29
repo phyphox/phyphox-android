@@ -2,13 +2,40 @@
     <title>Spring</title>
     <category>Mechanics</category>
     <description>
-        Analyze the frequency and period of a spring oscillator.
+Analyze the frequency and period of a spring oscillator.
 
-        This experiment uses the accelerometer to measure the oscillator movement and calculates the oscillation period T.
+This experiment uses the accelerometer to measure the oscillator movement and calculates the oscillation period T.
 
-        Further details:
-        The oscillation period is obtained through the autocorrelation of each accelerometer component. The sum of three autocorrelations is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate as the pendulum gives a sine function. Through this assumption we extract the position of the first full maximum to be in the range 3 t0 to 5 t0 in which we look for the maximum value.
+Further details:
+The oscillation period is obtained through the autocorrelation of each accelerometer component. The sum of three autocorrelations is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate as the pendulum gives a sine function. Through this assumption we extract the position of the first full maximum to be in the range 3 t0 to 5 t0 in which we look for the maximum value.
     </description>
+    <translations>
+        <translation locale="de">
+            <title>Federpendel</title>
+            <category>Mechanik</category>
+            <description>
+Misst die Frequenz und Periode eines Federpendels.
+
+Dieses Experiment nutzt den Beschleunigungssensor um die Pendelbewegung zu erfassen und berechnet hieraus die Schwingungsperiode T.
+
+Weitere Details:
+Die Schwingungsperiode wird durch eine Autokorrelation jeder Komponente des Beschleunigungs-Vektors ermittelt. In der Summe aller drei Autokorrelationen wird dann nach dem ersten Maximum nach dem für Autokorrelationen üblichen Maximum bei dt = 0 gesucht. Hierzu wird der erste Zeitpunkt t0 ermittelt, bei welchem das Signal unter Null fällt. Unter der Annahme, dass die Autokorrelation periodisch um Null schwingt, wird das Maximum dann im Intervall 3x t0 bis 5x t0 gesucht.
+            </description>
+            <string original="Results">Ergebnisse</string>
+            <string original="Period">Periode</string>
+            <string original="Frequency">Frequenz</string>
+            <string original="History">Verlauf</string>
+            <string original="result index">Ergebnis Nummer</string>
+            <string original="Period (s)">Periode (s)</string>
+            <string original="Frequency (Hz)">Frequenz (Hz)</string>
+            <string original="Autocorrelation">Autokorrelation</string>
+            <string original="correlation (a.u.)">Korrelation (a.u.)</string>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Accelerometer X">Beschleunigung X</string>
+            <string original="Accelerometer Y">Beschleunigung Y</string>
+            <string original="Accelerometer Z">Beschleunigung Z</string>
+        </translation>
+    </translations>
     <input>
         <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="20" />
     </input>

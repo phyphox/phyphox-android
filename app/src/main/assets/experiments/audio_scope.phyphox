@@ -3,10 +3,24 @@
     <category>Acoustics</category>
     <icon>ASc</icon>
     <description>
-            Show recorded audio data.
+Show recorded audio data.
 
-            This experiment just records short periods of audio data and displays them. To achieve a steady image, a zero crossing is used as a trigger and t=0 is shifted to the first (positive) crossing.
-        </description>
+This experiment just records short periods of audio data and displays them. To achieve a steady image, a zero crossing is used as a trigger and t=0 is shifted to the first (positive) crossing.
+    </description>
+    <translations>
+        <translation locale="de">
+            <title>Audio Oszilloskop</title>
+            <category>Akustik</category>
+            <description>
+Stellt Audioaufnahmen dar.
+
+Dieses Experiment nimmt Audiodaten über das Mikrofon auf und stellt diese dar. Um ein stabiles Bild zu zeigen, wird ähnlich einem Oszilloskop ein Trigger verwendet, wenn das Signal die Nulllinie durchläuft und die Zeitskala so verschoben, dass t=0 auf der ersten positiven Flanke liegt.
+            </description>
+            <string original="Scope">Oszilloskop</string>
+            <string original="Audio Data">Audiodaten</string>
+            <string original="Time (ms)">Zeit (ms)</string>
+        </translation>
+    </translations>
     <input>
         <audio output="recording" rate="48000" buffer="2400" />
     </input>

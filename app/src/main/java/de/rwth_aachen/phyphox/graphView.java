@@ -434,7 +434,7 @@ public class graphView extends View {
         } else {
             paint.setColor(res.getColor(R.color.main));
             paint.setTextAlign(Paint.Align.CENTER);
-            canvas.drawText("No drawable data.", graphL+graphW/2, (h-graphB+res.getDimension(R.dimen.graph_font))/2, paint);
+            canvas.drawText(res.getString(R.string.noDrawableData), graphL+graphW/2, (h-graphB+res.getDimension(R.dimen.graph_font))/2, paint);
         }
         canvas.restore();
 

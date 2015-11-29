@@ -53,6 +53,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -457,32 +458,46 @@ public class ExperimentList extends AppCompatActivity {
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             int eventType = xpp.getEventType(); //should be START_DOCUMENT
-            boolean inPhyphox = false; //Are we in an phyphox tag? (Ignore anything else)
-            int phyphoxDepth = 0; //Depth of the first phyphox tag (We only care for title, icon, description and category directly below the phyphox tag)
+            int phyphoxDepth = -1; //Depth of the first phyphox tag (We only care for title, icon, description and category directly below the phyphox tag)
+            int translationBlockDepth = -1; //Depth of the translations block
+            int translationDepth = -1; //Depth of a suitable translation, if found.
             while (eventType != XmlPullParser.END_DOCUMENT){ //Go through all tags until the end...
                 switch (eventType) {
                     case XmlPullParser.START_TAG: //React to start tags
                         switch (xpp.getName()) {
                             case "phyphox": //The phyphox tag is the root element of the experiment we want to interpret
-                                if (!inPhyphox) { //There should not be a phyphox tag within an phyphox tag, but who cares. Just ignore it if it happens
-                                    inPhyphox = true; //We just entered our first phyphox tag. We are now in the phyphox definition
+                                if (phyphoxDepth < 0) { //There should not be a phyphox tag within an phyphox tag, but who cares. Just ignore it if it happens
                                     phyphoxDepth = xpp.getDepth(); //Remember depth of phyphox tag
                                 }
                                 break;
+                            case "translations": //The translations block may contain a localized title and description
+                                if (xpp.getDepth() != phyphoxDepth+1) //Translations block has to be immediately below phyphox tag
+                                    break;
+                                if (translationBlockDepth < 0) {
+                                    translationBlockDepth = xpp.getDepth(); //Remember depth of the block
+                                }
+                                break;
+                            case "translation": //The translation block may contain our localized version
+                                if (xpp.getDepth() != translationBlockDepth+1) //The translation has to be immediately below he translations block
+                                    break;
+                                if (translationDepth < 0 && xpp.getAttributeValue(null, "locale").equals(Locale.getDefault().getLanguage())) {
+                                    translationDepth = xpp.getDepth(); //Remember depth of the translation block
+                                }
+                                break;
                             case "title": //This should give us the experiment title
-                                if (xpp.getDepth() == phyphoxDepth+1) //...only if it is immediately below the phyphox tag
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     title = xpp.nextText().trim();
                                 break;
                             case "icon": //This should give us the experiment icon (might be an acronym or a base64-encoded image)
-                                if (xpp.getDepth() == phyphoxDepth+1) //...only if it is immediately below the phyphox tag
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     icon = xpp.nextText().trim();
                                 break;
                             case "description": //This should give us the experiment description, but we only need the first line
-                                if (xpp.getDepth() == phyphoxDepth+1) //...only if it is immediately below the phyphox tag
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     description = xpp.nextText().trim().split("\n", 2)[0]; //Remove any whitespaces and take the first line until the first line break
                                 break;
                             case "category": //This should give us the experiment category
-                                if (xpp.getDepth() == phyphoxDepth+1) //...only if it is immediately below the phyphox tag
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     category = xpp.nextText().trim();
                                 break;
                         }
@@ -491,7 +506,17 @@ public class ExperimentList extends AppCompatActivity {
                         switch (xpp.getName()) {
                             case "phyphox": //We are leaving the phyphox tag
                                 if (xpp.getDepth() == phyphoxDepth) { //Check if we in fact reached the surface. There might have been something else called phyphox within.
-                                    inPhyphox = false;
+                                    phyphoxDepth = -1;
+                                }
+                                break;
+                            case "translations": //We are leaving the phyphox tag
+                                if (xpp.getDepth() == translationBlockDepth) { //Check if we in fact reached the surface. There might have been something else called phyphox within.
+                                    translationBlockDepth = -1;
+                                }
+                                break;
+                            case "translation": //We are leaving the phyphox tag
+                                if (xpp.getDepth() == translationDepth) { //Check if we in fact reached the surface. There might have been something else called phyphox within.
+                                    translationDepth = -1;
                                 }
                                 break;
                         }
@@ -787,7 +812,7 @@ public class ExperimentList extends AppCompatActivity {
                     }
                     if (light) {
                         output.write("<view name=\"Light\">".getBytes());
-                        output.write(("<graph label=\"Illumination\" inputX=\"light_time\" inputY=\"light\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\" />").getBytes());
+                        output.write(("<graph label=\"Illuminance\" inputX=\"light_time\" inputY=\"light\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\" />").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (lin) {
@@ -832,7 +857,7 @@ public class ExperimentList extends AppCompatActivity {
                     if (light) {
                         output.write("<set name=\"Light\">".getBytes());
                         output.write("<data name=\"Time (s)\" source=\"light_time\" />".getBytes());
-                        output.write("<data name=\"Illumination (lx)\" source=\"light\" />".getBytes());
+                        output.write("<data name=\"Illuminance (lx)\" source=\"light\" />".getBytes());
                         output.write("</set>".getBytes());
                     }
                     if (lin) {

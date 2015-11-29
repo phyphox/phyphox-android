@@ -2,13 +2,41 @@
     <title>Pendulum</title>
     <category>Mechanics</category>
     <description>
-        Determine the gravity constant (g=9.81m/s²) by using your phone as a pendulum.
+Determine the gravity constant (g=9.81m/s²) by using your phone as a pendulum.
 
-        This experiment uses the gyroscope to measure the pendulum movement and calculates the oscillation period T. The user has to enter the length L of the string used for the pendulum, so phyphox can calculate g = 4π²/T² L.
+This experiment uses the gyroscope to measure the pendulum movement and calculates the oscillation period T. The user has to enter the length L of the string used for the pendulum, so phyphox can calculate g = 4π²/T² L.
 
-        Further details:
-        The oscillation period is obtained through the autocorrelation of each gyroscope component. The sum of three autocorrelations is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate as the pendulum gives a sine function. Through this assumption we extract the position of the first full maximum to be in the range 3 t0 to 5 t0 in which we look for the maximum value.
+Further details:
+The oscillation period is obtained through the autocorrelation of each gyroscope component. The sum of three autocorrelations is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate as the pendulum gives a sine function. Through this assumption we extract the position of the first full maximum to be in the range 3 t0 to 5 t0 in which we look for the maximum value.
     </description>
+    <translations>
+        <translation locale="de">
+            <title>Pendel</title>
+            <category>Mechanik</category>
+            <description>
+Misst die Erdbeschleunigung (g=9.81m/s²) indem das Smartphone als Pendel benutzt wird.
+
+Dieses Experiment nutzt das Gyroskop um die Pendelbewegung zu erfassen und berechnet hieraus die Schwingungsperiode T. Der Nutzer muss die Länge des Pendels eingeben, so dass phyphox g = 4π²/T² L berechnen kann.
+
+Weitere Details:
+Die Schwingungsperiode wird durch eine Autokorrelation jeder Komponente des Gyroskop-Vektors ermittelt. In der Summe aller drei Autokorrelationen wird dann nach dem ersten Maximum nach dem für Autokorrelationen üblichen Maximum bei dt = 0 gesucht. Hierzu wird der erste Zeitpunkt t0 ermittelt, bei welchem das Signal unter Null fällt. Unter der Annahme, dass die Autokorrelation periodisch um Null schwingt, wird das Maximum dann im Intervall 3x t0 bis 5x t0 gesucht.
+            </description>
+            <string original="Results">Ergebnisse</string>
+            <string original="Period">Periode</string>
+            <string original="Frequency">Frequenz</string>
+            <string original="Length">Länge</string>
+            <string original="History">Verlauf</string>
+            <string original="result index">Ergebnis Nummer</string>
+            <string original="Period (s)">Periode (s)</string>
+            <string original="Frequency (Hz)">Frequenz (Hz)</string>
+            <string original="Autocorrelation">Autokorrelation</string>
+            <string original="correlation (a.u.)">Korrelation (a.u.)</string>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Gyroscope X">Gyroskop X</string>
+            <string original="Gyroscope Y">Gyroskop Y</string>
+            <string original="Gyroscope Z">Gyroskop Z</string>
+        </translation>
+    </translations>
     <icon>
         P
     </icon>
@@ -24,7 +52,7 @@
         </view>
         <view name="History">
             <graph label="Period" inputY="period" labelX="result index" labelY="Period (s)" />
-            <graph label="Frequency" inputY="frequency" labelX="result index" labelY="frequency (Hz)" />
+            <graph label="Frequency" inputY="frequency" labelX="result index" labelY="Frequency (Hz)" />
             <graph label="g" inputY="g" labelX="result index" labelY="g (m/s²)" />
         </view>
         <view name="Autocorrelation">

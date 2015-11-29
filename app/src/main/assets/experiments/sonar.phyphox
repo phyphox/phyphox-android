@@ -2,23 +2,53 @@
     <title>Sonar</title>
     <category>Acoustics</category>
     <description>
-    Measure distances through echos and the speed of sound.
+Measure distances through echos and the speed of sound.
 
-    A sonar sends bursts of short sounds, which get reflected by the object you want to measure. As sound travels at a speed of approximately 340 m/s, the time until the reflection reaches the microphone of your phone can be used to calculate the distance of this object.
+A sonar sends bursts of short sounds, which get reflected by the object you want to measure. As sound travels at a speed of approximately 340 m/s, the time until the reflection reaches the microphone of your phone can be used to calculate the distance of this object.
 
-    This experiments generates a &quot;chirp&quot;, sends it out through the speaker and starts a recording. A crosscorrelation of the chirp and the recorded data gives information about the timing at which echoes occur. This timing can then be multiplied with the speed of sound (and divided by 2 as the sound has to travel forth and back) and you get the distance at which the echoe originated.
+This experiments generates a &quot;chirp&quot;, sends it out through the speaker and starts a recording. A crosscorrelation of the chirp and the recorded data gives information about the timing at which echoes occur. This timing can then be multiplied with the speed of sound (and divided by 2 as the sound has to travel forth and back) and you get the distance at which the echo originated.
 
-    However, there are a few problems to this simple idea, that you have to consider:
+However, there are a few problems to this simple idea, that you have to consider:
 
-    1. Your phone may have an unfortunate layout for this kind of measurement.
-    In the best case the speaker and the microphone are aligned into the same direction. But the designers of your phone obviously place the microphone near your mouth and a speaker close to your ear or even an additional speaker on the back (for ringtones and music playback). Therefore the reflection of any sound may not reach the microphone directly.
+1. Your phone may have an unfortunate layout for this kind of measurement.
+In the best case the speaker and the microphone are aligned into the same direction. But the designers of your phone obviously place the microphone near your mouth and a speaker close to your ear or even an additional speaker on the back (for ringtones and music playback). Therefore the reflection of any sound may not reach the microphone directly.
 
-    2. Some objects absorb the sound instead of reflecting it.
-    It is hard to measure the distance to any &quot;soft&quot; objects like a sofa or human beings. Instead measure the distance to hard surfaces like stone walls or windows.
+2. Some objects absorb the sound instead of reflecting it.
+It is hard to measure the distance to any &quot;soft&quot; objects like a sofa or human beings. Instead measure the distance to hard surfaces like stone walls or windows.
 
-    3. You get reflections by many objects.
-    Sound usually travels in every direction, which is good for speakers that are meant to play ringtones. But for a sonar this means, that when targeting a wall, you also get reflections from the floor, the ceiling, another wall nearby, a post and simply from every suitable &quot;hard&quot; surface nearby. Therefore this sonar gives you all the reflections and it is up to you to interpret the result and to figure out, which reflection corresponds to the target you intended to measure. So start with a small hard target and try to screen all other directions with some foam material.
+3. You get reflections by many objects.
+Sound usually travels in every direction. For a sonar this means, that when targeting a wall, you also get reflections from the floor, the ceiling, another wall nearby, a post and simply from every suitable &quot;hard&quot; surface nearby. Therefore this sonar gives you all the reflections and it is up to you to interpret the result and to figure out, which reflection corresponds to the target you intended to measure. So start with a small hard target and try to screen all other directions with some foam material.
     </description>
+    <translations>
+        <translation locale="de">
+            <title>Sonar</title>
+            <category>Akustik</category>
+            <description>
+Misst Entfernungen mithilfe von Echos und der Schallgeschwindigkeit.
+
+Ein Sonar sendet kurze Schallimpulse, welche von den Objekten reflektiert werden, deren Entfernung gemessen werden soll. Da sich Schall mit einer Geschwindigkeit von etwa 340 m/s ausbreitet, kann die Dauer bis die Echos das Mikrofon des Smartphones erreichen in eine Entfernung umgerechnet werden.
+
+Dieses Experiment erzeugt ein sogenanntes &quot;chirp&quot; (englisch für Gezwitscher), gibt es durch den Lautsprecher aus und startet eine Aufnahme über das Mikrofon. Eine Kreuzkorrelation des Chirps mit dem aufgenommenen Signal gibt Hinweise darauf, zu welchen Zeiten Echos das Mikrofon erreichen. Diese Zeiten werden mit der Schallgeschwindigkeit multipliziert und durch 2 geteilt (das Signal muss zum Objekt und wieder zurück), so dass man die Entfernung zur Quelle des Echos erhält.
+
+Hierbei müssen allerdings ein paar Dinge beachtet werden:
+
+1. Ihr Smartphone kann eine unvorteilhafte Anordnung von Lautsprecher und Mikrofon haben.
+Im Idealfall sind Mikrofon und Lautsprecher in die gleiche Richtung ausgerichtet. Offensichtlich entwürft man Smartphones aber so, dass der Lautsprecher beim Telefonieren am Ohr und das Mikrofon in der Nähe des Mundes ist. Meistens wird der Ton auch über einen zweiten Lautsprecher auf der Rückseite ausgegeben, der Klingeltöne möglichst laut und ungerichtet ausgeben soll.
+
+2. Manche Objekte absorbieren Schall statt ihn zu reflektieren.
+Es ist schwer möglich, die Entfernung zu &quot;weichen&quot; Objekten wie beispielsweise einem Menschen oder einem Sofa zu messen. Statt dessen sollten Sie es mit harten Objekten wie einer Steinwand oder einem Fenster versuchen.
+
+3. Man erhält Echos von vielen Objekten.
+Schall breitet sich in der Regel ungerichtet aus. Für das Sonar bedeutet dies, dass Sie beim Versuch eine Wand zu messen auch Echos vom Boden, von der Decke, einer weiteren Wand in der Nähe, einem Pfosten und generell von jeder harten Oberfläche in Ihrer Umgebung erhalten. Das Ergebnis kann daher sehr schwer zu interpretieren sein und die Überlagerung kann die Messung unbrauchbar machen. Es empfielt sich daher, mit einem kleinen harten Zielobjekt zu beginnen und alle anderen Richtungen mit Schaumstoff abzuschirmen.
+            </description>
+            <string original="Speed of Sound">Schallgeschw.</string>
+            <string original="Echo location">Entfernung der Echos</string>
+            <string original="distance (cm)">Entfernung (cm)</string>
+            <string original="Time (s)">Zeit (s)</string>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Recording">Aufnahme</string>
+        </translation>
+    </translations>
     <input>
         <audio output="recording" rate="48000" buffer="12000" />
     </input>

@@ -3,12 +3,32 @@
     <category>Acoustics</category>
     <icon>AAu</icon>
     <description>
-        Measure the frequency of a single tone.
+Measure the frequency of a single tone.
 
-        This experiment records audio from the microphone and analyses it for its frequency. This only works if there is a single tone with a fixed frequency - if there are multiple frequencies (like an accord), use the &quot;spectrum&quot; experiment instead.
+This experiment records audio from the microphone and analyses it for its frequency. This only works if there is a single tone with a fixed frequency - if there are multiple frequencies (like an accord), use the &quot;spectrum&quot; experiment instead.
 
-        The analysis is done by calculating the autocorrelation of the audio signal, which is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate periodically about zero. Through this assumption we extract the position of the first full maximum to be in the range 3x t0 to 5x t0 in which we look for the maximum value.
+The analysis is done by calculating the autocorrelation of the audio signal, which is then analyzed for its first maximum. As an autocorrelation shows a maximum at dt = 0, we look for the first time t0 it crosses zero. From there we expect the autocorrelation to oscillate periodically about zero. Through this assumption we extract the position of the first full maximum to be in the range 3x t0 to 5x t0 in which we look for the maximum value.
     </description>
+    <translations>
+        <translation locale="de">
+            <title>Audio Autokorrelation</title>
+            <category>Akustik</category>
+            <description>
+Die Frequenz eines einzelnen Tons ermitteln.
+
+Dieses Experiment nimmt über das Mikrofon Töne auf und ermittelt ihre Frequenz. Dies funktioniert nur wenn es sich dabei um einen einzigen Ton mit fester Frequenz handelt - Wenn Sie mehrere Frequenzen (wie in einem Akkord) analysieren möchten, verwenden Sie statt dessen das Experiment &quot;Audio Spektrum&quot;.
+
+Die Frequenz wird mittels einer Autokorrelation des Audiosignals ermittelt. Die Frequenz entspricht dem ersten Maximum der Autokorrelation nach dem stets auftretenden Maximum bei dt = 0. Von dem Punkt t0, an welchem das Signal zum ersten Mal die Nulllinie unterschreitet, sucht der Algorithmus in dem Bereich 3x t0 bis 5x t0 nach dem Maximum der Autokorrelation, in der Annahme, dass diese sich periodisch um die Nulllinie bewegt.
+            </description>
+            <string original="Autocorr.">Autokorr.</string>
+            <string original="Period">Periode</string>
+            <string original="Frequency">Frequenz</string>
+            <string original="Autocorrelation">Autokorrelation</string>
+            <string original="correlation (a.u.)">Korrelation (a.u.)</string>
+            <string original="Raw data">Rohdaten</string>
+            <string original="Recording">Aufnahme</string>
+        </translation>
+    </translations>
     <input>
         <audio output="recording" rate="48000" buffer="4800" />
     </input>
@@ -19,7 +39,7 @@
             <graph label="Autocorrelation" inputX="autoco_t" inputY="autocorrelation" labelX="Δt (ms)" labelY="correlation (a.u.)" />
         </view>
         <view name="Raw data">
-            <graph label="Recording" inputX="time" inputY="recording" labelX="t (ms)" labelY="Recording (a.u.)" />
+            <graph label="Recording" inputX="time" inputY="recording" labelX="t (ms)" labelY="Amplitude (a.u.)" />
         </view>
     </views>
     <analysis period="0.1">

@@ -2,6 +2,14 @@
     <title>Magnetometer</title>
     <category>Raw Sensors</category>
     <description>Get raw data from the magnetometer.</description>
+    <translations>
+        <translation locale="de">
+            <title>Magnetfeld</title>
+            <category>Sensoren</category>
+            <description>Rohdaten des Magnetometers auslesen.</description>
+            <string original="Raw Data">Rohdaten</string>
+        </translation>
+    </translations>
     <input>
         <sensor type="magnetic_field" outputX="magX" outputY="magY" outputZ="magZ" outputT="mag_time" buffer="500" />
     </input>

@@ -3,6 +3,17 @@
     <category>Raw Sensors</category>
     <icon>LAc</icon>
     <description>Get raw data from the linear accelerometer, which gives the actual acceleration without earth's acceleration. This sensor gives (0, 0, 0) when the device is resting.</description>
+    <translations>
+        <translation locale="de">
+            <title>Lineare Beschleunigung</title>
+            <category>Sensoren</category>
+            <description>Rohdaten der linearen Beschleunigung auslesen, welche der tatsächlichen Beschleunigung ohne den Beitrag der Erdbeschleunigung entspricht. Dieser Sensor liefert (0, 0, 0), wenn das Gerät ruht.</description>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Linear Acceleration X">Lineare Beschleunigung X</string>
+            <string original="Linear Acceleration Y">Lineare Beschleunigung Y</string>
+            <string original="Linear Acceleration Z">Lineare Beschleunigung Z</string>
+        </translation>
+    </translations>
     <input>
         <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" />
     </input>

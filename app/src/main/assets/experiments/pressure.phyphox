@@ -2,6 +2,15 @@
     <title>Pressure</title>
     <category>Raw Sensors</category>
     <description>Get raw data from the barometer.</description>
+    <translations>
+        <translation locale="de">
+            <title>Druck</title>
+            <category>Sensoren</category>
+            <description>Rohdaten des Barometers auslesen.</description>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Pressure">Druck</string>
+        </translation>
+    </translations>
     <input>
         <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="500" />
     </input>

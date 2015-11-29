@@ -51,9 +51,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-//TODO Translation of Experiment-Texts
-//TODO Sonar needs fine-tuning
-
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
 public class Experiment extends AppCompatActivity {

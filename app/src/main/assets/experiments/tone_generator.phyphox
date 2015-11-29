@@ -2,12 +2,30 @@
     <title>Tone generator</title>
     <category>Acoustics</category>
     <description>
-        Generate a tone of one or two frequencies.
+Generate a tone of one or two frequencies.
 
-        The total signal will be normalized, so the amplitudes describe ratios.
+The total signal will be normalized, so the amplitudes describe ratios.
 
-        Note: This experiments tries to figure out the periodicity of the resulting signal and only calculates a single period. However, if both frequencies are too close or have particularly unharmonic ratios, this period becomes very long. In these cases, the experiment calculates a maximum of 1 second of audio signal (to consider older phones), which may lead to a period clicking sound as the sound loops at a period that does not match the actual signal.
+Note: This experiments tries to figure out the periodicity of the resulting signal and only calculates a single period. However, if both frequencies are too close or have particularly unharmonic ratios, this period becomes very long. In these cases, the experiment calculates a maximum of 1 second of audio signal (to consider older phones), which may lead to a period clicking sound as the sound loops at a period that does not match the actual signal.
     </description>
+    <translations>
+        <translation locale="de">
+            <title>Tongenerator</title>
+            <category>Akustik</category>
+            <description>
+Generiert einen Ton aus einer oder zwei Frequenzen.
+
+Das gesamte Signal wird normalisiert. Die Amplituden beschreiben somit nur ein Verhältnis.
+
+Beachten Sie: Dieses Experiment versucht, die Periodizität des Gesamtsignals zu ermitteln und berechnet nur eine Periode. Sind beide Frequenzen jedoch in einem ungünstigen Verhältnis, so dass die Periode sehr lang wird, berechnet dieses Experiment als maximale Periode eine Sekunde, um den Ablauf auch auf langsameren Smartphones zu ermöglichen. Dies kann zu periodischen Knackgeräuschen führen, wenn die Periode des berechneten Signals nicht mit der Periode des eigentlich gewünschten Signals übereinstimmt.
+            </description>
+            <string original="Frequency 1">Frequenz 1</string>
+            <string original="Frequency 2">Frequenz 2</string>
+            <string original="Base Frequency">Grundfrequenz</string>
+            <string original="Envelope Frequency">Einhüllende Freq.</string>
+            <string original="Time (s)">Zeit (s)</string>
+        </translation>
+    </translations>
     <input>
     </input>
     <views>

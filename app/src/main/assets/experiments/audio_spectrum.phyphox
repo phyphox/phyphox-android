@@ -3,10 +3,26 @@
     <category>Acoustics</category>
     <icon>ASp</icon>
     <description>
-            Display the frequency spectrum of an audio signal.
+Display the frequency spectrum of an audio signal.
 
-            This experiment records audio from the microphone and calculates its frequency spectrum through a Fourier transformation (FFT). If you only have a single tone with a single frequency, you might get more precise results from the &quot;autocorrelation&quot; audio experiment.
-        </description>
+This experiment records audio from the microphone and calculates its frequency spectrum through a Fourier transformation (FFT). If you only have a single tone with a single frequency, you might get more precise results from the &quot;autocorrelation&quot; audio experiment.
+    </description>
+    <translations>
+        <translation locale="de">
+            <title>Audio Spektrum</title>
+            <category>Akustik</category>
+            <description>
+Zeigt das Frequenz-Spektrum von Audiosignalen.
+
+Dieses Experiment nimmt Audiodaten über das Mikrofon auf und berechnet das Frequenzspektrum mittels einer Fourier-Transformation (FFT). Wenn Sie nur eine einzige Frequenz analysieren möchten, erhalten Sie möglicherweise präzisere Resultate mit dem Experiment &quot;Autokorrelation&quot;.
+            </description>
+            <string original="Spectrum">Spektrum</string>
+            <string original="Peak-Frequency">Frequenzspitze</string>
+            <string original="Fourier Transform">Fourier-Transformierte</string>
+            <string original="Raw data">Rohdaten</string>
+            <string original="Recording">Aufnahme</string>
+        </translation>
+    </translations>
     <input>
         <audio output="recording" rate="48000" buffer="8192" />
     </input>
@@ -16,7 +32,7 @@
             <graph label="Fourier Transform" inputX="display_frequency" inputY="fft" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)" />
         </view>
         <view name="Raw data">
-            <graph label="Recording" inputX="time" inputY="recording" labelX="t (ms)" labelY="Recording (a.u.)" />
+            <graph label="Recording" inputX="time" inputY="recording" labelX="t (ms)" labelY="Amplitude (a.u.)" />
         </view>
     </views>
     <analysis period="0.3">

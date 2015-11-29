@@ -2,6 +2,17 @@
     <title>Gyroscope</title>
     <category>Raw Sensors</category>
     <description>Get raw data from the gyroscope.</description>
+    <translations>
+        <translation locale="de">
+            <title>Gyroskop</title>
+            <category>Sensoren</category>
+            <description>Rohdaten des Gyroskops auslesen.</description>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Gyroscope X">Gyroskop X</string>
+            <string original="Gyroscope Y">Gyroskop Y</string>
+            <string original="Gyroscope Z">Gyroskop Z</string>
+        </translation>
+    </translations>
     <input>
         <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" />
     </input>

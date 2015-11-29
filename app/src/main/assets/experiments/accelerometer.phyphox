@@ -2,6 +2,17 @@
     <title>Accelerometer</title>
     <category>Raw Sensors</category>
     <description>Get raw data from the accelerometer.</description>
+    <translations>
+        <translation locale="de">
+            <title>Beschleunigung</title>
+            <category>Sensoren</category>
+            <description>Rohdaten des Beschleunigungssensors auslesen.</description>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Accelerometer X">Beschleunigung X</string>
+            <string original="Accelerometer Y">Beschleunigung Y</string>
+            <string original="Accelerometer Z">Beschleunigung Z</string>
+        </translation>
+    </translations>
     <input>
         <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" />
     </input>

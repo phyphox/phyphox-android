@@ -28,12 +28,24 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 
 //TODO clean-up and comment phyphoxFile class
 
 public class phyphoxFile {
+
+    private static Map<String, String> translation = new HashMap<>();
+
+    private static String translate(String input) {
+        if (translation.containsKey(input.trim()))
+            return translation.get(input.trim());
+        else
+            return input;
+    }
 
     public static boolean isValidIdentifier(String s) {
         if (s.isEmpty()) {
@@ -165,16 +177,58 @@ public class phyphoxFile {
                         case XmlPullParser.START_TAG:
                             switch (xpp.getName()) {
                                 case "title":
-                                    experiment.title = xpp.nextText();
+                                    experiment.title = xpp.nextText().trim();
                                     break;
                                 case "icon":
-                                    experiment.icon = xpp.nextText();
+                                    experiment.icon = xpp.nextText().trim();
                                     break;
                                 case "description":
-                                    experiment.description = xpp.nextText();
+                                    experiment.description = xpp.nextText().trim();
                                     break;
                                 case "category":
-                                    experiment.category = xpp.nextText();
+                                    experiment.category = xpp.nextText().trim();
+                                    break;
+                                case "translations":
+                                    while ((!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("translations"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                        switch (eventType) {
+                                            case XmlPullParser.START_TAG:
+                                                switch (xpp.getName()) {
+                                                    case "translation":
+                                                        String locale = xpp.getAttributeValue(null, "locale");
+                                                        if (Locale.getDefault().getLanguage().equals(locale)) {
+                                                            while ((!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("translation"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                                                switch (eventType) {
+                                                                    case XmlPullParser.START_TAG:
+                                                                        switch (xpp.getName()) {
+                                                                            case "title":
+                                                                                experiment.title = xpp.nextText().trim();
+                                                                                break;
+                                                                            case "category":
+                                                                                experiment.category = xpp.nextText().trim();
+                                                                                break;
+                                                                            case "description":
+                                                                                experiment.description = xpp.nextText().trim();
+                                                                                break;
+                                                                            case "string":
+                                                                                translation.put(xpp.getAttributeValue(null, "original").trim(), xpp.nextText().trim());
+                                                                                break;
+                                                                        }
+                                                                        break;
+                                                                }
+                                                                eventType = xpp.next();
+                                                            }
+                                                        } else {
+                                                            //Wrong language, skip this block
+                                                            while ((!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("translation"))) && eventType != XmlPullParser.END_DOCUMENT) {
+                                                                eventType = xpp.next();
+                                                            }
+                                                        }
+                                                        break;
+                                                }
+                                                break;
+                                        }
+                                        eventType = xpp.next();
+                                    }
                                     break;
                                 case "views":
                                     while ((!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("views"))) && eventType != XmlPullParser.END_DOCUMENT) {
@@ -183,14 +237,14 @@ public class phyphoxFile {
                                                 switch (xpp.getName()) {
                                                     case "view":
                                                         expView newView = new expView();
-                                                        newView.name = xpp.getAttributeValue(null, "name");
+                                                        newView.name = translate(xpp.getAttributeValue(null, "name"));
 
                                                         while ((!(eventType == XmlPullParser.END_TAG && xpp.getName().equals("view"))) && eventType != XmlPullParser.END_DOCUMENT) {
                                                             switch (eventType) {
                                                                 case XmlPullParser.START_TAG:
                                                                     switch (xpp.getName()) {
                                                                         case "value":
-                                                                            expView.valueElement ve = newView.new valueElement(xpp.getAttributeValue(null, "label"), null, xpp.getAttributeValue(null, "input"), null, null, parent.getResources());
+                                                                            expView.valueElement ve = newView.new valueElement(translate(xpp.getAttributeValue(null, "label")), null, xpp.getAttributeValue(null, "input"), null, null, parent.getResources());
                                                                             if (xpp.getAttributeValue(null, "labelsize") != null)
                                                                                 ve.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
                                                                             else
@@ -206,7 +260,7 @@ public class phyphoxFile {
                                                                             newView.elements.add(ve);
                                                                             break;
                                                                         case "info":
-                                                                            expView.infoElement infoe = newView.new infoElement(xpp.getAttributeValue(null, "label"), null, null, null, null, parent.getResources());
+                                                                            expView.infoElement infoe = newView.new infoElement(translate(xpp.getAttributeValue(null, "label")), null, null, null, null, parent.getResources());
                                                                             if (xpp.getAttributeValue(null, "labelsize") != null)
                                                                                 infoe.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
                                                                             else
@@ -214,7 +268,7 @@ public class phyphoxFile {
                                                                             newView.elements.add(infoe);
                                                                             break;
                                                                         case "graph":
-                                                                            expView.graphElement ge = newView.new graphElement(xpp.getAttributeValue(null, "label"), null, null, xpp.getAttributeValue(null, "inputX"), xpp.getAttributeValue(null, "inputY"), parent.getResources());
+                                                                            expView.graphElement ge = newView.new graphElement(translate(xpp.getAttributeValue(null, "label")), null, null, xpp.getAttributeValue(null, "inputX"), xpp.getAttributeValue(null, "inputY"), parent.getResources());
                                                                             if (xpp.getAttributeValue(null, "labelsize") != null)
                                                                                 ge.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
                                                                             else
@@ -226,14 +280,14 @@ public class phyphoxFile {
                                                                             ge.setForceFullDataset((xpp.getAttributeValue(null, "forceFullDataset") != null && xpp.getAttributeValue(null, "forceFullDataset").equals("true")));
                                                                             if (xpp.getAttributeValue(null, "history") != null)
                                                                                 ge.setHistoryLength(Integer.valueOf(xpp.getAttributeValue(null, "history")));
-                                                                            ge.setLabel(xpp.getAttributeValue(null, "labelX"), xpp.getAttributeValue(null, "labelY"));
+                                                                            ge.setLabel(translate(xpp.getAttributeValue(null, "labelX")), translate(xpp.getAttributeValue(null, "labelY")));
                                                                             boolean logX = Boolean.valueOf(xpp.getAttributeValue(null, "logX"));
                                                                             boolean logY = Boolean.valueOf(xpp.getAttributeValue(null, "logY"));
                                                                             ge.setLogScale(logX, logY);
                                                                             newView.elements.add(ge);
                                                                             break;
                                                                         case "input":
-                                                                            expView.inputElement ie = newView.new inputElement(xpp.getAttributeValue(null, "label"), xpp.getAttributeValue(null, "output"), null, null, null, parent.getResources());
+                                                                            expView.inputElement ie = newView.new inputElement(translate(xpp.getAttributeValue(null, "label")), xpp.getAttributeValue(null, "output"), null, null, null, parent.getResources());
                                                                             if (xpp.getAttributeValue(null, "labelsize") != null)
                                                                                 ie.setLabelSize(Float.valueOf(xpp.getAttributeValue(null, "labelsize")));
                                                                             else

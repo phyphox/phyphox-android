@@ -2,19 +2,31 @@
     <title>Light</title>
     <category>Raw Sensors</category>
     <description>Get raw data from the light sensor.</description>
+    <translations>
+        <translation locale="de">
+            <title>Licht</title>
+            <category>Sensoren</category>
+            <description>Rohdaten des Lichtsensors auslesen.</description>
+            <string original="Raw Data">Rohdaten</string>
+            <string original="Illuminance">Beleuchtungsstärke</string>
+            <string original="Note: On some devices the light sensor is only updated when there is a coarse change of illuminance.">
+                Auf manchen Geräten wird der Wert des Lichtsensors nur aktualisiert, wenn sich eine große Änderung der Beleuchtungsstärke ergibt.
+            </string>
+        </translation>
+    </translations>
     <input>
         <sensor type="light" outputX="illum" outputT="illum_time" buffer="500" />
     </input>
     <views>
         <view name="Raw Data">
-            <graph label="Illumination" inputX="illum_time" inputY="illum" labelX="t (s)" labelY="Ev (lx)" partialUpdate="true" />
-            <info label="Note: On some devices the light sensor is only updated when there is a coarse change in illumination." />
+            <graph label="Illuminance" inputX="illum_time" inputY="illum" labelX="t (s)" labelY="Ev (lx)" partialUpdate="true" />
+            <info label="Note: On some devices the light sensor is only updated when there is a coarse change of illuminance." />
         </view>
     </views>
     <export>
         <set name="Raw Data">
             <data name="Time (s)" source="illum_time" />
-            <data name="Illumination (lx)" source="illum" />
+            <data name="Illuminance (lx)" source="illum" />
         </set>
     </export>
 </phyphox>

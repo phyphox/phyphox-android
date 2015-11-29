@@ -25,7 +25,7 @@
         ]]>
     </string>
     <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
-    <string name="creditsApache">
+    <string name="creditsApache" translatable="false">
         <![CDATA[
         <b>Apache POI</b><br />
 Copyright 2003-2015 The Apache Software Foundation<br />
@@ -62,7 +62,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="unknown">unknown</string>
 
     <string name="delete">Delete</string>
-    <string name="confirmDelete">Do you want to delete this experiment from your library?</string>
+    <string name="confirmDelete">Do you want to delete this experiment from your collection?</string>
     <string name="confirmDeleteTitle">Confirm delete?</string>
 
     <string name="stop">Stop</string>
@@ -75,11 +75,11 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="timedRunDialogTitle">Timed Run</string>
     <string name="timedRunStartDelay">Start delay (s)</string>
-    <string name="timedRunStopDelay">Stop delay (s)</string>
+    <string name="timedRunStopDelay">Experiment duration (s)</string>
     <string name="enableTimedRun">Do a timed run</string>
 
     <string name="export">Export Data</string>
-    <string name="export_subject">Data from phyPhox</string>
+    <string name="export_subject">Data from phyphox</string>
     <string name="export_pick_share">Pick an export method</string>
 
     <string name="share">Share screenshot</string>
@@ -98,4 +98,6 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="pick_exportSets">Pick the data sets to export.</string>
     <string name="pick_exportFormat">Choose the data format.</string>
+
+    <string name="noDrawableData">No drawable data.</string>
 </resources>
