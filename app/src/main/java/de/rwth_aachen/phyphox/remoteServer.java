@@ -80,8 +80,8 @@ public class remoteServer extends Thread {
         try {
             while ((line = br.readLine()) != null) {
                 //Set color placeholders...
-                line = line.replace("###background-color###", "#"+String.format("%08x", res.getColor(R.color.background)).substring(2));
-                line = line.replace("###main-color###", "#"+String.format("%08x", res.getColor(R.color.main)).substring(2));
+                line = line.replace("###background-color###", "#"+String.format("%08x", res.getColor(R.color.backgroundExp)).substring(2));
+                line = line.replace("###main-color###", "#"+String.format("%08x", res.getColor(R.color.mainExp)).substring(2));
                 line = line.replace("###highlight-color###", "#"+String.format("%06x", res.getColor(R.color.highlight)).substring(2));
                 if (line.contains("###drawablePlay###"))
                     line = line.replace("###drawablePlay###", getBase64PNG(res.getDrawable(R.drawable.play)));

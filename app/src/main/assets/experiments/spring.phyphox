@@ -37,7 +37,7 @@ Die Schwingungsperiode wird durch eine Autokorrelation jeder Komponente des Besc
         </translation>
     </translations>
     <input>
-        <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="20" />
+        <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" rate="50" />
     </input>
     <analysis>
         <autocorrelation input1="accX" input2="acc_time" output1="autocorrelation_x" output2="autoco_t" mint="0" maxt="2.5" />

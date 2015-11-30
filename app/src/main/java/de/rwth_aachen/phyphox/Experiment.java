@@ -581,26 +581,26 @@ public class Experiment extends AppCompatActivity {
     Runnable updateData = new Runnable() {
         @Override
         public void run() {
-            //Do the analysis and update the views. All of these elements might fire exceptions,
+            //Do the analysis. All of these elements might fire exceptions,
             // especially on badly defined experiments. So let's be save and catch anything that
             // gets through to here.
-            if (experiment != null) { //This only makes sense if there is an experiment
+            while (measuring && !shutdown) {
+                if (experiment != null) { //This only makes sense if there is an experiment
+                    try {
+                        //time for some analysis?
+                        if (measuring) {
+                            analysisInProgress = true;
+                            experiment.processAnalysis(); //Do the math.
+                            analysisInProgress = false;
+                        }
+                    } catch (Exception e) {
+                        Log.e("updateData", "Unhandled exception.", e);
+                    }
+                }
                 try {
-                    //time for some analysis?
-                    if (measuring) {
-                        analysisInProgress = true;
-                        experiment.processAnalysis(); //Do the math.
-                        analysisInProgress = false;
-                    }
+                    Thread.sleep(40);
                 } catch (Exception e) {
-                    Log.e("updateData", "Unhandled exception.", e);
-                } finally {
-                    //If we are not supposed to stop, let's do it again in a short while
-                    if (!shutdown) {
-                        if (measuring)
-                            updateViewsHandler.postDelayed(this, 40);
-                        //else: This thread is no longer needed if we are not measuring
-                    }
+                    Log.w("updateData", "Sleep interrupted");
                 }
             }
         }

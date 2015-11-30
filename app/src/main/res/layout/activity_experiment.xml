@@ -55,7 +55,6 @@
         android:indeterminateOnly="true"
         android:indeterminate="true"
         android:indeterminateBehavior="repeat"
-        android:indeterminateTint="@color/main"
         android:background="@android:color/transparent"
         android:layout_alignParentLeft="false"
         android:layout_alignParentEnd="false"

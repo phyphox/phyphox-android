@@ -41,7 +41,7 @@ Die Schwingungsperiode wird durch eine Autokorrelation jeder Komponente des Gyro
         P
     </icon>
     <input>
-        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="20" />
+        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="50" />
     </input>
     <views>
         <view name="Results">
