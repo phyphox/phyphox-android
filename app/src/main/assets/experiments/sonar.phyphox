@@ -62,7 +62,7 @@ Schall breitet sich in der Regel ungerichtet aus. Für das Sonar bedeutet dies, 
             <graph label="Recording" inputX="recording_t" inputY="recording" labelX="Time (s)" labelY="A (a.u.)" />
         </view>
     </views>
-    <analysis period="0.2">
+    <analysis period="0.25">
         <ramp start="0" stop="0.25" buffer="12000" output1="recording_t" static="true" />
         <ramp start="0" stop="0.005" buffer="240" output1="chirp_t" static="true" />
         <ramp start="1000" stop="4000" buffer="240" output1="chirp_f" static="true" />
