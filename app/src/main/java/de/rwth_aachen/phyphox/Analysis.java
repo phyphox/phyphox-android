@@ -1,7 +1,5 @@
 package de.rwth_aachen.phyphox;
 
-import android.util.Log;
-
 import java.util.Iterator;
 import java.util.Vector;
 

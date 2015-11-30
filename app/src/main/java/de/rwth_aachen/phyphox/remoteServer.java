@@ -438,7 +438,8 @@ public class remoteServer extends Thread {
 
             StringBuilder sb;
 
-            synchronized(experiment.dataBuffers) {
+            experiment.dataLock.lock();
+            try {
                 int sizeEstimate = 0;
                 for (bufferRequest buffer : bufferList) {
                     if (experiment.dataMap.containsKey(buffer.name)) {
@@ -511,6 +512,8 @@ public class remoteServer extends Thread {
                 sb.append(", \"countDown\":");
                 sb.append(String.valueOf(callActivity.millisUntilFinished));
                 sb.append("\n}\n}\n");
+            } finally {
+                experiment.dataLock.unlock();
             }
 
             final String result = sb.toString();
@@ -564,9 +567,12 @@ public class remoteServer extends Thread {
                             result = "{\"result\" = false}";
                         } else {
                             callActivity.requestDefocus();
-                            synchronized(experiment.dataBuffers) {
+                            experiment.dataLock.lock();
+                            try {
                                 callActivity.remoteInput = true;
                                 experiment.dataBuffers.get(experiment.dataMap.get(buffer)).append(v);
+                            } finally {
+                                experiment.dataLock.unlock();
                             }
                             result = "{\"result\" = true}";
                         }

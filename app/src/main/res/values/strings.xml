@@ -24,7 +24,11 @@
             Development:<br /><b>Dr. Sebastian Kuhlen</b><br />Head of Institute:<br /><b>Prof. Christoph Stampfer</b><br />Design:<br /><b>Frank Posthoff (A.NikoPol)</b>
         ]]>
     </string>
-    <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
+    <string name="creditsLibs">
+        The interface elements have been generated with http://android-holo-colors.com.
+
+        The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.
+    </string>
     <string name="creditsApache" translatable="false">
         <![CDATA[
         <b>Apache POI</b><br />

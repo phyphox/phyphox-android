@@ -257,7 +257,7 @@ public class expView{
             labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
+            labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Create the value (and unit) as textView
             tv = new TextView(c);
@@ -268,7 +268,7 @@ public class expView{
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
-            tv.setTextColor(ContextCompat.getColor(c, R.color.main));
+            tv.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Add label and value to the row
             row.addView(labelView);
@@ -338,7 +338,7 @@ public class expView{
             textView.setText(this.label);
             textView.setGravity(Gravity.CENTER);
             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            textView.setTextColor(ContextCompat.getColor(c, R.color.main));
+            textView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Add it to the linear layout
             ll.addView(textView);
@@ -422,6 +422,7 @@ public class expView{
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
             row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setVerticalGravity(Gravity.CENTER_VERTICAL);
 
             //Create the label in the left half of the row
             TextView labelView = new TextView(c);
@@ -433,7 +434,7 @@ public class expView{
             labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
+            labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Create a horizontal linear layout, which seperates the right half into the edit field
             //and a textView to show the unit next to the user input
@@ -443,6 +444,7 @@ public class expView{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //right half of the whole row
             valueUnit.setOrientation(LinearLayout.HORIZONTAL);
+            valueUnit.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
             //The edit box
             iv = new EditText(c);
@@ -453,7 +455,7 @@ public class expView{
             iv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             iv.setPadding((int) labelSize / 2, 0, 0, 0);
             iv.setTypeface(null, Typeface.BOLD);
-            iv.setTextColor(ContextCompat.getColor(c, R.color.main));
+            iv.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Construct the inputType flags from our own state
             int inputType = InputType.TYPE_CLASS_NUMBER;
@@ -476,7 +478,7 @@ public class expView{
             unitView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             unitView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             unitView.setPadding(0, 0, (int) labelSize / 2, 0);
-            unitView.setTextColor(ContextCompat.getColor(c, R.color.main));
+            unitView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
             unitView.setTypeface(null, Typeface.BOLD);
 
             //Add edit box and unit to the horizontal linear layout that makes up the right half of the row
@@ -652,7 +654,7 @@ public class expView{
             labelView.setText(this.label);
             labelView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            labelView.setTextColor(ContextCompat.getColor(c, R.color.main));
+            labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Create the graphView
             gv = new graphView(c);
@@ -760,7 +762,7 @@ public class expView{
                         "}" +
                         "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.main)).substring(2) +"\"}});" +
+                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.mainExp)).substring(2) +"\"}});" +
                     "}";
         }
     }

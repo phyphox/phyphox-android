@@ -4,11 +4,12 @@ import android.app.Activity;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.util.Log;
-import android.widget.ProgressBar;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
@@ -25,6 +26,7 @@ public class phyphoxExperiment {
     public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
     public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
+    public Lock dataLock = new ReentrantLock();
 
     double analysisPeriod = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
@@ -84,23 +86,28 @@ public class phyphoxExperiment {
     public void handleInputViews(int currentView) {
         if (!loaded)
             return;
-        for (dataBuffer buffer : dataBuffers) { //Compare each databuffer name...
-            synchronized (dataBuffers) {
-                for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each expViewElement
-                    try {
-                        if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
-                            Double v = eve.getValue(); //...get the value
-                            if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
-                                buffer.append(v);
-                                newUserInput = true;
+        if (dataLock.tryLock()) {
+            try {
+                for (dataBuffer buffer : dataBuffers) { //Compare each databuffer name...
+                    for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each expViewElement
+                        try {
+                            if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
+                                Double v = eve.getValue(); //...get the value
+                                if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
+                                    buffer.append(v);
+                                    newUserInput = true;
+                                }
                             }
+                        } catch (Exception e) {
+                            Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                         }
-                    } catch (Exception e) {
-                        Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                     }
                 }
+            } finally {
+                dataLock.unlock();
             }
-        }
+        } else
+            return; //This is not urgent. Try another time instead of blocking the UI thread
     }
 
     //called by th main loop to initialize the analysis process
@@ -112,11 +119,14 @@ public class phyphoxExperiment {
         if (audioRecord != null) {
             dataBuffer recording = getBuffer(micOutput);
             final int readBufferSize = recording.size; //The dataBuffer for the recording
-            synchronized (dataBuffers) {
+            dataLock.lock();
+            try {
                 short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
                 recording.clear(); //We only want fresh data
                 int bytesRead = audioRecord.read(buffer, 0, recording.size);
                 recording.append(buffer, bytesRead);
+            } finally {
+                dataLock.unlock();
             }
         }
 
@@ -133,15 +143,19 @@ public class phyphoxExperiment {
 
         newUserInput = false;
 
-        synchronized (dataBuffers) {
-            //Call all the analysis modules and let them do their work.
+        dataLock.lock();
+        //Call all the analysis modules and let them do their work.
+        try {
             for (Analysis.analysisModule mod : analysis) {
                 try {
+                    Thread.yield();
                     mod.updateIfNotStatic();
                 } catch (Exception e) {
                     Log.e("processAnalysis", "Unhandled exception in analysis module " + mod.toString() + ".", e);
                 }
             }
+        } finally {
+            dataLock.unlock();
         }
 
         //Send the results to audio playback if used
@@ -200,28 +214,33 @@ public class phyphoxExperiment {
             return;
         if (!(newData || force)) //New data to present? If not: Nothing to do, unless an update is forced
             return;
-        synchronized (dataBuffers) {
-            for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
-                for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each view.
-                    try {
-                        //Set single value if the input buffer of the view matches the dataBuffer
-                        if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
-                            eve.setValue(buffer.value);
+        if (dataLock.tryLock()) {
+            try {
+                for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
+                    for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each view.
+                        try {
+                            //Set single value if the input buffer of the view matches the dataBuffer
+                            if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
+                                eve.setValue(buffer.value);
+                            }
+                            //Set x array data if the input buffer of the view matches the dataBuffer
+                            if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
+                                eve.setDataX(buffer);
+                            }
+                            //Set y array data if the input buffer of the view matches the dataBuffer
+                            if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
+                                eve.setDataY(buffer);
+                            }
+                        } catch (Exception e) {
+                            Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
                         }
-                        //Set x array data if the input buffer of the view matches the dataBuffer
-                        if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
-                            eve.setDataX(buffer);
-                        }
-                        //Set y array data if the input buffer of the view matches the dataBuffer
-                        if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
-                            eve.setDataY(buffer);
-                        }
-                    } catch (Exception e) {
-                        Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
                     }
                 }
+            } finally {
+                dataLock.unlock();
             }
-        }
+        } else
+            return; //This is not urgent. Try another time instead of blocking the UI thread!
         newData = false;
         //Finally call dataComplete on every view to notify them that the data has been sent
         for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {

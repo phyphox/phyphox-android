@@ -8,7 +8,11 @@
     <string name="confirmDeleteTitle">Löschen bestätigen?</string>
     <string name="credits">Credits</string>
     <string name="creditsNames"><![CDATA[             Entwicklung:<br /><b>Dr. Sebastian Kuhlen</b><br />Institutsleiter:<br /><b>Prof. Christoph Stampfer</b><br />Design:<br /><b>Frank Posthoff (A.NikoPol)</b>         ]]></string>
-    <string name="creditsLibs">Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliotheken \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) und \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), welche alle der MIT Lizenz unterliegen.</string>
+    <string name="creditsLibs">
+        Die Bedienelemente wurden mit http://android-holo-colors.com generiert.
+
+        Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliotheken \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) und \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), welche alle der MIT Lizenz unterliegen.
+    </string>
     <string name="creditsRWTH">Phyphox wurde am 2. Physiaklischen Institut A der RWTH Aachen entwickelt.</string>
     <string name="damageWarning">Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.</string>
     <string name="delete">Löschen</string>

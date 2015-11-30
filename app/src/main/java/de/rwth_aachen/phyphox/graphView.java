@@ -281,7 +281,7 @@ public class graphView extends View {
         int graphH = h-graphB;
 
         //Labels for the tics
-        paint.setColor(res.getColor(R.color.main));
+        paint.setColor(res.getColor(R.color.mainExp));
         paint.setStrokeWidth(1);
         paint.setAlpha(255);
         paint.setStyle(Paint.Style.FILL);
@@ -356,7 +356,7 @@ public class graphView extends View {
                         paint.setAlpha(255);
                     } else {
                         paint.setStrokeWidth(2);
-                        paint.setColor(res.getColor(R.color.main));
+                        paint.setColor(res.getColor(R.color.mainExp));
                         paint.setAlpha(255-(j+1)*255/historyLength);
                     }
                     double lastX = Double.NaN;
@@ -432,14 +432,14 @@ public class graphView extends View {
             }
 
         } else {
-            paint.setColor(res.getColor(R.color.main));
+            paint.setColor(res.getColor(R.color.mainExp));
             paint.setTextAlign(Paint.Align.CENTER);
             canvas.drawText(res.getString(R.string.noDrawableData), graphL+graphW/2, (h-graphB+res.getDimension(R.dimen.graph_font))/2, paint);
         }
         canvas.restore();
 
         //Draw rect around graph
-        paint.setColor(res.getColor(R.color.main));
+        paint.setColor(res.getColor(R.color.mainExp));
         paint.setStrokeWidth(3);
         paint.setAlpha(255);
         paint.setStrokeCap(Paint.Cap.SQUARE);

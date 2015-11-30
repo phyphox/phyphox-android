@@ -1,6 +1,5 @@
 package de.rwth_aachen.phyphox;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,9 +23,10 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.internal.view.ContextThemeWrapper;
 import android.util.Log;
-import android.view.ContextThemeWrapper;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -282,7 +282,7 @@ public class Experiment extends AppCompatActivity {
             startRemoteServer();
 
             //Finally create the "be careful, it's not our fault"-dialog
-            ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.AppTheme);
+            ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.phyphox);
             AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
             LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
             View startInfoLayout = adbInflater.inflate(R.layout.donotshowagain, null);
@@ -321,7 +321,7 @@ public class Experiment extends AppCompatActivity {
             TextView errorView = new TextView(this);
             errorView.setText(experiment.message);
             errorView.setGravity(Gravity.CENTER); //Center the message
-            errorView.setTextColor(ContextCompat.getColor(this, R.color.main)); //Set main color
+            errorView.setTextColor(ContextCompat.getColor(this, R.color.mainExp)); //Set main color
 
             ll.addView(errorView); //Add the TextView to the linear layout
         }
@@ -610,6 +610,13 @@ public class Experiment extends AppCompatActivity {
     Runnable updateViews = new Runnable() {
         @Override
         public void run() {
+            //Show progressbar if analysis is running (set by second thread)
+            if (analysisInProgress) {
+                analysisProgress.setVisibility(View.VISIBLE);
+            } else {
+                analysisProgress.setVisibility(View.INVISIBLE);
+            }
+
             //If a defocus has been requested (on another thread), do so.
             if (shouldDefocus) {
                 defocus();
@@ -635,8 +642,8 @@ public class Experiment extends AppCompatActivity {
                         experiment.handleInputViews(currentView);
                     }
                     //Update all the views currently visible
-                    analysisProgress.setVisibility(View.VISIBLE);
                     experiment.updateViews(currentView, false);
+
                     if (remoteInput) {
                         //If there has been remote input, we may reset it as updateViews will have taken care of this
                         //This also means, that there is new input from the user
@@ -655,12 +662,6 @@ public class Experiment extends AppCompatActivity {
                     }
                 }
             }
-
-            //Show progressbar if analysis is running (set by second thread)
-            if (analysisInProgress)
-                analysisProgress.setVisibility(View.VISIBLE);
-            else
-                analysisProgress.setVisibility(View.INVISIBLE);
         }
     };
 
@@ -696,10 +697,13 @@ public class Experiment extends AppCompatActivity {
     //Start a measurement
     public void startMeasurement() {
         //Clear the buffers and start the sensors. Also remember the start time as t0
-        synchronized (experiment.dataBuffers) { //Synced, do not allow another thread to meddle here...
+        experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
+        try {
             for (dataBuffer buffer : experiment.dataBuffers)
                 buffer.clear();
             experiment.startAllIO();
+        } finally {
+            experiment.dataLock.unlock();
         }
 
         //Set measurement state
@@ -843,8 +847,11 @@ public class Experiment extends AppCompatActivity {
             return; //Then we have nothing worth saving...
         try {
             outState.putInt(STATE_CURRENT_VIEW, currentView); //Save current experiment view
-            synchronized (experiment.dataBuffers) { //Save dataBuffers (synchronized, so no other thread alters them while we access them)
+            experiment.dataLock.lock(); //Save dataBuffers (synchronized, so no other thread alters them while we access them)
+            try {
                 outState.putSerializable(STATE_DATA_BUFFERS, experiment.dataBuffers);
+            } finally {
+                experiment.dataLock.unlock();
             }
             outState.putBoolean(STATE_REMOTE_SERVER, serverEnabled); //remote server status
             outState.putBoolean(STATE_TIMED_RUN, timedRun); //timed run status

@@ -2,7 +2,7 @@ package de.rwth_aachen.phyphox;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.app.AlertDialog;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,14 +22,15 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.internal.view.ContextThemeWrapper;
 import android.text.Html;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
-import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,7 +42,6 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -666,13 +666,14 @@ public class ExperimentList extends AppCompatActivity {
     //Displays a warning message that some experiments might damage the phone
     private void displayDoNotDamageYourPhone() {
         //Use the app theme and create an AlertDialog-builder
-        ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.AppTheme);
+        ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.phyphox);
         AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
         LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View warningLayout = adbInflater.inflate(R.layout.donotshowagain, null);
 
         //This reference is used to address a do-not-show-again checkbox within the dialog
         final CheckBox dontShowAgain = (CheckBox) warningLayout.findViewById(R.id.donotshowagain);
+        dontShowAgain.setTextColor(R.color.main);
 
         //Setup AlertDialog builder
         adb.setView(warningLayout);
