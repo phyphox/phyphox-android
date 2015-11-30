@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="phyphox" parent="@style/_phyphox"/>
+
+  <style name="_phyphox" parent="Theme.AppCompat.Light.DarkActionBar">
+
+    <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
+    <item name="android:textSize">@dimen/font</item>
+
+    <item name="android:editTextStyle">@style/EditTextphyphox</item>
+
+    <item name="android:textColorHighlight">#99ff7e22</item>
+
+    <item name="android:checkboxStyle">@style/CheckBoxphyphox</item>
+
+    <item name="android:radioButtonStyle">@style/RadioButtonphyphox</item>
+
+    <item name="android:buttonStyle">@style/Buttonphyphox</item>
+
+    <item name="android:imageButtonStyle">@style/ImageButtonphyphox</item>
+
+    <item name="android:spinnerStyle">@style/Spinnerphyphox</item>
+
+    <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemphyphox</item>
+
+    <item name="android:progressBarStyleHorizontal">@style/ProgressBarphyphox</item>
+
+  </style>
+
+</resources>

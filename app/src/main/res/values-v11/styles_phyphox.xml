@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="Buttonphyphox" parent="android:Widget.Holo.Light.Button">
+	  <item name="android:background">@drawable/phyphox_btn_default_holo_light</item>
+  </style>
+
+  <style name="ImageButtonphyphox" parent="android:Widget.Holo.Light.ImageButton">
+	  <item name="android:background">@drawable/phyphox_btn_default_holo_light</item>
+  </style>
+
+  <style name="Spinnerphyphox" parent="android:Widget.Holo.Light.Spinner">
+      <item name="android:background">@drawable/phyphox_spinner_background_holo_light</item>
+      <item name="android:dropDownSelector">@drawable/phyphox_list_selector_holo_light</item>
+  </style>
+
+  <style name="ProgressBarphyphox" parent="android:Widget.Holo.Light.ProgressBar.Horizontal">
+      <item name="android:progressDrawable">@drawable/phyphox_progress_horizontal_holo_light</item>
+      <item name="android:indeterminateDrawable">@drawable/phyphox_progress_indeterminate_horizontal_holo_light</item>
+  </style>
+
+</resources>
