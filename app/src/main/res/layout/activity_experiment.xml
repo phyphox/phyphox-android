@@ -14,7 +14,6 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/titleText"
         android:textColor="@color/main"
-        android:background="@color/highlight"
         android:paddingLeft="@dimen/activity_horizontal_padding"
         android:paddingRight="@dimen/activity_horizontal_padding"
         android:paddingTop="@dimen/activity_vertical_padding"
@@ -29,7 +28,8 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:paddingBottom="@dimen/activity_vertical_padding" />
+        android:paddingBottom="@dimen/activity_vertical_padding"
+        android:background="@color/highlight" />
 
     <Spinner
         android:layout_width="wrap_content"
@@ -43,6 +43,26 @@
         android:layout_alignStart="@+id/titleText"
         android:gravity="center_vertical" />
 
+    <ProgressBar
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/progressBar"
+        android:layout_alignLeft="@+id/titleText"
+        android:layout_alignRight="@+id/titleText"
+        android:progressTint="@color/main"
+        android:layout_alignParentBottom="false"
+        android:indeterminateOnly="true"
+        android:indeterminate="true"
+        android:indeterminateBehavior="repeat"
+        android:indeterminateTint="@color/main"
+        android:background="@android:color/transparent"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentStart="false"
+        android:progressBackgroundTint="@android:color/transparent"
+        android:layout_below="@+id/titleText" />
+
     <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -52,8 +72,8 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/titleText"
-        android:clickable="true">
+        android:clickable="true"
+        android:layout_below="@+id/progressBar">
 
         <LinearLayout
             android:orientation="vertical"
@@ -62,7 +82,6 @@
             android:id="@+id/experimentView"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
-            android:paddingTop="@dimen/activity_vertical_margin"
             android:paddingBottom="@dimen/activity_vertical_margin"
             android:clickable="true"
             style="@style/phyphox"

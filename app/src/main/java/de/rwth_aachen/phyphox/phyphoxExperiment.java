@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.util.Log;
+import android.widget.ProgressBar;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -40,6 +40,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -98,6 +99,9 @@ public class Experiment extends AppCompatActivity {
     ProgressDialog progress; //Holds a progress dialog when a file is being loaded
     Bundle savedInstanceState = null; //Holds the saved instance state, so it can be handled outside onCreate
 
+    ProgressBar analysisProgress;
+    boolean analysisInProgress = false;
+
     @Override
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +113,9 @@ public class Experiment extends AppCompatActivity {
 
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
+
+        this.analysisProgress = (ProgressBar)findViewById(R.id.progressBar);
+        analysisProgress.setVisibility(View.INVISIBLE);
 
         //We want to get the back-button in the actionbar (even on old Android versions)
         ActionBar ab = getSupportActionBar();
@@ -581,7 +588,9 @@ public class Experiment extends AppCompatActivity {
                 try {
                     //time for some analysis?
                     if (measuring) {
+                        analysisInProgress = true;
                         experiment.processAnalysis(); //Do the math.
+                        analysisInProgress = false;
                     }
                 } catch (Exception e) {
                     Log.e("updateData", "Unhandled exception.", e);
@@ -626,6 +635,7 @@ public class Experiment extends AppCompatActivity {
                         experiment.handleInputViews(currentView);
                     }
                     //Update all the views currently visible
+                    analysisProgress.setVisibility(View.VISIBLE);
                     experiment.updateViews(currentView, false);
                     if (remoteInput) {
                         //If there has been remote input, we may reset it as updateViews will have taken care of this
@@ -645,6 +655,12 @@ public class Experiment extends AppCompatActivity {
                     }
                 }
             }
+
+            //Show progressbar if analysis is running (set by second thread)
+            if (analysisInProgress)
+                analysisProgress.setVisibility(View.VISIBLE);
+            else
+                analysisProgress.setVisibility(View.INVISIBLE);
         }
     };
 
