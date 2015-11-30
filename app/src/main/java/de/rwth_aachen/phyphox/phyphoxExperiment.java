@@ -51,6 +51,17 @@ public class phyphoxExperiment {
         exporter = new dataExport(this);
     }
 
+    //Create a new buffer
+    public dataBuffer createBuffer(String key, int size) {
+        if (key == null)
+            return null;
+
+        dataBuffer output = new dataBuffer(key, size);
+        dataBuffers.add(output);
+        dataMap.put(key, dataBuffers.size() - 1);
+        return output;
+    }
+
     //Helper function to get a dataBuffer by its key name
     public dataBuffer getBuffer(String key) {
         Integer index = this.dataMap.get(key);

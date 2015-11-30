@@ -23,10 +23,16 @@ public class sensorInput implements SensorEventListener {
     private boolean average = false; //Avergae over aquisition period?
     private int aquisitions; //Number of aquisitions for this average
 
+    public class SensorException extends Exception {
+        public SensorException(String message) {
+            super(message);
+        }
+    }
+
     //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
     //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
     //be null to be left unused.
-    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, dataBuffer bDataX, dataBuffer bDataY, dataBuffer bDataZ, dataBuffer bTime) {
+    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, dataBuffer bDataX, dataBuffer bDataY, dataBuffer bDataZ, dataBuffer bTime) throws SensorException {
         this.sensorManager = sensorManager; //Store the sensorManager reference
 
         if (rate <= 0)
@@ -50,6 +56,7 @@ public class sensorInput implements SensorEventListener {
                 break;
             case "pressure": this.type = Sensor.TYPE_PRESSURE;
                 break;
+            default: throw  new SensorException("Unknown sensor.");
         }
 
         //Store the buffer references

@@ -47,7 +47,8 @@ public class Analysis {
         protected void setStatic(boolean isStatic) {
             this.isStatic = isStatic;
             for (dataBuffer output : outputs) {
-                output.setStatic(isStatic);
+                if (output != null)
+                    output.setStatic(isStatic);
             }
         }
 
@@ -632,7 +633,7 @@ public class Analysis {
                 double v = (double)its.get(0).next();
 
                 //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
-                if (outputs.size() > 1 && its.get(1).hasNext())
+                if (its.size() > 1 && its.get(1).hasNext())
                     currentX = (double)its.get(1).next();
                 else
                     currentX += 1;
@@ -647,7 +648,7 @@ public class Analysis {
 
             //Done. Append result to output1 and output2 if used.
             outputs.get(0).append(max);
-            if (outputs.size() > 1) {
+            if (outputs.size() > 1 && outputs.get(1) != null) {
                 outputs.get(1).append(x);
             }
 
@@ -675,6 +676,8 @@ public class Analysis {
         protected void update() {
             //Update the threshold from buffer or convert numerical string
             double vthreshold = getSingleValueFromUserString(threshold);
+            if (Double.isNaN(vthreshold))
+                vthreshold = 0.;
 
             //Get iterators
             Vector<Iterator> its = new Vector<>();
@@ -869,7 +872,7 @@ public class Analysis {
             //Append the real part of the result to output1 and the imaginary part to output2 (if used)
             for (i = 0; i < n; i++) {
                 outputs.get(0).append(x[i]);
-                if (outputs.size() > 1)
+                if (outputs.size() > 1 && outputs.get(1) != null)
                     outputs.get(1).append(y[i]);
             }
         }
@@ -900,12 +903,12 @@ public class Analysis {
             double mint, maxt;
 
             //Update min and max as they might come from a dataBuffer
-            if (smint.equals(""))
+            if (smint == null || smint.equals(""))
                 mint = Double.NEGATIVE_INFINITY; //not set by user, set to -inf so it has no effect
             else
                 mint = getSingleValueFromUserString(smint);
 
-            if (smaxt.equals(""))
+            if (smaxt == null || smaxt.equals(""))
                 maxt = Double.POSITIVE_INFINITY; //not set by user, set to +inf so it has no effect
             else
                 maxt = getSingleValueFromUserString(smaxt);
@@ -931,7 +934,7 @@ public class Analysis {
 
             //Clear outputs
             outputs.get(0).clear();
-            if (outputs.size() > 1)
+            if (outputs.size() > 1 && outputs.get(1) != null)
                 outputs.get(1).clear();
 
             //The actual calculation
@@ -947,7 +950,7 @@ public class Analysis {
 
                 //Append y output to output1 and x to output2 (if used)
                 outputs.get(0).append(sum);
-                if (outputs.size() > 1)
+                if (outputs.size() > 1 && outputs.get(1) != null)
                     outputs.get(1).append(x[i]);
             }
         }
@@ -1170,9 +1173,12 @@ public class Analysis {
 
         //Set start, stop and length
         protected void setParameters(String start, String stop, String length) {
-            this.start = start;
-            this.stop = stop;
-            this.length = length;
+            if (start != null)
+                this.start = start;
+            if (stop != null)
+                this.stop = stop;
+            if (length != null)
+                this.length = length;
         }
 
         @Override
@@ -1211,8 +1217,10 @@ public class Analysis {
 
         //Set value and length
         protected void setParameters(String value, String length) {
-            this.value = value;
-            this.length = length;
+            if (value != null)
+                this.value = value;
+            if (length != null)
+                this.length = length;
         }
 
         @Override
