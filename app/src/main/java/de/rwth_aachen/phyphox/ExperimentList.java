@@ -624,8 +624,9 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //Create the credits as an AlertDialog
-                AlertDialog.Builder credits = new AlertDialog.Builder(ExperimentList.this);
-                LayoutInflater creditsInflater = LayoutInflater.from(ExperimentList.this);
+                ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
+                AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
+                LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
                 View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
                 //Set the credit texts, which require HTML markup
@@ -673,7 +674,6 @@ public class ExperimentList extends AppCompatActivity {
 
         //This reference is used to address a do-not-show-again checkbox within the dialog
         final CheckBox dontShowAgain = (CheckBox) warningLayout.findViewById(R.id.donotshowagain);
-        dontShowAgain.setTextColor(R.color.main);
 
         //Setup AlertDialog builder
         adb.setView(warningLayout);
@@ -704,8 +704,9 @@ public class ExperimentList extends AppCompatActivity {
     //This displays a rather complex dialog to allow users to set up a simple experiment
     private void newExperimentDialog(final Context c) {
         //Build the dialog with an AlertDialog builder...
-        AlertDialog.Builder neDialog = new AlertDialog.Builder(ExperimentList.this);
-        LayoutInflater neInflater = LayoutInflater.from(ExperimentList.this);
+        ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.phyphox);
+        AlertDialog.Builder neDialog = new AlertDialog.Builder(ctw);
+        LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View neLayout = neInflater.inflate(R.layout.new_experiment, null);
 
         //Get a bunch of references to the dialog elements

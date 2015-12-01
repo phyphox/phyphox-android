@@ -20,14 +20,33 @@
 
     <item name="android:buttonStyle">@style/Buttonphyphox</item>
 
-    <item name="android:imageButtonStyle">@style/ImageButtonphyphox</item>
-
     <item name="android:spinnerStyle">@style/Spinnerphyphox</item>
 
     <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemphyphox</item>
 
     <item name="android:progressBarStyleHorizontal">@style/ProgressBarphyphox</item>
 
+    <item name="android:textColor">@color/mainDialog</item>
+    <item name="colorPrimary">@color/mainExp</item>
+    <item name="colorAccent">@color/highlight</item>
+
+    <item name="alertDialogTheme">@style/phyphoxDialog</item>
+    <item name="dialogTheme">@style/phyphoxDialog</item>
+  </style>
+
+  <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
+    <item name="colorPrimary">@color/main</item>
+    <item name="android:textSize">@dimen/font</item>
+    <item name="buttonStyle">@style/Buttonphyphox</item>
+    <item name="alertDialogTheme">@style/phyphoxDialog</item>
+    <item name="dialogTheme">@style/phyphoxDialog</item>
+  </style>
+
+  <style name="rwth" parent="Theme.AppCompat.NoActionBar">
+    <item name="android:textColor">@color/mainDialog</item>
+    <item name="colorPrimary">@color/mainDialog</item>
+    <item name="colorAccent">@color/rwth</item>
+    <item name="alertDialogTheme">@style/rwthDialog</item>
   </style>
 
 </resources>

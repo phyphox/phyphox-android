@@ -263,8 +263,6 @@ public abstract class phyphoxFile {
         }
     }
 
-    //TODO Comment blockparsers from here
-
     //Blockparser for the root element
     private static class phyphoxBlockParser extends xmlBlockParser {
 
@@ -275,39 +273,39 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "title":
+                case "title": //The experiment's title (might be replaced by a later translation block)
                     experiment.title = getText();
                     break;
-                case "icon":
+                case "icon": //The experiment's icon
                     experiment.icon = getText();
                     break;
-                case "description":
+                case "description": //The experiment's description (might be replaced by a later translation block)
                     experiment.description = getText();
                     break;
-                case "category":
+                case "category": //The experiment's category (might be replaced by a later translation block)
                     experiment.category = getText();
                     break;
-                case "translations":
+                case "translations": //A translations block may containing multiple translation-blocks
                     (new translationsBlockParser(xpp, experiment, parent)).process();
                     break;
-                case "views":
+                case "views": //A Views block may contain multiple view-blocks
                     (new viewsBlockParser(xpp, experiment, parent)).process();
                     break;
-                case "input":
+                case "input": //Holds inputs like sensors or the microphone
                     (new inputBlockParser(xpp, experiment, parent)).process();
                     break;
-                case "analysis":
-                    experiment.analysisPeriod = getDoubleAttribute("period", 0.);
-                    experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false);
+                case "analysis": //Holds a number of math modules which will be executed in the order they occur
+                    experiment.analysisPeriod = getDoubleAttribute("period", 0.); //Time between executions
+                    experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false); //Only execute when the user changed something?
                     (new analysisBlockParser(xpp, experiment, parent)).process();
                     break;
-                case "output":
+                case "output": //Holds outputs like the speaker
                     (new outputBlockParser(xpp, experiment, parent)).process();
                     break;
-                case "export":
+                case "export": //Holds multiple set-blocks, which in turn describe which buffer should be exported as a set
                     (new exportBlockParser(xpp, experiment, parent)).process();
                     break;
-                default:
+                default: //Unknown tag,,,
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
@@ -323,13 +321,13 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "translation":
-                    if (getStringAttribute("locale").equals(Locale.getDefault().getLanguage()))
-                        (new translationBlockParser(xpp, experiment, parent)).process();
+                case "translation": //A translation block holds all translation information for a single language
+                    if (getStringAttribute("locale").equals(Locale.getDefault().getLanguage())) //Check if the language matches...
+                        (new translationBlockParser(xpp, experiment, parent)).process(); //Jepp, use it!
                     else
-                        (new xmlBlockParser(xpp, experiment, parent)).process();
+                        (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
                     break;
-                default:
+                default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
@@ -346,19 +344,19 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
-                case "title":
+                case "title": //A title in our language? Great, take it!
                     experiment.title = getText();
                     break;
-                case "category":
+                case "category": //Category in the correct language
                     experiment.category = getText();
                     break;
-                case "description":
+                case "description": //Description in the correct language
                     experiment.description = getText();
                     break;
-                case "string":
-                    translation.put(getStringAttribute("original"), getText());
+                case "string": //Some other translation. In labels and names of view elements, the string defined here as the attribute "original" will be replaced by the text in this tag
+                    translation.put(getStringAttribute("original"), getText()); //Store it in our translation mapping
                     break;
-                default:
+                default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
@@ -375,17 +373,18 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "view":
-                    expView newView = new expView();
-                    newView.name = translate(xpp.getAttributeValue(null, "name"));
-                    (new viewBlockParser(xpp, experiment, parent, newView)).process();
-                    if (newView.name != null && newView.elements.size() > 0)
+                case "view": //A view defines an arangement of elements displayed to the user
+                    expView newView = new expView(); //Create a new view
+                    newView.name = getTranslatedAttribute("name"); //Fill its name
+                    (new viewBlockParser(xpp, experiment, parent, newView)).process(); //And load its elements
+                    if (newView.name != null && newView.elements.size() > 0) //We will only add it if it has a name and at least a single view
                         experiment.experimentViews.add(newView);
                     else {
+                        //No name or no views. Complain!
                         throw new phyphoxFileException("Invalid view.", xpp.getLineNumber());
                     }
                     break;
-                default:
+                default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
@@ -397,6 +396,7 @@ public abstract class phyphoxFile {
         private expView newView;
         private float labelSize;
 
+        //The viewBlockParser takes an additional argument, which is the expView instance it should fill
         viewBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, expView newView) {
             super(xpp, experiment, parent);
             this.newView = newView;
@@ -406,45 +406,45 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "value":
-                    expView.valueElement ve = newView.new valueElement(getTranslatedAttribute("label"), null, getStringAttribute("input"), null, null, parent.getResources());
-                    ve.setLabelSize((float)getDoubleAttribute("labelsize", labelSize));
-                    ve.setPrecision(getIntAttribute("precision", 2));
-                    ve.setScientificNotation(getBooleanAttribute("scientific", false));
-                    ve.setUnit(getStringAttribute("unit"));
-                    ve.setFactor(getDoubleAttribute("factor", 1.));
+                case "value": //A value element displays a single value to the user
+                    expView.valueElement ve = newView.new valueElement(getTranslatedAttribute("label"), null, getStringAttribute("input"), null, null, parent.getResources()); //Only a value input
+                    ve.setLabelSize((float)getDoubleAttribute("labelsize", labelSize)); //Label size
+                    ve.setPrecision(getIntAttribute("precision", 2)); //Floating point precision
+                    ve.setScientificNotation(getBooleanAttribute("scientific", false)); //Scientific notation vs. fixed point
+                    ve.setUnit(getStringAttribute("unit")); //We can have a unit after the value
+                    ve.setFactor(getDoubleAttribute("factor", 1.)); //A conversion factor. Usually for the unit
                     newView.elements.add(ve);
                     break;
-                case "info":
-                    expView.infoElement infoe = newView.new infoElement(getTranslatedAttribute("label"), null, null, null, null, parent.getResources());
-                    infoe.setLabelSize((float)getDoubleAttribute("labelsize", labelSize));
+                case "info": //An info element just shows some text
+                    expView.infoElement infoe = newView.new infoElement(getTranslatedAttribute("label"), null, null, null, null, parent.getResources()); //No inputs, just the label and resources
+                    infoe.setLabelSize((float)getDoubleAttribute("labelsize", labelSize)); //Label size
                     newView.elements.add(infoe);
                     break;
-                case "graph":
-                    expView.graphElement ge = newView.new graphElement(getTranslatedAttribute("label"), null, null, getStringAttribute("inputX"), getStringAttribute("inputY"), parent.getResources());
-                    ge.setLabelSize((float)getDoubleAttribute("labelsize", labelSize));
-                    ge.setAspectRatio(getDoubleAttribute("aspectRatio", 3.));
-                    String lineStyle = getStringAttribute("style");
-                    ge.setLine(!(lineStyle != null && lineStyle.equals("dots")));
-                    ge.setPartialUpdate(getBooleanAttribute("partialUpdate", false));
-                    ge.setForceFullDataset(getBooleanAttribute("forceFullDataset", false));
-                    ge.setHistoryLength(getIntAttribute("history", 1));
-                    ge.setLabel(getTranslatedAttribute("labelX"), getTranslatedAttribute("labelY"));
-                    ge.setLogScale(getBooleanAttribute("logX", false), getBooleanAttribute("logY", false));
+                case "graph": //A graph element displays a graph of an y array or two arrays x and y
+                    expView.graphElement ge = newView.new graphElement(getTranslatedAttribute("label"), null, null, getStringAttribute("inputX"), getStringAttribute("inputY"), parent.getResources()); //Two array inputs
+                    ge.setLabelSize((float)getDoubleAttribute("labelsize", labelSize)); //Label size
+                    ge.setAspectRatio(getDoubleAttribute("aspectRatio", 3.)); //Aspect ratio of the whole element area icluding axes
+                    String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
+                    ge.setLine(!(lineStyle != null && lineStyle.equals("dots"))); //Everything but dots will be lines
+                    ge.setPartialUpdate(getBooleanAttribute("partialUpdate", false)); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
+                    ge.setForceFullDataset(getBooleanAttribute("forceFullDataset", false)); //Display every single point instead of averaging those that would share the same x-pixel (may be quite a performance hit)
+                    ge.setHistoryLength(getIntAttribute("history", 1)); //If larger than 1 the previous n graphs remain visible in a different color
+                    ge.setLabel(getTranslatedAttribute("labelX"), getTranslatedAttribute("labelY"));  //x- and y- label
+                    ge.setLogScale(getBooleanAttribute("logX", false), getBooleanAttribute("logY", false)); //logarithmic scales for x/y axes
                     newView.elements.add(ge);
                     break;
-                case "input":
-                    expView.inputElement ie = newView.new inputElement(getTranslatedAttribute("label"), getStringAttribute("output"), null, null, null, parent.getResources());
-                    ie.setLabelSize((float) getDoubleAttribute("labelsize", labelSize));
-                    ie.setUnit(getStringAttribute("unit"));
-                    ie.setFactor(getDoubleAttribute("factor", 1.));
-                    ie.setSigned(getBooleanAttribute("signed", true));
-                    ie.setDecimal(getBooleanAttribute("decimal", true));
-                    ie.setDefaultValue(getDoubleAttribute("default", 0.));
+                case "input": //The input element can take input from the user
+                    expView.inputElement ie = newView.new inputElement(getTranslatedAttribute("label"), getStringAttribute("output"), null, null, null, parent.getResources()); //Ouput only
+                    ie.setLabelSize((float) getDoubleAttribute("labelsize", labelSize)); //Label size
+                    ie.setUnit(getStringAttribute("unit")); //A unit displayed next to the input box
+                    ie.setFactor(getDoubleAttribute("factor", 1.)); //A scaling factor. Mostly for matching units
+                    ie.setSigned(getBooleanAttribute("signed", true)); //May the entered number be negative?
+                    ie.setDecimal(getBooleanAttribute("decimal", true)); //May the user enter a decimal point (non-integer values)?
+                    ie.setDefaultValue(getDoubleAttribute("default", 0.)); //Default value before the user entered anything
                     newView.elements.add(ie);
-                    experiment.createBuffer(getStringAttribute("output"), 1);
+                    experiment.createBuffer(getStringAttribute("output"), 1); //The output element needs a buffer to write to
                     break;
-                default:
+                default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
@@ -461,31 +461,40 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "sensor":
-                    int bufferSize = getIntAttribute("buffer", 100);
-                    double rate = getDoubleAttribute("rate", 0.);
-                    boolean average = getBooleanAttribute("average", false);
+                case "sensor": //A sensor input (in the sense of android sensor)
+                    int bufferSize = getIntAttribute("buffer", 100); //Buffer size
+                    double rate = getDoubleAttribute("rate", 0.); //Aquisition rate (we always request fastest rate, but average or just pick every n-th readout)
+                    boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
+
+                    //Create the buffers (create buffer will only create on non-null values, so the user decides which to use)
                     dataBuffer dataX = experiment.createBuffer(xpp.getAttributeValue(null, "outputX"), bufferSize);
                     dataBuffer dataY = experiment.createBuffer(xpp.getAttributeValue(null, "outputY"), bufferSize);
                     dataBuffer dataZ = experiment.createBuffer(xpp.getAttributeValue(null, "outputZ"), bufferSize);
                     dataBuffer dataT = experiment.createBuffer(xpp.getAttributeValue(null, "outputT"), bufferSize);
+
+                    //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
                         experiment.inputSensors.add(new sensorInput(parent.sensorManager, getStringAttribute("type"), rate, average, dataX, dataY, dataZ, dataT));
                     } catch (sensorInput.SensorException e) {
-                        throw new phyphoxFileException("Undefined sensor type.", xpp.getLineNumber());
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
                     }
+
+                    //Check if the sensor is available on this device
                     if (!experiment.inputSensors.lastElement().isAvailable()) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(experiment.inputSensors.lastElement().getDescriptionRes()) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
                     }
                     break;
-                case "audio":
+                case "audio": //Audio input, aka microphone
+                    //Check for recording permission
                     if (ContextCompat.checkSelfPermission(parent, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                        //No permission? Request it (Android 6+, only)
                         ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.RECORD_AUDIO}, 0);
-                        throw new phyphoxFileException("Need permission to record audio.");
+                        throw new phyphoxFileException("Need permission to record audio."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
                     }
-                    experiment.micRate = getIntAttribute("rate", 48000);
-                    experiment.micBufferSize = getIntAttribute("buffer", experiment.micRate);
+                    experiment.micRate = getIntAttribute("rate", 48000); //Recording rate
+                    experiment.micBufferSize = getIntAttribute("buffer", experiment.micRate); //Output-buffer size
 
+                    //Devices have a minimum buffer size. We might need to increase our buffer...
                     int minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
                     if (minBufferSize < 0) {
                         throw new phyphoxFileException("Could not initialize recording. (" + minBufferSize + ")", xpp.getLineNumber());
@@ -495,12 +504,14 @@ public abstract class phyphoxFile {
                         Log.w("loadExperiment", "Audio buffer size had to be adjusted to " + minBufferSize);
                     }
 
+                    //Create the buffer to write to
                     experiment.micOutput = getStringAttribute("output");
                     experiment.createBuffer(experiment.micOutput, experiment.micBufferSize);
 
+                    //Now create the audioRecord instance
                     experiment.audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, experiment.micBufferSize * 2);
                     break;
-                default:
+                default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
@@ -517,132 +528,135 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException {
 
+            //As all analysis steps need outputs and take inputs, we will prepare the inputs here and
+            //calculate typical buffer sizes
             int i = 1;
-            int maxBufferSize = 1;
-            int totalBufferSize = 0;
-            Vector<String> inputs = new Vector<>();
-            String inputName;
-            while ((inputName = getStringAttribute("input" + i)) != null) {
+            int maxBufferSize = 1; //The size of the largest input buffer (for example, the addition of two arrays will have the size of the larger buffer and fill up the smaller one with the last element)
+            int totalBufferSize = 0; //Total size of all buffers (for example, the append-operation will create an output of the summed up size of all buffers.)
+            Vector<String> inputs = new Vector<>(); //This will hold the input buffers
+            String inputName; //Temp to go through all inputs
+            while ((inputName = getStringAttribute("input" + i)) != null) { //input1, input2, input3 etc....
                 int inputSize;
-                if (phyphoxFile.isValidIdentifier(inputName)) {
-                    if (experiment.getBuffer(inputName) == null)
+                if (phyphoxFile.isValidIdentifier(inputName)) { //Is this a buffer input?
+                    if (experiment.getBuffer(inputName) == null) //If a buffer reference, but not available, we have a problem.
                         throw new phyphoxFileException("Invalid input buffer. Any data buffer has to be defined as an output before being used as an input.", xpp.getLineNumber());
                     inputSize = experiment.getBuffer(inputName).size;
-                } else {
+                } else { //Just a value, which is like a buffer of length 1
                     inputSize = 1;
-                    try {
+                    try { //Check if we convert the numeric string. If not, we have a problem here...
                         Double.valueOf(getStringAttribute("input" + i));
                     } catch (NumberFormatException e) {
                         throw new phyphoxFileException("Invalid input format.", xpp.getLineNumber());
                     }
                 }
-                totalBufferSize += inputSize;
-                if (inputSize > maxBufferSize)
+                totalBufferSize += inputSize; //Add this buffer to the total buffer size
+                if (inputSize > maxBufferSize) //If this buffer is larger than the previous ones, update maxBufferSize
                     maxBufferSize = inputSize;
                 inputs.add(inputName);
                 i++;
             }
-            int singleBufferSize = getIntAttribute("buffer", 1);
+            int singleBufferSize = getIntAttribute("buffer", 1); //Some buffers have a single value output, but the user may decide to increase it to create a history
 
-            Vector<dataBuffer> outputs = new Vector<>();
+            Vector<dataBuffer> outputs = new Vector<>(); //Will hold the output buffers
 
             switch (tag.toLowerCase()) {
-                case "add":
+                case "add": //input1+input2+input3...
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.addAM(experiment, inputs, outputs));
                     break;
-                case "subtract":
+                case "subtract": //input1-input2-input3...
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.subtractAM(experiment, inputs, outputs));
                     break;
-                case "multiply":
+                case "multiply": //input1*input2*input3...
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.multiplyAM(experiment, inputs, outputs));
                     break;
-                case "divide":
+                case "divide": //input1/input2/input3...
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.divideAM(experiment, inputs, outputs));
                     break;
-                case "power":
+                case "power"://(input1^input2)^input3...
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.powerAM(experiment, inputs, outputs));
                     break;
-                case "gcd":
+                case "gcd": //Greatest common divisor
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.gcdAM(experiment, inputs, outputs));
                     break;
-                case "lcm":
+                case "lcm": //Least common multiple
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.lcmAM(experiment, inputs, outputs));
                     break;
-                case "abs":
+                case "abs": //Absolute value
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.absAM(experiment, inputs, outputs));
                     break;
-                case "sin":
+                case "sin": //Sine
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.sinAM(experiment, inputs, outputs));
                     break;
-                case "cos":
+                case "cos": //Cosine
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.cosAM(experiment, inputs, outputs));
                     break;
-                case "tan":
+                case "tan": //Tangens
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.tanAM(experiment, inputs, outputs));
                     break;
-                case "max":
+                case "max": //Maximum (takes y as first input and may take x as an optional second, same for outputs)
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), singleBufferSize));
                     outputs.add(experiment.createBuffer(getStringAttribute("output2"), singleBufferSize));
                     experiment.analysis.add(new Analysis.maxAM(experiment, inputs, outputs));
                     break;
-                case "threshold":
+                case "threshold": //Find the index at which the input crosses a threshold
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), singleBufferSize));
-                    boolean falling = getBooleanAttribute("falling", false);
+                    boolean falling = getBooleanAttribute("falling", false); //Positive or negative flank
                     experiment.analysis.add(new Analysis.thresholdAM(experiment, inputs, outputs, getStringAttribute("threshold"), falling));
                     break;
-                case "append":
+                case "append": //Append the inputs to each other
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), totalBufferSize));
                     experiment.analysis.add(new Analysis.appendAM(experiment, inputs, outputs));
                     break;
-                case "fft":
+                case "fft": //Fourier transform
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     outputs.add(experiment.createBuffer(getStringAttribute("output2"), maxBufferSize));
                     experiment.analysis.add(new Analysis.fftAM(experiment, inputs, outputs));
                     break;
-                case "autocorrelation":
+                case "autocorrelation": //Autocorrelation. First in/out is y, second in/out may be x
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     outputs.add(experiment.createBuffer(getStringAttribute("output2"), maxBufferSize));
                     Analysis.autocorrelationAM acAM = new Analysis.autocorrelationAM(experiment, inputs, outputs);
                     acAM.setMinMax(getStringAttribute("mint"), getStringAttribute("maxt"));
                     experiment.analysis.add(acAM);
                     break;
-                case "differentiate":
+                case "differentiate": //Differentiate by subtracting neighboring values
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize-1));
                     experiment.analysis.add(new Analysis.differentiateAM(experiment, inputs, outputs));
                     break;
-                case "crosscorrelation":
+                case "crosscorrelation": //Crosscorrelation requires two inputs and a single output. y only.
                     if (getStringAttribute("input1") == null || getStringAttribute("input2") == null) {
                         throw new phyphoxFileException("Crosscorrelation needs two inputs.", xpp.getLineNumber());
                     }
                     if (experiment.getBuffer(getStringAttribute("input1")) == null || experiment.getBuffer(getStringAttribute("input2")) == null) {
                         throw new phyphoxFileException("Crosscorrelation inputs not available.", xpp.getLineNumber());
                     }
+                    //The crosscorrelation only "moves" the smaller array along the larger one. If a correlation beyond these borders is needed, you have to add zeros yourself. Hence, the resulting size is the difference of the input sizes
                     int outSize = Math.abs(experiment.getBuffer(getStringAttribute("input1")).size - experiment.getBuffer(getStringAttribute("input2")).size);
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), outSize));
                     experiment.analysis.add(new Analysis.crosscorrelationAM(experiment, inputs, outputs));
                     break;
-                case "gausssmooth":
+                case "gausssmooth": //Smooth the data with a Gauss profile
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     Analysis.gaussSmoothAM gsAM = new Analysis.gaussSmoothAM(experiment, inputs, outputs);
                     if (getDoubleAttribute("sigma", 0) > 0)
                         gsAM.setSigma(getDoubleAttribute("sigma", 0));
                     experiment.analysis.add(gsAM);
                     break;
-                case "rangefilter":
+                case "rangefilter": //Arbitrary inputs and outputs, for each input[n] a min[n] and max[n] can be defined. The module filters the inputs in parallel and returns only those sets that match the filters
                     int j = 1;
-                    Vector<String> min = new Vector<>();
-                    Vector<String> max = new Vector<>();
+                    Vector<String> min = new Vector<>(); //List of mins
+                    Vector<String> max = new Vector<>(); //List of maxs
                     while (getStringAttribute("output" + j) != null) {
                         outputs.add(experiment.createBuffer(getStringAttribute("output"+j), maxBufferSize));
                         min.add(getStringAttribute("min" + j));
@@ -651,21 +665,22 @@ public abstract class phyphoxFile {
                     }
                     experiment.analysis.add(new Analysis.rangefilterAM(experiment, inputs, outputs, min, max));
                     break;
-                case "ramp":
+                case "ramp": //Create a linear ramp (great for creating time-bases)
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), singleBufferSize));
                     Analysis.rampGeneratorAM rampAM = new Analysis.rampGeneratorAM(experiment, inputs, outputs);
                     rampAM.setParameters(getStringAttribute("start"), getStringAttribute("stop"), getStringAttribute("length"));
                     experiment.analysis.add(rampAM);
                     break;
-                case "const":
+                case "const": //Initialize a buffer with constant values
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), singleBufferSize));
                     Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(experiment, inputs, outputs);
                     constAM.setParameters(getStringAttribute("value"), getStringAttribute("length"));
                     experiment.analysis.add(constAM);
                     break;
-                default:
+                default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
+            //Each buffer can be set to static and we only get here if the tag was a known module, that could be created, so we might just do this here...
             experiment.analysis.lastElement().setStatic(getBooleanAttribute("static", false));
         }
 
@@ -681,20 +696,21 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "audio":
-                    experiment.audioLoop = getBooleanAttribute("loop", false);
-                    experiment.audioSource = getStringAttribute("input");
-                    if (experiment.getBuffer(experiment.audioSource) == null)
+                case "audio": //Audio output, aka speaker
+                    experiment.audioLoop = getBooleanAttribute("loop", false); //Loop the output?
+                    experiment.audioSource = getStringAttribute("input"); //The dataBuffer that contains the audio data
+                    if (experiment.getBuffer(experiment.audioSource) == null) //If the buffer is not available, this cannot work
                         throw new phyphoxFileException("Invalid input buffer. Any data buffer has to be defined as an output before being used as an input.", xpp.getLineNumber());
-                    experiment.audioRate = getIntAttribute("rate", 48000);
+                    experiment.audioRate = getIntAttribute("rate", 48000); //Sample frequency
                     experiment.audioBufferSize = getIntAttribute("buffer", experiment.audioRate);
 
+                    //Create the audioTrack instance
                     experiment.audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, experiment.audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2 * experiment.audioBufferSize, AudioTrack.MODE_STATIC);
                     if (experiment.audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
                         throw new phyphoxFileException("Could not initialize audio. (" + experiment.audioTrack.getState() + ")", xpp.getLineNumber());
                     }
                     break;
-                default:
+                default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
@@ -711,10 +727,10 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, IOException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "set":
-                    dataExport.exportSet set = experiment.exporter.new exportSet(xpp.getAttributeValue(null, "name"));
-                    (new setBlockParser(xpp, experiment, parent, set)).process();
-                    experiment.exporter.addSet(set);
+                case "set": //An export set. These just group some dataBuffers to be exported as a set
+                    dataExport.exportSet set = experiment.exporter.new exportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
+                    (new setBlockParser(xpp, experiment, parent, set)).process(); //Parse the information within
+                    experiment.exporter.addSet(set); //Add the set
                 break;
                 default:
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
@@ -731,6 +747,7 @@ public abstract class phyphoxFile {
     private static class setBlockParser extends xmlBlockParser {
         private dataExport.exportSet set;
 
+        //This constructor takes an additional argument: The export set to be filled
         setBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, dataExport.exportSet set) {
             super(xpp, experiment, parent);
             this.set = set;
@@ -739,7 +756,7 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
-                case "data":
+                case "data": //Add this data buffer to the set
                     set.addSource(xpp.getAttributeValue(null, "name"), xpp.getAttributeValue(null, "source"));
                     break;
                 default:
