@@ -11,7 +11,7 @@
         </translation>
     </translations>
     <input>
-        <sensor type="magnetic_field" outputX="magX" outputY="magY" outputZ="magZ" outputT="mag_time" buffer="500" />
+        <sensor type="magnetic_field" outputX="magX" outputY="magY" outputZ="magZ" outputT="mag_time" buffer="10000" />
     </input>
     <views>
         <view name="Raw Data">

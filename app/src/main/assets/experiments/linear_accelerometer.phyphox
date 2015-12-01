@@ -15,7 +15,7 @@
         </translation>
     </translations>
     <input>
-        <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="500" />
+        <sensor type="linear_acceleration" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="10000" />
     </input>
     <views>
         <view name="Raw Data">

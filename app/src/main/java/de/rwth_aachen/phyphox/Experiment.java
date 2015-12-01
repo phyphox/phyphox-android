@@ -35,12 +35,16 @@ import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -72,6 +76,7 @@ public class Experiment extends AppCompatActivity {
     boolean measuring = false; //Measurement running?
     boolean loadCompleted = false; //Set to true when an experiment has been loaded successfully
     boolean shutdown = false; //The activity should be stopped. Used to escape the measurement loop.
+    boolean beforeStart = true; //Experiment has not yet been started even once
 
     //Remote server
     private remoteServer remote = null; //The remote server (see remoteServer class)
@@ -98,14 +103,20 @@ public class Experiment extends AppCompatActivity {
     Intent intent; //Another helper to easily access the data of the intent that triggered this activity
     ProgressDialog progress; //Holds a progress dialog when a file is being loaded
     Bundle savedInstanceState = null; //Holds the saved instance state, so it can be handled outside onCreate
+    MenuItem hint = null; //Reference to play-hint button
+    TextView hintAnimation = null; //Reference to the animated part of the play-hint button
 
-    ProgressBar analysisProgress;
-    boolean analysisInProgress = false;
+    //The analysis progress bar
+    ProgressBar analysisProgress;       //Reference to the progress bar view
+    boolean analysisInProgress = false; //Set to true by second thread while analysis is running
+    float analysisProgressAlpha = 0.f;  //Will be increased while analysis is running and decreased while idle. This smoothes the display and results in an everage transparency representing the average load.
+
 
     @Override
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        lockScreen(); //We do not want the activity to reload because of a screen rotation until the experiment has been loaded
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -132,6 +143,14 @@ public class Experiment extends AppCompatActivity {
     //onPause event
     public void onPause() {
         super.onPause();
+
+        try {
+            progress.dismiss(); //Close progress display
+        } catch (Exception e) {
+            //This should only fail if the window has already been destroyed. Ignore.
+        } finally {
+            progress = null;
+        }
 
         stopRemoteServer(); //Remote server should stop when the app is not active
         shutdown = true; //Stop the loop
@@ -188,7 +207,13 @@ public class Experiment extends AppCompatActivity {
     //This is called from the CopyXML thread in onPostExecute, so the copying process of a remote
     //   experiment to the local collection has been completed
     public void onCopyXMLCompleted(String result) {
-        progress.dismiss(); //Close progress display
+        try {
+            progress.dismiss(); //Close progress display
+        } catch (Exception e) {
+            //This should only fail if the window has already been destroyed. Ignore.
+        } finally {
+            progress = null;
+        }
         if (result.equals("")) { //No error
             //Show that it has been successfull and return to the experiment selection so the user
             //  can see the new addition to his collection
@@ -206,7 +231,13 @@ public class Experiment extends AppCompatActivity {
     //This is called from the experiment loading thread in onPostExecute, so the experiment should
     //   be ready and can be presented to the user
     public void onExperimentLoaded(phyphoxExperiment experiment) {
-        progress.dismiss(); //Close progress display
+        try {
+            progress.dismiss(); //Close progress display
+        } catch (Exception e) {
+            //This should only fail if the window has already been destroyed. Ignore.
+        } finally {
+            progress = null;
+        }
         this.experiment = experiment; //Store the loaded experiment
         if (experiment.loaded) { //Everything went fine, no errors
             //We should set the experiment title....
@@ -281,36 +312,7 @@ public class Experiment extends AppCompatActivity {
             //Start the remote server if activated
             startRemoteServer();
 
-            //Finally create the "be careful, it's not our fault"-dialog
-            ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.phyphox);
-            AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
-            LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-            View startInfoLayout = adbInflater.inflate(R.layout.donotshowagain, null);
-            final CheckBox dontShowAgain = (CheckBox) startInfoLayout.findViewById(R.id.donotshowagain);
-            adb.setView(startInfoLayout);
-            adb.setTitle(R.string.info);
-            adb.setMessage(R.string.startInfo);
-            adb.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    //Callback if user clicked "ok" (the only option)
-                    //Here we have to handle the case that the user decided not to see this dialog again
-                    Boolean skipStartInfo = false;
-                    if (dontShowAgain.isChecked())
-                        skipStartInfo = true;
-
-                    //Store this preference as a sharedPreference
-                    SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-                    SharedPreferences.Editor editor = settings.edit();
-                    editor.putBoolean("skipStartInfo", skipStartInfo);
-                    editor.apply();
-                }
-            });
-
-            //Check the shared preferences if the user already decided not to see this warning...
-            SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-            Boolean skipStartInfo = settings.getBoolean("skipStartInfo", false);
-            if (!skipStartInfo) //If he did not opt out of the warning, show it to him
-                adb.show();
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); //We are ready. Now the user may rotate.
 
         } else {
             //There has been an error. Show the error to the user and leave the activity in its
@@ -359,6 +361,36 @@ public class Experiment extends AppCompatActivity {
         timed_pause.setVisible(measuring && cdTimer != null);
         play.setVisible(!measuring && cdTimer == null);
         pause.setVisible(measuring && cdTimer == null);
+
+        //If the experiment has not yet been started, highlight the play button
+        if (beforeStart && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            if (hint == null) {
+                //Create an animation to guide the inexperienced user.
+
+                hint = menu.findItem(R.id.hint);
+
+                LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                hintAnimation = (TextView) inflater.inflate(R.layout.play_animated, null);
+
+                Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
+                anim.setRepeatCount(Animation.INFINITE);
+                anim.setRepeatMode(Animation.REVERSE);
+                hintAnimation.startAnimation(anim);
+
+                hint.setActionView(hintAnimation);
+            }
+        } else { //Either we cannot show the anymation or we should not show it as the start button has already been used. Hide the menu item and the animation
+            hint = menu.findItem(R.id.hint);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                if (hintAnimation != null) {
+                    hintAnimation.clearAnimation();
+                    hintAnimation.setVisibility(View.GONE);
+                    hintAnimation = null;
+                    hint.setActionView(null);
+                }
+            }
+            hint.setVisible(false);
+        }
 
         //the timer is shown if the timed run mode is active at all. In this case the timed run option is also checked
         timer.setVisible(timedRun);
@@ -612,6 +644,21 @@ public class Experiment extends AppCompatActivity {
         public void run() {
             //Show progressbar if analysis is running (set by second thread)
             if (analysisInProgress) {
+                analysisProgressAlpha += 0.05;
+                if (analysisProgressAlpha > 1.f)
+                    analysisProgressAlpha = 1.f;
+            } else {
+                analysisProgressAlpha -= 0.05;
+                if (analysisProgressAlpha < 0.f)
+                    analysisProgressAlpha = 0.f;
+            }
+            if (analysisProgressAlpha > 0.1) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    if (analysisProgressAlpha >= 0.9)
+                        analysisProgress.setAlpha(1.f);
+                    else
+                        analysisProgress.setAlpha(analysisProgressAlpha);
+                }
                 analysisProgress.setVisibility(View.VISIBLE);
             } else {
                 analysisProgress.setVisibility(View.INVISIBLE);
@@ -696,6 +743,9 @@ public class Experiment extends AppCompatActivity {
 
     //Start a measurement
     public void startMeasurement() {
+        //Disable play-button highlight
+        beforeStart = false;
+
         //Clear the buffers and start the sensors. Also remember the start time as t0
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {

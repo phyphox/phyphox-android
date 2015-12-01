@@ -357,7 +357,7 @@ public class graphView extends View {
                     } else {
                         paint.setStrokeWidth(2);
                         paint.setColor(res.getColor(R.color.mainExp));
-                        paint.setAlpha(255-(j+1)*255/historyLength);
+                        paint.setAlpha(150-(j+1)*150/historyLength);
                     }
                     double lastX = Double.NaN;
                     double lastY = Double.NaN;

@@ -22,7 +22,7 @@ Platzieren Sie Ihr Smartphone in einer Papprolle so, dass es um seine längste A
         </translation>
     </translations>
     <input>
-        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" rate="25" average="true" />
+        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="10000" rate="25" average="true" />
     </input>
     <views>
         <view name="Velocity">

@@ -192,9 +192,9 @@ public class phyphoxExperiment {
                 if (audioLoop) //If looping is enabled, loop from the end of the data
                     audioTrack.setLoopPoints(0, data.length-1, -1);
             } else { //If the data is static and already loaded, we just have to rewind...
-                if (!audioLoop) { //We only want to pause and rewind if we are not looping
-                    audioTrack.pause();
-                    audioTrack.setPlaybackHeadPosition(0);
+                if (!audioLoop) { //We only want to play again since we are not looping
+                    audioTrack.stop();
+                    audioTrack.reloadStaticData();
                 }
             }
         }

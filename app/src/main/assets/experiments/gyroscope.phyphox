@@ -14,7 +14,7 @@
         </translation>
     </translations>
     <input>
-        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="500" />
+        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="10000" />
     </input>
     <views>
         <view name="Raw Data">

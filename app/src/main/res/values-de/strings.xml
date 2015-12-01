@@ -21,7 +21,6 @@
     <string name="export">Daten exportieren</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
     <string name="export_subject">Daten aus phyphox</string>
-    <string name="info">Info</string>
     <string name="loadingText">Experiment wird geladen…</string>
     <string name="loadingTitle">Laden</string>
     <string name="newExperiment">Neues einfaches Experiment</string>
@@ -53,7 +52,6 @@
     <string name="share_subject">Screenshot aus phyphox</string>
     <string name="show_description">Beschreibung zeigen</string>
     <string name="start">Start</string>
-    <string name="startInfo">Willkommen im Experiment. Klicken Sie einfach oben auf den Start-Knopf und das Experiment beginnt.</string>
     <string name="stop">Stop</string>
     <string name="timedRun">Zeitautomatik</string>
     <string name="timedRunDialogTitle">Zeitautomatik</string>

@@ -28,7 +28,7 @@ Um das Rauschen des Experiments zu reduzieren, werden die Messdaten des Baromete
         </translation>
     </translations>
     <input>
-        <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="60" rate="1" average="true" />
+        <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="600" rate="1" average="true" />
     </input>
     <views>
         <view name="Velocity">

@@ -15,7 +15,7 @@
         </translation>
     </translations>
     <input>
-        <sensor type="light" outputX="illum" outputT="illum_time" buffer="500" />
+        <sensor type="light" outputX="illum" outputT="illum_time" buffer="10000" />
     </input>
     <views>
         <view name="Raw Data">
