@@ -35,13 +35,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/viewSelector"
-        android:layout_alignParentTop="true"
+        android:layout_alignParentTop="false"
         android:layout_alignBottom="@+id/titleText"
         android:layout_alignRight="@+id/titleText"
-        android:layout_alignEnd="@+id/titleText"
-        android:layout_alignLeft="@+id/titleText"
-        android:layout_alignStart="@+id/titleText"
-        android:gravity="center_vertical" />
+        android:gravity="center_vertical"
+        android:layout_alignTop="@+id/titleText" />
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"

@@ -23,6 +23,7 @@
   </style>
 
   <style name="Spinnerphyphox" parent="android:Widget.Spinner">
+      <item name="android:spinnerMode">dropdown</item>
       <item name="android:background">@drawable/phyphox_spinner_background_holo_light</item>
       <item name="android:dropDownSelector">@drawable/phyphox_list_selector_holo_light</item>
   </style>

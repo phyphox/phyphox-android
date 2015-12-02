@@ -143,6 +143,7 @@ public class Experiment extends AppCompatActivity {
     //onPause event
     public void onPause() {
         super.onPause();
+        hidePlayHintAnimation();
 
         try {
             progress.dismiss(); //Close progress display
@@ -338,6 +339,34 @@ public class Experiment extends AppCompatActivity {
         return true;
     }
 
+    //Create an animation to guide the inexperienced user to the start button.
+    private void showPlayHintAnimation () {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            hintAnimation = (TextView) inflater.inflate(R.layout.play_animated, null);
+
+            Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
+            anim.setRepeatCount(Animation.INFINITE);
+            anim.setRepeatMode(Animation.REVERSE);
+            hintAnimation.startAnimation(anim);
+
+            hint.setActionView(hintAnimation);
+        }
+    }
+
+    //Hide the start button hint animation
+    private void hidePlayHintAnimation () {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            if (hintAnimation != null) {
+                hintAnimation.clearAnimation();
+                hintAnimation.setVisibility(View.GONE);
+                hintAnimation = null;
+                hint.setActionView(null);
+                hint = null;
+            }
+        }
+    }
+
     @Override
     //Refresh the options menu
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -366,30 +395,13 @@ public class Experiment extends AppCompatActivity {
         if (beforeStart && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             if (hint == null) {
                 //Create an animation to guide the inexperienced user.
-
                 hint = menu.findItem(R.id.hint);
-
-                LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                hintAnimation = (TextView) inflater.inflate(R.layout.play_animated, null);
-
-                Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
-                anim.setRepeatCount(Animation.INFINITE);
-                anim.setRepeatMode(Animation.REVERSE);
-                hintAnimation.startAnimation(anim);
-
-                hint.setActionView(hintAnimation);
+                showPlayHintAnimation();
             }
         } else { //Either we cannot show the anymation or we should not show it as the start button has already been used. Hide the menu item and the animation
             hint = menu.findItem(R.id.hint);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                if (hintAnimation != null) {
-                    hintAnimation.clearAnimation();
-                    hintAnimation.setVisibility(View.GONE);
-                    hintAnimation = null;
-                    hint.setActionView(null);
-                }
-            }
             hint.setVisible(false);
+            hidePlayHintAnimation();
         }
 
         //the timer is shown if the timed run mode is active at all. In this case the timed run option is also checked
@@ -812,6 +824,7 @@ public class Experiment extends AppCompatActivity {
     //Stop the measurement
     public void stopMeasurement() {
         measuring = false; //Set the state
+        analysisProgressAlpha = 0.f; //Disable the progress bar
 
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
