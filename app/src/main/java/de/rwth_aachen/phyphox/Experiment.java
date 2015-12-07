@@ -64,6 +64,7 @@ public class Experiment extends AppCompatActivity {
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
     private static final String STATE_DATA_BUFFERS = "data_buffers"; //The current data buffers
     private static final String STATE_REMOTE_SERVER = "remote_server"; //Is the remote server activated?
+    private static final String STATE_BEFORE_START = "before_start"; //Has the experiment been started?
     private static final String STATE_TIMED_RUN = "timed_run"; //Are timed runs activated?
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
     private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay"; //The stop delay for a timed run
@@ -280,6 +281,7 @@ public class Experiment extends AppCompatActivity {
                 if (oldData != null) { //Did it work?
                     //Then reload the other states that the user can control
                     serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false); //Remote server activated?
+                    beforeStart = savedInstanceState.getBoolean(STATE_BEFORE_START, false); //Has the experiment ever been started?
                     timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false); //timed run activated?
                     timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
                     timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY); //stop delay of timed run
@@ -393,11 +395,13 @@ public class Experiment extends AppCompatActivity {
 
         //If the experiment has not yet been started, highlight the play button
         if (beforeStart && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if (hint == null) {
-                //Create an animation to guide the inexperienced user.
-                hint = menu.findItem(R.id.hint);
-                showPlayHintAnimation();
+            //Create an animation to guide the inexperienced user.
+            if (hint != null) {
+                //We have already created an animation, which we need to remove first.
+                hidePlayHintAnimation();
             }
+            hint = menu.findItem(R.id.hint);
+            showPlayHintAnimation();
         } else { //Either we cannot show the anymation or we should not show it as the start button has already been used. Hide the menu item and the animation
             hint = menu.findItem(R.id.hint);
             hint.setVisible(false);
@@ -917,6 +921,7 @@ public class Experiment extends AppCompatActivity {
                 experiment.dataLock.unlock();
             }
             outState.putBoolean(STATE_REMOTE_SERVER, serverEnabled); //remote server status
+            outState.putBoolean(STATE_BEFORE_START, beforeStart); //Has the experiment ever been started
             outState.putBoolean(STATE_TIMED_RUN, timedRun); //timed run status
             outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay); //timed run start delay
             outState.putDouble(STATE_TIMED_RUN_STOP_DELAY, timedRunStopDelay); //timed run stop delay
