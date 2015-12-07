@@ -37,6 +37,8 @@ import java.util.Vector;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
+    final static String phyphoxFileVersion = "1.0";
+
     //translation maps any English term for which a suitable translation is found to the current locale
     private static Map<String, String> translation = new HashMap<>();
 
@@ -800,8 +802,37 @@ public abstract class phyphoxFile {
                 //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
                 int eventType = xpp.getEventType();
                 while (eventType != XmlPullParser.END_DOCUMENT) {
-                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("phyphox"))
+                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("phyphox")) {
+                        //Phyphox tag. This is what we need to read, but let's check the file version first.
+                        String fileVersion = xpp.getAttributeValue(null, "version");
+                        if (fileVersion != null) {
+                            //A file version has been given. (If not, some user probably created the file manually. Let's allow this although it should not be encouraged.)
+                            //Parse the file version and the version of this class
+                            int split = fileVersion.indexOf('.'); //File version
+                            int phyphoxSplit = phyphoxFileVersion.indexOf('.'); //Class version
+                            try {
+                                //Version strings are supposed to be of the form "x.y" with x being the major version number and y being minor.
+
+                                //File versions
+                                int major = Integer.valueOf(fileVersion.substring(0, split));
+                                int minor = Integer.valueOf(fileVersion.substring(split + 1));
+
+                                //Class versions
+                                int phyphoxMajor = Integer.valueOf(phyphoxFileVersion.substring(0, phyphoxSplit));
+                                int phyphoxMinor = Integer.valueOf(phyphoxFileVersion.substring(phyphoxSplit + 1));
+
+                                //This class needs to be newer than the file. Otherwise ask the user to update.
+                                if (major > phyphoxMajor || (major == phyphoxMajor && minor > phyphoxMinor)) {
+                                    experiment.message = "This experiment has been created for a more recent version of phyphox. Please update phyphox to load this experiment.";
+                                    return experiment;
+                                }
+                            } catch (NumberFormatException e) {
+                                experiment.message = "Unable to interpret the file version of this experiment.";
+                                return experiment;
+                            }
+                        }
                         (new phyphoxBlockParser(xpp, experiment, parent)).process();
+                    }
                     eventType = xpp.next();
                 }
             } catch (XmlPullParserException e) { //Catch pullparser errors
