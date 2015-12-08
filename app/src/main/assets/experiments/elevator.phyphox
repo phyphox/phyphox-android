@@ -34,6 +34,7 @@ Um das Rauschen des Experiments zu reduzieren, werden die Messdaten des Baromete
         <view name="Velocity">
             <graph label="Vertical velocity" inputX="p_time" inputY="v" labelX="t (s)" labelY="v (m/s)" partialUpdate="true" />
             <graph label="Vertical velocity" inputX="p_time" inputY="vkmh" labelX="t (s)" labelY="v (km/h)" partialUpdate="true" />
+            <graph label="Height" inputX="p_time" inputY="h" labelX="t (s)" labelY="h (m)" partialUpdate="true" />
         </view>
         <view name="Raw Data">
             <graph label="Pressure" inputX="p_time" inputY="pressure" labelX="t (s)" labelY="p (hPa)" partialUpdate="true" />
@@ -43,16 +44,19 @@ Um das Rauschen des Experiments zu reduzieren, werden die Messdaten des Baromete
         <differentiate input1="p_time" output1="dt" />
         <divide input1="pressure" input2="1013.25" output1="innerRatio" />
         <power input1="innerRatio" input2="0.190294957" output1="powered" />
-        <differentiate input1="powered" output1="diffed" />
-        <multiply input1="diffed" input2="-44330.769230769" output1="dh" />
+        <multiply input1="powered" input2="-44330.769230769" output1="absh" />
+        <first input1="absh" output1="h0" />
+        <subtract input1="absh" input2="h0" output1="h" />
+        <differentiate input1="h" output1="dh" />
         <divide input1="dh" input2="dt" output1="v" />
         <multiply input1="v" input2="3.6" output1="vkmh" />
     </analysis>
     <export>
-        <set name="Velocity">
+        <set name="Pressure and velocity">
             <data name="Time (s)" source="p_time" />
-            <data name="Velocity (m/s)" source="v" />
             <data name="Pressure (hPa)" source="pressure" />
+            <data name="Velocity (m/s)" source="v" />
+            <data name="Height (m)" source="h" />
         </set>
     </export>
 </phyphox>

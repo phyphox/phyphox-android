@@ -598,6 +598,35 @@ public class Analysis {
         }
     }
 
+    //Get the first value of the dataset.
+    public static class firstAM extends analysisModule {
+
+        protected firstAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+
+            //Get iterators, values do not make sense here.
+            Vector<Iterator> its = new Vector<>();
+            for (int i = 0; i < inputs.size(); i++) {
+                if (inputs.get(i) == null) {
+                    its.add(null);
+                } else {
+                    its.add(experiment.getBuffer(inputs.get(i)).getIterator());
+                }
+            }
+
+            //Just get the first value and append it to each buffer
+            for (int i = 0; i < outputs.size(); i++) {
+                if (its.get(i) != null)
+                    outputs.get(i).append((double)its.get(i).next());
+            }
+
+        }
+    }
+
     //Get the maximum of the whole dataset.
     //input1 is y
     //input2 is x (if ommitted, it will be filled with 1, 2, 3, ...)
@@ -984,6 +1013,34 @@ public class Analysis {
                 v = (double)it.next();
                 outputs.get(0).append(v-last);
                 last = v;
+            }
+        }
+    }
+
+    //Simple integration by calculating the sum of all values up to the output index
+    //So, first value will be v0, second will be v0+v1, third v0+v1+v2 etc.
+    //The resulting array has exactly as many elements as the input array
+    public static class integrateAM extends analysisModule {
+
+        protected integrateAM(phyphoxExperiment experiment, Vector<String> inputs, Vector<dataBuffer> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            double sum = 0.;
+
+            //Clear output
+            outputs.get(0).clear();
+
+            //The actual calculation
+            Iterator it = experiment.getBuffer(inputs.get(0)).getIterator();
+            if (it == null) //non-buffer values are ignored
+                return;
+            //Calculate the sum
+            while (it.hasNext()) {
+                sum += (double)it.next();
+                outputs.get(0).append(sum);
             }
         }
     }

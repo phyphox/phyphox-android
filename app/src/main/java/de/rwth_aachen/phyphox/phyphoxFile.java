@@ -606,6 +606,14 @@ public abstract class phyphoxFile {
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
                     experiment.analysis.add(new Analysis.tanAM(experiment, inputs, outputs));
                     break;
+                case "first": //First value of each buffer
+                    int k = 1;
+                    while (getStringAttribute("output" + k) != null) {
+                        outputs.add(experiment.createBuffer(getStringAttribute("output" + k), singleBufferSize));
+                        k++;
+                    }
+                    experiment.analysis.add(new Analysis.firstAM(experiment, inputs, outputs));
+                    break;
                 case "max": //Maximum (takes y as first input and may take x as an optional second, same for outputs)
                     outputs.add(experiment.createBuffer(getStringAttribute("output1"), singleBufferSize));
                     outputs.add(experiment.createBuffer(getStringAttribute("output2"), singleBufferSize));
@@ -633,8 +641,12 @@ public abstract class phyphoxFile {
                     experiment.analysis.add(acAM);
                     break;
                 case "differentiate": //Differentiate by subtracting neighboring values
-                    outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize-1));
+                    outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize - 1));
                     experiment.analysis.add(new Analysis.differentiateAM(experiment, inputs, outputs));
+                    break;
+                case "integrate": //Integration from first value of buffer to each point in buffer
+                    outputs.add(experiment.createBuffer(getStringAttribute("output1"), maxBufferSize));
+                    experiment.analysis.add(new Analysis.integrateAM(experiment, inputs, outputs));
                     break;
                 case "crosscorrelation": //Crosscorrelation requires two inputs and a single output. y only.
                     if (getStringAttribute("input1") == null || getStringAttribute("input2") == null) {
