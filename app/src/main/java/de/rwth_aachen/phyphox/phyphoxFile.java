@@ -411,7 +411,7 @@ public abstract class phyphoxFile {
             switch (tag.toLowerCase()) {
                 case "value": //A value element displays a single value to the user
                     expView.valueElement ve = newView.new valueElement(getTranslatedAttribute("label"), null, getStringAttribute("input"), null, null, parent.getResources()); //Only a value input
-                    ve.setLabelSize((float)getDoubleAttribute("labelsize", labelSize)); //Label size
+                    ve.setLabelSize((float)getDoubleAttribute("labelsize", 1.)*labelSize); //Label size
                     ve.setPrecision(getIntAttribute("precision", 2)); //Floating point precision
                     ve.setScientificNotation(getBooleanAttribute("scientific", false)); //Scientific notation vs. fixed point
                     ve.setUnit(getStringAttribute("unit")); //We can have a unit after the value
@@ -420,12 +420,12 @@ public abstract class phyphoxFile {
                     break;
                 case "info": //An info element just shows some text
                     expView.infoElement infoe = newView.new infoElement(getTranslatedAttribute("label"), null, null, null, null, parent.getResources()); //No inputs, just the label and resources
-                    infoe.setLabelSize((float)getDoubleAttribute("labelsize", labelSize)); //Label size
+                    infoe.setLabelSize((float)getDoubleAttribute("labelsize", 1.0)*labelSize); //Label size
                     newView.elements.add(infoe);
                     break;
                 case "graph": //A graph element displays a graph of an y array or two arrays x and y
                     expView.graphElement ge = newView.new graphElement(getTranslatedAttribute("label"), null, null, getStringAttribute("inputX"), getStringAttribute("inputY"), parent.getResources()); //Two array inputs
-                    ge.setLabelSize((float)getDoubleAttribute("labelsize", labelSize)); //Label size
+                    ge.setLabelSize((float)getDoubleAttribute("labelsize", 1.0)*labelSize); //Label size
                     ge.setAspectRatio(getDoubleAttribute("aspectRatio", 3.)); //Aspect ratio of the whole element area icluding axes
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
                     ge.setLine(!(lineStyle != null && lineStyle.equals("dots"))); //Everything but dots will be lines
@@ -438,7 +438,7 @@ public abstract class phyphoxFile {
                     break;
                 case "edit": //The edit element can take input from the user
                     expView.editElement ie = newView.new editElement(getTranslatedAttribute("label"), getStringAttribute("output"), null, null, null, parent.getResources()); //Ouput only
-                    ie.setLabelSize((float) getDoubleAttribute("labelsize", labelSize)); //Label size
+                    ie.setLabelSize((float) getDoubleAttribute("labelsize", 1.0)*labelSize); //Label size
                     ie.setUnit(getStringAttribute("unit")); //A unit displayed next to the input box
                     ie.setFactor(getDoubleAttribute("factor", 1.)); //A scaling factor. Mostly for matching units
                     ie.setSigned(getBooleanAttribute("signed", true)); //May the entered number be negative?
