@@ -455,6 +455,7 @@ public class ExperimentList extends AppCompatActivity {
         String category = ""; //Experiment category
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
+        Drawable image = null; //This will hold the icon
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             int eventType = xpp.getEventType(); //should be START_DOCUMENT
@@ -489,8 +490,19 @@ public class ExperimentList extends AppCompatActivity {
                                     title = xpp.nextText().trim();
                                 break;
                             case "icon": //This should give us the experiment icon (might be an acronym or a base64-encoded image)
-                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
                                     icon = xpp.nextText().trim();
+                                    if (xpp.getAttributeValue(null, "type") != null && xpp.getAttributeValue(null, "type").equals("base64")) { //Check the icon type
+                                        //base64 encoded image. Decode it
+                                        image = new BitmapDrawable(res, decodeBase64(icon));
+                                    } else {
+                                        //Just a string. Create an icon from it. We allow a maximum of three characters.
+                                        if (icon.length() > 3)
+                                            icon = icon.substring(0,3);
+                                        image = new TextIcon(icon, this);
+                                    }
+
+                                }
                                 break;
                             case "description": //This should give us the experiment description, but we only need the first line
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
@@ -538,14 +550,9 @@ public class ExperimentList extends AppCompatActivity {
                 return;
             }
 
-            //Eversthing fine? Let's interpret the icon
-            Drawable image; //This will hold the icon
-            if (icon.equals("")) //No icon given. Create a TextIcon from the first three characters
+            //Let's check the icon
+            if (image == null) //No icon given. Create a TextIcon from the first three characters of the title
                 image = new TextIcon(title.substring(0, 3), this);
-            else if (icon.length() <= 3) //At this length, the experiment gives us an acronym. Let's create a TextIcon from this
-                image = new TextIcon(icon, this);
-            else //So we have more than 3 characters as data? Sounds like full icon. Decode it!
-                image = new BitmapDrawable(res, decodeBase64(icon));
 
             //We have all the information. Add the experiment.
             addExperiment(title, category, image, description, experimentXML, isAsset);

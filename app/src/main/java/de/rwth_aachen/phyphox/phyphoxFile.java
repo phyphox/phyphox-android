@@ -279,10 +279,11 @@ public abstract class phyphoxFile {
                     experiment.title = getText();
                     break;
                 case "icon": //The experiment's icon
-                    experiment.icon = getText();
+                    // We currently do not show the icon while the experiment is open, so we do not need to read it.
+                    //experiment.icon = getText();
                     break;
                 case "description": //The experiment's description (might be replaced by a later translation block)
-                    experiment.description = getText();
+                    experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "category": //The experiment's category (might be replaced by a later translation block)
                     experiment.category = getText();
@@ -353,7 +354,7 @@ public abstract class phyphoxFile {
                     experiment.category = getText();
                     break;
                 case "description": //Description in the correct language
-                    experiment.description = getText();
+                    experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "string": //Some other translation. In labels and names of view elements, the string defined here as the attribute "original" will be replaced by the text in this tag
                     translation.put(getStringAttribute("original"), getText()); //Store it in our translation mapping
