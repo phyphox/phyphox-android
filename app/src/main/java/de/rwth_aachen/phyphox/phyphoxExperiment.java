@@ -28,7 +28,7 @@ public class phyphoxExperiment {
     public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
     public Lock dataLock = new ReentrantLock();
 
-    double analysisPeriod = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
+    double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
     boolean newUserInput = false; //Will be set to true if the user changed any values
@@ -106,8 +106,8 @@ public class phyphoxExperiment {
             } finally {
                 dataLock.unlock();
             }
-        } else
-            return; //This is not urgent. Try another time instead of blocking the UI thread
+        }
+        //else: Lock not aquired, but this is not urgent. Try another time instead of blocking the UI thread
     }
 
     //called by th main loop to initialize the analysis process
@@ -136,7 +136,7 @@ public class phyphoxExperiment {
             if (!newUserInput) {
                 return; //No new input. Nothing to do.
             }
-        } else if (System.currentTimeMillis() - lastAnalysis <= analysisPeriod * 1000) {
+        } else if (System.currentTimeMillis() - lastAnalysis <= analysisSleep * 1000) {
             //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
             return; //Too soon. Nothing to do
         }
@@ -170,7 +170,7 @@ public class phyphoxExperiment {
 
                 //Get the data to output
                 short[] data = getBuffer(audioSource).getShortArray();
-                int result = 0; //Will hold the write result to log errors
+                int result; //Will hold the write result to log errors
                 if (audioLoop) {
                     //In case of loops we want to repeat the data buffer. However, some
                     //  implementations do not allow short loops. So as a workaround we fill the

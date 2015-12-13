@@ -26,7 +26,7 @@ Platzieren Sie Ihr Smartphone in einer Papprolle so, dass es um seine längste A
     </input>
     <views>
         <view name="Velocity">
-            <input label="Roll radius" output="r" unit="cm" factor="100" default="10" signed="false" />
+            <edit label="Roll radius" output="r" unit="cm" factor="100" default="10" signed="false" />
             <graph label="Velocity" inputX="gyr_time" inputY="v" labelX="t (s)" labelY="v (m/s)" partialUpdate="true" />
             <graph label="Velocity" inputX="gyr_time" inputY="vkmh" labelX="t (s)" labelY="v (km/h)" partialUpdate="true" />
         </view>

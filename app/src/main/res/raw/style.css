@@ -144,7 +144,7 @@ ul {
     font-size: 33%;
 }
 
-.valueElement, .inputElement {
+.valueElement, .editElement {
     display: block;
     width: 100%;
 }
@@ -168,7 +168,7 @@ ul {
     padding: 0 0.5%;
 }
 
-.inputElement .value {
+.editElement .value {
     font-size: 100%;
     width: 15%;
     padding: 0 0.5%;

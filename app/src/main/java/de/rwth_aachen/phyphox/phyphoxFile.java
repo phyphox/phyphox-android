@@ -298,7 +298,7 @@ public abstract class phyphoxFile {
                     (new inputBlockParser(xpp, experiment, parent)).process();
                     break;
                 case "analysis": //Holds a number of math modules which will be executed in the order they occur
-                    experiment.analysisPeriod = getDoubleAttribute("period", 0.); //Time between executions
+                    experiment.analysisSleep = getDoubleAttribute("sleep", 0.); //Time between executions
                     experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false); //Only execute when the user changed something?
                     (new analysisBlockParser(xpp, experiment, parent)).process();
                     break;
@@ -436,8 +436,8 @@ public abstract class phyphoxFile {
                     ge.setLogScale(getBooleanAttribute("logX", false), getBooleanAttribute("logY", false)); //logarithmic scales for x/y axes
                     newView.elements.add(ge);
                     break;
-                case "input": //The input element can take input from the user
-                    expView.inputElement ie = newView.new inputElement(getTranslatedAttribute("label"), getStringAttribute("output"), null, null, null, parent.getResources()); //Ouput only
+                case "edit": //The edit element can take input from the user
+                    expView.editElement ie = newView.new editElement(getTranslatedAttribute("label"), getStringAttribute("output"), null, null, null, parent.getResources()); //Ouput only
                     ie.setLabelSize((float) getDoubleAttribute("labelsize", labelSize)); //Label size
                     ie.setUnit(getStringAttribute("unit")); //A unit displayed next to the input box
                     ie.setFactor(getDoubleAttribute("factor", 1.)); //A scaling factor. Mostly for matching units

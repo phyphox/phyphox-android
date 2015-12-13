@@ -23,7 +23,7 @@ import java.util.Vector;
 // dataBuffer data, like a simple textDisplay showing a single value or a more complex graph.
 // Hence, these elements (for example graphElement or valueElement) inherit from the abstract
 // expViewElement class. expViewElements may even take data from the user and report it back to a
-// dataBuffer to create interactive experiments (inputElement).
+// dataBuffer to create interactive experiments (editElement).
 
 //Example:
 //A pendulum experiment may consist of three expViews, showing (1) raw data, (2) an autocorrelation
@@ -362,9 +362,9 @@ public class expView{
         }
     }
 
-    //inputElement implements a simple edit box which takes a single value from the user
-    public class inputElement extends expViewElement {
-        private EditText iv; //Holds the Android EditText
+    //editElement implements a simple edit box which takes a single value from the user
+    public class editElement extends expViewElement {
+        private EditText et; //Holds the Android EditText
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private String unit; //A string to display as unit
         private double defaultValue; //This value is filled into the dataBuffer before the user enters a custom value
@@ -373,7 +373,7 @@ public class expView{
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         //No special constructor. Just some defaults.
-        inputElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+        editElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
             this.unit = "";
             this.factor = 1.;
@@ -447,15 +447,15 @@ public class expView{
             valueUnit.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
             //The edit box
-            iv = new EditText(c);
-            iv.setLayoutParams(new TableRow.LayoutParams(
+            et = new EditText(c);
+            et.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.7f)); //Most of the right half
-            iv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            iv.setPadding((int) labelSize / 2, 0, 0, 0);
-            iv.setTypeface(null, Typeface.BOLD);
-            iv.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
+            et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            et.setPadding((int) labelSize / 2, 0, 0, 0);
+            et.setTypeface(null, Typeface.BOLD);
+            et.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Construct the inputType flags from our own state
             int inputType = InputType.TYPE_CLASS_NUMBER;
@@ -463,10 +463,10 @@ public class expView{
                 inputType |= InputType.TYPE_NUMBER_FLAG_SIGNED;
             if (decimal)
                 inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
-            iv.setInputType(inputType);
+            et.setInputType(inputType);
 
             //Start with NaN
-            iv.setText("NaN");
+            et.setText("NaN");
 
             //The unit next to the edit box
             TextView unitView = new TextView(c);
@@ -482,7 +482,7 @@ public class expView{
             unitView.setTypeface(null, Typeface.BOLD);
 
             //Add edit box and unit to the horizontal linear layout that makes up the right half of the row
-            valueUnit.addView(iv);
+            valueUnit.addView(et);
             valueUnit.addView(unitView);
 
             //Add label and the horizontal linear layout (edit box and unit) to the row
@@ -493,7 +493,7 @@ public class expView{
             ll.addView(row);
 
             //Add a listener to the edit box to keep track of the focus
-            iv.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 public void onFocusChange(View v, boolean hasFocus) {
                     focused = hasFocus;
                 }
@@ -515,7 +515,7 @@ public class expView{
             if (!decimal)
                 restrictions += "step=\"1\" ";
 
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"inputElement\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"editElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
                     "<input onchange=\"$.getJSON('control?cmd=set&buffer="+valueOutput+"&value='+$(this).val()/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
                     "<span class=\"unit\">"+this.unit+"</span>" +
@@ -527,7 +527,7 @@ public class expView{
         //use that is consistent with that of the valueElement
         protected double getValue() {
             try {
-                return Double.valueOf(iv.getText().toString())/factor;
+                return Double.valueOf(et.getText().toString())/factor;
             } catch (Exception e) {
                 return Double.NaN;
             }
@@ -541,9 +541,9 @@ public class expView{
             //This ensures, that the old value is restored if the view has to be created after the views have been switched.
             if (!focused) {
                 if (Double.isNaN(v)) //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
-                    iv.setText(String.valueOf(defaultValue));
+                    et.setText(String.valueOf(defaultValue));
                 else
-                    iv.setText(String.valueOf(v * factor));
+                    et.setText(String.valueOf(v * factor));
             }
         }
 

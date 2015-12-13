@@ -676,7 +676,7 @@ public class remoteServer extends Thread {
 
     //This query has the simple form control?cmd=start or control?cmd=set&buffer=name&value=42
     //The first form starts or stops the measurement. The second one sends a user-given value (from
-    //an inputElement) to a buffer
+    //an editElement) to a buffer
     class controlCommandHandler implements HttpRequestHandler {
 
         @Override

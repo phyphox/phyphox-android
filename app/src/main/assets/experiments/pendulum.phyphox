@@ -47,7 +47,7 @@ Die Schwingungsperiode wird durch eine Autokorrelation jeder Komponente des Gyro
         <view name="Results">
             <value label="Period" input="period" unit="s" />
             <value label="Frequency" input="frequency" unit="Hz" />
-            <input label="Length" output="length" unit="cm" factor="100" default="50" signed="false" />
+            <edit label="Length" output="length" unit="cm" factor="100" default="50" signed="false" />
             <value label="g" input="g" unit="m/s²" />
         </view>
         <view name="History">

@@ -30,10 +30,10 @@ Beachten Sie: Dieses Experiment versucht, die Periodizität des Gesamtsignals zu
     </input>
     <views>
         <view name="Settings">
-            <input label="Amplitude 1" output="a1" default="1" signed="false" />
-            <input label="Frequency 1" output="f1" unit="Hz" default="495" signed="false" />
-            <input label="Amplitude 2" output="a2" default="1" signed="false" />
-            <input label="Frequency 2" output="f2" unit="Hz" default="505" signed="false" />
+            <edit label="Amplitude 1" output="a1" default="1" signed="false" />
+            <edit label="Frequency 1" output="f1" unit="Hz" default="495" signed="false" />
+            <edit label="Amplitude 2" output="a2" default="1" signed="false" />
+            <edit label="Frequency 2" output="f2" unit="Hz" default="505" signed="false" />
             <value label="Base Frequency" input="basef" unit="Hz" />
             <value label="Envelope Frequency" input="envf" unit="Hz" />
         </view>
