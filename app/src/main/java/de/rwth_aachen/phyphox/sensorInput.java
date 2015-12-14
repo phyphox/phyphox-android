@@ -5,6 +5,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import java.util.Vector;
+
 //The sensorInput class encapsulates a sensor, maps their name from the phyphox-file format to
 //  the android identifiers and handles their output, which is written to the dataBuffers
 public class sensorInput implements SensorEventListener {
@@ -31,7 +33,7 @@ public class sensorInput implements SensorEventListener {
     //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
     //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
     //be null to be left unused.
-    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, dataBuffer bDataX, dataBuffer bDataY, dataBuffer bDataZ, dataBuffer bTime) throws SensorException {
+    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, Vector<dataBuffer> buffers) throws SensorException {
         this.sensorManager = sensorManager; //Store the sensorManager reference
 
         if (rate <= 0)
@@ -59,10 +61,11 @@ public class sensorInput implements SensorEventListener {
         }
 
         //Store the buffer references
-        this.dataX = bDataX;
-        this.dataY = bDataY;
-        this.dataZ = bDataZ;
-        this.dataT = bTime;
+        buffers.setSize(4);
+        this.dataX = buffers.get(0);
+        this.dataY = buffers.get(1);
+        this.dataZ = buffers.get(2);
+        this.dataT = buffers.get(3);
     }
 
     //Check if the sensor is available without trying to use it.

@@ -3,43 +3,81 @@
     <category>Acoustics</category>
     <icon>ASc</icon>
     <description>
-Show recorded audio data.
+        Show recorded audio data.
 
-This experiment just records short periods of audio data and displays them. To achieve a steady image, a zero crossing is used as a trigger and t=0 is shifted to the first (positive) crossing.
+        This experiment just records short periods of audio data and displays them. To achieve a steady image, a zero crossing is used as a trigger and t=0 is shifted to the first (positive) crossing.
     </description>
     <translations>
         <translation locale="de">
             <title>Audio Oszilloskop</title>
             <category>Akustik</category>
             <description>
-Stellt Audioaufnahmen dar.
+                Stellt Audioaufnahmen dar.
 
-Dieses Experiment nimmt Audiodaten über das Mikrofon auf und stellt diese dar. Um ein stabiles Bild zu zeigen, wird ähnlich einem Oszilloskop ein Trigger verwendet, wenn das Signal die Nulllinie durchläuft und die Zeitskala so verschoben, dass t=0 auf der ersten positiven Flanke liegt.
+                Dieses Experiment nimmt Audiodaten über das Mikrofon auf und stellt diese dar. Um ein stabiles Bild zu zeigen, wird ähnlich einem Oszilloskop ein Trigger verwendet, wenn das Signal die Nulllinie durchläuft und die Zeitskala so verschoben, dass t=0 auf der ersten positiven Flanke liegt.
             </description>
             <string original="Scope">Oszilloskop</string>
             <string original="Audio Data">Audiodaten</string>
             <string original="Time (ms)">Zeit (ms)</string>
         </translation>
     </translations>
+    <data-containers>
+        <container size="2400">recording</container>
+        <container size="2400" static="true">time</container>
+        <container size="480" static="true">reltime</container>
+        <container>triggerT</container>
+        <container>triggerTend</container>
+        <container size="480">subtime</container>
+        <container size="480">subdata</container>
+    </data-containers>
     <input>
-        <audio output="recording" rate="48000" buffer="2400" />
+        <audio rate="48000">
+            <output>recording</output>
+        </audio>
     </input>
     <views>
-        <view name="Scope">
-            <graph label="Audio Data" inputX="reltime" inputY="subdata" labelX="Time (ms)" labelY="Amplitude (a.u.)" />
+        <view label="Scope">
+            <graph label="Audio Data" labelX="Time (ms)" labelY="Amplitude (a.u.)">
+                <input axis="x">reltime</input>
+                <input axis="y">subdata</input>
+            </graph>
         </view>
     </views>
-    <analysis period="0.05">
-        <ramp start="0" stop="50" buffer="2400" output1="time" static="true" />
-        <ramp start="0" stop="10" buffer="480" output1="reltime" static="true" />
-        <threshold input1="recording" input2="time" threshold="0" falling="false" output1="triggerT" />
-        <add input1="triggerT" input2="10" output1="triggerTend" />
-        <rangefilter input1="time" input2="recording" min1="triggerT" max1="triggerTend" output1="subtime" output2="subdata" />
+    <analysis sleep="0.05">
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">50</input>
+            <output>time</output>
+        </ramp>
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">10</input>
+            <output>reltime</output>
+        </ramp>
+
+        <threshold falling="false">
+            <input as="y">recording</input>
+            <input as="x">time</input>
+            <output>triggerT</output>
+        </threshold>
+        <add>
+            <input>triggerT</input>
+            <input type="value">10</input>
+            <output>triggerTend</output>
+        </add>
+        <rangefilter>
+            <input>time</input>
+            <input as="min">triggerT</input>
+            <input as="max">triggerTend</input>
+            <input>recording</input>
+            <output>subtime</output>
+            <output>subdata</output>
+         </rangefilter>
     </analysis>
     <export>
         <set name="Audio data">
-            <data name="Time (ms)" source="reltime" />
-            <data name="Recording (a.u.)" source="subdata" />
+            <data name="Time (ms)">reltime</data>
+            <data name="Recording (a.u.)">subdata</data>
         </set>
     </export>
 </phyphox>

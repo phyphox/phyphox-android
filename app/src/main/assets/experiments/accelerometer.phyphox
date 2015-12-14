@@ -13,22 +13,42 @@
             <string original="Accelerometer Z">Beschleunigung Z</string>
         </translation>
     </translations>
+    <data-containers>
+        <container size="10000">accX</container>
+        <container size="10000">accY</container>
+        <container size="10000">accZ</container>
+        <container size="10000">acc_time</container>
+    </data-containers>
     <input>
-        <sensor type="accelerometer" outputX="accX" outputY="accY" outputZ="accZ" outputT="acc_time" buffer="10000" />
+        <sensor type="accelerometer">
+            <output component="x">accX</output>
+            <output component="y">accY</output>
+            <output component="z">accZ</output>
+            <output component="t">acc_time</output>
+        </sensor>
     </input>
     <views>
-        <view name="Raw Data">
-            <graph label="Accelerometer X" inputX="acc_time" inputY="accX" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
-            <graph label="Accelerometer Y" inputX="acc_time" inputY="accY" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
-            <graph label="Accelerometer Z" inputX="acc_time" inputY="accZ" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true" />
+        <view label="Raw Data">
+            <graph label="Accelerometer X" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true">
+                <input axis="x">acc_time</input>
+                <input axis="y">accX</input>
+            </graph>
+            <graph label="Accelerometer Y" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true">
+                <input axis="x">acc_time</input>
+                <input axis="y">accY</input>
+            </graph>
+            <graph label="Accelerometer Z" labelX="t (s)" labelY="a (m/s²)" partialUpdate="true">
+                <input axis="x">acc_time</input>
+                <input axis="y">accZ</input>
+            </graph>
         </view>
     </views>
     <export>
         <set name="Raw Data">
-            <data name="Time (s)" source="acc_time" />
-            <data name="Acceleration x (m/s^2)" source="accX" />
-            <data name="Acceleration y (m/s^2)" source="accY" />
-            <data name="Acceleration z (m/s^2)" source="accZ" />
+            <data name="Time (s)">acc_time</data>
+            <data name="Acceleration x (m/s^2)">accX"</data>
+            <data name="Acceleration y (m/s^2)">accY</data>
+            <data name="Acceleration z (m/s^2)">accZ</data>
         </set>
     </export>
 </phyphox>
