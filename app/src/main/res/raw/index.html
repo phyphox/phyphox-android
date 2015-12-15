@@ -117,6 +117,8 @@ if(yrange.from==null)yrange.from=yrange.axis.min;if(yrange.to==null)yrange.to=yr
     }
 
     function updateMeasuring(s) {
+        if (measuring != s["measuring"])
+            forceFull = true;
         measuring = s["measuring"];
         timedRun = s["timedRun"];
         countDown = s["countDown"];
@@ -124,13 +126,11 @@ if(yrange.from==null)yrange.from=yrange.axis.min;if(yrange.to==null)yrange.to=yr
             $("#header").addClass("active");
         } else {
             $("#header").removeClass("active");
-            forceFull = true;
         }
         if (countDown != 0) {
             $("#header").addClass("countdown");
         } else {
             $("#header").removeClass("countdown");
-            forceFull = true;
         }
         if (countDown == 0)
             $("#export").text("");

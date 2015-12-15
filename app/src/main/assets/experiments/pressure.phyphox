@@ -12,11 +12,11 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="10000">pressure</container>
-        <container size="10000">p_time</container>
+        <container size="1500">pressure</container>
+        <container size="1500">p_time</container>
     </data-containers>
     <input>
-        <sensor type="pressure">
+        <sensor type="pressure" rate="25">
             <output component="t">p_time</output>
             <output component="x">pressure</output>
         </sensor>

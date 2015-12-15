@@ -14,13 +14,13 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="10000">accX</container>
-        <container size="10000">accY</container>
-        <container size="10000">accZ</container>
-        <container size="10000">acc_time</container>
+        <container size="1500">accX</container>
+        <container size="1500">accY</container>
+        <container size="1500">accZ</container>
+        <container size="1500">acc_time</container>
     </data-containers>
     <input>
-        <sensor type="accelerometer">
+        <sensor type="accelerometer" rate="25">
             <output component="x">accX</output>
             <output component="y">accY</output>
             <output component="z">accZ</output>
