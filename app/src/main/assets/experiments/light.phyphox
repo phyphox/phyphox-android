@@ -14,19 +14,29 @@
             </string>
         </translation>
     </translations>
+    <data-containers>
+        <container size="10000">illum</container>
+        <container size="10000">illum_time</container>
+    </data-containers>
     <input>
-        <sensor type="light" outputX="illum" outputT="illum_time" buffer="10000" />
+        <sensor type="light">
+            <output component="x">illum</output>
+            <output component="t">illum_time</output>
+        </sensor>
     </input>
     <views>
-        <view name="Raw Data">
-            <graph label="Illuminance" inputX="illum_time" inputY="illum" labelX="t (s)" labelY="Ev (lx)" partialUpdate="true" />
+        <view label="Raw Data">
+            <graph label="Illuminance" labelX="t (s)" labelY="Ev (lx)" partialUpdate="true">
+                <input axis="x">illum_time</input>
+                <input axis="y">illum</input>
+            </graph>
             <info label="Note: On some devices the light sensor is only updated when there is a coarse change of illuminance." />
         </view>
     </views>
     <export>
         <set name="Raw Data">
-            <data name="Time (s)" source="illum_time" />
-            <data name="Illuminance (lx)" source="illum" />
+            <data name="Time (s)">illum_time</data>
+            <data name="Illuminance (lx)">illum</data>
         </set>
     </export>
 </phyphox>

@@ -13,22 +13,42 @@
             <string original="Gyroscope Z">Gyroskop Z</string>
         </translation>
     </translations>
+    <data-containers>
+        <container size="10000">gyrX</container>
+        <container size="10000">gyrY</container>
+        <container size="10000">gyrZ</container>
+        <container size="10000">gyr_time</container>
+    </data-containers>
     <input>
-        <sensor type="gyroscope" outputX="gyrX" outputY="gyrY" outputZ="gyrZ" outputT="gyr_time" buffer="10000" />
+        <sensor type="gyroscope">
+            <output component="x">gyrX</output>
+            <output component="y">gyrY</output>
+            <output component="z">gyrZ</output>
+            <output component="t">gyr_time</output>
+        </sensor>
     </input>
     <views>
-        <view name="Raw Data">
-            <graph label="Gyroscope X" inputX="gyr_time" inputY="gyrX" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true" />
-            <graph label="Gyroscope Y" inputX="gyr_time" inputY="gyrY" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true" />
-            <graph label="Gyroscope Z" inputX="gyr_time" inputY="gyrZ" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true" />
+        <view label="Raw Data">
+            <graph label="Gyroscope X" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true">
+                <input axis="x">gyr_time</input>
+                <input axis="y">gyrX</input>
+            </graph>
+            <graph label="Gyroscope Y" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true">
+                <input axis="x">gyr_time</input>
+                <input axis="y">gyrY</input>
+            </graph>
+            <graph label="Gyroscope Z" labelX="t (s)" labelY="w (rad/s)" partialUpdate="true">
+                <input axis="x">gyr_time</input>
+                <input axis="y">gyrZ</input>
+            </graph>
         </view>
     </views>
     <export>
         <set name="Raw Data">
-            <data name="Time (s)" source="gyr_time" />
-            <data name="Gyroscope x (rad/s)" source="gyrX" />
-            <data name="Gyroscope y (rad/s)" source="gyrY" />
-            <data name="Gyroscope z (rad/s)" source="gyrZ" />
+            <data name="Time (s)">gyr_time</data>
+            <data name="Gyroscope x (rad/s)">gyrX</data>
+            <data name="Gyroscope y (rad/s)">gyrY</data>
+            <data name="Gyroscope z (rad/s)">gyrZ</data>
         </set>
     </export>
 </phyphox>

@@ -11,18 +11,28 @@
             <string original="Pressure">Druck</string>
         </translation>
     </translations>
+    <data-containers>
+        <container size="10000">pressure</container>
+        <container size="10000">p_time</container>
+    </data-containers>
     <input>
-        <sensor type="pressure" outputX="pressure" outputT="p_time" buffer="10000" />
+        <sensor type="pressure">
+            <output component="t">p_time</output>
+            <output component="x">pressure</output>
+        </sensor>
     </input>
     <views>
-        <view name="Raw Data">
-            <graph label="Pressure" inputX="p_time" inputY="pressure" labelX="t (s)" labelY="p (hPa)" partialUpdate="true" />
+        <view label="Raw Data">
+            <graph label="Pressure" labelX="t (s)" labelY="p (hPa)" partialUpdate="true">
+                <input axis="x">p_time</input>
+                <input axis="y">pressure</input>
+            </graph>
         </view>
     </views>
     <export>
         <set name="Raw Data">
-            <data name="Time (s)" source="p_time" />
-            <data name="Pressure (hPa)" source="pressure" />
+            <data name="Time (s)">p_time</data>
+            <data name="Pressure (hPa)">pressure</data>
         </set>
     </export>
 </phyphox>

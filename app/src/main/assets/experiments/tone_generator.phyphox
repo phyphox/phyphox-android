@@ -2,22 +2,22 @@
     <title>Tone generator</title>
     <category>Acoustics</category>
     <description>
-Generate a tone of one or two frequencies.
+        Generate a tone of one or two frequencies.
 
-The total signal will be normalized, so the amplitudes describe ratios.
+        The total signal will be normalized, so the amplitudes describe ratios.
 
-Note: This experiments tries to figure out the periodicity of the resulting signal and only calculates a single period. However, if both frequencies are too close or have particularly unharmonic ratios, this period becomes very long. In these cases, the experiment calculates a maximum of 1 second of audio signal (to consider older phones), which may lead to a period clicking sound as the sound loops at a period that does not match the actual signal.
+        Note: This experiments tries to figure out the periodicity of the resulting signal and only calculates a single period. However, if both frequencies are too close or have particularly unharmonic ratios, this period becomes very long. In these cases, the experiment calculates a maximum of 1 second of audio signal (to consider older phones), which may lead to a period clicking sound as the sound loops at a period that does not match the actual signal.
     </description>
     <translations>
         <translation locale="de">
             <title>Tongenerator</title>
             <category>Akustik</category>
             <description>
-Generiert einen Ton aus einer oder zwei Frequenzen.
+                Generiert einen Ton aus einer oder zwei Frequenzen.
 
-Das gesamte Signal wird normalisiert. Die Amplituden beschreiben somit nur ein Verhältnis.
+                Das gesamte Signal wird normalisiert. Die Amplituden beschreiben somit nur ein Verhältnis.
 
-Beachten Sie: Dieses Experiment versucht, die Periodizität des Gesamtsignals zu ermitteln und berechnet nur eine Periode. Sind beide Frequenzen jedoch in einem ungünstigen Verhältnis, so dass die Periode sehr lang wird, berechnet dieses Experiment als maximale Periode eine Sekunde, um den Ablauf auch auf langsameren Smartphones zu ermöglichen. Dies kann zu periodischen Knackgeräuschen führen, wenn die Periode des berechneten Signals nicht mit der Periode des eigentlich gewünschten Signals übereinstimmt.
+                Beachten Sie: Dieses Experiment versucht, die Periodizität des Gesamtsignals zu ermitteln und berechnet nur eine Periode. Sind beide Frequenzen jedoch in einem ungünstigen Verhältnis, so dass die Periode sehr lang wird, berechnet dieses Experiment als maximale Periode eine Sekunde, um den Ablauf auch auf langsameren Smartphones zu ermöglichen. Dies kann zu periodischen Knackgeräuschen führen, wenn die Periode des berechneten Signals nicht mit der Periode des eigentlich gewünschten Signals übereinstimmt.
             </description>
             <string original="Frequency 1">Frequenz 1</string>
             <string original="Frequency 2">Frequenz 2</string>
@@ -26,58 +26,189 @@ Beachten Sie: Dieses Experiment versucht, die Periodizität des Gesamtsignals zu
             <string original="Time (s)">Zeit (s)</string>
         </translation>
     </translations>
-    <input>
-    </input>
+    <data-containers>
+        <container>a1</container>
+        <container>f1</container>
+        <container>a2</container>
+        <container>f2</container>
+
+        <container>basef</container>
+        <container>envf</container>
+        <container>basePeriodSamples</container>
+        <container>envPeriodSamples</container>
+        <container>minBuffer</container>
+
+        <container>temp1</container>
+        <container>temp2</container>
+
+        <container size="48000" static="true">tfull</container>
+        <container size="48000" static="true">i</container>
+        <container size="48000">t</container>
+
+        <container size="48000">signal_temp1</container>
+        <container size="48000">signal_temp2</container>
+        <container size="48000">signal_temp3</container>
+        <container size="48000">signal</container>
+        <container size="48000">signal_normalized</container>
+    </data-containers>
+    <output>
+        <audio loop="true">
+            <input>signal_normalized</input>
+        </audio>
+    </output>
     <views>
-        <view name="Settings">
-            <edit label="Amplitude 1" output="a1" default="1" signed="false" />
-            <edit label="Frequency 1" output="f1" unit="Hz" default="495" signed="false" />
-            <edit label="Amplitude 2" output="a2" default="1" signed="false" />
-            <edit label="Frequency 2" output="f2" unit="Hz" default="505" signed="false" />
-            <value label="Base Frequency" input="basef" unit="Hz" />
-            <value label="Envelope Frequency" input="envf" unit="Hz" />
+        <view label="Settings">
+            <edit label="Amplitude 1" default="1" signed="false">
+                <output>a1</output>
+            </edit>
+            <edit label="Frequency 1" unit="Hz" default="495" signed="false">
+                <output>f1</output>
+            </edit>
+            <edit label="Amplitude 2" default="1" signed="false">
+                <output>a2</output>
+            </edit>
+            <edit label="Frequency 2" unit="Hz" default="505" signed="false">
+                <output>f2</output>
+            </edit>
+            <value label="Base Frequency" unit="Hz">
+                <input>basef</input>
+            </value>
+            <value label="Envelope Frequency" unit="Hz">
+                <input>envf</input>
+            </value>
         </view>
-        <view name="Signal">
-            <graph label="Signal" inputX="t" inputY="signal" labelX="Time (s)" labelY="A (a.u.)" />
+        <view label="Signal">
+            <graph label="Signal" labelX="Time (s)" labelY="A (a.u.)" >
+                <input axis="x">t</input>
+                <input axis="y">signal</input>
+            </graph>
         </view>
     </views>
     <analysis onUserInput="true">
-        <ramp start="0" stop="0.999979167" buffer="48000" output1="tbuffer" static="true" />
-        <ramp start="0" stop="47999" buffer="48000" output1="i" static="true" />
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">0.999979167</input>
+            <output>tfull</output>
+        </ramp>
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">47999</input>
+            <output>i</output>
+        </ramp>
 
-        <add input1="f1" input2="f2" output1="sumf" />
-        <divide input1="sumf" input2="2" output1="basef" />
-        <divide input1="1" input2="basef" output1="basePeriod" />
-        <multiply input1="basePeriod" input2="48000" output1="basePeriodSamples" />
+        <add>
+            <input>f1</input>
+            <input>f2</input>
+            <output>temp1</output>
+        </add>
+        <divide>
+            <input>temp1</input>
+            <input type="value">2</input>
+            <output>basef</output>
+        </divide>
+        <divide>
+            <input type="value">1</input>
+            <input>basef</input>
+            <output>temp1</output>
+        </divide>
+        <multiply>
+            <input>temp1</input>
+            <input type="value">48000</input>
+            <output>basePeriodSamples</output>
+        </multiply>
 
-        <subtract input1="f1" input2="f2" output1="diff" />
-        <divide input1="diff" input2="2" output1="envfsigned" />
-        <abs input1="envfsigned" output1="envf" />
-        <divide input1="1" input2="envf" output1="envPeriod" />
-        <multiply input1="envPeriod" input2="48000" output1="envPeriodSamples" />
+        <subtract>
+            <input>f1</input>
+            <input>f2</input>
+            <output>temp1</output>
+        </subtract>
+        <divide>
+            <input>temp1</input>
+            <input type="value">2</input>
+            <output>temp2</output>
+        </divide>
+        <abs>
+            <input>temp2</input>
+            <output>envf</output>
+        </abs>
+        <divide>
+            <input type="value">1</input>
+            <input>envf</input>
+            <output>temp1</output>
+        </divide>
+        <multiply>
+            <input>temp1</input>
+            <input type="value">48000</input>
+            <output>envPeriodSamples</output>
+        </multiply>
 
-        <lcm input1="basePeriodSamples" input2="envPeriodSamples" output1="minBuffer" />
-        <rangefilter input1="i" input2="tbuffer" max1="minBuffer" output1="icut" output2="t" />
+        <lcm>
+            <input>basePeriodSamples</input>
+            <input>envPeriodSamples</input>
+            <output>minBuffer</output>
+        </lcm>
+        <rangefilter>
+            <input>i</input>
+            <input as="max">minBuffer</input>
+            <input>tfull</input>
+            <output>temp1</output>
+            <output>t</output>
+         </rangefilter>
 
-        <multiply input1="f1" input2="t" input3="6.283185307" output1="arg1" />
-        <multiply input1="f2" input2="t" input3="6.283185307" output1="arg2" />
-        <sin input1="arg1" output1="sin1" />
-        <sin input1="arg2" output1="sin2" />
-        <multiply input1="sin1" input2="a1" output1="sig1" />
-        <multiply input1="sin2" input2="a2" output1="sig2" />
-        <add input1="sig1" input2="sig2" output1="signal" />
-        <max input1="signal" output1="max" />
-        <divide input1="signal" input2="max" output1="signal_normalized" />
+        <multiply>
+            <input>f1</input>
+            <input>t</input>
+            <input type="value">6.283185307</input>
+            <output>signal_temp1</output>
+        </multiply>
+        <sin>
+            <input>signal_temp1</input>
+            <output>signal_temp2</output>
+        </sin>
+        <multiply>
+            <input>signal_temp2</input>
+            <input>a1</input>
+            <output>signal_temp1</output>
+        </multiply>
+
+        <multiply>
+            <input>f2</input>
+            <input>t</input>
+            <input type="value">6.283185307</input>
+            <output>signal_temp2</output>
+        </multiply>
+        <sin>
+            <input>signal_temp2</input>
+            <output>signal_temp3</output>
+        </sin>
+        <multiply>
+            <input>signal_temp3</input>
+            <input>a2</input>
+            <output>signal_temp2</output>
+        </multiply>
+
+        <add>
+            <input>signal_temp1</input>
+            <input>signal_temp2</input>
+            <output>signal</output>
+        </add>
+
+        <max>
+            <input as="y">signal</input>
+            <output as="max">temp1</output>
+        </max>
+        <divide>
+            <input>signal</input>
+            <input>temp1</input>
+            <output>signal_normalized</output>
+        </divide>
     </analysis>
     <export>
         <set name="Signal">
-            <data name="Time (s)" source="t" />
-            <data name="Signal 1" source="sig1" />
-            <data name="Signal 2" source="sig2" />
-            <data name="Signal sum" source="signal" />
+            <data name="Time (s)">t</data>
+            <data name="Signal 1">sig1</data>
+            <data name="Signal 2">sig2</data>
+            <data name="Signal sum">signal</data>
         </set>
     </export>
-    <output>
-        <audio loop="true" input="signal_normalized" rate="48000" buffer="48000" />
-    </output>
 </phyphox>

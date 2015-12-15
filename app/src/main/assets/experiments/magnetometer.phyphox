@@ -10,22 +10,42 @@
             <string original="Raw Data">Rohdaten</string>
         </translation>
     </translations>
+    <data-containers>
+        <container size="10000">mag_time</container>
+        <container size="10000">magX</container>
+        <container size="10000">magY</container>
+        <container size="10000">magZ</container>
+    </data-containers>
     <input>
-        <sensor type="magnetic_field" outputX="magX" outputY="magY" outputZ="magZ" outputT="mag_time" buffer="10000" />
+        <sensor type="magnetic_field">
+            <output component="x">magX</output>
+            <output component="y">magY</output>
+            <output component="z">magZ</output>
+            <output component="t">mag_time</output>
+        </sensor>
     </input>
     <views>
-        <view name="Raw Data">
-            <graph label="Magnetometer X" inputX="mag_time" inputY="magX" labelX="t (s)" labelY="B (µT)" partialUpdate="true" />
-            <graph label="Magnetometer Y" inputX="mag_time" inputY="magY" labelX="t (s)" labelY="B (µT)" partialUpdate="true" />
-            <graph label="Magnetometer Z" inputX="mag_time" inputY="magZ" labelX="t (s)" labelY="B (µT)" partialUpdate="true" />
+        <view label="Raw Data">
+            <graph label="Magnetometer X" labelX="t (s)" labelY="B (µT)" partialUpdate="true">
+                <input axis="x">mag_time</input>
+                <input axis="y">magX</input>
+            </graph>
+            <graph label="Magnetometer Y" labelX="t (s)" labelY="B (µT)" partialUpdate="true">
+                <input axis="x">mag_time</input>
+                <input axis="y">magY</input>
+            </graph>
+            <graph label="Magnetometer Z" labelX="t (s)" labelY="B (µT)" partialUpdate="true">
+                <input axis="x">mag_time</input>
+                <input axis="y">magZ</input>
+            </graph>
         </view>
     </views>
     <export>
         <set name="Raw Data">
-            <data name="Time (s)" source="mag_time" />
-            <data name="Magnetic Field x (µT)" source="magX" />
-            <data name="Magnetic Field y (µT)" source="magY" />
-            <data name="Magnetic Field z (µT)" source="magZ" />
+            <data name="Time (s)">mag_time</data>
+            <data name="Magnetic Field x (µT)">magX</data>
+            <data name="Magnetic Field y (µT)">magY</data>
+            <data name="Magnetic Field z (µT)">magZ</data>
         </set>
     </export>
 </phyphox>

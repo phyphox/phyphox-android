@@ -787,60 +787,96 @@ public class ExperimentList extends AppCompatActivity {
                     output.write("<category>Raw Sensors</category>".getBytes());
                     output.write("<description>Get raw data from selected sensors.</description>".getBytes());
 
+                    //Buffers for all sensors
+                    output.write("<data-containers>".getBytes());
+                    if (acc) {
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">acc_time</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">accX</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">accY</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">accZ</container>").getBytes());
+                    }
+                    if (gyr) {
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyr_time</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyrX</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyrY</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyrZ</container>").getBytes());
+                    }
+                    if (light) {
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">light_time</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">light</container>").getBytes());
+                    }
+                    if (lin) {
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">lin_time</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">linX</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">linY</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">linZ</container>").getBytes());
+                    }
+                    if (mag) {
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">mag_time</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">magX</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">magY</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">magZ</container>").getBytes());
+                    }
+                    if (pressure) {
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">pressure_time</container>").getBytes());
+                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">pressure</container>").getBytes());
+                    }
+                    output.write("</data-containers>".getBytes());
+
                     //Inputs for each sensor
                     output.write("<input>".getBytes());
                     if (acc)
-                        output.write(("<sensor type=\"accelerometer\" outputX=\"accX\" outputY=\"accY\" outputZ=\"accZ\" outputT=\"acc_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                        output.write(("<sensor type=\"accelerometer\" rate=\"" + rate + "\" ><output component=\"x\">accX</output><output component=\"y\">accY</output><output component=\"z\">accZ</output><output component=\"t\">acc_time</output></sensor>").getBytes());
                     if (gyr)
-                        output.write(("<sensor type=\"gyroscope\" outputX=\"gyrX\" outputY=\"gyrY\" outputZ=\"gyrZ\" outputT=\"gyr_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                        output.write(("<sensor type=\"gyroscope\" rate=\"" + rate + "\" ><output component=\"x\">gyrX</output><output component=\"y\">gyrY</output><output component=\"z\">gyrZ</output><output component=\"t\">gyr_time</output></sensor>").getBytes());
                     if (light)
-                        output.write(("<sensor type=\"light\" outputX=\"light\" outputT=\"light_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                        output.write(("<sensor type=\"light\" rate=\"" + rate + "\" ><output component=\"x\">light</output><output component=\"t\">light_time</output></sensor>").getBytes());
                     if (lin)
-                        output.write(("<sensor type=\"linear_acceleration\" outputX=\"linX\" outputY=\"linY\" outputZ=\"linZ\" outputT=\"lin_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                        output.write(("<sensor type=\"linear_acceleration\" rate=\"" + rate + "\" ><output component=\"x\">linX</output><output component=\"y\">linY</output><output component=\"z\">linZ</output><output component=\"t\">lin_time</output></sensor>").getBytes());
                     if (mag)
-                        output.write(("<sensor type=\"magnetic_field\" outputX=\"magX\" outputY=\"magY\" outputZ=\"magZ\" outputT=\"mag_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                        output.write(("<sensor type=\"magnetic_field\" rate=\"" + rate + "\" ><output component=\"x\">magX</output><output component=\"y\">magY</output><output component=\"z\">magZ</output><output component=\"t\">mag_time</output></sensor>").getBytes());
                     if (pressure)
-                        output.write(("<sensor type=\"pressure\" outputX=\"pressure\" outputT=\"pressure_time\" buffer=\"" + String.valueOf(bufferSize) + "\" rate=\"" + rate + "\" />").getBytes());
+                        output.write(("<sensor type=\"pressure\" rate=\"" + rate + "\" ><output component=\"x\">pressure</output><output component=\"t\">pressure_time</output></sensor>").getBytes());
                     output.write("</input>".getBytes());
 
                     //Views for each sensor
                     output.write("<views>".getBytes());
                     if (acc) {
-                        output.write("<view name=\"Accelerometer\">".getBytes());
-                        output.write(("<graph label=\"Acceleration X\" inputX=\"acc_time\" inputY=\"accX\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Acceleration Y\" inputX=\"acc_time\" inputY=\"accY\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Acceleration Z\" inputX=\"acc_time\" inputY=\"accZ\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                        output.write("<view label=\"Accelerometer\">".getBytes());
+                        output.write(("<graph label=\"Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (gyr) {
-                        output.write("<view name=\"Gyroscope\">".getBytes());
-                        output.write(("<graph label=\"Gyroscope X\" inputX=\"gyr_time\" inputY=\"gyrX\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Gyroscope Y\" inputX=\"gyr_time\" inputY=\"gyrY\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Gyroscope Z\" inputX=\"gyr_time\" inputY=\"gyrZ\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\" />").getBytes());
+                        output.write("<view label=\"Gyroscope\">".getBytes());
+                        output.write(("<graph label=\"Gyroscope X\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Gyroscope Y\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Gyroscope Z\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (light) {
-                        output.write("<view name=\"Light\">".getBytes());
-                        output.write(("<graph label=\"Illuminance\" inputX=\"light_time\" inputY=\"light\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\" />").getBytes());
+                        output.write("<view label=\"Light\">".getBytes());
+                        output.write(("<graph label=\"Illuminance\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\"><input axis=\"x\">light_time</input><input axis=\"y\">light</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (lin) {
-                        output.write("<view name=\"Linear Acceleration\">".getBytes());
-                        output.write(("<graph label=\"Linear Acceleration X\" inputX=\"lin_time\" inputY=\"linX\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Y\" inputX=\"lin_time\" inputY=\"linY\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Z\" inputX=\"lin_time\" inputY=\"linZ\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\" />").getBytes());
+                        output.write("<view label=\"Linear Acceleration\">".getBytes());
+                        output.write(("<graph label=\"Linear Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Linear Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Linear Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (mag) {
-                        output.write("<view name=\"Magnetometer\">".getBytes());
-                        output.write(("<graph label=\"Magnetic field X\" inputX=\"mag_time\" inputY=\"magX\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Magnetic field Y\" inputX=\"mag_time\" inputY=\"magY\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\" />").getBytes());
-                        output.write(("<graph label=\"Magnetic field Z\" inputX=\"mag_time\" inputY=\"magZ\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\" />").getBytes());
+                        output.write("<view label=\"Magnetometer\">".getBytes());
+                        output.write(("<graph label=\"Magnetic field X\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Magnetic field Y\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Magnetic field Z\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (pressure) {
-                        output.write("<view name=\"Pressure\">".getBytes());
-                        output.write(("<graph label=\"Pressure\" inputX=\"pressure_time\" inputY=\"pressure\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\" />").getBytes());
+                        output.write("<view label=\"Pressure\">".getBytes());
+                        output.write(("<graph label=\"Pressure\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\"><input axis=\"x\">pressure_time</input><input axis=\"y\">pressure</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     output.write("</views>".getBytes());
@@ -849,46 +885,46 @@ public class ExperimentList extends AppCompatActivity {
                     output.write("<export>".getBytes());
                     if (acc) {
                         output.write("<set name=\"Accelerometer\">".getBytes());
-                        output.write("<data name=\"Time (s)\" source=\"acc_time\" />".getBytes());
-                        output.write("<data name=\"Acceleration x (m/s^2)\" source=\"accX\" />".getBytes());
-                        output.write("<data name=\"Acceleration y (m/s^2)\" source=\"accY\" />".getBytes());
-                        output.write("<data name=\"Acceleration z (m/s^2)\" source=\"accZ\" />".getBytes());
+                        output.write("<data name=\"Time (s)\">acc_time</data>".getBytes());
+                        output.write("<data name=\"Acceleration x (m/s^2)\">accX</data>".getBytes());
+                        output.write("<data name=\"Acceleration y (m/s^2)\">accY</data>".getBytes());
+                        output.write("<data name=\"Acceleration z (m/s^2)\">accZ</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
                     if (gyr) {
                         output.write("<set name=\"Gyroscope\">".getBytes());
-                        output.write("<data name=\"Time (s)\" source=\"gyr_time\" />".getBytes());
-                        output.write("<data name=\"Gyroscope x (rad/s)\" source=\"gyrX\" />".getBytes());
-                        output.write("<data name=\"Gyroscope y (rad/s)\" source=\"gyrY\" />".getBytes());
-                        output.write("<data name=\"Gyroscope z (rad/s)\" source=\"gyrZ\" />".getBytes());
+                        output.write("<data name=\"Time (s)\">gyr_time</data>".getBytes());
+                        output.write("<data name=\"Gyroscope x (rad/s)\">gyrX</data>".getBytes());
+                        output.write("<data name=\"Gyroscope y (rad/s)\">gyrY</data>".getBytes());
+                        output.write("<data name=\"Gyroscope z (rad/s)\">gyrZ</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
                     if (light) {
                         output.write("<set name=\"Light\">".getBytes());
-                        output.write("<data name=\"Time (s)\" source=\"light_time\" />".getBytes());
-                        output.write("<data name=\"Illuminance (lx)\" source=\"light\" />".getBytes());
+                        output.write("<data name=\"Time (s)\">light_time</data>".getBytes());
+                        output.write("<data name=\"Illuminance (lx)\">light</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
                     if (lin) {
                         output.write("<set name=\"Linear Acceleration\">".getBytes());
-                        output.write("<data name=\"Time (s)\" source=\"lin_time\" />".getBytes());
-                        output.write("<data name=\"Linear Acceleration x (m/s^2)\" source=\"linX\" />".getBytes());
-                        output.write("<data name=\"Linear Acceleration y (m/s^2)\" source=\"linY\" />".getBytes());
-                        output.write("<data name=\"Linear Acceleration z (m/s^2)\" source=\"linZ\" />".getBytes());
+                        output.write("<data name=\"Time (s)\">lin_time</data>".getBytes());
+                        output.write("<data name=\"Linear Acceleration x (m/s^2)\">linX</data>".getBytes());
+                        output.write("<data name=\"Linear Acceleration y (m/s^2)\">linY</data>".getBytes());
+                        output.write("<data name=\"Linear Acceleration z (m/s^2)\">linZ</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
                     if (mag) {
                         output.write("<set name=\"Magnetometer\">".getBytes());
-                        output.write("<data name=\"Time (s)\" source=\"mag_time\" />".getBytes());
-                        output.write("<data name=\"Magnetic field x (µT)\" source=\"magX\" />".getBytes());
-                        output.write("<data name=\"Magnetic field y (µT)\" source=\"magY\" />".getBytes());
-                        output.write("<data name=\"Magnetic field z (µT)\" source=\"magZ\" />".getBytes());
+                        output.write("<data name=\"Time (s)\">mag_time</data>".getBytes());
+                        output.write("<data name=\"Magnetic field x (µT)\">magX</data>".getBytes());
+                        output.write("<data name=\"Magnetic field y (µT)\">magY</data>".getBytes());
+                        output.write("<data name=\"Magnetic field z (µT)\">magZ</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
                     if (pressure) {
                         output.write("<set name=\"Pressure\">".getBytes());
-                        output.write("<data name=\"Time (s)\" source=\"pressure_time\" />".getBytes());
-                        output.write("<data name=\"Pressure (hPa)\" source=\"pressure\" />".getBytes());
+                        output.write("<data name=\"Time (s)\">pressure_time</data>".getBytes());
+                        output.write("<data name=\"Pressure (hPa)\">pressure</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
                     output.write("</export>".getBytes());

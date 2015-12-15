@@ -505,8 +505,12 @@ public class Analysis {
 
             //Just get the first value and append it to each buffer
             for (int i = 0; i < outputs.size(); i++) {
-                if (its.get(i) != null && outputs.size() > i && outputs.get(i) != null)
-                    outputs.get(i).append((double)its.get(i).next());
+                if (outputs.size() > i && outputs.get(i) != null) {
+                    if (its.get(i).hasNext())
+                        outputs.get(i).append((double) its.get(i).next());
+                    else
+                        outputs.get(i).append(Double.NaN);
+                }
             }
 
         }
@@ -530,7 +534,10 @@ public class Analysis {
             //Get iterators, values do not make sense here.
             Vector<Iterator> its = new Vector<>();
             for (int i = 0; i < 2; i++) {
-                its.add(inputs.get(i).getIterator());
+                if (inputs.get(i) != null)
+                    its.add(inputs.get(i).getIterator());
+                else
+                    its.add(null);
             }
 
             double max = Double.NEGATIVE_INFINITY; //This will hold the maximum value

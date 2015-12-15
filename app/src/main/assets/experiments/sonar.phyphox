@@ -2,44 +2,44 @@
     <title>Sonar</title>
     <category>Acoustics</category>
     <description>
-Measure distances through echos and the speed of sound.
+        Measure distances through echos and the speed of sound.
 
-A sonar sends bursts of short sounds, which get reflected by the object you want to measure. As sound travels at a speed of approximately 340 m/s, the time until the reflection reaches the microphone of your phone can be used to calculate the distance of this object.
+        A sonar sends bursts of short sounds, which get reflected by the object you want to measure. As sound travels at a speed of approximately 340 m/s, the time until the reflection reaches the microphone of your phone can be used to calculate the distance of this object.
 
-This experiments generates a &quot;chirp&quot;, sends it out through the speaker and starts a recording. A crosscorrelation of the chirp and the recorded data gives information about the timing at which echoes occur. This timing can then be multiplied with the speed of sound (and divided by 2 as the sound has to travel forth and back) and you get the distance at which the echo originated.
+        This experiments generates a &quot;chirp&quot;, sends it out through the speaker and starts a recording. A crosscorrelation of the chirp and the recorded data gives information about the timing at which echoes occur. This timing can then be multiplied with the speed of sound (and divided by 2 as the sound has to travel forth and back) and you get the distance at which the echo originated.
 
-However, there are a few problems to this simple idea, that you have to consider:
+        However, there are a few problems to this simple idea, that you have to consider:
 
-1. Your phone may have an unfortunate layout for this kind of measurement.
-In the best case the speaker and the microphone are aligned into the same direction. But the designers of your phone obviously place the microphone near your mouth and a speaker close to your ear or even an additional speaker on the back (for ringtones and music playback). Therefore the reflection of any sound may not reach the microphone directly.
+        1. Your phone may have an unfortunate layout for this kind of measurement.
+        In the best case the speaker and the microphone are aligned into the same direction. But the designers of your phone obviously place the microphone near your mouth and a speaker close to your ear or even an additional speaker on the back (for ringtones and music playback). Therefore the reflection of any sound may not reach the microphone directly.
 
-2. Some objects absorb the sound instead of reflecting it.
-It is hard to measure the distance to any &quot;soft&quot; objects like a sofa or human beings. Instead measure the distance to hard surfaces like stone walls or windows.
+        2. Some objects absorb the sound instead of reflecting it.
+        It is hard to measure the distance to any &quot;soft&quot; objects like a sofa or human beings. Instead measure the distance to hard surfaces like stone walls or windows.
 
-3. You get reflections by many objects.
-Sound usually travels in every direction. For a sonar this means, that when targeting a wall, you also get reflections from the floor, the ceiling, another wall nearby, a post and simply from every suitable &quot;hard&quot; surface nearby. Therefore this sonar gives you all the reflections and it is up to you to interpret the result and to figure out, which reflection corresponds to the target you intended to measure. So start with a small hard target and try to screen all other directions with some foam material.
+        3. You get reflections by many objects.
+        Sound usually travels in every direction. For a sonar this means, that when targeting a wall, you also get reflections from the floor, the ceiling, another wall nearby, a post and simply from every suitable &quot;hard&quot; surface nearby. Therefore this sonar gives you all the reflections and it is up to you to interpret the result and to figure out, which reflection corresponds to the target you intended to measure. So start with a small hard target and try to screen all other directions with some foam material.
     </description>
     <translations>
         <translation locale="de">
             <title>Sonar</title>
             <category>Akustik</category>
             <description>
-Misst Entfernungen mithilfe von Echos und der Schallgeschwindigkeit.
+                Misst Entfernungen mithilfe von Echos und der Schallgeschwindigkeit.
 
-Ein Sonar sendet kurze Schallimpulse, welche von den Objekten reflektiert werden, deren Entfernung gemessen werden soll. Da sich Schall mit einer Geschwindigkeit von etwa 340 m/s ausbreitet, kann die Dauer bis die Echos das Mikrofon des Smartphones erreichen in eine Entfernung umgerechnet werden.
+                Ein Sonar sendet kurze Schallimpulse, welche von den Objekten reflektiert werden, deren Entfernung gemessen werden soll. Da sich Schall mit einer Geschwindigkeit von etwa 340 m/s ausbreitet, kann die Dauer bis die Echos das Mikrofon des Smartphones erreichen in eine Entfernung umgerechnet werden.
 
-Dieses Experiment erzeugt ein sogenanntes &quot;chirp&quot; (englisch für Gezwitscher), gibt es durch den Lautsprecher aus und startet eine Aufnahme über das Mikrofon. Eine Kreuzkorrelation des Chirps mit dem aufgenommenen Signal gibt Hinweise darauf, zu welchen Zeiten Echos das Mikrofon erreichen. Diese Zeiten werden mit der Schallgeschwindigkeit multipliziert und durch 2 geteilt (das Signal muss zum Objekt und wieder zurück), so dass man die Entfernung zur Quelle des Echos erhält.
+                Dieses Experiment erzeugt ein sogenanntes &quot;chirp&quot; (englisch für Gezwitscher), gibt es durch den Lautsprecher aus und startet eine Aufnahme über das Mikrofon. Eine Kreuzkorrelation des Chirps mit dem aufgenommenen Signal gibt Hinweise darauf, zu welchen Zeiten Echos das Mikrofon erreichen. Diese Zeiten werden mit der Schallgeschwindigkeit multipliziert und durch 2 geteilt (das Signal muss zum Objekt und wieder zurück), so dass man die Entfernung zur Quelle des Echos erhält.
 
-Hierbei müssen allerdings ein paar Dinge beachtet werden:
+                Hierbei müssen allerdings ein paar Dinge beachtet werden:
 
-1. Ihr Smartphone kann eine unvorteilhafte Anordnung von Lautsprecher und Mikrofon haben.
-Im Idealfall sind Mikrofon und Lautsprecher in die gleiche Richtung ausgerichtet. Offensichtlich entwürft man Smartphones aber so, dass der Lautsprecher beim Telefonieren am Ohr und das Mikrofon in der Nähe des Mundes ist. Meistens wird der Ton auch über einen zweiten Lautsprecher auf der Rückseite ausgegeben, der Klingeltöne möglichst laut und ungerichtet ausgeben soll.
+                1. Ihr Smartphone kann eine unvorteilhafte Anordnung von Lautsprecher und Mikrofon haben.
+                Im Idealfall sind Mikrofon und Lautsprecher in die gleiche Richtung ausgerichtet. Offensichtlich entwürft man Smartphones aber so, dass der Lautsprecher beim Telefonieren am Ohr und das Mikrofon in der Nähe des Mundes ist. Meistens wird der Ton auch über einen zweiten Lautsprecher auf der Rückseite ausgegeben, der Klingeltöne möglichst laut und ungerichtet ausgeben soll.
 
-2. Manche Objekte absorbieren Schall statt ihn zu reflektieren.
-Es ist schwer möglich, die Entfernung zu &quot;weichen&quot; Objekten wie beispielsweise einem Menschen oder einem Sofa zu messen. Statt dessen sollten Sie es mit harten Objekten wie einer Steinwand oder einem Fenster versuchen.
+                2. Manche Objekte absorbieren Schall statt ihn zu reflektieren.
+                Es ist schwer möglich, die Entfernung zu &quot;weichen&quot; Objekten wie beispielsweise einem Menschen oder einem Sofa zu messen. Statt dessen sollten Sie es mit harten Objekten wie einer Steinwand oder einem Fenster versuchen.
 
-3. Man erhält Echos von vielen Objekten.
-Schall breitet sich in der Regel ungerichtet aus. Für das Sonar bedeutet dies, dass Sie beim Versuch eine Wand zu messen auch Echos vom Boden, von der Decke, einer weiteren Wand in der Nähe, einem Pfosten und generell von jeder harten Oberfläche in Ihrer Umgebung erhalten. Das Ergebnis kann daher sehr schwer zu interpretieren sein und die Überlagerung kann die Messung unbrauchbar machen. Es empfielt sich daher, mit einem kleinen harten Zielobjekt zu beginnen und alle anderen Richtungen mit Schaumstoff abzuschirmen.
+                3. Man erhält Echos von vielen Objekten.
+                Schall breitet sich in der Regel ungerichtet aus. Für das Sonar bedeutet dies, dass Sie beim Versuch eine Wand zu messen auch Echos vom Boden, von der Decke, einer weiteren Wand in der Nähe, einem Pfosten und generell von jeder harten Oberfläche in Ihrer Umgebung erhalten. Das Ergebnis kann daher sehr schwer zu interpretieren sein und die Überlagerung kann die Messung unbrauchbar machen. Es empfielt sich daher, mit einem kleinen harten Zielobjekt zu beginnen und alle anderen Richtungen mit Schaumstoff abzuschirmen.
             </description>
             <string original="Speed of Sound">Schallgeschw.</string>
             <string original="Echo location">Entfernung der Echos</string>
@@ -49,55 +49,183 @@ Schall breitet sich in der Regel ungerichtet aus. Für das Sonar bedeutet dies, 
             <string original="Recording">Aufnahme</string>
         </translation>
     </translations>
+
+    <data-containers>
+        <container size="12000">recording</container>
+        <container size="12000" static="true">recording_t</container>
+
+        <container>speedofsound</container>
+
+        <container size="240" static="true">chirp_t</container>
+        <container size="240" static="true">chirp_f</container>
+        <container size="240" static="true">chirp_temp1</container>
+        <container size="240" static="true">chirp_temp2</container>
+        <container size="240" static="true">chirp</container>
+        <container size="240" static="true">weighted_chirp</container>
+
+        <container size="11760" static="true">crosscorrelation_t</container>
+        <container size="11760" static="true">crosscorrelation</container>
+        <container size="11760" static="true">ccTemp</container>
+
+        <container>t0</container>
+        <container>t1</container>
+        <container>t2</container>
+
+        <container size="1200">cut_t</container>
+        <container size="1200">relative_cc</container>
+        <container size="1200">relative_t</container>
+        <container size="1200">distance</container>
+    </data-containers>
+
     <input>
-        <audio output="recording" rate="48000" buffer="12000" />
+        <audio>
+            <output>recording</output>
+        </audio>
     </input>
+    <output>
+        <audio>
+            <input>weighted_chirp</input>
+        </audio>
+    </output>
     <views>
-        <view name="Chirp">
-            <edit label="Speed of Sound" output="speedofsound" unit="m/s" default="343" />
-            <graph label="Echo location" history="5" inputX="distance" inputY="relative_ccsmooth" labelX="distance (cm)" labelY="A (a.u.)" />
-            <graph label="Chirp" inputX="chirp_t" inputY="wchirp" labelX="Time (s)" labelY="A (a.u.)" />
+        <view label="Chirp">
+            <edit label="Speed of Sound" unit="m/s" default="343">
+                <output>speedofsound</output>
+            </edit>
+            <graph label="Echo location" history="5" labelX="distance (cm)" labelY="A (a.u.)">
+                <input axis="x">distance</input>
+                <input axis="y">relative_cc</input>
+            </graph>
+            <graph label="Chirp" labelX="Time (s)" labelY="A (a.u.)">
+                <input axis="x">chirp_t</input>
+                <input axis="y">weighted_chirp</input>
+            </graph>
         </view>
-        <view name="Raw Data">
-            <graph label="Recording" inputX="recording_t" inputY="recording" labelX="Time (s)" labelY="A (a.u.)" />
+        <view label="Raw Data">
+            <graph label="Recording" labelX="Time (s)" labelY="A (a.u.)">
+                <input axis="x">recording_t</input>
+                <input axis="y">recording</input>
+            </graph>
         </view>
     </views>
-    <analysis period="0.25">
-        <ramp start="0" stop="0.25" buffer="12000" output1="recording_t" static="true" />
-        <ramp start="0" stop="0.005" buffer="240" output1="chirp_t" static="true" />
-        <ramp start="1000" stop="4000" buffer="240" output1="chirp_f" static="true" />
-        <ramp start="0" stop="0.245" buffer="11760" output1="cc_t" static="true" />
-        <ramp start="0" stop="3.14159" buffer="240" output1="chirp_weight_base" static="true" />
-        <sin input1="chirp_weight_base" output1="chirp_weight_sin" static="true" />
-        <power input1="chirp_weight_sin" input2="0.25" output1="chirp_weight" static="true" />
-        <multiply input1="chirp_f" input2="chirp_t" input3="6.283185307" output1="chirp_arg" static="true" />
-        <sin input1="chirp_arg" output1="chirp" static="true" />
-        <multiply input1="chirp" input2="chirp_weight" output1="wchirp" static="true" />
-        <crosscorrelation input1="recording" input2="wchirp" output1="crosscorrelation" />
-        <multiply input1="crosscorrelation" input2="crosscorrelation" input3="1e10" output1="ccsquare" />
-        <gausssmooth input1="ccsquare" output1="ccsmooth" sigma="3" />
-        <max input1="ccsmooth" input2="cc_t" output1="ccmax" output2="t0" />
-        <add input1="t0" input2="0.002" output1="t1" />
-        <add input1="t0" input2="0.025" output1="t2" />
-        <rangefilter input1="cc_t" input2="ccsmooth" min1="t1" max1="t2" output1="cut_t" output2="relative_ccsmooth" />
-        <subtract input1="cut_t" input2="t0" output1="relative_t" />
-        <multiply input1="relative_t" input2="speedofsound" input3="50" output1="distance" />
+    <analysis sleep="0.25">
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">0.25</input>
+            <output>recording_t</output>
+        </ramp>
+
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">0.005</input>
+            <output>chirp_t</output>
+        </ramp>
+        <ramp>
+            <input as="start" type="value">1000</input>
+            <input as="stop" type="value">4000</input>
+            <output>chirp_f</output>
+        </ramp>
+
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">3.14159</input>
+            <output>chirp_temp1</output>
+        </ramp>
+
+        <sin>
+            <input>chirp_temp1</input>
+            <output>chirp_temp2</output>
+        </sin>
+        <power>
+            <input as="base">chirp_temp2</input>
+            <input as="exponent" type="value">0.25</input>
+            <output>chirp_temp1</output>
+        </power>
+        <multiply>
+            <input>chirp_f</input>
+            <input>chirp_t</input>
+            <input type="value">6.283185307</input>
+            <output>chirp_temp2</output>
+        </multiply>
+        <sin>
+            <input>chirp_temp2</input>
+            <output>chirp</output>
+        </sin>
+        <multiply>
+            <input>chirp</input>
+            <input>chirp_temp1</input>
+            <output>weighted_chirp</output>
+        </multiply>
+
+        <crosscorrelation>
+            <input>recording</input>
+            <input>weighted_chirp</input>
+            <output>crosscorrelation</output>
+        </crosscorrelation>
+
+        <ramp>
+            <input as="start" type="value">0</input>
+            <input as="stop" type="value">0.245</input>
+            <output>crosscorrelation_t</output>
+        </ramp>
+
+        <multiply>
+            <input>crosscorrelation</input>
+            <input>crosscorrelation</input>
+            <input type="value">1e10</input>
+            <output>ccTemp</output>
+        </multiply>
+        <gausssmooth sigma="3">
+            <input>ccTemp</input>
+            <output>crosscorrelation</output>
+        </gausssmooth>
+        <max>
+            <input as="y">crosscorrelation</input>
+            <input as="x">crosscorrelation_t</input>
+            <output as="position">t0</output>
+        </max>
+        <add>
+            <input>t0</input>
+            <input type="value">0.002</input>
+            <output>t1</output>
+        </add>
+        <add>
+            <input>t0</input>
+            <input type="value">0.025</input>
+            <output>t2</output>
+        </add>
+        <rangefilter>
+            <input>crosscorrelation_t</input>
+            <input as="min">t1</input>
+            <input as="max">t2</input>
+            <input>crosscorrelation</input>
+            <output>cut_t</output>
+            <output>relative_cc</output>
+        </rangefilter>
+        <subtract>
+            <input>cut_t</input>
+            <input>t0</input>
+            <output>relative_t</output>
+        </subtract>
+        <multiply>
+            <input>relative_t</input>
+            <input>speedofsound</input>
+            <input type="value">50</input>
+            <output>distance</output>
+        </multiply>
     </analysis>
     <export>
         <set name="Echo location">
-            <data name="Distance (cm)" source="distance" />
-            <data name="Crosscorrelation (a.u.)" source="relative_ccsmooth" />
+            <data name="Distance (cm)">distance</data>
+            <data name="Crosscorrelation (a.u.)">crosscorrelation</data>
         </set>
         <set name="Chirp">
-            <data name="Time (s)" source="chirp_t" />
-            <data name="Amplitude (a.u.)" source="wchirp" />
+            <data name="Time (s)">chirp_t</data>
+            <data name="Amplitude (a.u.)" >weighted_chirp</data>
         </set>
         <set name="Recording">
-            <data name="Time (s)" source="recording_t" />
-            <data name="Amplitude (a.u.)" source="recording" />
+            <data name="Time (s)">recording_t</data>
+            <data name="Amplitude (a.u.)">recording</data>
         </set>
     </export>
-    <output>
-        <audio input="wchirp" rate="48000" buffer="240" />
-    </output>
 </phyphox>
