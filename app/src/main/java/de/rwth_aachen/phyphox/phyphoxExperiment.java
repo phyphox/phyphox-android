@@ -119,14 +119,16 @@ public class phyphoxExperiment {
         if (audioRecord != null) {
             dataBuffer recording = getBuffer(micOutput);
             final int readBufferSize = recording.size; //The dataBuffer for the recording
-            dataLock.lock();
-            try {
-                short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
-                recording.clear(); //We only want fresh data
-                int bytesRead = audioRecord.read(buffer, 0, recording.size);
-                recording.append(buffer, bytesRead);
-            } finally {
-                dataLock.unlock();
+            short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
+            int bytesRead = audioRecord.read(buffer, 0, recording.size);
+            if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
+                dataLock.lock();
+                try {
+                    recording.clear(); //We only want fresh data
+                    recording.append(buffer, bytesRead);
+                } finally {
+                    dataLock.unlock();
+                }
             }
         }
 

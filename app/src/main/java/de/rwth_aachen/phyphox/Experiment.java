@@ -646,7 +646,7 @@ public class Experiment extends AppCompatActivity {
                     }
                 }
                 try {
-                    Thread.sleep(40);
+                    Thread.sleep(10);
                 } catch (Exception e) {
                     Log.w("updateData", "Sleep interrupted");
                 }

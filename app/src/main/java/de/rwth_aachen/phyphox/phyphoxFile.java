@@ -666,13 +666,14 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
 
                     int size = getIntAttribute("size",1);
+                    boolean isStatic = getBooleanAttribute("static", false);
 
                     String name = getText();
                     if (!isValidIdentifier(name))
                         throw new phyphoxFileException("\"" + name + "\" is not a valid name for a data-container.", xpp.getLineNumber());
 
                     dataBuffer newBuffer = experiment.createBuffer(name, size);
-                    newBuffer.setStatic(getBooleanAttribute("static", false));
+                    newBuffer.setStatic(isStatic);
                     break;
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());

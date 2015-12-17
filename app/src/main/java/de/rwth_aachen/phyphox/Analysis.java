@@ -36,6 +36,15 @@ public class Analysis {
         //Wrapper to update the module only if it is not static or has never been executed
         protected void updateIfNotStatic() {
             if (!(isStatic && executed)) {
+                boolean inputsReady = true;
+                for (int i = 0; i < inputs.size(); i++) {
+                    if (inputs.get(i) != null && inputs.get(i).getFilledSize() == 0) {
+                        inputsReady = false;
+                        break;
+                    }
+                }
+                if (!inputsReady)
+                    return;
                 update();
                 executed = true;
             }

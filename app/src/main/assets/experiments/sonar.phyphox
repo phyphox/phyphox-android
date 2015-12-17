@@ -63,9 +63,9 @@
         <container size="240" static="true">chirp</container>
         <container size="240" static="true">weighted_chirp</container>
 
-        <container size="11760" static="true">crosscorrelation_t</container>
-        <container size="11760" static="true">crosscorrelation</container>
-        <container size="11760" static="true">ccTemp</container>
+        <container size="11760">crosscorrelation_t</container>
+        <container size="11760">crosscorrelation</container>
+        <container size="11760">ccTemp</container>
 
         <container>t0</container>
         <container>t1</container>
@@ -75,6 +75,8 @@
         <container size="1200">relative_cc</container>
         <container size="1200">relative_t</container>
         <container size="1200">distance</container>
+        <container size="1200" static="true">first_cc</container>
+        <container size="1200">diff_cc</container>
     </data-containers>
 
     <input>
@@ -88,7 +90,7 @@
         </audio>
     </output>
     <views>
-        <view label="Chirp">
+        <view label="Echo location">
             <edit label="Speed of Sound" unit="m/s" default="343">
                 <output>speedofsound</output>
             </edit>
@@ -96,6 +98,8 @@
                 <input axis="x">distance</input>
                 <input axis="y">relative_cc</input>
             </graph>
+        </view>
+        <view label="Chirp">
             <graph label="Chirp" labelX="Time (s)" labelY="A (a.u.)">
                 <input axis="x">chirp_t</input>
                 <input axis="y">weighted_chirp</input>
@@ -108,7 +112,7 @@
             </graph>
         </view>
     </views>
-    <analysis sleep="0.25">
+    <analysis sleep="0.2">
         <ramp>
             <input as="start" type="value">0</input>
             <input as="stop" type="value">0.25</input>
@@ -213,6 +217,17 @@
             <input type="value">50</input>
             <output>distance</output>
         </multiply>
+
+        <append>
+            <input>relative_cc</input>
+            <output>first_cc</output>
+        </append>
+
+        <subtract>
+            <input>relative_cc</input>
+            <input>first_cc</input>
+            <output>diff_cc</output>
+        </subtract>
     </analysis>
     <export>
         <set name="Echo location">
