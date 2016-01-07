@@ -27,7 +27,7 @@ function phyphoxXMLBuilder() {
         var properties = Object.getOwnPropertyNames(this);
         var results = Object();
         for (var i = 0; i < properties.length; i++) {
-            if (typeof this[properties[i]].prototype.getModuleType !== "undefined" && this[properties[i]].prototype.getModuleType() === "input") {
+            if (typeof this[properties[i]].prototype.getModuleType !== "undefined" && this[properties[i]].prototype.getModuleType() === type) {
                 instance = (new this[properties[i]]);
                 if (typeof instance.getType() !== "undefined")
                     results[properties[i]] = instance.getType();
@@ -294,6 +294,14 @@ function phyphoxXMLBuilder() {
         var inputKey;
     }
 
+    this.outputModule.prototype.getModuleType = function () {
+        return "output";
+    }
+
+    this.outputModule.prototype.getType = function () {
+        return this.type;
+    }
+
     this.outputModule.prototype.generateXML = function () {
         var code = indent(2) + "<" + this.type;
         for (var i = 0; i < this.properties.length; i++) {
@@ -340,6 +348,14 @@ function phyphoxXMLBuilder() {
         var properties;
         var input;
         var output;
+    }
+
+    this.analysisModule.prototype.getType = function () {
+        return this.type;
+    }
+
+    this.analysisModule.prototype.getModuleType = function () {
+        return "analysis";
     }
 
     this.analysisModule.prototype.generateXML = function () {
@@ -725,6 +741,14 @@ function phyphoxXMLBuilder() {
         var inputKey;
         var input;
         var outputKey;
+    }
+
+    this.viewElement.prototype.getModuleType = function () {
+        return "view";
+    }
+
+    this.viewElement.prototype.getType = function () {
+        return this.type;
     }
 
     this.viewElement.prototype.generateXML = function () {
@@ -1288,7 +1312,7 @@ function phyphoxEditor(rootID) {
         this.element.append(this.inputListSection.getRootElement());
 
         newInputSection = new interfaceSection("New input");
-        moduleList = builder.getModules("input");
+        var moduleList = builder.getModules("input");
         var newType = Object.keys(moduleList)[0];
         this.inputTypeDropdown = new interfaceElementDropdown(
             function() {return newType},
@@ -1325,6 +1349,56 @@ function phyphoxEditor(rootID) {
                 }
             }
             this.inputListSection.appendContentElement((new modulePropertiesDialog(modules[i], makeDeleteFunction(i))).getElement());
+        }
+    }
+
+//Output tab
+
+    var tabOutput = function() {
+        var thisTab = this;
+        tab.call(this, "Output");
+
+        this.outputListSection = new interfaceSection("Output modules");
+        this.element.append(this.outputListSection.getRootElement());
+
+        newOutputSection = new interfaceSection("New output");
+        var moduleList = builder.getModules("output");
+        var newType = Object.keys(moduleList)[0];
+        this.outputTypeDropdown = new interfaceElementDropdown(
+            function() {return newType},
+            function(x) {newType = x},
+            "New output type", moduleList
+        );
+        newOutputSection.appendContentElement(this.outputTypeDropdown.getElement());
+        newOutputSection.appendContentElement(
+            new interfaceElementButton(
+                function(){return "Add this module"},
+                function(){
+                    builder.addOutputModule(new builder[newType]());
+                    thisTab.refresh();
+                }
+            ).getElement()
+        );
+
+        this.element.append(newOutputSection.getRootElement());
+    }
+    tabOutput.prototype = new tab();
+    tabOutput.prototype.constructor = tabOutput;
+
+    tabOutput.prototype.refresh = function () {
+        var thisTab = this;
+        modules = builder.getOutputModules();
+        this.outputListSection.clearContent();
+        for (var i = 0; i < modules.length; i++) {
+            function makeDeleteFunction(fixedi) {
+                return function() {
+                    if (confirm("Do you really want to delete this module?")) {
+                        builder.deleteOutputModule(fixedi);
+                        thisTab.refresh();
+                    }
+                }
+            }
+            this.outputListSection.appendContentElement((new modulePropertiesDialog(modules[i], makeDeleteFunction(i))).getElement());
         }
     }
 
@@ -1381,6 +1455,7 @@ function phyphoxEditor(rootID) {
     rootElement.append(tabBar).append(workArea).append(toolBar);
     addTab(new tabMain());
     addTab(new tabInput());
+    addTab(new tabOutput());
     addTab(new tabXML());
     toolBar.append(
         new interfaceElementButton(
