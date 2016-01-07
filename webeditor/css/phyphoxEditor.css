@@ -37,6 +37,7 @@
     display: inline-block;
     width: 45%;
     margin: 1%;
+    vertical-align: top;
 }
 
 .phyphoxEditorInterfaceSectionSingle {
@@ -67,6 +68,21 @@
     padding: 5px;
 }
 
+.phyphoxEditorModuleDialog {
+    width: 90%;
+    margin: 5%;
+}
+
+.phyphoxEditorModuleDialogTitle {
+    background: #e0e0e0;
+    text-align: left;
+    padding: 3px;
+}
+
+.phyphoxEditorModuleDialogContent {
+    border: 3px solid #e0e0e0;
+}
+
 .phyphoxEditorInterfaceElement {
     position: relative;
     display: inline-block;
@@ -77,15 +93,20 @@
     width: 100%;
 }
 
+.phyphoxEditorModuleDialogContent > .phyphoxEditorInterfaceElement {
+    width: 100%;
+}
+
 .phyphoxEditorInterfaceElement > * {
     display: inline-block;
-    width: 50%;
+    max-width: 50%;
     text-align: left;
     vertical-align: middle;
+    margin: 0;
 }
 
 .phyphoxEditorInterfaceElement > *:only-child {
-    width: 100%;
+    max-width: 100%;
 }
 
 .phyphoxEditorInterfaceElement > label {

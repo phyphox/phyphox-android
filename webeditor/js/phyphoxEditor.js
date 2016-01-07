@@ -6,7 +6,7 @@ function phyphoxXMLBuilder() {
 
     var indent = function(n) {
         indentation = "";
-        for (i = 0; i < n; i++)
+        for (var i = 0; i < n; i++)
             indentation += "    ";
         return indentation;
     }
@@ -23,6 +23,19 @@ function phyphoxXMLBuilder() {
         return String(str).replace(/\ /g, '&nbsp;');
     }
 
+    this.getModules = function(type) {
+        var properties = Object.getOwnPropertyNames(this);
+        var results = Object();
+        for (var i = 0; i < properties.length; i++) {
+            if (typeof this[properties[i]].prototype.getModuleType !== "undefined" && this[properties[i]].prototype.getModuleType() === "input") {
+                instance = (new this[properties[i]]);
+                if (typeof instance.getType() !== "undefined")
+                    results[properties[i]] = instance.getType();
+            }
+        }
+        return results;
+    }
+
 // Data-Types and properties
 
     var xmlProperty = function(name) {
@@ -33,9 +46,17 @@ function phyphoxXMLBuilder() {
         this.setValue = function(x) {
             this.value = x;
         }
+
+        this.getValue = function() {
+            return this.value;
+        }
     }
 
     xmlProperty.prototype.generateXML = function() {
+    }
+
+    xmlProperty.prototype.getPropertyType = function () {
+        return null;
     }
 
     var xmlPropertyBoolean = function(name, init) {
@@ -56,6 +77,10 @@ function phyphoxXMLBuilder() {
             return this.pname + "=\"false\"";
     }
 
+    xmlPropertyBoolean.prototype.getPropertyType = function () {
+        return "boolean";
+    }
+
     var xmlPropertyInt = function(name, init) {
         xmlProperty.call(this, name);
         this.setValue(init);
@@ -69,6 +94,10 @@ function phyphoxXMLBuilder() {
 
     xmlPropertyInt.prototype.generateXML = function() {
         return this.pname + "=\"" + this.value + "\"";
+    }
+
+    xmlPropertyInt.prototype.getPropertyType = function () {
+        return "int";
     }
 
     var xmlPropertyDouble = function(name, init) {
@@ -86,6 +115,10 @@ function phyphoxXMLBuilder() {
         return this.pname + "=\"" + this.value + "\"";
     }
 
+    xmlPropertyDouble.prototype.getPropertyType = function () {
+        return "double";
+    }
+
     var xmlPropertyString = function(name, init) {
         xmlProperty.call(this, name);
         this.setValue(init);
@@ -99,6 +132,10 @@ function phyphoxXMLBuilder() {
 
     xmlPropertyString.prototype.generateXML = function() {
         return this.pname + "=\"" + htmlEntities(this.value) + "\"";
+    }
+
+    xmlPropertyString.prototype.getPropertyType = function () {
+        return "string";
     }
 
     var xmlPropertyList = function(name, init, list) {
@@ -118,6 +155,10 @@ function phyphoxXMLBuilder() {
 
     xmlPropertyList.prototype.generateXML = function() {
         return this.pname + "=\"" + this.value + "\"";
+    }
+
+    xmlPropertyList.prototype.getPropertyType = function () {
+        return "list";
     }
 
 // Buffers
@@ -184,6 +225,14 @@ function phyphoxXMLBuilder() {
         var outputKey;
     }
 
+    this.inputModule.prototype.getModuleType = function () {
+        return "input";
+    }
+
+    this.inputModule.prototype.getType = function () {
+        return this.type;
+    }
+
     this.inputModule.prototype.generateXML = function () {
         var code = indent(2) + "<" + this.type;
         code += " " + this.rate.generateXML();
@@ -191,7 +240,7 @@ function phyphoxXMLBuilder() {
             code += " " + this.properties[i].generateXML();
         }
         code += ">\n";
-        for (i = 0; i < this.output.length; i++) {
+        for (var i = 0; i < this.output.length; i++) {
             if (this.output[i]["output"] === null)
                 continue;
             code += indent(3);
@@ -251,7 +300,7 @@ function phyphoxXMLBuilder() {
             code += " " + this.properties[i].generateXML();
         }
         code += ">\n";
-        for (i = 0; i < this.input.length; i++) {
+        for (var i = 0; i < this.input.length; i++) {
             if (this.input[i]["input"] === null)
                 continue;
             code += indent(3);
@@ -267,7 +316,7 @@ function phyphoxXMLBuilder() {
     }
 
     this.outputModule.prototype.setInput = function(list) {
-        for (i = 0; i < list.length; i++)
+        for (var i = 0; i < list.length; i++)
             this.input[i]["input"] = list[i];
     }
 
@@ -299,7 +348,7 @@ function phyphoxXMLBuilder() {
             code += " " + this.properties[i].generateXML();
         }
         code += ">\n";
-        for (i = 0; i < this.input.length; i++) {
+        for (var i = 0; i < this.input.length; i++) {
             if (this.input[i]["input"] === null)
                 continue;
             code += indent(3);
@@ -312,7 +361,7 @@ function phyphoxXMLBuilder() {
             }
             code += "</input>\n";
         }
-        for (i = 0; i < this.output.length; i++) {
+        for (var i = 0; i < this.output.length; i++) {
             if (this.output[i]["output"] === null)
                 continue;
             code += indent(3);
@@ -325,7 +374,7 @@ function phyphoxXMLBuilder() {
     }
 
     this.analysisModule.prototype.setInput = function(list) {
-        for (i = 0; i < list.length; i++)
+        for (var i = 0; i < list.length; i++)
             this.input[i]["input"] = list[i];
     }
 
@@ -684,7 +733,7 @@ function phyphoxXMLBuilder() {
             code += " " + this.properties[i].generateXML();
         }
         code += ">\n";
-        for (i = 0; i < this.input.length; i++) {
+        for (var i = 0; i < this.input.length; i++) {
             if (this.input[i]["input"] === null)
                 continue;
             code += indent(4);
@@ -695,7 +744,7 @@ function phyphoxXMLBuilder() {
             code += htmlEntities(this.input[i]["input"].getName());
             code += "</input>\n";
         }
-        for (i = 0; i < this.output.length; i++) {
+        for (var i = 0; i < this.output.length; i++) {
             if (this.output[i]["output"] === null)
                 continue;
             code += indent(4);
@@ -711,7 +760,7 @@ function phyphoxXMLBuilder() {
     }
 
     this.viewElement.prototype.setInput = function(list) {
-        for (i = 0; i < list.length; i++)
+        for (var i = 0; i < list.length; i++)
             this.input[i]["input"] = list[i];
     }
 
@@ -799,7 +848,7 @@ function phyphoxXMLBuilder() {
 
     this.viewGroup.prototype.generateXML = function () {
         var code = indent(2) + "<view name=\"" + this.label + "\">\n";
-        for (i = 0; i < this.elements.length; i++) {
+        for (var i = 0; i < this.elements.length; i++) {
             code += this.elements[i].generateXML();
         }
         code += indent(2) + "</view>\n";
@@ -855,16 +904,48 @@ function phyphoxXMLBuilder() {
         inputModules.push(module);
     }
 
+    this.getInputModules = function(module) {
+        return inputModules;
+    }
+
+    this.deleteInputModule = function(i) {
+        inputModules.splice(i, 1);
+    }
+
     this.addOutputModule = function(module) {
         outputModules.push(module);
+    }
+
+    this.getOutputModules = function(module) {
+        return outputModules;
+    }
+
+    this.deleteOutputModule = function(i) {
+        outputModules.splice(i, 1);
     }
 
     this.addAnalysisModule = function(module) {
         analysisModules.push(module);
     }
 
+    this.getAnalysisModules = function(module) {
+        return analysisModules;
+    }
+
+    this.deleteAnalysisModule = function(i) {
+        analysisModules.splice(i, 1);
+    }
+
     this.addViewGroup = function(viewGroup) {
         viewGroups.push(viewGroup);
+    }
+
+    this.getViewGroups = function(module) {
+        return viewGroups;
+    }
+
+    this.deleteViewGroup = function(i) {
+        viewGroups.splice(i, 1);
     }
 
     this.generateXML = function(htmlPreview) {
@@ -939,6 +1020,10 @@ function phyphoxEditor(rootID) {
         this.content.append(x);
     }
 
+    interfaceSection.prototype.clearContent = function (x) {
+        this.content.empty();
+    }
+
 //Generic interface element
 
     var _elementIndex = 0;
@@ -976,7 +1061,27 @@ function phyphoxEditor(rootID) {
     interfaceElementButton.prototype.constructor = interfaceElementButton;
 
     interfaceElementButton.prototype.refresh = function () {
-        this.input.text(this.get());
+        if (typeof this.get === "function")
+            this.input.text(this.get());
+    }
+
+//Interface element: Checkbox
+
+    var interfaceElementCheckbox = function(get, put, label) {
+        interfaceElement.call(this, get, put, label);
+        this.input = $("<input type=\"checkbox\" id=\"" + this.id + "\" />");
+        this.input.click(function() {
+            put(this.checked);
+        });
+        this.refresh();
+        this.element.append(this.input);
+    }
+    interfaceElementCheckbox.prototype = new interfaceElement();
+    interfaceElementCheckbox.prototype.constructor = interfaceElementCheckbox;
+
+    interfaceElementCheckbox.prototype.refresh = function () {
+        if (typeof this.get === "function")
+            this.input.get(0).checked = this.get();
     }
 
 //Interface element: String
@@ -994,7 +1099,46 @@ function phyphoxEditor(rootID) {
     interfaceElementString.prototype.constructor = interfaceElementString;
 
     interfaceElementString.prototype.refresh = function () {
-        this.input.val(this.get());
+        if (typeof this.get === "function")
+            this.input.val(this.get());
+    }
+
+//Interface element: int
+
+    var interfaceElementInt = function(get, put, label) {
+        interfaceElement.call(this, get, put, label);
+        this.input = $("<input type=\"number\" step=\"1\" id=\"" + this.id + "\" />");
+        this.input.change(function() {
+            put(this.value);
+        });
+        this.refresh();
+        this.element.append(this.input);
+    }
+    interfaceElementInt.prototype = new interfaceElement();
+    interfaceElementInt.prototype.constructor = interfaceElementInt;
+
+    interfaceElementInt.prototype.refresh = function () {
+        if (typeof this.get === "function")
+            this.input.val(this.get());
+    }
+
+//Interface element: Double
+
+    var interfaceElementDouble = function(get, put, label) {
+        interfaceElement.call(this, get, put, label);
+        this.input = $("<input type=\"number\" id=\"" + this.id + "\" />");
+        this.input.change(function() {
+            put(this.value);
+        });
+        this.refresh();
+        this.element.append(this.input);
+    }
+    interfaceElementDouble.prototype = new interfaceElement();
+    interfaceElementDouble.prototype.constructor = interfaceElementDouble;
+
+    interfaceElementDouble.prototype.refresh = function () {
+        if (typeof this.get === "function")
+            this.input.val(this.get());
     }
 
 //Interface element: Text
@@ -1012,7 +1156,87 @@ function phyphoxEditor(rootID) {
     interfaceElementText.prototype.constructor = interfaceElementText;
 
     interfaceElementText.prototype.refresh = function () {
-        this.input.val(this.get());
+        if (typeof this.get === "function")
+            this.input.val(this.get());
+    }
+
+//Interface element: Dropdown
+
+    var interfaceElementDropdown = function(get, put, label, options) {
+        interfaceElement.call(this, get, put, label);
+        this.input = $("<select size=\"1\" id=\"" + this.id + "\"></select>");
+        for (var key in options) {
+            this.input.append($("<option value=\""+key+"\">"+options[key]+"</option>"));
+        }
+        this.input.change(function() {
+            put(this.value);
+        });
+        this.refresh();
+        this.element.append(this.input);
+    }
+    interfaceElementDropdown.prototype = new interfaceElement();
+    interfaceElementDropdown.prototype.constructor = interfaceElementDropdown;
+
+    interfaceElementDropdown.prototype.refresh = function () {
+        if (typeof this.get === "function")
+            this.input.val(this.get());
+    }
+
+//Module properties dialog
+
+    var modulePropertiesDialog = function(module, deleteFunction) {
+        this.element = $("<div class=\"phyphoxEditorModuleDialog\"></div>");
+        this.element.append($("<div class=\"phyphoxEditorModuleDialogTitle\">"+module.getType()+"</div>"));
+        this.content = $("<div class=\"phyphoxEditorModuleDialogContent\"></div>");
+        if (module.getModuleType() === "input") {
+            this.ieRate = new interfaceElementDouble(function(){return module.rate.getValue()}, function(x) {module.rate.setValue(x)}, "Aquisition rate");
+            this.content.append(this.ieRate.getElement());
+        }
+        this.ieProperties = Array();
+        for (var i = 0; i < module.properties.length; i++) {
+            function makeGetCallback(fixedi) {
+                return function() {
+                    return module.properties[fixedi].getValue();
+                }
+            }
+            function makeSetCallback(fixedi) {
+                return function(x) {
+                    module.properties[fixedi].setValue(x);
+                }
+            }            
+
+            switch (module.properties[i].getPropertyType()) {
+                case "boolean": newIE = new interfaceElementCheckbox(makeGetCallback(i), makeSetCallback(i), module.properties[i].pname);
+                                break;
+                case "int": newIE = new interfaceElementInt(makeGetCallback(i), makeSetCallback(i), module.properties[i].pname);
+                                break;
+                case "double": newIE = new interfaceElementDouble(makeGetCallback(i), makeSetCallback(i), module.properties[i].pname);
+                                break;
+                case "string": newIE = new interfaceElementString(makeGetCallback(i), makeSetCallback(i), module.properties[i].pname);
+                                break;
+                case "list": newIE = new interfaceElementDropdown(makeGetCallback(i), makeSetCallback(i), module.properties[i].pname, module.properties[i].list);
+                                break;
+            }
+            this.ieProperties.push(newIE);
+            this.content.append(newIE.getElement());
+        }
+        if (typeof deleteFunction !== "undefined") {
+            this.content.append(
+                new interfaceElementButton(
+                    function(){return "Delete this module"},
+                    deleteFunction
+                ).getElement()
+            );
+        }
+        this.element.append(this.content);
+    }
+
+    modulePropertiesDialog.prototype.getElement = function () {
+        return this.element;
+    }
+
+    modulePropertiesDialog.prototype.refresh = function () {
+        this.ieRate.refresh();
     }
 
 //Generic tab
@@ -1052,6 +1276,56 @@ function phyphoxEditor(rootID) {
         this.ieTitle.refresh();
         this.ieCategory.refresh();
         this.ieDescription.refresh();
+    }
+
+//Input tab
+
+    var tabInput = function() {
+        var thisTab = this;
+        tab.call(this, "Input");
+
+        this.inputListSection = new interfaceSection("Input modules");
+        this.element.append(this.inputListSection.getRootElement());
+
+        newInputSection = new interfaceSection("New input");
+        moduleList = builder.getModules("input");
+        var newType = Object.keys(moduleList)[0];
+        this.inputTypeDropdown = new interfaceElementDropdown(
+            function() {return newType},
+            function(x) {newType = x},
+            "New input type", moduleList
+        );
+        newInputSection.appendContentElement(this.inputTypeDropdown.getElement());
+        newInputSection.appendContentElement(
+            new interfaceElementButton(
+                function(){return "Add this module"},
+                function(){
+                    builder.addInputModule(new builder[newType]());
+                    thisTab.refresh();
+                }
+            ).getElement()
+        );
+
+        this.element.append(newInputSection.getRootElement());
+    }
+    tabInput.prototype = new tab();
+    tabInput.prototype.constructor = tabInput;
+
+    tabInput.prototype.refresh = function () {
+        var thisTab = this;
+        modules = builder.getInputModules();
+        this.inputListSection.clearContent();
+        for (var i = 0; i < modules.length; i++) {
+            function makeDeleteFunction(fixedi) {
+                return function() {
+                    if (confirm("Do you really want to delete this module?")) {
+                        builder.deleteInputModule(fixedi);
+                        thisTab.refresh();
+                    }
+                }
+            }
+            this.inputListSection.appendContentElement((new modulePropertiesDialog(modules[i], makeDeleteFunction(i))).getElement());
+        }
     }
 
 //XML tab
@@ -1106,6 +1380,7 @@ function phyphoxEditor(rootID) {
 
     rootElement.append(tabBar).append(workArea).append(toolBar);
     addTab(new tabMain());
+    addTab(new tabInput());
     addTab(new tabXML());
     toolBar.append(
         new interfaceElementButton(
