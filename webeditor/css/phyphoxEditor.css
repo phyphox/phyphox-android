@@ -3,6 +3,7 @@
     padding: 0;
     background: none;
     color: black;
+    font-family: sans-serif;
 }
 
 .phyphoxEditorTabButton {
@@ -19,6 +20,7 @@
 .phyphoxEditorTabButton.active {
     border-bottom: 1px solid white;
     background: white;
+    font-weight: bold;
 }
 
 .phyphoxEditorTabButton:first-child {
@@ -63,9 +65,19 @@
     padding: 2px;
 }
 
+.phyphoxEditorHighlight .phyphoxEditorInterfaceSectionTitle {
+    color: white;
+    background: #ff7e22;
+    border: 3px solid #ff7e22;
+}
+
 .phyphoxEditorInterfaceSectionContent {
     border: 3px solid #e0e0e0;
     padding: 5px;
+}
+
+.phyphoxEditorHighlight .phyphoxEditorInterfaceSectionContent {
+    border: 3px solid #ff7e22;
 }
 
 .phyphoxEditorModuleDialog {

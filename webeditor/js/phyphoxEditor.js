@@ -262,7 +262,7 @@ function phyphoxXMLBuilder() {
         this.rate = new xmlPropertyDouble("rate", 48000);
         this.properties = new Array();
         this.output = new Array();
-        this.output[0] = {key: "output", output: buffers.addBuffer("recording", 48000)};
+//      this.output[0] = {key: "output", output: buffers.addBuffer("recording", 48000)};
     }
     this.inputModuleAudio.prototype = new this.inputModule();
     this.inputModuleAudio.prototype.constructor = this.inputModuleAudio;
@@ -276,10 +276,10 @@ function phyphoxXMLBuilder() {
         this.properties[0] = new xmlPropertyBoolean("average", false);
         this.properties[1] = new xmlPropertyList("type", "accelerometer", {"accelerometer": "Accelerometer", "linear_acceleration": "Linear Acceleration", "light": "Light", "gyroscope": "Gyroscope", "magnetic_field": "Magnetic Field", "pressure": "Pressure"});
         this.output = new Array();
-        this.output[0] = {key: "x", output: buffers.addBuffer("sensorX", 1000)};
+/*      this.output[0] = {key: "x", output: buffers.addBuffer("sensorX", 1000)};
         this.output[1] = {key: "y", output: buffers.addBuffer("sensorY", 1000)};
         this.output[2] = {key: "z", output: buffers.addBuffer("sensorZ", 1000)};
-        this.output[3] = {key: "t", output: buffers.addBuffer("sensorT", 1000)};
+        this.output[3] = {key: "t", output: buffers.addBuffer("sensorT", 1000)};*/
         this.outputKey = "component";
     }
     this.inputModuleSensor.prototype = new this.inputModule();
@@ -1025,12 +1025,14 @@ function phyphoxEditor(rootID) {
 
 //Interface section
 
-    var interfaceSection = function(title, singleColumn) {
+    var interfaceSection = function(title, singleColumn, highlight) {
         this.title = title;
         if (singleColumn === true)
             this.element = $("<div class=\"phyphoxEditorInterfaceSectionSingle\"></div>");
         else
             this.element = $("<div class=\"phyphoxEditorInterfaceSection\"></div>");
+        if (highlight === true)
+            this.element.addClass("phyphoxEditorHighlight");
         this.element.append($("<div class=\"phyphoxEditorInterfaceSectionTitle\">"+title+"</div>"));
         this.content = $("<div class=\"phyphoxEditorInterfaceSectionContent\"></div>");
         this.element.append(this.content);
@@ -1311,7 +1313,7 @@ function phyphoxEditor(rootID) {
         this.inputListSection = new interfaceSection("Input modules");
         this.element.append(this.inputListSection.getRootElement());
 
-        newInputSection = new interfaceSection("New input");
+        newInputSection = new interfaceSection("New input", false, true);
         var moduleList = builder.getModules("input");
         var newType = Object.keys(moduleList)[0];
         this.inputTypeDropdown = new interfaceElementDropdown(
@@ -1361,7 +1363,7 @@ function phyphoxEditor(rootID) {
         this.outputListSection = new interfaceSection("Output modules");
         this.element.append(this.outputListSection.getRootElement());
 
-        newOutputSection = new interfaceSection("New output");
+        newOutputSection = new interfaceSection("New output", false, true);
         var moduleList = builder.getModules("output");
         var newType = Object.keys(moduleList)[0];
         this.outputTypeDropdown = new interfaceElementDropdown(
