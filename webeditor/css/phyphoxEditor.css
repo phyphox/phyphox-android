@@ -38,7 +38,7 @@
     text-align: left;
     display: inline-block;
     width: 45%;
-    margin: 1%;
+    margin: 2%;
     vertical-align: top;
 }
 
@@ -46,7 +46,7 @@
     text-align: left;
     display: inline-block;
     width: 90%;
-    margin: 5%;
+    margin: 2% 5%;
 }
 
 @media screen and (max-width:800px) {
@@ -82,7 +82,7 @@
 
 .phyphoxEditorModuleDialog {
     width: 90%;
-    margin: 5%;
+    margin: 2% 5%;
 }
 
 .phyphoxEditorModuleDialogTitle {

@@ -871,7 +871,7 @@ function phyphoxXMLBuilder() {
     }
 
     this.viewGroup.prototype.generateXML = function () {
-        var code = indent(2) + "<view name=\"" + this.label + "\">\n";
+        var code = indent(2) + "<view label=\"" + this.label + "\">\n";
         for (var i = 0; i < this.elements.length; i++) {
             code += this.elements[i].generateXML();
         }
@@ -1404,6 +1404,100 @@ function phyphoxEditor(rootID) {
         }
     }
 
+//Views tab
+
+    var tabViews = function() {
+        var thisTab = this;
+        tab.call(this, "Views");
+
+        this.newViewSection = new interfaceSection("New view", true, true);
+        var newViewLabel = "New view";
+        this.ieNewViewLabel = new interfaceElementString(
+            function() {return newViewLabel},
+            function(x) {newViewLabel = x},
+            "Label of new view"
+        );
+        this.newViewSection.appendContentElement(this.ieNewViewLabel.getElement());
+        this.newViewSection.appendContentElement(
+            new interfaceElementButton(
+                function(){return "Add new view"},
+                function(){
+                    builder.addViewGroup(new builder.viewGroup(newViewLabel));
+                    thisTab.refresh();
+                }
+            ).getElement()
+        );
+
+        this.element.append(this.newViewSection.getRootElement());
+    }
+    tabViews.prototype = new tab();
+    tabViews.prototype.constructor = tabViews;
+
+    tabViews.prototype.refresh = function () {
+        var thisTab = this;
+        views = builder.getViewGroups();
+        $(this.element).children().slice(1).remove();
+        for (var i = 0; i < views.length; i++) {
+            function createViewSection(fixedi) {
+                viewSection = new interfaceSection(views[fixedi].label);
+                viewSection.appendContentElement(
+                    this.ieNewViewLabel = new interfaceElementString(
+                        function(){return views[fixedi].label},
+                        function(x){views[fixedi].label = x},
+                        "Label of this view"
+                    ).getElement()
+                );
+                viewSection.appendContentElement(
+                    new interfaceElementButton(
+                        function(){return "Delete this view"},
+                        function () {
+                            if (confirm("Do you really want to delete this view and all of its elements?")) {
+                                builder.deleteViewGroup(fixedi);
+                                thisTab.refresh();
+                            }
+                        }
+                    ).getElement()
+                );
+
+                elements = views[fixedi].elements;
+                for (var j = 0; j < elements.length; j++) {
+                    function makeElementDeleteFunction(fixedj) {
+                        return function() {
+                            if (confirm("Do you really want to delete this element?")) {
+                                views[fixedi].elements.splice(fixedj,1);
+                                thisTab.refresh();
+                            }
+                        }
+                    }
+                    viewSection.appendContentElement((new modulePropertiesDialog(elements[j], makeElementDeleteFunction(j))).getElement());
+                }
+
+                newElementSection = new interfaceSection("New element", true, true);
+                var viewList = builder.getModules("view");
+                var newType = Object.keys(viewList)[0];
+                viewTypeDropdown = new interfaceElementDropdown(
+                    function() {return newType},
+                    function(x) {newType = x},
+                    "New element type", viewList
+                );
+                newElementSection.appendContentElement(this.viewTypeDropdown.getElement());
+                newElementSection.appendContentElement(
+                    new interfaceElementButton(
+                        function(){return "Add this element"},
+                        function(){
+                            views[fixedi].addElement(new builder[newType]());
+                            thisTab.refresh();
+                        }
+                    ).getElement()
+                );
+
+                viewSection.appendContentElement(newElementSection.getRootElement());
+                return viewSection;
+            }
+            this.element.append(createViewSection(i).getRootElement());
+        }
+    }
+
 //XML tab
 
     var tabXML = function() {
@@ -1443,6 +1537,7 @@ function phyphoxEditor(rootID) {
     var recalculateWorkArea = function() {
         workArea.outerHeight(rootElement.height() - tabBar.outerHeight() - toolBar.outerHeight());
     }
+    $(window).resize(recalculateWorkArea);
 
     function downloadPhyphoxFile() {
         var element = document.createElement('a');
@@ -1458,6 +1553,7 @@ function phyphoxEditor(rootID) {
     addTab(new tabMain());
     addTab(new tabInput());
     addTab(new tabOutput());
+    addTab(new tabViews());
     addTab(new tabXML());
     toolBar.append(
         new interfaceElementButton(
