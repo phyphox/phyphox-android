@@ -14,10 +14,10 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="1500">accX</container>
-        <container size="1500">accY</container>
-        <container size="1500">accZ</container>
-        <container size="1500">acc_time</container>
+        <container size="500">accX</container>
+        <container size="500">accY</container>
+        <container size="500">accZ</container>
+        <container size="500">acc_time</container>
     </data-containers>
     <input>
         <sensor type="accelerometer" rate="25">
@@ -46,7 +46,7 @@
     <export>
         <set name="Raw Data">
             <data name="Time (s)">acc_time</data>
-            <data name="Acceleration x (m/s^2)">accX"</data>
+            <data name="Acceleration x (m/s^2)">accX</data>
             <data name="Acceleration y (m/s^2)">accY</data>
             <data name="Acceleration z (m/s^2)">accZ</data>
         </set>

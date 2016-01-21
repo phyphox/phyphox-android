@@ -12,8 +12,8 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="1500">pressure</container>
-        <container size="1500">p_time</container>
+        <container size="500">pressure</container>
+        <container size="500">p_time</container>
     </data-containers>
     <input>
         <sensor type="pressure" rate="25">

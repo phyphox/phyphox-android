@@ -14,10 +14,10 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="1500">gyrX</container>
-        <container size="1500">gyrY</container>
-        <container size="1500">gyrZ</container>
-        <container size="1500">gyr_time</container>
+        <container size="500">gyrX</container>
+        <container size="500">gyrY</container>
+        <container size="500">gyrZ</container>
+        <container size="500">gyr_time</container>
     </data-containers>
     <input>
         <sensor type="gyroscope" rate="25">

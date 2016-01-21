@@ -49,7 +49,7 @@
             </value>
             <graph label="Fourier Transform" logX="true" logY="true" labelX="Frequency (Hz)" labelY="FFT Mag (a.u.)">
                 <input axis="x">halfFrequency</input>
-                <input axis="y">halfFFTtempX</input>
+                <input axis="y">fft</input>
             </graph>
         </view>
         <view label="Raw data">
@@ -114,8 +114,8 @@
     </analysis>
     <export>
         <set name="FFT Spectrum">
-            <data name="Delay (ms)">autoco_t</data>
-            <data name="Autocorrelation (a.u.)">autocorrelation</data>
+            <data name="Frequency (Hz)">halfFrequency</data>
+            <data name="Absolute Amplitude (a.u.)">fft</data>
         </set>
         <set name="Raw data">
             <data name="Time (ms)">time</data>

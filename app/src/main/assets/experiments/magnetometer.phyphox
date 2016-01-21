@@ -11,10 +11,10 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="1500">mag_time</container>
-        <container size="1500">magX</container>
-        <container size="1500">magY</container>
-        <container size="1500">magZ</container>
+        <container size="500">mag_time</container>
+        <container size="500">magX</container>
+        <container size="500">magY</container>
+        <container size="500">magZ</container>
     </data-containers>
     <input>
         <sensor type="magnetic_field" rate="25">

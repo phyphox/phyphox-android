@@ -206,8 +206,6 @@
     <export>
         <set name="Signal">
             <data name="Time (s)">t</data>
-            <data name="Signal 1">sig1</data>
-            <data name="Signal 2">sig2</data>
             <data name="Signal sum">signal</data>
         </set>
     </export>

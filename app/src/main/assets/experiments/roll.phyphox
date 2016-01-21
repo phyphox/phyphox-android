@@ -22,10 +22,10 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="10000">gyrY</container>
-        <container size="10000">gyr_time</container>
-        <container size="10000">v</container>
-        <container size="10000">vkmh</container>
+        <container size="500">gyrY</container>
+        <container size="500">gyr_time</container>
+        <container size="500">v</container>
+        <container size="500">vkmh</container>
         <container>r</container>
     </data-containers>
     <input>

@@ -15,10 +15,10 @@
         </translation>
     </translations>
     <data-containers>
-        <container size="1500">acc_time</container>
-        <container size="1500">accX</container>
-        <container size="1500">accY</container>
-        <container size="1500">accZ</container>
+        <container size="500">acc_time</container>
+        <container size="500">accX</container>
+        <container size="500">accY</container>
+        <container size="500">accZ</container>
     </data-containers>
     <input>
         <sensor type="linear_acceleration" rate="25">

@@ -1316,7 +1316,12 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
                 case "data": //Add this data buffer to the set
-                    set.addSource(xpp.getAttributeValue(null, "name"), getText());
+                    String name = xpp.getAttributeValue(null, "name");
+                    String src = getText();
+                    if (experiment.getBuffer(src) != null)
+                        set.addSource(name, src);
+                    else
+                        throw new phyphoxFileException("Export buffer " + src + " has not been defined as a buffer.", xpp.getLineNumber());
                     break;
                 default:
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
