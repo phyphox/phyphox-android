@@ -1,0 +1,3 @@
+[submodule "app/src/main/assets/experiments"]
+	path = app/src/main/assets/experiments
+	url = https://Kuhlen@github.com/Kuhlen/phyphox-experiments
