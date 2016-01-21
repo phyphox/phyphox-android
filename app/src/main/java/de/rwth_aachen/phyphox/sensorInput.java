@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
 import java.util.Vector;
+import java.util.concurrent.locks.Lock;
 
 //The sensorInput class encapsulates a sensor, maps their name from the phyphox-file format to
 //  the android identifiers and handles their output, which is written to the dataBuffers
@@ -24,6 +25,8 @@ public class sensorInput implements SensorEventListener {
     private boolean average = false; //Avergae over aquisition period?
     private int aquisitions; //Number of aquisitions for this average
 
+    private Lock dataLock;
+
     public class SensorException extends Exception {
         public SensorException(String message) {
             super(message);
@@ -33,8 +36,9 @@ public class sensorInput implements SensorEventListener {
     //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
     //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
     //be null to be left unused.
-    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, Vector<dataBuffer> buffers) throws SensorException {
+    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, Vector<dataBuffer> buffers, Lock lock) throws SensorException {
         this.sensorManager = sensorManager; //Store the sensorManager reference
+        this.dataLock = lock;
 
         if (rate <= 0)
             this.period = 0;
@@ -139,14 +143,19 @@ public class sensorInput implements SensorEventListener {
             if (lastReading + period <= event.timestamp) {
                 //Average/waiting period is over
                 //Append the data to available buffers
-                if (dataX != null)
-                    dataX.append(avgX/aquisitions);
-                if (dataY != null)
-                    dataY.append(avgY/aquisitions);
-                if (dataZ != null)
-                    dataZ.append(avgZ/aquisitions);
-                if (dataT != null)
-                    dataT.append((event.timestamp-t0)*1e-9); //We want seconds since t0
+                dataLock.lock();
+                try {
+                    if (dataX != null)
+                        dataX.append(avgX / aquisitions);
+                    if (dataY != null)
+                        dataY.append(avgY / aquisitions);
+                    if (dataZ != null)
+                        dataZ.append(avgZ / aquisitions);
+                    if (dataT != null)
+                        dataT.append((event.timestamp - t0) * 1e-9); //We want seconds since t0
+                } finally {
+                    dataLock.unlock();
+                }
                 //Reset averaging
                 avgX = 0.;
                 avgY = 0.;
