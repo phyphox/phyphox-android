@@ -292,9 +292,9 @@ public class graphView extends View {
                 continue;
             double x;
             if (logX)
-                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL;
+                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*(graphW-1)+graphL;
             else
-                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
+                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*(graphW-1)+graphL;
             canvas.drawText(String.format("%.3g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
@@ -303,9 +303,9 @@ public class graphView extends View {
                 continue;
             double y;
             if (logY)
-                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*graphH-graphB;
+                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*(graphH-1)-graphB;
             else
-                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
+                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*(graphH-1)-graphB;
             canvas.drawText(String.format("%.3g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.5)), paint);
         }
 
@@ -331,17 +331,17 @@ public class graphView extends View {
         for (double tic : xTics) {
             double x;
             if (logX)
-                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL;
+                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*(graphW-1)+graphL;
             else
-                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL;
+                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*(graphW-1)+graphL;
             canvas.drawLine((float)x, 0, (float)x, h-graphB, paint);
         }
         for (double tic : yTics) {
             double y;
             if (logY)
-                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*graphH-graphB;
+                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*(graphH-1)-graphB;
             else
-                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
+                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*(graphH-1)-graphB;
             canvas.drawLine(graphL, (float)y, w, (float)y, paint);
         }
 
@@ -372,13 +372,13 @@ public class graphView extends View {
                         double thisX;
                         double thisY;
                         if (logX)
-                            thisX = Math.round((Math.log(graphX[j][i]/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*graphW+graphL);
+                            thisX = Math.round((Math.log(graphX[j][i]/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*(graphW-1)+graphL);
                         else
-                            thisX = Math.round((graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*graphW+graphL);
+                            thisX = Math.round((graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*(graphW-1)+graphL);
                         if (logY)
-                            thisY = h-(Math.log(graphY[j][i]/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*graphH-graphB;
+                            thisY = h-(Math.log(graphY[j][i]/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY)+1)*(graphH-1)-graphB;
                         else
-                            thisY = h-(graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*graphH-graphB;
+                            thisY = h-(graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*(graphH-1)-graphB;
 
                         if (forceFullDataset) {
                             //We shall draw every single point.
