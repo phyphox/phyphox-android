@@ -101,4 +101,6 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="pick_exportFormat">Choose the data format.</string>
 
     <string name="noDrawableData">No drawable data.</string>
+
+    <string name="categoryNewExperiment">Simple custom experiments</string>
 </resources>

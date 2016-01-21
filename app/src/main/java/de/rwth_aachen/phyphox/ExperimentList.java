@@ -784,7 +784,7 @@ public class ExperimentList extends AppCompatActivity {
 
                     //Title, standard category and standard description
                     output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());
-                    output.write("<category>Raw Sensors</category>".getBytes());
+                    output.write(("<category>"+res.getString(R.string.categoryNewExperiment)+"</category>").getBytes());
                     output.write("<description>Get raw data from selected sensors.</description>".getBytes());
 
                     //Buffers for all sensors

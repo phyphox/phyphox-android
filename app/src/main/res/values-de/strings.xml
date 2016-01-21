@@ -63,4 +63,5 @@
     <string name="unknown">unbekannt</string>
     <string name="warning">Warnung</string>
     <string name="noDrawableData">Keine darstellbaren Daten.</string>
+    <string name="categoryNewExperiment">Einfache eigene Experimente</string>
 </resources>
