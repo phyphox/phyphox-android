@@ -724,7 +724,6 @@ public abstract class phyphoxFile {
 
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
-            float labelSize = (float) getDoubleAttribute("labelsize", 1.) * this.labelDefSize;
             String label = getTranslatedAttribute("label");
             double factor = getDoubleAttribute("factor", 1.);
             String unit = getStringAttribute("unit");
@@ -742,7 +741,6 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
 
                     expView.valueElement ve = newView.new valueElement(label, null, inputs.get(0).buffer.name, null, null, parent.getResources()); //Only a value input
-                    ve.setLabelSize(labelSize); //Label size
                     ve.setPrecision(precision); //Floating point precision
                     ve.setScientificNotation(scientific); //Scientific notation vs. fixed point
                     ve.setUnit(unit); //We can have a unit after the value
@@ -752,7 +750,6 @@ public abstract class phyphoxFile {
                 }
                 case "info": //An info element just shows some text
                     expView.infoElement infoe = newView.new infoElement(label, null, null, null, null, parent.getResources()); //No inputs, just the label and resources
-                    infoe.setLabelSize(labelSize); //Label size
                     newView.elements.add(infoe);
                     break;
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
@@ -778,7 +775,6 @@ public abstract class phyphoxFile {
                     String bufferY = inputs.get(0).buffer.name;
 
                     expView.graphElement ge = newView.new graphElement(label, null, null, bufferX, bufferY, parent.getResources()); //Two array inputs
-                    ge.setLabelSize(labelSize); //Label size
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
                     ge.setLine(!(lineStyle != null && lineStyle.equals("dots"))); //Everything but dots will be lines
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
@@ -801,7 +797,6 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
                     expView.editElement ie = newView.new editElement(label, outputs.get(0).name, null, null, null, parent.getResources()); //Ouput only
-                    ie.setLabelSize(labelSize); //Label size
                     ie.setUnit(unit); //A unit displayed next to the input box
                     ie.setFactor(factor); //A scaling factor. Mostly for matching units
                     ie.setSigned(signed); //May the entered number be negative?
