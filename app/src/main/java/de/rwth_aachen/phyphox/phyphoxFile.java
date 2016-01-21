@@ -713,13 +713,11 @@ public abstract class phyphoxFile {
     //Blockparser for a single view block
     private static class viewBlockParser extends xmlBlockParser {
         private expView newView;
-        private float labelDefSize;
 
         //The viewBlockParser takes an additional argument, which is the expView instance it should fill
         viewBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, expView newView) {
             super(xpp, experiment, parent);
             this.newView = newView;
-            labelDefSize = parent.getResources().getDimension(R.dimen.font);
         }
 
         @Override

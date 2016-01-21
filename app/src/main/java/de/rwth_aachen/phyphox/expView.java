@@ -50,7 +50,7 @@ public class expView{
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             this.label = label;
-            this.labelSize = 25;
+            this.labelSize = res.getDimension(R.dimen.font);
             this.valueOutput = valueOutput;
             this.valueInput = valueInput;
             this.dataXInput = dataXInput;
