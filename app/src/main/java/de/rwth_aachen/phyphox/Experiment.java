@@ -44,6 +44,7 @@ import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.support.v7.widget.Toolbar;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -125,10 +126,16 @@ public class Experiment extends AppCompatActivity {
         this.analysisProgress = (ProgressBar)findViewById(R.id.progressBar);
         analysisProgress.setVisibility(View.INVISIBLE);
 
+        //Set our custom action bar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.customActionBar);
+        setSupportActionBar(toolbar);
+
         //We want to get the back-button in the actionbar (even on old Android versions)
         ActionBar ab = getSupportActionBar();
-        if (ab != null)
+        if (ab != null) {
             ab.setDisplayHomeAsUpEnabled(true);
+            ab.setDisplayShowTitleEnabled(false);
+        }
 
         //Start loading the experiment in a second thread (mostly for network loading, but it won't hurt in any case...)
         //So display a ProgressDialog and instantiate and execute loadXMLAsyncTask (see phyphoxFile class)

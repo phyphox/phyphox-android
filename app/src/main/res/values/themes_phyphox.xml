@@ -5,7 +5,13 @@
 
   <style name="phyphox" parent="@style/_phyphox"/>
 
-  <style name="_phyphox" parent="Theme.AppCompat.Light.DarkActionBar">
+  <style name="_phyphox" parent="Theme.AppCompat.Light.NoActionBar">
+
+    <item name="actionBarStyle">@style/ActionBarPhyphox</item>
+    <item name="android:actionBarStyle">@style/ActionBarPhyphox</item>
+
+    <item name="popupMenuStyle">@style/PopupMenuPhyphox</item>
+    <item name="android:popupMenuStyle">@style/PopupMenuPhyphox</item>
 
     <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
     <item name="android:textSize">@dimen/font</item>

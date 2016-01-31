@@ -8,57 +8,46 @@
     android:id="@+id/rootLayout"
     android:background="@color/backgroundExp">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/titleText"
-        android:textColor="@color/main"
-        android:paddingLeft="@dimen/activity_horizontal_padding"
-        android:paddingRight="@dimen/activity_horizontal_padding"
-        android:paddingTop="@dimen/activity_vertical_padding"
-        android:textSize="@dimen/headline_font"
-        android:textStyle="bold"
-        android:clickable="false"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:layout_alignParentStart="true"
-        android:text="phyphox"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:paddingBottom="@dimen/activity_vertical_padding"
-        android:background="@color/highlight" />
-
-    <Spinner
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/viewSelector"
-        android:layout_alignParentTop="false"
-        android:layout_alignBottom="@+id/titleText"
-        android:layout_alignRight="@+id/titleText"
-        android:gravity="center_vertical"
-        android:layout_alignTop="@+id/titleText" />
+        android:minHeight="?attr/actionBarSize"
+        android:theme="@style/ActionBarPhyphox"
+        android:id="@+id/customActionBar">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/titleText"
+                android:textSize="@dimen/small_font"
+                android:textColor="@color/main"
+                />
+            <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/viewSelector" />
+        </LinearLayout>
+    </android.support.v7.widget.Toolbar>
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/progressBar"
-        android:layout_alignLeft="@+id/titleText"
-        android:layout_alignRight="@+id/titleText"
         android:progressTint="@color/main"
-        android:layout_alignParentBottom="false"
         android:indeterminateOnly="true"
         android:indeterminate="true"
         android:indeterminateBehavior="repeat"
         android:background="@android:color/transparent"
         android:layout_alignParentLeft="false"
         android:layout_alignParentEnd="false"
+        android:layout_alignParentRight="false"
         android:layout_alignParentStart="false"
         android:progressBackgroundTint="@android:color/transparent"
-        android:layout_below="@+id/titleText" />
+        android:layout_below="@+id/customActionBar" />
 
     <ScrollView
         android:layout_width="wrap_content"

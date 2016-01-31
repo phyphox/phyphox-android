@@ -7,6 +7,7 @@
     <dimen name="activity_vertical_padding">5dp</dimen>
 
     <dimen name="font">16sp</dimen>
+    <dimen name="small_font">13sp</dimen>
     <dimen name="experiment_title_font">22sp</dimen>
     <dimen name="experiment_info_font">15sp</dimen>
     <dimen name="headline_font">22sp</dimen>
