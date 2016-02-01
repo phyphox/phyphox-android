@@ -160,7 +160,7 @@ public class remoteServer extends Thread {
             //While we receive new lines, look for placeholders. replace placeholders with data and append them to our stringbuilder
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) { //The title. This one is easy...
-                    sb.append(line.replace("<!-- [[title]] -->", "phyPhoX: "+experiment.title));
+                    sb.append(line.replace("<!-- [[title]] -->", experiment.title));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     //The viewLayout is a JSON object with our view setup. All the experiment views
@@ -460,7 +460,7 @@ public class remoteServer extends Thread {
                         public void writeTo(final OutputStream outstream)
                                 throws IOException {
 
-                            InputStream is = res.openRawResource(R.raw.phyphox_200);
+                            InputStream is = res.openRawResource(R.raw.phyphox_logo);
 
                             byte[] buffer = new byte[1024];
                             int len = is.read(buffer);

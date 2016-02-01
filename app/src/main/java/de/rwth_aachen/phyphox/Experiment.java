@@ -39,6 +39,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -55,7 +56,7 @@ import java.util.Vector;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
-public class Experiment extends AppCompatActivity {
+public class Experiment extends AppCompatActivity implements View.OnClickListener {
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -102,7 +103,7 @@ public class Experiment extends AppCompatActivity {
     ProgressDialog progress; //Holds a progress dialog when a file is being loaded
     Bundle savedInstanceState = null; //Holds the saved instance state, so it can be handled outside onCreate
     MenuItem hint = null; //Reference to play-hint button
-    TextView hintAnimation = null; //Reference to the animated part of the play-hint button
+    ImageView hintAnimation = null; //Reference to the animated part of the play-hint button
 
     //The analysis progress bar
     ProgressBar analysisProgress;       //Reference to the progress bar view
@@ -348,7 +349,7 @@ public class Experiment extends AppCompatActivity {
     private void showPlayHintAnimation () {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            hintAnimation = (TextView) inflater.inflate(R.layout.play_animated, null);
+            hintAnimation = (ImageView) inflater.inflate(R.layout.play_animated, null);
 
             Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
             anim.setRepeatCount(Animation.INFINITE);
@@ -403,11 +404,11 @@ public class Experiment extends AppCompatActivity {
                 //We have already created an animation, which we need to remove first.
                 hidePlayHintAnimation();
             }
-            hint = menu.findItem(R.id.hint);
+            hint = menu.findItem(R.id.action_play);
             showPlayHintAnimation();
-        } else { //Either we cannot show the anymation or we should not show it as the start button has already been used. Hide the menu item and the animation
-            hint = menu.findItem(R.id.hint);
-            hint.setVisible(false);
+            hint.getActionView().setOnClickListener(this);
+        } else { //Either we cannot show the anymation or we should not show it as the start button has already been used. Hide the animation
+            hint = menu.findItem(R.id.action_play);
             hidePlayHintAnimation();
         }
 
@@ -434,6 +435,15 @@ public class Experiment extends AppCompatActivity {
         }
         super.onPrepareOptionsMenu(menu);
         return true;
+    }
+
+    public void onClick(View v) {
+        if (v == hintAnimation) {
+            if (timedRun) {
+                startTimedMeasurement();
+            } else
+                startMeasurement();
+        }
     }
 
     @Override

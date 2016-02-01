@@ -1,7 +1,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="0dp"
     tools:context="de.rwth_aachen.phyphox.Experiment"
     android:clickable="false"
@@ -9,25 +8,32 @@
     android:background="@color/backgroundExp">
 
     <android.support.v7.widget.Toolbar
+        android:layout_alignParentTop="true"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
+        android:layout_height="?attr/actionBarSize"
         android:theme="@style/ActionBarPhyphox"
-        android:id="@+id/customActionBar">
+        android:id="@+id/customActionBar"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true">
         <LinearLayout
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
             android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/titleText"
-                android:textSize="@dimen/small_font"
+                android:textSize="@dimen/font"
                 android:textColor="@color/main"
+                android:inputType="text"
                 />
             <Spinner
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="@dimen/font"
                 android:id="@+id/viewSelector" />
         </LinearLayout>
     </android.support.v7.widget.Toolbar>

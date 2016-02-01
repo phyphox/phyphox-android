@@ -10,9 +10,10 @@
           <item name="popupTheme">@style/PopupMenuPhyphox</item>
   </style>
 
-  <style name="PopupMenuPhyphox" parent="Widget.AppCompat.ListPopupWindow">
+  <style name="PopupMenuPhyphox" parent="Widget.AppCompat.Light.ListPopupWindow">
       <item name="android:background">@color/backgroundExp</item>
       <item name="android:textColor">@color/mainExp</item>
+      <item name="android:textColorPrimary">@color/mainExp</item>
   </style>
 
   <style name="EditTextphyphox" parent="android:Widget.EditText">
@@ -60,6 +61,8 @@
     <style name="SpinnerItem" parent="Widget.AppCompat.TextView.SpinnerItem">
         <item name="android:textColor">@color/main</item>
         <item name="android:text">@dimen/headline_font</item>
+        <item name="android:paddingLeft">0dp</item>
+        <item name="android:paddingStart">0dp</item>
     </style>
 
     <style name="rwthDialog" parent="Theme.AppCompat.Light.Dialog.Alert">

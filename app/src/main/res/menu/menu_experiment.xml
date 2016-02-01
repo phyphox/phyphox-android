@@ -1,8 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" tools:context="de.rwth_aachen.phyphox.Experiment">
-    <item android:id="@+id/hint" android:title="@string/start" android:icon="@drawable/playhint"
-        android:orderInCategory="1" app:showAsAction="always|withText" />
     <item android:id="@+id/action_timed_play" android:title="@string/timed_start" android:icon="@drawable/timed_play"
         android:orderInCategory="2" app:showAsAction="always" />
     <item android:id="@+id/action_timed_pause" android:title="@string/timed_stop" android:icon="@drawable/timed_pause"

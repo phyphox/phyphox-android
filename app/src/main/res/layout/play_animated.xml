@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-    <TextView  xmlns:android="http://schemas.android.com/apk/res/android"
+    <ImageView  xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/Widget.AppCompat.ActionButton"
         android:id="@+id/playhint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/start"
-        android:textColor="#ff7e22"
-        android:drawableRight="@drawable/playhint"/>
+        android:src="@drawable/play"/>
