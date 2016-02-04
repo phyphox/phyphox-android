@@ -365,12 +365,20 @@ public class ExperimentList extends AppCompatActivity {
             catLayout.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT));
+            catLayout.setPadding(
+                    res.getDimensionPixelOffset(R.dimen.activity_horizontal_margin)-res.getDimensionPixelOffset(R.dimen.expElementMargin),
+                    0,
+                    res.getDimensionPixelOffset(R.dimen.activity_horizontal_margin)-res.getDimensionPixelOffset(R.dimen.expElementMargin),
+                    res.getDimensionPixelOffset(R.dimen.activity_vertical_margin)
+            );
 
             //Create the headline text view
             categoryHeadline = new TextView(parentContext);
-            categoryHeadline.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            layout.setMargins(res.getDimensionPixelOffset(R.dimen.expElementMargin), 0, res.getDimensionPixelOffset(R.dimen.expElementMargin), res.getDimensionPixelOffset(R.dimen.expElementMargin));
+            categoryHeadline.setLayoutParams(layout);
             categoryHeadline.setText(name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
             categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
@@ -387,11 +395,18 @@ public class ExperimentList extends AppCompatActivity {
             experimentSubList.setNumColumns(ExpandableHeightGridView.AUTO_FIT);
             experimentSubList.setStretchMode(ExpandableHeightGridView.STRETCH_COLUMN_WIDTH);
             experimentSubList.setExpanded(true);
-            experimentSubList.setPadding(0, 0, 0, res.getDimensionPixelOffset(R.dimen.activity_vertical_margin));
 
             //Create the adapter and give it to the gridView
             experiments = new experimentItemAdapter(parentActivity);
             experimentSubList.setAdapter(experiments);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                categoryHeadline.setElevation(res.getDimensionPixelOffset(R.dimen.expElementElevation));
+                catLayout.setClipToPadding(false);
+                catLayout.setClipChildren(false);
+                experimentSubList.setClipToPadding(false);
+                experimentSubList.setClipChildren(false);
+            }
 
             //Add headline and experiment list to our base layout
             catLayout.addView(categoryHeadline);

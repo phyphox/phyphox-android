@@ -44,7 +44,9 @@
         android:layout_alignStart="@+id/imageView"
         android:layout_alignRight="@+id/imageView"
         android:layout_alignEnd="@+id/imageView"
-        android:drawableLeft="@drawable/new_experiment" />
+        android:drawableLeft="@drawable/new_experiment"
+        android:elevation="12dp"
+        android:layout_marginTop="@dimen/activity_vertical_margin" />
 
     <ScrollView
         android:layout_width="wrap_content"
@@ -56,15 +58,16 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
         android:layout_below="@+id/newExperiment">
 
         <LinearLayout
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/experimentList"></LinearLayout>
+            android:id="@+id/experimentList"
+            android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
     </ScrollView>
 
 </RelativeLayout>

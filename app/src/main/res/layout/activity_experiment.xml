@@ -14,7 +14,8 @@
         android:theme="@style/ActionBarPhyphox"
         android:id="@+id/customActionBar"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true">
+        android:layout_alignParentRight="true"
+        android:elevation="4dp">
         <LinearLayout
             android:layout_alignParentTop="true"
             android:layout_alignParentStart="true"

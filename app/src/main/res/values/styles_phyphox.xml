@@ -32,7 +32,8 @@
   <style name="Buttonphyphox" parent="android:Widget.Button">
 	  <item name="android:textColor">@color/highlight</item>
       <item name="android:textAllCaps">false</item>
-      <item name="android:background">@drawable/abc_btn_borderless_material</item>
+      <item name="android:background">@drawable/background_ripple</item>
+      <item name="android:padding">5dp</item>
   </style>
 
   <style name="Spinnerphyphox" parent="Widget.AppCompat.Spinner">
