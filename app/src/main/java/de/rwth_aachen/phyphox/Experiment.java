@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,6 +43,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -589,13 +591,23 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             } else {
                 final MenuItem itemRef = item;
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setMessage(res.getString(R.string.remoteServerWarning) + "\n\n" + remoteServer.getAddresses())
+                builder.setMessage(res.getString(R.string.remoteServerWarning))
                         .setTitle(R.string.remoteServerWarningTitle)
                         .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 itemRef.setChecked(true);
                                 serverEnabled = true;
                                 startRemoteServer();
+                            }
+                        })
+                        .setNeutralButton(R.string.hotspotSettings, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                final Intent intent = new Intent(Intent.ACTION_MAIN, null);
+                                intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                                final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.TetherSettings");
+                                intent.setComponent(cn);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity( intent);
                             }
                         })
                         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -843,8 +855,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         measuring = false; //Set the state
         analysisProgressAlpha = 0.f; //Disable the progress bar
 
-        //Lift the restrictions, so the screen may turn off again and the user may rotate the device
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
+        if (!remoteInput)
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
 
         //Deactivate any timer
@@ -866,18 +879,41 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Start the remote server (see remoteServer class)
     private void startRemoteServer() {
-        if (remote != null || !serverEnabled) //Check if it is actually activated. If not, just stop
+        TextView announcer = (TextView)findViewById(R.id.remoteInfo);
+
+        if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                announcer.animate().translationY(announcer.getMeasuredHeight());
+            else
+                announcer.setVisibility(View.INVISIBLE);
             return;
+        }
+
         //Instantiate and start the server
         remote = new remoteServer(experiment, this);
         remote.start();
 
         //Announce this to the user as there are security concerns.
-        Toast.makeText(this, "Remote access server started.", Toast.LENGTH_LONG).show();
+        announcer.setText(res.getString(R.string.remoteServerActive, remoteServer.getAddresses().replaceAll("\\s+$", "")));
+        announcer.setVisibility(View.VISIBLE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            announcer.animate().translationY(0);
+
+        //Also we want to keep the device active for remote access
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     //Stop the remote server (see remoteServer class)
     private void stopRemoteServer() {
+        if (!measuring)
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //Announce this to the user, so he knows why the webinterface stopped working.
+        TextView announcer = (TextView)findViewById(R.id.remoteInfo);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            announcer.animate().translationY(announcer.getMeasuredHeight());
+        else
+            announcer.setVisibility(View.INVISIBLE);
+
         if (remote == null) //no server there? never mind.
             return;
 
@@ -892,8 +928,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         remote = null;
 
-        //Announce this to the user, so he knows why the webinterface stopped working.
-        Toast.makeText(this, "Remote access server stopped.", Toast.LENGTH_LONG).show();
     }
 
     //Called by remote server to stop the measurement from other thread

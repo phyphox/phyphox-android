@@ -19,6 +19,6 @@
     <dimen name="expElementWidth">250dp</dimen>
     <dimen name="expElementBorderWidth">2dp</dimen>
     <dimen name="expElementIconSize">50dp</dimen>
-    <dimen name="expElementElevation">4dp</dimen>
+    <dimen name="expElementElevation">2dp</dimen>
     <dimen name="expElementMargin">2dp</dimen>
 </resources>

@@ -88,8 +88,10 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="share_pick_share">Pick a share method</string>
 
     <string name="remoteServer">Allow remote access</string>
-    <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement by accessing the following address from any web browser on the same network:</string>
+    <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.</string>
     <string name="remoteServerWarningTitle">Security warning!</string>
+    <string name="remoteServerActive">Remote access enabled. Access this experiment from te following URL:\n%1$s</string>
+    <string name="hotspotSettings">Hotspot Settings</string>
 
     <string name="show_description">Show Description</string>
     <string name="save_locally">Add experiment to collection</string>

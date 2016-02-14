@@ -45,7 +45,7 @@
         android:layout_alignRight="@+id/imageView"
         android:layout_alignEnd="@+id/imageView"
         android:drawableLeft="@drawable/new_experiment"
-        android:elevation="12dp"
+        android:elevation="6dp"
         android:layout_marginTop="@dimen/activity_vertical_margin" />
 
     <ScrollView

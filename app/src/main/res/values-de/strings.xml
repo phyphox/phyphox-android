@@ -21,6 +21,7 @@
     <string name="export">Daten exportieren</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
     <string name="export_subject">Daten aus phyphox</string>
+    <string name="hotspotSettings">Hotspot Einstellungen</string>
     <string name="loadingText">Experiment wird geladen…</string>
     <string name="loadingTitle">Laden</string>
     <string name="newExperiment">Neues einfaches Experiment</string>
@@ -34,7 +35,8 @@
     <string name="pick_exportFormat">Wählen Sie ein Datei-Format.</string>
     <string name="pick_exportSets">Wählen Sie die zu exportierenden Datensätze.</string>
     <string name="remoteServer">Fernzugriff erlauben</string>
-    <string name="remoteServerWarning">Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem Vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobile Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie auf Ihre Messung von jedem modernen Webbrowser im Netzwerk erreichen, indem Sie dort eine der folgenden Adressen eingeben:</string>
+    <string name="remoteServerActive">Fernzugriff aktiv. Sie erreichen dieses Experiment unter folgender URL:\n%1$s</string>
+    <string name="remoteServerWarning">Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie auf Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.</string>
     <string name="remoteServerWarningTitle">Sicherheitswarnung!</string>
     <string name="save_locally">Experiment zur Sammlung hinzufügen</string>
     <string name="save_locally_done">Das Experiment wurde zur Sammlung hinzugefügt.</string>
