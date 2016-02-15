@@ -249,7 +249,7 @@ public class dataExport {
 
         @Override
         protected String getFilename () {
-            return "phyphox.xlsx";
+            return "phyphox.xls";
         }
     }
 
