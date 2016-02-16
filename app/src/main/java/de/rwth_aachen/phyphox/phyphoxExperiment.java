@@ -23,6 +23,7 @@ public class phyphoxExperiment {
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment
     public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
+    public Vector<bluetoothInput> bluetoothInputs = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
     public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
     public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
@@ -270,6 +271,9 @@ public class phyphoxExperiment {
         //Sensors
         for (sensorInput sensor : inputSensors)
             sensor.stop();
+        //Bluetooth
+        for (bluetoothInput bti : bluetoothInputs)
+            bti.stop();
     }
 
     //Helper to start all I/O of this experiment (i.e. when it should be started)
@@ -280,6 +284,9 @@ public class phyphoxExperiment {
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
         for (sensorInput sensor : inputSensors)
             sensor.start();
+
+        for (bluetoothInput bti : bluetoothInputs)
+            bti.start();
 
         //Audio Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)

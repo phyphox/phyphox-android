@@ -99,6 +99,7 @@
         android:layout_alignWithParentIfMissing="false"
         android:elevation="4dp"
         android:paddingLeft="@dimen/activity_horizontal_padding"
-        android:paddingRight="@dimen/activity_horizontal_padding" />
+        android:paddingRight="@dimen/activity_horizontal_padding"
+        android:visibility="invisible"/>
 
 </RelativeLayout>

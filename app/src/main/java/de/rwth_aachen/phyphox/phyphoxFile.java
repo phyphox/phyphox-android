@@ -882,6 +882,34 @@ public abstract class phyphoxFile {
                     experiment.audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, experiment.micBufferSize * 2);
                     break;
                 }
+                case "bluetooth": { //A serial bluetooth input
+                    double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
+                    boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
+
+                    String nameFilter = getStringAttribute("name");
+                    String addressFilter = getStringAttribute("address");
+
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                    };
+                    Vector<dataBuffer> outputs = new Vector<>();
+                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
+
+                    //Instantiate the input.
+                    try {
+                        experiment.bluetoothInputs.add(new bluetoothInput(nameFilter, addressFilter, rate, average, outputs, experiment.dataLock));
+                    } catch (bluetoothInput.bluetoothException e) {
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
+                    }
+
+                    //Check if the sensor is available on this device
+                    if (!experiment.bluetoothInputs.lastElement().isAvailable()) {
+                        throw new phyphoxFileException("Bluetooth device not found.");
+                    }
+                    break;
+                }
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
