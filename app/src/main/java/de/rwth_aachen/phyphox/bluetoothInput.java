@@ -76,38 +76,6 @@ public class bluetoothInput {
         if (btDevice == null)
             throw new bluetoothException("Bluetooth device not found. (name filter: " + deviceName + ", address filter: " + deviceAddress);
 
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                try {
-                    btSocket =(BluetoothSocket) btDevice.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(btDevice,1);
-//                    btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(btUUID);
-                } catch (Exception e2) {
-                    Log.e("phyphox", "Could not create insecure RfcommSocket for bluetooth device.");
-                }
-            }
-            if (btSocket == null)
-                btSocket = btDevice.createRfcommSocketToServiceRecord(btUUID);
-        } catch (IOException e) {
-            throw new bluetoothException("Could not create bluetooth socket.");
-        }
-
-        try {
-            btSocket.connect();
-        } catch (IOException e) {
-            try {
-                btSocket.close();
-            } catch (IOException e2) {
-
-            }
-            throw new bluetoothException("Could not open bluetooth connection: " + e.getMessage());
-        }
-
-        try {
-            inStream = btSocket.getInputStream();
-        } catch (IOException e) {
-            throw new bluetoothException("Could get input stream from bluetooth device.");
-        }
-
         this.dataLock = lock;
 
         if (rate <= 0)
@@ -120,6 +88,63 @@ public class bluetoothInput {
         this.data = buffers;
         for (int i = 0; i < buffers.size(); i++) {
             this.avg.add(0.);
+        }
+    }
+
+    public void openConnection() throws bluetoothException {
+        if (btSocket != null) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    try {
+                        btSocket = (BluetoothSocket) btDevice.getClass().getMethod("createRfcommSocket", new Class[]{int.class}).invoke(btDevice, 1);
+                        //                    btSocket = btDevice.createInsecureRfcommSocketToServiceRecord(btUUID);
+                    } catch (Exception e2) {
+                        Log.e("phyphox", "Could not create insecure RfcommSocket for bluetooth device.");
+                    }
+                }
+                if (btSocket == null)
+                    btSocket = btDevice.createRfcommSocketToServiceRecord(btUUID);
+            } catch (IOException e) {
+                throw new bluetoothException("Could not create bluetooth socket.");
+            }
+
+            try {
+                btSocket.connect();
+            } catch (IOException e) {
+                try {
+                    btSocket.close();
+                } catch (IOException e2) {
+
+                }
+                throw new bluetoothException("Could not open bluetooth connection: " + e.getMessage());
+            }
+        }
+
+        if (btSocket == null)
+            throw new bluetoothException("Bluetooth connection opened successfully, but socket is null.");
+
+        try {
+            inStream = btSocket.getInputStream();
+        } catch (IOException e) {
+            throw new bluetoothException("Could get input stream from bluetooth device.");
+        }
+    }
+
+    public void closeConnection() {
+        try {
+            inStream.close();
+        } catch (Exception e) {
+
+        } finally {
+            inStream = null;
+        }
+
+        try {
+            btSocket.close();
+        } catch (Exception e) {
+
+        } finally {
+            btSocket = null;
         }
     }
 

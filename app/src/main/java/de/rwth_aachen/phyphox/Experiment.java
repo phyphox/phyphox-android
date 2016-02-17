@@ -163,6 +163,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         stopRemoteServer(); //Remote server should stop when the app is not active
         shutdown = true; //Stop the loop
         stopMeasurement(); //Stop the measurement
+        for (bluetoothInput bti : experiment.bluetoothInputs)
+            bti.closeConnection(); //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
         overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Make a nice animation...
     }
 
@@ -172,6 +174,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         super.onResume();
 
         shutdown = false; //Deactivate shutdown variable
+
         updateViewsHandler.postDelayed(updateViews, 40); //Start the "main loop" again
         startRemoteServer();  //Restart the remote server (if it is activated)
         //We do not start the measurement again automatically. If the user switched away, this might
@@ -313,6 +316,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             //Everything is ready. Let's start the "main loop"
             loadCompleted = true;
+
             updateViewsHandler.postDelayed(updateViews, 40);
 
             //Also invalidate the options menu, so it can activate any controls, that are valid for a loaded experiment

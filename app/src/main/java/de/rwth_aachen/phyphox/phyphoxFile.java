@@ -900,6 +900,7 @@ public abstract class phyphoxFile {
                     //Instantiate the input.
                     try {
                         experiment.bluetoothInputs.add(new bluetoothInput(nameFilter, addressFilter, rate, average, outputs, experiment.dataLock));
+                        experiment.bluetoothInputs.lastElement().openConnection();
                     } catch (bluetoothInput.bluetoothException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
                     }
