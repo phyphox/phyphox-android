@@ -320,9 +320,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             //Start the remote server if activated
             startRemoteServer();
-
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); //We are ready. Now the user may rotate.
-
         } else {
             //There has been an error. Show the error to the user and leave the activity in its
             //   non-interactive state...
@@ -336,6 +333,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             ll.addView(errorView); //Add the TextView to the linear layout
         }
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); //We are ready. Now the user may rotate.
     }
 
 
@@ -378,9 +377,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     @Override
     //Refresh the options menu
     public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
         //Do we have a valid experiment?
         if (experiment == null || !experiment.loaded) {
-            return false; //Nope. Then there is no interaction.
+            for (int i = 0; i < menu.size(); i++)
+                menu.getItem(i).setVisible(false);
+            return true; //Even though there are no menu elements, we need to enable the menu to allow up navigation through the back button
         }
         //Get all the menu items we want to manipulate
         MenuItem timed_play = menu.findItem(R.id.action_timed_play);
@@ -435,7 +437,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     timer.setTitle(String.valueOf(Math.round(timedRunStartDelay))+"s");
             }
         }
-        super.onPrepareOptionsMenu(menu);
         return true;
     }
 
