@@ -112,7 +112,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean analysisInProgress = false; //Set to true by second thread while analysis is running
     float analysisProgressAlpha = 0.f;  //Will be increased while analysis is running and decreased while idle. This smoothes the display and results in an everage transparency representing the average load.
 
-
     @Override
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,8 +162,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         stopRemoteServer(); //Remote server should stop when the app is not active
         shutdown = true; //Stop the loop
         stopMeasurement(); //Stop the measurement
-        for (bluetoothInput bti : experiment.bluetoothInputs)
-            bti.closeConnection(); //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
+        if (experiment != null && experiment.loaded)
+            for (bluetoothInput bti : experiment.bluetoothInputs)
+                bti.closeConnection(); //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
         overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Make a nice animation...
     }
 
@@ -966,8 +966,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //store our data if the activity gets destroyed or recreated (device rotation!)
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (!loadCompleted) //the experiment is not even ready yet?
-            return; //Then we have nothing worth saving...
+        if (!loadCompleted) { //the experiment is not even ready yet?
+            //If we have an old state (activity closed before completely loaded), we may save this again.
+            if (savedInstanceState != null)
+                outState.putAll(savedInstanceState);
+            return;
+        }
         try {
             outState.putInt(STATE_CURRENT_VIEW, currentView); //Save current experiment view
             experiment.dataLock.lock(); //Save dataBuffers (synchronized, so no other thread alters them while we access them)
@@ -984,6 +988,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         } catch (Exception e) {
             //Something went wrong?
             //Discard all the data to get a clean new activity and start fresh.
+            e.printStackTrace();
             outState.clear();
         }
     }
