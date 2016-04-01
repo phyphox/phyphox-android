@@ -28,7 +28,7 @@ import java.util.concurrent.locks.Lock;
 public class bluetoothInput {
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
-    public Vector<dataBuffer> data = new Vector<>(); //Data-buffers
+    public Vector<dataOutput> data = new Vector<>(); //Data-buffers
 
     private String buffer;
     private long lastReading; //Remember the time of the last reading to fullfill the rate
@@ -51,7 +51,7 @@ public class bluetoothInput {
         }
     }
 
-    protected bluetoothInput(String deviceName, String deviceAddress, double rate, boolean average, Vector<dataBuffer> buffers, Lock lock) throws bluetoothException{
+    protected bluetoothInput(String deviceName, String deviceAddress, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws bluetoothException{
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null)
             throw new bluetoothException("Could not find a bluetooth adapter.");

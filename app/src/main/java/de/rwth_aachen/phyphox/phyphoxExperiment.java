@@ -31,6 +31,8 @@ public class phyphoxExperiment {
 
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
+    long analysisTime; //This variable holds the system time of the moment the current analysis process started.
+    long firstAnalysisTime = 0; //This variable holds the system time of the moment the first analysis process started.
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
     boolean newUserInput = false; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
@@ -90,18 +92,20 @@ public class phyphoxExperiment {
         if (dataLock.tryLock()) {
             try {
                 for (dataBuffer buffer : dataBuffers) { //Compare each databuffer name...
-                    for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each expViewElement
-                        try {
-                            if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
-                                Double v = eve.getValue(); //...get the value
-                                if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
-                                    buffer.append(v);
-                                    newUserInput = true;
+                    for (expView ev : experimentViews) {
+                            for (expView.expViewElement eve : ev.elements) { //...to each expViewElement
+                                try {
+                                    if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
+                                        Double v = eve.getValue(); //...get the value
+                                        if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
+                                            buffer.append(v);
+                                            newUserInput = true;
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                                 }
                             }
-                        } catch (Exception e) {
-                            Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
-                        }
                     }
                 }
             } finally {
@@ -147,6 +151,9 @@ public class phyphoxExperiment {
         newUserInput = false;
 
         dataLock.lock();
+        analysisTime = System.currentTimeMillis();
+        if (firstAnalysisTime == 0)
+            firstAnalysisTime = analysisTime;
         //Call all the analysis modules and let them do their work.
         try {
             for (Analysis.analysisModule mod : analysis) {
@@ -214,11 +221,11 @@ public class phyphoxExperiment {
     }
 
     //called by the main loop after everything is processed. Here we have to send all the analysis results to the appropriate views
-    public void updateViews(int currentView, boolean force) {
+    public boolean updateViews(int currentView, boolean force) {
         if (!loaded)
-            return;
+            return true;
         if (!(newData || force)) //New data to present? If not: Nothing to do, unless an update is forced
-            return;
+            return true;
         if (dataLock.tryLock()) {
             try {
                 for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
@@ -245,7 +252,7 @@ public class phyphoxExperiment {
                 dataLock.unlock();
             }
         } else
-            return; //This is not urgent. Try another time instead of blocking the UI thread!
+            return false; //This is not urgent. Try another time instead of blocking the UI thread!
         newData = false;
         //Finally call dataComplete on every view to notify them that the data has been sent
         for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
@@ -255,6 +262,7 @@ public class phyphoxExperiment {
                 Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " on data completion.", e);
             }
         }
+        return true;
     }
 
     //Helper to stop all I/O of this experiment (i.e. when it should be stopped)
@@ -280,6 +288,8 @@ public class phyphoxExperiment {
     public void startAllIO() {
         if (!loaded)
             return;
+
+        firstAnalysisTime = 0;
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
         for (sensorInput sensor : inputSensors)

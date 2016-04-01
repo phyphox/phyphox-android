@@ -600,7 +600,10 @@ public class remoteServer extends Thread {
                         sb.append("\", \"buffer\":[");
 
                         if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our bufer class
-                            sb.append(format.format(db.value));
+                            if (Double.isNaN(db.value))
+                                sb.append("null");
+                            else
+                                sb.append(format.format(db.value));
                         else {
                             //Get all the values...
                             boolean firstValue = true; //Find first iteration, so the other ones can add a seperator
@@ -620,7 +623,10 @@ public class remoteServer extends Thread {
                                 else
                                     sb.append(",");
 
-                                sb.append(format.format(v));
+                                if (Double.isNaN(v))
+                                    sb.append("null");
+                                else
+                                    sb.append(format.format(v));
                             }
                         }
 
@@ -714,13 +720,15 @@ public class remoteServer extends Thread {
                                 //We do not allow to explicitly set NaN. The buffer initially contains NaN and this is probably a mistake
                                 result = "{\"result\" = false}";
                             } else {
+                                callActivity.remoteInput = true;
+                                experiment.newData = true;
+
                                 //Defocus the input element in the API interface or it might not be updated and will reenter the old value
                                 callActivity.requestDefocus();
 
                                 //Send the value to the buffer, but aquire a lock first, so it does not interfere with data analysis
                                 experiment.dataLock.lock();
                                 try {
-                                    callActivity.remoteInput = true;
                                     experiment.dataBuffers.get(experiment.dataMap.get(buffer)).append(v);
                                 } finally {
                                     experiment.dataLock.unlock();

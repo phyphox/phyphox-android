@@ -305,9 +305,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                             experiment.dataBuffers.get(i).append((double) it.next());
                     }
 
+                    //Update all the views
+                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
+                        experiment.updateViews(i, true);
+                    }
+
                     //Which view was active when we were stopped?
                     currentView = savedInstanceState.getInt(STATE_CURRENT_VIEW); //Get currentView
                     viewSelector.setSelection(currentView); //Set spinner to the right entry
+
                 }
             }
 
@@ -739,13 +745,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         experiment.handleInputViews(currentView);
                     }
                     //Update all the views currently visible
-                    experiment.updateViews(currentView, false);
+                    if (experiment.updateViews(currentView, false)) {
 
-                    if (remoteInput) {
-                        //If there has been remote input, we may reset it as updateViews will have taken care of this
-                        //This also means, that there is new input from the user
-                        remoteInput = false;
-                        experiment.newUserInput = true;
+                        if (remoteInput) {
+                            //If there has been remote input, we may reset it as updateViews will have taken care of this
+                            //This also means, that there is new input from the user
+                            remoteInput = false;
+                            experiment.newUserInput = true;
+                        }
                     }
                 } catch (Exception e) {
                     Log.e("updateViews", "Unhandled exception.", e);
@@ -865,7 +872,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         analysisProgressAlpha = 0.f; //Disable the progress bar
 
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
-        if (!remoteInput)
+        if (!serverEnabled)
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
 

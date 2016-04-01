@@ -284,12 +284,12 @@ public abstract class phyphoxFile {
         }
 
         Vector<dataInput> inputList;
-        Vector<dataBuffer> outputList;
+        Vector<dataOutput> outputList;
         ioMapping[] inputMapping;
         ioMapping[] outputMapping;
         String mappingAttribute;
 
-        ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataBuffer> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
+        ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
             super(xpp, experiment, parent);
             this.inputList = inputList;
             this.outputList = outputList;
@@ -443,6 +443,9 @@ public abstract class phyphoxFile {
                     if (outputMapping == null)
                         throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
 
+                    //Check the type
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+
                     if (mapping != null) {
                         for (int i = 0; i < outputMapping.length; i++) {
                             if (outputMapping[i].name.equals(mapping)) {
@@ -516,7 +519,7 @@ public abstract class phyphoxFile {
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                     else {
-                        outputList.set(targetIndex, buffer);
+                        outputList.set(targetIndex, new dataOutput(buffer, clearBeforeWrite));
                     }
                     break;
                 default: //Unknown tag,,,
@@ -726,7 +729,7 @@ public abstract class phyphoxFile {
             double factor = getDoubleAttribute("factor", 1.);
             String unit = getStringAttribute("unit");
             Vector<dataInput> inputs = new Vector<>();
-            Vector<dataBuffer> outputs = new Vector<>();
+            Vector<dataOutput> outputs = new Vector<>();
             switch (tag.toLowerCase()) {
                 case "value": { //A value element displays a single value to the user
                     int precision = getIntAttribute("precision", 2);
@@ -794,7 +797,7 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
-                    expView.editElement ie = newView.new editElement(label, outputs.get(0).name, null, null, null, parent.getResources()); //Ouput only
+                    expView.editElement ie = newView.new editElement(label, outputs.get(0).buffer.name, null, null, null, parent.getResources()); //Ouput only
                     ie.setUnit(unit); //A unit displayed next to the input box
                     ie.setFactor(factor); //A scaling factor. Mostly for matching units
                     ie.setSigned(signed); //May the entered number be negative?
@@ -833,7 +836,7 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                     };
-                    Vector<dataBuffer> outputs = new Vector<>();
+                    Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
@@ -862,11 +865,11 @@ public abstract class phyphoxFile {
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
                     };
-                    Vector<dataBuffer> outputs = new Vector<>();
+                    Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
-                    experiment.micOutput = outputs.get(0).name;
-                    experiment.micBufferSize = outputs.get(0).size; //Output-buffer size
+                    experiment.micOutput = outputs.get(0).buffer.name;
+                    experiment.micBufferSize = outputs.get(0).size(); //Output-buffer size
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
                     int minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
@@ -894,7 +897,7 @@ public abstract class phyphoxFile {
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
                     };
-                    Vector<dataBuffer> outputs = new Vector<>();
+                    Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     //Instantiate the input.
@@ -929,9 +932,22 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
 
             Vector<dataInput> inputs = new Vector<>(); //Will hold the inputs
-            Vector<dataBuffer> outputs = new Vector<>(); //Will hold the output buffers
+            Vector<dataOutput> outputs = new Vector<>(); //Will hold the output buffers
 
             switch (tag.toLowerCase()) {
+                case "timer": { //Start-time of analysis
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs));
+                } break;
                 case "add": { //input1+input2+input3...
 
                     //Allowed input/output configuration
@@ -1163,6 +1179,25 @@ public abstract class phyphoxFile {
 
                     Analysis.autocorrelationAM acAM = new Analysis.autocorrelationAM(experiment, inputs, outputs);
                     experiment.analysis.add(acAM);
+                } break;
+                case "periodicity": { //Periodicity
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "dx"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "overlap"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "min"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "max"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "time"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "period"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }}
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    Analysis.periodicityAM pAM = new Analysis.periodicityAM(experiment, inputs, outputs);
+                    experiment.analysis.add(pAM);
                 } break;
                 case "differentiate": { //Differentiate by subtracting neighboring values
 

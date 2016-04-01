@@ -12,13 +12,13 @@ public class Analysis {
     //analysisModule is is the prototype from which each analysis module inherits its interface
     public static class analysisModule {
         protected Vector<dataInput> inputs; //The key of input dataBuffers
-        protected Vector<dataBuffer> outputs; //The keys of outputBuffers
+        protected Vector<dataOutput> outputs; //The keys of outputBuffers
         protected phyphoxExperiment experiment; //experiment reference to access buffers
         protected boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
 
         //Main contructor
-        protected analysisModule(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected analysisModule(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             this.experiment = experiment;
             this.inputs = inputs;
             this.outputs = outputs;
@@ -26,14 +26,14 @@ public class Analysis {
             //If any output module is non-static, than this analysis module is not static
             this.isStatic = true;
             for (int i = 0; i < outputs.size(); i++) {
-                if (outputs.get(i) != null && !outputs.get(i).isStatic) {
+                if (outputs.get(i) != null && !outputs.get(i).isStatic()) {
                     this.isStatic = false;
                     break;
                 }
             }
         }
 
-        //Wrapper to update the module only if it is not static or has never been executed
+        //Wrapper to update the module only if it is not static or has never been executed and to clear the buffer if required
         protected void updateIfNotStatic() {
             if (!(isStatic && executed)) {
                 boolean inputsReady = true;
@@ -45,6 +45,9 @@ public class Analysis {
                 }
                 if (!inputsReady)
                     return;
+                for (dataOutput output : outputs)
+                    if (output != null && output.clearBeforeWrite)
+                        output.buffer.clear();
                 update();
                 executed = true;
             }
@@ -56,10 +59,23 @@ public class Analysis {
         }
     }
 
+    //Get the seconds since the experiment started
+    public static class timerAM extends analysisModule {
+
+        protected timerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            outputs.get(0).append((experiment.analysisTime - experiment.firstAnalysisTime)/1000.);
+        }
+    }
+
     //Add input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class addAM extends analysisModule {
 
-        protected addAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected addAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -74,11 +90,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            //Clear output
-            outputs.get(0).clear();
-
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
                 double sum = 0;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -99,7 +111,7 @@ public class Analysis {
     //Subtract input values (i1-i2-i3-i4...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class subtractAM extends analysisModule {
 
-        protected subtractAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected subtractAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -114,11 +126,8 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            //Clear output
-            outputs.get(0).clear();
 
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
                 double sum = 0.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -142,7 +151,7 @@ public class Analysis {
     //Multiply input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class multiplyAM extends analysisModule {
 
-        protected multiplyAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected multiplyAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -157,10 +166,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            //Clear output
-            outputs.get(0).clear();
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
                 double product = 1.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -182,7 +188,7 @@ public class Analysis {
     //Divide input values (i1/i2/i3/...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class divideAM extends analysisModule {
 
-        protected divideAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected divideAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -197,10 +203,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            //Clear output
-            outputs.get(0).clear();
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
                 double product = 1.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -226,7 +229,7 @@ public class Analysis {
     // Missing values in shorter buffers are filled from the last value.
     public static class powerAM extends analysisModule {
 
-        protected powerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected powerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -241,10 +244,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            //Clear output
-            outputs.get(0).clear();
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
                 double power = 1.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -270,7 +270,7 @@ public class Analysis {
     // Missing values in shorter buffers are filled from the last value.
     public static class gcdAM extends analysisModule {
 
-        protected gcdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected gcdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -285,10 +285,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            //Clear output
-            outputs.get(0).clear();
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
                     if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
@@ -319,7 +316,7 @@ public class Analysis {
     // Missing values in shorter buffers are filled from the last value.
     public static class lcmAM extends analysisModule {
 
-        protected lcmAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected lcmAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -334,10 +331,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            //Clear output
-            outputs.get(0).clear();
-
-            for (int i = 0; i < outputs.get(0).size; i++) { //For each value of output buffer
+            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
                     if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
@@ -370,7 +364,7 @@ public class Analysis {
     // The output has the length of the input buffer or at 1 for a value.
     public static class absAM extends analysisModule {
 
-        protected absAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected absAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -382,10 +376,6 @@ public class Analysis {
             //Get value or iterator
             it = inputs.get(0).getIterator();
             lastValue = inputs.get(0).value;
-
-            //Clear output
-            outputs.get(0).clear();
-
 
             while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
@@ -403,7 +393,7 @@ public class Analysis {
     // The output has the length of the input buffer or at 1 for a value.
     public static class sinAM extends analysisModule {
 
-        protected sinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected sinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -415,9 +405,6 @@ public class Analysis {
             //Get value or iterator
             it = inputs.get(0).getIterator();
             lastValue = inputs.get(0).value;
-
-            //Clear output
-            outputs.get(0).clear();
 
             while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
@@ -435,7 +422,7 @@ public class Analysis {
     // The output has the length of the input buffer or at 1 for a value.
     public static class cosAM extends analysisModule {
 
-        protected cosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected cosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -447,9 +434,6 @@ public class Analysis {
             //Get value or iterator
             it = inputs.get(0).getIterator();
             lastValue = inputs.get(0).value;
-
-            //Clear output
-            outputs.get(0).clear();
 
             while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
@@ -468,7 +452,7 @@ public class Analysis {
     // The output has the length of the input buffer or at 1 for a value.
     public static class tanAM extends analysisModule {
 
-        protected tanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected tanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -480,9 +464,6 @@ public class Analysis {
             //Get value or iterator
             it = inputs.get(0).getIterator();
             lastValue = inputs.get(0).value;
-
-            //Clear output
-            outputs.get(0).clear();
 
             while (it == null || it.hasNext()) { //For each output value or at least once for values
                 if (it != null && it.hasNext()) {
@@ -499,7 +480,7 @@ public class Analysis {
     //Get the first value of the dataset.
     public static class firstAM extends analysisModule {
 
-        protected firstAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected firstAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -533,7 +514,7 @@ public class Analysis {
     //input1 and output1 are mandatory, input1 and input2 are optional.
     public static class maxAM extends analysisModule {
 
-        protected maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -591,7 +572,7 @@ public class Analysis {
         boolean falling = false; //Falling or rising trigger?
 
         //Extended constructor which receives the threshold and falling as well.
-        protected thresholdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs, boolean falling) {
+        protected thresholdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean falling) {
             super(experiment, inputs, outputs);
             this.falling = falling;
         }
@@ -646,16 +627,12 @@ public class Analysis {
     //Append all inputs to the output.
     public static class appendAM extends analysisModule {
 
-        protected appendAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected appendAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
-
-            //Clear output buffer
-            outputs.get(0).clear();
-
             for (int i = 0; i < inputs.size(); i++) { //For each input
                 //Get iterator
                 Iterator it = inputs.get(i).getIterator();
@@ -676,7 +653,7 @@ public class Analysis {
         private int n, np2, logn; //input size, power-of-two filled size, log2 of input size (integer)
         private double [] cos, sin; //Lookup table
 
-        protected fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
 
             n = inputs.get(0).buffer.size; //Actual input size
@@ -809,7 +786,7 @@ public class Analysis {
     //A min and max can be set through setMinMaxT which limit the x-range used for calculation
     public static class autocorrelationAM extends analysisModule {
 
-        protected autocorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected autocorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -847,11 +824,6 @@ public class Analysis {
                 }
             }
 
-            //Clear outputs
-            outputs.get(0).clear();
-            if (outputs.size() > 1 && outputs.get(1) != null)
-                outputs.get(1).clear();
-
             //The actual calculation
             for (int i = 0; i < y.length; i++) { //Displacement i for each value of input1
                 if (x[i] < mint || x[i] > maxt) //Skip this, if it should be filtered
@@ -872,11 +844,127 @@ public class Analysis {
         }
     }
 
+    //Calculate the periodicity over time by doing autocorrelations on a series of subsets of the input data
+    //input1 is x values
+    //input2 is y values
+    //input3 is step distance dx in samples
+    //input4 is step overlap in samples (optional, default: 0)
+    //input5 is the minimum period in samples (optional, default: 0)
+    //input6 is the maximum period in samples (optional, default: +Inf)
+    //input6 is the precision in samples (optional, default: 1)
+    //output1 is the periodicity in units of input1
+    public static class periodicityAM extends analysisModule {
+
+        protected periodicityAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            //Get arrays for random access
+            Double x[] = inputs.get(0).buffer.getArray();
+            Double y[] = inputs.get(1).buffer.getArray();
+
+            int n = inputs.get(1).buffer.getFilledSize();
+
+            //Get dx and overlap
+            int dx = (int)inputs.get(2).getValue();
+
+            //Overlap is optional...
+            int overlap = 0;
+            if (inputs.size() >= 4 && inputs.get(3) != null)
+                overlap = (int)inputs.get(3).getValue();
+
+            boolean userSelectedRange = false;
+
+            //min period is optional...
+            int minPeriod = 0;
+            if (inputs.size() >= 5 && inputs.get(4) != null) {
+                minPeriod = (int) Math.floor(inputs.get(4).getValue());
+                userSelectedRange = true;
+            }
+
+            //max period is optional...
+            int maxPeriod = Integer.MAX_VALUE;
+            if (inputs.size() >= 6 && inputs.get(5) != null) {
+                maxPeriod = (int) Math.ceil(inputs.get(5).getValue());
+                userSelectedRange = true;
+            }
+
+            //The actual calculation
+            for (int stepX = 0; stepX <= n - dx; stepX += dx) {
+                //Calculate actual autocorrelation range as it might be cut off at the edges
+                int x1 = stepX - overlap;
+                if (x1 < 0)
+                    x1 = 0;
+
+                int x2 = stepX + dx + overlap;
+                if (x2 > n)
+                    x2 = n;
+
+                if (maxPeriod > x2-x1)
+                    maxPeriod = x2-x1;
+
+                int firstNegative = -1;
+                int maxPosition = -1;
+                double maxValue = Double.NEGATIVE_INFINITY;
+                double maxValueLeft = Double.NEGATIVE_INFINITY;
+                double maxValueRight = Double.NEGATIVE_INFINITY;
+                double lastSum = Double.NEGATIVE_INFINITY;
+
+                double step = 1;
+                if (!userSelectedRange)
+                    step = 2; //Until we find the first negative value, we can go faster...
+
+                for (int i = minPeriod; i < maxPeriod; i += step) { //Displacement i for each value of input1
+                    double sum = 0.;
+                    for (int j = x1; j < x2 - i; j++) { //For each value of input1 minus the current displacement
+                        sum += y[j] * y[j + i]; //Product of normal and displaced data
+                    }
+                    sum /= (double) (x2-x1-i); //Normalize to the number of values at this displacement
+
+                    if (!userSelectedRange && firstNegative < 0) {
+                        if (sum < 0) { //So, this is the first negative one... We can now skip ahead to 3 times this position and work more precisely from there.
+                            firstNegative = i;
+                            i = 3*firstNegative+1;
+                            step = 1;
+                        }
+                    } else if (!userSelectedRange && i > 5 * firstNegative) { //We have passed the first period. Further maxima can only be found on the next period and we are not interested in this...
+                        break;
+                    } else if (userSelectedRange || i > 3 * firstNegative) {
+                        if (sum > maxValue) {
+                            maxValue = sum;
+                            maxPosition = i;
+                            maxValueLeft = lastSum;
+                            maxValueRight = Double.NEGATIVE_INFINITY;
+                        } else if (i == maxPosition + 1) {
+                            maxValueRight = sum;
+                        }
+                    }
+                    lastSum = sum;
+                }
+
+                double xMax = Double.NaN;
+                if (maxPosition > 0 && maxValue > 0 && maxValueLeft > 0 && maxValueRight > 0) {
+                    double dy = 0.5 * (maxValueRight - maxValueLeft);
+                    double d2y = 2*maxValue - maxValueLeft - maxValueRight;
+                    double m = dy / d2y;
+                    xMax = x[x1+maxPosition] + 0.5*m*(x[x1+maxPosition+1] - x[x1+maxPosition-1]) - x[x1];
+                }
+//Log.d("test", "min: " + minPeriod + ", max: " + maxPeriod + ", x1: " + x1 + ", pos: " + maxPosition + ", period: " + xMax);
+                if (outputs.size() > 0 && outputs.get(0) != null)
+                    outputs.get(0).append(x[x1]);
+                if (outputs.size() > 1 && outputs.get(1) != null)
+                    outputs.get(1).append(xMax);
+            }
+        }
+    }
+
     //Simple differentiation by calculating the difference of neighboring points
     //The resulting array has exactly one element less than the input array
     public static class differentiateAM extends analysisModule {
 
-        protected differentiateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected differentiateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -884,9 +972,6 @@ public class Analysis {
         protected void update() {
             double v, last = Double.NaN;
             boolean first = true;
-
-            //Clear output
-            outputs.get(0).clear();
 
             //The actual calculation
             Iterator it = inputs.get(0).getIterator();
@@ -911,16 +996,13 @@ public class Analysis {
     //The resulting array has exactly as many elements as the input array
     public static class integrateAM extends analysisModule {
 
-        protected integrateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected integrateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
         @Override
         protected void update() {
             double sum = 0.;
-
-            //Clear output
-            outputs.get(0).clear();
 
             //The actual calculation
             Iterator it = inputs.get(0).getIterator();
@@ -941,7 +1023,7 @@ public class Analysis {
     //This does not work if both have the same size. Pad one input to match the target total size first.
     //The size of the output is the difference of both input sizes.
     public static class crosscorrelationAM extends analysisModule {
-        protected crosscorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected crosscorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -956,9 +1038,6 @@ public class Analysis {
                 b = inputs.get(0).getArray();
                 a = inputs.get(1).getArray();
             }
-
-            //Clear output
-            outputs.get(0).clear();
 
             //The actual calculation
             int compRange = a.length - b.length;
@@ -980,7 +1059,7 @@ public class Analysis {
         int calcWidth; //range to which the gauss is calculated
         double[] gauss; //Gauss-weight look-up-table
 
-        protected gaussSmoothAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected gaussSmoothAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             setSigma(3); //default
         }
@@ -999,9 +1078,6 @@ public class Analysis {
         protected void update() {
             //Get array for random access
             Double y[] = inputs.get(0).getArray();
-
-            //Clear output
-            outputs.get(0).clear();
 
             for (int i = 0; i < y.length; i++) { //For each data-point
                 double sum = 0;
@@ -1023,7 +1099,7 @@ public class Analysis {
     public static class rangefilterAM extends analysisModule {
 
         //Constructor also takes arrays of min and max values
-        protected rangefilterAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected rangefilterAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1054,11 +1130,6 @@ public class Analysis {
             Vector<Iterator> its = new Vector<>();
             for (int i = 0; i < n; i++) {
                 its.add(inputs.get(3*i).getIterator());
-            }
-
-            //Clear all outputs
-            for (dataBuffer output : outputs) {
-                output.clear();
             }
 
             double []data = new double[n]; //Will hold values of all inputs at same index
@@ -1105,7 +1176,7 @@ public class Analysis {
         double vstop = 100.;
         int vlength = -1;
 
-        protected rampGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected rampGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1118,12 +1189,9 @@ public class Analysis {
             if (inputs.size() > 2 && inputs.get(2) != null)
                 vlength = (int)inputs.get(2).getValue();
 
-            //Clear output
-            outputs.get(0).clear();
-
             //If length is not set, use the size of the output buffer
             if (vlength < 0)
-                vlength = outputs.get(0).size;
+                vlength = outputs.get(0).size();
 
             //Write ramp to output buffer
             for (int i = 0; i < vlength; i++) {
@@ -1142,7 +1210,7 @@ public class Analysis {
         double vvalue = 0.;
         int vlength = -1;
 
-        protected constGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataBuffer> outputs) {
+        protected constGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1153,12 +1221,9 @@ public class Analysis {
             if (inputs.size() > 1 && inputs.get(1) != null)
                 vlength = (int)inputs.get(1).getValue();
 
-            //Clear output
-            outputs.get(0).clear();
-
             //If length is not set, use the size of the output buffer
             if (vlength < 0)
-                vlength = outputs.get(0).size;
+                vlength = outputs.get(0).size();
 
             //Write values to output
             for (int i = 0; i < vlength; i++) {

@@ -351,11 +351,17 @@ public class graphView extends View {
             for (int j = historyFilled-1; j >= 0; j--) {
                 if (graphY[j] != null && graphX[j] != null) {
                     if (j == 0) {
-                        paint.setStrokeWidth(3);
+                        if (this.line)
+                            paint.setStrokeWidth(3);
+                        else
+                            paint.setStrokeWidth(5);
                         paint.setColor(res.getColor(R.color.highlight));
                         paint.setAlpha(255);
                     } else {
-                        paint.setStrokeWidth(2);
+                        if (this.line)
+                            paint.setStrokeWidth(2);
+                        else
+                            paint.setStrokeWidth(3);
                         paint.setColor(res.getColor(R.color.mainExp));
                         paint.setAlpha(150-(j+1)*150/historyLength);
                     }

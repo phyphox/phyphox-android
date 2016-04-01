@@ -293,7 +293,8 @@ public class expView{
         @Override
         //We just have to send calculated value and the unit to the textView
         protected void setValue(double x) {
-            tv.setText(String.format(this.formatter, x*this.factor)+this.unit);
+            if (tv != null)
+                tv.setText(String.format(this.formatter, x*this.factor)+this.unit);
         }
 
         @Override
@@ -368,6 +369,7 @@ public class expView{
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private String unit; //A string to display as unit
         private double defaultValue; //This value is filled into the dataBuffer before the user enters a custom value
+        private double currentValue = Double.NaN; //This value is filled into the dataBuffer before the user enters a custom value
         private boolean signed = true; //Is the user allowed to give negative values?
         private boolean decimal = true; //Is the user allowed to give non-integer values?
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
@@ -526,12 +528,14 @@ public class expView{
         //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
         //use that is consistent with that of the valueElement
         protected double getValue() {
+            if (et == null)
+                return currentValue;
             try {
-                return Double.valueOf(et.getText().toString())/factor;
+                currentValue = Double.valueOf(et.getText().toString())/factor;
             } catch (Exception e) {
-                return Double.NaN;
+                return currentValue;
             }
-
+            return currentValue;
         }
 
         @Override
@@ -541,9 +545,11 @@ public class expView{
             //This ensures, that the old value is restored if the view has to be created after the views have been switched.
             if (!focused) {
                 if (Double.isNaN(v)) //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
-                    et.setText(String.valueOf(defaultValue));
+                    currentValue = defaultValue;
                 else
-                    et.setText(String.valueOf(v * factor));
+                    currentValue = v * factor;
+                if (et != null)
+                    et.setText(String.valueOf(currentValue));
             }
         }
 
@@ -725,6 +731,8 @@ public class expView{
         //Also clear the data afterwards to avoid sending it multiple times if it is not updated for
         //some reason
         protected void dataComplete() {
+            if (gv == null)
+                return;
             if (dataY != null) {
                 if (dataX != null) {
                     gv.addGraphData(dataY, dataX);

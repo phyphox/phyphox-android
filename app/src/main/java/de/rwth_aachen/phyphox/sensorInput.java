@@ -36,7 +36,7 @@ public class sensorInput implements SensorEventListener {
     //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
     //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
     //be null to be left unused.
-    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, Vector<dataBuffer> buffers, Lock lock) throws SensorException {
+    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws SensorException {
         this.sensorManager = sensorManager; //Store the sensorManager reference
         this.dataLock = lock;
 
@@ -66,10 +66,14 @@ public class sensorInput implements SensorEventListener {
 
         //Store the buffer references
         buffers.setSize(4);
-        this.dataX = buffers.get(0);
-        this.dataY = buffers.get(1);
-        this.dataZ = buffers.get(2);
-        this.dataT = buffers.get(3);
+        if (buffers.get(0) != null)
+            this.dataX = buffers.get(0).buffer;
+        if (buffers.get(1) != null)
+            this.dataY = buffers.get(1).buffer;
+        if (buffers.get(2) != null)
+            this.dataZ = buffers.get(2).buffer;
+        if (buffers.get(3) != null)
+            this.dataT = buffers.get(3).buffer;
     }
 
     //Check if the sensor is available without trying to use it.
