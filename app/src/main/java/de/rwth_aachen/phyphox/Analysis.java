@@ -34,7 +34,7 @@ public class Analysis {
         }
 
         //Wrapper to update the module only if it is not static or has never been executed and to clear the buffer if required
-        protected void updateIfNotStatic() {
+        protected boolean updateIfNotStatic() {
             if (!(isStatic && executed)) {
                 boolean inputsReady = true;
                 for (int i = 0; i < inputs.size(); i++) {
@@ -44,13 +44,25 @@ public class Analysis {
                     }
                 }
                 if (!inputsReady)
-                    return;
+                    return false;
                 for (dataOutput output : outputs)
                     if (output != null && output.clearBeforeWrite)
                         output.buffer.clear();
                 update();
+
+    /* Uncomment to print the last value of inputs and outputs for debugging...
+                Log.d("AnalysisDebug", "[" + this.getClass().toString() + "]");
+                for (dataInput input : inputs)
+                    if (input != null)
+                        Log.d("AnalysisDebug", "in: " + input.getValue());
+                for (dataOutput output : outputs)
+                    if (output != null)
+                        Log.d("AnalysisDebug", output.buffer.name + " => " + output.getValue());
+    */
+
                 executed = true;
             }
+            return true;
         }
 
         //The main update function has to be overridden by the modules
