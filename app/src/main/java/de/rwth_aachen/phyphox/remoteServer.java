@@ -257,10 +257,6 @@ public class remoteServer extends Thread {
                         sb.append(experiment.experimentViews.get(i).name);
                         sb.append("</option>\n");
                     }
-                } else if (line.contains("<!-- [[exportSetSelectors]] -->")) {
-                    //The export sets the user can choose to export
-                    for (int i = 0; i < experiment.exporter.exportSets.size(); i++) //For each export set
-                        sb.append("<div class=\"setSelector\"><input type=\"checkbox\" id=\"set").append(i).append("\" name=\"set").append(i).append("\" /><label for=\"set").append(i).append("\">").append(experiment.exporter.exportSets.get(i).name).append("</label></div>\n");
                 } else if (line.contains("<!-- [[exportFormatOptions]] -->")) {
                     //The export format
                     for (int i = 0; i < experiment.exporter.exportFormats.length; i++)
@@ -804,16 +800,8 @@ public class remoteServer extends Thread {
                 //Get the content-type
                 String type = experiment.exporter.exportFormats[formatInt].getType();
 
-                //Parse the given sets into a list of selected items
-                ArrayList<Integer> selectedItems = new ArrayList<>();
-                for (int i = 0; i < experiment.exporter.exportSets.size(); i++) {
-                    if (uri.getQueryParameter("set"+i) != null) {
-                        selectedItems.add(i);
-                    }
-                }
-
                 //Use the experiment's exporter to create the file
-                final File exportFile = experiment.exporter.exportDirect(selectedItems, experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir());
+                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir());
 
                 //Now we only have to read the file and pass it to the output stream
                 httpEntity = new EntityTemplate(

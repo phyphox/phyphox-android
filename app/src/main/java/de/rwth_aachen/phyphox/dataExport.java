@@ -19,7 +19,9 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -81,6 +83,12 @@ public class dataExport {
 
     //This abstract class defines the interface for a specific export format
     protected abstract class exportFormat {
+        protected String filenameBase = "phyphox";
+
+        public void setFilenameBase (String fb) {
+            filenameBase = fb;
+        }
+
         protected abstract String getName(); //Returns the name or description of the format
         protected abstract File export (Vector<exportSet> sets, File exportPath); //The actual export routine, which returns a datafile
         protected abstract String getType(); //Returns the mime-type of the exported file.
@@ -170,7 +178,7 @@ public class dataExport {
         }
         @Override
         protected String getFilename () {
-            return "phyphox.zip";
+            return this.filenameBase + ".zip";
         }
     }
 
@@ -249,7 +257,7 @@ public class dataExport {
 
         @Override
         protected String getFilename () {
-            return "phyphox.xls";
+            return filenameBase + ".xls";
         }
     }
 
@@ -278,58 +286,7 @@ public class dataExport {
             exportSets.get(i).getData();
         }
 
-        //Show the dialog to the user to select the exportSets
-        showSetDialog(c);
-    }
-
-    //Show a dialog from which the user may select exportSets to export
-    protected void showSetDialog(final Activity c) {
-        final ArrayList<Integer> mSelectedItems = new ArrayList<>(); //Will hold the indices of selected sets
-        AlertDialog.Builder builder = new AlertDialog.Builder(c); //Dialog builder...
-
-        CharSequence[] options = new CharSequence[exportSets.size()]; //The strings presented to the user as options
-        boolean[] enabled = new boolean[exportSets.size()]; //Holds whether the options are checked
-        for (int i = 0; i < exportSets.size(); i++) { //Initialize the arrays as enabled and add them to the indices list
-            options[i] = exportSets.get(i).name; //The name of the set
-            enabled[i] = true; //Start with all sets enabled
-            mSelectedItems.add(i); //As we start with all sets enabled, add the indices to the result set
-        }
-
-        //Create dialog...
-        builder.setTitle(R.string.pick_exportSets) //Set the dialog title from language resources
-                .setMultiChoiceItems(options, enabled, //Create item selection menu
-                        new DialogInterface.OnMultiChoiceClickListener() { //Callback when user changes the selection
-                            @Override
-                            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                                if (isChecked) { //If the user checked an item...
-                                    mSelectedItems.add(which); //...add it to the collection...
-                                } else if (mSelectedItems.contains(which)) { //...if it is deselected...
-                                    mSelectedItems.remove(Integer.valueOf(which)); //...remove it.
-                                }
-                            }
-                        })
-                .setPositiveButton(R.string.next, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) { //Callback when the user confirms his selection
-                        //Create a list of the exportSets which should be used
-                        Vector<exportSet> chosenSets = new Vector<>();
-                        for (int i = 0; i < exportSets.size(); i++) {
-                            if (mSelectedItems.contains(i))
-                                chosenSets.add(exportSets.get(i));
-                        }
-
-                        //Use give the result to the next dialog, which lets the user choose a file format
-                        showFormatDialog(chosenSets, c);
-                    }
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {//Callback if the user aborts the dialog.
-                        //Nothing to do here. We shall not export.
-                    }
-                });
-
-        builder.create().show(); //Show the dialog we have just constructed
+        showFormatDialog(exportSets, c);
     }
 
     //Annoying class to make the integer mutable.
@@ -366,6 +323,9 @@ public class dataExport {
                     @Override
                     public void onClick(DialogInterface dialog, int id) { //Callback when the user confirms his selection
                         //Lets do the actual export
+
+                        //Set a file name including the current date
+                        exportFormats[selected.value].setFilenameBase("phyphox_" + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
 
                         //Call the export filter to write the data to a file
                         File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir());
@@ -405,15 +365,14 @@ public class dataExport {
     //This function is used when all the dialogs are not done in the app, but on the web interface.
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
-    protected File exportDirect(ArrayList<Integer> selectedItems, exportFormat format, File cacheDir) {
-        Vector<exportSet> chosenSets = new Vector<>();
+    protected File exportDirect(exportFormat format, File cacheDir) {
         for (int i = 0; i < exportSets.size(); i++) {
-            if (selectedItems.contains(i)) {
-                exportSets.get(i).getData();
-                chosenSets.add(exportSets.get(i));
-            }
+            exportSets.get(i).getData();
         }
-        return format.export(chosenSets, cacheDir);
+
+        format.setFilenameBase("phyphox_" + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
+
+        return format.export(exportSets, cacheDir);
     }
 
 }
