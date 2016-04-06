@@ -183,26 +183,30 @@ public class phyphoxExperiment {
                 short[] data = getBuffer(audioSource).getShortArray();
                 if (data.length > 0) {
                     int result; //Will hold the write result to log errors
+                    int loopedBufferSize = 0;
                     if (audioLoop) {
                         //In case of loops we want to repeat the data buffer. However, some
-                        //  implementations do not allow short loops. So as a workaround we fill the
-                        //  whole audio buffer with the repeated data buffer, so if the device does not
-                        //  accept the loop period, we still have some looping. (Unfortunately, there
-                        //  will be a discontinuity as the full buffer most likely will not have a
-                        //  length that is a multiple of the data buffer.)
-                        short[] filledBuffer = new short[audioBufferSize];
-                        for (int i = 0; i < audioBufferSize; i++)
+                        //  implementations do not allow short loops. So as a workaround we increase
+                        //  the size of the audio buffer to at least 1 second and make it a multiple
+                        //  size of the samples that we have to loop. The samples will be written
+                        //  to this buffer multiple times. This way the device will accept the loop.
+                        loopedBufferSize = data.length;
+                        if (loopedBufferSize < audioRate) {
+                            loopedBufferSize = (audioRate / data.length + 1) * data.length;
+                        }
+                        short[] filledBuffer = new short[loopedBufferSize];
+                        for (int i = 0; i < loopedBufferSize; i++)
                             filledBuffer[i] = data[i % data.length];
-                        result = audioTrack.write(filledBuffer, 0, audioBufferSize);
+                        result = audioTrack.write(filledBuffer, 0, loopedBufferSize);
                     } else //Usually, just write the small buffer...
                         result = audioTrack.write(data, 0, data.length);
 
                     if (result <= 0)
-                        Log.e("processAnalysis", "Unexpected audio write result: " + result + " written / " + audioBufferSize + " buffer size");
+                        Log.e("processAnalysis", "Unexpected audio write result: " + result + " written.");
 
                     audioTrack.reloadStaticData();
                     if (audioLoop) //If looping is enabled, loop from the end of the data
-                        audioTrack.setLoopPoints(0, data.length - 1, -1);
+                        audioTrack.setLoopPoints(0, loopedBufferSize, -1);
                 }
             } else { //If the data is static and already loaded, we just have to rewind...
                 if (!audioLoop) { //We only want to play again since we are not looping

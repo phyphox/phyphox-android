@@ -1325,6 +1325,12 @@ public abstract class phyphoxFile {
                     experiment.audioSource = inputs.get(0).buffer.name;
                     experiment.audioBufferSize = inputs.get(0).buffer.size;
 
+                    //To avoid to short audio loops, we will write the audio data multiple times
+                    // until we reached at least one second. In the worst case (one sample less than
+                    // one second) we will have data for just short of 2 seconds.
+                    if (experiment.audioLoop && experiment.audioBufferSize < 2*experiment.audioRate)
+                        experiment.audioBufferSize = 2*experiment.audioBufferSize;
+
                     //Create the audioTrack instance
                     experiment.audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, experiment.audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2 * experiment.audioBufferSize, AudioTrack.MODE_STATIC);
                     if (experiment.audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
