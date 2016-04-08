@@ -12,6 +12,7 @@ public class dataInput implements Serializable {
     boolean isBuffer = false;
     double value = Double.NaN;
     dataBuffer buffer = null;
+    boolean clearAfterRead = true;
 
     //Get value
     public double getValue() {
@@ -22,7 +23,8 @@ public class dataInput implements Serializable {
     }
 
     //Constructor if this should contain a buffer
-    protected dataInput(dataBuffer buffer) {
+    protected dataInput(dataBuffer buffer, boolean clear) {
+        this.clearAfterRead = clear;
         isBuffer = true;
         this.buffer = buffer;
     }
@@ -68,6 +70,18 @@ public class dataInput implements Serializable {
             short ret[] = new short[1];
             ret[0] = (short) (value * (Short.MAX_VALUE)); //Rescale data to short range;
             return ret;
+        }
+    }
+
+    public void clear() {
+        buffer.clear();
+    }
+
+    protected dataInput copy() {
+        if (this.isBuffer) {
+            return new dataInput(this.buffer.copy(), this.clearAfterRead);
+        } else {
+            return new dataInput(this.value);
         }
     }
 }

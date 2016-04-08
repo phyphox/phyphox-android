@@ -426,13 +426,17 @@ public abstract class phyphoxFile {
                             throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
                         }
                     } else if (type.equals("buffer")) {
+
+                        //Check the type
+                        boolean clearAfterRead = getBooleanAttribute("clear", true);
+
                         //This is a buffer. Let's see if it exists
                         String bufferName = getText();
                         dataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                         else {
-                            inputList.set(targetIndex, new dataInput(buffer));
+                            inputList.set(targetIndex, new dataInput(buffer, clearAfterRead));
                         }
                     } else {
                         throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());

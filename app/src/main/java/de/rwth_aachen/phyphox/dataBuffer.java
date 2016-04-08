@@ -38,7 +38,7 @@ public class dataBuffer implements Serializable {
     }
 
     //Append a double-array with [count] entries.
-    public void append(double value[], int count) {
+    public void append(Double value[], Integer count) {
         for (int i = 0; i < count; i++)
             append(value[i]);
     }
@@ -83,5 +83,12 @@ public class dataBuffer implements Serializable {
             i++;
         }
         return ret;
+    }
+
+    public dataBuffer copy() {
+        dataBuffer db = new dataBuffer(this.name, this.size);
+        db.append(this.getArray(), this.getFilledSize());
+        db.isStatic = this.isStatic;
+        return db;
     }
 }

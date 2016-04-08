@@ -11,7 +11,8 @@ public class Analysis {
 
     //analysisModule is is the prototype from which each analysis module inherits its interface
     public static class analysisModule {
-        protected Vector<dataInput> inputs; //The key of input dataBuffers
+        private Vector<dataInput> inputsOriginal; //The key of input dataBuffers, note that this is private, so derived classes cannot access this directly, but have to use the copy
+        protected Vector<dataInput> inputs = new Vector<>(); //The local copy of the input data when the analysis module starts its update
         protected Vector<dataOutput> outputs; //The keys of outputBuffers
         protected phyphoxExperiment experiment; //experiment reference to access buffers
         protected boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
@@ -20,7 +21,7 @@ public class Analysis {
         //Main contructor
         protected analysisModule(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             this.experiment = experiment;
-            this.inputs = inputs;
+            this.inputsOriginal = inputs;
             this.outputs = outputs;
 
             //If any output module is non-static, than this analysis module is not static
@@ -37,8 +38,8 @@ public class Analysis {
         protected boolean updateIfNotStatic() {
             if (!(isStatic && executed)) {
                 boolean inputsReady = true;
-                for (int i = 0; i < inputs.size(); i++) {
-                    if (inputs.get(i) != null && inputs.get(i).getFilledSize() == 0) {
+                for (int i = 0; i < inputsOriginal.size(); i++) {
+                    if (inputsOriginal.get(i) != null && inputsOriginal.get(i).getFilledSize() == 0) {
                         inputsReady = false;
                         break;
                     }
@@ -48,9 +49,27 @@ public class Analysis {
                 for (dataOutput output : outputs)
                     if (output != null && output.clearBeforeWrite)
                         output.buffer.clear();
+
+                experiment.dataLock.lock();
+                try {
+                    inputs.setSize(inputsOriginal.size());
+                    for (int i = 0; i < inputsOriginal.size(); i++) {
+                        if (inputsOriginal.get(i) == null)
+                            inputs.set(i, null);
+                        else {
+                            inputs.set(i, inputsOriginal.get(i).copy());
+                            if (inputsOriginal.get(i).isBuffer && inputsOriginal.get(i).clearAfterRead && !inputsOriginal.get(i).buffer.isStatic)
+                                inputsOriginal.get(i).clear();
+                        }
+                    }
+                } finally {
+                    experiment.dataLock.unlock();
+                }
+
                 update();
 
-    /* Uncomment to print the last value of inputs and outputs for debugging...
+    // Uncomment to print the last value of inputs and outputs for debugging...
+    /*
                 Log.d("AnalysisDebug", "[" + this.getClass().toString() + "]");
                 for (dataInput input : inputs)
                     if (input != null)
