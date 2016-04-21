@@ -8,8 +8,8 @@ android {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 9
         targetSdkVersion 23
-        versionCode 8
-        versionName "0.4.2 (beta)"
+        versionCode 9
+        versionName "0.4.3 (beta)"
     }
     buildTypes {
         release {
@@ -23,6 +23,6 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'org.apache.poi:poi:3.13'
 }
