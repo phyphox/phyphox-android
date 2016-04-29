@@ -5,6 +5,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Region;
+import android.util.Log;
 import android.view.View;
 
 //The graphView class implements an Android view which displays a data graph
@@ -157,22 +158,39 @@ public class graphView extends View {
             double logMax = Math.log10(max); //Store the log of the max and min value
             double logMin = Math.log10(min);
 
-            int digitRange = (int)(Math.floor(logMax)-Math.ceil(logMin)); //The range of the axis in terms of the number of digits its labels have (well, actually it's the exponent, you know what I mean..?)
+            int digitRange = (int)(Math.ceil(logMax)-Math.floor(logMin)); //The range of the axis in terms of the number of digits its labels have (well, actually it's the exponent, you know what I mean..?)
 
             //we will just set up tics at powers of ten: 0.1, 1, 10, 100 etc.
             if (digitRange < 1) //Range to short for this naive tic algorithm
                 return new double[0];
 
-            int magStep = 1; //If we cover huge scales we might want to do larger steps...
-            while (digitRange+1 > maxTics * magStep) //Do we have more than max tics? Increase step size then.
-                magStep++;
+            double first = Math.pow(10, Math.floor(logMin)); //The first tic above min
+            double[] tics;  //The array to hold the tics
 
-            double first = Math.pow(10, Math.ceil(logMin)); //The first tic above min
-            double[] tics = new double[(digitRange+1)/magStep]; //The array to hold the tics
-
-            for (int i = 0; i < (digitRange+1)/magStep; i++) { //Fill the array with powers of ten
-                tics[i] = first;
-                first *= 10;
+            if (digitRange < 3) { //Very small range - we will multiple steps inbetween: 1 2 5 10 20 50 100 200 500 ...
+                tics = new double[3 * digitRange];
+                for (int i = 0; i < digitRange; i++) {
+                    tics[3 * i] = first;
+                    tics[3 * i + 1] = 2 * first;
+                    tics[3 * i + 2] = 5 * first;
+                    first *= 10;
+                }
+            } else if (digitRange < 4) { //Small range - we will have a step inbetween: 1 5 10 50 100 500 ...
+                tics =  new double[2*digitRange];
+                for (int i = 0; i < digitRange; i++) {
+                    tics[2*i] = first;
+                    tics[2*i+1] = 5*first;
+                    first *= 10;
+                }
+            } else { //Regular range - we will do powers of ten
+                int magStep = 1; //If we cover huge scales we might want to do larger steps...
+                while (digitRange > maxTics * magStep) //Do we have more than max tics? Increase step size then.
+                    magStep++;
+                tics = new double[digitRange/magStep];
+                for (int i = 0; i < digitRange / magStep; i++) { //Fill the array with powers of ten
+                    tics[i] = first;
+                    first *= 10;
+                }
             }
 
             return tics; //Done
@@ -382,7 +400,7 @@ public class graphView extends View {
                         else
                             thisX = Math.round((graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*(graphW-1)+graphL);
                         if (logY)
-                            thisY = h-(Math.log(graphY[j][i]/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY)+1)*(graphH-1)-graphB;
+                            thisY = h-(Math.log(graphY[j][i]/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*(graphH-1)-graphB;
                         else
                             thisY = h-(graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*(graphH-1)-graphB;
 
