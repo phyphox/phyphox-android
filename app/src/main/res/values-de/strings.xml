@@ -13,7 +13,7 @@
 
         Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliotheken \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) und \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), welche alle der MIT Lizenz unterliegen.
     </string>
-    <string name="creditsRWTH">Phyphox wurde am 2. Physiaklischen Institut A der RWTH Aachen entwickelt.</string>
+    <string name="creditsRWTH">Phyphox wurde am 2. Physikalischen Institut A der RWTH Aachen entwickelt.</string>
     <string name="damageWarning">Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.</string>
     <string name="delete">Löschen</string>
     <string name="donotshowagain">Nicht erneut anzeigen</string>
