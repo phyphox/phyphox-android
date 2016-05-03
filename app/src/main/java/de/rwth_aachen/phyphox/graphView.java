@@ -19,9 +19,6 @@ public class graphView extends View {
     private int historyLength; //If set to n > 1 the graph will also show the last n sets in a different color
     private int historyFilled; //Tracks the number of entries in the history
 
-    private double rangeMinX, rangeMaxX, rangeMinY, rangeMaxY; //User defined fixed ranges. Min and max for x- and y-axis
-    private double minX, maxX, minY, maxY; //If a rescale is triggered, the global min and max for x and y values is stored here
-
     boolean line = false; //Show lines instead of points?
 
     private final static int maxXTics = 6; //Constant to set a target number of tics on the x axis
@@ -30,6 +27,21 @@ public class graphView extends View {
     private String labelY = null; //Label for the y-axis
     private boolean logX = false; //logarithmic scale for the x-axis?
     private boolean logY = false; //logarithmic scale for the y-axis?
+
+
+    public enum scaleMode {
+        auto, extend, fixed
+    }
+
+    scaleMode scaleMinX = scaleMode.auto;
+    scaleMode scaleMaxX = scaleMode.auto;
+    scaleMode scaleMinY = scaleMode.auto;
+    scaleMode scaleMaxY = scaleMode.auto;
+
+    double minX = 0.;
+    double maxX = 0.;
+    double minY = 0.;
+    double maxY = 0.;
 
     Paint paint; //Anti-Aliased paint used all over this class
     private Resources res; //Reference to resources (for strings and colors)
@@ -40,7 +52,6 @@ public class graphView extends View {
         super(context);
         res = getResources();
         setHistoryLength(1);
-        setRange(Double.NaN, Double.NaN, Double.NaN, Double.NaN); //No fixed range
         rescale(); //Calculate initial scale. At this point it will just set all min and max to +inf and -inf
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     }
@@ -58,35 +69,72 @@ public class graphView extends View {
         graphY = new Double[historyLength][];
     }
 
+    public void setScaleModeX(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
+        scaleMinX = minMode;
+        scaleMaxX = maxMode;
+        minX = minV;
+        maxX = maxV;
+        if (minMode == scaleMode.fixed)
+            minX = minV;
+        else
+            minX = Double.POSITIVE_INFINITY;
+        if (maxMode == scaleMode.fixed)
+            maxX = maxV;
+        else
+            maxX = Double.NEGATIVE_INFINITY;
+    }
+
+    public void setScaleModeY(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
+        scaleMinY = minMode;
+        scaleMaxY = maxMode;
+        if (minMode == scaleMode.fixed)
+            minY = minV;
+        else
+            minY = Double.POSITIVE_INFINITY;
+        if (maxMode == scaleMode.fixed)
+            maxY = maxV;
+        else
+            maxY = Double.NEGATIVE_INFINITY;
+    }
+
     //Interface to force the display the full data set vs. skipping datapoints if there are more than neccessary at the current resolution
     public void setForceFullDataset(boolean forceFullDataset) {
         this.forceFullDataset = forceFullDataset;
     }
 
-    //Rescale any non-fixed ranges (those set to NaN)
+    //Rescale any non-fixed ranges
     public void rescale() {
-        minX = Double.POSITIVE_INFINITY;
-        maxX = Double.NEGATIVE_INFINITY;
-        minY = Double.POSITIVE_INFINITY;
-        maxY = Double.NEGATIVE_INFINITY;
+        double extremeMinX = Double.POSITIVE_INFINITY;
+        double extremeMaxX = Double.NEGATIVE_INFINITY;
+        double extremeMinY = Double.POSITIVE_INFINITY;
+        double extremeMaxY = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < historyFilled; i++) { //Consider every history entry
             for (int j = 0; graphX[i] != null && j < graphX[i].length; j++) { //Consider all the x-data
                 if (Double.isInfinite(graphX[i][j]) || Double.isNaN(graphX[i][j])) //Finite data only
                     continue;
-                if (graphX[i][j] < minX)
-                    minX = graphX[i][j];
-                if (graphX[i][j] > maxX)
-                    maxX = graphX[i][j];
+                if (graphX[i][j] < extremeMinX)
+                    extremeMinX = graphX[i][j];
+                if (graphX[i][j] > extremeMaxX)
+                    extremeMaxX = graphX[i][j];
             }
             for (int j = 0; graphY[i] != null && j < graphY[i].length; j++) { //Consider all the y-data
                 if (Double.isInfinite(graphY[i][j]) || Double.isNaN(graphY[i][j])) //Finite data only
                     continue;
-                if (graphY[i][j] < minY)
-                    minY = graphY[i][j];
-                if (graphY[i][j] > maxY)
-                    maxY = graphY[i][j];
+                if (graphY[i][j] < extremeMinY)
+                    extremeMinY = graphY[i][j];
+                if (graphY[i][j] > extremeMaxY)
+                    extremeMaxY = graphY[i][j];
             }
         }
+        Log.d("test", "maxY: " + maxY + ", extremeMaxY: " + extremeMaxY);
+        if (scaleMinX == scaleMode.auto || (scaleMinX == scaleMode.extend && minX > extremeMinX))
+            minX = extremeMinX;
+        if (scaleMaxX == scaleMode.auto || (scaleMaxX == scaleMode.extend && maxX < extremeMaxX))
+            maxX = extremeMaxX;
+        if (scaleMinY == scaleMode.auto || (scaleMinY == scaleMode.extend && minY > extremeMinY))
+            minY = extremeMinY;
+        if (scaleMaxY == scaleMode.auto || (scaleMaxY == scaleMode.extend && maxY < extremeMaxY))
+            maxY = extremeMaxY;
     }
 
     //Add a new graph and (if enabled) push the old graphs back into history
@@ -121,15 +169,6 @@ public class graphView extends View {
 
         //Call the full addGraphData with the artificial x data
         addGraphData(graphY, graphX);
-    }
-
-    //Interface to set fixed ranges
-    public void setRange(double minX, double maxX, double minY, double maxY) {
-        rangeMinX = minX;
-        rangeMaxX = maxX;
-        rangeMinY = minY;
-        rangeMaxY = maxY;
-        this.invalidate(); //Invalidate to redraw
     }
 
     //Interface to set axis labels
@@ -239,44 +278,28 @@ public class graphView extends View {
 
         paint.setTextSize(res.getDimension(R.dimen.graph_font));
 
-        //Set limits - range[Min|Max][X|Y] is the user set one - if it is not set (NaN) use [min|max][X|Y] from rescaling
-        double effectiveMinX, effectiveMaxX, effectiveMinY, effectiveMaxY;
-        if (Double.isNaN(rangeMinX))
-            effectiveMinX = minX;
-        else
-            effectiveMinX = rangeMinX;
-        if (Double.isNaN(rangeMaxX))
-            effectiveMaxX = maxX;
-        else
-            effectiveMaxX = rangeMaxX;
-        if (Double.isNaN(rangeMinY))
-            effectiveMinY = minY;
-        else
-            effectiveMinY = rangeMinY;
-        if (Double.isNaN(rangeMaxY))
-            effectiveMaxY = maxY;
-        else
-            effectiveMaxY = rangeMaxY;
+        double workingMinY = minY;
+        double workingMaxY = maxY;
 
         //Stretch y slightly to give a little headroom... Also force a range if it is zero
         if (!logY) {
-            double extraY = (effectiveMaxY - effectiveMinY) * 0.05;
+            double extraY = (workingMaxY - workingMinY) * 0.05;
             if (extraY == 0)
-                extraY = effectiveMaxY * 0.05;
-            effectiveMaxY += extraY;
-            effectiveMinY -= extraY;
+                extraY = workingMaxY * 0.05;
+            workingMaxY += extraY;
+            workingMinY -= extraY;
         }
 
         //On log scales zero is a problem. We just set a minimum which works for most plots.
         //However, this is a compromise.
-        if (logX && effectiveMinX < 0.001)
-            effectiveMinX = 0.001;
-        if (logY && effectiveMinY < 0.001)
-            effectiveMinY = 0.001;
+        if (logX && minX < 0.001)
+            minX = 0.001;
+        if (logY && workingMinY < 0.001)
+            workingMinY = 0.001;
 
         //Generate the tics
-        double[] xTics = getTics(effectiveMinX, effectiveMaxX, maxXTics, logX);
-        double[] yTics = getTics(effectiveMinY, effectiveMaxY, maxYTics, logY);
+        double[] xTics = getTics(minX, maxX, maxXTics, logX);
+        double[] yTics = getTics(workingMinY, workingMaxY, maxYTics, logY);
 
         //Calculate area...
         int w = this.getWidth();
@@ -306,24 +329,24 @@ public class graphView extends View {
 
         paint.setTextAlign(Paint.Align.CENTER);
         for (double tic : xTics) {
-            if (tic < effectiveMinX || tic > effectiveMaxX)
+            if (tic < minX || tic > maxX)
                 continue;
             double x;
             if (logX)
-                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*(graphW-1)+graphL;
+                x = (Math.log(tic/minX))/(Math.log(maxX/minX))*(graphW-1)+graphL;
             else
-                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*(graphW-1)+graphL;
+                x = (tic-minX)/(maxX-minX)*(graphW-1)+graphL;
             canvas.drawText(String.format("%.3g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (double tic : yTics) {
-            if (tic < effectiveMinY || tic > effectiveMaxY)
+            if (tic < workingMinY || tic > workingMaxY)
                 continue;
             double y;
             if (logY)
-                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*(graphH-1)-graphB;
+                y = h-(Math.log(tic/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
             else
-                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*(graphH-1)-graphB;
+                y = h-(tic-workingMinY)/(workingMaxY-workingMinY)*(graphH-1)-graphB;
             canvas.drawText(String.format("%.3g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.5)), paint);
         }
 
@@ -349,23 +372,23 @@ public class graphView extends View {
         for (double tic : xTics) {
             double x;
             if (logX)
-                x = (Math.log(tic/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*(graphW-1)+graphL;
+                x = (Math.log(tic/minX))/(Math.log(maxX/minX))*(graphW-1)+graphL;
             else
-                x = (tic-effectiveMinX)/(effectiveMaxX-effectiveMinX)*(graphW-1)+graphL;
+                x = (tic-minX)/(maxX-minX)*(graphW-1)+graphL;
             canvas.drawLine((float)x, 0, (float)x, h-graphB, paint);
         }
         for (double tic : yTics) {
             double y;
             if (logY)
-                y = h-(Math.log(tic/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*(graphH-1)-graphB;
+                y = h-(Math.log(tic/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
             else
-                y = h-(tic-effectiveMinY)/(effectiveMaxY-effectiveMinY)*(graphH-1)-graphB;
+                y = h-(tic-workingMinY)/(workingMaxY-workingMinY)*(graphH-1)-graphB;
             canvas.drawLine(graphL, (float)y, w, (float)y, paint);
         }
 
         //Draw graph
         paint.setStrokeCap(Paint.Cap.ROUND);
-        if (effectiveMinX < effectiveMaxX) {
+        if (minX < maxX) {
             for (int j = historyFilled-1; j >= 0; j--) {
                 if (graphY[j] != null && graphX[j] != null) {
                     if (j == 0) {
@@ -396,13 +419,13 @@ public class graphView extends View {
                         double thisX;
                         double thisY;
                         if (logX)
-                            thisX = Math.round((Math.log(graphX[j][i]/effectiveMinX))/(Math.log(effectiveMaxX/effectiveMinX))*(graphW-1)+graphL);
+                            thisX = Math.round((Math.log(graphX[j][i]/minX))/(Math.log(maxX/minX))*(graphW-1)+graphL);
                         else
-                            thisX = Math.round((graphX[j][i]-effectiveMinX)/(effectiveMaxX-effectiveMinX)*(graphW-1)+graphL);
+                            thisX = Math.round((graphX[j][i]-minX)/(maxX-minX)*(graphW-1)+graphL);
                         if (logY)
-                            thisY = h-(Math.log(graphY[j][i]/effectiveMinY))/(Math.log(effectiveMaxY/effectiveMinY))*(graphH-1)-graphB;
+                            thisY = h-(Math.log(graphY[j][i]/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
                         else
-                            thisY = h-(graphY[j][i]-effectiveMinY)/(effectiveMaxY-effectiveMinY)*(graphH-1)-graphB;
+                            thisY = h-(graphY[j][i]-workingMinY)/(workingMaxY-workingMinY)*(graphH-1)-graphB;
 
                         if (forceFullDataset) {
                             //We shall draw every single point.

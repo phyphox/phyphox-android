@@ -174,6 +174,11 @@ public class expView{
         protected String getDataYInput() {
             return this.dataYInput;
         }
+
+        //This is called, when the data for the view has been reset
+        protected void clear() {
+
+        }
     }
 
     //valueElement implements a simple text display for a single value with an unit and a given
@@ -580,6 +585,16 @@ public class expView{
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
 
+        graphView.scaleMode scaleMinX = graphView.scaleMode.auto;
+        graphView.scaleMode scaleMaxX = graphView.scaleMode.auto;
+        graphView.scaleMode scaleMinY = graphView.scaleMode.auto;
+        graphView.scaleMode scaleMaxY = graphView.scaleMode.auto;
+
+        double minX = 0.;
+        double maxX = 0.;
+        double minY = 0.;
+        double maxY = 0.;
+
         //Quite usual constructor...
         graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
@@ -596,6 +611,24 @@ public class expView{
             this.line = line;
             if (gv != null)
                 gv.setLine(line);
+        }
+
+        public void setScaleModeX(graphView.scaleMode minMode, double minV, graphView.scaleMode maxMode, double maxV) {
+            this.scaleMinX = minMode;
+            this.scaleMaxX = maxMode;
+            this.minX = minV;
+            this.maxX = maxV;
+            if (gv != null)
+                gv.setScaleModeX(minMode, minV, maxMode, maxV);
+        }
+
+        public void setScaleModeY(graphView.scaleMode minMode, double minV, graphView.scaleMode maxMode, double maxV) {
+            this.scaleMinY = minMode;
+            this.scaleMaxY = maxMode;
+            this.minY = minV;
+            this.maxY = maxV;
+            if (gv != null)
+                gv.setScaleModeY(minMode, minV, maxMode, maxV);
         }
 
         //Interface to set a history length
@@ -670,6 +703,8 @@ public class expView{
 
             //Send our parameters to the graphView isntance
             gv.setLine(line);
+            gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
+            gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setHistoryLength(historyLength);
             gv.setForceFullDataset(forceFullDataset);
             gv.setLabel(labelX, labelY);
@@ -772,6 +807,15 @@ public class expView{
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
                         "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.mainExp)).substring(2) +"\"}});" +
                     "}";
+        }
+
+        @Override
+        protected void clear() {
+            //Set our scale mode again to reset scaling from old data
+            if (gv != null) {
+                gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
+                gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
+            }
         }
     }
 

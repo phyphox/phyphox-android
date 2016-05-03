@@ -593,6 +593,62 @@ public class Analysis {
         }
     }
 
+    //Get the minimum of the whole dataset.
+    //input1 is y
+    //input2 is x (if ommitted, it will be filled with 1, 2, 3, ...)
+    //output1 will receive a single value, the minimum y
+    //output2 (if used) will receive a single value, the x of the minimum
+    //input1 and output1 are mandatory, input1 and input2 are optional.
+    public static class minAM extends analysisModule {
+
+        protected minAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+
+            //Get iterators, values do not make sense here.
+            Vector<Iterator> its = new Vector<>();
+            for (int i = 0; i < 2; i++) {
+                if (inputs.get(i) != null)
+                    its.add(inputs.get(i).getIterator());
+                else
+                    its.add(null);
+            }
+
+            double min = Double.POSITIVE_INFINITY; //This will hold the minimum value
+            double x = Double.NEGATIVE_INFINITY; //The x location of the minimum
+            double currentX = -1; //Current x during iteration
+
+            while (its.get(1).hasNext()) { //For each value of input1
+                double v = (double)its.get(1).next();
+
+                //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
+                if (its.get(0) != null && its.get(0).hasNext())
+                    currentX = (double)its.get(0).next();
+                else
+                    currentX += 1;
+
+                //Is the current value bigger then the previous minimum?
+                if (v < min) {
+                    //Set minimum and location of minimum
+                    min = v;
+                    x = currentX;
+                }
+            }
+
+            //Done. Append result to output1 and output2 if used.
+            if (outputs.size() > 0 && outputs.get(0) != null) {
+                outputs.get(0).append(min);
+            }
+            if (outputs.size() > 1 && outputs.get(1) != null) {
+                outputs.get(1).append(x);
+            }
+
+        }
+    }
+
     //Find the x value where the input crosses a given threshold.
     //input1 is y
     //input2 is x (if ommitted, it will be filled with 1, 2, 3, ...)

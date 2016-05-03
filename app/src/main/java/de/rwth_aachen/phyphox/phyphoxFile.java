@@ -721,6 +721,22 @@ public abstract class phyphoxFile {
     private static class viewBlockParser extends xmlBlockParser {
         private expView newView;
 
+        graphView.scaleMode parseScaleMode(String attribute) {
+            String scaleStr = getStringAttribute(attribute);
+            graphView.scaleMode scale = graphView.scaleMode.auto;
+            if (scaleStr != null) {
+                switch (scaleStr) {
+                    case "auto": scale = graphView.scaleMode.auto;
+                        break;
+                    case "extend": scale = graphView.scaleMode.extend;
+                        break;
+                    case "fixed": scale = graphView.scaleMode.fixed;
+                        break;
+                }
+            }
+            return scale;
+        }
+
         //The viewBlockParser takes an additional argument, which is the expView instance it should fill
         viewBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, expView newView) {
             super(xpp, experiment, parent);
@@ -768,6 +784,17 @@ public abstract class phyphoxFile {
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
 
+                    graphView.scaleMode scaleMinX = parseScaleMode("scaleMinX");
+                    graphView.scaleMode scaleMaxX = parseScaleMode("scaleMaxX");
+                    graphView.scaleMode scaleMinY = parseScaleMode("scaleMinY");
+                    graphView.scaleMode scaleMaxY = parseScaleMode("scaleMaxY");
+
+                    double minX = getDoubleAttribute("minX", 0.);
+                    double maxX = getDoubleAttribute("maxX", 0.);
+                    double minY = getDoubleAttribute("minY", 0.);
+                    double maxY = getDoubleAttribute("maxY", 0.);
+
+
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; }},
@@ -782,6 +809,8 @@ public abstract class phyphoxFile {
                     expView.graphElement ge = newView.new graphElement(label, null, null, bufferX, bufferY, parent.getResources()); //Two array inputs
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
                     ge.setLine(!(lineStyle != null && lineStyle.equals("dots"))); //Everything but dots will be lines
+                    ge.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
+                    ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setForceFullDataset(forceFullUpdate); //Display every single point instead of averaging those that would share the same x-pixel (may be quite a performance hit)
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
@@ -1125,6 +1154,21 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.maxAM(experiment, inputs, outputs));
+                } break;
+                case "min": { //Minimum (takes y as first input and may take x as an optional second, same for outputs)
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "min"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "position"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.minAM(experiment, inputs, outputs));
                 } break;
                 case "threshold": { //Find the index at which the input crosses a threshold
                     boolean falling = getBooleanAttribute("falling", false); //Positive or negative flank

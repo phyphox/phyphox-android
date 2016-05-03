@@ -803,11 +803,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Disable play-button highlight
         beforeStart = false;
 
-        //Clear the buffers and start the sensors. Also remember the start time as t0
+        //Clear the buffers and views and start the sensors. Also remember the start time as t0
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {
             for (dataBuffer buffer : experiment.dataBuffers)
                 buffer.clear();
+            for (expView views : experiment.experimentViews)
+                for (expView.expViewElement view : views.elements)
+                    view.clear();
             experiment.startAllIO();
         } finally {
             experiment.dataLock.unlock();
