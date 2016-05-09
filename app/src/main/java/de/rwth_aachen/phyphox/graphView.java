@@ -126,7 +126,6 @@ public class graphView extends View {
                     extremeMaxY = graphY[i][j];
             }
         }
-        Log.d("test", "maxY: " + maxY + ", extremeMaxY: " + extremeMaxY);
         if (scaleMinX == scaleMode.auto || (scaleMinX == scaleMode.extend && minX > extremeMinX))
             minX = extremeMinX;
         if (scaleMaxX == scaleMode.auto || (scaleMaxX == scaleMode.extend && maxX < extremeMaxX))
@@ -278,8 +277,19 @@ public class graphView extends View {
 
         paint.setTextSize(res.getDimension(R.dimen.graph_font));
 
+        double workingMinX = minX;
+        double workingMaxX = maxX;
         double workingMinY = minY;
         double workingMaxY = maxY;
+
+        //Stretch x slightly to give a little headroom... Also force a range if it is zero
+        if (!logX) {
+            double extraX = (workingMaxX - workingMinX) * 0.05;
+            if (extraX == 0)
+                extraX = workingMaxX * 0.05;
+            workingMaxX += extraX;
+            workingMinX -= extraX;
+        }
 
         //Stretch y slightly to give a little headroom... Also force a range if it is zero
         if (!logY) {
@@ -292,13 +302,13 @@ public class graphView extends View {
 
         //On log scales zero is a problem. We just set a minimum which works for most plots.
         //However, this is a compromise.
-        if (logX && minX < 0.001)
-            minX = 0.001;
+        if (logX && workingMinX < 0.001)
+            workingMinX = 0.001;
         if (logY && workingMinY < 0.001)
             workingMinY = 0.001;
 
         //Generate the tics
-        double[] xTics = getTics(minX, maxX, maxXTics, logX);
+        double[] xTics = getTics(workingMinX, workingMaxX, maxXTics, logX);
         double[] yTics = getTics(workingMinY, workingMaxY, maxYTics, logY);
 
         //Calculate area...
@@ -329,13 +339,13 @@ public class graphView extends View {
 
         paint.setTextAlign(Paint.Align.CENTER);
         for (double tic : xTics) {
-            if (tic < minX || tic > maxX)
+            if (tic < workingMinX || tic > workingMaxX)
                 continue;
             double x;
             if (logX)
-                x = (Math.log(tic/minX))/(Math.log(maxX/minX))*(graphW-1)+graphL;
+                x = (Math.log(tic/workingMinX))/(Math.log(workingMaxX/workingMinX))*(graphW-1)+graphL;
             else
-                x = (tic-minX)/(maxX-minX)*(graphW-1)+graphL;
+                x = (tic-workingMinX)/(workingMaxX-workingMinX)*(graphW-1)+graphL;
             canvas.drawText(String.format("%.3g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
@@ -372,9 +382,9 @@ public class graphView extends View {
         for (double tic : xTics) {
             double x;
             if (logX)
-                x = (Math.log(tic/minX))/(Math.log(maxX/minX))*(graphW-1)+graphL;
+                x = (Math.log(tic/workingMinX))/(Math.log(workingMaxX/workingMinX))*(graphW-1)+graphL;
             else
-                x = (tic-minX)/(maxX-minX)*(graphW-1)+graphL;
+                x = (tic-workingMinX)/(workingMaxX-workingMinX)*(graphW-1)+graphL;
             canvas.drawLine((float)x, 0, (float)x, h-graphB, paint);
         }
         for (double tic : yTics) {
@@ -388,7 +398,7 @@ public class graphView extends View {
 
         //Draw graph
         paint.setStrokeCap(Paint.Cap.ROUND);
-        if (minX < maxX) {
+        if (workingMinX < workingMaxX) {
             for (int j = historyFilled-1; j >= 0; j--) {
                 if (graphY[j] != null && graphX[j] != null) {
                     if (j == 0) {
@@ -419,9 +429,9 @@ public class graphView extends View {
                         double thisX;
                         double thisY;
                         if (logX)
-                            thisX = Math.round((Math.log(graphX[j][i]/minX))/(Math.log(maxX/minX))*(graphW-1)+graphL);
+                            thisX = Math.round((Math.log(graphX[j][i]/workingMinX))/(Math.log(workingMaxX/workingMinX))*(graphW-1)+graphL);
                         else
-                            thisX = Math.round((graphX[j][i]-minX)/(maxX-minX)*(graphW-1)+graphL);
+                            thisX = Math.round((graphX[j][i]-workingMinX)/(workingMaxX-workingMinX)*(graphW-1)+graphL);
                         if (logY)
                             thisY = h-(Math.log(graphY[j][i]/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
                         else
@@ -438,8 +448,7 @@ public class graphView extends View {
                                 //This has to be part of the current average. Add it and continue
                                 avgY += thisY;
                                 avgCount++;
-                                if (i < graphX[j].length-1 && i < graphY[j].length-1)
-                                    continue; //There might be another point for this average...
+                                continue; //There might be another point for this average...
                             }
                             //So we are done with this x pixel (Either because we found a new one or
                             //because this is the last point in the data set.
@@ -474,6 +483,24 @@ public class graphView extends View {
                             avgY = 0.;
                         }
                         avgX = thisX;
+                    }
+                    // We may have to draw one last line to the result of the last averaging:
+                    if (!forceFullDataset) {
+                        if (avgCount == 0)
+                            avgY = Double.NaN;
+                        else
+                            avgY /= (double) avgCount; //Average
+
+                        //Now draw a line or a point
+                        if (this.line) {
+                            if (!(Double.isNaN(lastX) || Double.isNaN(lastY) || Double.isNaN(avgX) || Double.isNaN(avgY))) {
+                                canvas.drawLine((float) lastX, (float) lastY, (float) avgX, (float) avgY, paint);
+                            }
+                        } else {
+                            if (!(Double.isNaN(avgX) || Double.isNaN(avgY))) {
+                                canvas.drawPoint((float) avgX, (float) avgY, paint);
+                            }
+                        }
                     }
                 }
             }

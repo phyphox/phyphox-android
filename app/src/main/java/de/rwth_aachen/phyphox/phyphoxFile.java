@@ -1141,11 +1141,13 @@ public abstract class phyphoxFile {
                     experiment.analysis.add(new Analysis.firstAM(experiment, inputs, outputs));
                 } break;
                 case "max": { //Maximum (takes y as first input and may take x as an optional second, same for outputs)
+                    boolean multiple = getBooleanAttribute("multiple", false); //Positive or negative flank
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "max"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
@@ -1153,14 +1155,16 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.maxAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.maxAM(experiment, inputs, outputs, multiple));
                 } break;
                 case "min": { //Minimum (takes y as first input and may take x as an optional second, same for outputs)
+                    boolean multiple = getBooleanAttribute("multiple", false); //Positive or negative flank
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "min"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
@@ -1168,7 +1172,7 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.minAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.minAM(experiment, inputs, outputs, multiple));
                 } break;
                 case "threshold": { //Find the index at which the input crosses a threshold
                     boolean falling = getBooleanAttribute("falling", false); //Positive or negative flank
@@ -1298,6 +1302,18 @@ public abstract class phyphoxFile {
                     if (sigma > 0)
                         gsAM.setSigma(sigma);
                     experiment.analysis.add(gsAM);
+                } break;
+                case "match": { //Arbitrary inputs and outputs, for each input[n] a min[n] and max[n] can be defined. The module filters the inputs in parallel and returns only those sets that match the filters
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.matchAM(experiment, inputs, outputs));
                 } break;
                 case "rangefilter": { //Arbitrary inputs and outputs, for each input[n] a min[n] and max[n] can be defined. The module filters the inputs in parallel and returns only those sets that match the filters
 

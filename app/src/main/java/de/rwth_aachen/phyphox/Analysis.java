@@ -46,9 +46,6 @@ public class Analysis {
                 }
                 if (!inputsReady)
                     return false;
-                for (dataOutput output : outputs)
-                    if (output != null && output.clearBeforeWrite)
-                        output.buffer.clear();
 
                 experiment.dataLock.lock();
                 try {
@@ -65,6 +62,10 @@ public class Analysis {
                 } finally {
                     experiment.dataLock.unlock();
                 }
+
+                for (dataOutput output : outputs)
+                    if (output != null && output.clearBeforeWrite)
+                        output.buffer.clear();
 
                 update();
 
@@ -543,14 +544,19 @@ public class Analysis {
     //output1 will receive a single value, the maximum y
     //output2 (if used) will receive a single value, the x of the maximum
     //input1 and output1 are mandatory, input1 and input2 are optional.
+    //If the parameter "multiple" is set, this module will output multiple local maxima (and their positions)
+    //In multiple mode input3 may set a threshold: A local maximum will be searched in ranges of consecutive values above the threshold, Default: 0
     public static class maxAM extends analysisModule {
+        private boolean multiple = false;
 
-        protected maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        protected maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
             super(experiment, inputs, outputs);
+            this.multiple = multiple;
         }
 
         @Override
         protected void update() {
+            double threshold = 0.;
 
             //Get iterators, values do not make sense here.
             Vector<Iterator> its = new Vector<>();
@@ -560,6 +566,9 @@ public class Analysis {
                 else
                     its.add(null);
             }
+
+            if (multiple && inputs.size() > 2 && inputs.get(2) != null)
+                threshold = inputs.get(2).getValue();
 
             double max = Double.NEGATIVE_INFINITY; //This will hold the maximum value
             double x = Double.NEGATIVE_INFINITY; //The x location of the maximum
@@ -574,8 +583,18 @@ public class Analysis {
                 else
                     currentX += 1;
 
-                //Is the current value bigger then the previous maximum?
-                if (v > max) {
+                if (multiple && v < threshold) {
+                    if (!Double.isInfinite(x)) {
+                        if (outputs.size() > 0 && outputs.get(0) != null) {
+                            outputs.get(0).append(max);
+                        }
+                        if (outputs.size() > 1 && outputs.get(1) != null) {
+                            outputs.get(1).append(x);
+                        }
+                        max = Double.NEGATIVE_INFINITY;
+                        x = Double.NEGATIVE_INFINITY;
+                    }
+                } else if (v > max) {
                     //Set maximum and location of maximum
                     max = v;
                     x = currentX;
@@ -583,11 +602,13 @@ public class Analysis {
             }
 
             //Done. Append result to output1 and output2 if used.
-            if (outputs.size() > 0 && outputs.get(0) != null) {
-                outputs.get(0).append(max);
-            }
-            if (outputs.size() > 1 && outputs.get(1) != null) {
-                outputs.get(1).append(x);
+            if (!Double.isInfinite(x)) {
+                if (outputs.size() > 0 && outputs.get(0) != null) {
+                    outputs.get(0).append(max);
+                }
+                if (outputs.size() > 1 && outputs.get(1) != null) {
+                    outputs.get(1).append(x);
+                }
             }
 
         }
@@ -599,14 +620,19 @@ public class Analysis {
     //output1 will receive a single value, the minimum y
     //output2 (if used) will receive a single value, the x of the minimum
     //input1 and output1 are mandatory, input1 and input2 are optional.
+    //If the parameter "multiple" is set, this module will output multiple local minima (and their positions)
+    //In multiple mode input3 may set a threshold: A local minimum will be searched in ranges of consecutive values below the threshold, Default: 0
     public static class minAM extends analysisModule {
+        private boolean multiple = false;
 
-        protected minAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        protected minAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
             super(experiment, inputs, outputs);
+            this.multiple = multiple;
         }
 
         @Override
         protected void update() {
+            double threshold = 0.;
 
             //Get iterators, values do not make sense here.
             Vector<Iterator> its = new Vector<>();
@@ -616,6 +642,9 @@ public class Analysis {
                 else
                     its.add(null);
             }
+
+            if (multiple && inputs.size() > 2 && inputs.get(2) != null)
+                threshold = inputs.get(2).getValue();
 
             double min = Double.POSITIVE_INFINITY; //This will hold the minimum value
             double x = Double.NEGATIVE_INFINITY; //The x location of the minimum
@@ -630,20 +659,32 @@ public class Analysis {
                 else
                     currentX += 1;
 
-                //Is the current value bigger then the previous minimum?
-                if (v < min) {
-                    //Set minimum and location of minimum
+                if (multiple && v > threshold) {
+                    if (!Double.isInfinite(x)) {
+                        if (outputs.size() > 0 && outputs.get(0) != null) {
+                            outputs.get(0).append(min);
+                        }
+                        if (outputs.size() > 1 && outputs.get(1) != null) {
+                            outputs.get(1).append(x);
+                        }
+                        min = Double.POSITIVE_INFINITY;
+                        x = Double.NEGATIVE_INFINITY;
+                    }
+                } else if (v < min) {
+                    //Set maximum and location of maximum
                     min = v;
                     x = currentX;
                 }
             }
 
             //Done. Append result to output1 and output2 if used.
-            if (outputs.size() > 0 && outputs.get(0) != null) {
-                outputs.get(0).append(min);
-            }
-            if (outputs.size() > 1 && outputs.get(1) != null) {
-                outputs.get(1).append(x);
+            if (!Double.isInfinite(x)) {
+                if (outputs.size() > 0 && outputs.get(0) != null) {
+                    outputs.get(0).append(min);
+                }
+                if (outputs.size() > 1 && outputs.get(1) != null) {
+                    outputs.get(1).append(x);
+                }
             }
 
         }
@@ -653,7 +694,7 @@ public class Analysis {
     //input1 is y
     //input2 is x (if ommitted, it will be filled with 1, 2, 3, ...)
     //output1 will receive the x value of the point the threshold is crossed
-    //The threshold is set in the contructor (in the loading code it defaults to 0)
+    //The threshold is set by input3 (it defaults to 0)
     //The constructor parameter falling select positive or negative edge triggering (loaded with rising as default)
     public static class thresholdAM extends analysisModule {
         boolean falling = false; //Falling or rising trigger?
@@ -1174,6 +1215,53 @@ public class Analysis {
                         sum += gauss[j+calcWidth]*y[k]; //Add weighted contribution
                 }
                 outputs.get(0).append(sum); //Append the result to the output buffer
+            }
+        }
+    }
+
+
+    //Match a couple of inputs and only return those that have a valid value in every input
+    //You need exactly as many outputs as there are inputs.
+    public static class matchAM extends analysisModule {
+
+        protected matchAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            //Get iterators of all inputs (numeric string not allowed here as it makes no sense to filter static input)
+            Vector<Iterator> its = new Vector<>();
+            for (int i = 0; i < inputs.size(); i++) {
+                its.add(inputs.get(i).getIterator());
+            }
+
+            double []data = new double[inputs.size()]; //Will hold values of all inputs at same index
+            boolean hasNext = true; //Will be set to false if ANY of the iterators has no next item
+            while (hasNext) {
+                //Check if any input has a value left
+                hasNext = true;
+                for (Iterator it : its) {
+                    if (!it.hasNext()) {
+                        hasNext = false;
+                        break;
+                    }
+                }
+                if (hasNext) {
+                    boolean filter = false; //Will be set to true if any input is invalid
+                    for (int i = 0; i < inputs.size(); i++) { //For each input...
+                        data[i] = (double) its.get(i).next();
+                        if (Double.isInfinite(data[i]) || Double.isNaN(data[i])) { //Is this value valid?
+                            filter = true; //Yepp, filter this index
+                        }
+                    }
+                    if (!filter) { //Filter not triggered? Append the values of each input to the corresponding outputs.
+                        for (int i = 0; i < inputs.size(); i++) {
+                            if (i < outputs.size() && outputs.get(i) != null)
+                                outputs.get(i).append(data[i]);
+                        }
+                    }
+                }
             }
         }
     }
