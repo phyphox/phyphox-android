@@ -362,22 +362,24 @@ public class ExperimentList extends AppCompatActivity {
             //Create the base linear layout to hold title and list
             catLayout = new LinearLayout(parentContext);
             catLayout.setOrientation(LinearLayout.VERTICAL);
-            catLayout.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
-            catLayout.setPadding(
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            lllp.setMargins(
                     res.getDimensionPixelOffset(R.dimen.activity_horizontal_margin)-res.getDimensionPixelOffset(R.dimen.expElementMargin),
                     0,
                     res.getDimensionPixelOffset(R.dimen.activity_horizontal_margin)-res.getDimensionPixelOffset(R.dimen.expElementMargin),
                     res.getDimensionPixelOffset(R.dimen.activity_vertical_margin)
             );
+            catLayout.setLayoutParams(lllp);
+            catLayout.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.background));
 
             //Create the headline text view
             categoryHeadline = new TextView(parentContext);
             LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            layout.setMargins(res.getDimensionPixelOffset(R.dimen.expElementMargin), 0, res.getDimensionPixelOffset(R.dimen.expElementMargin), res.getDimensionPixelOffset(R.dimen.expElementMargin));
+//            layout.setMargins(res.getDimensionPixelOffset(R.dimen.expElementMargin), 0, res.getDimensionPixelOffset(R.dimen.expElementMargin), res.getDimensionPixelOffset(R.dimen.expElementMargin));
             categoryHeadline.setLayoutParams(layout);
             categoryHeadline.setText(name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
@@ -401,7 +403,7 @@ public class ExperimentList extends AppCompatActivity {
             experimentSubList.setAdapter(experiments);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                categoryHeadline.setElevation(res.getDimensionPixelOffset(R.dimen.expElementElevation));
+                catLayout.setElevation(res.getDimensionPixelOffset(R.dimen.expElementElevation));
                 catLayout.setClipToPadding(false);
                 catLayout.setClipChildren(false);
                 experimentSubList.setClipToPadding(false);

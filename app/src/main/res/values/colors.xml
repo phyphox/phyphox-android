@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="background">#404040</color>
-    <color name="backgroundExp">#f0f0f0</color>
+    <color name="backgroundExp">#404040</color>
     <color name="backgroundDialog">#ffffff</color>
     <color name="main">#ffffff</color>
-    <color name="mainExp">#000000</color>
+    <color name="mainExp">#ffffff</color>
     <color name="mainDialog">#000000</color>
     <color name="grid">#808080</color>
     <color name="highlight">#ff7e22</color>

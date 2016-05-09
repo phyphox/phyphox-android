@@ -5,8 +5,10 @@
     <dimen name="activity_horizontal_padding">8dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="activity_vertical_padding">5dp</dimen>
+    <dimen name="graph_label_start_margin">16dp</dimen>
 
     <dimen name="font">16sp</dimen>
+    <dimen name="label_font">18sp</dimen>
     <dimen name="small_font">13sp</dimen>
     <dimen name="experiment_title_font">22sp</dimen>
     <dimen name="experiment_info_font">15sp</dimen>
@@ -19,6 +21,6 @@
     <dimen name="expElementWidth">250dp</dimen>
     <dimen name="expElementBorderWidth">2dp</dimen>
     <dimen name="expElementIconSize">50dp</dimen>
-    <dimen name="expElementElevation">2dp</dimen>
+    <dimen name="expElementElevation">8dp</dimen>
     <dimen name="expElementMargin">2dp</dimen>
 </resources>

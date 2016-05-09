@@ -5,7 +5,7 @@
 
   <style name="phyphox" parent="@style/_phyphox"/>
 
-  <style name="_phyphox" parent="Theme.AppCompat.Light.NoActionBar">
+  <style name="_phyphox" parent="Theme.AppCompat.NoActionBar">
 
     <item name="actionBarStyle">@style/ActionBarPhyphox</item>
     <item name="android:actionBarStyle">@style/ActionBarPhyphox</item>

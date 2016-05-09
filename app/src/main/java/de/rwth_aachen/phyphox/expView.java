@@ -50,7 +50,7 @@ public class expView{
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             this.label = label;
-            this.labelSize = res.getDimension(R.dimen.font);
+            this.labelSize = res.getDimension(R.dimen.label_font);
             this.valueOutput = valueOutput;
             this.valueInput = valueInput;
             this.dataXInput = dataXInput;
@@ -687,9 +687,12 @@ public class expView{
 
             //Create the label
             TextView labelView = new TextView(c);
-            labelView.setLayoutParams(new TableRow.LayoutParams(
+            TableRow.LayoutParams lp = new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            lp.setMargins((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.graph_label_start_margin), res.getDisplayMetrics()), 0, 0, 0);
+            labelView.setLayoutParams(lp);
             labelView.setText(this.label);
             labelView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);

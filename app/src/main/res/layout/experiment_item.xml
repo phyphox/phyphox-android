@@ -3,12 +3,11 @@
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:clickable="false"
     android:clipToPadding="false"
-    android:padding="@dimen/expElementMargin">
+    android:paddingTop="@dimen/expElementMargin">
 
     <RelativeLayout
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:clickable="false"
-        android:elevation="@dimen/expElementElevation"
         android:background="@drawable/background_ripple">
 
         <ImageView

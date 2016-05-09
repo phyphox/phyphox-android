@@ -357,7 +357,7 @@ public class graphView extends View {
                 y = h-(Math.log(tic/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
             else
                 y = h-(tic-workingMinY)/(workingMaxY-workingMinY)*(graphH-1)-graphB;
-            canvas.drawText(String.format("%.3g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.5)), paint);
+            canvas.drawText(String.format("%.3g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
         }
 
         //Labels
