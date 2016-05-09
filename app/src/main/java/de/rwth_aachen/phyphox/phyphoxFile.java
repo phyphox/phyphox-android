@@ -39,8 +39,9 @@ public abstract class phyphoxFile {
 
     final static String phyphoxFileVersion = "1.0";
 
-    //translation maps any English term for which a suitable translation is found to the current locale
+    //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
+    private static boolean perfectLocaleFound = false;
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
     private static String translate(String input) {
@@ -75,6 +76,9 @@ public abstract class phyphoxFile {
 
     //Helper function to open an inputStream from various intents
     public static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
+        perfectLocaleFound = false;
+        translation = new HashMap<>();
+
         PhyphoxStream phyphoxStream = new PhyphoxStream();
 
         //We only respond to view-action-intents
@@ -616,9 +620,12 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "translation": //A translation block holds all translation information for a single language
-                    if (getStringAttribute("locale").equals(Locale.getDefault().getLanguage())) //Check if the language matches...
+                    String thisLocale = getStringAttribute("locale");
+                    if (thisLocale.equals(Locale.getDefault().getLanguage()) || (!perfectLocaleFound && thisLocale.equals("en"))) { //Check if the language matches...
+                        if (thisLocale.equals(Locale.getDefault().getLanguage()))
+                            perfectLocaleFound = true;
                         (new translationBlockParser(xpp, experiment, parent)).process(); //Jepp, use it!
-                    else
+                    } else
                         (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
                     break;
                 default: //Unknown tag...
@@ -1524,6 +1531,10 @@ public abstract class phyphoxFile {
                                 experiment.message = "Unable to interpret the file version of this experiment.";
                                 return experiment;
                             }
+
+                            String globalLocale = xpp.getAttributeValue(null, "locale");
+                            if (globalLocale != null && globalLocale.equals(Locale.getDefault().getLanguage()))
+                                perfectLocaleFound = true;
                         }
                         (new phyphoxBlockParser(xpp, experiment, parent)).process();
                     }

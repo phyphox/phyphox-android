@@ -477,6 +477,7 @@ public class ExperimentList extends AppCompatActivity {
             int phyphoxDepth = -1; //Depth of the first phyphox tag (We only care for title, icon, description and category directly below the phyphox tag)
             int translationBlockDepth = -1; //Depth of the translations block
             int translationDepth = -1; //Depth of a suitable translation, if found.
+            boolean perfectTranslationFound = false; //Becomes true if the global locale or a translation locale matches the system locale - if true, no other translations will be read.
             while (eventType != XmlPullParser.END_DOCUMENT){ //Go through all tags until the end...
                 switch (eventType) {
                     case XmlPullParser.START_TAG: //React to start tags
@@ -484,6 +485,9 @@ public class ExperimentList extends AppCompatActivity {
                             case "phyphox": //The phyphox tag is the root element of the experiment we want to interpret
                                 if (phyphoxDepth < 0) { //There should not be a phyphox tag within an phyphox tag, but who cares. Just ignore it if it happens
                                     phyphoxDepth = xpp.getDepth(); //Remember depth of phyphox tag
+                                    String globalLocale = xpp.getAttributeValue(null, "locale");
+                                    if (globalLocale != null && globalLocale.equals(Locale.getDefault().getLanguage()))
+                                        perfectTranslationFound = true;
                                 }
                                 break;
                             case "translations": //The translations block may contain a localized title and description
@@ -496,7 +500,10 @@ public class ExperimentList extends AppCompatActivity {
                             case "translation": //The translation block may contain our localized version
                                 if (xpp.getDepth() != translationBlockDepth+1) //The translation has to be immediately below he translations block
                                     break;
-                                if (translationDepth < 0 && xpp.getAttributeValue(null, "locale").equals(Locale.getDefault().getLanguage())) {
+                                String thisLocale = xpp.getAttributeValue(null, "locale");
+                                if (translationDepth < 0 && (thisLocale.equals(Locale.getDefault().getLanguage()) || (!perfectTranslationFound && thisLocale.equals("en")))) {
+                                    if (thisLocale.equals(Locale.getDefault().getLanguage()))
+                                        perfectTranslationFound = true;
                                     translationDepth = xpp.getDepth(); //Remember depth of the translation block
                                 }
                                 break;
