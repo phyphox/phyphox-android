@@ -20,6 +20,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
@@ -692,7 +693,7 @@ public class ExperimentList extends AppCompatActivity {
             }
         };
 
-        Button newExperimentB = (Button) findViewById(R.id.newExperiment);
+        FloatingActionButton newExperimentB = (FloatingActionButton) findViewById(R.id.newExperiment);
         newExperimentB.setOnClickListener(neocl);
     }
 

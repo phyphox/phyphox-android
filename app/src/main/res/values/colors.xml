@@ -10,6 +10,7 @@
     <color name="backgroundRemote">#f0f0f0</color>
     <color name="backgroundGridRemote">#ffffff</color>
     <color name="main">#ffffff</color>
+    <color name="main2">#e0e0e0</color>
     <color name="mainExp">#ffffff</color>
     <color name="mainDialog">#000000</color>
     <color name="mainRemote">#000000</color>

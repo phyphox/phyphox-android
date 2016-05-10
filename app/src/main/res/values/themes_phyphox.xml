@@ -25,7 +25,7 @@
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
         <item name="android:textColor">@color/main</item>
         <item name="android:textColorPrimary">@color/main</item>
-        <item name="android:textColorSecondary">@color/main</item>
+        <item name="android:textColorSecondary">@color/main2</item>
         <item name="colorAccent">@color/highlight</item>
         <item name="android:colorAccent" tools:ignore="NewApi">@color/highlight</item>
         <item name="android:textColorHighlight">@color/highlight</item>
