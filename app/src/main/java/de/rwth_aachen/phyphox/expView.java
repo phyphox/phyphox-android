@@ -811,7 +811,7 @@ public class expView{
                         "}" +
                         "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.mainExp)).substring(2) +"\"}});" +
+                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.mainRemote)).substring(2) +"\", \"backgroundColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2) +"\"}});" +
                     "}";
         }
 

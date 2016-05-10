@@ -7,7 +7,8 @@
     <color name="backgroundExp2">#606060</color>
     <color name="backgroundExp3">#202020</color>
     <color name="backgroundDialog">#ffffff</color>
-    <color name="backgroundRemote">#e8e8e8</color>
+    <color name="backgroundRemote">#f0f0f0</color>
+    <color name="backgroundGridRemote">#ffffff</color>
     <color name="main">#ffffff</color>
     <color name="mainExp">#ffffff</color>
     <color name="mainDialog">#000000</color>
