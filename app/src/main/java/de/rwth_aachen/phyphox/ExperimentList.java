@@ -132,6 +132,59 @@ public class ExperimentList extends AppCompatActivity {
         }
     }
 
+    //The class BitmapIcon is a drawable that displays a user-given PNG on top of an orange background
+    public class BitmapIcon extends Drawable {
+
+        private final Paint paint; //The paint for the icon
+        private final Paint paintBG; //The paint for the background
+        private final Bitmap icon;
+
+        //The constructor takes a context and the characters to display. It also sets up the paints
+        public BitmapIcon(Bitmap icon, Context c) {
+            this.icon = icon;
+
+            //Icon-Paint
+            this.paint = new Paint();
+            paint.setAntiAlias(true);
+
+            //Background paint
+            this.paintBG = new Paint();
+            paintBG.setColor(ContextCompat.getColor(c, R.color.highlight));
+            paintBG.setStyle(Paint.Style.FILL);
+        }
+
+        @Override
+        //Draw the icon
+        public void draw(Canvas canvas) {
+            //A rectangle and text on top. Quite simple.
+            int size = (int)res.getDimension(R.dimen.expElementIconSize);
+            int wSrc = icon.getWidth();
+            int hSrc = icon.getHeight();
+            canvas.drawRect(new Rect(0, 0, size, size), paintBG);
+            canvas.drawBitmap(icon, new Rect(0, 0, wSrc, hSrc), new Rect(0, 0, size, size), paint);
+        }
+
+        @Override
+        //Needs to be implemented.
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+            paintBG.setAlpha(alpha);
+        }
+
+        @Override
+        //Needs to be implemented.
+        public void setColorFilter(ColorFilter cf) {
+            paint.setColorFilter(cf);
+            paintBG.setColorFilter(cf);
+        }
+
+        @Override
+        //Needs to be implemented.
+        public int getOpacity() {
+            return PixelFormat.OPAQUE;
+        }
+    }
+
     //This adapter is used to fill the gridView of the categories in the experiment list.
     //So, this can be considered to be the experiment entries within an category
     private class experimentItemAdapter extends BaseAdapter {
@@ -519,7 +572,7 @@ public class ExperimentList extends AppCompatActivity {
                                     if (xpp.getAttributeValue(null, "type") != null && xpp.getAttributeValue(null, "type").equals("base64")) { //Check the icon type
                                         //base64 encoded image. Decode it
                                         icon = xpp.nextText().trim();
-                                        image = new BitmapDrawable(res, decodeBase64(icon));
+                                        image = new BitmapIcon(decodeBase64(icon), this);
                                     } else {
                                         //Just a string. Create an icon from it. We allow a maximum of three characters.
                                         icon = xpp.nextText().trim();
