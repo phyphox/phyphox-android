@@ -1,58 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!-- Generated with http://android-holo-colors.com -->
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <style name="phyphox" parent="@style/_phyphox"/>
+    <style name="phyphox" parent="Theme.AppCompat.NoActionBar">
 
-  <style name="_phyphox" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:textColor">@color/mainExp</item>
+        <item name="android:textColorPrimary">@color/mainExp</item>
+        <item name="android:textColorSecondary">@color/mainExp</item>
+        <item name="colorAccent">@color/highlight</item>
+        <item name="android:colorAccent" tools:ignore="NewApi">@color/highlight</item>
+        <item name="android:textColorHighlight">@color/highlight</item>
 
-    <item name="actionBarStyle">@style/ActionBarPhyphox</item>
-    <item name="android:actionBarStyle">@style/ActionBarPhyphox</item>
+        <item name="colorPrimary">@color/phyphox_color</item>
+        <item name="colorPrimaryDark">@color/backgroundExp3</item>
 
-    <item name="popupMenuStyle">@style/PopupMenuPhyphox</item>
-    <item name="android:popupMenuStyle">@style/PopupMenuPhyphox</item>
+        <item name="android:textSize">@dimen/font</item>
 
-    <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
-    <item name="android:textSize">@dimen/font</item>
+        <item name="alertDialogTheme">@style/phyphoxDialog</item>
+        <item name="dialogTheme">@style/phyphoxDialog</item>
 
-    <item name="android:editTextStyle">@style/EditTextphyphox</item>
+    </style>
 
-    <item name="android:textColorHighlight">#99ff7e22</item>
+    <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:textColor">@color/main</item>
+        <item name="android:textColorPrimary">@color/main</item>
+        <item name="android:textColorSecondary">@color/main</item>
+        <item name="colorAccent">@color/highlight</item>
+        <item name="android:colorAccent" tools:ignore="NewApi">@color/highlight</item>
+        <item name="android:textColorHighlight">@color/highlight</item>
 
-    <item name="android:checkboxStyle">@style/CheckBoxphyphox</item>
+        <item name="colorPrimary">@color/phyphox_color</item>
+        <item name="colorPrimaryDark">@color/background3</item>
+        <item name="android:textSize">@dimen/font</item>
 
-    <item name="android:radioButtonStyle">@style/RadioButtonphyphox</item>
+        <item name="alertDialogTheme">@style/phyphoxDialog</item>
+        <item name="dialogTheme">@style/phyphoxDialog</item>
+    </style>
 
-    <item name="android:buttonStyle">@style/Buttonphyphox</item>
-
-    <item name="android:spinnerStyle">@style/Spinnerphyphox</item>
-
-    <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemphyphox</item>
-
-    <item name="android:progressBarStyleHorizontal">@style/ProgressBarphyphox</item>
-
-    <item name="android:textColor">@color/mainDialog</item>
-    <item name="colorPrimary">@color/mainExp</item>
-    <item name="colorAccent">@color/highlight</item>
-
-    <item name="alertDialogTheme">@style/phyphoxDialog</item>
-    <item name="dialogTheme">@style/phyphoxDialog</item>
-  </style>
-
-  <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
-    <item name="colorPrimary">@color/main</item>
-    <item name="android:textSize">@dimen/font</item>
-    <item name="buttonStyle">@style/Buttonphyphox</item>
-    <item name="alertDialogTheme">@style/phyphoxDialog</item>
-    <item name="dialogTheme">@style/phyphoxDialog</item>
-  </style>
-
-  <style name="rwth" parent="Theme.AppCompat.NoActionBar">
-    <item name="android:textColor">@color/mainDialog</item>
-    <item name="colorPrimary">@color/mainDialog</item>
-    <item name="colorAccent">@color/rwth</item>
-    <item name="alertDialogTheme">@style/rwthDialog</item>
-  </style>
+    <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:textColor">@color/mainDialog</item>
+        <item name="colorPrimary">@color/mainDialog</item>
+        <item name="colorAccent">@color/rwth</item>
+        <item name="alertDialogTheme">@style/rwthDialog</item>
+    </style>
 
 </resources>

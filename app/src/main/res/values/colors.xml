@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="background">#404040</color>
+    <color name="background2">#606060</color>
+    <color name="background3">#202020</color>
     <color name="backgroundExp">#404040</color>
+    <color name="backgroundExp2">#606060</color>
+    <color name="backgroundExp3">#202020</color>
     <color name="backgroundDialog">#ffffff</color>
+    <color name="backgroundRemote">#e8e8e8</color>
     <color name="main">#ffffff</color>
     <color name="mainExp">#ffffff</color>
     <color name="mainDialog">#000000</color>
+    <color name="mainRemote">#000000</color>
     <color name="grid">#808080</color>
     <color name="highlight">#ff7e22</color>
     <color name="phyphox_color">#ff7e22</color>

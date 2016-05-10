@@ -16,12 +16,15 @@ import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -45,6 +48,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
@@ -96,7 +100,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //The experiment
     phyphoxExperiment experiment; //The experiment (definition and functionality) after it has been loaded.
-    private int currentView; //An experiment may define multiple view layouts. This is the index of the currently used one.
+    TabLayout tabLayout;
+    ViewPager pager;
+    expViewPagerAdapter adapter;
 
     //Others...
     private Resources res; //Helper to easily access resources
@@ -143,6 +149,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //So display a ProgressDialog and instantiate and execute loadXMLAsyncTask (see phyphoxFile class)
         progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
         (new phyphoxFile.loadXMLAsyncTask(intent, this)).execute();
+
     }
 
     @Override
@@ -199,22 +206,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
-    //Switch to a certain view (of the experiment views)
-    private void setupView(int newView) {
-        //Clear the base linear layout
-        LinearLayout ll = (LinearLayout) findViewById(R.id.experimentView);
-        ll.removeAllViews();
-
-        //Create all viewElements in the new view
-        for (expView.expViewElement element : experiment.experimentViews.elementAt(newView).elements) {
-            element.createView(ll, this);
-        }
-
-        //Store the index of the current view
-        currentView = newView;
-        experiment.updateViews(currentView, true);
-    }
-
     //This is called from the CopyXML thread in onPostExecute, so the copying process of a remote
     //   experiment to the local collection has been completed
     public void onCopyXMLCompleted(String result) {
@@ -254,34 +245,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             //We should set the experiment title....
             ((TextView) findViewById(R.id.titleText)).setText(experiment.title);
 
-            //Create the dropdown menu from which the user may select different views of this experiment
-            List<String> viewChoices = new ArrayList<>(); //List of view names
-            for (expView v : experiment.experimentViews) { //For each experiment view
-                viewChoices.add(v.name); //Add the name to the list
-            }
-            //Now get the dropdown view ("Spinner" element)
-            Spinner viewSelector = (Spinner) findViewById(R.id.viewSelector);
-            //Fill the name list into an array adapter
-            ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, viewChoices);
-            //Setup the array adapter to a simple default
-            spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            //And feet the adapter to the spinne
-            viewSelector.setAdapter(spinnerArrayAdapter);
-
-            //Now for the functionality of the spinner: Create an onclick listener
-            viewSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    //The user has selected a view, so let's set up this view.
-                    setupView(position);
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                    //Nothing to do if nothing is expected...
-                }
-
-            });
+            int startView = 0;
 
             //If we have a savedInstanceState, it would be a good time to interpret it...
             if (savedInstanceState != null) {
@@ -311,14 +275,29 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     }
 
                     //Which view was active when we were stopped?
-                    currentView = savedInstanceState.getInt(STATE_CURRENT_VIEW); //Get currentView
-                    viewSelector.setSelection(currentView); //Set spinner to the right entry
+                    startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
 
                 }
             }
 
-            //Now actually display the selected view
-            setupView(viewSelector.getSelectedItemPosition());
+            tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
+            pager = ((ViewPager)findViewById(R.id.view_pager));
+            FragmentManager manager = getSupportFragmentManager();
+            adapter = new expViewPagerAdapter(manager, this.experiment);
+            pager.setAdapter(adapter);
+            tabLayout.setupWithViewPager(pager);
+            pager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+
+            for (int i = 0; i < adapter.getCount(); i++) {
+                expViewFragment f = (expViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
+                if (f != null)
+                    f.recreateView();
+            }
+
+            if (adapter.getCount() < 2)
+                tabLayout.setVisibility(View.GONE);
+
+            tabLayout.getTabAt(startView).select();
 
             //Everything is ready. Let's start the "main loop"
             loadCompleted = true;
@@ -742,10 +721,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
                     //Get values from input views only if there isn't fresh data from the remote server which might get overridden
                     if (!remoteInput) {
-                        experiment.handleInputViews(currentView);
+                        experiment.handleInputViews(tabLayout.getSelectedTabPosition());
                     }
                     //Update all the views currently visible
-                    if (experiment.updateViews(currentView, false)) {
+                    if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
 
                         if (remoteInput) {
                             //If there has been remote input, we may reset it as updateViews will have taken care of this
@@ -983,7 +962,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return;
         }
         try {
-            outState.putInt(STATE_CURRENT_VIEW, currentView); //Save current experiment view
+            outState.putInt(STATE_CURRENT_VIEW, tabLayout.getSelectedTabPosition()); //Save current experiment view
             experiment.dataLock.lock(); //Save dataBuffers (synchronized, so no other thread alters them while we access them)
             try {
                 outState.putSerializable(STATE_DATA_BUFFERS, experiment.dataBuffers);

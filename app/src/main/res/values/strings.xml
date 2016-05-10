@@ -105,4 +105,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="noDrawableData">No drawable data.</string>
 
     <string name="categoryNewExperiment">Simple custom experiments</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

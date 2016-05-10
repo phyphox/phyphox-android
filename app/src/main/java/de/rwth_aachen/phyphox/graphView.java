@@ -14,6 +14,8 @@ public class graphView extends View {
     private Double[][] graphX; //The x data to be displayed
     private Double[][] graphY; //The y data to be displayed
 
+    private double aspectRatio = 3.;
+
     private boolean forceFullDataset = false; //If true, all data points are shown. If false, some datapoints will be skipped if much more data is availbale than required by the resolution
 
     private int historyLength; //If set to n > 1 the graph will also show the last n sets in a different color
@@ -48,12 +50,39 @@ public class graphView extends View {
 
     //Simple constructor just needs a context to call the View constructor
     //Initialize some stuff...
-    public graphView(Context context) {
+    public graphView(Context context, double aspectRatio) {
         super(context);
+        this.aspectRatio = aspectRatio;
         res = getResources();
         setHistoryLength(1);
         rescale(); //Calculate initial scale. At this point it will just set all min and max to +inf and -inf
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        int height, width;
+
+        //Measure Width
+        if (widthMode == MeasureSpec.UNSPECIFIED && heightMode == MeasureSpec.UNSPECIFIED) {
+            width = 600;
+            height = (int)Math.round(600/aspectRatio);
+        } else if (widthMode == MeasureSpec.UNSPECIFIED) {
+            height = heightSize;
+            width = (int)Math.round(height * aspectRatio);
+        } else if (heightMode == MeasureSpec.UNSPECIFIED) {
+            width = widthSize;
+            height = (int)Math.round(width / aspectRatio);
+        } else {
+            width = widthSize;
+            height = heightSize;
+        }
+
+        setMeasuredDimension(width, height);
     }
 
     //Interface to switch between lines and points

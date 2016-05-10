@@ -1,88 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!-- Generated with http://android-holo-colors.com -->
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="android:background">@color/phyphox_color</item>
-        <item name="android:textColor">@color/main</item>
 
-          <item name="popupTheme">@style/PopupMenuPhyphox</item>
-  </style>
+    <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:textColorPrimary">@color/main</item>
+        <item name="android:textColorSecondary">@color/main</item>
 
-  <style name="PopupMenuPhyphox" parent="Widget.AppCompat.Light.ListPopupWindow">
-      <item name="android:background">@color/backgroundDialog</item>
-      <item name="android:textColor">@color/mainDialog</item>
-      <item name="android:textColorPrimary">@color/mainDialog</item>
-  </style>
-
-  <style name="EditTextphyphox" parent="android:Widget.EditText">
-	  <item name="android:background">@drawable/phyphox_edit_text_holo_light</item>
-	  <item name="android:textColor">@color/mainExp</item>
-  </style>
-
-  <style name="CheckBoxphyphox" parent="android:Widget.CompoundButton.CheckBox">
-      <item name="android:button">@drawable/phyphox_btn_check_holo_light</item>
-  </style>
-
-  <style name="RadioButtonphyphox" parent="android:Widget.CompoundButton.RadioButton">
-      <item name="android:button">@drawable/phyphox_btn_radio_holo_light</item>
-  </style>
-
-  <style name="Buttonphyphox" parent="android:Widget.Button">
-	  <item name="android:textColor">@color/highlight</item>
-      <item name="android:textAllCaps">false</item>
-      <item name="android:background">@drawable/background_ripple</item>
-      <item name="android:padding">5dp</item>
-  </style>
-
-  <style name="Spinnerphyphox" parent="Widget.AppCompat.Spinner">
-      <item name="android:spinnerMode">dropdown</item>
-  </style>
-
-  <style name="SpinnerDropDownItemphyphox" parent="Widget.AppCompat.DropDownItem.Spinner">
-      <item name="android:textColor">@color/mainDialog</item>
-      <item name="android:background">@color/backgroundDialog</item>
-      <item name="android:checkMark">@drawable/phyphox_btn_radio_holo_light</item>
-  </style>
-  <style name="ProgressBarphyphox" parent="android:Widget.ProgressBar.Horizontal">
-      <item name="android:progressDrawable">@drawable/phyphox_progress_horizontal_holo_light</item>
-      <item name="android:indeterminateDrawable">@drawable/phyphox_progress_indeterminate_horizontal_holo_light</item>
-      <item name="android:minHeight">16dip</item>
-      <item name="android:maxHeight">16dip</item>
-  </style>
-
-    <style name="phyphoxDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="colorAccent">@color/highlight</item>
-        <item name="android:textColorPrimary">@color/mainDialog</item>
-        <item name="android:background">@color/backgroundDialog</item>
-        <item name="android:windowTitleStyle">@style/windowTitleStyle</item>
+<!--        <item name="selectableItemBackground">?android:selectableItemBackground</item>
+        <item name="selectableItemBackgroundBorderless">?android:selectableItemBackground</item>-->
     </style>
 
-    <style name="SpinnerItem" parent="Widget.AppCompat.TextView.SpinnerItem">
-        <item name="android:textColor">@color/main</item>
-        <item name="android:text">@dimen/headline_font</item>
-        <item name="android:paddingLeft">0dp</item>
-        <item name="android:paddingStart">0dp</item>
+  <style name="PopupMenuPhyphox" parent="ThemeOverlay.AppCompat.Dark">
+      <item name="android:textColor">@color/mainExp</item>
+      <item name="android:colorBackground">@color/backgroundExp2</item>
+  </style>
+
+    <style name="phyphoxDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/highlight</item>
     </style>
 
     <style name="rwthDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="colorAccent">@color/rwth</item>
-        <item name="android:textColorPrimary">@color/mainDialog</item>
-        <item name="android:background">@color/backgroundDialog</item>
-        <item name="android:windowTitleStyle">@style/rwthWindowTitleStyle</item>
-    </style>
-
-    <style name="windowTitleStyle">
-        <item name="android:textColor">@color/highlight</item>
-        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Title</item>
-        <item name="android:textSize">@dimen/headline_font</item>
-    </style>
-
-    <style name="rwthWindowTitleStyle">
-        <item name="android:textColor">@color/rwth</item>
-        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Title</item>
-        <item name="android:textSize">@dimen/headline_font</item>
     </style>
 
 </resources>

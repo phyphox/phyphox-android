@@ -1,43 +1,38 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingBottom="0dp"
     tools:context="de.rwth_aachen.phyphox.Experiment"
     android:clickable="false"
-    android:id="@+id/rootLayout"
-    android:background="@color/backgroundExp">
+    android:id="@+id/rootLayout">
 
     <android.support.v7.widget.Toolbar
         android:layout_alignParentTop="true"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:theme="@style/ActionBarPhyphox"
+        android:layout_height="?actionBarSize"
         android:id="@+id/customActionBar"
+        android:theme="@style/ActionBarPhyphox"
+        app:popupTheme="@style/PopupMenuPhyphox"
+        android:background="?attr/colorPrimary"
+        android:elevation="8dp"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:elevation="4dp">
-        <LinearLayout
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentLeft="true"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/titleText"
-                android:textSize="@dimen/font"
-                android:textColor="@color/main"
-                android:inputType="text"
-                />
-            <Spinner
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="@dimen/font"
-                android:id="@+id/viewSelector" />
-        </LinearLayout>
+        android:layout_alignParentRight="true">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+            android:id="@+id/titleText" />
     </android.support.v7.widget.Toolbar>
+
+    <android.support.design.widget.TabLayout
+        android:elevation="4dp"
+        android:background="@color/backgroundExp2"
+        android:id="@+id/tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_below="@+id/customActionBar"
+        app:tabMode="scrollable"
+    />
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
@@ -54,35 +49,14 @@
         android:layout_alignParentRight="false"
         android:layout_alignParentStart="false"
         android:progressBackgroundTint="@android:color/transparent"
-        android:layout_below="@+id/customActionBar" />
+        android:layout_below="@+id/tab_layout" />
 
-    <ScrollView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/scrollView"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:clickable="true"
-        android:layout_below="@+id/progressBar"
-        android:background="@color/backgroundExp">
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/experimentView"
-            android:paddingLeft="@dimen/activity_horizontal_margin"
-            android:paddingRight="@dimen/activity_horizontal_margin"
-            android:paddingBottom="@dimen/activity_vertical_margin"
-            android:clickable="true"
-            style="@style/phyphox"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:background="@color/backgroundExp"></LinearLayout>
-    </ScrollView>
+    <android.support.v4.view.ViewPager
+        android:layout_below="@id/tab_layout"
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
 
     <TextView
         android:layout_width="wrap_content"
@@ -91,7 +65,7 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:background="@color/background"
+        android:background="@color/backgroundExp2"
         android:textColor="@color/main"
         android:text="@string/remoteServerActive"
         android:layout_alignParentLeft="true"

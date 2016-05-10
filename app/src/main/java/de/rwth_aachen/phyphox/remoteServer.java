@@ -84,8 +84,8 @@ public class remoteServer extends Thread {
             //While ẃe get lines from the resource file, replace placeholders and hand the line to the stringbuilder
             while ((line = br.readLine()) != null) {
                 //Set color placeholders...
-                line = line.replace("###background-color###", "#"+String.format("%08x", res.getColor(R.color.backgroundExp)).substring(2));
-                line = line.replace("###main-color###", "#"+String.format("%08x", res.getColor(R.color.mainExp)).substring(2));
+                line = line.replace("###background-color###", "#"+String.format("%08x", res.getColor(R.color.backgroundRemote)).substring(2));
+                line = line.replace("###main-color###", "#"+String.format("%08x", res.getColor(R.color.mainRemote)).substring(2));
                 line = line.replace("###highlight-color###", "#"+String.format("%06x", res.getColor(R.color.highlight)).substring(2));
 
                 //Set some drawables directly in the css as base64-encoded PNGs

@@ -338,12 +338,15 @@ public class expView{
 
             //Create the text as textView
             TextView textView = new TextView(c);
-            textView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.info_element_margin), res.getDisplayMetrics());
+            lllp.setMargins(0, margin, 0, margin);
+            textView.setLayoutParams(lllp);
             textView.setText(this.label);
-            textView.setGravity(Gravity.CENTER);
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            textView.setGravity(Gravity.LEFT);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.info_element_font));
             textView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Add it to the linear layout
@@ -699,10 +702,10 @@ public class expView{
             labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Create the graphView
-            gv = new graphView(c);
+            gv = new graphView(c, aspectRatio);
             gv.setLayoutParams(new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int)Math.round(ll.getWidth()/aspectRatio)));
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
 
             //Send our parameters to the graphView isntance
             gv.setLine(line);
