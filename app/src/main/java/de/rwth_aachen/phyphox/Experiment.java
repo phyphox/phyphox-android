@@ -314,13 +314,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             //   non-interactive state...
 
             //Append TextView with error message to the base linear layout
-            LinearLayout ll = (LinearLayout) findViewById(R.id.experimentView);
-            TextView errorView = new TextView(this);
-            errorView.setText(experiment.message);
-            errorView.setGravity(Gravity.CENTER); //Center the message
-            errorView.setTextColor(ContextCompat.getColor(this, R.color.mainExp)); //Set main color
-
-            ll.addView(errorView); //Add the TextView to the linear layout
+            TextView tv = (TextView) findViewById(R.id.errorMessage);
+            tv.setText(experiment.message);
+            tv.setVisibility(View.VISIBLE);
+            this.experiment = null;
         }
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); //We are ready. Now the user may rotate.

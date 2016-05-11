@@ -45,8 +45,15 @@ public class expViewFragment extends Fragment {
             for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.createView(ll, getContext());
             }
+        }
+    }
 
-            ((Experiment) getActivity()).experiment.updateViews(index, true);
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if(isVisibleToUser) {
+            if (((Experiment)getActivity()).experiment != null)
+                ((Experiment) getActivity()).experiment.updateViews(index, true);
         }
     }
 

@@ -652,19 +652,6 @@ public class ExperimentList extends AppCompatActivity {
         categories.clear();
         ((LinearLayout)findViewById(R.id.experimentList)).removeAllViews();
 
-        //Load experiments from assets
-        try {
-            AssetManager assetManager = getAssets();
-            final String[] experimentXMLs = assetManager.list("experiments"); //All experiments are placed in the experiments folder
-            for (String experimentXML : experimentXMLs) {
-                //Load details for each experiment
-                InputStream input = assetManager.open("experiments/" + experimentXML);
-                loadExperimentInfo(input, experimentXML, true);
-            }
-        } catch (IOException e) {
-            Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
-        }
-
         //Load experiments from local files
         try {
             //Get all files that end on ".phyphox"
@@ -679,6 +666,19 @@ public class ExperimentList extends AppCompatActivity {
                 //Load details for each experiment
                 InputStream input = openFileInput(file.getName());
                 loadExperimentInfo(input, file.getName(), false);
+            }
+        } catch (IOException e) {
+            Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
+        }
+
+        //Load experiments from assets
+        try {
+            AssetManager assetManager = getAssets();
+            final String[] experimentXMLs = assetManager.list("experiments"); //All experiments are placed in the experiments folder
+            for (String experimentXML : experimentXMLs) {
+                //Load details for each experiment
+                InputStream input = assetManager.open("experiments/" + experimentXML);
+                loadExperimentInfo(input, experimentXML, true);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();

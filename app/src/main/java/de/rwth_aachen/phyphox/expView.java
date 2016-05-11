@@ -463,7 +463,7 @@ public class expView{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.7f)); //Most of the right half
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            et.setPadding((int) labelSize / 2, 0, 0, 0);
+         //   et.setPadding((int) labelSize / 2, 0, 0, 0);
             et.setTypeface(null, Typeface.BOLD);
             et.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 

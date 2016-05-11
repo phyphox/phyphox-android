@@ -8,6 +8,9 @@
     <RelativeLayout
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:clickable="false"
+        android:elevation="1dp"
+        android:paddingRight="@dimen/activity_horizontal_padding"
+        android:paddingEnd="@dimen/activity_horizontal_padding"
         android:background="@drawable/background_ripple">
 
         <ImageView

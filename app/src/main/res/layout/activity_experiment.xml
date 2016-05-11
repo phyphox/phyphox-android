@@ -61,12 +61,27 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/tab_layout"
+        android:id="@+id/errorMessage"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:textColor="@color/mainExp"
+        android:text=""
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:paddingLeft="@dimen/activity_horizontal_padding"
+        android:paddingRight="@dimen/activity_horizontal_padding"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/remoteInfo"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:background="@color/backgroundExp2"
-        android:textColor="@color/main"
+        android:textColor="@color/mainExp"
         android:text="@string/remoteServerActive"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
