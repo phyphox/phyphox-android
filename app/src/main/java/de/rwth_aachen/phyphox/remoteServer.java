@@ -456,7 +456,7 @@ public class remoteServer extends Thread {
                         public void writeTo(final OutputStream outstream)
                                 throws IOException {
 
-                            InputStream is = res.openRawResource(R.raw.phyphox_logo);
+                            InputStream is = res.openRawResource(R.raw.phyphox_orange);
 
                             byte[] buffer = new byte[1024];
                             int len = is.read(buffer);

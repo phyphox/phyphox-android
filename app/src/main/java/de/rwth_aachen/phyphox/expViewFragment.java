@@ -46,6 +46,9 @@ public class expViewFragment extends Fragment {
                 element.createView(ll, getContext());
             }
         }
+
+        if (((Experiment)getActivity()).experiment != null)
+            ((Experiment) getActivity()).experiment.updateViews(index, true);
     }
 
     @Override

@@ -16,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:id="@+id/logo"
-            android:src="@drawable/phyphox_text"
+            android:src="@drawable/phyphox_dark"
             android:scaleType="fitStart"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
@@ -43,20 +43,6 @@
             android:layout_alignTop="@+id/logo" />
     </RelativeLayout>
 
-    <android.support.design.widget.FloatingActionButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/newExperiment"
-        android:id="@+id/newExperiment"
-        android:src="@drawable/new_experiment"
-        app:fabSize="normal"
-        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:elevation="12dp"
-        />
-
     <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -79,5 +65,19 @@
             android:id="@+id/experimentList"
             android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
     </ScrollView>
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/newExperiment"
+        android:id="@+id/newExperiment"
+        android:src="@drawable/new_experiment"
+        app:fabSize="normal"
+        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:elevation="12dp"
+        />
 
 </RelativeLayout>

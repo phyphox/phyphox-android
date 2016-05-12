@@ -159,8 +159,9 @@ public class phyphoxExperiment {
             for (Analysis.analysisModule mod : analysis) {
                 try {
                     Thread.yield();
-                    if (!mod.updateIfNotStatic()) //This only returns false if the module found its inputs to be uninitialized, in which case we abort the rest... (Typical example: no audio recorded yet)
+                    if (!mod.updateIfNotStatic()) { //This only returns false if the module found its inputs to be uninitialized, in which case we abort the rest... (Typical example: no audio recorded yet)
                         break;
+                    }
                 } catch (Exception e) {
                     Log.e("processAnalysis", "Unhandled exception in analysis module " + mod.toString() + ".", e);
                 }

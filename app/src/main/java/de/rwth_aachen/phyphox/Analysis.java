@@ -1197,8 +1197,13 @@ public class Analysis {
             this.calcWidth = (int)Math.round(sigma*3); //Adapt calculation range: 3x sigma should be plenty
 
             gauss = new double[calcWidth*2+1];
+            double sum = 0.;
             for (int i = -calcWidth; i <= calcWidth; i++) {
-                gauss[i+calcWidth] = Math.exp(-(i/sigma*i/sigma)/2.)/(sigma*Math.sqrt(2.*Math.PI)); //Gauß!
+                gauss[i+calcWidth] = Math.exp(-(i/sigma*i/sigma)/2.); //Gauß! We normalize numerically to make up for imprecisions due to discretization.
+                sum += gauss[i+calcWidth];
+            }
+            for (int i = -calcWidth; i <= calcWidth; i++) {
+                gauss[i+calcWidth] /= sum;
             }
         }
 
@@ -1209,11 +1214,17 @@ public class Analysis {
 
             for (int i = 0; i < y.length; i++) { //For each data-point
                 double sum = 0;
+                double norm = 0;
                 for (int j = -calcWidth; j <= calcWidth; j++) { //For each step in the look-up-table
                     int k = i+j; //index in input that corresponds to the step in the look-up-table
-                    if (k >= 0 && k < y.length)
-                        sum += gauss[j+calcWidth]*y[k]; //Add weighted contribution
+                    if (k >= 0 && k < y.length) {
+                        sum += gauss[j + calcWidth] * y[k]; //Add weighted contribution
+                        if (i < calcWidth || i > y.length - calcWidth - 1)
+                            norm += gauss[j + calcWidth];
+                    }
                 }
+                if (i < calcWidth || i > y.length-calcWidth)
+                    sum /= norm;
                 outputs.get(0).append(sum); //Append the result to the output buffer
             }
         }
