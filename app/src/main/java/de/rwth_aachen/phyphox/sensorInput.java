@@ -126,8 +126,11 @@ public class sensorInput implements SensorEventListener {
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(SensorEvent event) {
-        if (t0 == 0)
+        if (t0 == 0) {
             t0 = event.timestamp; //Any event sets the same t0 for all sensors
+            if (dataT != null && dataT.getFilledSize() > 0)
+                t0 -= dataT.value * 1e9;
+        }
 
         //From here only listen to "this" sensor
         if (event.sensor.getType() == type) {

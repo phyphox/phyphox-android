@@ -68,6 +68,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="stop">Stop</string>
     <string name="start">Start</string>
+    <string name="clear_data">Clear data</string>
     <string name="timed_stop">Stop timed run</string>
     <string name="timed_start">Start timed run</string>
 
@@ -92,6 +93,10 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="remoteServerWarningTitle">Security warning!</string>
     <string name="remoteServerActive">Remote access enabled. Access this experiment from te following URL:\n%1$s</string>
     <string name="hotspotSettings">Hotspot Settings</string>
+
+    <string name="switchColumns1">View: 1 column</string>
+    <string name="switchColumns2">View: 2 columns</string>
+    <string name="switchColumns3">View: 3 columns</string>
 
     <string name="show_description">Show Description</string>
     <string name="save_locally">Add experiment to collection</string>

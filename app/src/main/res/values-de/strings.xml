@@ -3,6 +3,7 @@
     <string name="app_name">phyphox</string>
     <string name="action_settings">Einstellungen</string>
     <string name="cancel">Abbrechen</string>
+    <string name="clear_data">Daten löschen</string>
     <string name="close">Schließen</string>
     <string name="confirmDelete">Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?</string>
     <string name="confirmDeleteTitle">Löschen bestätigen?</string>
@@ -55,6 +56,9 @@
     <string name="show_description">Beschreibung zeigen</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="switchColumns1">Ansicht: 1 Spalte</string>
+    <string name="switchColumns2">Ansicht: 2 Spalten</string>
+    <string name="switchColumns3">Ansicht: 3 Spalten</string>
     <string name="timedRun">Zeitautomatik</string>
     <string name="timedRunDialogTitle">Zeitautomatik</string>
     <string name="timedRunStartDelay">Startverzögerung (s)</string>

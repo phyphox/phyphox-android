@@ -295,7 +295,9 @@ public class phyphoxExperiment {
         if (!loaded)
             return;
 
-        firstAnalysisTime = 0;
+        //If we start IO and the data has not been reset, we want to set the first analysis time to now, offset by the duration of the last measurement period
+        if (firstAnalysisTime != 0)
+            firstAnalysisTime = System.currentTimeMillis() - (analysisTime-firstAnalysisTime);
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
         for (sensorInput sensor : inputSensors)

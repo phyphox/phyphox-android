@@ -85,6 +85,8 @@ public class remoteServer extends Thread {
             while ((line = br.readLine()) != null) {
                 //Set color placeholders...
                 line = line.replace("###background-color###", "#"+String.format("%08x", res.getColor(R.color.backgroundRemote)).substring(2));
+                line = line.replace("###background2-color###", "#"+String.format("%08x", res.getColor(R.color.background2Remote)).substring(2));
+                line = line.replace("###background2hover-color###", "#"+String.format("%08x", res.getColor(R.color.background2HoverRemote)).substring(2));
                 line = line.replace("###main-color###", "#"+String.format("%08x", res.getColor(R.color.mainRemote)).substring(2));
                 line = line.replace("###highlight-color###", "#"+String.format("%06x", res.getColor(R.color.highlight)).substring(2));
 
@@ -97,10 +99,12 @@ public class remoteServer extends Thread {
                     line = line.replace("###drawablePause###", getBase64PNG(res.getDrawable(R.drawable.pause)));
                 if (line.contains("###drawableTimedPause###"))
                     line = line.replace("###drawableTimedPause###", getBase64PNG(res.getDrawable(R.drawable.timed_pause)));
-                if (line.contains("###drawableExport###"))
-                    line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
-                if (line.contains("###drawableColumns###"))
-                    line = line.replace("###drawableColumns###", getBase64PNG(res.getDrawable(R.drawable.columns)));
+//                if (line.contains("###drawableClearData###"))
+//                    line = line.replace("###drawableClearData###", getBase64PNG(res.getDrawable(R.drawable.delete)));
+//                if (line.contains("###drawableExport###"))
+//                    line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
+                if (line.contains("###drawableMore###"))
+                    line = line.replace("###drawableMore###", getBase64PNG(res.getDrawable(R.drawable.more)));
 
                 //Add the line and a linebreak
                 sb.append(line);
@@ -161,6 +165,21 @@ public class remoteServer extends Thread {
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) { //The title. This one is easy...
                     sb.append(line.replace("<!-- [[title]] -->", experiment.title));
+                    sb.append("\n");
+                } else if (line.contains("<!-- [[clearDataTranslation]] -->")) { //The localized string for "clear data"
+                        sb.append(line.replace("<!-- [[clearDataTranslation]] -->", res.getString(R.string.clear_data)));
+                        sb.append("\n");
+                } else if (line.contains("<!-- [[exportTranslation]] -->")) { //The localized string for "clear data"
+                    sb.append(line.replace("<!-- [[exportTranslation]] -->", res.getString(R.string.export)));
+                    sb.append("\n");
+                } else if (line.contains("<!-- [[switchColumns1Translation]] -->")) { //The localized string for "clear data"
+                    sb.append(line.replace("<!-- [[switchColumns1Translation]] -->", res.getString(R.string.switchColumns1)));
+                    sb.append("\n");
+                } else if (line.contains("<!-- [[switchColumns2Translation]] -->")) { //The localized string for "clear data"
+                    sb.append(line.replace("<!-- [[switchColumns2Translation]] -->", res.getString(R.string.switchColumns2)));
+                    sb.append("\n");
+                } else if (line.contains("<!-- [[switchColumns3Translation]] -->")) { //The localized string for "clear data"
+                    sb.append(line.replace("<!-- [[switchColumns3Translation]] -->", res.getString(R.string.switchColumns3)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     //The viewLayout is a JSON object with our view setup. All the experiment views
@@ -251,11 +270,11 @@ public class remoteServer extends Thread {
                     //The option list for the view selector. Simple.
                     for (int i = 0; i < experiment.experimentViews.size(); i++) {
                         //For each view
-                        sb.append("<option value=\"");
+                        sb.append("<li value=\"");
                         sb.append(i);
                         sb.append("\">");
                         sb.append(experiment.experimentViews.get(i).name);
-                        sb.append("</option>\n");
+                        sb.append("</li>\n");
                     }
                 } else if (line.contains("<!-- [[exportFormatOptions]] -->")) {
                     //The export format
@@ -698,6 +717,10 @@ public class remoteServer extends Thread {
                         break;
                     case "stop": //Stop the measurement
                         callActivity.remoteStopMeasurement();
+                        result = "{\"result\" = true}";
+                        break;
+                    case "clear": //Clear measurement data
+                        callActivity.clearData();
                         result = "{\"result\" = true}";
                         break;
                     case "set": //Set the value of a buffer

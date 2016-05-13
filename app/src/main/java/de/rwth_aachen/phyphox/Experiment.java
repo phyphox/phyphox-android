@@ -530,6 +530,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return true;
         }
 
+        //Clear data button. Clear the data :)
+        if (id == R.id.action_clear) {
+            clearData();
+            return true;
+        }
+
         //Export button. Call the export function of the dataExport class
         if (id == R.id.action_export) {
             experiment.export(this);
@@ -779,18 +785,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Disable play-button highlight
         beforeStart = false;
 
-        //Clear the buffers and views and start the sensors. Also remember the start time as t0
-        experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
-        try {
-            for (dataBuffer buffer : experiment.dataBuffers)
-                buffer.clear();
-            for (expView views : experiment.experimentViews)
-                for (expView.expViewElement view : views.elements)
-                    view.clear();
-            experiment.startAllIO();
-        } finally {
-            experiment.dataLock.unlock();
-        }
+        //Start the sensors
+        experiment.startAllIO();
 
         //Set measurement state
         measuring = true;
@@ -870,6 +866,23 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //refresh the options menu
         invalidateOptionsMenu();
+    }
+
+    public void clearData() {
+        //Clear the buffers
+        experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
+        try {
+            for (dataBuffer buffer : experiment.dataBuffers)
+                buffer.clear();
+            for (expView views : experiment.experimentViews)
+                for (expView.expViewElement view : views.elements)
+                    view.clear();
+
+        } finally {
+            experiment.dataLock.unlock();
+        }
+        experiment.newData = true;
+        experiment.firstAnalysisTime = 0;
     }
 
     //Start the remote server (see remoteServer class)

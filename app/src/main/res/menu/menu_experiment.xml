@@ -11,6 +11,8 @@
         android:orderInCategory="5" app:showAsAction="always" />
     <item android:id="@+id/timer" android:title="0s"
         android:orderInCategory="6" app:showAsAction="always" />
+    <item android:id="@+id/action_clear" android:title="@string/clear_data" android:icon="@drawable/delete"
+        android:orderInCategory="20" app:showAsAction="never" />
     <item android:id="@+id/action_description" android:title="@string/show_description" android:icon="@drawable/info"
         android:orderInCategory="30" app:showAsAction="never" />
     <item android:id="@+id/action_export" android:title="@string/export" android:icon="@drawable/download"
