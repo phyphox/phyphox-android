@@ -569,7 +569,7 @@ public class ExperimentList extends AppCompatActivity {
                                 break;
                             case "icon": //This should give us the experiment icon (might be an acronym or a base64-encoded image)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
-                                    if (xpp.getAttributeValue(null, "type") != null && xpp.getAttributeValue(null, "type").equals("base64")) { //Check the icon type
+                                    if (xpp.getAttributeValue(null, "format") != null && xpp.getAttributeValue(null, "format").equals("base64")) { //Check the icon type
                                         //base64 encoded image. Decode it
                                         icon = xpp.nextText().trim();
                                         image = new BitmapIcon(decodeBase64(icon), this);
