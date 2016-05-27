@@ -93,8 +93,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Timed run status
     boolean timedRun = false; //Timed run enabled?
-    double timedRunStartDelay = 0.; //Start delay for timed runs
-    double timedRunStopDelay = 0.; //Stop delay for timed runs
+    double timedRunStartDelay = 3.; //Start delay for timed runs
+    double timedRunStopDelay = 10.; //Stop delay for timed runs
     CountDownTimer cdTimer = null; //This holds the timer used for timed runs. If it is not null, a timed run is running and at the end of the countdown the measurement state will change
     long millisUntilFinished = 0; //This variable is used to cache the remaining countdown, so it is available outside the onTick-callback of the timer
 

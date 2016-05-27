@@ -27,7 +27,7 @@
     <string name="loadingTitle">Laden</string>
     <string name="newExperiment">Neues einfaches Experiment</string>
     <string name="newExperimentInputBufferSize">Puffergröße</string>
-    <string name="newExperimentInputRate">Sensorrate</string>
+    <string name="newExperimentInputRate">Sensorrate (in Hz, 0 = so schnell wie möglich)</string>
     <string name="newExperimentInputSensors">Aktive Sensoren</string>
     <string name="newExperimentInputTitle">Titel</string>
     <string name="newExperimentPhyphoxInfo">Besuchen Sie phyphox.com, um komplexere Experimente mit einer Datenanalyse zu erstellen und diese mit Kollegen, Schülern und Freunden zu teilen.</string>
