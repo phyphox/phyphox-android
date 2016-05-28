@@ -270,9 +270,7 @@ public class remoteServer extends Thread {
                     //The option list for the view selector. Simple.
                     for (int i = 0; i < experiment.experimentViews.size(); i++) {
                         //For each view
-                        sb.append("<li value=\"");
-                        sb.append(i);
-                        sb.append("\">");
+                        sb.append("<li>");
                         sb.append(experiment.experimentViews.get(i).name);
                         sb.append("</li>\n");
                     }
