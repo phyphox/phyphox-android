@@ -14,7 +14,7 @@
         android:layout_height="wrap_content">
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="@dimen/titleIconSize"
             android:id="@+id/logo"
             android:src="@drawable/phyphox_dark"
             android:scaleType="fitStart"
@@ -57,8 +57,8 @@
         android:layout_below="@+id/expListHeader">
 
         <LinearLayout
-            android:clipChildren="false"
-            android:clipToPadding="false"
+            android:clipChildren="true"
+            android:clipToPadding="true"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

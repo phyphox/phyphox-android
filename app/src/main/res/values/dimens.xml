@@ -1,20 +1,22 @@
 <resources>
     <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_horizontal_button_margin">8dp</dimen>
+    <dimen name="titleIconSize">40dp</dimen>
+
+    <dimen name="activity_horizontal_margin">12dp</dimen>
+    <dimen name="activity_horizontal_button_margin">12dp</dimen>
     <dimen name="activity_horizontal_padding">8dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">8dp</dimen>
     <dimen name="activity_vertical_padding">5dp</dimen>
     <dimen name="graph_label_start_margin">16dp</dimen>
     <dimen name="info_element_margin">16dp</dimen>
 
     <dimen name="font">16sp</dimen>
-    <dimen name="label_font">18sp</dimen>
+    <dimen name="label_font">16sp</dimen>
     <dimen name="info_element_font">14sp</dimen>
     <dimen name="small_font">13sp</dimen>
-    <dimen name="experiment_title_font">22sp</dimen>
-    <dimen name="experiment_info_font">15sp</dimen>
-    <dimen name="headline_font">22sp</dimen>
+    <dimen name="experiment_title_font">18sp</dimen>
+    <dimen name="experiment_info_font">13sp</dimen>
+    <dimen name="headline_font">16sp</dimen>
     <dimen name="graph_font">14sp</dimen>
     <dimen name="credit_font">13sp</dimen>
     <dimen name="credit_font_main">16sp</dimen>
@@ -22,7 +24,7 @@
 
     <dimen name="expElementWidth">250dp</dimen>
     <dimen name="expElementBorderWidth">2dp</dimen>
-    <dimen name="expElementIconSize">52dp</dimen>
+    <dimen name="expElementIconSize">42dp</dimen>
     <dimen name="expElementElevation">4dp</dimen>
     <dimen name="expElementMargin">1dp</dimen>
 </resources>

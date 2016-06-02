@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="titleIconSize">50dp</dimen>
+
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <dimen name="experiment_title_font">16sp</dimen>
+    <dimen name="experiment_info_font">13sp</dimen>
+    <dimen name="headline_font">16sp</dimen>
+
+    <dimen name="expElementIconSize">52dp</dimen>
+
+</resources>
