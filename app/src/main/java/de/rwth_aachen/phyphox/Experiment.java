@@ -874,6 +874,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     public void clearData() {
         //Clear the buffers
+
+        stopMeasurement();
+
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {
             for (dataBuffer buffer : experiment.dataBuffers)
