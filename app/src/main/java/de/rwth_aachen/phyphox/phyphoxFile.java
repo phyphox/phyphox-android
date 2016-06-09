@@ -932,17 +932,52 @@ public abstract class phyphoxFile {
                     String nameFilter = getStringAttribute("name");
                     String addressFilter = getStringAttribute("address");
 
+                    String protocolStr = getStringAttribute("protocol");
+                    Protocol protocol = null;
+                    switch (protocolStr) {
+                        case "simple": {
+                            String separator = getStringAttribute("separator");
+                            if (separator == null || separator.equals("")) {
+                                separator = "\n";
+                            }
+                            protocol = new Protocol(new Protocol.simple(separator));
+                            break;
+                        }
+                        case "csv": {
+                            String separator = getStringAttribute("separator");
+                            if (separator == null || separator.equals("")) {
+                                separator = ",";
+                            }
+                            protocol = new Protocol(new Protocol.csv(separator));
+                            break;
+                        }
+                        case "json": {
+                            Vector<String> names = new Vector<>();
+                            int index = 1;
+                            String name = getStringAttribute("out"+index);
+                            while (name != null) {
+                                names.add(name);
+                                index++;
+                                name = getStringAttribute("out"+index);
+                            }
+                            protocol = new Protocol(new Protocol.json(names));
+                            break;
+                        }
+                        default: {
+                            throw new phyphoxFileException("Unknown bluetooth protocol: " + protocolStr, xpp.getLineNumber());
+                        }
+                    }
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false;}},
                     };
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     //Instantiate the input.
                     try {
-                        experiment.bluetoothInputs.add(new bluetoothInput(nameFilter, addressFilter, rate, average, outputs, experiment.dataLock));
+                        experiment.bluetoothInputs.add(new bluetoothInput(nameFilter, addressFilter, rate, average, outputs, experiment.dataLock, protocol));
                         experiment.bluetoothInputs.lastElement().openConnection();
                     } catch (bluetoothInput.bluetoothException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
@@ -1382,13 +1417,19 @@ public abstract class phyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
-                case "audio": //Audio output, aka speaker
+                case "audio": { //Audio output, aka speaker
                     experiment.audioLoop = getBooleanAttribute("loop", false); //Loop the output?
                     experiment.audioRate = getIntAttribute("rate", 48000); //Sample frequency
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }}
                     };
                     Vector<dataInput> inputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
@@ -1399,8 +1440,8 @@ public abstract class phyphoxFile {
                     //To avoid to short audio loops, we will write the audio data multiple times
                     // until we reached at least one second. In the worst case (one sample less than
                     // one second) we will have data for just short of 2 seconds.
-                    if (experiment.audioLoop && experiment.audioBufferSize < 2*experiment.audioRate)
-                        experiment.audioBufferSize = 2*experiment.audioBufferSize;
+                    if (experiment.audioLoop && experiment.audioBufferSize < 2 * experiment.audioRate)
+                        experiment.audioBufferSize = 2 * experiment.audioBufferSize;
 
                     //Create the audioTrack instance
                     experiment.audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, experiment.audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2 * experiment.audioBufferSize, AudioTrack.MODE_STATIC);
@@ -1408,6 +1449,68 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Could not initialize audio. (" + experiment.audioTrack.getState() + ")", xpp.getLineNumber());
                     }
                     break;
+                }
+                case "bluetooth": { //A serial bluetooth output
+                    String nameFilter = getStringAttribute("name");
+                    String addressFilter = getStringAttribute("address");
+
+                    String protocolStr = getStringAttribute("protocol");
+                    Protocol protocol = null;
+                    switch (protocolStr) {
+                        case "simple": {
+                            String separator = getStringAttribute("separator");
+                            if (separator == null || separator.equals("")) {
+                                separator = "\n";
+                            }
+                            protocol = new Protocol(new Protocol.simple(separator));
+                            break;
+                        }
+                        case "csv": {
+                            String separator = getStringAttribute("separator");
+                            if (separator == null || separator.equals("")) {
+                                separator = ",";
+                            }
+                            protocol = new Protocol(new Protocol.csv(separator));
+                            break;
+                        }
+                        case "json": {
+                            Vector<String> names = new Vector<>();
+                            int index = 1;
+                            String name = getStringAttribute("out"+index);
+                            while (name != null) {
+                                names.add(name);
+                                index++;
+                                name = getStringAttribute("out"+index);
+                            }
+                            protocol = new Protocol(new Protocol.json(names));
+                            break;
+                        }
+                        default: {
+                            throw new phyphoxFileException("Unknown bluetooth protocol: " + protocolStr, xpp.getLineNumber());
+                        }
+                    }
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false;}}
+                    };
+                    Vector<dataInput> inputs = new Vector<>();
+                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
+
+                    //Instantiate the input.
+                    try {
+                        experiment.bluetoothOutputs.add(new bluetoothOutput(nameFilter, addressFilter, inputs, protocol));
+                        experiment.bluetoothOutputs.lastElement().openConnection();
+                    } catch (bluetoothOutput.bluetoothException e) {
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
+                    }
+
+                    //Check if the sensor is available on this device
+                    if (!experiment.bluetoothOutputs.lastElement().isAvailable()) {
+                        throw new phyphoxFileException("Bluetooth device not found.");
+                    }
+                    break;
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }

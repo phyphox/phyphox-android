@@ -63,7 +63,7 @@ public class dataBuffer implements Serializable {
     }
 
     //Retrieve the iterator of the BlockingQueue
-    public Iterator getIterator() {
+    public Iterator<Double> getIterator() {
         return buffer.iterator();
     }
 

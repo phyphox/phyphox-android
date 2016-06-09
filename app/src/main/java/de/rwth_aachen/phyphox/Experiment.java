@@ -169,9 +169,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         stopRemoteServer(); //Remote server should stop when the app is not active
         shutdown = true; //Stop the loop
         stopMeasurement(); //Stop the measurement
-        if (experiment != null && experiment.loaded)
+        if (experiment != null && experiment.loaded) {
+            //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
             for (bluetoothInput bti : experiment.bluetoothInputs)
-                bti.closeConnection(); //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
+                bti.closeConnection();
+            for (bluetoothOutput bti : experiment.bluetoothOutputs)
+                bti.closeConnection();
+        }
         overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Make a nice animation...
     }
 

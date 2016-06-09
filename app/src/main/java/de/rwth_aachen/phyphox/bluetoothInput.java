@@ -12,17 +12,11 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
-
-//TODO
-//This is a first and very basic implementation. This class should support different protocols and
-//allow to assign values from a single bluetooth device to different buffers. Also, for some
-//protocols, a timestamp should be generated.
-//Known bug: Already connected devices are not closed when the experiment is stopped, leading to a
-//connection error, when the connection is reestablished after opening the experiment again.
 
 //The bluetoothInput class encapsulates a generic serial input from bluetooth devices
 public class bluetoothInput {
@@ -30,11 +24,10 @@ public class bluetoothInput {
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
     public Vector<dataOutput> data = new Vector<>(); //Data-buffers
 
-    private String buffer;
     private long lastReading; //Remember the time of the last reading to fullfill the rate
     private Vector<Double> avg = new Vector<>(); //Used for averaging
     private boolean average = false; //Avergae over aquisition period?
-    private int aquisitions; //Number of aquisitions for this average
+    private Vector<Integer> aquisitions; //Number of aquisitions for this average
 
     private static final UUID btUUID = UUID.fromString("245fb312-a57f-40a1-9c45-9287984f270c");
 
@@ -45,13 +38,17 @@ public class bluetoothInput {
     private BluetoothSocket btSocket = null;
     private InputStream inStream = null;
 
+    private Protocol protocol;
+
     public class bluetoothException extends Exception {
         public bluetoothException(String message) {
             super(message);
         }
     }
 
-    protected bluetoothInput(String deviceName, String deviceAddress, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws bluetoothException{
+    protected bluetoothInput(String deviceName, String deviceAddress, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, Protocol protocol) throws bluetoothException{
+        this.protocol = protocol;
+
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null)
             throw new bluetoothException("Could not find a bluetooth adapter.");
@@ -159,9 +156,10 @@ public class bluetoothInput {
 
         //Reset averaging
         this.lastReading = 0;
-        for (int i = 0; i < avg.size(); i++)
+        for (int i = 0; i < avg.size(); i++) {
             avg.set(i, 0.);
-        this.aquisitions = 0;
+            aquisitions.set(i, 0);
+        }
 
         byte tempBuffer[] = new byte[1024];
         try {
@@ -173,7 +171,7 @@ public class bluetoothInput {
         } catch (IOException e) {
         }
 
-        buffer = "";
+        protocol.clear();
     }
 
     //Stop the data aquisition
@@ -187,61 +185,49 @@ public class bluetoothInput {
         if (t0 == 0)
             t0 = t;
 
-        try {
-            byte tempBuffer[] = new byte[256];
-            int remaining = inStream.available();
-            int readCount;
-            while (remaining > 0) {
-                readCount = inStream.read(tempBuffer, 0, 256);
-                buffer += (new String(tempBuffer)).substring(0, readCount);
-                remaining = inStream.available();
-            }
-        } catch (IOException e) {
+        Vector<Vector<Double>> receivedData = protocol.receive(inStream);
+
+        Vector<Iterator<Double>> iterators = new Vector<>();
+        for (Vector<Double> rd : receivedData) {
+            iterators.add(rd.iterator());
         }
 
-        int separator = buffer.indexOf(";");
-        while (separator >= 0) {
-            double v = Double.NaN;
-            try {
-                v = Double.valueOf(buffer.substring(0, separator));
-            } catch (NumberFormatException e) {
-                buffer = buffer.substring(separator+1);
-                separator = buffer.indexOf(";");
-                continue;
-            }
-
-            buffer = buffer.substring(separator);
-
-            if (average) {
-                //TODO: More complex protocols: Asign values to buffers
-                for (int i = 0; i < avg.size(); i++)
-                    avg.set(i, avg.get(i) + v);
-                aquisitions++;
-            } else {
-                //TODO: More complex protocols: Asign values to buffers
-                for (int i = 0; i < avg.size(); i++)
-                    avg.set(i, v);
-                aquisitions = 1;
-            }
-            if (lastReading + period <= t) {
-                //Average/waiting period is over
-                //Append the data to available buffers
-                dataLock.lock();
-                //TODO: More complex protocols: Asign values to buffers (some protocols should also generate a timestamp)
-                try {
-                    for (int i = 0; i < data.size(); i++)
-                        data.get(i).append(avg.get(i) / aquisitions);
-                } finally {
-                    dataLock.unlock();
+        boolean dataLeft = true;
+        while (dataLeft) {
+            dataLeft = false;
+            for (int iBuffer = 0; iBuffer < receivedData.size() && iBuffer < avg.size(); iBuffer++) {
+                if (iterators.get(iBuffer).hasNext()) {
+                    dataLeft = true;
+                    if (average) {
+                        avg.set(iBuffer, avg.get(iBuffer) + iterators.get(iBuffer).next());
+                        aquisitions.set(iBuffer, aquisitions.get(iBuffer) + 1);
+                    } else {
+                        avg.set(iBuffer, iterators.get(iBuffer).next());
+                        aquisitions.set(iBuffer, 1);
+                    }
                 }
-                //Reset averaging
-                this.lastReading = t;
-                for (int i = 0; i < avg.size(); i++)
-                    avg.set(i, 0.);
-                this.aquisitions = 0;
+            }
+        }
+
+        if (lastReading + period <= t) {
+            //Average/waiting period is over
+            //Append the data to available buffers
+            dataLock.lock();
+            try {
+                for (int i = 0; i < data.size(); i++) {
+                    if (aquisitions.get(i) > 0)
+                        data.get(i).append(avg.get(i) / aquisitions.get(i));
+                }
+            } finally {
+                dataLock.unlock();
+            }
+            //Reset averaging
+            for (int i = 0; i < data.size(); i++) {
+                avg.set(i, 0.);
+                aquisitions.set(i, 0);
             }
 
-            separator = buffer.indexOf(";");
+            this.lastReading = t;
         }
     }
 }

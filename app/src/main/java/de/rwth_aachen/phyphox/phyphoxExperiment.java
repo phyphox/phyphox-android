@@ -23,7 +23,8 @@ public class phyphoxExperiment {
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment
     public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
-    public Vector<bluetoothInput> bluetoothInputs = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
+    public Vector<bluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
+    public Vector<bluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
     public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
     public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
@@ -220,6 +221,11 @@ public class phyphoxExperiment {
         //Restart if used.
         if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
             audioTrack.play();
+        }
+
+        //Send the results to the bluetooth outputs (if used)
+        for (bluetoothOutput btOut : bluetoothOutputs) {
+            btOut.sendData();
         }
 
         newData = true; //We have fresh data to present.
