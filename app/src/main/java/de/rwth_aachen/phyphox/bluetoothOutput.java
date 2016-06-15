@@ -6,14 +6,12 @@ import android.bluetooth.BluetoothSocket;
 import android.os.Build;
 import android.util.Log;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.locks.Lock;
 
 
 //The bluetoothInput class encapsulates a generic serial output to bluetooth devices
@@ -25,7 +23,7 @@ public class bluetoothOutput {
     private BluetoothAdapter btAdapter = null;
     BluetoothDevice btDevice = null;
     private BluetoothSocket btSocket = null;
-    private OutputStream outStream = null;
+    private BufferedOutputStream outStream = null;
 
     private Protocol protocol;
 
@@ -66,7 +64,7 @@ public class bluetoothOutput {
     }
 
     public void openConnection() throws bluetoothException {
-        if (btSocket != null) {
+        if (btDevice != null) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                     try {
@@ -98,7 +96,7 @@ public class bluetoothOutput {
             throw new bluetoothException("Bluetooth connection opened successfully, but socket is null.");
 
         try {
-            outStream = btSocket.getOutputStream();
+            outStream = new BufferedOutputStream(btSocket.getOutputStream());
         } catch (IOException e) {
             throw new bluetoothException("Could get input stream from bluetooth device.");
         }

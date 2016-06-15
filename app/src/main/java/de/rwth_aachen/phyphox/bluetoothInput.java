@@ -3,12 +3,10 @@ package de.rwth_aachen.phyphox;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
+import android.util.StringBuilderPrinter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +25,7 @@ public class bluetoothInput {
     private long lastReading; //Remember the time of the last reading to fullfill the rate
     private Vector<Double> avg = new Vector<>(); //Used for averaging
     private boolean average = false; //Avergae over aquisition period?
-    private Vector<Integer> aquisitions; //Number of aquisitions for this average
+    private Vector<Integer> aquisitions = new Vector<>(); //Number of aquisitions for this average
 
     private static final UUID btUUID = UUID.fromString("245fb312-a57f-40a1-9c45-9287984f270c");
 
@@ -39,6 +37,8 @@ public class bluetoothInput {
     private InputStream inStream = null;
 
     private Protocol protocol;
+
+    private AsyncReceive asyncReceive = null;
 
     public class bluetoothException extends Exception {
         public bluetoothException(String message) {
@@ -85,11 +85,12 @@ public class bluetoothInput {
         this.data = buffers;
         for (int i = 0; i < buffers.size(); i++) {
             this.avg.add(0.);
+            this.aquisitions.add(0);
         }
     }
 
     public void openConnection() throws bluetoothException {
-        if (btSocket != null) {
+        if (btDevice != null) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                     try {
@@ -171,21 +172,49 @@ public class bluetoothInput {
         } catch (IOException e) {
         }
 
-        protocol.clear();
+        asyncReceive = new AsyncReceive();
+        asyncReceive.execute();
     }
 
     //Stop the data aquisition
     public void stop() {
+        if (asyncReceive != null) {
+            asyncReceive.shutdown = true;
+            asyncReceive.cancel(true);
+        }
+    }
+
+    private class AsyncReceive extends AsyncTask<Void, Void, Void> {
+        public boolean shutdown = false;
+        private StringBuilder buffer = new StringBuilder();
+
+        AsyncReceive() {
+        }
+
+        protected Void doInBackground(Void... params) {
+            while (!shutdown && inStream != null) {
+                byte tempBuffer[] = new byte[1024];
+                try {
+                    int readCount = inStream.read(tempBuffer, 0, 1024);
+                    buffer.append(new String(tempBuffer).substring(0, readCount));
+                    Vector<Vector<Double>> receivedData = protocol.receive(buffer);
+                    if (receivedData == null || receivedData.size() == 0)
+                        continue;
+                    retrieveData(receivedData);
+                } catch (Exception e) {
+
+                }
+            }
+            return null;
+        }
 
     }
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
-    public void retrieveData() {
+    public void retrieveData(Vector<Vector<Double>> receivedData) {
         long t = System.nanoTime();
         if (t0 == 0)
             t0 = t;
-
-        Vector<Vector<Double>> receivedData = protocol.receive(inStream);
 
         Vector<Iterator<Double>> iterators = new Vector<>();
         for (Vector<Double> rd : receivedData) {

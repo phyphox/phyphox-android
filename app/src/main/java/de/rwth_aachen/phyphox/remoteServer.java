@@ -71,6 +71,8 @@ public class remoteServer extends Thread {
     Resources res; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
 
+    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
+
     static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
 
     //buildStyleCSS loads the css file from the resources and replaces some placeholders
@@ -527,7 +529,7 @@ public class remoteServer extends Thread {
 
                     //Now the current element is query.substring(start, end) and the "=" will be at seperator
 
-                    //Intrepret thie request
+                    //Intrepret the request
                     bufferRequest br = new bufferRequest();
                     br.name = Uri.decode(query.substring(start, separator)); //The name (the part before "=")
                     br.reference = "";
@@ -535,7 +537,7 @@ public class remoteServer extends Thread {
                         br.threshold = Double.NaN; //No special request - the last value should be ok
                     else {
                         String th = query.substring(separator+1, end); //The part after "="
-                        if (th.equals("full")) {
+                        if (th.equals("full") || forceFullUpdate) {
                             br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
                         } else {
                             //So we get a threshold. We just have to figure out the reference buffer
@@ -552,6 +554,7 @@ public class remoteServer extends Thread {
                     bufferList.add(br);
                     start = end + 1;
                 } while (start < query.length());
+                forceFullUpdate = false;
             }
 
             //We now know what the query request. Let's build our answer
@@ -602,7 +605,7 @@ public class remoteServer extends Thread {
                         sb.append("\":{\"size\":");
                         sb.append(db.size);
 
-                        //Does the respond contain a single value, the whole buffer or a part of it?
+                        //Does the response contain a single value, the whole buffer or a part of it?
                         sb.append(",\"updateMode\":\"");
                         if (Double.isNaN(buffer.threshold))
                             sb.append("single");

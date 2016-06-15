@@ -970,7 +970,7 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
                     };
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
@@ -1476,11 +1476,11 @@ public abstract class phyphoxFile {
                         case "json": {
                             Vector<String> names = new Vector<>();
                             int index = 1;
-                            String name = getStringAttribute("out"+index);
+                            String name = getStringAttribute("in"+index);
                             while (name != null) {
                                 names.add(name);
                                 index++;
-                                name = getStringAttribute("out"+index);
+                                name = getStringAttribute("in"+index);
                             }
                             protocol = new Protocol(new Protocol.json(names));
                             break;
@@ -1492,7 +1492,7 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false;}}
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
                     };
                     Vector<dataInput> inputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
