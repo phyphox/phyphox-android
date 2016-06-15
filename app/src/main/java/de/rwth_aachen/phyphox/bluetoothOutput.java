@@ -8,6 +8,7 @@ import android.util.Log;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
@@ -15,7 +16,7 @@ import java.util.Vector;
 
 
 //The bluetoothInput class encapsulates a generic serial output to bluetooth devices
-public class bluetoothOutput {
+public class bluetoothOutput implements Serializable {
     public Vector<dataInput> data = new Vector<>(); //Data-buffers
 
     private static final UUID btUUID = UUID.fromString("245fb312-a57f-40a1-9c45-9287984f270c");

@@ -19,6 +19,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,16 +29,16 @@ import java.util.zip.ZipOutputStream;
 
 //The dataExport class provides export functionality for a phyphoxExperiment.
 //it provides multiple export formats and the dialogs to control them
-public class dataExport {
+public class dataExport implements Serializable {
 
     //exportSet class
     //An export set is a collection of related dataBuffers, which (ideally) have the same size
     //exportSets are defined for each experiments and represent logical subsets of all dataBuffers which the user might want to export
-    public class exportSet {
+    public class exportSet implements Serializable {
         String name;
 
         //This class maps dataBuffers (by their key name) to a name in this exportSet
-        protected class sourceMapping {
+        protected class sourceMapping implements Serializable {
             String name;
             String source;
 
@@ -82,7 +83,7 @@ public class dataExport {
     public Vector<exportSet> exportSets = new Vector<>(); //The available export sets
 
     //This abstract class defines the interface for a specific export format
-    protected abstract class exportFormat {
+    protected abstract class exportFormat implements Serializable {
         protected String filenameBase = "phyphox";
 
         public void setFilenameBase (String fb) {
@@ -98,7 +99,7 @@ public class dataExport {
     //Implements the CSV (Comma-separated values) format.
     //Despite its name you can change the separator to something mot practical (i.e. tab-separated)
     //To provite multiple datasets, the plain-text files are grouped into a single zip-file.
-    protected class csvFormat extends exportFormat {
+    protected class csvFormat extends exportFormat implements Serializable {
         protected String separator; //The separator, typically "," or "\t"
         protected String name; //The name of this format can be changed to describe different separators
 
@@ -183,7 +184,7 @@ public class dataExport {
     }
 
     //This class implements an Microsoft Excel export using the Apache POI library
-    protected class excelFormat extends exportFormat {
+    protected class excelFormat extends exportFormat implements Serializable {
         //Nothing to do or configure in the costructor
         excelFormat() {
         }
@@ -293,7 +294,7 @@ public class dataExport {
     //The point is that we will show "radio buttons" when the user selects an export format. The
     //  result is a single index to the format selected by the user. So this should be an integer,
     //  which has to be mutable if we want to change it in the callback.
-    protected class mutableInteger {
+    protected class mutableInteger implements Serializable {
         public int value;
     }
 

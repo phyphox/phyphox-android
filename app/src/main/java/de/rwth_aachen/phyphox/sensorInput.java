@@ -5,12 +5,13 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import java.io.Serializable;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 //The sensorInput class encapsulates a sensor, maps their name from the phyphox-file format to
 //  the android identifiers and handles their output, which is written to the dataBuffers
-public class sensorInput implements SensorEventListener {
+public class sensorInput implements SensorEventListener, Serializable {
     public int type; //Sensor type (Android identifier)
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement

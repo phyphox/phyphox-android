@@ -55,6 +55,7 @@ import android.support.v7.widget.Toolbar;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -66,12 +67,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
-    private static final String STATE_DATA_BUFFERS = "data_buffers"; //The current data buffers
     private static final String STATE_REMOTE_SERVER = "remote_server"; //Is the remote server activated?
     private static final String STATE_BEFORE_START = "before_start"; //Has the experiment been started?
     private static final String STATE_TIMED_RUN = "timed_run"; //Are timed runs activated?
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
     private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay"; //The stop delay for a timed run
+    private static final String STATE_EXPERIMENT = "experiment"; //The actual experiment
 
     //This handler creates the "main loop" as it is repeatedly called using postDelayed
     //Not a real loop to keep some resources available
@@ -145,10 +146,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             ab.setDisplayShowTitleEnabled(false);
         }
 
-        //Start loading the experiment in a second thread (mostly for network loading, but it won't hurt in any case...)
-        //So display a ProgressDialog and instantiate and execute loadXMLAsyncTask (see phyphoxFile class)
-        progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-        (new phyphoxFile.loadXMLAsyncTask(intent, this)).execute();
+        if (savedInstanceState != null) {
+            //We saved our experiment. Lets just retrieve it and continue
+            experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
+            onExperimentLoaded(experiment);
+        } else {
+            //Start loading the experiment in a second thread (mostly for network loading, but it won't hurt in any case...)
+            //So display a ProgressDialog and instantiate and execute loadXMLAsyncTask (see phyphoxFile class)
+            progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+            (new phyphoxFile.loadXMLAsyncTask(intent, this)).execute();
+        }
 
     }
 
@@ -253,35 +260,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             //If we have a savedInstanceState, it would be a good time to interpret it...
             if (savedInstanceState != null) {
-                //Load the old dataBuffer data from the state
-                Vector<dataBuffer> oldData = (Vector<dataBuffer>) savedInstanceState.getSerializable(STATE_DATA_BUFFERS);
-                if (oldData != null) { //Did it work?
-                    //Then reload the other states that the user can control
-                    serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false); //Remote server activated?
-                    beforeStart = savedInstanceState.getBoolean(STATE_BEFORE_START, false); //Has the experiment ever been started?
-                    timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false); //timed run activated?
-                    timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
-                    timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY); //stop delay of timed run
+                //Reload the states that the user can control
+                serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false); //Remote server activated?
+                beforeStart = savedInstanceState.getBoolean(STATE_BEFORE_START, false); //Has the experiment ever been started?
+                timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false); //timed run activated?
+                timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
+                timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY); //stop delay of timed run
 
-                    //Let's place the old data in our new buffers
-                    for (int i = 0; i < experiment.dataBuffers.size() && i < oldData.size(); i++) { //For each dataBuffer
-                        if (oldData.get(i) == null) //Do we have old data?
-                            continue; //Nope, next one
-                        experiment.dataBuffers.get(i).clear(); //Clear the new buffer (probably not neccessary)
-                        Iterator it = oldData.get(i).getIterator(); //Get an iterator for the old Data
-                        while (it.hasNext()) //Append each item to the new buffer
-                            experiment.dataBuffers.get(i).append((double) it.next());
-                    }
-
-                    //Update all the views
-                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                        experiment.updateViews(i, true);
-                    }
-
-                    //Which view was active when we were stopped?
-                    startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
-
+                //Update all the views
+                for (int i = 0; i < experiment.experimentViews.size(); i++) {
+                    experiment.updateViews(i, true);
                 }
+
+                //Which view was active when we were stopped?
+                startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
             }
 
             tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
@@ -980,7 +972,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putInt(STATE_CURRENT_VIEW, tabLayout.getSelectedTabPosition()); //Save current experiment view
             experiment.dataLock.lock(); //Save dataBuffers (synchronized, so no other thread alters them while we access them)
             try {
-                outState.putSerializable(STATE_DATA_BUFFERS, experiment.dataBuffers);
+                outState.putSerializable(STATE_EXPERIMENT, (Serializable)experiment);
             } finally {
                 experiment.dataLock.unlock();
             }

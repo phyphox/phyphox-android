@@ -22,6 +22,8 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,7 +73,24 @@ public abstract class phyphoxFile {
     public static class PhyphoxStream {
         boolean isLocal;                //is the stream a local resource? (asset or private file)
         InputStream inputStream = null; //the input stream or null on error
+        byte source[] = null;           //A copy of the input for non-local sources
         String errorMessage = "";       //Error message that can be displayed to the user
+    }
+
+    //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
+    public static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        int n;
+        byte[] buffer = new byte[1024];
+        while ((n = stream.inputStream.read(buffer, 0, 1024)) != -1) {
+            os.write(buffer, 0, n);
+        }
+        os.flush();
+
+        stream.source = os.toByteArray();
+        stream.inputStream = new ByteArrayInputStream(stream.source);
+
     }
 
     //Helper function to open an inputStream from various intents
@@ -94,19 +113,17 @@ public abstract class phyphoxFile {
                     AssetManager assetManager = parent.getAssets();
                     try {
                         phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        return phyphoxStream;
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: "+e.getMessage();
-                        return phyphoxStream;
                     }
                 } else { //The local file is in the private directory
                     try {
                         phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
-                        return phyphoxStream;
                     }
                 }
+                return phyphoxStream;
 
             } else if (scheme.equals(ContentResolver.SCHEME_FILE )) {//The intent refers to a file
                 phyphoxStream.isLocal = false;
@@ -122,11 +139,11 @@ public abstract class phyphoxFile {
                 }
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
-                    return phyphoxStream;
+                    remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from file: " + e.getMessage();
-                    return phyphoxStream;
                 }
+                return phyphoxStream;
 
             } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {//The intent refers to a content (like the attachment from a mailing app)
                 phyphoxStream.isLocal = false;
@@ -134,21 +151,22 @@ public abstract class phyphoxFile {
                 ContentResolver resolver = parent.getContentResolver();
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
+                    remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from content: " + e.getMessage();
-                    return phyphoxStream;
                 }
+                return phyphoxStream;
             } else if (scheme.equals("http") || scheme.equals("https")) { //The intent refers to an online resource
                 phyphoxStream.isLocal = false;
                 try {
                     Uri uri = intent.getData();
                     URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPath());
                     phyphoxStream.inputStream = url.openStream();
-                    return phyphoxStream;
+                    remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from http: " + e.getMessage();
-                    return phyphoxStream;
                 }
+                return phyphoxStream;
             }
             phyphoxStream.errorMessage = "Unknown scheme.";
             return phyphoxStream;
@@ -1596,10 +1614,12 @@ public abstract class phyphoxFile {
             }
 
             experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
+            experiment.source = input.source;
 
             try {
                 //Setup the pull parser
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
+
                 XmlPullParser xpp = Xml.newPullParser();
                 xpp.setInput(reader);
 
@@ -1687,10 +1707,17 @@ public abstract class phyphoxFile {
 
         //Copying is done on a second thread...
         protected String doInBackground(String... params) {
-            //Open the input stream (see above)
-            phyphoxFile.PhyphoxStream input = phyphoxFile.openXMLInputStream(intent, parent);
-            if (!input.errorMessage.equals(""))
-                return input.errorMessage; //Abort and relay the rror message, if this failed
+            InputStream input;
+            if (parent.experiment.source != null) {
+                //We have stored the original source file...
+                input = new ByteArrayInputStream(parent.experiment.source);
+            } else {
+                //If not, open the remote source, but usually this should not happen...
+                phyphoxFile.PhyphoxStream ps = phyphoxFile.openXMLInputStream(intent, parent);
+                input = ps.inputStream;
+            }
+            if (input == null)
+                return "Error loading the original XML file again. This should not have happend."; //Abort and relay the rror message, if this failed
 
             //Copy the input stream to a random file name
             try {
@@ -1698,10 +1725,10 @@ public abstract class phyphoxFile {
                 FileOutputStream output = parent.openFileOutput(file, Activity.MODE_PRIVATE);
                 byte[] buffer = new byte[1024];
                 int count;
-                while ((count = input.inputStream.read(buffer)) != -1)
+                while ((count = input.read(buffer)) != -1)
                     output.write(buffer, 0, count);
                 output.close();
-                input.inputStream.close();
+                input.close();
             } catch (Exception e) {
                 return "Error loading the original XML file again: " + e.getMessage();
             }

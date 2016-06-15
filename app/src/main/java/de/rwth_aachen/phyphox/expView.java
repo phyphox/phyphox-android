@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import java.io.Serializable;
 import java.util.Vector;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
@@ -33,10 +34,10 @@ import java.util.Vector;
 //finally only consist of two values showing the results of the analysis: A frequency and a period.
 
 
-public class expView{
+public class expView implements Serializable{
 
     //Abstract expViewElement class defining the interface for any element of an experiment view
-    public abstract class expViewElement {
+    public abstract class expViewElement implements Serializable {
         protected String label; //Each element has a label. Usually naming the data shown
         protected float labelSize; //Size of the label
         protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
@@ -183,7 +184,7 @@ public class expView{
 
     //valueElement implements a simple text display for a single value with an unit and a given
     //format.
-    public class valueElement extends expViewElement {
+    public class valueElement extends expViewElement implements Serializable {
         private TextView tv; //Holds the Android textView
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private boolean scientificNotation; //Show scientific notation instead of fixed point (1e-3 instead of 0.001)
@@ -318,7 +319,7 @@ public class expView{
     }
 
     //infoElement implements a simple static text display, which gives additional info to the user
-    public class infoElement extends expViewElement {
+    public class infoElement extends expViewElement implements Serializable {
         private TextView tv; //Holds the Android textView
 
         //Constructor takes the same arguments as the expViewElement constructor
@@ -372,7 +373,7 @@ public class expView{
     }
 
     //editElement implements a simple edit box which takes a single value from the user
-    public class editElement extends expViewElement {
+    public class editElement extends expViewElement implements Serializable {
         private EditText et; //Holds the Android EditText
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private String unit; //A string to display as unit
@@ -574,8 +575,8 @@ public class expView{
     //graphElement implements a graph that displays y vs. x arrays from the dataBuffer
     //This class mostly wraps the graphView, which (being rather complex) is implemented in its own
     //class. See graphView.java...
-    public class graphElement extends expViewElement {
-        private graphView gv = null; //Holds and GraphView isntance
+    public class graphElement extends expViewElement implements Serializable {
+        private graphView gv = null; //Holds a GraphView instance
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
         private Double[] dataX; //The x data to be displayed
         private Double[] dataY; //The y data to be displayed

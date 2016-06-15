@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox;
 
 import android.util.Log;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -10,7 +11,7 @@ import java.util.Vector;
 public class Analysis {
 
     //analysisModule is is the prototype from which each analysis module inherits its interface
-    public static class analysisModule {
+    public static class analysisModule implements Serializable {
         private Vector<dataInput> inputsOriginal; //The key of input dataBuffers, note that this is private, so derived classes cannot access this directly, but have to use the copy
         protected Vector<dataInput> inputs = new Vector<>(); //The local copy of the input data when the analysis module starts its update
         protected Vector<dataOutput> outputs; //The keys of outputBuffers
@@ -92,7 +93,7 @@ public class Analysis {
     }
 
     //Get the seconds since the experiment started
-    public static class timerAM extends analysisModule {
+    public static class timerAM extends analysisModule implements Serializable {
 
         protected timerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -105,7 +106,7 @@ public class Analysis {
     }
 
     //Add input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
-    public static class addAM extends analysisModule {
+    public static class addAM extends analysisModule implements Serializable {
 
         protected addAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -141,7 +142,7 @@ public class Analysis {
     }
 
     //Subtract input values (i1-i2-i3-i4...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
-    public static class subtractAM extends analysisModule {
+    public static class subtractAM extends analysisModule implements Serializable {
 
         protected subtractAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -181,7 +182,7 @@ public class Analysis {
     }
 
     //Multiply input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
-    public static class multiplyAM extends analysisModule {
+    public static class multiplyAM extends analysisModule implements Serializable {
 
         protected multiplyAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -218,7 +219,7 @@ public class Analysis {
 
 
     //Divide input values (i1/i2/i3/...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
-    public static class divideAM extends analysisModule {
+    public static class divideAM extends analysisModule implements Serializable {
 
         protected divideAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -259,7 +260,7 @@ public class Analysis {
     // Calculate the power of input values. ((i1^i2)^i3)^..., but you probably only want two inputs here...
     // The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller).
     // Missing values in shorter buffers are filled from the last value.
-    public static class powerAM extends analysisModule {
+    public static class powerAM extends analysisModule implements Serializable {
 
         protected powerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -300,7 +301,7 @@ public class Analysis {
     // Calculate the greatest common divisor (GCD), takes exactly two inputs.
     // The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller).
     // Missing values in shorter buffers are filled from the last value.
-    public static class gcdAM extends analysisModule {
+    public static class gcdAM extends analysisModule implements Serializable {
 
         protected gcdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -346,7 +347,7 @@ public class Analysis {
     // Calculate the least common multiple (GCD), takes exactly two inputs.
     // The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller).
     // Missing values in shorter buffers are filled from the last value.
-    public static class lcmAM extends analysisModule {
+    public static class lcmAM extends analysisModule implements Serializable {
 
         protected lcmAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -394,7 +395,7 @@ public class Analysis {
 
     // Calculate the absolute of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
-    public static class absAM extends analysisModule {
+    public static class absAM extends analysisModule implements Serializable {
 
         protected absAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -423,7 +424,7 @@ public class Analysis {
 
     // Calculate the sine of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
-    public static class sinAM extends analysisModule {
+    public static class sinAM extends analysisModule implements Serializable {
 
         protected sinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -452,7 +453,7 @@ public class Analysis {
 
     // Calculate the cosine of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
-    public static class cosAM extends analysisModule {
+    public static class cosAM extends analysisModule implements Serializable {
 
         protected cosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -482,7 +483,7 @@ public class Analysis {
 
     // Calculate the tangens of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
-    public static class tanAM extends analysisModule {
+    public static class tanAM extends analysisModule implements Serializable {
 
         protected tanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -510,7 +511,7 @@ public class Analysis {
     }
 
     //Get the first value of the dataset.
-    public static class firstAM extends analysisModule {
+    public static class firstAM extends analysisModule implements Serializable {
 
         protected firstAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -546,7 +547,7 @@ public class Analysis {
     //input1 and output1 are mandatory, input1 and input2 are optional.
     //If the parameter "multiple" is set, this module will output multiple local maxima (and their positions)
     //In multiple mode input3 may set a threshold: A local maximum will be searched in ranges of consecutive values above the threshold, Default: 0
-    public static class maxAM extends analysisModule {
+    public static class maxAM extends analysisModule implements Serializable {
         private boolean multiple = false;
 
         protected maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
@@ -622,7 +623,7 @@ public class Analysis {
     //input1 and output1 are mandatory, input1 and input2 are optional.
     //If the parameter "multiple" is set, this module will output multiple local minima (and their positions)
     //In multiple mode input3 may set a threshold: A local minimum will be searched in ranges of consecutive values below the threshold, Default: 0
-    public static class minAM extends analysisModule {
+    public static class minAM extends analysisModule implements Serializable {
         private boolean multiple = false;
 
         protected minAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
@@ -696,7 +697,7 @@ public class Analysis {
     //output1 will receive the x value of the point the threshold is crossed
     //The threshold is set by input3 (it defaults to 0)
     //The constructor parameter falling select positive or negative edge triggering (loaded with rising as default)
-    public static class thresholdAM extends analysisModule {
+    public static class thresholdAM extends analysisModule implements Serializable {
         boolean falling = false; //Falling or rising trigger?
 
         //Extended constructor which receives the threshold and falling as well.
@@ -753,7 +754,7 @@ public class Analysis {
     }
 
     //Append all inputs to the output.
-    public static class appendAM extends analysisModule {
+    public static class appendAM extends analysisModule implements Serializable {
 
         protected appendAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -777,7 +778,7 @@ public class Analysis {
 
     //Calculate FFT of single input
     //If the input length is not a power of two the input will be filled with zeros until it is a power of two
-    public static class fftAM extends analysisModule {
+    public static class fftAM extends analysisModule implements Serializable {
         private int n, np2, logn; //input size, power-of-two filled size, log2 of input size (integer)
         private double [] cos, sin; //Lookup table
 
@@ -912,7 +913,7 @@ public class Analysis {
     //output1 is y of autocorrelation
     //output2 is relative x (displacement of autocorrelation in units of input2)
     //A min and max can be set through setMinMaxT which limit the x-range used for calculation
-    public static class autocorrelationAM extends analysisModule {
+    public static class autocorrelationAM extends analysisModule implements Serializable {
 
         protected autocorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -981,7 +982,7 @@ public class Analysis {
     //input6 is the maximum period in samples (optional, default: +Inf)
     //input6 is the precision in samples (optional, default: 1)
     //output1 is the periodicity in units of input1
-    public static class periodicityAM extends analysisModule {
+    public static class periodicityAM extends analysisModule implements Serializable {
 
         protected periodicityAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -1090,7 +1091,7 @@ public class Analysis {
 
     //Simple differentiation by calculating the difference of neighboring points
     //The resulting array has exactly one element less than the input array
-    public static class differentiateAM extends analysisModule {
+    public static class differentiateAM extends analysisModule implements Serializable {
 
         protected differentiateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -1122,7 +1123,7 @@ public class Analysis {
     //Simple integration by calculating the sum of all values up to the output index
     //So, first value will be v0, second will be v0+v1, third v0+v1+v2 etc.
     //The resulting array has exactly as many elements as the input array
-    public static class integrateAM extends analysisModule {
+    public static class integrateAM extends analysisModule implements Serializable {
 
         protected integrateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -1150,7 +1151,7 @@ public class Analysis {
     //There is no zero-padding. The smaller input is moved "along" the larger input.
     //This does not work if both have the same size. Pad one input to match the target total size first.
     //The size of the output is the difference of both input sizes.
-    public static class crosscorrelationAM extends analysisModule {
+    public static class crosscorrelationAM extends analysisModule implements Serializable {
         protected crosscorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
@@ -1183,7 +1184,7 @@ public class Analysis {
     //Smooth data using a gauss distribution
     //Sigma defaults to 3 but can be changed.
     //Note that sigma cannot be set by a dataBuffer
-    public static class gaussSmoothAM extends analysisModule {
+    public static class gaussSmoothAM extends analysisModule implements Serializable {
         int calcWidth; //range to which the gauss is calculated
         double[] gauss; //Gauss-weight look-up-table
 
@@ -1233,7 +1234,7 @@ public class Analysis {
 
     //Match a couple of inputs and only return those that have a valid value in every input
     //You need exactly as many outputs as there are inputs.
-    public static class matchAM extends analysisModule {
+    public static class matchAM extends analysisModule implements Serializable {
 
         protected matchAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -1282,7 +1283,7 @@ public class Analysis {
     //For each input you can set a min and max value.
     // If tha value of any input falls outside min and max, the data at this index if discarded for all inputs
     //You need exactly as many outputs as there are inputs.
-    public static class rangefilterAM extends analysisModule {
+    public static class rangefilterAM extends analysisModule implements Serializable {
 
         //Constructor also takes arrays of min and max values
         protected rangefilterAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
@@ -1356,7 +1357,7 @@ public class Analysis {
     //Defaults to a ramp from 0 to 100
     //You can set start, stop and length. The first value will match start, the last value will match stop
     //Databuffers allowed for all parameters
-    public static class rampGeneratorAM extends analysisModule {
+    public static class rampGeneratorAM extends analysisModule implements Serializable {
         //Defaults as string values as this might be set to a dataBuffer
         double vstart = 0.;
         double vstop = 100.;
@@ -1391,7 +1392,7 @@ public class Analysis {
     //Defaults to a value of zero
     //You can set the value and length.
     //Databuffers allowed for all parameters
-    public static class constGeneratorAM extends analysisModule {
+    public static class constGeneratorAM extends analysisModule implements Serializable {
         //Defaults as string values as this might be set to a dataBuffer
         double vvalue = 0.;
         int vlength = -1;

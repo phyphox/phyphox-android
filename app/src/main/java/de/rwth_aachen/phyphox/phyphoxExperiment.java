@@ -5,6 +5,7 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.util.Log;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -13,9 +14,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
-public class phyphoxExperiment {
+public class phyphoxExperiment implements Serializable {
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
+    byte[] source = null; //This may hold the original source file if it comes from a remote source
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment
     String category = ""; //The category of this experiment

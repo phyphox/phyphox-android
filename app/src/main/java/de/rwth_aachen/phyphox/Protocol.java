@@ -9,10 +9,11 @@ import org.json.JSONObject;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 
-public class Protocol {
+public class Protocol implements Serializable {
     protocolImplementation protocol;
 
     Protocol(protocolImplementation protocol) {
@@ -35,7 +36,7 @@ public class Protocol {
         return protocol.processInData(buffer);
     }
 
-    protected abstract static class protocolImplementation {
+    protected abstract static class protocolImplementation implements Serializable {
 
         protected abstract boolean canSend();
         protected abstract boolean canReceive();
@@ -49,7 +50,7 @@ public class Protocol {
 
     }
 
-    public static class simple extends protocolImplementation {
+    public static class simple extends protocolImplementation implements Serializable {
         String separator = "\n";
 
         simple() {
@@ -106,7 +107,7 @@ public class Protocol {
         }
     }
 
-    public static class csv extends protocolImplementation {
+    public static class csv extends protocolImplementation implements Serializable {
         String separator = ",";
 
         csv() {
@@ -203,7 +204,7 @@ public class Protocol {
         }
     }
 
-    public static class json extends protocolImplementation {
+    public static class json extends protocolImplementation implements Serializable {
         Vector<String> names = null;
 
         json() {

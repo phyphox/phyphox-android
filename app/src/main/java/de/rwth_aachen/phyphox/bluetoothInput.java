@@ -10,6 +10,7 @@ import android.util.StringBuilderPrinter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
@@ -17,7 +18,7 @@ import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 //The bluetoothInput class encapsulates a generic serial input from bluetooth devices
-public class bluetoothInput {
+public class bluetoothInput implements Serializable {
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
     public Vector<dataOutput> data = new Vector<>(); //Data-buffers

@@ -8,9 +8,11 @@ import android.graphics.Region;
 import android.util.Log;
 import android.view.View;
 
+import java.io.Serializable;
+
 //The graphView class implements an Android view which displays a data graph
 
-public class graphView extends View {
+public class graphView extends View implements Serializable {
     private Double[][] graphX; //The x data to be displayed
     private Double[][] graphY; //The y data to be displayed
 
