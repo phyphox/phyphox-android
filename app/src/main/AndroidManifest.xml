@@ -51,10 +51,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:host="*" android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\.phyphox" />
-                <data android:host="*" android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\..*\\.phyphox" />
-                <data android:host="*" android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\.phyphox" />
-                <data android:host="*" android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\..*\\.phyphox" />
+                <data android:host="*" android:scheme="content" android:mimeType="*/*" android:pathPattern=".*" />
             </intent-filter>
         </activity>
         <provider
