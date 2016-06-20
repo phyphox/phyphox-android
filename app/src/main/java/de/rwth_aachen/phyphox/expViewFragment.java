@@ -55,7 +55,7 @@ public class expViewFragment extends Fragment {
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         if(isVisibleToUser) {
-            if (((Experiment)getActivity()).experiment != null)
+            if (getActivity() != null && ((Experiment)getActivity()).experiment != null)
                 ((Experiment) getActivity()).experiment.updateViews(index, true);
         }
     }
