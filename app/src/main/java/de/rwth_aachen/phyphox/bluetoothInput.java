@@ -32,10 +32,10 @@ public class bluetoothInput implements Serializable {
 
     private Lock dataLock;
 
-    private BluetoothAdapter btAdapter = null;
+    transient private BluetoothAdapter btAdapter = null;
     BluetoothDevice btDevice = null;
-    private BluetoothSocket btSocket = null;
-    private InputStream inStream = null;
+    transient private BluetoothSocket btSocket = null;
+    transient private InputStream inStream = null;
 
     private Protocol protocol;
 
@@ -127,6 +127,11 @@ public class bluetoothInput implements Serializable {
         } catch (IOException e) {
             throw new bluetoothException("Could get input stream from bluetooth device.");
         }
+    }
+
+    public void reconnect(BluetoothAdapter bta) throws bluetoothException {
+        this.btAdapter = bta;
+        openConnection();
     }
 
     public void closeConnection() {

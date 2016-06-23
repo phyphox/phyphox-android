@@ -1,6 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" tools:context="de.rwth_aachen.phyphox.Experiment">
+    <item android:id="@+id/timer" android:title="0s"
+        android:orderInCategory="1" app:showAsAction="always" />
     <item android:id="@+id/action_timed_play" android:title="@string/timed_start" android:icon="@drawable/timed_play"
         android:orderInCategory="2" app:showAsAction="always" />
     <item android:id="@+id/action_timed_pause" android:title="@string/timed_stop" android:icon="@drawable/timed_pause"
@@ -9,8 +11,6 @@
         android:orderInCategory="4" app:showAsAction="always" />
     <item android:id="@+id/action_pause" android:title="@string/stop" android:icon="@drawable/pause"
         android:orderInCategory="5" app:showAsAction="always" />
-    <item android:id="@+id/timer" android:title="0s"
-        android:orderInCategory="6" app:showAsAction="always" />
     <item android:id="@+id/action_description" android:title="@string/show_description" android:icon="@drawable/info"
         android:orderInCategory="30" app:showAsAction="never" />
     <item android:id="@+id/action_export" android:title="@string/export" android:icon="@drawable/download"

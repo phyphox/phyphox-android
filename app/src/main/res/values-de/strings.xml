@@ -37,7 +37,7 @@
     <string name="pick_exportSets">Wählen Sie die zu exportierenden Datensätze.</string>
     <string name="remoteServer">Fernzugriff erlauben</string>
     <string name="remoteServerActive">Fernzugriff aktiv. Sie erreichen dieses Experiment unter folgender URL:\n%1$s</string>
-    <string name="remoteServerWarning">Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie auf Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.</string>
+    <string name="remoteServerWarning">Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.</string>
     <string name="remoteServerWarningTitle">Sicherheitswarnung!</string>
     <string name="save_locally">Experiment zur Sammlung hinzufügen</string>
     <string name="save_locally_done">Das Experiment wurde zur Sammlung hinzugefügt.</string>

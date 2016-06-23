@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,7 +23,6 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -30,7 +30,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,16 +38,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
-import android.widget.Spinner;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
@@ -56,10 +49,6 @@ import android.support.v7.widget.Toolbar;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Vector;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
@@ -267,11 +256,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
                 timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY); //stop delay of timed run
 
-                //Update all the views
-                for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                    experiment.updateViews(i, true);
-                }
-
                 //Which view was active when we were stopped?
                 startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
             }
@@ -292,6 +276,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             if (adapter.getCount() < 2)
                 tabLayout.setVisibility(View.GONE);
+
+            try {
+                experiment.init(sensorManager);
+            } catch (Exception e) {
+                Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+            }
 
             tabLayout.getTabAt(startView).select();
 

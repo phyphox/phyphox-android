@@ -71,7 +71,7 @@ public class ExperimentList extends AppCompatActivity {
     public static final String PREFS_NAME = "phyphox";
 
     //A resource reference for easy access
-    Resources res;
+    private Resources res;
 
     private Vector<category> categories = new Vector<>(); //The list of categories. The category class (see below) holds a category and all its experiment items
 

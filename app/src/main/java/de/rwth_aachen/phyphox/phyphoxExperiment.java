@@ -1,8 +1,13 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.hardware.SensorManager;
+import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaRecorder;
 import android.util.Log;
 
 import java.io.Serializable;
@@ -41,14 +46,14 @@ public class phyphoxExperiment implements Serializable {
     boolean newData = true; //Will be set to true if we have fresh data to present
 
     //Parameters for audio playback
-    AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
+    transient AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
     String audioSource; //The key name of the buffer which holds the data that should be played back through the speaker.
     int audioRate = 48000; //The playback rate (in Hz)
     int audioBufferSize = 0; //The size of the audio buffer
     boolean audioLoop = false; //Loop the track?
 
     //Parameters for audio record
-    AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
+    transient AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
     String micOutput; //The key name of the buffer which receives the data from audio recording.
     int micRate = 48000; //The recording rate in Hz
     int micBufferSize = 0; //The size of the recording buffer
@@ -319,5 +324,47 @@ public class phyphoxExperiment implements Serializable {
             audioRecord.startRecording();
 
         //We will not start audio output here as it will be triggered by the analysis modules.
+    }
+
+    public void init(SensorManager sensorManager) throws Exception {
+        //Update all the views
+        for (int i = 0; i < experimentViews.size(); i++) {
+            updateViews(i, true);
+        }
+
+        //Create the audioTrack instance
+        if (audioSource != null) {
+            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2 * audioBufferSize, AudioTrack.MODE_STATIC);
+            if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
+                throw new Exception("Could not initialize audio. (" + audioTrack.getState() + ")");
+            }
+        }
+
+        //Create audioTrack instance
+        if (micBufferSize > 0)
+            audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize * 2);
+
+        //Reconnect sensors
+        for (sensorInput si : inputSensors) {
+            si.attachSensorManager(sensorManager);
+        }
+
+        //Reconnect bluetooth inputs
+        for (bluetoothInput bti : bluetoothInputs) {
+            try {
+                bti.reconnect(BluetoothAdapter.getDefaultAdapter());
+            } catch (bluetoothInput.bluetoothException e) {
+                throw new Exception("Could not initialize bluetooth input. (" + e.getMessage() + ")");
+            }
+        }
+
+        //Reconnect bluetooth outputs
+        for (bluetoothOutput bto : bluetoothOutputs) {
+            try {
+                bto.reconnect(BluetoothAdapter.getDefaultAdapter());
+            } catch (bluetoothOutput.bluetoothException e) {
+                throw new Exception("Could not initialize bluetooth output. (" + e.getMessage() + ")");
+            }
+        }
     }
 }

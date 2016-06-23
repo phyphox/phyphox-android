@@ -185,7 +185,7 @@ public class dataExport implements Serializable {
 
     //This class implements an Microsoft Excel export using the Apache POI library
     protected class excelFormat extends exportFormat implements Serializable {
-        //Nothing to do or configure in the costructor
+        //Nothing to do or configure in the constructor
         excelFormat() {
         }
 

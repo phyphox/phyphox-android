@@ -21,10 +21,10 @@ public class bluetoothOutput implements Serializable {
 
     private static final UUID btUUID = UUID.fromString("245fb312-a57f-40a1-9c45-9287984f270c");
 
-    private BluetoothAdapter btAdapter = null;
+    transient private BluetoothAdapter btAdapter = null;
     BluetoothDevice btDevice = null;
-    private BluetoothSocket btSocket = null;
-    private BufferedOutputStream outStream = null;
+    transient private BluetoothSocket btSocket = null;
+    transient private BufferedOutputStream outStream = null;
 
     private Protocol protocol;
 
@@ -101,6 +101,11 @@ public class bluetoothOutput implements Serializable {
         } catch (IOException e) {
             throw new bluetoothException("Could get input stream from bluetooth device.");
         }
+    }
+
+    public void reconnect(BluetoothAdapter bta) throws bluetoothException {
+        this.btAdapter = bta;
+        openConnection();
     }
 
     public void closeConnection() {

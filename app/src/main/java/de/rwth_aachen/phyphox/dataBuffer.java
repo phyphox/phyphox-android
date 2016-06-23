@@ -11,7 +11,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class dataBuffer implements Serializable {
     public String name; //The key name
-    private BlockingQueue<Double> buffer; //The actual buffer
+    private BlockingQueue<Double> buffer; //The actual buffer (will be initialized as ArrayBlockingQueue which is Serializable)
     public int size; //The target size
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter

@@ -19,7 +19,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     public dataBuffer dataY; //Data-buffer for y (3D sensors only)
     public dataBuffer dataZ; //Data-buffer for z (3D sensors only)
     public dataBuffer dataT; //Data-buffer for t
-    private SensorManager sensorManager; //Hold the sensor manager
+    transient private SensorManager sensorManager; //Hold the sensor manager
 
     private long lastReading; //Remember the time of the last reading to fullfill the rate
     private double avgX, avgY, avgZ; //Used for averaging
@@ -37,8 +37,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
     //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
     //be null to be left unused.
-    protected sensorInput(SensorManager sensorManager, String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws SensorException {
-        this.sensorManager = sensorManager; //Store the sensorManager reference
+    protected sensorInput(String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws SensorException {
         this.dataLock = lock;
 
         if (rate <= 0)
@@ -75,6 +74,10 @@ public class sensorInput implements SensorEventListener, Serializable {
             this.dataZ = buffers.get(2).buffer;
         if (buffers.get(3) != null)
             this.dataT = buffers.get(3).buffer;
+    }
+
+    public void attachSensorManager(SensorManager sensorManager) {
+        this.sensorManager = sensorManager;
     }
 
     //Check if the sensor is available without trying to use it.

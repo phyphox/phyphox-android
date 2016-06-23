@@ -7,9 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -899,7 +897,8 @@ public abstract class phyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new sensorInput(parent.sensorManager, type, rate, average, outputs, experiment.dataLock));
+                        experiment.inputSensors.add(new sensorInput(type, rate, average, outputs, experiment.dataLock));
+                        experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (sensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
                     }
@@ -939,8 +938,6 @@ public abstract class phyphoxFile {
                         Log.w("loadExperiment", "Audio buffer size had to be adjusted to " + minBufferSize);
                     }
 
-                    //Now create the audioRecord instance
-                    experiment.audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, experiment.micBufferSize * 2);
                     break;
                 }
                 case "bluetooth": { //A serial bluetooth input
@@ -1461,11 +1458,6 @@ public abstract class phyphoxFile {
                     if (experiment.audioLoop && experiment.audioBufferSize < 2 * experiment.audioRate)
                         experiment.audioBufferSize = 2 * experiment.audioBufferSize;
 
-                    //Create the audioTrack instance
-                    experiment.audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, experiment.audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2 * experiment.audioBufferSize, AudioTrack.MODE_STATIC);
-                    if (experiment.audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
-                        throw new phyphoxFileException("Could not initialize audio. (" + experiment.audioTrack.getState() + ")", xpp.getLineNumber());
-                    }
                     break;
                 }
                 case "bluetooth": { //A serial bluetooth output

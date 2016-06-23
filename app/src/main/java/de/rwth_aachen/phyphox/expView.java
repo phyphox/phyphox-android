@@ -46,7 +46,6 @@ public class expView implements Serializable{
         protected String dataYInput; //Array data from this input can be displayed to the user, usually used for y-axis
 
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
-        protected Resources res; //Access to resources
 
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
@@ -61,8 +60,6 @@ public class expView implements Serializable{
             //This allows to receive the old user-set value after the view has changed
             if (this.valueInput == null && this.valueOutput != null)
                 this.valueInput = this.getValueOutput();
-
-            this.res = res;
         }
 
         //Interface to change the label size
@@ -72,7 +69,7 @@ public class expView implements Serializable{
 
         //Abstract function to force child classes to implement createView
         //This will take a linear layout, which should be filled by this function
-        protected abstract void createView(LinearLayout ll, Context c);
+        protected abstract void createView(LinearLayout ll, Context c, Resources res);
 
         //Abstract function to force child classes to implement createViewHTML
         //This will return HTML code representing the element
@@ -185,7 +182,7 @@ public class expView implements Serializable{
     //valueElement implements a simple text display for a single value with an unit and a given
     //format.
     public class valueElement extends expViewElement implements Serializable {
-        private TextView tv; //Holds the Android textView
+        transient private TextView tv; //Holds the Android textView
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private boolean scientificNotation; //Show scientific notation instead of fixed point (1e-3 instead of 0.001)
         private int precision; //The number of significant digits
@@ -245,7 +242,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android vews we need to the linear layout
-        protected void createView(LinearLayout ll, Context c){
+        protected void createView(LinearLayout ll, Context c, Resources res){
             //Create a row consisting of label and value
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -320,7 +317,7 @@ public class expView implements Serializable{
 
     //infoElement implements a simple static text display, which gives additional info to the user
     public class infoElement extends expViewElement implements Serializable {
-        private TextView tv; //Holds the Android textView
+        transient private TextView tv; //Holds the Android textView
 
         //Constructor takes the same arguments as the expViewElement constructor
         infoElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
@@ -335,7 +332,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c){
+        protected void createView(LinearLayout ll, Context c, Resources res){
 
             //Create the text as textView
             TextView textView = new TextView(c);
@@ -374,7 +371,7 @@ public class expView implements Serializable{
 
     //editElement implements a simple edit box which takes a single value from the user
     public class editElement extends expViewElement implements Serializable {
-        private EditText et; //Holds the Android EditText
+        transient private EditText et; //Holds the Android EditText
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private String unit; //A string to display as unit
         private double defaultValue; //This value is filled into the dataBuffer before the user enters a custom value
@@ -426,7 +423,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, Context c){
+        protected void createView(LinearLayout ll, Context c, Resources res){
             //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -576,7 +573,7 @@ public class expView implements Serializable{
     //This class mostly wraps the graphView, which (being rather complex) is implemented in its own
     //class. See graphView.java...
     public class graphElement extends expViewElement implements Serializable {
-        private graphView gv = null; //Holds a GraphView instance
+        transient private graphView gv = null; //Holds a GraphView instance
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
         private Double[] dataX; //The x data to be displayed
         private Double[] dataY; //The y data to be displayed
@@ -588,6 +585,11 @@ public class expView implements Serializable{
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
+
+        private String highlightColor;
+        private String backgroundGridRemoteColor;
+        private String gridColor;
+        private String mainRemoteColor;
 
         graphView.scaleMode scaleMinX = graphView.scaleMode.auto;
         graphView.scaleMode scaleMaxX = graphView.scaleMode.auto;
@@ -680,7 +682,12 @@ public class expView implements Serializable{
 
         @Override
         //Create the actual view in Android
-        protected void createView(LinearLayout ll, Context c){
+        protected void createView(LinearLayout ll, Context c, Resources res){
+            highlightColor = String.format("%08x", res.getColor(R.color.highlight)).substring(2);
+            backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
+            mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
+            gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
+
             //We need a label and want to put the graph below. So we wrap everything into a vertical
             //linear layout (Axis labels are handled by the graphView)
             LinearLayout gvll = new LinearLayout(c);
@@ -812,7 +819,7 @@ public class expView implements Serializable{
                         "}" +
                         "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+String.format("%08x", res.getColor(R.color.highlight)).substring(2) + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.grid)).substring(2) +"\"}, \"grid\": {\"borderColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.mainRemote)).substring(2) +"\", \"backgroundColor\": \""+ "#"+String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2) +"\"}});" +
+                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ highlightColor + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
                     "}";
         }
 
