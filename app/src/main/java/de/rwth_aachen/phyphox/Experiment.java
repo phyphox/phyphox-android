@@ -49,6 +49,8 @@ import android.support.v7.widget.Toolbar;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
@@ -535,7 +537,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
             screenView.setDrawingCacheEnabled(false);
 
-            File file = new File(this.getCacheDir(), "/phyphox.png");
+            File file = new File(this.getCacheDir(), "/phyphox " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
             try {
                 FileOutputStream out = new FileOutputStream(file);
                 bitmap.compress(Bitmap.CompressFormat.PNG, 85, out);

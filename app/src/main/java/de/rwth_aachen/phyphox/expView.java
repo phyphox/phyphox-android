@@ -585,11 +585,14 @@ public class expView implements Serializable{
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
+        private double lineWidth = 1.0;
+        private int color;
 
         private String highlightColor;
         private String backgroundGridRemoteColor;
         private String gridColor;
         private String mainRemoteColor;
+        private String lineColor;
 
         graphView.scaleMode scaleMinX = graphView.scaleMode.auto;
         graphView.scaleMode scaleMaxX = graphView.scaleMode.auto;
@@ -604,12 +607,25 @@ public class expView implements Serializable{
         //Quite usual constructor...
         graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
-            aspectRatio = 3.;
+            aspectRatio = 2.5;
+            color = res.getColor(R.color.highlight);
         }
 
         //Interface to change the height of the graph
         protected void setAspectRatio(double aspectRatio) {
             this.aspectRatio = aspectRatio;
+        }
+
+        protected void setLineWidth(double lineWidth) {
+            this.lineWidth = lineWidth;
+            if (gv != null)
+                gv.setLineWidth(lineWidth);
+        }
+
+        protected void setColor(int color) {
+            this.color = color;
+            if (gv != null)
+                gv.setColor(color);
         }
 
         //Interface to switch between points and lines
@@ -687,6 +703,7 @@ public class expView implements Serializable{
             backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
             mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
             gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
+            lineColor = String.format("%08x", color).substring(2);
 
             //We need a label and want to put the graph below. So we wrap everything into a vertical
             //linear layout (Axis labels are handled by the graphView)
@@ -717,6 +734,8 @@ public class expView implements Serializable{
 
             //Send our parameters to the graphView isntance
             gv.setLine(line);
+            gv.setLineWidth(lineWidth);
+            gv.setColor(color);
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setHistoryLength(historyLength);
@@ -819,7 +838,7 @@ public class expView implements Serializable{
                         "}" +
                         "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ highlightColor + "\" , \"data\": d }], {\"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
+                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(line ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth)+"}, \"points\": {show:"+(!line ? "true" : "false")+"}, \"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
                     "}";
         }
 

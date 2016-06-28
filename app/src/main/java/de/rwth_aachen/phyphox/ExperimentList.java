@@ -54,6 +54,9 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Vector;
@@ -403,12 +406,13 @@ public class ExperimentList extends AppCompatActivity {
             public void setExpanded(boolean expanded) {
                 this.expanded = expanded;
             }
+
         }
 
         //Constructor for the category class, takes a category name, the layout into which it should
         // place its views and the calling activity (mostly to display the dialog in the onClick
         // listener of the delete button for each element - maybe this should be restructured).
-        public category(String name, LinearLayout parentLayout, Activity parentActivity) {
+        public category(String name, Activity parentActivity) {
             //Store what we need.
             this.name = name;
             parentContext = parentActivity;
@@ -467,7 +471,9 @@ public class ExperimentList extends AppCompatActivity {
             //Add headline and experiment list to our base layout
             catLayout.addView(categoryHeadline);
             catLayout.addView(experimentSubList);
+        }
 
+        public void addToParent(LinearLayout parentLayout) {
             //Add the layout to the layout designated by the caller
             parentLayout.addView(catLayout);
         }
@@ -480,6 +486,16 @@ public class ExperimentList extends AppCompatActivity {
         //Helper to check if the name of this category matches a given string
         public boolean hasName(String cat) {
             return cat.equals(name);
+        }
+    }
+
+    class categoryComparator implements Comparator<category> {
+        public int compare(category a, category b) {
+            if (a.name.equals(res.getString(R.string.categoryRawSensor)))
+                return -1;
+            if (b.name.equals(res.getString(R.string.categoryRawSensor)))
+                return 1;
+            return a.name.compareTo(b.name);
         }
     }
 
@@ -498,8 +514,7 @@ public class ExperimentList extends AppCompatActivity {
             }
         }
         //Category does not yet exist. Create it and add the experiment
-        LinearLayout catList = (LinearLayout)findViewById(R.id.experimentList);
-        categories.add(new category(cat, catList, this));
+        categories.add(new category(cat, this));
         categories.lastElement().addExperiment(exp, image, description, xmlFile, isAsset);
     }
 
@@ -650,7 +665,8 @@ public class ExperimentList extends AppCompatActivity {
 
         //Clear the old list first
         categories.clear();
-        ((LinearLayout)findViewById(R.id.experimentList)).removeAllViews();
+        LinearLayout catList = (LinearLayout)findViewById(R.id.experimentList);
+        catList.removeAllViews();
 
         //Load experiments from local files
         try {
@@ -682,6 +698,12 @@ public class ExperimentList extends AppCompatActivity {
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
+        }
+
+        Collections.sort(categories, new categoryComparator());
+
+        for (category cat : categories) {
+            cat.addToParent(catList);
         }
     }
 

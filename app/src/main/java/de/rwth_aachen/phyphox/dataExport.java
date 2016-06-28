@@ -326,7 +326,7 @@ public class dataExport implements Serializable {
                         //Lets do the actual export
 
                         //Set a file name including the current date
-                        exportFormats[selected.value].setFilenameBase("phyphox_" + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
+                        exportFormats[selected.value].setFilenameBase("phyphox " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
 
                         //Call the export filter to write the data to a file
                         File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir());

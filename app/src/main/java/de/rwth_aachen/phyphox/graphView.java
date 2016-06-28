@@ -29,6 +29,9 @@ public class graphView extends View {
     private boolean logX = false; //logarithmic scale for the x-axis?
     private boolean logY = false; //logarithmic scale for the y-axis?
 
+    private double lineWidth = 1.0;
+    private int color = 0xffffff;
+
 
     public enum scaleMode {
         auto, extend, fixed
@@ -56,6 +59,14 @@ public class graphView extends View {
         setHistoryLength(1);
         rescale(); //Calculate initial scale. At this point it will just set all min and max to +inf and -inf
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
+
+    public void setLineWidth(double lineWidth) {
+        this.lineWidth = lineWidth;
     }
 
     @Override
@@ -431,16 +442,16 @@ public class graphView extends View {
                 if (graphY[j] != null && graphX[j] != null) {
                     if (j == 0) {
                         if (this.line)
-                            paint.setStrokeWidth(3);
+                            paint.setStrokeWidth(3*(float)this.lineWidth);
                         else
-                            paint.setStrokeWidth(5);
-                        paint.setColor(res.getColor(R.color.highlight));
+                            paint.setStrokeWidth(5*(float)this.lineWidth);
+                        paint.setColor(this.color);
                         paint.setAlpha(255);
                     } else {
                         if (this.line)
-                            paint.setStrokeWidth(2);
+                            paint.setStrokeWidth(2*(float)this.lineWidth);
                         else
-                            paint.setStrokeWidth(3);
+                            paint.setStrokeWidth(3*(float)this.lineWidth);
                         paint.setColor(res.getColor(R.color.mainExp));
                         paint.setAlpha(150-(j+1)*150/historyLength);
                     }

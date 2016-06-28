@@ -247,6 +247,16 @@ public abstract class phyphoxFile {
             return Boolean.valueOf(att);
         }
 
+        //Helper to receive a color attribute, if invalid or not present, return default
+        protected int getColorAttribute(String identifier, int defaultValue) {
+            final String att = xpp.getAttributeValue(null, identifier);
+            if (att == null)
+                return defaultValue;
+            if (att.length() != 6)
+                return defaultValue;
+            return Integer.parseInt(att, 16);
+        }
+
         //These functions should be overriden with block-specific code
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
 
@@ -797,7 +807,7 @@ public abstract class phyphoxFile {
                     newView.elements.add(infoe);
                     break;
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
-                    double aspectRatio = getDoubleAttribute("aspectRatio", 3.);
+                    double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
                     boolean partialUpdate = getBooleanAttribute("partialUpdate", false);
                     boolean forceFullUpdate = getBooleanAttribute("forceFullDataset", false);
@@ -806,6 +816,8 @@ public abstract class phyphoxFile {
                     String labelY = getTranslatedAttribute("labelY");
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
+                    double lineWidth = getDoubleAttribute("lineWidth", 1.0);
+                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.highlight));
 
                     graphView.scaleMode scaleMinX = parseScaleMode("scaleMinX");
                     graphView.scaleMode scaleMaxX = parseScaleMode("scaleMaxX");
@@ -832,6 +844,8 @@ public abstract class phyphoxFile {
                     expView.graphElement ge = newView.new graphElement(label, null, null, bufferX, bufferY, parent.getResources()); //Two array inputs
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
                     ge.setLine(!(lineStyle != null && lineStyle.equals("dots"))); //Everything but dots will be lines
+                    ge.setLineWidth(lineWidth);
+                    ge.setColor(color);
                     ge.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
                     ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
