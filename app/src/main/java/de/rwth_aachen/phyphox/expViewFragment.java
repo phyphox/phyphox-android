@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -65,9 +66,26 @@ public class expViewFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         root = inflater.inflate(R.layout.fragment_exp_view, container, false);
+
         recreateView();
 
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (root == null)
+            return;
+        LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
+        ll.removeAllViews();
+
+        if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
+            for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+                element.cleanView();
+            }
+        }
+
+        super.onDestroyView();
     }
 
 }

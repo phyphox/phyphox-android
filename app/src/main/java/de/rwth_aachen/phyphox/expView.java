@@ -3,13 +3,16 @@ package de.rwth_aachen.phyphox;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Typeface;
+import android.opengl.GLSurfaceView;
 import android.support.v4.content.ContextCompat;
 import android.text.InputType;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -70,6 +73,10 @@ public class expView implements Serializable{
         //Abstract function to force child classes to implement createView
         //This will take a linear layout, which should be filled by this function
         protected abstract void createView(LinearLayout ll, Context c, Resources res);
+
+        protected void cleanView() {
+
+        }
 
         //Abstract function to force child classes to implement createViewHTML
         //This will return HTML code representing the element
@@ -574,12 +581,14 @@ public class expView implements Serializable{
     //class. See graphView.java...
     public class graphElement extends expViewElement implements Serializable {
         transient private graphView gv = null; //Holds a GraphView instance
+        transient private PlotRenderer plotRenderer = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
-        private Double[] dataX; //The x data to be displayed
-        private Double[] dataY; //The y data to be displayed
+        private floatBufferRepresentation dataX; //The x data to be displayed
+        private floatBufferRepresentation dataY; //The y data to be displayed
+        private double dataMinX, dataMaxX, dataMinY, dataMaxY;
+
         private boolean line = false; //Show lines instead of points?
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
-        private boolean forceFullDataset = false; //If true, all data points are shown. If false, some datapoints will be skipped if much more data is availbale than required by the resolution
         private String labelX = null; //Label for the x-axis
         private String labelY = null; //Label for the y-axis
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
@@ -660,13 +669,6 @@ public class expView implements Serializable{
                 gv.setHistoryLength(hl);
         }
 
-        //Interface to force the display the full data set vs. skipping datapoints if there are more than neccessary at the current resolution
-        protected void setForceFullDataset(boolean forceFullDataset) {
-            this.forceFullDataset = forceFullDataset;
-            if (gv != null)
-                gv.setForceFullDataset(forceFullDataset);
-        }
-
         //Interface to set the axis labels.
         protected void setLabel(String labelX, String labelY) {
             this.labelX = labelX;
@@ -699,6 +701,7 @@ public class expView implements Serializable{
         @Override
         //Create the actual view in Android
         protected void createView(LinearLayout ll, Context c, Resources res){
+
             highlightColor = String.format("%08x", res.getColor(R.color.highlight)).substring(2);
             backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
             mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
@@ -726,8 +729,23 @@ public class expView implements Serializable{
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
+            FrameLayout fl = new FrameLayout(c);
+            fl.setLayoutParams(new TableRow.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            PlotAreaView plotAreaView = new PlotAreaView(c);
+            plotAreaView.setLayoutParams(new TableRow.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+
+            plotRenderer = new PlotRenderer(res);
+            plotRenderer.start();
+            plotAreaView.setSurfaceTextureListener(plotRenderer);
+
+
             //Create the graphView
-            gv = new graphView(c, aspectRatio);
+            gv = new graphView(c, aspectRatio, plotAreaView, plotRenderer);
             gv.setLayoutParams(new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -739,17 +757,31 @@ public class expView implements Serializable{
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setHistoryLength(historyLength);
-            gv.setForceFullDataset(forceFullDataset);
             gv.setLabel(labelX, labelY);
             gv.setLogScale(logX, logY);
 
+            fl.addView(plotAreaView);
+            fl.addView(gv);
+
             //Add label and graphView to our own wrapper linear layout
             gvll.addView(labelView);
-            gvll.addView(gv);
+            gvll.addView(fl);
 
             //Add the wrapper layout to the linear layout given to this function
             ll.addView(gvll);
 
+        }
+
+        @Override
+        public void cleanView() {
+            plotRenderer.halt();
+            try {
+                plotRenderer.join();
+            } catch (InterruptedException e) {
+                Log.e("cleanView", "Renderer: Interrupted execution.");
+            }
+            plotRenderer = null;
+            gv = null;
         }
 
         @Override
@@ -769,7 +801,9 @@ public class expView implements Serializable{
         @Override
         //Store the x data array until we update
         protected void setDataX(dataBuffer x) {
-            dataX = x.getArray();
+            dataX = x.getFloatBuffer();
+            dataMinX = x.getMin();
+            dataMaxX = x.getMax();
         }
 
         @Override
@@ -783,7 +817,9 @@ public class expView implements Serializable{
         @Override
         //Store the y data array until we update
         protected void setDataY(dataBuffer y) {
-            dataY = y.getArray();
+            dataY = y.getFloatBuffer();
+            dataMinY = y.getMin();
+            dataMaxY = y.getMax();
         }
 
         @Override
@@ -803,10 +839,10 @@ public class expView implements Serializable{
                 return;
             if (dataY != null) {
                 if (dataX != null) {
-                    gv.addGraphData(dataY, dataX);
+                    gv.addGraphData(dataY, dataMinY, dataMaxY, dataX, dataMinX, dataMaxX);
                     dataX = null;
                 } else
-                    gv.addGraphData(dataY);
+                    gv.addGraphData(dataY, dataMinY, dataMaxY);
                 dataY = null;
             }
         }

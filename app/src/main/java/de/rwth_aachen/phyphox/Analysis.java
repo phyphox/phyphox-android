@@ -123,7 +123,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double sum = 0;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -160,7 +160,7 @@ public class Analysis {
             }
 
 
-            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double sum = 0.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -199,7 +199,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double product = 1.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -236,7 +236,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double product = 1.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -277,7 +277,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double power = 1.;
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
@@ -318,7 +318,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
                     if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator
@@ -364,7 +364,7 @@ public class Analysis {
                 lastValues.add(inputs.get(i).value);
             }
 
-            for (int i = 0; i < outputs.get(0).size(); i++) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 boolean anyInput = false; //Is there any buffer left with values?
                 for (int j = 0; j < its.size(); j++) { //For each input buffer
                     if (its.get(j) != null && its.get(j).hasNext()) { //New value from this iterator

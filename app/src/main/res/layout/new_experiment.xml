@@ -65,30 +65,6 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/newExperimentInputBufferSize"
-                    android:id="@+id/textView4"
-                    android:labelFor="@+id/neBuffer" />
-
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:ems="10"
-                    android:id="@id/neBuffer"
-                    android:hint="@string/newExperimentInputBufferSize"
-                    android:text="500" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="@dimen/activity_vertical_margin">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
                     android:text="@string/newExperimentInputRate"
                     android:id="@+id/textView5"
                     android:labelFor="@+id/neRate" />

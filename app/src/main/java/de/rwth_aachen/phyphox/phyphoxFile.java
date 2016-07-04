@@ -810,7 +810,6 @@ public abstract class phyphoxFile {
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
                     boolean partialUpdate = getBooleanAttribute("partialUpdate", false);
-                    boolean forceFullUpdate = getBooleanAttribute("forceFullDataset", false);
                     int history = getIntAttribute("history", 1);
                     String labelX = getTranslatedAttribute("labelX");
                     String labelY = getTranslatedAttribute("labelY");
@@ -849,7 +848,6 @@ public abstract class phyphoxFile {
                     ge.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
                     ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
-                    ge.setForceFullDataset(forceFullUpdate); //Display every single point instead of averaging those that would share the same x-pixel (may be quite a performance hit)
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY);  //x- and y- label
                     ge.setLogScale(logX, logY); //logarithmic scales for x/y axes

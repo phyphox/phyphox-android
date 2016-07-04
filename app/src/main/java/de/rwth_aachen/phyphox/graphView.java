@@ -4,18 +4,22 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Region;
+import android.util.Log;
 import android.view.View;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 
 //The graphView class implements an Android view which displays a data graph
 
 public class graphView extends View {
-    private Double[][] graphX; //The x data to be displayed
-    private Double[][] graphY; //The y data to be displayed
+    private floatBufferRepresentation[] graphX; //The x data to be displayed
+    private double[] histMinX, histMaxX;
+    private floatBufferRepresentation[] graphY; //The y data to be displayed
+    private double[] histMinY, histMaxY;
 
     private double aspectRatio = 3.;
-
-    private boolean forceFullDataset = false; //If true, all data points are shown. If false, some datapoints will be skipped if much more data is availbale than required by the resolution
 
     private int historyLength; //If set to n > 1 the graph will also show the last n sets in a different color
     private int historyFilled; //Tracks the number of entries in the history
@@ -32,7 +36,6 @@ public class graphView extends View {
     private double lineWidth = 1.0;
     private int color = 0xffffff;
 
-
     public enum scaleMode {
         auto, extend, fixed
     }
@@ -48,25 +51,34 @@ public class graphView extends View {
     double maxY = 0.;
 
     Paint paint; //Anti-Aliased paint used all over this class
-    private Resources res; //Reference to resources (for strings and colors)
+
+    PlotAreaView plotAreaView;
+    PlotRenderer plotRenderer;
+    GraphSetup graphSetup;
 
     //Simple constructor just needs a context to call the View constructor
     //Initialize some stuff...
-    public graphView(Context context, double aspectRatio) {
+    public graphView(Context context, double aspectRatio, PlotAreaView plotAreaView, PlotRenderer plotRenderer) {
         super(context);
         this.aspectRatio = aspectRatio;
-        res = getResources();
+        this.plotAreaView = plotAreaView;
+        this.plotRenderer = plotRenderer;
+        this.graphSetup = new GraphSetup();
+        this.plotRenderer.setGraphSetup(this.graphSetup);
         setHistoryLength(1);
         rescale(); //Calculate initial scale. At this point it will just set all min and max to +inf and -inf
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     }
 
     public void setColor(int color) {
         this.color = color;
+        graphSetup.color = color;
     }
 
     public void setLineWidth(double lineWidth) {
         this.lineWidth = lineWidth;
+        graphSetup.lineWidth = (float)lineWidth;
     }
 
     @Override
@@ -98,14 +110,20 @@ public class graphView extends View {
     //Interface to switch between lines and points
     public void setLine(boolean line) {
         this.line = line;
+        graphSetup.dots = !line;
     }
 
     //Interface to set the history length
     public void setHistoryLength(int length) {
         this.historyLength = length;
         this.historyFilled = 0;
-        graphX = new Double[historyLength][];
-        graphY = new Double[historyLength][];
+        graphX = new floatBufferRepresentation[historyLength];
+        graphY = new floatBufferRepresentation[historyLength];
+        histMinX = new double[historyLength];
+        histMaxX = new double[historyLength];
+        histMinY = new double[historyLength];
+        histMaxY = new double[historyLength];
+        graphSetup.historyLength = length;
     }
 
     public void setScaleModeX(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
@@ -136,61 +154,63 @@ public class graphView extends View {
             maxY = Double.NEGATIVE_INFINITY;
     }
 
-    //Interface to force the display the full data set vs. skipping datapoints if there are more than neccessary at the current resolution
-    public void setForceFullDataset(boolean forceFullDataset) {
-        this.forceFullDataset = forceFullDataset;
-    }
-
     //Rescale any non-fixed ranges
     public void rescale() {
-        double extremeMinX = Double.POSITIVE_INFINITY;
-        double extremeMaxX = Double.NEGATIVE_INFINITY;
-        double extremeMinY = Double.POSITIVE_INFINITY;
-        double extremeMaxY = Double.NEGATIVE_INFINITY;
-        for (int i = 0; i < historyFilled; i++) { //Consider every history entry
-            for (int j = 0; graphX[i] != null && j < graphX[i].length; j++) { //Consider all the x-data
-                if (Double.isInfinite(graphX[i][j]) || Double.isNaN(graphX[i][j])) //Finite data only
-                    continue;
-                if (graphX[i][j] < extremeMinX)
-                    extremeMinX = graphX[i][j];
-                if (graphX[i][j] > extremeMaxX)
-                    extremeMaxX = graphX[i][j];
-            }
-            for (int j = 0; graphY[i] != null && j < graphY[i].length; j++) { //Consider all the y-data
-                if (Double.isInfinite(graphY[i][j]) || Double.isNaN(graphY[i][j])) //Finite data only
-                    continue;
-                if (graphY[i][j] < extremeMinY)
-                    extremeMinY = graphY[i][j];
-                if (graphY[i][j] > extremeMaxY)
-                    extremeMaxY = graphY[i][j];
-            }
+        double dataMinX = Double.POSITIVE_INFINITY;
+        double dataMaxX = Double.NEGATIVE_INFINITY;
+        double dataMinY = Double.POSITIVE_INFINITY;
+        double dataMaxY = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < historyFilled; i++) {
+            if (!Double.isInfinite(histMinX[i]) && histMinX[i] < dataMinX)
+                dataMinX = histMinX[i];
+            if (!Double.isInfinite(histMaxX[i]) && histMaxX[i] > dataMaxX)
+                dataMaxX = histMaxX[i];
+            if (!Double.isInfinite(histMinY[i]) && histMinY[i] < dataMinY)
+                dataMinY = histMinY[i];
+            if (!Double.isInfinite(histMaxY[i]) && histMaxY[i] > dataMaxY)
+                dataMaxY = histMaxY[i];
         }
-        if (scaleMinX == scaleMode.auto || (scaleMinX == scaleMode.extend && minX > extremeMinX))
-            minX = extremeMinX;
-        if (scaleMaxX == scaleMode.auto || (scaleMaxX == scaleMode.extend && maxX < extremeMaxX))
-            maxX = extremeMaxX;
-        if (scaleMinY == scaleMode.auto || (scaleMinY == scaleMode.extend && minY > extremeMinY))
-            minY = extremeMinY;
-        if (scaleMaxY == scaleMode.auto || (scaleMaxY == scaleMode.extend && maxY < extremeMaxY))
-            maxY = extremeMaxY;
+
+        if (scaleMinX == scaleMode.auto || (scaleMinX == scaleMode.extend && minX > dataMinX))
+            minX = dataMinX;
+        if (scaleMaxX == scaleMode.auto || (scaleMaxX == scaleMode.extend && maxX < dataMaxX))
+            maxX = dataMaxX;
+        if (scaleMinY == scaleMode.auto || (scaleMinY == scaleMode.extend && minY > dataMinY))
+            minY = dataMinY;
+        if (scaleMaxY == scaleMode.auto || (scaleMaxY == scaleMode.extend && maxY < dataMaxY))
+            maxY = dataMaxY;
     }
 
     //Add a new graph and (if enabled) push the old graphs back into history
-    public void addGraphData(Double[] graphY, Double[] graphX) {
+    public void addGraphData(floatBufferRepresentation graphY, double minY, double maxY, floatBufferRepresentation graphX, double minX, double maxX) {
+        if (graphY == null || graphX == null)
+            return;
+
         //Push back data in the history
         for (int i = historyFilled-1; i > 0; i--) {
             this.graphY[i] = this.graphY[i-1];
             this.graphX[i] = this.graphX[i-1];
+            this.histMinX[i] = this.histMinX[i-1];
+            this.histMaxX[i] = this.histMaxX[i-1];
+            this.histMinY[i] = this.histMinY[i-1];
+            this.histMaxY[i] = this.histMaxY[i-1];
         }
 
         //set new graph
         this.graphY[0] = graphY;
         this.graphX[0] = graphX;
+        this.histMinX[0] = minX;
+        this.histMaxX[0] = maxX;
+        this.histMinY[0] = minY;
+        this.histMaxY[0] = maxY;
 
         //History increases
         historyFilled++;
         if (historyFilled > historyLength) //History full? Limit it.
             historyFilled = historyLength;
+
+        graphSetup.setData(this.graphX, this.graphY, historyFilled, plotRenderer);
 
         //Rescale and invalidate to update everything
         this.rescale();
@@ -198,15 +218,22 @@ public class graphView extends View {
     }
 
     //This overloads addGraphData to take pure y-data without x data
-    public void addGraphData(Double[] graphY) {
+    public void addGraphData(floatBufferRepresentation graphY, double min, double max) {
+        if (graphY == null)
+            return;
         //Create standard x data with indices
-        Double [] graphX = new Double[graphY.length];
-        for (int i = 0; i < graphY.length; i++)
-            if (!Double.isNaN(graphY[i]))
-                graphX[i] = (double)i;
+        if (graphY.size == 0) {
+            addGraphData(graphY, min, max, graphY, min, max);
+        }
+        FloatBuffer data = ByteBuffer.allocateDirect(graphY.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        graphY.data.position(0);
+        for (int i = 0; i < graphY.size; i++)
+            data.put((float)i);
+
+        floatBufferRepresentation graphX = new floatBufferRepresentation(data, 0, graphY.size);
 
         //Call the full addGraphData with the artificial x data
-        addGraphData(graphY, graphX);
+        addGraphData(graphY, min, max, graphX, 0, graphY.size-1);
     }
 
     //Interface to set axis labels
@@ -219,6 +246,8 @@ public class graphView extends View {
     public void setLogScale(boolean logX, boolean logY) {
         this.logX = logX;
         this.logY = logY;
+        graphSetup.logX = logX;
+        graphSetup.logY = logY;
     }
 
     //Helper function that figures out where to put tics on an axis
@@ -263,10 +292,11 @@ public class graphView extends View {
                 int magStep = 1; //If we cover huge scales we might want to do larger steps...
                 while (digitRange > maxTics * magStep) //Do we have more than max tics? Increase step size then.
                     magStep++;
+                double magFactor = Math.pow(10, magStep);
                 tics = new double[digitRange/magStep];
                 for (int i = 0; i < digitRange / magStep; i++) { //Fill the array with powers of ten
                     tics[i] = first;
-                    first *= 10;
+                    first *= magFactor;
                 }
             }
 
@@ -313,6 +343,8 @@ public class graphView extends View {
     //Draw the graph!
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        Resources res = getResources();
 
         paint.setTextSize(res.getDimension(R.dimen.graph_font));
 
@@ -410,147 +442,6 @@ public class graphView extends View {
             canvas.restore();
         }
 
-        canvas.save();
-        canvas.clipRect(graphL,0,w,h-graphB, Region.Op.INTERSECT);
-
-        //Draw grid
-        paint.setColor(res.getColor(R.color.grid));
-        paint.setAlpha(255);
-        paint.setStrokeCap(Paint.Cap.SQUARE);
-
-        for (double tic : xTics) {
-            double x;
-            if (logX)
-                x = (Math.log(tic/workingMinX))/(Math.log(workingMaxX/workingMinX))*(graphW-1)+graphL;
-            else
-                x = (tic-workingMinX)/(workingMaxX-workingMinX)*(graphW-1)+graphL;
-            canvas.drawLine((float)x, 0, (float)x, h-graphB, paint);
-        }
-        for (double tic : yTics) {
-            double y;
-            if (logY)
-                y = h-(Math.log(tic/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
-            else
-                y = h-(tic-workingMinY)/(workingMaxY-workingMinY)*(graphH-1)-graphB;
-            canvas.drawLine(graphL, (float)y, w, (float)y, paint);
-        }
-
-        //Draw graph
-        paint.setStrokeCap(Paint.Cap.ROUND);
-        if (workingMinX < workingMaxX) {
-            for (int j = historyFilled-1; j >= 0; j--) {
-                if (graphY[j] != null && graphX[j] != null) {
-                    if (j == 0) {
-                        if (this.line)
-                            paint.setStrokeWidth(3*(float)this.lineWidth);
-                        else
-                            paint.setStrokeWidth(5*(float)this.lineWidth);
-                        paint.setColor(this.color);
-                        paint.setAlpha(255);
-                    } else {
-                        if (this.line)
-                            paint.setStrokeWidth(2*(float)this.lineWidth);
-                        else
-                            paint.setStrokeWidth(3*(float)this.lineWidth);
-                        paint.setColor(res.getColor(R.color.mainExp));
-                        paint.setAlpha(150-(j+1)*150/historyLength);
-                    }
-                    double lastX = Double.NaN;
-                    double lastY = Double.NaN;
-
-                    double avgX = Double.NaN; //Average for single x-axis pixel
-                    double avgY = Double.NaN; //Average for single y-axis pixel
-                    int avgCount = 0; //Keeps track of the number of points that have been added
-                                      //to the same x-axis pixel for averaging
-
-                    for (int i = 0; i < graphX[j].length && i < graphY[j].length; i++) {
-                        //Calculate x/y in display coordinates
-                        double thisX;
-                        double thisY;
-                        if (logX)
-                            thisX = Math.round((Math.log(graphX[j][i]/workingMinX))/(Math.log(workingMaxX/workingMinX))*(graphW-1)+graphL);
-                        else
-                            thisX = Math.round((graphX[j][i]-workingMinX)/(workingMaxX-workingMinX)*(graphW-1)+graphL);
-                        if (logY)
-                            thisY = h-(Math.log(graphY[j][i]/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
-                        else
-                            thisY = h-(graphY[j][i]-workingMinY)/(workingMaxY-workingMinY)*(graphH-1)-graphB;
-
-                        if (forceFullDataset) {
-                            //We shall draw every single point.
-                            avgX = thisX;
-                            avgY = thisY;
-                        } else {
-                            if (Double.isNaN(thisX) || Double.isNaN(thisY))
-                                continue;
-                            if (thisX == avgX) {
-                                //This has to be part of the current average. Add it and continue
-                                avgY += thisY;
-                                avgCount++;
-                                continue; //There might be another point for this average...
-                            }
-                            //So we are done with this x pixel (Either because we found a new one or
-                            //because this is the last point in the data set.
-                            if (avgCount == 0)
-                                avgY = Double.NaN;
-                            else
-                                avgY /= (double)avgCount; //Average
-                        }
-
-                        //Now draw a line or a point
-                        if (this.line) {
-                            if (!(Double.isNaN(lastX) || Double.isNaN(lastY) || Double.isNaN(avgX) || Double.isNaN(avgY))) {
-                                canvas.drawLine((float)lastX, (float)lastY, (float)avgX, (float)avgY, paint);
-                            }
-                        } else {
-                            if (!(Double.isNaN(avgX) || Double.isNaN(avgY))) {
-                                canvas.drawPoint((float) avgX, (float) avgY, paint);
-                            }
-                        }
-
-                        //Remember this point for next iteration (to draw a line and to know which
-                        // points to average)
-                        lastX = avgX;
-                        lastY = avgY;
-
-                        //And reset averaging
-                        if (!Double.isNaN(thisY)) {
-                            avgCount = 1;
-                            avgY = thisY;
-                        } else {
-                            avgCount = 0;
-                            avgY = 0.;
-                        }
-                        avgX = thisX;
-                    }
-                    // We may have to draw one last line to the result of the last averaging:
-                    if (!forceFullDataset) {
-                        if (avgCount == 0)
-                            avgY = Double.NaN;
-                        else
-                            avgY /= (double) avgCount; //Average
-
-                        //Now draw a line or a point
-                        if (this.line) {
-                            if (!(Double.isNaN(lastX) || Double.isNaN(lastY) || Double.isNaN(avgX) || Double.isNaN(avgY))) {
-                                canvas.drawLine((float) lastX, (float) lastY, (float) avgX, (float) avgY, paint);
-                            }
-                        } else {
-                            if (!(Double.isNaN(avgX) || Double.isNaN(avgY))) {
-                                canvas.drawPoint((float) avgX, (float) avgY, paint);
-                            }
-                        }
-                    }
-                }
-            }
-
-        } else {
-            paint.setColor(res.getColor(R.color.mainExp));
-            paint.setTextAlign(Paint.Align.CENTER);
-            canvas.drawText(res.getString(R.string.noDrawableData), graphL+graphW/2, (h-graphB+res.getDimension(R.dimen.graph_font))/2, paint);
-        }
-        canvas.restore();
-
         //Draw rect around graph
         paint.setColor(res.getColor(R.color.mainExp));
         paint.setStrokeWidth(3);
@@ -558,6 +449,12 @@ public class graphView extends View {
         paint.setStrokeCap(Paint.Cap.SQUARE);
         paint.setStyle(Paint.Style.STROKE);
         canvas.drawRect(graphL + 1, 1, w - 1, h - graphB - 1, paint);
+
+        //Draw graph in OpenGL
+        graphSetup.setPlotBounds(graphL, 0, graphW, graphH);
+        graphSetup.setTics(xTics, yTics, plotRenderer);
+        graphSetup.setDataBounds((float)workingMinX, (float)workingMaxX, (float)workingMinY, (float)workingMaxY);
+        plotRenderer.requestRender();
 
     }
 }

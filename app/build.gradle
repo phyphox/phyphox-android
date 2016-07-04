@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "de.rwth_aachen.phyphox"
-        minSdkVersion 9
+        minSdkVersion 14
         targetSdkVersion 24
         versionCode 16
         versionName "0.5.5 (beta)"

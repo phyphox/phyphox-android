@@ -819,7 +819,6 @@ public class ExperimentList extends AppCompatActivity {
 
         //Get a bunch of references to the dialog elements
         final EditText neTitle = (EditText) neLayout.findViewById(R.id.neTitle); //The edit box for the title of the new experiment
-        final EditText neBuffer = (EditText) neLayout.findViewById(R.id.neBuffer); //Edit box for the buffer length
         final EditText neRate = (EditText) neLayout.findViewById(R.id.neRate); //Edit box for the aquisition rate
 
         //More references: Checkboxes for sensors
@@ -841,18 +840,6 @@ public class ExperimentList extends AppCompatActivity {
                 //Prepare the variables from user input
 
                 String title = neTitle.getText().toString(); //Title of the new experiment
-
-                //Prepare the buffer size
-                int bufferSize;
-                try {
-                    bufferSize = Integer.valueOf(neBuffer.getText().toString());
-                } catch (Exception e) {
-                    bufferSize = 0;
-                }
-                if (bufferSize <= 0 || bufferSize > 1e6) {
-                    bufferSize = 500;
-                    Toast.makeText(ExperimentList.this, "Invaid buffer size. Set to default of 500.", Toast.LENGTH_LONG).show();
-                }
 
                 //Prepare the rate
                 double rate;
@@ -891,36 +878,36 @@ public class ExperimentList extends AppCompatActivity {
                     //Buffers for all sensors
                     output.write("<data-containers>".getBytes());
                     if (acc) {
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">acc_time</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">accX</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">accY</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">accZ</container>").getBytes());
+                        output.write(("<container size=\"0\">acc_time</container>").getBytes());
+                        output.write(("<container size=\"0\">accX</container>").getBytes());
+                        output.write(("<container size=\"0\">accY</container>").getBytes());
+                        output.write(("<container size=\"0\">accZ</container>").getBytes());
                     }
                     if (gyr) {
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyr_time</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyrX</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyrY</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">gyrZ</container>").getBytes());
+                        output.write(("<container size=\"0\">gyr_time</container>").getBytes());
+                        output.write(("<container size=\"0\">gyrX</container>").getBytes());
+                        output.write(("<container size=\"0\">gyrY</container>").getBytes());
+                        output.write(("<container size=\"0\">gyrZ</container>").getBytes());
                     }
                     if (light) {
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">light_time</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">light</container>").getBytes());
+                        output.write(("<container size=\"0\">light_time</container>").getBytes());
+                        output.write(("<container size=\"0\">light</container>").getBytes());
                     }
                     if (lin) {
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">lin_time</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">linX</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">linY</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">linZ</container>").getBytes());
+                        output.write(("<container size=\"0\">lin_time</container>").getBytes());
+                        output.write(("<container size=\"0\">linX</container>").getBytes());
+                        output.write(("<container size=\"0\">linY</container>").getBytes());
+                        output.write(("<container size=\"0\">linZ</container>").getBytes());
                     }
                     if (mag) {
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">mag_time</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">magX</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">magY</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">magZ</container>").getBytes());
+                        output.write(("<container size=\"0\">mag_time</container>").getBytes());
+                        output.write(("<container size=\"0\">magX</container>").getBytes());
+                        output.write(("<container size=\"0\">magY</container>").getBytes());
+                        output.write(("<container size=\"0\">magZ</container>").getBytes());
                     }
                     if (pressure) {
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">pressure_time</container>").getBytes());
-                        output.write(("<container size=\"" + String.valueOf(bufferSize) + "\">pressure</container>").getBytes());
+                        output.write(("<container size=\"0\">pressure_time</container>").getBytes());
+                        output.write(("<container size=\"0\">pressure</container>").getBytes());
                     }
                     output.write("</data-containers>".getBytes());
 

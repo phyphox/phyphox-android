@@ -5,19 +5,19 @@
         android:id="@+id/scrollView"
         tools:context="de.rwth_aachen.phyphox.expViewFragment"
         android:clickable="true"
-        android:colorBackground="@color/backgroundExp" >
+        android:background="@color/backgroundExp" >
 
         <LinearLayout
             android:orientation="vertical"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/experimentView"
+            android:clickable="true"
+            android:focusable="true"
             android:paddingTop="@dimen/activity_vertical_margin"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
             android:paddingBottom="@dimen/activity_vertical_margin"
-            android:clickable="true"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:elevation="8dp"></LinearLayout>
+            android:focusableInTouchMode="true"></LinearLayout>
+
     </ScrollView>

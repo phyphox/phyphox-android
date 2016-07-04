@@ -137,9 +137,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             ab.setDisplayShowTitleEnabled(false);
         }
 
-        if (savedInstanceState != null) {
-            //We saved our experiment. Lets just retrieve it and continue
+        if (savedInstanceState != null)
             experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
+        if (experiment != null) {
+            //We saved our experiment. Lets just retrieve it and continue
             onExperimentLoaded(experiment);
         } else {
             //Start loading the experiment in a second thread (mostly for network loading, but it won't hurt in any case...)
@@ -152,8 +153,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     @Override
     //onPause event
-    public void onPause() {
-        super.onPause();
+    public void onStop() {
+        super.onStop();
         hidePlayHintAnimation();
 
         try {
@@ -179,8 +180,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     @Override
     //Let's start again
-    public void onResume() {
-        super.onResume();
+    public void onRestart() {
+        super.onRestart();
 
         shutdown = false; //Deactivate shutdown variable
 
@@ -196,15 +197,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //   with the formerly missing permission
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-                this.recreate();
-            else {
-                //This should not occur, as this is a Marhmallow (> Honeycomb) feature, but this is
-                //   would be the way to restart the activity on older versions where recreate() is
-                //   not available
-                finish();
-                startActivity(intent);
-            }
+            this.recreate();
         }
     }
 
@@ -322,29 +315,25 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Create an animation to guide the inexperienced user to the start button.
     private void showPlayHintAnimation () {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            hintAnimation = (ImageView) inflater.inflate(R.layout.play_animated, null);
+        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        hintAnimation = (ImageView) inflater.inflate(R.layout.play_animated, null);
 
-            Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
-            anim.setRepeatCount(Animation.INFINITE);
-            anim.setRepeatMode(Animation.REVERSE);
-            hintAnimation.startAnimation(anim);
+        Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
+        anim.setRepeatCount(Animation.INFINITE);
+        anim.setRepeatMode(Animation.REVERSE);
+        hintAnimation.startAnimation(anim);
 
-            hint.setActionView(hintAnimation);
-        }
+        hint.setActionView(hintAnimation);
     }
 
     //Hide the start button hint animation
     private void hidePlayHintAnimation () {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if (hintAnimation != null) {
-                hintAnimation.clearAnimation();
-                hintAnimation.setVisibility(View.GONE);
-                hintAnimation = null;
-                hint.setActionView(null);
-                hint = null;
-            }
+        if (hintAnimation != null) {
+            hintAnimation.clearAnimation();
+            hintAnimation.setVisibility(View.GONE);
+            hintAnimation = null;
+            hint.setActionView(null);
+            hint = null;
         }
     }
 
@@ -376,7 +365,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         pause.setVisible(measuring && cdTimer == null);
 
         //If the experiment has not yet been started, highlight the play button
-        if (beforeStart && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        if (beforeStart) {
             //Create an animation to guide the inexperienced user.
             if (hint != null) {
                 //We have already created an animation, which we need to remove first.
@@ -675,12 +664,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     analysisProgressAlpha = 0.f;
             }
             if (analysisProgressAlpha > 0.1) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    if (analysisProgressAlpha >= 0.9)
-                        analysisProgress.setAlpha(1.f);
-                    else
-                        analysisProgress.setAlpha(analysisProgressAlpha);
-                }
+                if (analysisProgressAlpha >= 0.9)
+                    analysisProgress.setAlpha(1.f);
+                else
+                    analysisProgress.setAlpha(analysisProgressAlpha);
                 analysisProgress.setVisibility(View.VISIBLE);
             } else {
                 analysisProgress.setVisibility(View.INVISIBLE);
