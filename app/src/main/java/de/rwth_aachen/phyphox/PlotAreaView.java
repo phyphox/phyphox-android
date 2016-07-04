@@ -315,33 +315,89 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
 
         int[] attribList = {
-                EGL10.EGL_RED_SIZE, 8,
-                EGL10.EGL_GREEN_SIZE, 8,
-                EGL10.EGL_BLUE_SIZE, 8,
-                EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
+                EGL10.EGL_RED_SIZE, 4,
+                EGL10.EGL_GREEN_SIZE, 4,
+                EGL10.EGL_BLUE_SIZE, 4,
+                EGL10.EGL_ALPHA_SIZE, 1,
+                EGL10.EGL_SURFACE_TYPE, EGL10.EGL_WINDOW_BIT | EGL10.EGL_PBUFFER_BIT,
                 EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-                EGL10.EGL_SAMPLES, 4,
                 EGL10.EGL_NONE
         };
-        EGLConfig[] configs = new EGLConfig[1];
-        int[] numConfigs = new int[1];
-        if (!egl.eglChooseConfig(eglDisplay, attribList, configs, 1, numConfigs)) {
-            throw new RuntimeException("unable to find RGB888 EGL config");
+        int[] arg = new int[1];
+
+        if (!egl.eglChooseConfig(eglDisplay, attribList, null, 0, arg)) {
+            throw new RuntimeException("unable to retrieve config count");
         }
+
+        int numConfigs = arg[0];
+        if (numConfigs <= 0) {
+            throw new RuntimeException("minimum OpenGL requirements could not be fulfilled.");
+        }
+
+        EGLConfig[] configs = new EGLConfig[numConfigs];
+
+        if (!egl.eglChooseConfig(eglDisplay, attribList, configs, numConfigs, arg)) {
+            throw new RuntimeException("unable to retrieve config list config");
+        }
+
+        int configHighScore = 0; //we will calculate a score based on number of colors, AA samples etc.
+        EGLConfig favConfig = null; //Out favourite config will be remembered here...
+
+        for (EGLConfig config : configs) {
+            int[] value = new int[1];
+            int r = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_RED_SIZE, value) ? value[0] : 0;
+            int g = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_GREEN_SIZE, value) ? value[0] : 0;
+            int b = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_BLUE_SIZE, value) ? value[0] : 0;
+            int a = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_ALPHA_SIZE, value) ? value[0] : 0;
+            int d = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_DEPTH_SIZE, value) ? value[0] : 0;
+            int s = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_STENCIL_SIZE, value) ? value[0] : 0;
+            int samples = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_SAMPLES, value) ? value[0] : 0;
+            int transp = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_TRANSPARENT_TYPE, value) ? value[0] : 0;
+
+            int score = 0;
+            score += 10*(r + g + b); //We want as many bits as possible here...
+            score += a;              //Alpha is not too important, but nice to have some precision here
+            score -= d;              //We don't need a depth buffer
+            score -= s;              //And we do not need a stencil buffer
+            score += 5*samples;     //We love anti alias
+            score += (transp == EGL10.EGL_NONE ? 3 : 0); //We prefer a non-transparent background
+
+            if (score > configHighScore) {
+                configHighScore = score;
+                favConfig = config;
+            }
+        }
+
+        if (favConfig == null) {
+            throw new RuntimeException("No OpenGL config found. Should not happen here...");
+        }
+
+/*
+        int[] value = new int[1];
+        int r = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_RED_SIZE, value) ? value[0] : 0;
+        int g = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_GREEN_SIZE, value) ? value[0] : 0;
+        int b = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_BLUE_SIZE, value) ? value[0] : 0;
+        int a = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_ALPHA_SIZE, value) ? value[0] : 0;
+        int d = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_DEPTH_SIZE, value) ? value[0] : 0;
+        int s = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_STENCIL_SIZE, value) ? value[0] : 0;
+        int samples = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_SAMPLES, value) ? value[0] : 0;
+        int transp = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_TRANSPARENT_TYPE, value) ? value[0] : 0;
+        Log.d("initGL", "Mode selected from " + numConfigs + " available:\nr = " + r + ", g = " + g + ", b = " + b + ", a = " + a + "\nDepth = " + d + ", Stencil = " + s + "\nSamples = " + samples + ", Transparent type = " + transp);
+*/
 
         int[] attrib_list = {
                 EGL_CONTEXT_CLIENT_VERSION, 2,
                 EGL10.EGL_NONE
         };
-        eglContext = egl.eglCreateContext(eglDisplay, configs[0], EGL10.EGL_NO_CONTEXT, attrib_list);
-        if (eglContext == null) {
+        eglContext = egl.eglCreateContext(eglDisplay, favConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
+        if (eglContext == null || eglContext == EGL10.EGL_NO_CONTEXT) {
             throw new RuntimeException("No eglContext");
         }
 
         int[] surfaceAttribs = {
                 EGL10.EGL_NONE
         };
-        eglSurface = egl.eglCreateWindowSurface(eglDisplay, configs[0], surfaceTexture, surfaceAttribs);
+        eglSurface = egl.eglCreateWindowSurface(eglDisplay, favConfig, surfaceTexture, surfaceAttribs);
         if (eglSurface == null) {
             throw new RuntimeException("surface was null");
         }
