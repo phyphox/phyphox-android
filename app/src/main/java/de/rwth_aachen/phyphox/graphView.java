@@ -224,6 +224,7 @@ public class graphView extends View {
         //Create standard x data with indices
         if (graphY.size == 0) {
             addGraphData(graphY, min, max, graphY, min, max);
+            return;
         }
         FloatBuffer data = ByteBuffer.allocateDirect(graphY.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         graphY.data.position(0);
