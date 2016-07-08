@@ -8,8 +8,8 @@ android {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 24
-        versionCode 17
-        versionName "0.6.0 (beta)"
+        versionCode 19
+        versionName "0.6.2 (beta)"
     }
     buildTypes {
         release {

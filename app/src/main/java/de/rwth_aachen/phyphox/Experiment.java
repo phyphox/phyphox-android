@@ -8,9 +8,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
@@ -18,11 +20,11 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
+import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.app.TaskStackBuilder;
-import android.os.Bundle;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -34,7 +36,9 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -46,11 +50,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
 
+import org.apache.poi.ss.formula.functions.T;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Vector;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
@@ -412,6 +421,33 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    //Recursively get all TextureViews, used for screenshots
+    public Vector<PlotAreaView> getAllPlotAreaViews(View v) {
+        Vector<PlotAreaView> l = new Vector<>();
+        if (v instanceof PlotAreaView) {
+            l.add((PlotAreaView)v);
+        } else if (v instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup)v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                l.addAll(getAllPlotAreaViews(vg.getChildAt(i)));
+            }
+        }
+        return l;
+    }
+
+    public Vector<graphView> getAllGraphViews(View v) {
+        Vector<graphView> l = new Vector<>();
+        if (v instanceof graphView) {
+            l.add((graphView)v);
+        } else if (v instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup)v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                l.addAll(getAllGraphViews(vg.getChildAt(i)));
+            }
+        }
+        return l;
+    }
+
     @Override
     //the user has clicked an option.
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -522,30 +558,59 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //The share button. Take a screenshot and send a share intent to all those social media apps...
         if (id == R.id.action_share) {
             View screenView = findViewById(R.id.rootLayout).getRootView();
+
             screenView.setDrawingCacheEnabled(true);
             Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
             screenView.setDrawingCacheEnabled(false);
 
+            Canvas canvas = new Canvas(bitmap);
+
+            Vector<PlotAreaView> pavList = getAllPlotAreaViews(screenView);
+            for (PlotAreaView pav : pavList) {
+                pav.setDrawingCacheEnabled(true);
+                Bitmap bmp = pav.getBitmap();
+                pav.setDrawingCacheEnabled(false);
+
+                int location[] = new int[2];
+                pav.getLocationOnScreen(location);
+                canvas.drawBitmap(bmp, location[0], location[1], null);
+            }
+
+            Vector<graphView> gvList = getAllGraphViews(screenView);
+            for (graphView gv : gvList) {
+                gv.setDrawingCacheEnabled(true);
+                Bitmap bmp = Bitmap.createBitmap(gv.getDrawingCache());
+                gv.setDrawingCacheEnabled(false);
+
+                int location[] = new int[2];
+                gv.getLocationOnScreen(location);
+                canvas.drawBitmap(bmp, location[0], location[1], null);
+            }
+
             File file = new File(this.getCacheDir(), "/phyphox " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
             try {
                 FileOutputStream out = new FileOutputStream(file);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 85, out);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
                 out.flush();
                 out.close();
+                bitmap.recycle();
 
                 final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
-                grantUriPermission(getPackageName(), uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 final Intent intent = ShareCompat.IntentBuilder.from(this)
                         .setType("image/png")
                         .setSubject(getString(R.string.share_subject))
                         .setStream(uri)
-                        .setChooserTitle(R.string.share_pick_share)
-                        .createChooserIntent()
-                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        .getIntent()
+                        .setFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                        .setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                startActivity(intent);
+                List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                for (ResolveInfo ri : resInfoList) {
+                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+
+                startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
             } catch (Exception e) {
                 Log.e("action_share", "Unhandled exception", e);
             }

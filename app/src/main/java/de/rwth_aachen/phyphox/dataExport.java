@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.content.FileProvider;
@@ -23,6 +24,7 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -333,20 +335,23 @@ public class dataExport implements Serializable {
 
                         //Use a FileProvider so we can send this file to other apps
                         final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", exportFile);
-                        c.grantUriPermission(c.getPackageName(), uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                         //Create a share intent
                         final Intent intent = ShareCompat.IntentBuilder.from(c)
                                 .setType(exportFormats[selected.value].getType()) //mime type from the export filter
                                 .setSubject(c.getString(R.string.export_subject))
                                 .setStream(uri)
-                                .setChooserTitle(R.string.export_pick_share)
-                                .createChooserIntent()
+                                .getIntent()
                                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
                                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
+                        List<ResolveInfo> resInfoList = c.getPackageManager().queryIntentActivities(intent, 0);
+                        for (ResolveInfo ri : resInfoList) {
+                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+
                         //Execute this intent
-                        c.startActivity(intent);
+                        c.startActivity(Intent.createChooser(intent, c.getString(R.string.share_pick_share)));
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

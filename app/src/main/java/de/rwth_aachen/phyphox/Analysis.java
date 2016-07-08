@@ -11,7 +11,7 @@ import java.util.Vector;
 
 public class Analysis {
 
-    public static class FFT {
+    public static class FFT implements Serializable {
         private int n, logn; //input size, power-of-two filled size, log2 of input size (integer)
         private double [] cos, sin; //Lookup table
 

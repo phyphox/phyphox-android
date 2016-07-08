@@ -53,7 +53,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:host="*" android:scheme="content" android:mimeType="*/*" android:pathPattern=".*" />
+                <data android:host="*" android:scheme="content" android:mimeType="application/octet-stream" android:pathPattern=".*" />
             </intent-filter>
         </activity>
         <provider
