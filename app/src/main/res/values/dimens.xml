@@ -9,6 +9,7 @@
     <dimen name="activity_vertical_padding">5dp</dimen>
     <dimen name="graph_label_start_margin">16dp</dimen>
     <dimen name="info_element_margin">16dp</dimen>
+    <dimen name="lib_margin">32dp</dimen>
 
     <dimen name="font">16sp</dimen>
     <dimen name="label_font">16sp</dimen>
@@ -18,7 +19,7 @@
     <dimen name="experiment_info_font">13sp</dimen>
     <dimen name="headline_font">16sp</dimen>
     <dimen name="graph_font">14sp</dimen>
-    <dimen name="credit_font">13sp</dimen>
+    <dimen name="credit_font">12sp</dimen>
     <dimen name="credit_font_main">16sp</dimen>
 
 

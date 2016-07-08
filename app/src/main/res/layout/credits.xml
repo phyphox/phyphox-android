@@ -20,16 +20,18 @@
 
         <LinearLayout
             android:orientation="vertical"
+            android:padding="@dimen/activity_horizontal_padding"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
             <ImageView
-                android:layout_width="fill_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/rwth"
                 android:src="@drawable/rwth"
-                android:padding="30dp"
                 android:scaleType="fitCenter"
+                android:maxWidth="250dp"
+                android:layout_gravity="right"
                 android:adjustViewBounds="true" />
 
             <TextView
@@ -52,7 +54,7 @@
                 android:paddingTop="@dimen/activity_vertical_margin"
                 android:paddingBottom="@dimen/activity_vertical_margin"
                 android:background="@color/rwth"
-                android:layout_gravity="right"
+                android:layout_gravity="left"
                 android:textColor="@android:color/white" />
 
             <TextView
@@ -60,6 +62,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/creditsLibs"
                 android:id="@+id/creditLibs"
+                android:layout_marginTop="@dimen/lib_margin"
                 android:textSize="@dimen/credit_font"/>
 
             <TextView
@@ -71,7 +74,7 @@
                 android:layout_alignBottom="@+id/scrollView2"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="@dimen/activity_vertical_margin" />
+                android:layout_marginTop="@dimen/lib_margin" />
         </LinearLayout>
     </ScrollView>
 

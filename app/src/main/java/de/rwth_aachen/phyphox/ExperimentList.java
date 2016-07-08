@@ -745,7 +745,6 @@ public class ExperimentList extends AppCompatActivity {
 
                 //Finish alertDialog builder
                 credits.setView(creditLayout);
-                credits.setTitle(R.string.credits);
                 credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         //Nothing to do. Just close the thing.
