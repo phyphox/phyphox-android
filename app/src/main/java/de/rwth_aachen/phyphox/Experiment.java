@@ -31,6 +31,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -42,9 +43,11 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,6 +60,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -659,12 +663,40 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Desciption-button. Show the experiment description
         if (id == R.id.action_description) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage(experiment.description)
-                    .setTitle(R.string.show_description)
-                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
+            builder.setTitle(R.string.show_description);
+
+            LinearLayout ll = new LinearLayout(builder.getContext());
+            ll.setOrientation(LinearLayout.VERTICAL);
+            int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
+            int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
+            ll.setPadding(marginX, marginY, marginX, marginY);
+
+            TextView description = new TextView(builder.getContext());
+            description.setText(experiment.description);
+            ll.addView(description);
+
+            for (String label : experiment.links.keySet()) {
+                Button btn = new Button(builder.getContext());
+                btn.setText(label);
+                final String url = experiment.links.get(label);
+                btn.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View view) {
+                        Uri uri = Uri.parse(url);
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        if (intent.resolveActivity(getPackageManager()) != null) {
+                            startActivity(intent);
                         }
-                    });
+                    }
+                });
+                ll.addView(btn);
+            }
+
+            builder.setView(ll);
+
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                }
+            });
             AlertDialog dialog = builder.create();
             dialog.show();
             return true;

@@ -603,6 +603,9 @@ public abstract class phyphoxFile {
                 case "description": //The experiment's description (might be replaced by a later translation block)
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
+                case "link": //Links to external sources like documentation (might be replaced by a later translation block)
+                    experiment.links.put(getStringAttribute("label"), getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", ""));
+                    break;
                 case "category": //The experiment's category (might be replaced by a later translation block)
                     experiment.category = getText();
                     break;
@@ -679,6 +682,9 @@ public abstract class phyphoxFile {
                     break;
                 case "description": //Description in the correct language
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
+                    break;
+                case "link": //Links to external sources like documentation
+                    experiment.links.put(getStringAttribute("label"), getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", ""));
                     break;
                 case "string": //Some other translation. In labels and names of view elements, the string defined here as the attribute "original" will be replaced by the text in this tag
                     translation.put(getStringAttribute("original"), getText()); //Store it in our translation mapping

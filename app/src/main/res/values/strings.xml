@@ -15,7 +15,7 @@
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
 
     <string name="credits">Credits</string>
-    <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics A at the RWTH Aachen University.</string>
+    <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
     <string name="creditsNames">
         <![CDATA[
             Development:<br /><b>Dr. Sebastian Kuhlen</b><br />iOS implementation:<br /><b>Jonas Gessner</b><br />Design:<br /><b>Frank Posthoff (A.NikoPol)</b><br />Head of Institute:<br /><b>Prof. Christoph Stampfer</b>
@@ -96,7 +96,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="switchColumns2">View: 2 columns</string>
     <string name="switchColumns3">View: 3 columns</string>
 
-    <string name="show_description">Show Description</string>
+    <string name="show_description">Experiment info</string>
     <string name="save_locally">Add experiment to collection</string>
     <string name="save_locally_done">Experiment successfully added to collection</string>
 
