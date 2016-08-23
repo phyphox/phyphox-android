@@ -154,15 +154,23 @@ public abstract class phyphoxFile {
                     phyphoxStream.errorMessage = "Error loading experiment from content: " + e.getMessage();
                 }
                 return phyphoxStream;
-            } else if (scheme.equals("http") || scheme.equals("https")) { //The intent refers to an online resource
+            } else if (scheme.equals("phyphox")) { //The intent refers to an online resource, but we need to figure out if we can use https or should fallback to http
                 phyphoxStream.isLocal = false;
+                Uri uri = intent.getData();
                 try {
-                    Uri uri = intent.getData();
-                    URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPath());
+                    URL url = new URL("https", uri.getHost(), uri.getPath());
                     phyphoxStream.inputStream = url.openStream();
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
-                    phyphoxStream.errorMessage = "Error loading experiment from http: " + e.getMessage();
+                    //ok, https did not work. Maybe we success with http?
+                    try {
+                        URL url = new URL("http", uri.getHost(), uri.getPath());
+                        phyphoxStream.inputStream = url.openStream();
+                        remoteInputToMemory(phyphoxStream);
+                    } catch (Exception e2) {
+
+                        phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
+                    }
                 }
                 return phyphoxStream;
             }
