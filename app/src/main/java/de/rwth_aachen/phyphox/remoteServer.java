@@ -71,6 +71,8 @@ public class remoteServer extends Thread {
     Resources res; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
 
+    String sessionID = "";
+
     public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
 
     static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
@@ -302,6 +304,8 @@ public class remoteServer extends Thread {
         //Create the css and html files
         buildStyleCSS();
         buildIndexHTML();
+
+        sessionID = String.format("%06x", (System.nanoTime() & 0xffffff));
 
         //Start the service...
         RUNNING = true;
@@ -653,8 +657,12 @@ public class remoteServer extends Thread {
                 //We also send the experiment status
                 sb.append("\n},\n\"status\":{\n");
 
+                //Session ID
+                sb.append("\"session\":\"");
+                sb.append(sessionID);
+
                 //Measuring?
-                sb.append("\"measuring\":");
+                sb.append("\", \"measuring\":");
                 if (callActivity.measuring)
                     sb.append("true");
                 else
