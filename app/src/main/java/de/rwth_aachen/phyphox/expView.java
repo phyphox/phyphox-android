@@ -560,9 +560,9 @@ public class expView implements Serializable{
                 if (Double.isNaN(v)) //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
                     currentValue = defaultValue;
                 else
-                    currentValue = v * factor;
+                    currentValue = v;
                 if (et != null)
-                    et.setText(String.valueOf(currentValue));
+                    et.setText(String.valueOf(currentValue*factor));
             }
         }
 
