@@ -215,11 +215,11 @@ public class dataBuffer implements Serializable {
     }
 }
 
-class floatBufferRepresentation {
+class floatBufferRepresentation implements Serializable {
     FloatBuffer data;
     int size;
     int offset;
-    public final Object lock = new Object();
+    transient public final Object lock = new Object();
 
     floatBufferRepresentation(FloatBuffer data, int offset, int size) {
         this.data = data;
