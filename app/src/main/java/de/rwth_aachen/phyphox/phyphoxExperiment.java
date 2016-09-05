@@ -249,22 +249,24 @@ public class phyphoxExperiment implements Serializable {
         if (dataLock.tryLock()) {
             try {
                 for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
-                    for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) { //...to each view.
-                        try {
-                            //Set single value if the input buffer of the view matches the dataBuffer
-                            if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
-                                eve.setValue(buffer.value);
+                    for (expView experimentView : experimentViews) {
+                        for (expView.expViewElement eve : experimentView.elements) { //...to each view.
+                            try {
+                                //Set single value if the input buffer of the view matches the dataBuffer
+                                if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
+                                    eve.setValue(buffer.value);
+                                }
+                                //Set x array data if the input buffer of the view matches the dataBuffer
+                                if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
+                                    eve.setDataX(buffer);
+                                }
+                                //Set y array data if the input buffer of the view matches the dataBuffer
+                                if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
+                                    eve.setDataY(buffer);
+                                }
+                            } catch (Exception e) {
+                                Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
                             }
-                            //Set x array data if the input buffer of the view matches the dataBuffer
-                            if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
-                                eve.setDataX(buffer);
-                            }
-                            //Set y array data if the input buffer of the view matches the dataBuffer
-                            if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
-                                eve.setDataY(buffer);
-                            }
-                        } catch (Exception e) {
-                            Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
                         }
                     }
                 }
