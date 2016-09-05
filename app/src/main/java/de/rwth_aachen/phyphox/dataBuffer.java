@@ -215,7 +215,7 @@ public class dataBuffer implements Serializable {
     }
 }
 
-class floatBufferRepresentation implements Serializable {
+class floatBufferRepresentation {
     FloatBuffer data;
     int size;
     int offset;

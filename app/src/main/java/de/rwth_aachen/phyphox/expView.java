@@ -583,8 +583,8 @@ public class expView implements Serializable{
         transient private graphView gv = null; //Holds a GraphView instance
         transient private PlotRenderer plotRenderer = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
-        private floatBufferRepresentation dataX; //The x data to be displayed
-        private floatBufferRepresentation dataY; //The y data to be displayed
+        transient private floatBufferRepresentation dataX; //The x data to be displayed
+        transient private floatBufferRepresentation dataY; //The y data to be displayed
         private double dataMinX, dataMaxX, dataMinY, dataMaxY;
 
         private boolean line = false; //Show lines instead of points?

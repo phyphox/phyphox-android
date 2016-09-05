@@ -43,7 +43,7 @@ class CurveData {
     int vboX, vboY;
     int n;
     float color[] = new float[4];
-    floatBufferRepresentation fbX, fbY;
+    transient floatBufferRepresentation fbX, fbY;
 }
 
 class GraphSetup {
