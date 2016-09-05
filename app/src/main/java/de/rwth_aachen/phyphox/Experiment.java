@@ -1,7 +1,6 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -37,7 +36,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -49,18 +47,15 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
 
-import org.apache.poi.ss.formula.functions.T;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -673,6 +668,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             TextView description = new TextView(builder.getContext());
             description.setText(experiment.description);
+            description.setTextColor(res.getColor(R.color.main2));
+
             ll.addView(description);
 
             for (String label : experiment.links.keySet()) {
@@ -688,10 +685,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         }
                     }
                 });
+                btn.setBackgroundResource(R.drawable.background_ripple);
                 ll.addView(btn);
             }
 
-            builder.setView(ll);
+            ScrollView sv = new ScrollView(builder.getContext());
+            sv.setHorizontalScrollBarEnabled(false);
+            sv.setVerticalScrollBarEnabled(true);
+            sv.addView(ll);
+
+            builder.setView(sv);
 
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
