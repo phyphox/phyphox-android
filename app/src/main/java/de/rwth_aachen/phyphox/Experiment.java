@@ -67,6 +67,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
     private static final String STATE_REMOTE_SERVER = "remote_server"; //Is the remote server activated?
+    private static final String STATE_REMOTE_SESSION_ID = "remote_session_id"; //The session ID of the remote server
     private static final String STATE_BEFORE_START = "before_start"; //Has the experiment been started?
     private static final String STATE_TIMED_RUN = "timed_run"; //Are timed runs activated?
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
@@ -90,6 +91,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean updateState = false; //This is set to true when a state changed is initialized remotely. The measurement state will then be set to remoteIntentMeasuring.
     public boolean remoteInput = false; //Has there been an data input (inputViews for now) from the remote server that should be processed?
     public boolean shouldDefocus = false; //Should the current view loose focus? (Neccessary to remotely edit an input view, which has focus on this device)
+    private String sessionID = "";
 
     //Timed run status
     boolean timedRun = false; //Timed run enabled?
@@ -254,6 +256,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (savedInstanceState != null) {
                 //Reload the states that the user can control
                 serverEnabled = savedInstanceState.getBoolean(STATE_REMOTE_SERVER, false); //Remote server activated?
+                sessionID = savedInstanceState.getString(STATE_REMOTE_SESSION_ID, ""); //Remote server session id?
                 beforeStart = savedInstanceState.getBoolean(STATE_BEFORE_START, false); //Has the experiment ever been started?
                 timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false); //timed run activated?
                 timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
@@ -974,7 +977,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         //Instantiate and start the server
-        remote = new remoteServer(experiment, this);
+        if (sessionID.isEmpty()) {
+            remote = new remoteServer(experiment, this);
+            sessionID = remote.sessionID;
+        } else
+            remote = new remoteServer(experiment, this, sessionID);
         remote.start();
 
         //Announce this to the user as there are security concerns.
@@ -1056,6 +1063,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 experiment.dataLock.unlock();
             }
             outState.putBoolean(STATE_REMOTE_SERVER, serverEnabled); //remote server status
+            outState.putString(STATE_REMOTE_SESSION_ID, sessionID); //remote server status
             outState.putBoolean(STATE_BEFORE_START, beforeStart); //Has the experiment ever been started
             outState.putBoolean(STATE_TIMED_RUN, timedRun); //timed run status
             outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay); //timed run start delay

@@ -194,6 +194,7 @@ public class phyphoxExperiment implements Serializable {
                 if (data.length > 0) {
                     int result; //Will hold the write result to log errors
                     int loopedBufferSize = 0;
+
                     if (audioLoop) {
                         //In case of loops we want to repeat the data buffer. However, some
                         //  implementations do not allow short loops. So as a workaround we increase
@@ -215,6 +216,7 @@ public class phyphoxExperiment implements Serializable {
                         Log.e("processAnalysis", "Unexpected audio write result: " + result + " written.");
 
                     audioTrack.reloadStaticData();
+                    audioTrack.setPlaybackHeadPosition(0);
                     if (audioLoop) //If looping is enabled, loop from the end of the data
                         audioTrack.setLoopPoints(0, loopedBufferSize, -1);
                 }

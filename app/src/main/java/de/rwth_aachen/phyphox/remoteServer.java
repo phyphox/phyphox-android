@@ -71,7 +71,7 @@ public class remoteServer extends Thread {
     Resources res; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
 
-    String sessionID = "";
+    public String sessionID = "";
 
     public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
 
@@ -296,7 +296,7 @@ public class remoteServer extends Thread {
     }
 
     //The constructor takes the experiment to control and the activity of which we need to show/control the status
-    remoteServer(phyphoxExperiment experiment, Experiment callActivity) {
+    remoteServer(phyphoxExperiment experiment, Experiment callActivity, String sessionID) {
         this.experiment = experiment;
         this.callActivity = callActivity;
         this.res = callActivity.getResources();
@@ -305,11 +305,15 @@ public class remoteServer extends Thread {
         buildStyleCSS();
         buildIndexHTML();
 
-        sessionID = String.format("%06x", (System.nanoTime() & 0xffffff));
+        this.sessionID = sessionID;
 
         //Start the service...
         RUNNING = true;
         startHttpService();
+    }
+
+    remoteServer(phyphoxExperiment experiment, Experiment callActivity) {
+        this(experiment, callActivity, String.format("%06x", (System.nanoTime() & 0xffffff)));
     }
 
     //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
