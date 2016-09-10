@@ -618,6 +618,10 @@ public class expView implements Serializable{
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
             aspectRatio = 2.5;
             color = res.getColor(R.color.highlight);
+            highlightColor = String.format("%08x", res.getColor(R.color.highlight)).substring(2);
+            backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
+            mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
+            gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
         }
 
         //Interface to change the height of the graph
@@ -635,6 +639,7 @@ public class expView implements Serializable{
             this.color = color;
             if (gv != null)
                 gv.setColor(color);
+            lineColor = String.format("%08x", color).substring(2);
         }
 
         //Interface to switch between points and lines
@@ -701,12 +706,6 @@ public class expView implements Serializable{
         @Override
         //Create the actual view in Android
         protected void createView(LinearLayout ll, Context c, Resources res){
-
-            highlightColor = String.format("%08x", res.getColor(R.color.highlight)).substring(2);
-            backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
-            mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
-            gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
-            lineColor = String.format("%08x", color).substring(2);
 
             //We need a label and want to put the graph below. So we wrap everything into a vertical
             //linear layout (Axis labels are handled by the graphView)
