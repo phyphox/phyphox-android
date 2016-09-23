@@ -385,6 +385,8 @@ public class expView implements Serializable{
         private double currentValue = Double.NaN; //This value is filled into the dataBuffer before the user enters a custom value
         private boolean signed = true; //Is the user allowed to give negative values?
         private boolean decimal = true; //Is the user allowed to give non-integer values?
+        private Double min = -Double.NEGATIVE_INFINITY;
+        private Double max = Double.NEGATIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         //No special constructor. Just some defaults.
@@ -420,6 +422,12 @@ public class expView implements Serializable{
         //Interface to allow non-integer values
         protected void setDecimal(boolean decimal) {
             this.decimal = decimal;
+        }
+
+        //Interface to set limits
+        protected void setLimits(double min, double max) {
+            this.min = min;
+            this.max = max;
         }
 
         @Override
@@ -511,8 +519,20 @@ public class expView implements Serializable{
             et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 public void onFocusChange(View v, boolean hasFocus) {
                     focused = hasFocus;
+                    if (!hasFocus) {
+                        setValue(getValue()); //Write back the value actually used...
+                    }
                 }
             });
+
+            et.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                    et.clearFocus();
+                    return true;
+                }
+            });
+
         }
 
         @Override
@@ -525,8 +545,12 @@ public class expView implements Serializable{
         protected String createViewHTML(){
             //Construct value restrictions in HTML5
             String restrictions = "";
-            if (!signed)
+            if (!signed && min < 0)
                 restrictions += "min=\"0\" ";
+            else if (!min.isInfinite())
+                restrictions += "min=\""+(min*factor)+"\" ";
+            if (!max.isInfinite())
+                restrictions += "max=\""+(max*factor)+"\" ";
             if (!decimal)
                 restrictions += "step=\"1\" ";
 
@@ -541,10 +565,16 @@ public class expView implements Serializable{
         //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
         //use that is consistent with that of the valueElement
         protected double getValue() {
-            if (et == null)
+            if (et == null || focused)
                 return currentValue;
             try {
                 currentValue = Double.valueOf(et.getText().toString())/factor;
+                if (currentValue < min) {
+                    currentValue = min;
+                }
+                if (currentValue > max) {
+                    currentValue = max;
+                }
             } catch (Exception e) {
                 return currentValue;
             }

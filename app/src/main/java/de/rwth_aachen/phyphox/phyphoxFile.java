@@ -37,7 +37,7 @@ import java.util.Vector;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.0";
+    final static String phyphoxFileVersion = "1.1";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -873,6 +873,9 @@ public abstract class phyphoxFile {
                     boolean decimal = getBooleanAttribute("decimal", true);
                     double defaultValue = getDoubleAttribute("default", 0.);
 
+                    double min = getDoubleAttribute("min", Double.NEGATIVE_INFINITY);
+                    double max = getDoubleAttribute("max", Double.POSITIVE_INFINITY);
+
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; }}
@@ -885,6 +888,7 @@ public abstract class phyphoxFile {
                     ie.setSigned(signed); //May the entered number be negative?
                     ie.setDecimal(decimal); //May the user enter a decimal point (non-integer values)?
                     ie.setDefaultValue(defaultValue); //Default value before the user entered anything
+                    ie.setLimits(min, max);
                     newView.elements.add(ie);
                     break;
                 }
