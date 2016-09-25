@@ -32,9 +32,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,7 +48,9 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,6 +77,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
     private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay"; //The stop delay for a timed run
     private static final String STATE_EXPERIMENT = "experiment"; //The actual experiment
+    private static final String STATE_HINT_DISMISSED = "hint_dismissed"; //The actual experiment
 
     //This handler creates the "main loop" as it is repeatedly called using postDelayed
     //Not a real loop to keep some resources available
@@ -83,6 +88,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean loadCompleted = false; //Set to true when an experiment has been loaded successfully
     boolean shutdown = false; //The activity should be stopped. Used to escape the measurement loop.
     boolean beforeStart = true; //Experiment has not yet been started even once
+    boolean hintDismissed = false; //Remember that the user has clicked away the hint to the menu
 
     //Remote server
     private remoteServer remote = null; //The remote server (see remoteServer class)
@@ -119,6 +125,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     ProgressBar analysisProgress;       //Reference to the progress bar view
     boolean analysisInProgress = false; //Set to true by second thread while analysis is running
     float analysisProgressAlpha = 0.f;  //Will be increased while analysis is running and decreased while idle. This smoothes the display and results in an everage transparency representing the average load.
+
+    PopupWindow popupWindow = null;
 
     @Override
     //Where it all begins...
@@ -185,6 +193,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             for (bluetoothOutput bti : experiment.bluetoothOutputs)
                 bti.closeConnection();
         }
+
+        if (popupWindow != null)
+            popupWindow.dismiss();
+
         overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Make a nice animation...
     }
 
@@ -261,6 +273,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false); //timed run activated?
                 timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
                 timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY); //stop delay of timed run
+                hintDismissed = savedInstanceState.getBoolean(STATE_HINT_DISMISSED);
 
                 //Which view was active when we were stopped?
                 startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
@@ -313,9 +326,60 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); //We are ready. Now the user may rotate.
+
+        //An explanation is not necessary for raw sensors
+        if (experiment.category.equals(res.getString(R.string.categoryRawSensor)))
+            hintDismissed = true;
+
+        if (!hintDismissed)
+            showMenuHint();
+
     }
 
 
+    private void showMenuHint() {
+        LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
+        View hintView = inflater.inflate(R.layout.menu_hint, null);
+
+        popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        if(Build.VERSION.SDK_INT >= 21){
+            popupWindow.setElevation(4.0f);
+        }
+
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setTouchable(true);
+        popupWindow.setFocusable(true);
+        LinearLayout ll = (LinearLayout) hintView.findViewById(R.id.hint_root);
+
+        ll.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                popupWindow.dismiss();
+                return true;
+            }
+        });
+
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                hintDismissed = true;
+                popupWindow = null;
+            }
+        });
+
+
+        findViewById(R.id.rootLayout).post(new Runnable() {
+            public void run() {
+                Toolbar actionBar = (Toolbar) findViewById(R.id.customActionBar);
+                if (actionBar == null)
+                    return;
+                int pos[] = new int[2];
+                actionBar.getLocationOnScreen(pos);
+                popupWindow.showAtLocation(actionBar, Gravity.TOP | Gravity.RIGHT, 0, pos[1] + (int)(actionBar.getHeight()*0.8));
+            }
+        });
+    }
 
     @Override
     //Create options menu from out layout
@@ -1068,6 +1132,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putBoolean(STATE_TIMED_RUN, timedRun); //timed run status
             outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay); //timed run start delay
             outState.putDouble(STATE_TIMED_RUN_STOP_DELAY, timedRunStopDelay); //timed run stop delay
+            outState.putBoolean(STATE_HINT_DISMISSED, hintDismissed);
         } catch (Exception e) {
             //Something went wrong?
             //Discard all the data to get a clean new activity and start fresh.

@@ -17,6 +17,7 @@
     <string name="delete">Löschen</string>
     <string name="donotshowagain">Nicht erneut anzeigen</string>
     <string name="enableTimedRun">Zeitautomatik nutzen</string>
+    <string name="experimentinfo_hint">Schaue unter Experiment Info, um zu erfahren wie dieses Experiment funktioniert.</string>
     <string name="export">Daten exportieren</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
     <string name="export_subject">Daten aus phyphox</string>
