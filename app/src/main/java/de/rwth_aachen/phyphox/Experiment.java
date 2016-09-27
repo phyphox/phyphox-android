@@ -327,6 +327,28 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); //We are ready. Now the user may rotate.
 
+        //If this experiment has been loaded from a external source, we offer to save it locally
+        if (!experiment.isLocal) {
+            hintDismissed = true; //Do not show menu hint for external experiments
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(res.getString(R.string.save_locally_message))
+                    .setTitle(R.string.save_locally)
+                    .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+                            new phyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+
         //An explanation is not necessary for raw sensors
         if (experiment.category.equals(res.getString(R.string.categoryRawSensor)))
             hintDismissed = true;

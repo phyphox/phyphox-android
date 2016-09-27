@@ -40,6 +40,8 @@
     <string name="remoteServerWarningTitle">Sicherheitswarnung!</string>
     <string name="save_locally">Experiment zur Sammlung hinzufügen</string>
     <string name="save_locally_done">Das Experiment wurde zur Sammlung hinzugefügt.</string>
+    <string name="save_locally_message">Dieses Experiment wurde aus einer externen Quelle geöffnet. Möchtest du es deiner Experiment-Sammlung hinzufügen?</string>
+    <string name="save_locally_button">In Sammlung speichern</string>
     <string name="sensorAccelerometer">Beschleunigungssensor</string>
     <string name="sensorGyroscope">Gyroskop</string>
     <string name="sensorLight">Licht</string>
