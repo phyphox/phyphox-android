@@ -377,7 +377,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         ll.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                popupWindow.dismiss();
+                if (popupWindow != null)
+                    popupWindow.dismiss();
                 return true;
             }
         });
