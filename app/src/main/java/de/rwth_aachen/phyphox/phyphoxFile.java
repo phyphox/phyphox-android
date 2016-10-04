@@ -37,7 +37,7 @@ import java.util.Vector;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.1";
+    final static String phyphoxFileVersion = "1.2";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -1068,6 +1068,33 @@ public abstract class phyphoxFile {
 
                     experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs));
                 } break;
+                case "count": { //Absolute value
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "buffer"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "count"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.countAM(experiment, inputs, outputs));
+                } break;
+                case "average": { //Absolute value
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "buffer"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "average"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "stddev"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.averageAM(experiment, inputs, outputs));
+                } break;
                 case "add": { //input1+input2+input3...
 
                     //Allowed input/output configuration
@@ -1176,6 +1203,7 @@ public abstract class phyphoxFile {
                     experiment.analysis.add(new Analysis.absAM(experiment, inputs, outputs));
                 } break;
                 case "sin": { //Sine
+                    boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1186,9 +1214,10 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.sinAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.sinAM(experiment, inputs, outputs, deg));
                 } break;
                 case "cos": { //Cosine
+                    boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1199,9 +1228,10 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.cosAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.cosAM(experiment, inputs, outputs, deg));
                 } break;
                 case "tan": { //Tangens
+                    boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1212,7 +1242,103 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.tanAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.tanAM(experiment, inputs, outputs, deg));
+                } break;
+                case "sinh": { //Sine
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "sinh"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.sinhAM(experiment, inputs, outputs));
+                } break;
+                case "cosh": { //Cosine
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "cosh"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.coshAM(experiment, inputs, outputs));
+                } break;
+                case "tanh": { //Tangens
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "tanh"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.tanhAM(experiment, inputs, outputs));
+                } break;
+                case "asin": { //Sine
+                    boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "asin"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.asinAM(experiment, inputs, outputs, deg));
+                } break;
+                case "acos": { //Cosine
+                    boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "acos"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.acosAM(experiment, inputs, outputs, deg));
+                } break;
+                case "atan": { //Tangens
+                    boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "atan"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.atanAM(experiment, inputs, outputs, deg));
+                } break;
+                case "atan2": { //Tangens
+                    boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "atan2"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.atan2AM(experiment, inputs, outputs, deg));
                 } break;
                 case "first": { //First value of each buffer
 
@@ -1275,6 +1401,20 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.thresholdAM(experiment, inputs, outputs, falling));
+                } break;
+                case "binning": { //count number of values falling into binning ranges
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "x0"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "dx"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "binStarts"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "binCounts"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.binningAM(experiment, inputs, outputs));
                 } break;
                 case "append": { //Append the inputs to each other
 

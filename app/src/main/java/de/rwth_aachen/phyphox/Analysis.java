@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.regex.Matcher;
 
 // The analysis class is used to to do math operations on dataBuffers
 
@@ -235,6 +236,70 @@ public class Analysis {
         @Override
         protected void update() {
             outputs.get(0).append((experiment.analysisTime - experiment.firstAnalysisTime)/1000.);
+        }
+    }
+
+    // Get the number of elements in the input buffer
+    public static class countAM extends analysisModule implements Serializable {
+
+        protected countAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            int size = inputArraySizes.get(0);
+            outputs.get(0).append(size);
+        }
+    }
+
+    // Get the average value of this buffer (ignoring NaNs)
+    public static class averageAM extends analysisModule implements Serializable {
+
+        protected averageAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double in[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            if (size == 0)
+                return;
+            outputs.get(0).append(size);
+            double sum = 0.;
+            int count = 0;
+            for (int i = 0; i < size; i++) {
+                if (in[i].isNaN() || in[i].isInfinite())
+                    continue;;
+                sum += in[i];
+                count++;
+            }
+            if (count == 0)
+                return;
+
+            double avg = sum/count;
+
+            outputs.get(0).append(avg);
+
+            //We only calculate the standard deviation if it is actually written to a buffer
+            if (outputs.size() > 1) {
+                if (count < 2) {
+                    outputs.get(1).append(Double.NaN);
+                }
+                sum = 0.;
+                count = 0;
+                for (int i = 0; i < size; i++) {
+                    if (in[i].isNaN() || in[i].isInfinite())
+                        continue;;
+                    sum += (in[i]-avg)*(in[i]-avg);
+                    count++;
+                }
+                double std = Math.sqrt(sum/(count-1));
+                outputs.get(1).append(std);
+            }
         }
     }
 
@@ -575,36 +640,50 @@ public class Analysis {
     // Calculate the sine of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
     public static class sinAM extends analysisModule implements Serializable {
+        boolean deg;
 
-        protected sinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        protected sinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
+            this.deg = deg;
         }
 
         @Override
         protected void update() {
             Double array[] = inputArrays.get(0);
             int size = inputArraySizes.get(0);
-            for (int i = 0; i < size; i++)
-                outputs.get(0).append(Math.sin(array[i]));
+            if (deg) {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.sin(Math.PI / 180. * array[i]));
+            } else {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.sin(array[i]));
+            }
         }
     }
 
     // Calculate the cosine of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
     public static class cosAM extends analysisModule implements Serializable {
+        boolean deg;
 
-        protected cosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        protected cosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
+            this.deg = deg;
         }
 
         @Override
         protected void update() {
             Double array[] = inputArrays.get(0);
             int size = inputArraySizes.get(0);
-            for (int i = 0; i < size; i++)
-                outputs.get(0).append(Math.cos(array[i]));
+            if (deg) {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.cos(Math.PI / 180. * array[i]));
+            } else {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.cos(array[i]));
+            }
         }
     }
 
@@ -612,8 +691,30 @@ public class Analysis {
     // Calculate the tangens of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
     public static class tanAM extends analysisModule implements Serializable {
+        boolean deg;
 
-        protected tanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        protected tanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+            this.deg = deg;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            if (deg) {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.tan(Math.PI / 180. * array[i]));
+            } else {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.tan(array[i]));
+            }
+        }
+    }
+
+    public static class sinhAM extends analysisModule implements Serializable {
+        protected sinhAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -623,7 +724,134 @@ public class Analysis {
             Double array[] = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++)
-                outputs.get(0).append(Math.tan(array[i]));
+                outputs.get(0).append(Math.sinh(array[i]));
+        }
+    }
+
+    public static class coshAM extends analysisModule implements Serializable {
+
+        protected coshAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            for (int i = 0; i < size; i++)
+                outputs.get(0).append(Math.cosh(array[i]));
+        }
+    }
+
+    public static class tanhAM extends analysisModule implements Serializable {
+
+        protected tanhAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            for (int i = 0; i < size; i++)
+                outputs.get(0).append(Math.tanh(array[i]));
+        }
+    }
+
+    public static class asinAM extends analysisModule implements Serializable {
+        boolean deg;
+
+        protected asinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+            this.deg = deg;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            if (deg) {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(180. / Math.PI * Math.asin(array[i]));
+            } else {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.asin(array[i]));
+            }
+        }
+    }
+
+    public static class acosAM extends analysisModule implements Serializable {
+        boolean deg;
+
+        protected acosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+            this.deg = deg;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            if (deg) {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(180. / Math.PI * Math.acos(array[i]));
+            } else {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.acos(array[i]));
+            }
+        }
+    }
+
+    public static class atanAM extends analysisModule implements Serializable {
+        boolean deg;
+
+        protected atanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+            this.deg = deg;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            if (deg) {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(180. / Math.PI * Math.atan(array[i]));
+            } else {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.atan(array[i]));
+            }
+        }
+    }
+
+    public static class atan2AM extends analysisModule implements Serializable {
+        boolean deg;
+
+        protected atan2AM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+            this.deg = deg;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            Double array2[] = inputArrays.get(1);
+            int size = inputArraySizes.get(0);
+            if (size > inputArraySizes.get(1))
+                size = inputArraySizes.get(1);
+            if (deg) {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(180. / Math.PI * Math.atan2(array[i], array2[i]));
+            } else {
+                for (int i = 0; i < size; i++)
+                    outputs.get(0).append(Math.atan2(array[i], array2[i]));
+            }
         }
     }
 
@@ -857,6 +1085,60 @@ public class Analysis {
                 last = v;
             }
             outputs.get(0).append(currentX); //Append final x position to output1
+
+        }
+    }
+
+    //Binning: get number of elements that fall into the intervals x0..x0+dx..x0+2dx.. (default: x0 = 0, dx = 1)
+    public static class binningAM extends analysisModule implements Serializable {
+
+        protected binningAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+            Iterator it = inputs.get(0).getIterator();
+            double x0 = 0.;
+            if (inputs.size() > 1 && inputs.get(1) != null)
+                x0 = inputs.get(1).getValue();
+            if (Double.isNaN(x0))
+                x0 = 0.;
+
+            double dx = 1.;
+            if (inputs.size() > 2 && inputs.get(2) != null)
+                dx = inputs.get(2).getValue();
+            if (Double.isNaN(dx))
+                dx = 1.;
+
+            Vector<Double> binStarts = new Vector<>();
+            Vector<Double> binCounts = new Vector<>();
+
+            while (it.hasNext()) {
+                double v = (double)it.next();
+                if (Double.isNaN(v) || Double.isInfinite(v))
+                    continue;
+                int binIndex = (int)((v-x0)/dx);
+                if (binStarts.size() == 0) {
+                    binStarts.add(x0+binIndex*dx);
+                    binCounts.add(1.);
+                } else {
+                    int firstBinIndex = (int)Math.round((binStarts.get(0)-x0)/dx);
+                    while (binIndex > firstBinIndex + binStarts.size() - 1) {
+                        binStarts.add(x0+(firstBinIndex+binStarts.size())*dx);
+                        binCounts.add(0.);
+                    }
+                    while (binIndex < firstBinIndex) {
+                        binStarts.insertElementAt(x0+(firstBinIndex-1)*dx,0);
+                        binCounts.insertElementAt(0.,0);
+                        firstBinIndex = (int)Math.round((binStarts.get(0)-x0)/dx);
+                    }
+                    binCounts.set(binIndex-firstBinIndex,binCounts.get(binIndex-firstBinIndex)+1);
+                }
+            }
+
+            outputs.get(0).append(binStarts.toArray(new Double[0]), binStarts.size());
+            outputs.get(1).append(binCounts.toArray(new Double[0]), binCounts.size());
 
         }
     }
