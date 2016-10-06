@@ -268,7 +268,7 @@ public class Analysis {
             int size = inputArraySizes.get(0);
             if (size == 0)
                 return;
-            outputs.get(0).append(size);
+
             double sum = 0.;
             int count = 0;
             for (int i = 0; i < size; i++) {
