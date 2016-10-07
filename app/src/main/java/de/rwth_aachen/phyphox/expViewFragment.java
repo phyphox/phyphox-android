@@ -67,13 +67,17 @@ public class expViewFragment extends Fragment {
         // Inflate the layout for this fragment
         root = inflater.inflate(R.layout.fragment_exp_view, container, false);
 
-        recreateView();
-
         return root;
     }
 
     @Override
-    public void onDestroyView() {
+    public void onStart() {
+        recreateView();
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
         if (root == null)
             return;
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
@@ -85,7 +89,7 @@ public class expViewFragment extends Fragment {
             }
         }
 
-        super.onDestroyView();
+        super.onStop();
     }
 
 }
