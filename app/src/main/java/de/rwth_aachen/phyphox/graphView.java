@@ -32,6 +32,8 @@ public class graphView extends View {
     private String labelY = null; //Label for the y-axis
     private boolean logX = false; //logarithmic scale for the x-axis?
     private boolean logY = false; //logarithmic scale for the y-axis?
+    private int xPrecision = 3;
+    private int yPrecision = 3;
 
     private double lineWidth = 1.0;
     private int color = 0xffffff;
@@ -251,6 +253,11 @@ public class graphView extends View {
         graphSetup.logY = logY;
     }
 
+    public void setPrecision(int xPrecision, int yPrecision) {
+        this.xPrecision = xPrecision;
+        this.yPrecision = yPrecision;
+    }
+
     //Helper function that figures out where to put tics on an axis
     //Takes the min and max of that axis, a maximum count of tics and whether the axis is supposed
     // to be logarithmic
@@ -393,7 +400,7 @@ public class graphView extends View {
             graphB += (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2);
         int graphL = 0;
         for (double tic : yTics) {
-            double tw = paint.measureText(String.format("%.3g", tic))+res.getDimension(R.dimen.graph_font)/2.;
+            double tw = paint.measureText(String.format("%."+yPrecision+"g", tic))+res.getDimension(R.dimen.graph_font)/2.;
             if (tw > graphL)
                 graphL = (int)Math.ceil(tw);
         }
@@ -418,7 +425,7 @@ public class graphView extends View {
                 x = (Math.log(tic/workingMinX))/(Math.log(workingMaxX/workingMinX))*(graphW-1)+graphL;
             else
                 x = (tic-workingMinX)/(workingMaxX-workingMinX)*(graphW-1)+graphL;
-            canvas.drawText(String.format("%.3g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            canvas.drawText(String.format("%."+xPrecision+"g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (double tic : yTics) {
@@ -429,7 +436,7 @@ public class graphView extends View {
                 y = h-(Math.log(tic/workingMinY))/(Math.log(workingMaxY/workingMinY))*(graphH-1)-graphB;
             else
                 y = h-(tic-workingMinY)/(workingMaxY-workingMinY)*(graphH-1)-graphB;
-            canvas.drawText(String.format("%.3g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            canvas.drawText(String.format("%."+yPrecision+"g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
         }
 
         //Labels

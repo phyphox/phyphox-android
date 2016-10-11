@@ -832,6 +832,8 @@ public abstract class phyphoxFile {
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
+                    int xPrecision = getIntAttribute("xPrecision", 3);
+                    int yPrecision = getIntAttribute("yPrecision", 3);
                     int color = getColorAttribute("color", parent.getResources().getColor(R.color.highlight));
 
                     graphView.scaleMode scaleMinX = parseScaleMode("scaleMinX");
@@ -867,6 +869,7 @@ public abstract class phyphoxFile {
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY);  //x- and y- label
                     ge.setLogScale(logX, logY); //logarithmic scales for x/y axes
+                    ge.setPrecision(xPrecision, yPrecision); //logarithmic scales for x/y axes
                     newView.elements.add(ge);
                     break;
                 }

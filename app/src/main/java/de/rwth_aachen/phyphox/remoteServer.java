@@ -553,8 +553,8 @@ public class remoteServer extends Thread {
                             if (subsplit == -1)
                                 br.threshold = Double.valueOf(th)+1e-8; //No reference specified
                             else { //A reference is given
-                                br.threshold = Double.valueOf(th.substring(0, subsplit));
-                                br.reference = th.substring(subsplit+1)+1e-8;
+                                br.threshold = Double.valueOf(th.substring(0, subsplit))+1e-8;
+                                br.reference = th.substring(subsplit+1);
                             }
                         }
                     }

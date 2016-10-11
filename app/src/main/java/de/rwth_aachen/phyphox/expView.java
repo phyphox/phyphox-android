@@ -688,6 +688,8 @@ public class expView implements Serializable{
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
+        private int xPrecision = 3;
+        private int yPrecision = 3;
         private double lineWidth = 1.0;
         private int color;
 
@@ -782,6 +784,11 @@ public class expView implements Serializable{
             this.logY = logY;
         }
 
+        protected void setPrecision(int xPrecision, int yPrecision) {
+            this.xPrecision = xPrecision;
+            this.yPrecision = yPrecision;
+        }
+
         //Interface to set partial updates vs. full updates of the data sets
         protected void setPartialUpdate(boolean pu) {
             this.partialUpdate = pu;
@@ -852,6 +859,7 @@ public class expView implements Serializable{
             gv.setHistoryLength(historyLength);
             gv.setLabel(labelX, labelY);
             gv.setLogScale(logX, logY);
+            gv.setPrecision(xPrecision, yPrecision);
 
             fl.addView(plotAreaView);
             fl.addView(gv);
