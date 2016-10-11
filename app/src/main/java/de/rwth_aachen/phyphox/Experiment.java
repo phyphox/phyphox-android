@@ -213,6 +213,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         startRemoteServer();  //Restart the remote server (if it is activated)
         //We do not start the measurement again automatically. If the user switched away, this might
         //   be confusing otherwise.
+
+        invalidateOptionsMenu();
     }
 
     @Override
