@@ -77,7 +77,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
     private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay"; //The stop delay for a timed run
     private static final String STATE_EXPERIMENT = "experiment"; //The actual experiment
-    private static final String STATE_HINT_DISMISSED = "hint_dismissed"; //The actual experiment
+    private static final String STATE_HINT_DISMISSED = "hint_dismissed";
+    private static final String STATE_SAVE_LOCALLY_DISMISSED = "save_locally_dismissed";
 
     //This handler creates the "main loop" as it is repeatedly called using postDelayed
     //Not a real loop to keep some resources available
@@ -89,6 +90,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean shutdown = false; //The activity should be stopped. Used to escape the measurement loop.
     boolean beforeStart = true; //Experiment has not yet been started even once
     boolean hintDismissed = false; //Remember that the user has clicked away the hint to the menu
+    boolean saveLocallyDismissed = false; //Remember that the user did not want to save this experiment locally
 
     //Remote server
     private remoteServer remote = null; //The remote server (see remoteServer class)
@@ -274,6 +276,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
                 timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY); //stop delay of timed run
                 hintDismissed = savedInstanceState.getBoolean(STATE_HINT_DISMISSED);
+                saveLocallyDismissed = savedInstanceState.getBoolean(STATE_SAVE_LOCALLY_DISMISSED);
 
                 //Which view was active when we were stopped?
                 startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
@@ -331,22 +334,24 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (!experiment.isLocal) {
             hintDismissed = true; //Do not show menu hint for external experiments
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage(res.getString(R.string.save_locally_message))
-                    .setTitle(R.string.save_locally)
-                    .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-                            new phyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
-                        }
-                    })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-
-                        }
-                    });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            if (!saveLocallyDismissed) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(res.getString(R.string.save_locally_message))
+                        .setTitle(R.string.save_locally)
+                        .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+                                new phyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                saveLocallyDismissed = true;
+                            }
+                        });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
         }
 
         //An explanation is not necessary for raw sensors
@@ -1156,6 +1161,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay); //timed run start delay
             outState.putDouble(STATE_TIMED_RUN_STOP_DELAY, timedRunStopDelay); //timed run stop delay
             outState.putBoolean(STATE_HINT_DISMISSED, hintDismissed);
+            outState.putBoolean(STATE_SAVE_LOCALLY_DISMISSED, saveLocallyDismissed);
         } catch (Exception e) {
             //Something went wrong?
             //Discard all the data to get a clean new activity and start fresh.
