@@ -801,6 +801,7 @@ public abstract class phyphoxFile {
                 case "value": { //A value element displays a single value to the user
                     int precision = getIntAttribute("precision", 2);
                     boolean scientific = getBooleanAttribute("scientific", false);
+                    double size = getDoubleAttribute("size", 1.0);
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -813,6 +814,7 @@ public abstract class phyphoxFile {
                     ve.setScientificNotation(scientific); //Scientific notation vs. fixed point
                     ve.setUnit(unit); //We can have a unit after the value
                     ve.setFactor(factor); //A conversion factor. Usually for the unit
+                    ve.setSize(size); //A conversion factor. Usually for the unit
                     newView.elements.add(ve);
                     break;
                 }

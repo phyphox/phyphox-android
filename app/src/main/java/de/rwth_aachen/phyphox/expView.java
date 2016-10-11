@@ -2,10 +2,15 @@ package de.rwth_aachen.phyphox;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.opengl.GLSurfaceView;
 import android.support.v4.content.ContextCompat;
 import android.text.InputType;
+import android.text.SpannableString;
+import android.text.TextPaint;
+import android.text.style.MetricAffectingSpan;
+import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -192,10 +197,44 @@ public class expView implements Serializable{
     public class valueElement extends expViewElement implements Serializable {
         transient private TextView tv; //Holds the Android textView
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
+        private double size;
         private boolean scientificNotation; //Show scientific notation instead of fixed point (1e-3 instead of 0.001)
         private int precision; //The number of significant digits
         private String formatter; //This formatter is created when scientificNotation and precision are set
         private String unit; //A string to display as unit
+
+        //Used to change size within TextView
+        private class MiddleRelativeSizeSpan extends MetricAffectingSpan {
+            private final float mProportion;
+
+            public MiddleRelativeSizeSpan(float proportion) {
+                mProportion = proportion;
+            }
+
+            public float getSizeChange() {
+                return mProportion;
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                updateAnyState(ds);
+            }
+
+            @Override
+            public void updateMeasureState(TextPaint ds) {
+                updateAnyState(ds);
+            }
+
+            private void updateAnyState(TextPaint ds) {
+                Rect bounds = new Rect();
+                ds.getTextBounds("1A", 0, 2, bounds);
+                int shift = bounds.top - bounds.bottom;
+                ds.setTextSize(ds.getTextSize() * mProportion);
+                ds.getTextBounds("1A", 0, 2, bounds);
+                shift += bounds.bottom - bounds.top;
+                ds.baselineShift += shift/2;
+            }
+        }
 
         //Constructor takes the same arguments as the expViewElement constructor
         //It sets a precision of 2 with fixed point notation as default and creates the formatter
@@ -206,6 +245,7 @@ public class expView implements Serializable{
             updateFormatter();
             this.unit = "";
             this.factor = 1.;
+            this.size = 1.;
         }
 
         //Create the formatter for the notation and precision: for example  %.2e or %.2f
@@ -226,6 +266,10 @@ public class expView implements Serializable{
         protected void setPrecision(int p) {
             this.precision = p;
             updateFormatter();
+        }
+
+        protected void setSize(double size) {
+            this.size = size;
         }
 
         //Interface to set conversion factor. The element will show inputValue times this factor
@@ -265,7 +309,7 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //left half should be label
             labelView.setText(this.label);
-            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
+            labelView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL); //Align right to the center of the row
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
             labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
@@ -276,6 +320,7 @@ public class expView implements Serializable{
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //right half should be value+unit
+            tv.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
@@ -304,8 +349,26 @@ public class expView implements Serializable{
         @Override
         //We just have to send calculated value and the unit to the textView
         protected void setValue(double x) {
-            if (tv != null)
-                tv.setText(String.format(this.formatter, x*this.factor)+this.unit);
+            if (tv != null) {
+                String vStr;
+                String uStr;
+                if (Double.isNaN(x)) {
+                    vStr = "-";
+                    uStr = "";
+                } else {
+                    vStr = String.format(this.formatter, x * this.factor);
+                    uStr = this.unit;
+                }
+                String out = vStr+uStr;
+
+                if (size != 1.0) {
+                    SpannableString sStr = new SpannableString(out);
+                    sStr.setSpan(new MiddleRelativeSizeSpan((float)size), 0, vStr.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    tv.setText(sStr);
+                } else {
+                    tv.setText(out);
+                }
+            }
         }
 
         @Override
