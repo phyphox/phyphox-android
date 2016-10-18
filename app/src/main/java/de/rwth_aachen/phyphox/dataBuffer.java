@@ -25,6 +25,7 @@ public class dataBuffer implements Serializable {
     public int size; //The target size
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
+    public double init = Double.NaN;
 
     transient private floatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
     private int floatCopyCapacity = 0;
@@ -103,6 +104,13 @@ public class dataBuffer implements Serializable {
         this.isStatic = isStatic;
     }
 
+    //Wrapper function to set this buffer's static-state
+    public void setInit(double init) {
+        this.init = init;
+        if (!Double.isNaN(init))
+            this.append(init);
+    }
+
     //Delete all data and set last item to NaN (if not static)
     public void clear() {
         if (isStatic)
@@ -116,6 +124,9 @@ public class dataBuffer implements Serializable {
         }
         min = Double.NaN;
         max = Double.NaN;
+
+        if (!Double.isNaN(init))
+            this.append(init);
     }
 
     //Retrieve the iterator of the BlockingQueue

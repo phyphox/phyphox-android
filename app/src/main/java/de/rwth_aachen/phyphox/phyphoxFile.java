@@ -37,7 +37,7 @@ import java.util.Vector;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.2";
+    final static String phyphoxFileVersion = "1.3";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -720,6 +720,7 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
 
                     int size = getIntAttribute("size",1);
+                    double init = getDoubleAttribute("init",Double.NaN);
                     boolean isStatic = getBooleanAttribute("static", false);
 
                     String name = getText();
@@ -728,6 +729,7 @@ public abstract class phyphoxFile {
 
                     dataBuffer newBuffer = experiment.createBuffer(name, size);
                     newBuffer.setStatic(isStatic);
+                    newBuffer.setInit(init);
                     break;
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
@@ -961,7 +963,7 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
                     experiment.micOutput = outputs.get(0).buffer.name;
-                    experiment.micBufferSize = outputs.get(0).size(); //Output-buffer size
+                    experiment.micBufferSize = outputs.get(0).size()*2; //Output-buffer size
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
                     int minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
@@ -1085,6 +1087,26 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.countAM(experiment, inputs, outputs));
+                } break;
+                case "if": { //Absolute value
+
+                    boolean less = getBooleanAttribute("less", false);
+                    boolean equal = getBooleanAttribute("equal", false);
+                    boolean greater = getBooleanAttribute("greater", false);
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "less"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "more"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "true"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "false"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "result"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.ifAM(experiment, inputs, outputs, less, equal, greater));
                 } break;
                 case "average": { //Absolute value
 

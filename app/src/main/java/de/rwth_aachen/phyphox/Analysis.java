@@ -254,6 +254,31 @@ public class Analysis {
         }
     }
 
+    // return buffer "true" if first input is smaller than second, otherwise return buffer "false"
+    public static class ifAM extends analysisModule implements Serializable {
+        boolean less, equal, greater;
+
+        protected ifAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean less, boolean equal, boolean greater) {
+            super(experiment, inputs, outputs);
+            this.less = less;
+            this.equal = equal;
+            this.greater = greater;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            if (inputArrays.size() < 4 || inputArraySizes.get(0) == 0 || inputArraySizes.get(1) == 0)
+                return;
+            double a = inputArrays.get(0)[inputArraySizes.get(0)-1];
+            double b = inputArrays.get(1)[inputArraySizes.get(1)-1];
+            if ((a < b && less) || (a == b && equal) || (a > b && greater))
+                outputs.get(0).append(inputArrays.get(2), inputArraySizes.get(2));
+            else
+                outputs.get(0).append(inputArrays.get(3), inputArraySizes.get(3));
+        }
+    }
+
     // Get the average value of this buffer (ignoring NaNs)
     public static class averageAM extends analysisModule implements Serializable {
 
