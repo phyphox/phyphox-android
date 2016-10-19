@@ -353,7 +353,7 @@ public class expView implements Serializable{
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"valueElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "<span class=\"value\"></span>" +
+                    "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span>"+ this.unit + "</span>" +
                     "</div>";
         }
 
@@ -388,11 +388,11 @@ public class expView implements Serializable{
             //In JavaScript we have to use "toExponential" or "toFixed" isntead of a formatter
             if (scientificNotation)
                 return "function (x) {" +
-                        "$(\"#element"+htmlID+" .value\").text((x*"+factor+").toExponential("+precision+")+\" "+unit+"\")" +
+                        "$(\"#element"+htmlID+" .value .valueNumber\").text((x*"+factor+").toExponential("+precision+"))" +
                         "}";
             else
                 return "function (x) {" +
-                        "$(\"#element"+htmlID+" .value\").text((x*"+factor+").toFixed("+precision+")+\" "+unit+"\")" +
+                        "$(\"#element"+htmlID+" .value .valueNumber\").text((x*"+factor+").toFixed("+precision+"))" +
                         "}";
         }
     }
