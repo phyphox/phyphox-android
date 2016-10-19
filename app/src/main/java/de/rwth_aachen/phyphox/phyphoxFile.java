@@ -899,6 +899,21 @@ public abstract class phyphoxFile {
                     newView.elements.add(ie);
                     break;
                 }
+                case "button": { //The edit element can take input from the user
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; repeatableOffset = 0;}},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0;}}
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, null)).process(); //Load inputs and outputs
+
+                    expView.buttonElement be = newView.new buttonElement(label, null, null, null, null, parent.getResources()); //This one is user-event driven and does not regularly read or write values
+                    be.setIO(inputs, outputs);
+                    newView.elements.add(be);
+                    break;
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }

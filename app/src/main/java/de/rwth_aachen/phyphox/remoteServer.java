@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
+import android.util.SparseIntArray;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -50,10 +51,13 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 //remoteServer implements a web-interface to remote control the experiment and receive the data
 //Unfortunately, Google decided to depricate org.apache.http in Android 6, so until we move to
@@ -76,6 +80,9 @@ public class remoteServer extends Thread {
     public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
 
     static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
+
+    private Vector<Integer> htmlID2View = new Vector<>(); //This maps htmlIDs to the view of the element
+    private Vector<Integer> htmlID2Element = new Vector<>(); //This maps htmlIDs to the view of the element
 
     //buildStyleCSS loads the css file from the resources and replaces some placeholders
     protected void buildStyleCSS () {
@@ -194,6 +201,8 @@ public class remoteServer extends Thread {
 
                     int id = 0; //We will give each view a unique id to address them in JavaScript
                                 //via a HTML id
+                    htmlID2View.clear();
+                    htmlID2Element.clear();
 
                     for (int i = 0; i < experiment.experimentViews.size(); i++) {
                         //For each ecperiment view
@@ -209,6 +218,10 @@ public class remoteServer extends Thread {
                         sb.append("\", \"elements\":[\n");
                         for (int j = 0; j < experiment.experimentViews.get(i).elements.size(); j++) {
                             //For each element within this view
+
+                            //Store the mapping of htmlID to the experiment view hierarchy
+                            htmlID2View.add(i);
+                            htmlID2Element.add(j);
 
                             if (j > 0)  //Add a colon if this is not the first item to seperate the previous one.
                                 sb.append(",");
@@ -769,6 +782,23 @@ public class remoteServer extends Thread {
                             }
                         } else
                             result = "{\"result\" = false}";
+                        break;
+                    case "trigger":
+                        String elementStr = uri.getQueryParameter("element"); //Which element?
+                        if (elementStr != null) {
+                            int htmlID;
+                            try {
+                                htmlID = Integer.valueOf(elementStr);
+                            } catch (Exception e) {
+                                //Invalid input
+                                result = "{\"result\" = false}";
+                                break;
+                            }
+                            experiment.experimentViews.get(htmlID2View.get(htmlID)).elements.get(htmlID2Element.get(htmlID)).trigger();
+                            result = "{\"result\" = true}";
+                        } else {
+                            result = "{\"result\" = false}";
+                        }
                         break;
                     default:
                         result = "{\"result\" = false}";

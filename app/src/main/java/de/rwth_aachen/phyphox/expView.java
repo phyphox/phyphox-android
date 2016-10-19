@@ -17,6 +17,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -166,6 +167,16 @@ public class expView implements Serializable{
         //where to store user input
         protected String getValueOutput() {
             return this.valueOutput;
+        }
+
+        //This is called when the analysis process is finished and the element is allowed to write to the buffers
+        protected void onMayWriteToBuffers() {
+
+        }
+
+        //This is called when the element should be triggered (i.e. button press triggered by the remote interface)
+        protected void trigger() {
+
         }
 
         //This returns the key name of the valueInput dataBuffer. Called by the main loop to figure
@@ -667,6 +678,99 @@ public class expView implements Serializable{
                     "if (!$(\"#element"+htmlID+" .value\").is(':focus'))" +
                         "$(\"#element"+htmlID+" .value\").val((x*"+factor+"))" +
                     "}";
+        }
+    }
+
+    //buttonElement implements a simple button which writes values from inputs to outputs when triggered
+    public class buttonElement extends expViewElement implements Serializable {
+        transient private Button b; //Holds the Android Button
+        private Vector<dataInput> inputs = null;
+        private Vector<dataOutput> outputs = null;
+        private boolean triggered = false;
+
+        //No special constructor.
+        buttonElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        }
+
+        protected void setIO(Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            this.inputs = inputs;
+            this.outputs = outputs;
+        }
+
+        @Override
+        //This is not automatically updated, but triggered by the user, so it's "none"
+        protected String getUpdateMode() {
+            return "none";
+        }
+
+        @Override
+        //Create the view in Android and append it to the linear layout
+        protected void createView(LinearLayout ll, Context c, Resources res){
+            //The button
+            b = new Button(c);
+
+            LinearLayout.LayoutParams vglp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.info_element_margin), res.getDisplayMetrics());
+            vglp.setMargins(0, margin, 0, 0);
+            vglp.gravity = Gravity.CENTER;
+
+            b.setLayoutParams(vglp);
+            b.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            b.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
+            b.setText(this.label);
+
+            //Add the button to the main linear layout passed to this function
+            ll.addView(b);
+
+            //Add a listener to the button to get the trigger
+            b.setOnClickListener(new View.OnClickListener() {
+                 @Override
+                 public void onClick(View view) {
+                     trigger();
+                 }
+            });
+
+        }
+
+        @Override
+        protected void trigger() {
+            triggered = true;
+        }
+
+        @Override
+        //If triggered, write the data to the output buffers
+        //Always return zero as the analysis process does not receive the values directly
+        protected void onMayWriteToBuffers() {
+            if (!triggered)
+                return;
+            triggered = false;
+            if (inputs == null || outputs == null)
+                return;
+            for (int i = 0; i < inputs.size(); i++) {
+                if  (i >= outputs.size())
+                    continue;
+                if (outputs.get(i).buffer == null)
+                    continue;
+                outputs.get(i).clear();
+                if (inputs.get(i).isBuffer && inputs.get(i).buffer != null)
+                    outputs.get(i).append(inputs.get(i).getValue());
+                else
+                    outputs.get(i).append(inputs.get(i).getArray(), inputs.get(i).getFilledSize());
+            }
+        }
+
+        @Override
+        //Create the HTML markup for this element
+        //<div>
+        //  <span>Label</span> <input /> <span>unit</span>
+        //</div>
+        //Note that the input is send from here as well as the AJAX-request is placed in the
+        //onchange-listener in the markup
+        protected String createViewHTML(){
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
+                    "<button onclick=\"$.getJSON('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
+                    "</div>";
         }
     }
 

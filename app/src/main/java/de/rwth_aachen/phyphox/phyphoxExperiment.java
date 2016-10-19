@@ -104,6 +104,7 @@ public class phyphoxExperiment implements Serializable {
                     for (expView ev : experimentViews) {
                             for (expView.expViewElement eve : ev.elements) { //...to each expViewElement
                                 try {
+                                    eve.onMayWriteToBuffers(); //The element may now write to its buffers if it wants to do it on its own...
                                     if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
                                         Double v = eve.getValue(); //...get the value
                                         if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
