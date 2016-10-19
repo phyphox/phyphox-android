@@ -19,6 +19,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
@@ -69,6 +70,7 @@ public class ExperimentList extends AppCompatActivity {
     //Strings which define extra information for intents starting an experiment from local files
     public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
+    public final static String EXPERIMENT_SENSORREADY = "com.dicon.phyphox.EXPERIMENT_SENSORREADY";
 
     //String constant to identify our preferences
     public static final String PREFS_NAME = "phyphox";
@@ -199,6 +201,7 @@ public class ExperimentList extends AppCompatActivity {
         Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
         Vector<String> xmlFiles = new Vector<>(); //List of xmlFile name for each experiment (has to be provided in the intent if the user wants to load this)
         Vector<Boolean> isAssetList = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
+        Vector<Boolean> sensorReadyList = new Vector<>(); //List of booleans for each experiment, which track whether the experiment is available due to availability of the sensors required
 
         //The constructor takes the activity reference. That's all.
         public experimentItemAdapter(Activity parentActivity) {
@@ -227,6 +230,7 @@ public class ExperimentList extends AppCompatActivity {
             Intent intent = new Intent(v.getContext(), Experiment.class);
             intent.putExtra(EXPERIMENT_XML, xmlFiles.get(position));
             intent.putExtra(EXPERIMENT_ISASSET, isAssetList.get(position));
+            intent.putExtra(EXPERIMENT_SENSORREADY, sensorReadyList.get(position));
             intent.setAction(Intent.ACTION_VIEW);
 
             //If we are on a recent API, we can add a nice zoom animation
@@ -242,7 +246,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(Drawable icon, String title, String info, String xmlFile, boolean isAsset) {
+        public void addExperiment(Drawable icon, String title, String info, String xmlFile, boolean isAsset, boolean sensorReady) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -257,6 +261,7 @@ public class ExperimentList extends AppCompatActivity {
             infos.insertElementAt(info, i);
             xmlFiles.insertElementAt(xmlFile, i);
             isAssetList.insertElementAt(isAsset, i);
+            sensorReadyList.insertElementAt(sensorReady, i);
 
             //Notify the adapter that we changed its contents
             this.notifyDataSetChanged();
@@ -302,6 +307,14 @@ public class ExperimentList extends AppCompatActivity {
             holder.icon.setImageDrawable(icons.get(position));
             holder.title.setText(titles.get(position));
             holder.info.setText(infos.get(position));
+
+            if (!sensorReadyList.get(position)) {
+                holder.title.setTextColor(res.getColor(R.color.mainDisabled));
+                holder.info.setTextColor(res.getColor(R.color.mainDisabled));
+            } else {
+                holder.title.setTextColor(res.getColor(R.color.main));
+                holder.info.setTextColor(res.getColor(R.color.main2));
+            }
 
             //Handle the delete button. Set it visible only for non-assets
             if (isAssetList.get(position))
@@ -479,8 +492,8 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter.
-        public void addExperiment(String exp, Drawable image, String description, final String xmlFile, boolean isAsset) {
-            experiments.addExperiment(image, exp, description, xmlFile, isAsset);
+        public void addExperiment(String exp, Drawable image, String description, final String xmlFile, boolean isAsset, boolean sensorReady) {
+            experiments.addExperiment(image, exp, description, xmlFile, isAsset, sensorReady);
         }
 
         //Helper to check if the name of this category matches a given string
@@ -504,18 +517,18 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isAsset) {
+    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isAsset, boolean sensorReady) {
         //Check all categories for the category of the new experiment
         for (category icat : categories) {
             if (icat.hasName(cat)) {
                 //Found it. Add the experiment and return
-                icat.addExperiment(exp, image, description, xmlFile, isAsset);
+                icat.addExperiment(exp, image, description, xmlFile, isAsset, sensorReady);
                 return;
             }
         }
         //Category does not yet exist. Create it and add the experiment
         categories.add(new category(cat, this));
-        categories.lastElement().addExperiment(exp, image, description, xmlFile, isAsset);
+        categories.lastElement().addExperiment(exp, image, description, xmlFile, isAsset, sensorReady);
     }
 
     //Decode the experiment icon (base64) and return a bitmap
@@ -548,6 +561,12 @@ public class ExperimentList extends AppCompatActivity {
             int phyphoxDepth = -1; //Depth of the first phyphox tag (We only care for title, icon, description and category directly below the phyphox tag)
             int translationBlockDepth = -1; //Depth of the translations block
             int translationDepth = -1; //Depth of a suitable translation, if found.
+
+            //This part is used to check sensor availability before launching the experiment
+            SensorManager sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
+            boolean inInput = false;
+            boolean sensorReady = true;
+
             boolean perfectTranslationFound = false; //Becomes true if the global locale or a translation locale matches the system locale - if true, no other translations will be read.
             while (eventType != XmlPullParser.END_DOCUMENT){ //Go through all tags until the end...
                 switch (eventType) {
@@ -606,6 +625,26 @@ public class ExperimentList extends AppCompatActivity {
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     category = xpp.nextText().trim();
                                 break;
+                            case "input": //We just have to check if there are any sensors, which are not supported on this device
+                                if (xpp.getDepth() == phyphoxDepth+1)
+                                    inInput = true;
+                                break;
+                            case "sensor":
+                                if (!inInput || !sensorReady)
+                                    break;
+                                String type = xpp.getAttributeValue(null, "type");
+                                sensorInput testSensor;
+                                try {
+                                    testSensor = new sensorInput(type, 0, false, null, null);
+                                    testSensor.attachSensorManager(sensorManager);
+                                } catch (sensorInput.SensorException e) {
+                                    sensorReady = false;
+                                    break;
+                                }
+                                if (!testSensor.isAvailable()) {
+                                    sensorReady = false;
+                                }
+                                break;
                         }
                         break;
                     case XmlPullParser.END_TAG: //React to end tags
@@ -624,6 +663,10 @@ public class ExperimentList extends AppCompatActivity {
                                 if (xpp.getDepth() == translationDepth) { //Check if we in fact reached the surface. There might have been something else called phyphox within.
                                     translationDepth = -1;
                                 }
+                                break;
+                            case "input":
+                                if (xpp.getDepth() == phyphoxDepth+1)
+                                    inInput = false;
                                 break;
                         }
                         break;
@@ -649,7 +692,7 @@ public class ExperimentList extends AppCompatActivity {
                 image = new TextIcon(title.substring(0, 3), this);
 
             //We have all the information. Add the experiment.
-            addExperiment(title, category, image, description, experimentXML, isAsset);
+            addExperiment(title, category, image, description, experimentXML, isAsset, sensorReady);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             Toast.makeText(this, "Error loading " + experimentXML + " (XML Exception)", Toast.LENGTH_LONG).show();

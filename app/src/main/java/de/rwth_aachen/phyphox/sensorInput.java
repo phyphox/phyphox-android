@@ -64,7 +64,9 @@ public class sensorInput implements SensorEventListener, Serializable {
             default: throw  new SensorException("Unknown sensor.");
         }
 
-        //Store the buffer references
+        //Store the buffer references if any
+        if (buffers == null)
+            return;
         buffers.setSize(4);
         if (buffers.get(0) != null)
             this.dataX = buffers.get(0).buffer;
