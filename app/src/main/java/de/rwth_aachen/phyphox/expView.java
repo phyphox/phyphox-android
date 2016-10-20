@@ -17,6 +17,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -513,7 +514,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res){
+        protected void createView(LinearLayout ll, final Context c, Resources res){
             //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -595,6 +596,8 @@ public class expView implements Serializable{
                 public void onFocusChange(View v, boolean hasFocus) {
                     focused = hasFocus;
                     if (!hasFocus) {
+                        InputMethodManager imm = (InputMethodManager)c.getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
                         setValue(getValue()); //Write back the value actually used...
                     }
                 }
