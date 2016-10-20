@@ -85,7 +85,6 @@ public abstract class phyphoxFile {
             os.write(buffer, 0, n);
         }
         os.flush();
-
         stream.source = os.toByteArray();
         stream.inputStream = new ByteArrayInputStream(stream.source);
 
@@ -158,13 +157,13 @@ public abstract class phyphoxFile {
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
                 try {
-                    URL url = new URL("https", uri.getHost(), uri.getPath());
+                    URL url = new URL("https", uri.getHost(), uri.getPath() + "?" + uri.getQuery());
                     phyphoxStream.inputStream = url.openStream();
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
-                        URL url = new URL("http", uri.getHost(), uri.getPath());
+                        URL url = new URL("http", uri.getHost(), uri.getPath() + "?" + uri.getQuery());
                         phyphoxStream.inputStream = url.openStream();
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e2) {
