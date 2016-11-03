@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;

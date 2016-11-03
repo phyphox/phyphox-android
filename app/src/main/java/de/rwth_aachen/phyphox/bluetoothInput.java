@@ -33,13 +33,15 @@ public class bluetoothInput implements Serializable {
     private Lock dataLock;
 
     transient private BluetoothAdapter btAdapter = null;
-    BluetoothDevice btDevice = null;
+    transient BluetoothDevice btDevice = null;
     transient private BluetoothSocket btSocket = null;
     transient private InputStream inStream = null;
 
     private Protocol protocol;
+    private String deviceName;
+    private String deviceAddress;
 
-    private AsyncReceive asyncReceive = null;
+    transient private AsyncReceive asyncReceive = null;
 
     public class bluetoothException extends Exception {
         public bluetoothException(String message) {
@@ -50,6 +52,28 @@ public class bluetoothInput implements Serializable {
     protected bluetoothInput(String deviceName, String deviceAddress, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, Protocol protocol) throws bluetoothException{
         this.protocol = protocol;
 
+        this.deviceName = deviceName;
+        this.deviceAddress = deviceAddress;
+
+        this.dataLock = lock;
+
+        if (rate <= 0)
+            this.period = 0;
+        else
+            this.period = (long)((1/rate)*1e9); //Period in ns
+
+        this.average = average;
+
+        this.data = buffers;
+        for (int i = 0; i < buffers.size(); i++) {
+            this.avg.add(0.);
+            this.aquisitions.add(0);
+        }
+
+        findDevice();
+    }
+
+    public void findDevice() throws bluetoothException {
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null)
             throw new bluetoothException("Could not find a bluetooth adapter.");
@@ -73,21 +97,6 @@ public class bluetoothInput implements Serializable {
 
         if (btDevice == null)
             throw new bluetoothException("Bluetooth device not found. (name filter: " + deviceName + ", address filter: " + deviceAddress);
-
-        this.dataLock = lock;
-
-        if (rate <= 0)
-            this.period = 0;
-        else
-            this.period = (long)((1/rate)*1e9); //Period in ns
-
-        this.average = average;
-
-        this.data = buffers;
-        for (int i = 0; i < buffers.size(); i++) {
-            this.avg.add(0.);
-            this.aquisitions.add(0);
-        }
     }
 
     public void openConnection() throws bluetoothException {
@@ -131,7 +140,10 @@ public class bluetoothInput implements Serializable {
 
     public void reconnect(BluetoothAdapter bta) throws bluetoothException {
         this.btAdapter = bta;
-        openConnection();
+        if (btDevice == null)
+            findDevice();
+        if (btSocket == null || !btSocket.isConnected())
+            openConnection();
     }
 
     public void closeConnection() {

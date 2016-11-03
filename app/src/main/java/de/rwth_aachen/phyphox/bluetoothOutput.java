@@ -22,11 +22,13 @@ public class bluetoothOutput implements Serializable {
     private static final UUID btUUID = UUID.fromString("245fb312-a57f-40a1-9c45-9287984f270c");
 
     transient private BluetoothAdapter btAdapter = null;
-    BluetoothDevice btDevice = null;
+    transient BluetoothDevice btDevice = null;
     transient private BluetoothSocket btSocket = null;
     transient private BufferedOutputStream outStream = null;
 
     private Protocol protocol;
+    private String deviceName;
+    private String deviceAddress;
 
     public class bluetoothException extends Exception {
         public bluetoothException(String message) {
@@ -37,6 +39,15 @@ public class bluetoothOutput implements Serializable {
     protected bluetoothOutput(String deviceName, String deviceAddress, Vector<dataInput> buffers, Protocol protocol) throws bluetoothException{
         this.protocol = protocol;
 
+        this.deviceName = deviceName;
+        this.deviceAddress = deviceAddress;
+
+        this.data = buffers;
+
+        findDevice();
+    }
+
+    public void findDevice() throws bluetoothException {
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null)
             throw new bluetoothException("Could not find a bluetooth adapter.");
@@ -60,8 +71,6 @@ public class bluetoothOutput implements Serializable {
 
         if (btDevice == null)
             throw new bluetoothException("Bluetooth device not found. (name filter: " + deviceName + ", address filter: " + deviceAddress);
-
-        this.data = buffers;
     }
 
     public void openConnection() throws bluetoothException {
@@ -105,7 +114,10 @@ public class bluetoothOutput implements Serializable {
 
     public void reconnect(BluetoothAdapter bta) throws bluetoothException {
         this.btAdapter = bta;
-        openConnection();
+        if (btDevice == null)
+            findDevice();
+        if (btSocket == null || !btSocket.isConnected())
+            openConnection();
     }
 
     public void closeConnection() {
