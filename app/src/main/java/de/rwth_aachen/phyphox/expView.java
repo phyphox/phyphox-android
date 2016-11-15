@@ -171,13 +171,12 @@ public class expView implements Serializable{
         }
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
-        protected void onMayWriteToBuffers() {
-
+        protected boolean onMayWriteToBuffers() {
+            return false;
         }
 
         //This is called when the element should be triggered (i.e. button press triggered by the remote interface)
         protected void trigger() {
-
         }
 
         //This returns the key name of the valueInput dataBuffer. Called by the main loop to figure
@@ -744,12 +743,12 @@ public class expView implements Serializable{
         @Override
         //If triggered, write the data to the output buffers
         //Always return zero as the analysis process does not receive the values directly
-        protected void onMayWriteToBuffers() {
+        protected boolean onMayWriteToBuffers() {
             if (!triggered)
-                return;
+                return false;
             triggered = false;
             if (inputs == null || outputs == null)
-                return;
+                return false;
             for (int i = 0; i < inputs.size(); i++) {
                 if  (i >= outputs.size())
                     continue;
@@ -761,6 +760,7 @@ public class expView implements Serializable{
                 else
                     outputs.get(i).append(inputs.get(i).getArray(), inputs.get(i).getFilledSize());
             }
+            return true;
         }
 
         @Override

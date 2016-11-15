@@ -831,7 +831,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         //time for some analysis?
                         if (measuring) {
                             analysisInProgress = true;
-                            experiment.processAnalysis(); //Do the math.
+                            experiment.processAnalysis(true); //Do the math.
                             analysisInProgress = false;
                         }
                     } catch (Exception e) {
@@ -893,7 +893,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 try {
                     //Get values from input views only if there isn't fresh data from the remote server which might get overridden
                     if (!remoteInput) {
-                        experiment.handleInputViews(tabLayout.getSelectedTabPosition());
+                        experiment.handleInputViews(tabLayout.getSelectedTabPosition(), measuring);
                     }
                     //Update all the views currently visible
                     if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
@@ -1054,6 +1054,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             experiment.dataLock.unlock();
         }
         experiment.newData = true;
+        experiment.newUserInput = true;
         if (remote != null && serverEnabled)
             remote.forceFullUpdate = true;
         experiment.firstAnalysisTime = 0;

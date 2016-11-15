@@ -43,7 +43,7 @@ public class phyphoxExperiment implements Serializable {
     long analysisTime; //This variable holds the system time of the moment the current analysis process started.
     long firstAnalysisTime = 0; //This variable holds the system time of the moment the first analysis process started.
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
-    boolean newUserInput = false; //Will be set to true if the user changed any values
+    boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
 
     //Parameters for audio playback
@@ -95,7 +95,7 @@ public class phyphoxExperiment implements Serializable {
     }
 
     //This function gets called in the main loop and takes care of any inputElements in the current experiment view
-    public void handleInputViews(int currentView) {
+    public void handleInputViews(int currentView, boolean measuring) {
         if (!loaded)
             return;
         if (dataLock.tryLock()) {
@@ -104,7 +104,8 @@ public class phyphoxExperiment implements Serializable {
                     for (expView ev : experimentViews) {
                             for (expView.expViewElement eve : ev.elements) { //...to each expViewElement
                                 try {
-                                    eve.onMayWriteToBuffers(); //The element may now write to its buffers if it wants to do it on its own...
+                                    if (eve.onMayWriteToBuffers()) //The element may now write to its buffers if it wants to do it on its own...
+                                        newUserInput = true;
                                     if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
                                         Double v = eve.getValue(); //...get the value
                                         if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
@@ -123,15 +124,17 @@ public class phyphoxExperiment implements Serializable {
             }
         }
         //else: Lock not aquired, but this is not urgent. Try another time instead of blocking the UI thread
+        if (newUserInput && !measuring)
+            processAnalysis(false);
     }
 
     //called by th main loop to initialize the analysis process
-    public void processAnalysis() {
+    public void processAnalysis(boolean measuring) {
         if (!loaded)
             return;
 
         //Get the data from the audio recording if used
-        if (audioRecord != null) {
+        if (audioRecord != null && measuring) {
             dataBuffer recording = getBuffer(micOutput);
             final int readBufferSize = recording.size; //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
@@ -170,7 +173,7 @@ public class phyphoxExperiment implements Serializable {
                 try {
                     Thread.yield();
                     if (!mod.updateIfNotStatic()) { //This only returns false if the module found its inputs to be uninitialized, in which case we abort the rest... (Typical example: no audio recorded yet)
-                        break;
+//                        break; //Nope, let's not break... This should not be an issue anywhere but may prevent resets from a button to show up when experiment is stopped.
                     }
                 } catch (Exception e) {
                     Log.e("processAnalysis", "Unhandled exception in analysis module " + mod.toString() + ".", e);
@@ -181,7 +184,7 @@ public class phyphoxExperiment implements Serializable {
         }
 
         //Send the results to audio playback if used
-        if (audioTrack != null) {
+        if (audioTrack != null && measuring) {
             if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && getBuffer(audioSource).isStatic)) {
                 //If the data is not static, or the audio track not yet initialized, we have to push our data to the audioTrack
 
@@ -230,7 +233,7 @@ public class phyphoxExperiment implements Serializable {
         }
 
         //Restart if used.
-        if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
+        if (measuring && audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
             audioTrack.play();
         }
 
