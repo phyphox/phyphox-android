@@ -21,10 +21,14 @@ import org.apache.poi.ss.usermodel.Workbook;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -102,18 +106,20 @@ public class dataExport implements Serializable {
     //Despite its name you can change the separator to something mot practical (i.e. tab-separated)
     //To provite multiple datasets, the plain-text files are grouped into a single zip-file.
     protected class csvFormat extends exportFormat implements Serializable {
-        protected String separator; //The separator, typically "," or "\t"
+        protected char separator; //The separator, typically "," or "\t"
+        protected char decimalPoint; //The separator, typically "," or "\t"
         protected String name; //The name of this format can be changed to describe different separators
 
         //This constructor allows to set a separator and a name
-        csvFormat(String separator, String name) {
+        csvFormat(char separator, char decimalPoint, String name) {
             this.separator = separator;
+            this.decimalPoint = decimalPoint;
             this.name = name;
         }
 
         //the default constructor uses a comma-separator (",") and an appropriate name
         csvFormat() {
-            this(",", "Comma-separated values (CSV)");
+            this(',', '.', "Comma-separated values (CSV)");
         }
 
         @Override
@@ -124,6 +130,13 @@ public class dataExport implements Serializable {
         @Override
         protected File export (Vector<exportSet> sets, File exportPath) {
             File file = new File(exportPath, "/"+getFilename()); // Create a file with default filename in the given path
+
+            DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+            format.applyPattern("0.000000000E0");
+            DecimalFormatSymbols dfs = format.getDecimalFormatSymbols();
+            dfs.setDecimalSeparator(decimalPoint);
+            format.setDecimalFormatSymbols(dfs);
+            format.setGroupingUsed(false);
 
             try { // A lot can go wrong here... Let's catch em all...
                 FileOutputStream stream = new FileOutputStream(file); //Open a basic output stream
@@ -136,7 +149,7 @@ public class dataExport implements Serializable {
                         //Contruct the table header in the first line
                         String header = "";
                         for (int j = 0; j < set.data.length; j++) { //Each column gets a name...
-                            header += set.sources.get(j).name;
+                            header += "\"" + set.sources.get(j).name + "\"";
                             if (j < set.data.length -1)
                                 header += separator;
                         }
@@ -146,17 +159,17 @@ public class dataExport implements Serializable {
                         //Then add all the data
                         for (int i = 0; i < set.data[0].length; i++) { //For each row of data... The first column determines the number of rows
                             //Construct the data row
-                            String data = "";
+                            StringBuilder data = new StringBuilder();
                             for (int j = 0; j < set.data.length; j++) { //For each column within this row
                                 if (i < set.data[j].length) //Do we have data for this cell?
-                                    data += set.data[j][i]; //Add it to the row
+                                    data.append(format.format(set.data[j][i])); //Add it to the row
                                 else
-                                    data += "NaN"; //No data? Enter NaN in the row
+                                    data.append("NaN"); //No data? Enter NaN in the row
                                 if (j < set.data.length - 1)
-                                    data += separator;
+                                    data.append(separator);
                             }
-                            data += "\n";
-                            zstream.write(data.getBytes()); //Write to zip-file
+                            data.append("\n");
+                            zstream.write(data.toString().getBytes()); //Write to zip-file
                         }
 
                         zstream.closeEntry(); //This dataset is complete. Close its file within the zip
@@ -266,9 +279,12 @@ public class dataExport implements Serializable {
 
     //This array holds instances of all export formats that should be presented to the user
     public final exportFormat[] exportFormats = {
-            new csvFormat(),
-            new csvFormat("\t", "Tab-separated values (CSV)"),
-            new excelFormat()
+            new excelFormat(),
+            new csvFormat(',', '.', "CSV (Comma, decimal point)"),
+            new csvFormat('\t', '.', "CSV (Tabulator, decimal point)"),
+            new csvFormat(';', '.', "CSV (Semicolon, decimal point)"),
+            new csvFormat('\t', ',', "CSV (Tabulator, decimal comma)"),
+            new csvFormat(';', ',', "CSV (Semicolon, decimal comma)")
     };
 
     //The constructor just has to store a reference to the experiment
