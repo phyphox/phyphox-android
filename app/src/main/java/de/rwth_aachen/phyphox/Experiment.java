@@ -62,7 +62,9 @@ import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 // Experiments are performed in this activity, which reacts to various intents.
@@ -158,8 +160,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             ab.setDisplayShowTitleEnabled(false);
         }
 
-        if (savedInstanceState != null)
-            experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
+        if (savedInstanceState != null) {
+            App app = (App) this.getApplicationContext();
+            experiment = app.experiment;
+            //experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
+        };
         if (experiment != null) {
             //We saved our experiment. Lets just retrieve it and continue
             onExperimentLoaded(experiment);
@@ -462,6 +467,31 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem timed_run = menu.findItem(R.id.action_timedRun);
         MenuItem remote = menu.findItem(R.id.action_remoteServer);
         MenuItem saveLocally = menu.findItem(R.id.action_saveLocally);
+
+        Iterator it = experiment.highlightedLinks.entrySet().iterator();
+        for (int i = 1; i <= 5; i++) {
+            MenuItem link;
+            switch (i) {
+                case 1: link = menu.findItem(R.id.action_link1);
+                    break;
+                case 2: link = menu.findItem(R.id.action_link2);
+                    break;
+                case 3: link = menu.findItem(R.id.action_link3);
+                    break;
+                case 4: link = menu.findItem(R.id.action_link4);
+                    break;
+                case 5: link = menu.findItem(R.id.action_link5);
+                    break;
+                default: link = menu.findItem(R.id.action_link5);
+                    break;
+            }
+            if (it.hasNext()) {
+                link.setVisible(true);
+                Map.Entry entry = (Map.Entry)it.next();
+                link.setTitle((String)entry.getKey());
+            } else
+                link.setVisible(false);
+        }
 
         //If a timed run timer is active, we show either timed_play or timed_pause. otherwise we show play or pause
         //The pause version is shown when we are measuring, the play version otherwise
@@ -802,6 +832,31 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             dialog.show();
             return true;
         }
+
+        int highlightLink = -1;
+        switch (id) {
+            case R.id.action_link1: highlightLink = 0;
+                break;
+            case R.id.action_link2: highlightLink = 1;
+                break;
+            case R.id.action_link3: highlightLink = 2;
+                break;
+            case R.id.action_link4: highlightLink = 3;
+                break;
+            case R.id.action_link5: highlightLink = 4;
+                break;
+            default: highlightLink = -1;
+                break;
+        }
+        if (highlightLink >= 0) {
+            Map.Entry entry = (Map.Entry)experiment.highlightedLinks.entrySet().toArray()[highlightLink];
+            Uri uri = Uri.parse((String)entry.getValue());
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            }
+        }
+
 
         //Save locally button (copy to collection). Instantiate and start the copying thread.
         if (id == R.id.action_saveLocally) {
@@ -1154,7 +1209,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putInt(STATE_CURRENT_VIEW, tabLayout.getSelectedTabPosition()); //Save current experiment view
             experiment.dataLock.lock(); //Save dataBuffers (synchronized, so no other thread alters them while we access them)
             try {
-                outState.putSerializable(STATE_EXPERIMENT, (Serializable)experiment);
+                App app = (App) getApplicationContext();
+                app.experiment = experiment;
+                //outState.putSerializable(STATE_EXPERIMENT, (Serializable)experiment);
             } finally {
                 experiment.dataLock.unlock();
             }

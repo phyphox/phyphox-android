@@ -11,8 +11,15 @@
         android:orderInCategory="4" app:showAsAction="always" />
     <item android:id="@+id/action_pause" android:title="@string/stop" android:icon="@drawable/pause"
         android:orderInCategory="5" app:showAsAction="always" />
+
     <item android:id="@+id/action_description" android:title="@string/show_description" android:icon="@drawable/info"
         android:orderInCategory="30" app:showAsAction="never" />
+    <item android:id="@+id/action_link1" android:title="@string/show_description" android:orderInCategory="31" app:showAsAction="never" />
+    <item android:id="@+id/action_link2" android:title="@string/show_description" android:orderInCategory="32" app:showAsAction="never" />
+    <item android:id="@+id/action_link3" android:title="@string/show_description" android:orderInCategory="33" app:showAsAction="never" />
+    <item android:id="@+id/action_link4" android:title="@string/show_description" android:orderInCategory="34" app:showAsAction="never" />
+    <item android:id="@+id/action_link5" android:title="@string/show_description" android:orderInCategory="35" app:showAsAction="never" />
+
     <item android:id="@+id/action_export" android:title="@string/export" android:icon="@drawable/download"
         android:orderInCategory="50" app:showAsAction="never" />
     <item android:id="@+id/action_share" android:title="@string/share" android:icon="@drawable/share"

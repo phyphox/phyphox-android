@@ -611,7 +611,12 @@ public abstract class phyphoxFile {
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation (might be replaced by a later translation block)
-                    experiment.links.put(getStringAttribute("label"), getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", ""));
+                    boolean highlighted = getBooleanAttribute("highlight", false);
+                    String label = getStringAttribute("label");
+                    String link = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
+                    experiment.links.put(label, link);
+                    if (highlighted)
+                        experiment.highlightedLinks.put(label, link);
                     break;
                 case "category": //The experiment's category (might be replaced by a later translation block)
                     experiment.category = getText();
@@ -691,7 +696,12 @@ public abstract class phyphoxFile {
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation
-                    experiment.links.put(getStringAttribute("label"), getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", ""));
+                    boolean highlighted = getBooleanAttribute("highlight", false);
+                    String label = getStringAttribute("label");
+                    String link = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
+                    experiment.links.put(label, link);
+                    if (highlighted)
+                        experiment.highlightedLinks.put(label, link);
                     break;
                 case "string": //Some other translation. In labels and names of view elements, the string defined here as the attribute "original" will be replaced by the text in this tag
                     translation.put(getStringAttribute("original"), getText()); //Store it in our translation mapping
