@@ -331,7 +331,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             this.experiment = null;
         }
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); //We are ready. Now the user may rotate.
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED); //We are ready. Now the user may rotate.
 
         //If this experiment has been loaded from a external source, we offer to save it locally
         if (!experiment.isLocal) {
@@ -1018,7 +1018,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
         if (!serverEnabled)
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
         //Deactivate any timer
         if (cdTimer != null) {
