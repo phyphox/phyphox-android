@@ -1120,8 +1120,8 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "less"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "more"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "a"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "b"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "true"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "false"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                     };
