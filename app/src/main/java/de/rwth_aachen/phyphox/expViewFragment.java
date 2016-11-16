@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 
+import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -8,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 
 public class expViewFragment extends Fragment {
@@ -66,6 +68,16 @@ public class expViewFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         root = inflater.inflate(R.layout.fragment_exp_view, container, false);
+
+        final LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
+        ll.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    InputMethodManager imm = (InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(ll.getWindowToken(), 0);
+                }
+            }
+        });
 
         return root;
     }

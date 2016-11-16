@@ -545,7 +545,17 @@ public class expView implements Serializable{
             valueUnit.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
             //The edit box
-            et = new EditText(c);
+            et = new EditText(c) {
+                @Override
+                public boolean onKeyPreIme(int keyCode, KeyEvent event) {
+                    if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
+                        et.clearFocus();
+                    } else if (keyCode == KeyEvent.KEYCODE_MENU) {
+
+                    }
+                    return super.onKeyPreIme(keyCode, event);
+                }
+            };
             et.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -595,8 +605,6 @@ public class expView implements Serializable{
                 public void onFocusChange(View v, boolean hasFocus) {
                     focused = hasFocus;
                     if (!hasFocus) {
-                        InputMethodManager imm = (InputMethodManager)c.getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
                         setValue(getValue()); //Write back the value actually used...
                     }
                 }
