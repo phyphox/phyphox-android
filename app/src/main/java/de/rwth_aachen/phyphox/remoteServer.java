@@ -637,7 +637,7 @@ public class remoteServer extends Thread {
                         sb.append("\", \"buffer\":[");
 
                         if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our bufer class
-                            if (Double.isNaN(db.value))
+                            if (Double.isNaN(db.value) || Double.isInfinite(db.value))
                                 sb.append("null");
                             else
                                 sb.append(format.format(db.value));
@@ -660,7 +660,7 @@ public class remoteServer extends Thread {
                                 else
                                     sb.append(",");
 
-                                if (Double.isNaN(v))
+                                if (Double.isNaN(v) || Double.isInfinite(v))
                                     sb.append("null");
                                 else
                                     sb.append(format.format(v));
