@@ -1677,7 +1677,7 @@ public abstract class phyphoxFile {
                     // until we reached at least one second. In the worst case (one sample less than
                     // one second) we will have data for just short of 2 seconds.
                     if (experiment.audioLoop && experiment.audioBufferSize < 2 * experiment.audioRate)
-                        experiment.audioBufferSize = 2 * experiment.audioBufferSize;
+                        experiment.audioBufferSize = 2 * experiment.audioRate;
 
                     break;
                 }

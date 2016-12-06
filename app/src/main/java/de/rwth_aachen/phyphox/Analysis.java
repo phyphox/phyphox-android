@@ -1180,8 +1180,12 @@ public class Analysis {
             for (int i = 0; i < inputs.size(); i++) { //For each input
                 //Get iterator
                 Iterator it = inputs.get(i).getIterator();
-                if (it == null) //non-buffer values are ignored
+                if (it == null) { //non-buffer value
+                    double v = inputs.get(i).getValue();
+                    if (!Double.isNaN(v))
+                        outputs.get(0).append(v);
                     continue;
+                }
                 //Append all data from input to the output buffer
                 while (it.hasNext()) {
                     outputs.get(0).append((double)it.next());
