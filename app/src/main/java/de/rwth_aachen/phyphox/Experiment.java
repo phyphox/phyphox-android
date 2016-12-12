@@ -13,6 +13,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
@@ -467,6 +468,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem timed_run = menu.findItem(R.id.action_timedRun);
         MenuItem remote = menu.findItem(R.id.action_remoteServer);
         MenuItem saveLocally = menu.findItem(R.id.action_saveLocally);
+        MenuItem calibratedMagnetometer = menu.findItem(R.id.action_calibrated_magnetometer);
 
         Iterator it = experiment.highlightedLinks.entrySet().iterator();
         for (int i = 1; i <= 5; i++) {
@@ -524,6 +526,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //The remote server option is checked if activated
         remote.setChecked(serverEnabled);
+
+        //The calibrated magnetometer entry is only shown if the experiment uses a magnetometer and if the API level is high enough to offer an uncalibrated alternative
+        boolean magnetometer = false;
+        boolean calibrated = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) != null) {
+            for (sensorInput sensor : experiment.inputSensors) {
+                if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+                    magnetometer = true;
+                    calibrated = sensor.calibrated;
+                }
+            }
+        }
+        calibratedMagnetometer.setVisible(magnetometer);
+        calibratedMagnetometer.setChecked(calibrated);
 
         //If the timedRun is active, we have to set the value of the countdown
         if (timedRun) {
@@ -740,6 +756,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
             } catch (Exception e) {
                 Log.e("action_share", "Unhandled exception", e);
+            }
+        }
+
+        if (id == R.id.action_calibrated_magnetometer) {
+            stopMeasurement();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                for (sensorInput sensor : experiment.inputSensors) {
+                    if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+                        sensor.calibrated = !item.isChecked();
+                    }
+                }
             }
         }
 

@@ -92,6 +92,8 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="remoteServerActive">Remote access enabled. Access this experiment from te following URL:\n%1$s</string>
     <string name="hotspotSettings">Hotspot Settings</string>
 
+    <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
+
     <string name="switchColumns1">View: 1 column</string>
     <string name="switchColumns2">View: 2 columns</string>
     <string name="switchColumns3">View: 3 columns</string>

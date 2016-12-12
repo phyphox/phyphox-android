@@ -4,6 +4,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 
 import java.io.Serializable;
 import java.util.Vector;
@@ -13,6 +14,7 @@ import java.util.concurrent.locks.Lock;
 //  the android identifiers and handles their output, which is written to the dataBuffers
 public class sensorInput implements SensorEventListener, Serializable {
     public int type; //Sensor type (Android identifier)
+    public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
     public dataBuffer dataX; //Data-buffer for x
@@ -100,6 +102,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                 return R.string.sensorAccelerometer;
             case Sensor.TYPE_MAGNETIC_FIELD: this.type = Sensor.TYPE_MAGNETIC_FIELD;
                 return R.string.sensorMagneticField;
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED: this.type = Sensor.TYPE_MAGNETIC_FIELD;
+                return R.string.sensorMagneticField;
             case Sensor.TYPE_PRESSURE: this.type = Sensor.TYPE_PRESSURE;
                 return R.string.sensorPressure;
         }
@@ -109,6 +113,13 @@ public class sensorInput implements SensorEventListener, Serializable {
     //Start the data aquisition by registering a listener for this sensor.
     public void start() {
         this.t0 = 0; //Reset t0. This will be set by the first sensor event
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)) {
+            if (calibrated)
+                this.type = Sensor.TYPE_MAGNETIC_FIELD;
+            else
+                this.type = Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED;
+        }
 
         //Reset averaging
         this.lastReading = 0;
