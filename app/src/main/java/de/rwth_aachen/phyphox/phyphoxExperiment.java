@@ -191,7 +191,6 @@ public class phyphoxExperiment implements Serializable {
 
                 if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
                     audioTrack.pause(); //Stop the playback first
-                audioTrack.flush(); //Empty the buffer
 
 
                 //Get the data to output
