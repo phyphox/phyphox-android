@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Einstellungen</string>
+    <string name="calibrated_magnetometer">Kalibriertes Magnetometer nutzen</string>
     <string name="cancel">Abbrechen</string>
     <string name="clear_data">Daten löschen</string>
     <string name="close">Schließen</string>
