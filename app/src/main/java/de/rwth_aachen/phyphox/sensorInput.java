@@ -36,6 +36,19 @@ public class sensorInput implements SensorEventListener, Serializable {
         }
     }
 
+    public static int resolveSensorString(String type) {
+        //Interpret the type string
+        switch (type) {
+            case "linear_acceleration": return Sensor.TYPE_LINEAR_ACCELERATION;
+            case "light": return Sensor.TYPE_LIGHT;
+            case "gyroscope": return Sensor.TYPE_GYROSCOPE;
+            case "accelerometer": return Sensor.TYPE_ACCELEROMETER;
+            case "magnetic_field": return Sensor.TYPE_MAGNETIC_FIELD;
+            case "pressure": return Sensor.TYPE_PRESSURE;
+            default: return -1;
+        }
+    }
+
     //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
     //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
     //be null to be left unused.
@@ -49,22 +62,9 @@ public class sensorInput implements SensorEventListener, Serializable {
 
         this.average = average;
 
-        //Interpret the type string
-        switch (type) {
-            case "linear_acceleration": this.type = Sensor.TYPE_LINEAR_ACCELERATION;
-                break;
-            case "light": this.type = Sensor.TYPE_LIGHT;
-                break;
-            case "gyroscope": this.type = Sensor.TYPE_GYROSCOPE;
-                break;
-            case "accelerometer": this.type = Sensor.TYPE_ACCELEROMETER;
-                break;
-            case "magnetic_field": this.type = Sensor.TYPE_MAGNETIC_FIELD;
-                break;
-            case "pressure": this.type = Sensor.TYPE_PRESSURE;
-                break;
-            default: throw  new SensorException("Unknown sensor.");
-        }
+        this.type = resolveSensorString(type);
+        if (this.type < 0)
+            throw  new SensorException("Unknown sensor.");
 
         //Store the buffer references if any
         if (buffers == null)
@@ -90,24 +90,28 @@ public class sensorInput implements SensorEventListener, Serializable {
     }
 
     //Get the internationalization string for a sensor type
-    public int getDescriptionRes() {
+    public static int getDescriptionRes(int type) {
         switch (type) {
             case Sensor.TYPE_LINEAR_ACCELERATION:
                 return R.string.sensorLinearAcceleration;
-            case Sensor.TYPE_LIGHT: this.type = Sensor.TYPE_LIGHT;
+            case Sensor.TYPE_LIGHT:
                 return R.string.sensorLight;
-            case Sensor.TYPE_GYROSCOPE: this.type = Sensor.TYPE_GYROSCOPE;
+            case Sensor.TYPE_GYROSCOPE:
                 return R.string.sensorGyroscope;
-            case Sensor.TYPE_ACCELEROMETER: this.type = Sensor.TYPE_ACCELEROMETER;
+            case Sensor.TYPE_ACCELEROMETER:
                 return R.string.sensorAccelerometer;
-            case Sensor.TYPE_MAGNETIC_FIELD: this.type = Sensor.TYPE_MAGNETIC_FIELD;
+            case Sensor.TYPE_MAGNETIC_FIELD:
                 return R.string.sensorMagneticField;
-            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED: this.type = Sensor.TYPE_MAGNETIC_FIELD;
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
                 return R.string.sensorMagneticField;
-            case Sensor.TYPE_PRESSURE: this.type = Sensor.TYPE_PRESSURE;
+            case Sensor.TYPE_PRESSURE:
                 return R.string.sensorPressure;
         }
         return R.string.unknown;
+    }
+
+    public int getDescriptionRes() {
+        return sensorInput.getDescriptionRes(type);
     }
 
     //Start the data aquisition by registering a listener for this sensor.

@@ -1079,6 +1079,18 @@ public class expView implements Serializable{
                 transformY = "ticks: [0.01,0.1,1,10], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, ";
             else
                 transformY = "\"ticks\": 3, ";
+
+            String scaleX = "";
+            if (scaleMinX == graphView.scaleMode.fixed && !Double.isNaN(minX))
+                scaleX += "\"min\":" + minX + ", ";
+            if (scaleMaxX == graphView.scaleMode.fixed && !Double.isNaN(maxX))
+                scaleX += "\"max\":" + maxX + ", ";
+            String scaleY = "";
+            if (scaleMinY == graphView.scaleMode.fixed && !Double.isNaN(minY))
+                scaleY += "\"min\":" + minY + ", ";
+            if (scaleMaxY == graphView.scaleMode.fixed && !Double.isNaN(maxY))
+                scaleY += "\"max\":" + maxY + ", ";
+
             return "function () {" +
                         "var d = [];" +
                         "if (!elementData["+htmlID+"].hasOwnProperty(\"y\"))" +
@@ -1090,7 +1102,7 @@ public class expView implements Serializable{
                         "}" +
                         "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(line ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth)+"}, \"points\": {show:"+(!line ? "true" : "false")+"}, \"xaxis\": {" + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
+                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(line ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth)+"}, \"points\": {show:"+(!line ? "true" : "false")+"}, \"xaxis\": {" + scaleX + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + scaleY + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
                     "}";
         }
 

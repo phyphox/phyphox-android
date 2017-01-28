@@ -20,6 +20,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
@@ -58,6 +59,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Vector;
@@ -71,6 +73,7 @@ public class ExperimentList extends AppCompatActivity {
     public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
     public final static String EXPERIMENT_SENSORREADY = "com.dicon.phyphox.EXPERIMENT_SENSORREADY";
+    public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
 
     //String constant to identify our preferences
     public static final String PREFS_NAME = "phyphox";
@@ -201,7 +204,7 @@ public class ExperimentList extends AppCompatActivity {
         Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
         Vector<String> xmlFiles = new Vector<>(); //List of xmlFile name for each experiment (has to be provided in the intent if the user wants to load this)
         Vector<Boolean> isAssetList = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
-        Vector<Boolean> sensorReadyList = new Vector<>(); //List of booleans for each experiment, which track whether the experiment is available due to availability of the sensors required
+        Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
 
         //The constructor takes the activity reference. That's all.
         public experimentItemAdapter(Activity parentActivity) {
@@ -230,7 +233,7 @@ public class ExperimentList extends AppCompatActivity {
             Intent intent = new Intent(v.getContext(), Experiment.class);
             intent.putExtra(EXPERIMENT_XML, xmlFiles.get(position));
             intent.putExtra(EXPERIMENT_ISASSET, isAssetList.get(position));
-            intent.putExtra(EXPERIMENT_SENSORREADY, sensorReadyList.get(position));
+            intent.putExtra(EXPERIMENT_UNAVAILABLESENSOR, unavailableSensorList.get(position));
             intent.setAction(Intent.ACTION_VIEW);
 
             //If we are on a recent API, we can add a nice zoom animation
@@ -246,7 +249,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(Drawable icon, String title, String info, String xmlFile, boolean isAsset, boolean sensorReady) {
+        public void addExperiment(Drawable icon, String title, String info, String xmlFile, boolean isAsset, Integer unavailableSensor) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -261,7 +264,7 @@ public class ExperimentList extends AppCompatActivity {
             infos.insertElementAt(info, i);
             xmlFiles.insertElementAt(xmlFile, i);
             isAssetList.insertElementAt(isAsset, i);
-            sensorReadyList.insertElementAt(sensorReady, i);
+            unavailableSensorList.insertElementAt(unavailableSensor, i);
 
             //Notify the adapter that we changed its contents
             this.notifyDataSetChanged();
@@ -285,7 +288,29 @@ public class ExperimentList extends AppCompatActivity {
                 convertView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        start(position, v);
+                        if (unavailableSensorList.get(position) < 0)
+                            start(position, v);
+                        else {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                            builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(unavailableSensorList.get(position)) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
+                                    .setTitle(R.string.sensorNotAvailableWarningTitle)
+                                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+
+                                        }
+                                    })
+                                    .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
+                                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                            if (intent.resolveActivity(getPackageManager()) != null) {
+                                                startActivity(intent);
+                                            }
+                                        }
+                                    });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        }
                     }
                 });
 
@@ -308,7 +333,7 @@ public class ExperimentList extends AppCompatActivity {
             holder.title.setText(titles.get(position));
             holder.info.setText(infos.get(position));
 
-            if (!sensorReadyList.get(position)) {
+            if (unavailableSensorList.get(position) >= 0) {
                 holder.title.setTextColor(res.getColor(R.color.mainDisabled));
                 holder.info.setTextColor(res.getColor(R.color.mainDisabled));
             } else {
@@ -492,8 +517,8 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter.
-        public void addExperiment(String exp, Drawable image, String description, final String xmlFile, boolean isAsset, boolean sensorReady) {
-            experiments.addExperiment(image, exp, description, xmlFile, isAsset, sensorReady);
+        public void addExperiment(String exp, Drawable image, String description, final String xmlFile, boolean isAsset, Integer unavailableSensor) {
+            experiments.addExperiment(image, exp, description, xmlFile, isAsset, unavailableSensor);
         }
 
         //Helper to check if the name of this category matches a given string
@@ -517,18 +542,18 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isAsset, boolean sensorReady) {
+    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isAsset, Integer unavailableSensor) {
         //Check all categories for the category of the new experiment
         for (category icat : categories) {
             if (icat.hasName(cat)) {
                 //Found it. Add the experiment and return
-                icat.addExperiment(exp, image, description, xmlFile, isAsset, sensorReady);
+                icat.addExperiment(exp, image, description, xmlFile, isAsset, unavailableSensor);
                 return;
             }
         }
         //Category does not yet exist. Create it and add the experiment
         categories.add(new category(cat, this));
-        categories.lastElement().addExperiment(exp, image, description, xmlFile, isAsset, sensorReady);
+        categories.lastElement().addExperiment(exp, image, description, xmlFile, isAsset, unavailableSensor);
     }
 
     //Decode the experiment icon (base64) and return a bitmap
@@ -565,7 +590,7 @@ public class ExperimentList extends AppCompatActivity {
             //This part is used to check sensor availability before launching the experiment
             SensorManager sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
             boolean inInput = false;
-            boolean sensorReady = true;
+            Integer unavailableSensor = -1;
 
             boolean perfectTranslationFound = false; //Becomes true if the global locale or a translation locale matches the system locale - if true, no other translations will be read.
             while (eventType != XmlPullParser.END_DOCUMENT){ //Go through all tags until the end...
@@ -630,7 +655,7 @@ public class ExperimentList extends AppCompatActivity {
                                     inInput = true;
                                 break;
                             case "sensor":
-                                if (!inInput || !sensorReady)
+                                if (!inInput || unavailableSensor >= 0)
                                     break;
                                 String type = xpp.getAttributeValue(null, "type");
                                 sensorInput testSensor;
@@ -638,11 +663,13 @@ public class ExperimentList extends AppCompatActivity {
                                     testSensor = new sensorInput(type, 0, false, null, null);
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (sensorInput.SensorException e) {
-                                    sensorReady = false;
+                                    unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
+                                    Log.d("SENSOR","x" + unavailableSensor);
                                     break;
                                 }
                                 if (!testSensor.isAvailable()) {
-                                    sensorReady = false;
+                                    unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
+                                    Log.d("SENSOR", "x"+unavailableSensor);
                                 }
                                 break;
                         }
@@ -692,7 +719,7 @@ public class ExperimentList extends AppCompatActivity {
                 image = new TextIcon(title.substring(0, 3), this);
 
             //We have all the information. Add the experiment.
-            addExperiment(title, category, image, description, experimentXML, isAsset, sensorReady);
+            addExperiment(title, category, image, description, experimentXML, isAsset, unavailableSensor);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             Toast.makeText(this, "Error loading " + experimentXML + " (XML Exception)", Toast.LENGTH_LONG).show();

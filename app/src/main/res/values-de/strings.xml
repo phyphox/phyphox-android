@@ -51,6 +51,8 @@
     <string name="sensorNotAvailableWarningText1">Der Sensor</string>
     <string name="sensorNotAvailableWarningText2">ist nicht verfügbar. Normalerweise bedeutet dies, dass Ihr Gerät über keinen solchen Sensor verfügt.</string>
     <string name="sensorNotAvailableWarningTitle">Sensor nicht verfügbar.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Weitere Infos</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/de/faq-de/#faqMissingSensor</string>
     <string name="sensorPressure">Druck</string>
     <string name="share">Screenshot teilen</string>
     <string name="share_pick_share">Wählen Sie eine App zum Teilen</string>
