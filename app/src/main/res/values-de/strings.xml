@@ -30,7 +30,7 @@
     <string name="newExperimentInputRate">Sensorrate (in Hz, 0 = so schnell wie möglich)</string>
     <string name="newExperimentInputSensors">Aktive Sensoren</string>
     <string name="newExperimentInputTitle">Titel</string>
-    <string name="newExperimentPhyphoxInfo">Besuchen Sie phyphox.com, um komplexere Experimente mit einer Datenanalyse zu erstellen und diese mit Kollegen, Schülern und Freunden zu teilen.</string>
+    <string name="newExperimentPhyphoxInfo">Besuchen Sie phyphox.org, um komplexere Experimente mit einer Datenanalyse zu erstellen und diese mit Kollegen, Schülern und Freunden zu teilen.</string>
     <string name="next">Weiter</string>
     <string name="ok">OK</string>
     <string name="pick_exportFormat">Wählen Sie ein Datei-Format.</string>

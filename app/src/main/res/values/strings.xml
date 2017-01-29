@@ -4,7 +4,7 @@
     <string name="title_activity_experiment">phyphox</string>
 
     <string name="newExperiment">Add simple experiment</string>
-    <string name="newExperimentPhyphoxInfo">Visit phyphox.com to create more advanced experiments including data analysis and share them with colleagues, students and friends.</string>
+    <string name="newExperimentPhyphoxInfo">Visit phyphox.org to create more advanced experiments including data analysis and share them with colleagues, students and friends.</string>
     <string name="newExperimentInputTitle">Title</string>
     <string name="newExperimentInputBufferSize">Buffer size (number of values to be stored)</string>
     <string name="newExperimentInputRate">Sensor rate (in Hz, 0 = as fast as possible)</string>
