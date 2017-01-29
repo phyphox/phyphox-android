@@ -413,6 +413,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     return;
                 int pos[] = new int[2];
                 actionBar.getLocationOnScreen(pos);
+                if(isFinishing())
+                    return;
                 popupWindow.showAtLocation(actionBar, Gravity.TOP | Gravity.RIGHT, 0, pos[1] + (int)(actionBar.getHeight()*0.8));
             }
         });
