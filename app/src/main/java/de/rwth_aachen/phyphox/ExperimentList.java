@@ -716,7 +716,7 @@ public class ExperimentList extends AppCompatActivity {
 
             //Let's check the icon
             if (image == null) //No icon given. Create a TextIcon from the first three characters of the title
-                image = new TextIcon(title.substring(0, 3), this);
+                image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
 
             //We have all the information. Add the experiment.
             addExperiment(title, category, image, description, experimentXML, isAsset, unavailableSensor);
