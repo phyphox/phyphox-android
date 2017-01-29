@@ -340,7 +340,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED); //We are ready. Now the user may rotate.
 
         //If this experiment has been loaded from a external source, we offer to save it locally
-        if (!experiment.isLocal) {
+        if (!experiment.isLocal && experiment.loaded) {
             hintDismissed = true; //Do not show menu hint for external experiments
 
             if (!saveLocallyDismissed) {
@@ -363,8 +363,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
         }
 
-        //An explanation is not necessary for raw sensors
-        if (experiment.category.equals(res.getString(R.string.categoryRawSensor)))
+        //An explanation is not necessary for raw sensors and of course we don't want it if there is an error
+        if (experiment.category.equals(res.getString(R.string.categoryRawSensor)) || !experiment.loaded)
             hintDismissed = true;
 
         if (!hintDismissed)
