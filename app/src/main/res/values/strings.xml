@@ -49,6 +49,9 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="sensorAccelerometer">Accelerometer</string>
     <string name="sensorMagneticField">Magnetic Field</string>
     <string name="sensorPressure">Pressure</string>
+    <string name="sensorTemperature">Temperature</string>
+    <string name="sensorHumidity">Humidity</string>
+    <string name="sensorProximity">Proximity</string>
 
     <string name="sensorNotAvailableWarningTitle">Sensor not available</string>
     <string name="sensorNotAvailableWarningText1">The sensor</string>

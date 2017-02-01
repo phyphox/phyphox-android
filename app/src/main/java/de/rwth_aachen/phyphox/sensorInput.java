@@ -45,6 +45,9 @@ public class sensorInput implements SensorEventListener, Serializable {
             case "accelerometer": return Sensor.TYPE_ACCELEROMETER;
             case "magnetic_field": return Sensor.TYPE_MAGNETIC_FIELD;
             case "pressure": return Sensor.TYPE_PRESSURE;
+            case "temperature": return Sensor.TYPE_AMBIENT_TEMPERATURE;
+            case "humidity": return Sensor.TYPE_RELATIVE_HUMIDITY;
+            case "proximity": return Sensor.TYPE_PROXIMITY;
             default: return -1;
         }
     }
@@ -106,6 +109,12 @@ public class sensorInput implements SensorEventListener, Serializable {
                 return R.string.sensorMagneticField;
             case Sensor.TYPE_PRESSURE:
                 return R.string.sensorPressure;
+            case Sensor.TYPE_AMBIENT_TEMPERATURE:
+                return R.string.sensorTemperature;
+            case Sensor.TYPE_RELATIVE_HUMIDITY:
+                return R.string.sensorHumidity;
+            case Sensor.TYPE_PROXIMITY:
+                return R.string.sensorProximity;
         }
         return R.string.unknown;
     }
