@@ -243,7 +243,7 @@ public class expView implements Serializable{
                 ds.setTextSize(ds.getTextSize() * mProportion);
                 ds.getTextBounds("1A", 0, 2, bounds);
                 shift += bounds.bottom - bounds.top;
-                ds.baselineShift += shift/2;
+                ds.baselineShift += Math.round(shift/2.);
             }
         }
 
@@ -312,6 +312,7 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
             row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
 
             //Create the label as textView
             TextView labelView = new TextView(c);
@@ -332,7 +333,7 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //right half should be value+unit
             tv.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize); //Align left to the center of the row
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize*(float)size); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
             tv.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
@@ -374,7 +375,7 @@ public class expView implements Serializable{
 
                 if (size != 1.0) {
                     SpannableString sStr = new SpannableString(out);
-                    sStr.setSpan(new MiddleRelativeSizeSpan((float)size), 0, vStr.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    sStr.setSpan(new MiddleRelativeSizeSpan(1.f/(float)size), vStr.length(), out.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
                     tv.setText(sStr);
                 } else {
                     tv.setText(out);
@@ -399,7 +400,6 @@ public class expView implements Serializable{
 
     //infoElement implements a simple static text display, which gives additional info to the user
     public class infoElement extends expViewElement implements Serializable {
-        transient private TextView tv; //Holds the Android textView
 
         //Constructor takes the same arguments as the expViewElement constructor
         infoElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
@@ -440,8 +440,66 @@ public class expView implements Serializable{
         //  <p>text</p>
         //</div>
         protected String createViewHTML(){
-            return "<div style=\"font-size:\"+this.labelSize/.4+\"%;\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
                     "<p>"+this.label+"</p>" +
+                    "</div>";
+        }
+
+        @Override
+        //In Javascript we don't have to do anything
+        protected String setValueHTML() {
+            return "function (x) {}";
+        }
+    }
+
+    //separatorElement implements a simple spacing, optionally showing line
+    public class separatorElement extends expViewElement implements Serializable {
+        private int color = 0;
+        private float height = 0.1f;
+
+        //Label is not used
+        separatorElement(String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+            super("", valueOutput, valueInput, dataXInput, dataYInput, res);
+        }
+
+        public void setColor(int c) {
+            this.color = c;
+        }
+
+        public void setHeight(float h) {
+            this.height = h;
+        }
+
+        @Override
+        //This does not display anything. Do not update.
+        protected String getUpdateMode() {
+            return "none";
+        }
+
+        @Override
+        //Append the Android views we need to the linear layout
+        protected void createView(LinearLayout ll, Context c, Resources res){
+
+            //Create the text as textView
+            View v = new View(c);
+            LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (int)(res.getDimension(R.dimen.info_element_font)*height));
+            v.setLayoutParams(lllp);
+            v.setBackgroundColor(color);
+
+            //Add it to the linear layout
+            ll.addView(v);
+        }
+
+        @Override
+        //Creat the HTML version of this view:
+        //<div>
+        //  <p>text</p>
+        //</div>
+        protected String createViewHTML(){
+            String c = String.format("%08x", color).substring(2);
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;background: #;height: "+height+"em"+ c +"\" class=\"separatorElement\" id=\"element"+htmlID+"\">" +
                     "</div>";
         }
 
@@ -722,8 +780,8 @@ public class expView implements Serializable{
             b = new Button(c);
 
             LinearLayout.LayoutParams vglp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.info_element_margin), res.getDisplayMetrics());
-            vglp.setMargins(0, margin, 0, 0);
+//            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.info_element_margin), res.getDisplayMetrics());
+//            vglp.setMargins(0, margin, 0, 0);
             vglp.gravity = Gravity.CENTER;
 
             b.setLayoutParams(vglp);

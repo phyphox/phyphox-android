@@ -45,6 +45,8 @@ public abstract class phyphoxFile {
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
     private static String translate(String input) {
+        if (input == null)
+            return "";
         if (translation.containsKey(input.trim()))
             return translation.get(input.trim());
         else
@@ -261,7 +263,7 @@ public abstract class phyphoxFile {
                 return defaultValue;
             if (att.length() != 6)
                 return defaultValue;
-            return Integer.parseInt(att, 16);
+            return Integer.parseInt(att, 16) | 0xff000000;
         }
 
         //These functions should be overriden with block-specific code
@@ -832,6 +834,14 @@ public abstract class phyphoxFile {
                 case "info": //An info element just shows some text
                     expView.infoElement infoe = newView.new infoElement(label, null, null, null, null, parent.getResources()); //No inputs, just the label and resources
                     newView.elements.add(infoe);
+                    break;
+                case "separator": //An info element just shows some text
+                    expView.separatorElement separatore = newView.new separatorElement(null, null, null, null, parent.getResources()); //No inputs, just the label and resources
+                    int c = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
+                    float height = (float)getDoubleAttribute("height", 0.1);
+                    separatore.setColor(c);
+                    separatore.setHeight(height);
+                    newView.elements.add(separatore);
                     break;
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
