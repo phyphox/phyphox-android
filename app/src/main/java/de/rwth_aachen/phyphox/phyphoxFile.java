@@ -362,7 +362,7 @@ public abstract class phyphoxFile {
                     if (mapping != null) {
                         //An explicit mapping has been given
 
-                        //Check if there is a matchin inputMapping
+                        //Check if there is a matching inputMapping
                         for (int i = 0; i < inputMapping.length; i++) {
                             if (inputMapping[i].name.equals(mapping)) {
                                 targetIndex = i;
@@ -379,11 +379,10 @@ public abstract class phyphoxFile {
                             inputList.setSize(targetIndex+1);
 
                         //If the targetIndex is not yet mapped, we are done here. If not, we have to check if this entry is repeatable, so we can map it again
-                        if (inputList.get(targetIndex) != null) {
+                        if (inputList.get(targetIndex) != null || inputMapping[targetIndex].repeatableOffset >= 0) {
                             if (inputMapping[targetIndex].repeatableOffset >= 0) {
                                 //It is repeatable. Let's calculate a new index according to the repeatable offset
                                 int repeatPeriod = inputMapping[inputMapping.length-1].repeatableOffset+1;
-                                targetIndex = inputMapping.length + inputMapping[mappingIndex].repeatableOffset;
                                 //If the value is repeatable, we want to add it to the last current repeatable group
                                 while (targetIndex-inputMapping[mappingIndex].repeatableOffset+repeatPeriod < inputList.size())
                                     targetIndex += repeatPeriod;
