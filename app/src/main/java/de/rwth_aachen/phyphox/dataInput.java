@@ -10,6 +10,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class dataInput implements Serializable {
     boolean isBuffer = false;
+    boolean isEmpty = false;
     double value = Double.NaN;
     dataBuffer buffer = null;
     boolean clearAfterRead = true;
@@ -26,19 +27,28 @@ public class dataInput implements Serializable {
     protected dataInput(dataBuffer buffer, boolean clear) {
         this.clearAfterRead = clear;
         isBuffer = true;
+        this.isEmpty = false;
         this.buffer = buffer;
     }
 
     //Constructor if this should contain a constant value
     protected dataInput(double value) {
         isBuffer = false;
+        this.isEmpty = false;
         this.value = value;
+    }
+
+    protected dataInput() {
+        this.isBuffer = false;
+        this.isEmpty = true;
     }
 
     //Get the number of elements actually filled into the buffer
     public int getFilledSize() {
         if (isBuffer)
             return buffer.getFilledSize();
+        else if (isEmpty)
+            return 0;
         else
             return 1;
     }
@@ -55,6 +65,8 @@ public class dataInput implements Serializable {
     public Double[] getArray() {
         if (isBuffer) {
             return buffer.getArray();
+        } else if (isEmpty) {
+            return new Double[0];
         } else {
             Double ret[] = new Double[1];
             ret[0] = value;
@@ -66,6 +78,8 @@ public class dataInput implements Serializable {
     public short[] getShortArray() {
         if (isBuffer) {
             return buffer.getShortArray();
+        } else if (isEmpty) {
+            return new short[0];
         } else {
             short ret[] = new short[1];
             ret[0] = (short) (value * (Short.MAX_VALUE)); //Rescale data to short range;
@@ -74,12 +88,15 @@ public class dataInput implements Serializable {
     }
 
     public void clear() {
-        buffer.clear();
+        if (isBuffer)
+            buffer.clear();
     }
 
     protected dataInput copy() {
         if (this.isBuffer) {
             return new dataInput(this.buffer.copy(), this.clearAfterRead);
+        } else if (isEmpty) {
+            return new dataInput();
         } else {
             return new dataInput(this.value);
         }

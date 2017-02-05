@@ -823,9 +823,9 @@ public class expView implements Serializable{
                     continue;
                 outputs.get(i).clear();
                 if (inputs.get(i).isBuffer && inputs.get(i).buffer != null)
-                    outputs.get(i).append(inputs.get(i).getValue());
-                else
                     outputs.get(i).append(inputs.get(i).getArray(), inputs.get(i).getFilledSize());
+                else if (!inputs.isEmpty())
+                    outputs.get(i).append(inputs.get(i).getValue());
             }
             return true;
         }

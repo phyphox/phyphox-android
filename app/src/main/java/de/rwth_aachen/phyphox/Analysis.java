@@ -132,6 +132,7 @@ public class Analysis {
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
 
         protected boolean useArray = false;
+        protected boolean clearInModule = false;
 
         //Main contructor
         protected analysisModule(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
@@ -154,7 +155,7 @@ public class Analysis {
             if (!(isStatic && executed)) {
                 boolean inputsReady = true;
                 for (int i = 0; i < inputsOriginal.size(); i++) {
-                    if (inputsOriginal.get(i) != null && inputsOriginal.get(i).getFilledSize() == 0) {
+                    if (inputsOriginal.get(i) != null && !inputsOriginal.get(i).isEmpty && inputsOriginal.get(i).getFilledSize() == 0) {
                         inputsReady = false;
                         break;
                     }
@@ -190,9 +191,11 @@ public class Analysis {
                     experiment.dataLock.unlock();
                 }
 
-                for (dataOutput output : outputs)
-                    if (output != null && output.clearBeforeWrite)
-                        output.buffer.clear();
+                if (!clearInModule) {
+                    for (dataOutput output : outputs)
+                        if (output != null && output.clearBeforeWrite)
+                            output.buffer.clear();
+                }
 
 //                long updateStart = System.nanoTime();
 
@@ -264,18 +267,28 @@ public class Analysis {
             this.equal = equal;
             this.greater = greater;
             useArray = true;
+            clearInModule = true;
         }
 
         @Override
         protected void update() {
-            if (inputArrays.size() < 4 || inputArraySizes.get(0) == 0 || inputArraySizes.get(1) == 0)
+            if (inputArrays.size() < 2 || inputArraySizes.get(0) == 0 || inputArraySizes.get(1) == 0)
                 return;
-            double a = inputArrays.get(0)[inputArraySizes.get(0)-1];
-            double b = inputArrays.get(1)[inputArraySizes.get(1)-1];
-            if ((a < b && less) || (a == b && equal) || (a > b && greater))
-                outputs.get(0).append(inputArrays.get(2), inputArraySizes.get(2));
-            else
-                outputs.get(0).append(inputArrays.get(3), inputArraySizes.get(3));
+            double a = inputArrays.get(0)[inputArraySizes.get(0) - 1];
+            double b = inputArrays.get(1)[inputArraySizes.get(1) - 1];
+            if ((a < b && less) || (a == b && equal) || (a > b && greater)) {
+                if (inputArrays.size() >= 3 && inputArrays.get(2) != null) {
+                    if (outputs.get(0).clearBeforeWrite)
+                        outputs.get(0).clear();
+                    outputs.get(0).append(inputArrays.get(2), inputArraySizes.get(2));
+                }
+            } else {
+                if (inputArrays.size() >= 4  && inputArrays.get(3) != null) {
+                    if (outputs.get(0).clearBeforeWrite)
+                        outputs.get(0).clear();
+                    outputs.get(0).append(inputArrays.get(3), inputArraySizes.get(3));
+                }
+            }
         }
     }
 
@@ -1178,6 +1191,8 @@ public class Analysis {
         @Override
         protected void update() {
             for (int i = 0; i < inputs.size(); i++) { //For each input
+                if (inputs.get(i).isEmpty)
+                    continue;
                 //Get iterator
                 Iterator it = inputs.get(i).getIterator();
                 if (it == null) { //non-buffer value

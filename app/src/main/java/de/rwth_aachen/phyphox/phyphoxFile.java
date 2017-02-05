@@ -317,6 +317,7 @@ public abstract class phyphoxFile {
             boolean asRequired = true;
             int repeatableOffset = -1;
             boolean valueAllowed = true;
+            boolean emptyAllowed = false;
             int minCount = 0;
             int maxCount = 0;
             int count = 0;
@@ -475,6 +476,13 @@ public abstract class phyphoxFile {
                             throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                         else {
                             inputList.set(targetIndex, new dataInput(buffer, clearAfterRead));
+                        }
+                    } else if (type.equals("empty")) {
+                        //No input, Is this allowed?
+                        if (inputMapping[mappingIndex].emptyAllowed) {
+                            inputList.set(targetIndex, new dataInput());
+                        } else {
+                            throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
                         }
                     } else {
                         throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
@@ -920,7 +928,7 @@ public abstract class phyphoxFile {
                 case "button": { //The edit element can take input from the user
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; repeatableOffset = 0;}},
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; emptyAllowed = true; repeatableOffset = 0;}},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0;}}
@@ -1131,8 +1139,8 @@ public abstract class phyphoxFile {
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "a"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "b"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "true"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "false"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "true"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = true; emptyAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "false"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = true; emptyAllowed = true; repeatableOffset = -1; }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "result"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
@@ -1479,7 +1487,7 @@ public abstract class phyphoxFile {
                 case "append": { //Append the inputs to each other
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; emptyAllowed = true; repeatableOffset = 0; }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
