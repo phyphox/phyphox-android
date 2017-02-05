@@ -196,7 +196,7 @@ public class sensorInput implements SensorEventListener, Serializable {
                     if (dataT != null)
                         dataT.append((event.timestamp - t0) * 1e-9); //We want seconds since t0
                     if (dataAbs != null)
-                        dataAbs.append(Math.sqrt(avgX*avgX+avgY+avgY+avgZ*avgZ) / aquisitions);
+                        dataAbs.append(Math.sqrt(avgX*avgX+avgY*avgY+avgZ*avgZ) / aquisitions);
                 } finally {
                     dataLock.unlock();
                 }
