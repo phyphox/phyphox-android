@@ -22,6 +22,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     public dataBuffer dataY; //Data-buffer for y (3D sensors only)
     public dataBuffer dataZ; //Data-buffer for z (3D sensors only)
     public dataBuffer dataT; //Data-buffer for t
+    public dataBuffer dataAbs; //Data-buffer for absolute value
     transient private SensorManager sensorManager; //Hold the sensor manager
 
     private long lastReading; //Remember the time of the last reading to fullfill the rate
@@ -73,7 +74,8 @@ public class sensorInput implements SensorEventListener, Serializable {
         //Store the buffer references if any
         if (buffers == null)
             return;
-        buffers.setSize(4);
+
+        buffers.setSize(5);
         if (buffers.get(0) != null)
             this.dataX = buffers.get(0).buffer;
         if (buffers.get(1) != null)
@@ -82,6 +84,8 @@ public class sensorInput implements SensorEventListener, Serializable {
             this.dataZ = buffers.get(2).buffer;
         if (buffers.get(3) != null)
             this.dataT = buffers.get(3).buffer;
+        if (buffers.get(4) != null)
+            this.dataAbs = buffers.get(4).buffer;
     }
 
     public void attachSensorManager(SensorManager sensorManager) {
@@ -191,6 +195,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                         dataZ.append(avgZ / aquisitions);
                     if (dataT != null)
                         dataT.append((event.timestamp - t0) * 1e-9); //We want seconds since t0
+                    if (dataAbs != null)
+                        dataAbs.append(Math.sqrt(avgX*avgX+avgY+avgY+avgZ*avgZ) / aquisitions);
                 } finally {
                     dataLock.unlock();
                 }
