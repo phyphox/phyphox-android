@@ -143,7 +143,7 @@ public class phyphoxExperiment implements Serializable {
             if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
                 dataLock.lock();
                 try {
-                    recording.clear(); //We only want fresh data
+                    recording.clear(false); //We only want fresh data
                     recording.append(buffer, bytesRead);
                 } finally {
                     dataLock.unlock();

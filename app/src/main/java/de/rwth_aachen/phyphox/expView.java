@@ -499,7 +499,7 @@ public class expView implements Serializable{
         //</div>
         protected String createViewHTML(){
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;background: #;height: "+height+"em"+ c +"\" class=\"separatorElement\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;background: #"+c+";height: "+height+"em\" class=\"separatorElement\" id=\"element"+htmlID+"\">" +
                     "</div>";
         }
 
@@ -821,7 +821,7 @@ public class expView implements Serializable{
                     continue;
                 if (outputs.get(i).buffer == null)
                     continue;
-                outputs.get(i).clear();
+                outputs.get(i).clear(false);
                 if (inputs.get(i).isBuffer && inputs.get(i).buffer != null)
                     outputs.get(i).append(inputs.get(i).getArray(), inputs.get(i).getFilledSize());
                 else if (!inputs.isEmpty())

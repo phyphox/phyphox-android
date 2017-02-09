@@ -54,8 +54,8 @@ public class dataOutput implements Serializable {
         return buffer.isStatic;
     }
 
-    public void clear() {
-        buffer.clear();
+    public void clear(boolean reset) {
+        buffer.clear(reset);
     }
 
     public int size() {

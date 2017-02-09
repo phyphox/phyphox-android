@@ -1129,7 +1129,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {
             for (dataBuffer buffer : experiment.dataBuffers)
-                buffer.clear();
+                buffer.clear(true);
             for (expView views : experiment.experimentViews)
                 for (expView.expViewElement view : views.elements)
                     view.clear();

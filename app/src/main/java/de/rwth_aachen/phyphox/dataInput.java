@@ -87,9 +87,9 @@ public class dataInput implements Serializable {
         }
     }
 
-    public void clear() {
+    public void clear(boolean reset) {
         if (isBuffer)
-            buffer.clear();
+            buffer.clear(reset);
     }
 
     protected dataInput copy() {

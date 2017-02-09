@@ -155,7 +155,7 @@ public class Analysis {
             if (!(isStatic && executed)) {
                 boolean inputsReady = true;
                 for (int i = 0; i < inputsOriginal.size(); i++) {
-                    if (inputsOriginal.get(i) != null && !inputsOriginal.get(i).isEmpty && inputsOriginal.get(i).getFilledSize() == 0) {
+                    if (inputsOriginal.get(i) != null && inputsOriginal.get(i).isBuffer && inputsOriginal.get(i).buffer.untouched) {
                         inputsReady = false;
                         break;
                     }
@@ -184,7 +184,7 @@ public class Analysis {
                             } else
                                 inputs.set(i, inputsOriginal.get(i).copy());
                             if (inputsOriginal.get(i).isBuffer && inputsOriginal.get(i).clearAfterRead && !inputsOriginal.get(i).buffer.isStatic)
-                                inputsOriginal.get(i).clear();
+                                inputsOriginal.get(i).clear(false);
                         }
                     }
                 } finally {
@@ -194,7 +194,7 @@ public class Analysis {
                 if (!clearInModule) {
                     for (dataOutput output : outputs)
                         if (output != null && output.clearBeforeWrite)
-                            output.buffer.clear();
+                            output.buffer.clear(false);
                 }
 
 //                long updateStart = System.nanoTime();
@@ -279,13 +279,13 @@ public class Analysis {
             if ((a < b && less) || (a == b && equal) || (a > b && greater)) {
                 if (inputArrays.size() >= 3 && inputArrays.get(2) != null) {
                     if (outputs.get(0).clearBeforeWrite)
-                        outputs.get(0).clear();
+                        outputs.get(0).clear(false);
                     outputs.get(0).append(inputArrays.get(2), inputArraySizes.get(2));
                 }
             } else {
                 if (inputArrays.size() >= 4  && inputArrays.get(3) != null) {
                     if (outputs.get(0).clearBeforeWrite)
-                        outputs.get(0).clear();
+                        outputs.get(0).clear(false);
                     outputs.get(0).append(inputArrays.get(3), inputArraySizes.get(3));
                 }
             }
@@ -1703,8 +1703,9 @@ public class Analysis {
                     }
                     if (!filter) { //Filter not triggered? Append the values of each input to the corresponding outputs.
                         for (int i = 0; i < n; i++) {
-                            if (i < outputs.size() && outputs.get(i) != null)
+                            if (i < outputs.size() && outputs.get(i) != null) {
                                 outputs.get(i).append(data[i]);
+                            }
                         }
                     }
 
