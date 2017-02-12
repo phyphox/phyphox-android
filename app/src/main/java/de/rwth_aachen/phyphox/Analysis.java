@@ -1092,7 +1092,10 @@ public class Analysis {
             //Get iterators
             Vector<Iterator> its = new Vector<>();
             for (int i = 0; i < 2; i++) {
-                its.add(inputs.get(i).getIterator());
+                if (inputs.get(i) != null)
+                    its.add(inputs.get(i).getIterator());
+                else
+                    its.add(null);
             }
 
             double last = Double.NaN; //Last value that did not trigger. Start with a NaN as result

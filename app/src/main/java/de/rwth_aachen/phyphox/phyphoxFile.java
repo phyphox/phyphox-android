@@ -1008,13 +1008,13 @@ public abstract class phyphoxFile {
                     experiment.micBufferSize = outputs.get(0).size()*2; //Output-buffer size
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
-                    int minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-                    if (minBufferSize < 0) {
-                        throw new phyphoxFileException("Could not initialize recording. (" + minBufferSize + ")", xpp.getLineNumber());
+                    experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
+                    if (experiment.minBufferSize < 0) {
+                        throw new phyphoxFileException("Could not initialize recording. (" + experiment.minBufferSize + ")", xpp.getLineNumber());
                     }
-                    if (minBufferSize > experiment.micBufferSize) {
-                        experiment.micBufferSize = minBufferSize;
-                        Log.w("loadExperiment", "Audio buffer size had to be adjusted to " + minBufferSize);
+                    if (experiment.minBufferSize > experiment.micBufferSize) {
+                        experiment.micBufferSize = experiment.minBufferSize;
+                        Log.w("loadExperiment", "Audio buffer size had to be adjusted to " + experiment.minBufferSize);
                     }
 
                     break;

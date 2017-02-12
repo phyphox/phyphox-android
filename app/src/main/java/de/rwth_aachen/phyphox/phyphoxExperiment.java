@@ -46,6 +46,7 @@ public class phyphoxExperiment implements Serializable {
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
     boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
+    boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
 
     //Parameters for audio playback
     transient AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
@@ -59,6 +60,7 @@ public class phyphoxExperiment implements Serializable {
     String micOutput; //The key name of the buffer which receives the data from audio recording.
     int micRate = 48000; //The recording rate in Hz
     int micBufferSize = 0; //The size of the recording buffer
+    int minBufferSize = 0; //The minimum buffer size requested by the device
 
     public dataExport exporter; //An instance of the dataExport class for exporting functionality (see dataExport.java)
 
@@ -137,13 +139,16 @@ public class phyphoxExperiment implements Serializable {
         //Get the data from the audio recording if used
         if (audioRecord != null && measuring) {
             dataBuffer recording = getBuffer(micOutput);
-            final int readBufferSize = recording.size; //The dataBuffer for the recording
+            final int readBufferSize = Math.max(Math.min(recording.size, 4800),minBufferSize); //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
-            int bytesRead = audioRecord.read(buffer, 0, recording.size);
+            int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
             if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
                 dataLock.lock();
                 try {
-                    recording.clear(false); //We only want fresh data
+                    if (recordingUsed) {
+                        recording.clear(false); //We only want fresh data
+                        recordingUsed = false;
+                    }
                     recording.append(buffer, bytesRead);
                 } finally {
                     dataLock.unlock();
@@ -161,7 +166,6 @@ public class phyphoxExperiment implements Serializable {
             //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
             return; //Too soon. Nothing to do
         }
-
         newUserInput = false;
 
         dataLock.lock();
@@ -242,6 +246,7 @@ public class phyphoxExperiment implements Serializable {
             btOut.sendData();
         }
 
+        recordingUsed = true;
         newData = true; //We have fresh data to present.
         lastAnalysis = System.currentTimeMillis(); //Remember when we were done this time
     }
