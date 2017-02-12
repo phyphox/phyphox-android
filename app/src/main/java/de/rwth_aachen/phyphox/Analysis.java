@@ -1785,4 +1785,42 @@ public class Analysis {
         }
     }
 
+    //Return a subrange of multiple inputs, starting at index start and returning a total of length
+    //or starting at index start and stopping at index end-1
+    public static class subrangeAM extends analysisModule implements Serializable {
+
+        protected subrangeAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+        }
+
+        @Override
+        protected void update() {
+
+            int start = 0;
+            int end = -1;
+            if (inputs.size() > 0 && inputs.get(0) != null)
+                start = (int)inputs.get(0).getValue();
+            if (inputs.size() > 1 && inputs.get(1) != null)
+                end = (int)inputs.get(1).getValue();
+            if (inputs.size() > 2 && inputs.get(2) != null)
+                end = start + (int)inputs.get(2).getValue();
+            if (start < 0 || start > end) {
+                start = 0;
+            }
+            if (end < 0) {
+                end = 0;
+                for (int i = 3; i < inputs.size(); i++)
+                    if (inputs.get(i) != null && inputs.get(i).getFilledSize() > end)
+                        end = inputs.get(i).getFilledSize();
+            }
+
+            for (int i = 3; i < inputs.size(); i++) {
+                if (outputs.size() > i-3 && outputs.get(i-3) != null && inputs.get(i) != null) {
+                    int thisEnd = Math.min(end,inputs.get(i).getFilledSize());
+                    outputs.get(i-3).append(Arrays.copyOfRange(inputs.get(i).getArray(), start, thisEnd), thisEnd-start);
+                }
+            }
+        }
+    }
+
 }

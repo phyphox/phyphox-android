@@ -1625,6 +1625,21 @@ public abstract class phyphoxFile {
 
                     experiment.analysis.add(new Analysis.rangefilterAM(experiment, inputs, outputs));
                 } break;
+                case "subrange": { //from, to or length may be defined, arbitrary number of additional inputs and outputs
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "from"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "to"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "length"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.subrangeAM(experiment, inputs, outputs));
+                } break;
                 case "ramp": { //Create a linear ramp (great for creating time-bases)
 
                     ioBlockParser.ioMapping[] inputMapping = {
