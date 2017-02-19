@@ -36,6 +36,7 @@
 
         <item name="alertDialogTheme">@style/phyphoxDialog</item>
         <item name="dialogTheme">@style/phyphoxDialog</item>
+
     </style>
 
     <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">

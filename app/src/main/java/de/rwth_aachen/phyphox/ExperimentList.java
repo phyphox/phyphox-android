@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.PopupMenu;
 import android.text.Html;
 import android.util.AttributeSet;
 import android.util.Base64;
@@ -35,6 +36,8 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -801,28 +804,69 @@ public class ExperimentList extends AppCompatActivity {
         View.OnClickListener ocl = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Create the credits as an AlertDialog
-                ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
-                AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
-                LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-                View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
-                //Set the credit texts, which require HTML markup
-                TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
-                tv.setText(Html.fromHtml(res.getString(R.string.creditsNames)));
-                TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
-                tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
+                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox);
+                PopupMenu popup = new PopupMenu(wrapper, v);
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.action_credits:
+                                //Create the credits as an AlertDialog
+                                ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
+                                AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
+                                LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+                                View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
-                //Finish alertDialog builder
-                credits.setView(creditLayout);
-                credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        //Nothing to do. Just close the thing.
+                                //Set the credit texts, which require HTML markup
+                                TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
+                                tv.setText(Html.fromHtml(res.getString(R.string.creditsNames)));
+                                TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
+                                tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
+
+                                //Finish alertDialog builder
+                                credits.setView(creditLayout);
+                                credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        //Nothing to do. Just close the thing.
+                                    }
+                                });
+
+                                //Present the dialog
+                                credits.show();
+                                return true;
+                            case R.id.action_helpExperiments: {
+                                Uri uri = Uri.parse(res.getString(R.string.experimentsPhyphoxOrgURL));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                if (intent.resolveActivity(getPackageManager()) != null) {
+                                    startActivity(intent);
+                                }
+                            }
+                            return true;
+                            case R.id.action_helpFAQ: {
+                                Uri uri = Uri.parse(res.getString(R.string.faqPhyphoxOrgURL));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                if (intent.resolveActivity(getPackageManager()) != null) {
+                                    startActivity(intent);
+                                }
+                            }
+                            return true;
+                            case R.id.action_helpRemote: {
+                                Uri uri = Uri.parse(res.getString(R.string.remotePhyphoxOrgURL));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                if (intent.resolveActivity(getPackageManager()) != null) {
+                                    startActivity(intent);
+                                }
+                            }
+                            return true;
+                            default:
+                                return false;
+                        }
                     }
                 });
+                popup.inflate(R.menu.menu_help);
+                popup.show();
 
-                //Present the dialog
-                credits.show();
             }
         };
         ImageView creditsV = (ImageView) findViewById(R.id.credits);

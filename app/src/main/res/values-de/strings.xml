@@ -19,6 +19,15 @@
     <string name="donotshowagain">Nicht erneut anzeigen</string>
     <string name="enableTimedRun">Zeitautomatik nutzen</string>
     <string name="experimentinfo_hint">Schaue unter Experiment Info, um zu erfahren wie dieses Experiment funktioniert.</string>
+
+    <string name="help">Hilfe und Infos</string>
+    <string name="experimentsPhyphoxOrg">Experiment-Ideen und Anleitungen</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experimente</string>
+    <string name="faqPhyphoxOrg">Häufig gestellte Fragen</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq-de</string>
+    <string name="remotePhyphoxOrg">Hilfe zum Fernzugriff</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/fernsteuerung</string>
+
     <string name="export">Daten exportieren</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
     <string name="export_subject">Daten aus phyphox</string>

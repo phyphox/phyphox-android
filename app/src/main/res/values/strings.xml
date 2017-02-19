@@ -10,6 +10,14 @@
     <string name="newExperimentInputRate">Sensor rate (in Hz, 0 = as fast as possible)</string>
     <string name="newExperimentInputSensors">Active sensors</string>
 
+    <string name="help">Help and info</string>
+    <string name="experimentsPhyphoxOrg">Experiment ideas and instructions</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Frequently asked questions</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Remote control help</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+
     <string name="warning">Warning</string>
     <string name="donotshowagain">Do not show again</string>
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
