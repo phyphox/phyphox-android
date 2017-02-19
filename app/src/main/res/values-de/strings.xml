@@ -66,6 +66,7 @@
     <string name="switchColumns1">Ansicht: 1 Spalte</string>
     <string name="switchColumns2">Ansicht: 2 Spalten</string>
     <string name="switchColumns3">Ansicht: 3 Spalten</string>
+    <string name="switchToPhoneLayout">Ansicht: Schmal</string>
     <string name="timedRun">Zeitautomatik</string>
     <string name="timedRunDialogTitle">Zeitautomatik</string>
     <string name="timedRunStartDelay">Startverzögerung (s)</string>

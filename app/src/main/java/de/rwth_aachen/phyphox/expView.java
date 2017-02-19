@@ -440,7 +440,7 @@ public class expView implements Serializable{
         //  <p>text</p>
         //</div>
         protected String createViewHTML(){
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
                     "<p>"+this.label+"</p>" +
                     "</div>";
         }

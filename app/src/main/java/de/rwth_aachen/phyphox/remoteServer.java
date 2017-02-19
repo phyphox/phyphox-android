@@ -183,6 +183,9 @@ public class remoteServer extends Thread {
                 } else if (line.contains("<!-- [[exportTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[exportTranslation]] -->", res.getString(R.string.export)));
                     sb.append("\n");
+                } else if (line.contains("<!-- [[switchToPhoneLayoutTranslation]] -->")) { //The localized string for "clear data"
+                    sb.append(line.replace("<!-- [[switchToPhoneLayoutTranslation]] -->", res.getString(R.string.switchToPhoneLayout)));
+                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns1Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns1Translation]] -->", res.getString(R.string.switchColumns1)));
                     sb.append("\n");

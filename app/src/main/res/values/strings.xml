@@ -99,6 +99,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
 
+    <string name="switchToPhoneLayout">View: Narrow</string>
     <string name="switchColumns1">View: 1 column</string>
     <string name="switchColumns2">View: 2 columns</string>
     <string name="switchColumns3">View: 3 columns</string>
