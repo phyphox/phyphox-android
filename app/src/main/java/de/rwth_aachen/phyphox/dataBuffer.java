@@ -115,12 +115,12 @@ public class dataBuffer implements Serializable {
 
     //Delete all data and set last item to NaN (if not static)
     public void clear(boolean reset) {
+        if (isStatic)
+            return;
         if (reset)
             untouched = true;
         else
             untouched = false;
-        if (isStatic)
-            return;
         buffer.clear();
         value = Double.NaN;
         if (floatCopy != null) {
