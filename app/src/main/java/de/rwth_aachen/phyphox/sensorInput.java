@@ -162,7 +162,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(SensorEvent event) {
         if (t0 == 0) {
-            t0 = event.timestamp; //Any event sets the same t0 for all sensors
+            t0 = event.timestamp; //Any event sets t0
             if (dataT != null && dataT.getFilledSize() > 0)
                 t0 -= dataT.value * 1e9;
         }
@@ -182,6 +182,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                 avgZ = event.values[2];
                 aquisitions = 1;
             }
+            if (lastReading == 0)
+                lastReading = event.timestamp;
             if (lastReading + period <= event.timestamp) {
                 //Average/waiting period is over
                 //Append the data to available buffers
