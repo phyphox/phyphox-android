@@ -1,11 +1,15 @@
 package de.rwth_aachen.phyphox;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.opengl.GLSurfaceView;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.AppCompatEditText;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
@@ -58,6 +62,8 @@ public class expView implements Serializable{
 
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
+        transient protected View rootView; //Holds the root view of the element
+
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             this.label = label;
@@ -80,7 +86,7 @@ public class expView implements Serializable{
 
         //Abstract function to force child classes to implement createView
         //This will take a linear layout, which should be filled by this function
-        protected abstract void createView(LinearLayout ll, Context c, Resources res);
+        protected abstract void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent);
 
         protected void cleanView() {
 
@@ -201,12 +207,30 @@ public class expView implements Serializable{
         protected void clear() {
 
         }
+
+        protected void hide() {
+            if (rootView != null) {
+                rootView.setVisibility(View.GONE);
+            }
+        }
+
+        protected void restore() {
+            if (rootView != null) {
+                rootView.setVisibility(View.VISIBLE);
+            }
+        }
+
+        protected void maximize() {
+            if (rootView != null) {
+                rootView.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     //valueElement implements a simple text display for a single value with an unit and a given
     //format.
     public class valueElement extends expViewElement implements Serializable {
-        transient private TextView tv; //Holds the Android textView
+        transient private TextView tv = null;
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private double size;
         private boolean scientificNotation; //Show scientific notation instead of fixed point (1e-3 instead of 0.001)
@@ -305,7 +329,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android vews we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
             //Create a row consisting of label and value
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -338,12 +362,14 @@ public class expView implements Serializable{
             tv.setTypeface(null, Typeface.BOLD);
             tv.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
+
             //Add label and value to the row
             row.addView(labelView);
             row.addView(tv);
 
             //Add the row to the linear layout
-            ll.addView(row);
+            rootView = row;
+            ll.addView(rootView);
         }
 
         @Override
@@ -414,7 +440,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
 
             //Create the text as textView
             TextView textView = new TextView(c);
@@ -430,8 +456,10 @@ public class expView implements Serializable{
 
             textView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
+            rootView = textView;
+
             //Add it to the linear layout
-            ll.addView(textView);
+            ll.addView(rootView);
         }
 
         @Override
@@ -478,18 +506,18 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
 
             //Create the text as textView
-            View v = new View(c);
+            rootView = new View(c);
             LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     (int)(res.getDimension(R.dimen.info_element_font)*height));
-            v.setLayoutParams(lllp);
-            v.setBackgroundColor(color);
+            rootView.setLayoutParams(lllp);
+            rootView.setBackgroundColor(color);
 
             //Add it to the linear layout
-            ll.addView(v);
+            ll.addView(rootView);
         }
 
         @Override
@@ -512,7 +540,7 @@ public class expView implements Serializable{
 
     //editElement implements a simple edit box which takes a single value from the user
     public class editElement extends expViewElement implements Serializable {
-        transient private EditText et; //Holds the Android EditText
+        transient EditText et = null;
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private String unit; //A string to display as unit
         private double defaultValue; //This value is filled into the dataBuffer before the user enters a custom value
@@ -572,7 +600,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, final Context c, Resources res){
+        protected void createView(LinearLayout ll, final Context c, Resources res, expViewFragment parent){
             //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -604,7 +632,7 @@ public class expView implements Serializable{
             valueUnit.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
             //The edit box
-            et = new EditText(c) {
+            et = new AppCompatEditText(c) {
                 @Override
                 public boolean onKeyPreIme(int keyCode, KeyEvent event) {
                     if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
@@ -656,8 +684,10 @@ public class expView implements Serializable{
             row.addView(labelView);
             row.addView(valueUnit);
 
+            rootView = row;
+
             //Add the row to the main linear layout passed to this function
-            ll.addView(row);
+            ll.addView(rootView);
 
             //Add a listener to the edit box to keep track of the focus
             et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -752,7 +782,6 @@ public class expView implements Serializable{
 
     //buttonElement implements a simple button which writes values from inputs to outputs when triggered
     public class buttonElement extends expViewElement implements Serializable {
-        transient private Button b; //Holds the Android Button
         private Vector<dataInput> inputs = null;
         private Vector<dataOutput> outputs = null;
         private boolean triggered = false;
@@ -775,9 +804,9 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
             //The button
-            b = new Button(c);
+            Button b = new Button(c);
 
             LinearLayout.LayoutParams vglp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 //            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.info_element_margin), res.getDisplayMetrics());
@@ -790,7 +819,8 @@ public class expView implements Serializable{
             b.setText(this.label);
 
             //Add the button to the main linear layout passed to this function
-            ll.addView(b);
+            rootView = b;
+            ll.addView(rootView);
 
             //Add a listener to the button to get the trigger
             b.setOnClickListener(new View.OnClickListener() {
@@ -848,12 +878,18 @@ public class expView implements Serializable{
     //This class mostly wraps the graphView, which (being rather complex) is implemented in its own
     //class. See graphView.java...
     public class graphElement extends expViewElement implements Serializable {
-        transient private graphView gv = null; //Holds a GraphView instance
+        private final graphElement self;
+        transient private expViewFragment parent = null;
+        transient private TextView labelView = null;
+        transient private graphView gv = null;
         transient private PlotRenderer plotRenderer = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
         transient private floatBufferRepresentation dataX; //The x data to be displayed
         transient private floatBufferRepresentation dataY; //The y data to be displayed
         private double dataMinX, dataMaxX, dataMinY, dataMaxY;
+
+        private boolean isExclusive = false;
+        private int margin;
 
         private boolean line = false; //Show lines instead of points?
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
@@ -886,6 +922,10 @@ public class expView implements Serializable{
         //Quite usual constructor...
         graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
             super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+            this.self = this;
+
+            margin = res.getDimensionPixelSize(R.dimen.activity_vertical_margin);
+
             aspectRatio = 2.5;
             color = res.getColor(R.color.highlight);
             highlightColor = String.format("%08x", res.getColor(R.color.highlight)).substring(2);
@@ -980,7 +1020,9 @@ public class expView implements Serializable{
 
         @Override
         //Create the actual view in Android
-        protected void createView(LinearLayout ll, Context c, Resources res){
+        protected void createView(LinearLayout ll, Context c, Resources res, final expViewFragment parent){
+
+            this.parent = parent;
 
             //We need a label and want to put the graph below. So we wrap everything into a vertical
             //linear layout (Axis labels are handled by the graphView)
@@ -991,7 +1033,7 @@ public class expView implements Serializable{
             gvll.setOrientation(LinearLayout.VERTICAL);
 
             //Create the label
-            TextView labelView = new TextView(c);
+            labelView = new TextView(c);
             TableRow.LayoutParams lp = new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1004,12 +1046,12 @@ public class expView implements Serializable{
             labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             FrameLayout fl = new FrameLayout(c);
-            fl.setLayoutParams(new TableRow.LayoutParams(
+            fl.setLayoutParams(new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
             PlotAreaView plotAreaView = new PlotAreaView(c);
-            plotAreaView.setLayoutParams(new TableRow.LayoutParams(
+            plotAreaView.setLayoutParams(new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -1020,7 +1062,7 @@ public class expView implements Serializable{
 
             //Create the graphView
             gv = new graphView(c, aspectRatio, plotAreaView, plotRenderer);
-            gv.setLayoutParams(new TableRow.LayoutParams(
+            gv.setLayoutParams(new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -1035,6 +1077,18 @@ public class expView implements Serializable{
             gv.setLogScale(logX, logY);
             gv.setPrecision(xPrecision, yPrecision);
 
+            gv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (self.parent != null) {
+                        if (isExclusive)
+                            self.parent.leaveExclusive();
+                        else
+                            self.parent.requestExclusive(self);
+                    }
+                }
+            });
+
             fl.addView(plotAreaView);
             fl.addView(gv);
 
@@ -1043,7 +1097,8 @@ public class expView implements Serializable{
             gvll.addView(fl);
 
             //Add the wrapper layout to the linear layout given to this function
-            ll.addView(gvll);
+            rootView = gvll;
+            ll.addView(rootView);
 
         }
 
@@ -1171,6 +1226,35 @@ public class expView implements Serializable{
             if (gv != null) {
                 gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
                 gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
+                gv.setAllowZooming(false);
+            }
+        }
+
+        @Override
+        protected void restore() {
+            super.restore();
+            if (rootView != null && gv != null && parent != null) {
+                isExclusive = false;
+
+                gv.setLayoutParams(new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
+
+                gv.setAllowZooming(false);
+            }
+        }
+
+        @Override
+        protected void maximize() {
+            super.maximize();
+            if (rootView != null && gv != null && parent != null) {
+                isExclusive = true;
+
+                gv.setLayoutParams(new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        parent.root.getMeasuredHeight() - labelView.getMeasuredHeight() - 2*margin));
+
+                gv.setAllowZooming(true);
             }
         }
     }

@@ -4,12 +4,19 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PointF;
+import android.support.v4.view.MotionEventCompat;
+import android.support.v4.view.ScaleGestureDetectorCompat;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+
+import static android.view.MotionEvent.INVALID_POINTER_ID;
 
 //The graphView class implements an Android view which displays a data graph
 
@@ -52,11 +59,98 @@ public class graphView extends View {
     double minY = 0.;
     double maxY = 0.;
 
+    private boolean allowZooming = false;
+    double zoomMinX = Double.NaN;
+    double zoomMaxX = Double.NaN;
+    double zoomMinY = Double.NaN;
+    double zoomMaxY = Double.NaN;
+
     Paint paint; //Anti-Aliased paint used all over this class
 
     PlotAreaView plotAreaView;
     PlotRenderer plotRenderer;
     GraphSetup graphSetup;
+
+    private boolean processingGesture = false;
+    private float panXStart = Float.NaN;
+    private float panYStart = Float.NaN;
+    private double panXOrigin = Double.NaN;
+    private double panYOrigin = Double.NaN;
+
+    private float scaleXStart = Float.NaN;
+    private float scaleYStart = Float.NaN;
+    private float scaleXStartSpan = Float.NaN;
+    private float scaleYStartSpan = Float.NaN;
+    private double scaleXOrigin = Double.NaN;
+    private double scaleYOrigin = Double.NaN;
+    private double scaleXStartScale = Double.NaN;
+    private double scaleYStartScale = Double.NaN;
+
+    private ScaleGestureDetector.OnScaleGestureListener scaleListener = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
+            scaleXStart = scaleGestureDetector.getFocusX();
+            scaleYStart = scaleGestureDetector.getFocusY();
+
+            if (!(scaleXStart > graphSetup.plotBoundL && scaleXStart < graphSetup.plotBoundL + graphSetup.plotBoundW && scaleYStart > graphSetup.plotBoundT && scaleYStart < graphSetup.plotBoundT + graphSetup.plotBoundH))
+                return false;
+
+            scaleXStartSpan = scaleGestureDetector.getCurrentSpanX();
+            scaleYStartSpan = scaleGestureDetector.getCurrentSpanY();
+
+            final double cminX = Double.isNaN(zoomMinX) ? minX : zoomMinX;
+            final double cminY = Double.isNaN(zoomMinY) ? minY : zoomMinY;
+            final double cmaxX = Double.isNaN(zoomMaxX) ? maxX : zoomMaxX;
+            final double cmaxY = Double.isNaN(zoomMaxY) ? maxY : zoomMaxY;
+
+            scaleXStartScale = cmaxX-cminX;
+            scaleYStartScale = cmaxY-cminY;
+            scaleXOrigin = cminX + (scaleXStart - graphSetup.plotBoundL) / (graphSetup.plotBoundW) * (scaleXStartScale);
+            scaleYOrigin = cmaxY - (scaleYStart - graphSetup.plotBoundT) / (graphSetup.plotBoundH) * (scaleYStartScale);
+
+            processingGesture = false;
+            return true;
+        }
+
+        @Override
+        public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+            final float spanX = scaleGestureDetector.getCurrentSpanX();
+            final float spanY = scaleGestureDetector.getCurrentSpanY();
+            final float focusX = scaleGestureDetector.getFocusX();
+            final float focusY = scaleGestureDetector.getFocusY();
+
+            double scaleX, scaleY;
+
+            if (scaleXStartSpan/scaleYStartSpan > 0.5)
+                scaleX = scaleXStartSpan / spanX * scaleXStartScale;
+            else
+                scaleX = scaleXStartScale;
+
+            if (scaleYStartSpan/scaleYStartSpan > 0.5)
+                scaleY = scaleYStartSpan / spanY * scaleYStartScale;
+            else
+                scaleY = scaleYStartScale;
+
+            if (scaleX > 10*scaleXStartScale)
+                scaleX = 10*scaleXStartScale;
+
+            if (scaleY > 10*scaleYStartScale)
+                scaleY = 10*scaleYStartScale;
+
+            zoomMinX = scaleXOrigin - (focusX - graphSetup.plotBoundL) / graphSetup.plotBoundW * scaleX;
+            zoomMaxX = zoomMinX + scaleX;
+            zoomMaxY = scaleYOrigin + (focusY - graphSetup.plotBoundT) / graphSetup.plotBoundH * scaleY;
+            zoomMinY = zoomMaxY - scaleY;
+
+            invalidate();
+
+            processingGesture = false;
+
+            return true;
+        }
+
+    };
+    private ScaleGestureDetector scaleGestureDetector;
 
     //Simple constructor just needs a context to call the View constructor
     //Initialize some stuff...
@@ -70,6 +164,86 @@ public class graphView extends View {
         setHistoryLength(1);
         rescale(); //Calculate initial scale. At this point it will just set all min and max to +inf and -inf
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        scaleGestureDetector = new ScaleGestureDetector(context, scaleListener);
+    }
+
+    public void setAllowZooming(boolean allow) {
+        allowZooming = allow;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (!allowZooming)
+            return super.onTouchEvent(event);
+
+        scaleGestureDetector.onTouchEvent(event);
+
+        if (event.getPointerCount() > 1)
+            return true;
+
+        final float x = event.getX();
+        final float y = event.getY();
+
+        if (!processingGesture
+                && (!(x > graphSetup.plotBoundL && x < graphSetup.plotBoundL + graphSetup.plotBoundW && y > graphSetup.plotBoundT && y < graphSetup.plotBoundT + graphSetup.plotBoundH)))
+            return super.onTouchEvent(event);
+
+        final int action = MotionEventCompat.getActionMasked(event);
+
+        switch (action) {
+            case MotionEvent.ACTION_DOWN: {
+                panXStart = x;
+                panYStart = y;
+                panXOrigin = Double.NaN;
+                panYOrigin = Double.NaN;
+                processingGesture = true;
+                getParent().requestDisallowInterceptTouchEvent(true);
+                break;
+            }
+            case MotionEvent.ACTION_MOVE: {
+                final float dx = x - panXStart;
+                final float dy = y - panYStart;
+
+                if (!processingGesture || (dx*dx+dy*dy < 30 && Double.isNaN(panXOrigin)))
+                    break;
+
+                if (Double.isNaN(panXOrigin)) {
+                    panXOrigin = Double.isNaN(zoomMinX) ? minX : zoomMinX;
+                    panYOrigin = Double.isNaN(zoomMinY) ? minY : zoomMinY;
+                }
+
+                double w = (Double.isNaN(zoomMaxX) ? maxX : zoomMaxX) - (Double.isNaN(zoomMinX) ? minX : zoomMinX);
+                double h = (Double.isNaN(zoomMaxY) ? maxY : zoomMaxY) - (Double.isNaN(zoomMinY) ? minY : zoomMinY);
+
+                zoomMinX = panXOrigin - dx * w / graphSetup.plotBoundW;
+                zoomMinY = panYOrigin + dy * h / graphSetup.plotBoundH;
+                zoomMaxX = zoomMinX + w;
+                zoomMaxY = zoomMinY + h;
+
+                invalidate();
+
+                getParent().requestDisallowInterceptTouchEvent(true);
+                break;
+            }
+            case MotionEvent.ACTION_UP: {
+                if (processingGesture && Double.isNaN(panXOrigin))
+                    performClick();
+
+                panXOrigin = Double.NaN;
+                panYOrigin = Double.NaN;
+
+                processingGesture = false;
+
+                getParent().requestDisallowInterceptTouchEvent(false);
+                break;
+            }
+            case MotionEvent.ACTION_CANCEL: {
+                getParent().requestDisallowInterceptTouchEvent(false);
+                break;
+            }
+        }
+
+        return true;
 
     }
 
@@ -356,10 +530,10 @@ public class graphView extends View {
 
         paint.setTextSize(res.getDimension(R.dimen.graph_font));
 
-        double workingMinX = minX;
-        double workingMaxX = maxX;
-        double workingMinY = minY;
-        double workingMaxY = maxY;
+        double workingMinX = Double.isNaN(zoomMinX) ? minX : zoomMinX;
+        double workingMaxX = Double.isNaN(zoomMaxX) ? maxX : zoomMaxX;
+        double workingMinY = Double.isNaN(zoomMinY) ? minY : zoomMinY;
+        double workingMaxY = Double.isNaN(zoomMaxY) ? maxY : zoomMaxY;
 
         //Stretch x slightly to give a little headroom... Also force a range if it is zero
         if (!logX) {

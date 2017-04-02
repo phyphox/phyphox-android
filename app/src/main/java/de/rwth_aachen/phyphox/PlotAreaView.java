@@ -155,6 +155,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     private boolean renderRequested = false;
     private boolean updateBuffers = false;
     private boolean updateGrid = false;
+    private SurfaceTexture newSurface = null;
 
     private GraphSetup graphSetup = null;
 
@@ -177,6 +178,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     EGLDisplay eglDisplay;
     EGLContext eglContext;
     EGLSurface eglSurface;
+
+    EGLConfig favConfig = null;
+    int[] surfaceAttribs = {
+            EGL10.EGL_NONE
+    };
 
     final String vertexShader =
             "uniform vec4 in_color;" +
@@ -262,6 +268,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             renderRequested = true;
             updateBuffers = true;
             updateGrid = true;
+
             while (true) {
                 synchronized (lock) {
                     readyToRender = true;
@@ -277,6 +284,38 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                         break;
                     }
                     renderRequested = false;
+                }
+
+                synchronized (lock) {
+                    if (newSurface != null) {
+
+                        deinitScene();
+
+                        egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+                        egl.eglDestroySurface(eglDisplay, eglSurface);
+
+                        egl.eglDestroyContext(eglDisplay, eglContext);
+
+                        surfaceTexture = newSurface;
+                        newSurface = null;
+
+                        eglContext = egl.eglCreateContext(eglDisplay, favConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
+                        if (eglContext == null || eglContext == EGL10.EGL_NO_CONTEXT) {
+                            throw new RuntimeException("No eglContext");
+                        }
+
+                        eglSurface = egl.eglCreateWindowSurface(eglDisplay, favConfig, surfaceTexture, surfaceAttribs);
+                        if (eglSurface == null) {
+                            throw new RuntimeException("surface was null");
+                        }
+
+                        if (!egl.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
+                            throw new RuntimeException("eglMakeCurrent failed");
+                        }
+
+                        initScene();
+
+                    }
                 }
 
                 if (updateBuffers) {
@@ -304,10 +343,15 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
     }
 
-    public void initGL() {
-        final int EGL_OPENGL_ES2_BIT = 4;
-        final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+    private final int EGL_OPENGL_ES2_BIT = 4;
+    private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
+    private int[] attrib_list = {
+            EGL_CONTEXT_CLIENT_VERSION, 2,
+            EGL10.EGL_NONE
+    };
+
+    public void initGL() {
         egl = (EGL10) EGLContext.getEGL();
         eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
         if (!egl.eglInitialize(eglDisplay, null)) {
@@ -341,7 +385,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
 
         int configHighScore = 0; //we will calculate a score based on number of colors, AA samples etc.
-        EGLConfig favConfig = null; //Out favourite config will be remembered here...
+        favConfig = null; //Our favourite config will be remembered here...
 
         for (EGLConfig config : configs) {
             int[] value = new int[1];
@@ -384,19 +428,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         int transp = egl.eglGetConfigAttrib(eglDisplay, favConfig, EGL10.EGL_TRANSPARENT_TYPE, value) ? value[0] : 0;
         Log.d("initGL", "Mode selected from " + numConfigs + " available:\nr = " + r + ", g = " + g + ", b = " + b + ", a = " + a + "\nDepth = " + d + ", Stencil = " + s + "\nSamples = " + samples + ", Transparent type = " + transp);
 */
-
-        int[] attrib_list = {
-                EGL_CONTEXT_CLIENT_VERSION, 2,
-                EGL10.EGL_NONE
-        };
         eglContext = egl.eglCreateContext(eglDisplay, favConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
         if (eglContext == null || eglContext == EGL10.EGL_NO_CONTEXT) {
             throw new RuntimeException("No eglContext");
         }
 
-        int[] surfaceAttribs = {
-                EGL10.EGL_NONE
-        };
         eglSurface = egl.eglCreateWindowSurface(eglDisplay, favConfig, surfaceTexture, surfaceAttribs);
         if (eglSurface == null) {
             throw new RuntimeException("surface was null");
@@ -636,9 +672,14 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture st, int width, int height) {
-        this.w = width;
-        this.h = height;
-        //TODO? Recreate egl surface???
+        synchronized (lock) {
+            newSurface = st;
+            this.w = width;
+            this.h = height;
+            updateBuffers = true;
+            updateGrid = true;
+            lock.notify();
+        }
     }
 
     @Override
