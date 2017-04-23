@@ -37,7 +37,7 @@ import java.util.Vector;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.4";
+    final static String phyphoxFileVersion = "1.5";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -738,7 +738,12 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
 
                     int size = getIntAttribute("size",1);
-                    double init = getDoubleAttribute("init",Double.NaN);
+                    String strInit[] = getStringAttribute("init").split(",");
+                    Double init[] = new Double[strInit.length];
+                    for (int i = 0; i < init.length; i++) {
+                        init[i] = Double.parseDouble(strInit[i].trim());
+                    }
+
                     boolean isStatic = getBooleanAttribute("static", false);
 
                     String name = getText();
