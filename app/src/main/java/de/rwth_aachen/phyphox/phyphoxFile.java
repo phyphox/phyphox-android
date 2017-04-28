@@ -112,12 +112,14 @@ public abstract class phyphoxFile {
                     AssetManager assetManager = parent.getAssets();
                     try {
                         phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: "+e.getMessage();
                     }
                 } else { //The local file is in the private directory
                     try {
                         phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
@@ -612,6 +614,8 @@ public abstract class phyphoxFile {
                 case "title": //The experiment's title (might be replaced by a later translation block)
                     experiment.title = getText();
                     break;
+                case "state-title":
+                    break;
                 case "icon": //The experiment's icon
                     // We currently do not show the icon while the experiment is open, so we do not need to read it.
                     //experiment.icon = getText();
@@ -738,12 +742,7 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
 
                     int size = getIntAttribute("size",1);
-                    String strInit[] = getStringAttribute("init").split(",");
-                    Double init[] = new Double[strInit.length];
-                    for (int i = 0; i < init.length; i++) {
-                        init[i] = Double.parseDouble(strInit[i].trim());
-                    }
-
+                    String strInit = getStringAttribute("init");
                     boolean isStatic = getBooleanAttribute("static", false);
 
                     String name = getText();
@@ -752,7 +751,19 @@ public abstract class phyphoxFile {
 
                     dataBuffer newBuffer = experiment.createBuffer(name, size);
                     newBuffer.setStatic(isStatic);
-                    newBuffer.setInit(init);
+
+                    if (strInit != null && !strInit.isEmpty()) {
+                        String strInitArray[] = strInit.split(",");
+                        Double init[] = new Double[strInitArray.length];
+                        for (int i = 0; i < init.length; i++) {
+                            try {
+                                init[i] = Double.parseDouble(strInitArray[i].trim());
+                            } catch (Exception e) {
+                                init[i] = Double.NaN;
+                            }
+                        }
+                        newBuffer.setInit(init);
+                    }
                     break;
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());

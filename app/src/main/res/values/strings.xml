@@ -80,6 +80,8 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="stop">Stop</string>
     <string name="start">Start</string>
     <string name="clear_data">Clear data</string>
+    <string name="clear_data_question">Clear recorded data?</string>
+    <string name="clear">Clear</string>
     <string name="timed_stop">Stop timed run</string>
     <string name="timed_start">Start timed run</string>
 
@@ -96,7 +98,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="export_pick_share">Pick an export method</string>
 
     <string name="share">Share screenshot</string>
-    <string name="share_subject">Screenshot from phyPhox</string>
+    <string name="share_subject">Screenshot from phyphox</string>
     <string name="share_pick_share">Pick a share method</string>
 
     <string name="remoteServer">Allow remote access</string>
@@ -117,6 +119,15 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="save_locally_done">Experiment successfully added to collection</string>
     <string name="save_locally_message">This experiment has been opened from a remote source. Do you want to add it to your experiment collection?</string>
     <string name="save_locally_button">Save to collection</string>
+    <string name="save_state">Save experiment state</string>
+    <string name="save_state_category">Saved experiment states</string>
+    <string name="save_state_message">You can save the state of this experiment including your data to your collection or share it with a third-party app.</string>
+    <string name="save_state_title">Title</string>
+    <string name="save_state_save">To collection</string>
+    <string name="save_state_share">Share</string>
+    <string name="save_state_subject">Experiment state for phyphox</string>
+    <string name="save_state_default_title">Measurement</string>
+    <string name="save_state_success">State has been saved to your collection.</string>
 
     <string name="timedRun">Timed run</string>
 

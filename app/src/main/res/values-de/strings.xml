@@ -5,6 +5,8 @@
     <string name="calibrated_magnetometer">Kalibriertes Magnetometer nutzen</string>
     <string name="cancel">Abbrechen</string>
     <string name="clear_data">Daten löschen</string>
+    <string name="clear_data_question">Aufgenommene Daten löschen?</string>
+    <string name="clear">Löschen</string>
     <string name="close">Schließen</string>
     <string name="confirmDelete">Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?</string>
     <string name="confirmDeleteTitle">Löschen bestätigen?</string>
@@ -52,6 +54,15 @@
     <string name="save_locally_done">Das Experiment wurde zur Sammlung hinzugefügt.</string>
     <string name="save_locally_message">Dieses Experiment wurde aus einer externen Quelle geöffnet. Möchtest du es deiner Experiment-Sammlung hinzufügen?</string>
     <string name="save_locally_button">In Sammlung speichern</string>
+    <string name="save_state">Zustand speichern</string>
+    <string name="save_state_category">Gespeicherte Zustände</string>
+    <string name="save_state_message">Du kannst den Zustand des Experiments mit deinen Messdaten in deiner Sammlung speichern oder über eine Drittanbieter-App teilen.</string>
+    <string name="save_state_title">Titel</string>
+    <string name="save_state_save">In die Sammlung</string>
+    <string name="save_state_share">Teilen</string>
+    <string name="save_state_subject">Experiment-Zustand für phyphox</string>
+    <string name="save_state_default_title">Messung</string>
+    <string name="save_state_success">Der Zustand wurde in deiner Sammlung gespeichert.</string>
     <string name="sensorAccelerometer">Beschleunigungssensor</string>
     <string name="sensorGyroscope">Gyroskop</string>
     <string name="sensorLight">Licht</string>

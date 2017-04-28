@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
@@ -58,14 +59,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
 
+import org.w3c.dom.Document;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Vector;
 
 // Experiments are performed in this activity, which reacts to various intents.
@@ -690,13 +698,102 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Clear data button. Clear the data :)
         if (id == R.id.action_clear) {
-            clearData();
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(res.getString(R.string.clear_data_question))
+                    .setPositiveButton(R.string.clear_data, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            clearData();
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
             return true;
         }
 
         //Export button. Call the export function of the dataExport class
         if (id == R.id.action_export) {
             experiment.export(this);
+            return true;
+        }
+
+        //Saving the state - either locally or through a share intent
+        if (id == R.id.action_saveState) {
+            stopMeasurement();
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            final View dialogView = this.getLayoutInflater().inflate(R.layout.savestate_dialog, null);
+            builder.setView(dialogView);
+            final EditText customTitleET = (EditText) dialogView.findViewById(R.id.customTitle);
+            DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+            final Date now = Calendar.getInstance().getTime();
+            customTitleET.setText(getString(R.string.save_state_default_title) + " " + df.format(now));
+            builder.setMessage(res.getString(R.string.save_state_message))
+                    .setTitle(R.string.save_state)
+                    .setPositiveButton(R.string.save_state_save, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            try {
+                                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
+                                FileOutputStream output = openFileOutput(file, Activity.MODE_PRIVATE);
+                                String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
+                                output.close();
+                                if (result != null) {
+                                    Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                            } catch (Exception e) {
+                                Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                return;
+                            }
+                            Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setNeutralButton(R.string.save_state_share, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                            String filename = getString(R.string.save_state_default_title) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
+                            File file = new File(getCacheDir(), "/"+filename);
+                            try {
+                                FileOutputStream output = new FileOutputStream(file);
+                                String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
+                                output.close();
+                                if (result != null) {
+                                    Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                            } catch (Exception e) {
+                                Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                return;
+                            }
+
+                            final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                            final Intent intent = ShareCompat.IntentBuilder.from(Experiment.this)
+                                    .setType("application/octet-stream") //mime type from the export filter
+                                    .setSubject(getString(R.string.save_state_subject))
+                                    .setStream(uri)
+                                    .getIntent()
+                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                            for (ResolveInfo ri : resInfoList) {
+                                grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            }
+
+                            //Execute this intent
+                            startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
             return true;
         }
 

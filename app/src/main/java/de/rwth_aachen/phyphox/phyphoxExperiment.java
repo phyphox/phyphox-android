@@ -8,21 +8,42 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.text.TextUtils;
 import android.util.Log;
 
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
 public class phyphoxExperiment implements Serializable {
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
-    byte[] source = null; //This may hold the original source file if it comes from a remote source
+    byte[] source = null; //This holds the original source file
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment
     String category = ""; //The category of this experiment
@@ -380,5 +401,93 @@ public class phyphoxExperiment implements Serializable {
                 throw new Exception("Could not initialize bluetooth output. (" + e.getMessage() + ")");
             }
         }
+    }
+
+    public String writeStateFile(String customTitle, OutputStream os) {
+        if (source == null)
+            return "Source is null.";
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db;
+        try {
+            db = dbf.newDocumentBuilder();
+        } catch (Exception e) {
+            return "Could not create DocumentBuilder: " + e.getMessage();
+        }
+
+        Document doc;
+        InputStream is = new ByteArrayInputStream(source);
+        try {
+            doc = db.parse(is);
+        } catch (Exception e) {
+            return "Could not parse source: " + e.getMessage();
+        }
+
+        Element root = doc.getDocumentElement();
+        if (root == null)
+            return "Source has no root.";
+
+        root.normalize();
+
+        Element customTitleEl = doc.createElement("state-title");
+        customTitleEl.setTextContent(customTitle);
+        root.appendChild(customTitleEl);
+
+        NodeList containers = root.getElementsByTagName("data-containers");
+        if (containers.getLength() != 1)
+            return "Source needs exactly one data-container block.";
+
+        NodeList buffers = containers.item(0).getChildNodes();
+
+        DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+        format.applyPattern("0.#########E0");
+        DecimalFormatSymbols dfs = format.getDecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        format.setDecimalFormatSymbols(dfs);
+        format.setGroupingUsed(false);
+
+        for (int i = 0; i < buffers.getLength(); i++) {
+            if (!buffers.item(i).getNodeName().equals("container"))
+                continue;
+
+            dataBuffer buffer = getBuffer(buffers.item(i).getTextContent());
+            if (buffer == null)
+                continue;
+
+            Attr attr = doc.createAttribute("init");
+
+            StringBuilder sb = new StringBuilder();
+            boolean first = true;
+            for (double v : buffer.getArray()) {
+                if (first)
+                    first = false;
+                else
+                    sb.append(",");
+                sb.append(format.format(v));
+            }
+
+            attr.setValue(sb.toString());
+
+            buffers.item(i).getAttributes().setNamedItem(attr);
+        }
+
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer t;
+        try {
+            t = tf.newTransformer();
+        } catch (Exception e) {
+            return "Could not create transformer: " + e.getMessage();
+        }
+
+        DOMSource domSource = new DOMSource(doc);
+
+
+        StreamResult streamResult = new StreamResult(os);
+        try {
+            t.transform(domSource, streamResult);
+        } catch (Exception e) {
+            return "Transform failed: " + e.getMessage();
+        }
+
+        return null;
     }
 }

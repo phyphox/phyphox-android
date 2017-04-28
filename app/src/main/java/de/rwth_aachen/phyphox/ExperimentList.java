@@ -536,6 +536,10 @@ public class ExperimentList extends AppCompatActivity {
                 return -1;
             if (b.name.equals(res.getString(R.string.categoryRawSensor)))
                 return 1;
+            if (a.name.equals(res.getString(R.string.save_state_category)))
+                return -1;
+            if (b.name.equals(res.getString(R.string.save_state_category)))
+                return 1;
             return a.name.compareTo(b.name);
         }
     }
@@ -579,6 +583,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //Strings to hold results of the few items we care about
         String title = ""; //Experiment title
+        String stateTitle = ""; //A title given by the user for a saved experiment state
         String category = ""; //Experiment category
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
@@ -628,6 +633,10 @@ public class ExperimentList extends AppCompatActivity {
                             case "title": //This should give us the experiment title
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     title = xpp.nextText().trim();
+                                break;
+                            case "state-title":
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
+                                    stateTitle = xpp.nextText().trim();
                                 break;
                             case "icon": //This should give us the experiment icon (might be an acronym or a base64-encoded image)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
@@ -715,6 +724,12 @@ public class ExperimentList extends AppCompatActivity {
             if (category.equals("")) {
                 Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a category.", Toast.LENGTH_LONG).show();
                 return;
+            }
+
+            if (!stateTitle.equals("")) {
+                description = title;
+                title = stateTitle;
+                category = getString(R.string.save_state_category);
             }
 
             //Let's check the icon
