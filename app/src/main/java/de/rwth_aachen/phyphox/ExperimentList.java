@@ -807,6 +807,10 @@ public class ExperimentList extends AppCompatActivity {
     //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
     //  warning message.
     protected void onCreate(Bundle savedInstanceState) {
+
+        //Switch from the theme used as splash screen to the theme for the activity
+        setTheme(R.style.experimentList);
+
         //Basics. Call super-constructor and inflate the layout.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experiment_list);

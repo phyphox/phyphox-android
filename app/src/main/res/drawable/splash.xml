@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android" android:opacity="opaque">
+    <item android:drawable="@color/background"/>
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/phyphox_dark" />
+    </item>
+    <item android:bottom="5 0dp" android:right="0dp">
+        <bitmap
+            android:tint="@android:color/white"
+            android:gravity="right|bottom"
+            android:src="@drawable/rwth" />
+    </item>
+
+</layer-list>

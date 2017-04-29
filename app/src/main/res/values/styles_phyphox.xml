@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Generated with http://android-holo-colors.com -->
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <style name="splashTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
 
     <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="android:textColorPrimary">@color/main</item>
         <item name="android:textColorSecondary">@color/main</item>
-
-<!--        <item name="selectableItemBackground">?android:selectableItemBackground</item>
-        <item name="selectableItemBackgroundBorderless">?android:selectableItemBackground</item>-->
     </style>
 
   <style name="PopupMenuPhyphox" parent="ThemeOverlay.AppCompat.Dark">
