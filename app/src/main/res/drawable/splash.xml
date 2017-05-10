@@ -4,13 +4,6 @@
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@drawable/phyphox_dark" />
+            android:src="@drawable/logo_stack" />
     </item>
-    <item android:bottom="5 0dp" android:right="0dp">
-        <bitmap
-            android:tint="@android:color/white"
-            android:gravity="right|bottom"
-            android:src="@drawable/rwth" />
-    </item>
-
 </layer-list>
