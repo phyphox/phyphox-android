@@ -172,14 +172,18 @@ public class sensorInput implements SensorEventListener, Serializable {
             if (average) {
                 //We want averages, so sum up all the data and count the aquisitions
                 avgX += event.values[0];
-                avgY += event.values[1];
-                avgZ += event.values[2];
+                if (event.values.length > 1) {
+                    avgY += event.values[1];
+                    avgZ += event.values[2];
+                }
                 aquisitions++;
             } else {
                 //No averaging. Just keep the last result
                 avgX = event.values[0];
-                avgY = event.values[1];
-                avgZ = event.values[2];
+                if (event.values.length > 1) {
+                    avgY = event.values[1];
+                    avgZ = event.values[2];
+                }
                 aquisitions = 1;
             }
             if (lastReading == 0)
