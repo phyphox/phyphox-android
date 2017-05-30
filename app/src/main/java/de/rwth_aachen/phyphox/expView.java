@@ -369,6 +369,7 @@ public class expView implements Serializable{
 
             //Add the row to the linear layout
             rootView = row;
+            rootView.setFocusableInTouchMode(true);
             ll.addView(rootView);
         }
 
@@ -457,6 +458,7 @@ public class expView implements Serializable{
             textView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             rootView = textView;
+            rootView.setFocusableInTouchMode(true);
 
             //Add it to the linear layout
             ll.addView(rootView);
@@ -685,6 +687,7 @@ public class expView implements Serializable{
             row.addView(valueUnit);
 
             rootView = row;
+            rootView.setFocusableInTouchMode(true);
 
             //Add the row to the main linear layout passed to this function
             ll.addView(rootView);
@@ -1098,6 +1101,7 @@ public class expView implements Serializable{
 
             //Add the wrapper layout to the linear layout given to this function
             rootView = gvll;
+            rootView.setFocusableInTouchMode(true);
             ll.addView(rootView);
 
         }

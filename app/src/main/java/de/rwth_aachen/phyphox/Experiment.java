@@ -445,6 +445,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         anim.setRepeatMode(Animation.REVERSE);
         hintAnimation.startAnimation(anim);
 
+        hintAnimation.setContentDescription(res.getString(R.string.start));
+
         hint.setActionView(hintAnimation);
     }
 

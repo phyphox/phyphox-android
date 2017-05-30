@@ -40,7 +40,8 @@
             android:adjustViewBounds="true"
             android:layout_alignParentStart="false"
             android:layout_alignParentLeft="false"
-            android:layout_alignTop="@+id/logo" />
+            android:layout_alignTop="@+id/logo"
+            android:contentDescription="@string/info"/>
     </RelativeLayout>
 
     <ScrollView
@@ -69,6 +70,7 @@
     <android.support.design.widget.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:contentDescription="@string/newExperiment"
         android:text="@string/newExperiment"
         android:id="@+id/newExperiment"
         android:src="@drawable/new_experiment"

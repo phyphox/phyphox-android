@@ -10,6 +10,8 @@
     <string name="close">Schließen</string>
     <string name="confirmDelete">Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?</string>
     <string name="confirmDeleteTitle">Löschen bestätigen?</string>
+
+    <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsNames"><![CDATA[             Entwicklung und Konzept:<br /><b>Dr. Sebastian Kuhlen</b><br />iOS Umsetzung:<br /><b>Jonas Gessner</b><br />Konzept:<br /><b>Prof. Christoph Stampfer</b><br />Design:<br /><b>Frank Posthoff (A.NikoPol)</b>         ]]></string>
     <string name="creditsLibs">

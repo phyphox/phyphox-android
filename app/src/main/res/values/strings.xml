@@ -22,6 +22,7 @@
     <string name="donotshowagain">Do not show again</string>
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
 
+    <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
     <string name="creditsNames">
