@@ -325,6 +325,13 @@ public abstract class phyphoxFile {
             int count = 0;
         }
 
+        public static class AdditionalTag {
+            String name;
+            String content;
+            Map<String, String> attributes = new HashMap<>();
+        }
+        Vector<AdditionalTag> additionalTags;
+
         Vector<dataInput> inputList;
         Vector<dataOutput> outputList;
         ioMapping[] inputMapping;
@@ -332,12 +339,17 @@ public abstract class phyphoxFile {
         String mappingAttribute;
 
         ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
+            this(xpp, experiment, parent, inputList, outputList, inputMapping, outputMapping, mappingAttribute, null);
+        }
+
+        ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute, Vector<AdditionalTag> additionalTags) {
             super(xpp, experiment, parent);
             this.inputList = inputList;
             this.outputList = outputList;
             this.inputMapping = inputMapping;
             this.outputMapping = outputMapping;
             this.mappingAttribute = mappingAttribute;
+            this.additionalTags = additionalTags;
         }
 
         @Override
@@ -574,8 +586,15 @@ public abstract class phyphoxFile {
                         outputList.set(targetIndex, new dataOutput(buffer, clearBeforeWrite));
                     }
                     break;
-                default: //Unknown tag,,,
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                default: //Unknown tag...
+                    if (additionalTags == null)
+                        throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    AdditionalTag at = new AdditionalTag();
+                    for (int i = 0; i < xpp.getAttributeCount(); i++)
+                        at.attributes.put(xpp.getAttributeName(i).toLowerCase(), xpp.getAttributeValue(i));
+                    at.name = tag.toLowerCase();
+                    at.content = getText();
+                    additionalTags.add(at);
             }
         }
 
@@ -840,12 +859,34 @@ public abstract class phyphoxFile {
                     double size = getDoubleAttribute("size", 1.0);
 
                     //Allowed input/output configuration
+                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}}
                     };
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
+                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
 
                     expView.valueElement ve = newView.new valueElement(label, null, inputs.get(0).buffer.name, null, null, parent.getResources()); //Only a value input
+                    for (ioBlockParser.AdditionalTag at : ats) {
+                        if (!at.name.equals("map")) {
+                            throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
+                        }
+                        expView.valueElement.Mapping map = ve.new Mapping(translate(at.content));
+                        if (at.attributes.containsKey("min")) {
+                            try {
+                                map.min = Double.valueOf(at.attributes.get("min"));
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Could not parse min of map tag.", xpp.getLineNumber());
+                            }
+                        }
+                        if (at.attributes.containsKey("max")) {
+                            try {
+                                map.max = Double.valueOf(at.attributes.get("max"));
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Could not parse max of map tag.", xpp.getLineNumber());
+                            }
+                        }
+                        ve.addMapping(map);
+                    }
                     ve.setPrecision(precision); //Floating point precision
                     ve.setScientificNotation(scientific); //Scientific notation vs. fixed point
                     ve.setUnit(unit); //We can have a unit after the value
@@ -985,7 +1026,8 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "abs"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
+                            new ioBlockParser.ioMapping() {{name = "abs"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "accuracy"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                     };
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs

@@ -30,6 +30,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Vector;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
@@ -238,6 +239,23 @@ public class expView implements Serializable{
         private String formatter; //This formatter is created when scientificNotation and precision are set
         private String unit; //A string to display as unit
 
+        protected class Mapping {
+            Double min = Double.NEGATIVE_INFINITY;
+            Double max = Double.POSITIVE_INFINITY;
+            String str;
+
+            protected Mapping(String str) {
+                this.str = str;
+            }
+        }
+
+        protected Vector<Mapping> mappings = new Vector<>();
+
+        protected void addMapping(Mapping mapping) {
+            Log.d("test", "mapping: " + mapping.min + " to " + mapping.max + " as " + mapping.str);
+            this.mappings.add(mapping);
+        }
+
         //Used to change size within TextView
         private class MiddleRelativeSizeSpan extends MetricAffectingSpan {
             private final float mProportion;
@@ -381,7 +399,7 @@ public class expView implements Serializable{
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"valueElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span>"+ this.unit + "</span>" +
+                    "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ this.unit + "</span></span>" +
                     "</div>";
         }
 
@@ -389,14 +407,22 @@ public class expView implements Serializable{
         //We just have to send calculated value and the unit to the textView
         protected void setValue(double x) {
             if (tv != null) {
-                String vStr;
-                String uStr;
+                String vStr = "";
+                String uStr = "";
                 if (Double.isNaN(x)) {
                     vStr = "-";
                     uStr = "";
                 } else {
-                    vStr = String.format(this.formatter, x * this.factor);
-                    uStr = this.unit;
+                    for (Mapping map : mappings)  {
+                        if (x >= map.min && x <= map.max) {
+                            vStr = map.str;
+                            break;
+                        }
+                    }
+                    if (vStr.isEmpty()) {
+                        vStr = String.format(this.formatter, x * this.factor);
+                        uStr = this.unit;
+                    }
                 }
                 String out = vStr+uStr;
 
@@ -413,15 +439,32 @@ public class expView implements Serializable{
         @Override
         //In Javascript we just have to set the content of the value <span> to the value using jquery
         protected String setValueHTML() {
-            //In JavaScript we have to use "toExponential" or "toFixed" isntead of a formatter
-            if (scientificNotation)
-                return "function (x) {" +
-                        "$(\"#element"+htmlID+" .value .valueNumber\").text((x*"+factor+").toExponential("+precision+"))" +
-                        "}";
-            else
-                return "function (x) {" +
-                        "$(\"#element"+htmlID+" .value .valueNumber\").text((x*"+factor+").toFixed("+precision+"))" +
-                        "}";
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("function (x) {");
+            sb.append(      "var v = null;");
+
+            sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
+            for (Mapping map : mappings) {
+                String str = map.str.replace("<","&lt;").replace(">","&gt;");
+                if (!map.max.isInfinite() && !map.min.isInfinite()) {
+                    sb.append("else if (x >= " + map.min + ") && x <= " + map.max + ")) {v = \"" + str + "\";}");
+                } else if (!map.max.isInfinite()) {
+                    sb.append("else if (x <= " + map.max + ") {v = \"" + str + "\";}");
+                } else if (!map.min.isInfinite()) {
+                    sb.append("else if (x >= " + map.min + ") {v = \"" + str + "\";}");
+                }
+            }
+
+            sb.append("     if (v == null) {");
+            sb.append("         v = (x*"+factor+").to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
+            sb.append("         $(\"#element"+htmlID+" .value .valueUnit\").text(\""+ this.unit + "\");");
+            sb.append("     } else {");
+            sb.append("         $(\"#element"+htmlID+" .value .valueUnit\").text(\"\");");
+            sb.append("     }");
+            sb.append("     $(\"#element"+htmlID+" .value .valueNumber\").text(v);");
+            sb.append("}");
+            return sb.toString();
         }
     }
 
@@ -549,8 +592,8 @@ public class expView implements Serializable{
         private double currentValue = Double.NaN; //This value is filled into the dataBuffer before the user enters a custom value
         private boolean signed = true; //Is the user allowed to give negative values?
         private boolean decimal = true; //Is the user allowed to give non-integer values?
-        private Double min = -Double.NEGATIVE_INFINITY;
-        private Double max = Double.NEGATIVE_INFINITY;
+        private Double min = Double.NEGATIVE_INFINITY;
+        private Double max = Double.POSITIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         //No special constructor. Just some defaults.

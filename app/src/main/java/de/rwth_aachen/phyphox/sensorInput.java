@@ -23,10 +23,11 @@ public class sensorInput implements SensorEventListener, Serializable {
     public dataBuffer dataZ; //Data-buffer for z (3D sensors only)
     public dataBuffer dataT; //Data-buffer for t
     public dataBuffer dataAbs; //Data-buffer for absolute value
+    public dataBuffer dataAccuracy; //Data-buffer for absolute value
     transient private SensorManager sensorManager; //Hold the sensor manager
 
     private long lastReading; //Remember the time of the last reading to fullfill the rate
-    private double avgX, avgY, avgZ; //Used for averaging
+    private double avgX, avgY, avgZ, avgAccuracy; //Used for averaging
     private boolean average = false; //Avergae over aquisition period?
     private int aquisitions; //Number of aquisitions for this average
 
@@ -75,7 +76,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         if (buffers == null)
             return;
 
-        buffers.setSize(5);
+        buffers.setSize(6);
         if (buffers.get(0) != null)
             this.dataX = buffers.get(0).buffer;
         if (buffers.get(1) != null)
@@ -86,6 +87,8 @@ public class sensorInput implements SensorEventListener, Serializable {
             this.dataT = buffers.get(3).buffer;
         if (buffers.get(4) != null)
             this.dataAbs = buffers.get(4).buffer;
+        if (buffers.get(5) != null)
+            this.dataAccuracy = buffers.get(5).buffer;
     }
 
     public void attachSensorManager(SensorManager sensorManager) {
@@ -144,6 +147,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         this.avgX = 0.;
         this.avgY = 0.;
         this.avgZ = 0.;
+        this.avgAccuracy = 0.;
         this.aquisitions = 0;
 
         this.sensorManager.registerListener(this, sensorManager.getDefaultSensor(type), SensorManager.SENSOR_DELAY_FASTEST);
@@ -167,6 +171,23 @@ public class sensorInput implements SensorEventListener, Serializable {
                 t0 -= dataT.value * 1e9;
         }
 
+        Double accuracy = Double.NaN;
+        if (type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+            accuracy = 0.0;
+        } else if (type == Sensor.TYPE_MAGNETIC_FIELD) {
+            switch (event.accuracy) {
+                case SensorManager.SENSOR_STATUS_NO_CONTACT:
+                case SensorManager.SENSOR_STATUS_UNRELIABLE:
+                    accuracy = -1.0;
+                case SensorManager.SENSOR_STATUS_ACCURACY_LOW:
+                    accuracy = 1.0;
+                case SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM:
+                    accuracy = 2.0;
+                case SensorManager.SENSOR_STATUS_ACCURACY_HIGH:
+                    accuracy = 3.0;
+            }
+        }
+
         //From here only listen to "this" sensor
         if (event.sensor.getType() == type) {
             if (average) {
@@ -176,6 +197,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                     avgY += event.values[1];
                     avgZ += event.values[2];
                 }
+
+                avgAccuracy = Math.min(accuracy, avgAccuracy);
                 aquisitions++;
             } else {
                 //No averaging. Just keep the last result
@@ -184,6 +207,7 @@ public class sensorInput implements SensorEventListener, Serializable {
                     avgY = event.values[1];
                     avgZ = event.values[2];
                 }
+                avgAccuracy = accuracy;
                 aquisitions = 1;
             }
             if (lastReading == 0)
@@ -203,6 +227,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                         dataT.append((event.timestamp - t0) * 1e-9); //We want seconds since t0
                     if (dataAbs != null)
                         dataAbs.append(Math.sqrt(avgX*avgX+avgY*avgY+avgZ*avgZ) / aquisitions);
+                    if (dataAccuracy != null)
+                        dataAccuracy.append(accuracy);
                 } finally {
                     dataLock.unlock();
                 }
@@ -210,6 +236,7 @@ public class sensorInput implements SensorEventListener, Serializable {
                 avgX = 0.;
                 avgY = 0.;
                 avgZ = 0.;
+                avgAccuracy = 0.;
                 lastReading = event.timestamp;
                 aquisitions = 0;
             }
