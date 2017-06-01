@@ -1329,6 +1329,33 @@ public abstract class phyphoxFile {
 
                     experiment.analysis.add(new Analysis.absAM(experiment, inputs, outputs));
                 } break;
+                case "round": { //Round
+                    boolean floor = getBooleanAttribute("floor", false);
+                    boolean ceil = getBooleanAttribute("ceil", false);
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "round"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.roundAM(experiment, inputs, outputs, floor, ceil));
+                } break;
+                case "log": { //nat. logarithm
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "log"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.logAM(experiment, inputs, outputs));
+                } break;
                 case "sin": { //Sine
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 

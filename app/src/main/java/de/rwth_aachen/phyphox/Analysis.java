@@ -675,6 +675,53 @@ public class Analysis {
         }
     }
 
+    // Calculate the nearest integer (or ceil/floor if set by an attribute)
+    // The output has the length of the input buffer or at 1 for a value.
+    public static class roundAM extends analysisModule implements Serializable {
+        boolean floor, ceil;
+
+        protected roundAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean floor, boolean ceil) {
+            super(experiment, inputs, outputs);
+            this.floor = floor;
+            this.ceil = ceil;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            for (int i = 0; i < size; i++) {
+                if (!floor && !ceil)
+                    outputs.get(0).append(Math.round(array[i]));
+                else if (floor) {
+                    outputs.get(0).append(Math.floor(array[i]));
+                } else {
+                    outputs.get(0).append(Math.ceil(array[i]));
+                }
+            }
+        }
+    }
+
+    // Calculate the natural logarithm
+    // The output has the length of the input buffer or at 1 for a value.
+    public static class logAM extends analysisModule implements Serializable {
+
+        protected logAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double array[] = inputArrays.get(0);
+            int size = inputArraySizes.get(0);
+            for (int i = 0; i < size; i++) {
+                outputs.get(0).append(Math.log(array[i]));
+            }
+        }
+    }
+
     // Calculate the sine of a single input value.
     // The output has the length of the input buffer or at 1 for a value.
     public static class sinAM extends analysisModule implements Serializable {
