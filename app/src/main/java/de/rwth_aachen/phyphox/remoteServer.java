@@ -110,8 +110,8 @@ public class remoteServer extends Thread {
                     line = line.replace("###drawablePause###", getBase64PNG(res.getDrawable(R.drawable.pause)));
                 if (line.contains("###drawableTimedPause###"))
                     line = line.replace("###drawableTimedPause###", getBase64PNG(res.getDrawable(R.drawable.timed_pause)));
-//                if (line.contains("###drawableClearData###"))
-//                    line = line.replace("###drawableClearData###", getBase64PNG(res.getDrawable(R.drawable.delete)));
+                if (line.contains("###drawableClearData###"))
+                    line = line.replace("###drawableClearData###", getBase64PNG(res.getDrawable(R.drawable.delete)));
 //                if (line.contains("###drawableExport###"))
 //                    line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
                 if (line.contains("###drawableMore###"))
@@ -180,6 +180,9 @@ public class remoteServer extends Thread {
                 } else if (line.contains("<!-- [[clearDataTranslation]] -->")) { //The localized string for "clear data"
                         sb.append(line.replace("<!-- [[clearDataTranslation]] -->", res.getString(R.string.clear_data)));
                         sb.append("\n");
+                } else if (line.contains("<!-- [[clearConfirmTranslation]] -->")) { //The localized string for "Clear data?"
+                    sb.append(line.replace("<!-- [[clearConfirmTranslation]] -->", res.getString(R.string.clear_data_question)));
+                    sb.append("\n");
                 } else if (line.contains("<!-- [[exportTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[exportTranslation]] -->", res.getString(R.string.export)));
                     sb.append("\n");
