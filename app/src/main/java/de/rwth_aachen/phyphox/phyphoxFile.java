@@ -3,9 +3,11 @@ package de.rwth_aachen.phyphox;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -1044,6 +1046,38 @@ public abstract class phyphoxFile {
                     if (!experiment.inputSensors.lastElement().isAvailable()) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(experiment.inputSensors.lastElement().getDescriptionRes()) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
                     }
+                    break;
+                }
+                case "location": { //Audio input, aka microphone
+                    //Check for recording permission
+                    if (ContextCompat.checkSelfPermission(parent, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        //No permission? Request it (Android 6+, only)
+                        ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                        throw new phyphoxFileException("Need permission to receive location through GPS."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
+                    }
+
+                    //Allowed input/output configuration
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "lat"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "lon"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "v"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "dir"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "accuracy"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "zAccuracy"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "status"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "satellites"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
+                    };
+                    Vector<dataOutput> outputs = new Vector<>();
+                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
+
+                    experiment.gpsIn = new gpsInput(outputs, experiment.dataLock);
+                    experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
+
+
+
                     break;
                 }
                 case "audio": { //Audio input, aka microphone

@@ -16,6 +16,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.CountDownTimer;
@@ -317,7 +318,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 tabLayout.setVisibility(View.GONE);
 
             try {
-                experiment.init(sensorManager);
+                experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
             } catch (Exception e) {
                 Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
             }

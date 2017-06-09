@@ -1,13 +1,17 @@
 package de.rwth_aachen.phyphox;
 
+import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
+import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -53,6 +57,7 @@ public class phyphoxExperiment implements Serializable {
     public Map<String, String> highlightedLinks = new HashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
     public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
+    public gpsInput gpsIn = null;
     public Vector<bluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
     public Vector<bluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
     public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
@@ -333,6 +338,10 @@ public class phyphoxExperiment implements Serializable {
         //Sensors
         for (sensorInput sensor : inputSensors)
             sensor.stop();
+
+        if (gpsIn != null)
+            gpsIn.stop();
+
         //Bluetooth
         for (bluetoothInput bti : bluetoothInputs)
             bti.stop();
@@ -351,6 +360,9 @@ public class phyphoxExperiment implements Serializable {
         for (sensorInput sensor : inputSensors)
             sensor.start();
 
+        if (gpsIn != null)
+            gpsIn.start();
+
         for (bluetoothInput bti : bluetoothInputs)
             bti.start();
 
@@ -361,7 +373,7 @@ public class phyphoxExperiment implements Serializable {
         //We will not start audio output here as it will be triggered by the analysis modules.
     }
 
-    public void init(SensorManager sensorManager) throws Exception {
+    public void init(SensorManager sensorManager, LocationManager locationManager) throws Exception {
         //Update all the views
         for (int i = 0; i < experimentViews.size(); i++) {
             updateViews(i, true);
@@ -383,6 +395,9 @@ public class phyphoxExperiment implements Serializable {
         for (sensorInput si : inputSensors) {
             si.attachSensorManager(sensorManager);
         }
+
+        if (gpsIn != null)
+            gpsIn.attachLocationManager(locationManager);
 
         //Reconnect bluetooth inputs
         for (bluetoothInput bti : bluetoothInputs) {

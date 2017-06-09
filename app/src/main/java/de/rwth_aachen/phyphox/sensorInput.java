@@ -55,9 +55,8 @@ public class sensorInput implements SensorEventListener, Serializable {
         }
     }
 
-    //The constructor needs the sensorManager, the phyphox identifier of the sensor type, the
-    //desired aquisition rate, and the four buffers to receive x, y, z and t. The data buffers may
-    //be null to be left unused.
+    //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
+    // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
     protected sensorInput(String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws SensorException {
         this.dataLock = lock;
 
@@ -171,25 +170,26 @@ public class sensorInput implements SensorEventListener, Serializable {
                 t0 -= dataT.value * 1e9;
         }
 
-        Double accuracy = Double.NaN;
-        if (type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
-            accuracy = 0.0;
-        } else if (type == Sensor.TYPE_MAGNETIC_FIELD) {
-            switch (event.accuracy) {
-                case SensorManager.SENSOR_STATUS_NO_CONTACT:
-                case SensorManager.SENSOR_STATUS_UNRELIABLE:
-                    accuracy = -1.0;
-                case SensorManager.SENSOR_STATUS_ACCURACY_LOW:
-                    accuracy = 1.0;
-                case SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM:
-                    accuracy = 2.0;
-                case SensorManager.SENSOR_STATUS_ACCURACY_HIGH:
-                    accuracy = 3.0;
-            }
-        }
-
         //From here only listen to "this" sensor
         if (event.sensor.getType() == type) {
+
+            Double accuracy = Double.NaN;
+            if (type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+                accuracy = 0.0;
+            } else if (type == Sensor.TYPE_MAGNETIC_FIELD) {
+                switch (event.accuracy) {
+                    case SensorManager.SENSOR_STATUS_NO_CONTACT:
+                    case SensorManager.SENSOR_STATUS_UNRELIABLE:
+                        accuracy = -1.0;
+                    case SensorManager.SENSOR_STATUS_ACCURACY_LOW:
+                        accuracy = 1.0;
+                    case SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM:
+                        accuracy = 2.0;
+                    case SensorManager.SENSOR_STATUS_ACCURACY_HIGH:
+                        accuracy = 3.0;
+                }
+            }
+
             if (average) {
                 //We want averages, so sum up all the data and count the aquisitions
                 avgX += event.values[0];
