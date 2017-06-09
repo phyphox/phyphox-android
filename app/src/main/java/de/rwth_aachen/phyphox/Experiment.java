@@ -424,7 +424,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 actionBar.getLocationOnScreen(pos);
                 if(isFinishing())
                     return;
-                popupWindow.showAtLocation(actionBar, Gravity.TOP | Gravity.RIGHT, 0, pos[1] + (int)(actionBar.getHeight()*0.8));
+                try {
+                    popupWindow.showAtLocation(actionBar, Gravity.TOP | Gravity.RIGHT, 0, pos[1] + (int) (actionBar.getHeight() * 0.8));
+                } catch (WindowManager.BadTokenException e) {
+                    Log.e("showMenuHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
+                }
             }
         });
     }

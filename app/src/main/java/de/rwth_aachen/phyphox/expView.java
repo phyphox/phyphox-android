@@ -252,7 +252,6 @@ public class expView implements Serializable{
         protected Vector<Mapping> mappings = new Vector<>();
 
         protected void addMapping(Mapping mapping) {
-            Log.d("test", "mapping: " + mapping.min + " to " + mapping.max + " as " + mapping.str);
             this.mappings.add(mapping);
         }
 
