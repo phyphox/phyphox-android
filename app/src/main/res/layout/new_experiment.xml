@@ -107,12 +107,6 @@
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorHumidity"
-                    android:id="@+id/neHumidity" />
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
                     android:text="@string/sensorLight"
                     android:id="@+id/neLight" />
 
@@ -121,6 +115,12 @@
                     android:layout_height="wrap_content"
                     android:text="@string/sensorLinearAcceleration"
                     android:id="@+id/neLinearAcceleration" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/location"
+                    android:id="@+id/neLocation" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -139,12 +139,6 @@
                     android:layout_height="wrap_content"
                     android:text="@string/sensorProximity"
                     android:id="@+id/neProximity" />
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sensorTemperature"
-                    android:id="@+id/neTemperature" />
 
             </LinearLayout>
 

@@ -959,6 +959,7 @@ public class ExperimentList extends AppCompatActivity {
 //        final CheckBox neHumidity = (CheckBox) neLayout.findViewById(R.id.neHumidity);
         final CheckBox neLight = (CheckBox) neLayout.findViewById(R.id.neLight);
         final CheckBox neLinearAcceleration = (CheckBox) neLayout.findViewById(R.id.neLinearAcceleration);
+        final CheckBox neLocation = (CheckBox) neLayout.findViewById(R.id.neLocation);
         final CheckBox neMagneticField = (CheckBox) neLayout.findViewById(R.id.neMagneticField);
         final CheckBox nePressure = (CheckBox) neLayout.findViewById(R.id.nePressure);
         final CheckBox neProximity = (CheckBox) neLayout.findViewById(R.id.neProximity);
@@ -991,11 +992,12 @@ public class ExperimentList extends AppCompatActivity {
 //                boolean hum = neHumidity.isChecked();
                 boolean light = neLight.isChecked();
                 boolean lin = neLinearAcceleration.isChecked();
+                boolean loc = neLocation.isChecked();
                 boolean mag = neMagneticField.isChecked();
                 boolean pressure = nePressure.isChecked();
                 boolean prox = neProximity.isChecked();
 //                boolean temp = neTemperature.isChecked();
-                if (!(acc || gyr || light || lin || mag || pressure || prox /*|| hum || temp*/)) {
+                if (!(acc || gyr || light || lin || loc || mag || pressure || prox /*|| hum || temp*/)) {
                     acc = true;
                     Toast.makeText(ExperimentList.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
                 }
@@ -1042,6 +1044,18 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<container size=\"0\">linY</container>").getBytes());
                         output.write(("<container size=\"0\">linZ</container>").getBytes());
                     }
+                    if (loc) {
+                        output.write(("<container size=\"0\">loc_time</container>").getBytes());
+                        output.write(("<container size=\"0\">locLat</container>").getBytes());
+                        output.write(("<container size=\"0\">locLon</container>").getBytes());
+                        output.write(("<container size=\"0\">locZ</container>").getBytes());
+                        output.write(("<container size=\"0\">locV</container>").getBytes());
+                        output.write(("<container size=\"0\">locDir</container>").getBytes());
+                        output.write(("<container size=\"0\">locAccuracy</container>").getBytes());
+                        output.write(("<container size=\"0\">locZAccuracy</container>").getBytes());
+                        output.write(("<container size=\"0\">locStatus</container>").getBytes());
+                        output.write(("<container size=\"0\">locSatellites</container>").getBytes());
+                    }
                     if (mag) {
                         output.write(("<container size=\"0\">mag_time</container>").getBytes());
                         output.write(("<container size=\"0\">magX</container>").getBytes());
@@ -1078,6 +1092,8 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<sensor type=\"light\" rate=\"" + rate + "\" ><output component=\"x\">light</output><output component=\"t\">light_time</output></sensor>").getBytes());
                     if (lin)
                         output.write(("<sensor type=\"linear_acceleration\" rate=\"" + rate + "\" ><output component=\"x\">linX</output><output component=\"y\">linY</output><output component=\"z\">linZ</output><output component=\"t\">lin_time</output></sensor>").getBytes());
+                    if (loc)
+                        output.write(("<location><output component=\"lat\">locLat</output><output component=\"lon\">locLon</output><output component=\"z\">locZ</output><output component=\"t\">loc_time</output><output component=\"v\">locV</output><output component=\"dir\">locDir</output><output component=\"accuracy\">locAccuracy</output><output component=\"zAccuracy\">locZAccuracy</output><output component=\"status\">locStatus</output><output component=\"satellites\">locSatellites</output></location>").getBytes());
                     if (mag)
                         output.write(("<sensor type=\"magnetic_field\" rate=\"" + rate + "\" ><output component=\"x\">magX</output><output component=\"y\">magY</output><output component=\"z\">magZ</output><output component=\"t\">mag_time</output></sensor>").getBytes());
                     if (pressure)
@@ -1123,6 +1139,19 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<graph label=\"Linear Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linX</input></graph>").getBytes());
                         output.write(("<graph label=\"Linear Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linY</input></graph>").getBytes());
                         output.write(("<graph label=\"Linear Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linZ</input></graph>").getBytes());
+                        output.write("</view>".getBytes());
+                    }
+                    if (loc) {
+                        output.write("<view label=\"Location\">".getBytes());
+                        output.write(("<graph label=\"Latitude\" labelX=\"t (s)\" labelY=\"Latitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLat</input></graph>").getBytes());
+                        output.write(("<graph label=\"Longitude\" labelX=\"t (s)\" labelY=\"Longitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLon</input></graph>").getBytes());
+                        output.write(("<graph label=\"Height\" labelX=\"t (s)\" labelY=\"z (m)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locZ</input></graph>").getBytes());
+                        output.write(("<graph label=\"Velocity\" labelX=\"t (s)\" labelY=\"v (m/s)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locV</input></graph>").getBytes());
+                        output.write(("<graph label=\"Direction\" labelX=\"t (s)\" labelY=\"heading (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locDir</input></graph>").getBytes());
+                        output.write(("<value label=\"Horizontal Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locAccuracy</input></value>").getBytes());
+                        output.write(("<value label=\"Vertical Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locZAccuracy</input></value>").getBytes());
+                        output.write(("<value label=\"Satellites\" size=\"1\" precision=\"0\"><input>locSatellites</input></value>").getBytes());
+                        output.write(("<value label=\"Status\" size=\"1\" precision=\"0\"><input>locStatus</input><map max=\"-1\">GPS disabled</map><map max=\"0\">Waiting for signal</map><map max=\"1\">Active</map></value>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (mag) {
@@ -1189,6 +1218,18 @@ public class ExperimentList extends AppCompatActivity {
                         output.write("<data name=\"Linear Acceleration x (m/s^2)\">linX</data>".getBytes());
                         output.write("<data name=\"Linear Acceleration y (m/s^2)\">linY</data>".getBytes());
                         output.write("<data name=\"Linear Acceleration z (m/s^2)\">linZ</data>".getBytes());
+                        output.write("</set>".getBytes());
+                    }
+                    if (loc) {
+                        output.write("<set name=\"Location\">".getBytes());
+                        output.write("<data name=\"Time (s)\">loc_time</data>".getBytes());
+                        output.write("<data name=\"Latitude (°)\">locLat</data>".getBytes());
+                        output.write("<data name=\"Longitude (°)\">locLon</data>".getBytes());
+                        output.write("<data name=\"Height (m)\">locZ</data>".getBytes());
+                        output.write("<data name=\"Velocity (m/s)\">locV</data>".getBytes());
+                        output.write("<data name=\"Direction (°)\">locDir</data>".getBytes());
+                        output.write("<data name=\"Horizontal Accuracy (m)\">locAccuracy</data>".getBytes());
+                        output.write("<data name=\"Vertical Accuracy (m)\">locZAccuracy</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
                     if (mag) {

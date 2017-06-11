@@ -38,6 +38,7 @@
     <string name="hotspotSettings">Hotspot Einstellungen</string>
     <string name="loadingText">Experiment wird geladen…</string>
     <string name="loadingTitle">Laden</string>
+    <string name="location">Standort</string>
     <string name="newExperiment">Neues einfaches Experiment</string>
     <string name="newExperimentInputBufferSize">Puffergröße (Anzahl zu speichernder Werte)</string>
     <string name="newExperimentInputRate">Sensorrate (in Hz, 0 = so schnell wie möglich)</string>
