@@ -1264,20 +1264,23 @@ public class Analysis {
     //If the input length is not a power of two the input will be filled with zeros until it is a power of two
     public static class fftAM extends analysisModule implements Serializable {
         private FFT fft;
-        int n;
 
         protected fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             fft = new FFT();
-            n = inputs.get(0).buffer.size; //Actual input size
-            fft.prepare(n);
 
             useArray = true;
         }
 
         @Override
         protected void update() {
+            int size = inputArrays.get(0).length;
+            if (size < 2)
+                return;
 
+            if (fft.n != size) {
+                fft.prepare(size);
+            }
 
             Double x[] = Arrays.copyOf(inputArrays.get(0), fft.np2);
             Double y[];
@@ -1297,7 +1300,7 @@ public class Analysis {
             fft.calculate(x, y);
 
             //Append the real part of the result to output1 and the imaginary part to output2 (if used)
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < size; i++) {
                 if (outputs.size() > 0 && outputs.get(0) != null)
                 outputs.get(0).append(x[i]);
                 if (outputs.size() > 1 && outputs.get(1) != null)
