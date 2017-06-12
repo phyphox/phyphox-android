@@ -66,6 +66,7 @@ public class phyphoxExperiment implements Serializable {
     public Lock dataLock = new ReentrantLock();
 
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
+    dataBuffer analysisDynamicSleep = null;
     long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
     long analysisTime; //This variable holds the system time of the moment the current analysis process started.
     long firstAnalysisTime = 0; //This variable holds the system time of the moment the first analysis process started.
@@ -182,13 +183,18 @@ public class phyphoxExperiment implements Serializable {
             }
         }
 
+        Double sleep = analysisSleep;
+        if (analysisDynamicSleep != null && !Double.isNaN(analysisDynamicSleep.value) && !Double.isInfinite(analysisDynamicSleep.value)) {
+            sleep = analysisDynamicSleep.value;
+        }
+
         //Check if the actual math should be done
         if (analysisOnUserInput) {
             //If set by the experiment, the analysis is only done when there is new input from the user
             if (!newUserInput) {
                 return; //No new input. Nothing to do.
             }
-        } else if (System.currentTimeMillis() - lastAnalysis <= analysisSleep * 1000) {
+        } else if (System.currentTimeMillis() - lastAnalysis <= sleep * 1000) {
             //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
             return; //Too soon. Nothing to do
         }
