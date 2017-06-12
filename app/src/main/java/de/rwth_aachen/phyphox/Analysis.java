@@ -1851,7 +1851,8 @@ public class Analysis {
                 end = (int)inputs.get(1).getValue();
             if (inputs.size() > 2 && inputs.get(2) != null)
                 end = start + (int)inputs.get(2).getValue();
-            if (start < 0 || start > end) {
+
+            if (start < 0) {
                 start = 0;
             }
             if (end < 0) {
@@ -1864,7 +1865,8 @@ public class Analysis {
             for (int i = 3; i < inputs.size(); i++) {
                 if (outputs.size() > i-3 && outputs.get(i-3) != null && inputs.get(i) != null) {
                     int thisEnd = Math.min(end,inputs.get(i).getFilledSize());
-                    outputs.get(i-3).append(Arrays.copyOfRange(inputs.get(i).getArray(), start, thisEnd), thisEnd-start);
+                    if (start < thisEnd)
+                        outputs.get(i-3).append(Arrays.copyOfRange(inputs.get(i).getArray(), start, thisEnd), thisEnd-start);
                 }
             }
         }
