@@ -670,10 +670,12 @@ public abstract class phyphoxFile {
                 case "analysis": //Holds a number of math modules which will be executed in the order they occur
                     experiment.analysisSleep = getDoubleAttribute("sleep", 0.); //Time between executions
                     String dynamicSleep = getStringAttribute("dynamicSleep"); //Time between executions
-                    if (experiment.getBuffer(dynamicSleep) != null)
-                        experiment.analysisDynamicSleep = experiment.getBuffer(dynamicSleep);
-                    else
-                        throw new phyphoxFileException("Dynamic sleep buffer " + dynamicSleep + " has not been defined as a buffer.", xpp.getLineNumber());
+                    if (dynamicSleep != null) {
+                        if (experiment.getBuffer(dynamicSleep) != null)
+                            experiment.analysisDynamicSleep = experiment.getBuffer(dynamicSleep);
+                        else
+                            throw new phyphoxFileException("Dynamic sleep buffer " + dynamicSleep + " has not been defined as a buffer.", xpp.getLineNumber());
+                    }
                     experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false); //Only execute when the user changed something?
                     (new analysisBlockParser(xpp, experiment, parent)).process();
                     break;
