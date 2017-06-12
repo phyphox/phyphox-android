@@ -564,7 +564,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //Decode the experiment icon (base64) and return a bitmap
-    public static Bitmap decodeBase64(String input) {
+    public static Bitmap decodeBase64(String input) throws IllegalArgumentException {
         byte[] decodedByte = Base64.decode(input, 0); //Decode the base64 data to binary
         return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
     }
@@ -643,7 +643,12 @@ public class ExperimentList extends AppCompatActivity {
                                     if (xpp.getAttributeValue(null, "format") != null && xpp.getAttributeValue(null, "format").equals("base64")) { //Check the icon type
                                         //base64 encoded image. Decode it
                                         icon = xpp.nextText().trim();
-                                        image = new BitmapIcon(decodeBase64(icon), this);
+                                        try {
+                                            Bitmap bitmap = decodeBase64(icon);
+                                            image = new BitmapIcon(bitmap, this);
+                                        } catch (IllegalArgumentException e) {
+                                            Log.e("loadExperimentInfo", "Invalid icon: " + e.getMessage());
+                                        }
                                     } else {
                                         //Just a string. Create an icon from it. We allow a maximum of three characters.
                                         icon = xpp.nextText().trim();
