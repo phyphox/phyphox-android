@@ -447,11 +447,13 @@ public class expView implements Serializable{
             for (Mapping map : mappings) {
                 String str = map.str.replace("<","&lt;").replace(">","&gt;");
                 if (!map.max.isInfinite() && !map.min.isInfinite()) {
-                    sb.append("else if (x >= " + map.min + ") && x <= " + map.max + ")) {v = \"" + str + "\";}");
+                    sb.append("else if (x >= " + map.min + " && x <= " + map.max + ") {v = \"" + str + "\";}");
                 } else if (!map.max.isInfinite()) {
                     sb.append("else if (x <= " + map.max + ") {v = \"" + str + "\";}");
                 } else if (!map.min.isInfinite()) {
                     sb.append("else if (x >= " + map.min + ") {v = \"" + str + "\";}");
+                } else {
+                    sb.append("else if (true) {v = \"" + str + "\";}");
                 }
             }
 
