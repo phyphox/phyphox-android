@@ -681,12 +681,17 @@ public class ExperimentList extends AppCompatActivity {
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (sensorInput.SensorException e) {
                                     unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
-                                    Log.d("SENSOR","x" + unavailableSensor);
                                     break;
                                 }
                                 if (!testSensor.isAvailable()) {
                                     unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
-                                    Log.d("SENSOR", "x"+unavailableSensor);
+                                }
+                                break;
+                            case "location":
+                                if (!inInput || unavailableSensor >= 0)
+                                    break;
+                                if (!gpsInput.isAvailable(this)) {
+                                    unavailableSensor = R.string.location;
                                 }
                                 break;
                         }

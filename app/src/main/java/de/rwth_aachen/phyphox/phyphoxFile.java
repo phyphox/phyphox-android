@@ -1083,7 +1083,9 @@ public abstract class phyphoxFile {
                     experiment.gpsIn = new gpsInput(outputs, experiment.dataLock);
                     experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
 
-
+                    if (!gpsInput.isAvailable(parent)) {
+                        throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(R.string.location) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
+                    }
 
                     break;
                 }

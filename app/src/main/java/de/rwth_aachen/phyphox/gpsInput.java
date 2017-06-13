@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -67,6 +68,11 @@ public class gpsInput implements Serializable {
 
     public void attachLocationManager(LocationManager locationManager) {
         this.locationManager = locationManager;
+    }
+
+    //Check if GPS hardware is available
+    public static boolean isAvailable(Context context) {
+        return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS));
     }
 
     //Start the data aquisition by registering a listener for this location manager.
