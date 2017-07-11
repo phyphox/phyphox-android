@@ -126,7 +126,7 @@ public class graphView extends View {
             else
                 scaleX = scaleXStartScale;
 
-            if (scaleYStartSpan/scaleYStartSpan > 0.5)
+            if (scaleYStartSpan/scaleXStartSpan > 0.5)
                 scaleY = scaleYStartSpan / spanY * scaleYStartScale;
             else
                 scaleY = scaleYStartScale;
