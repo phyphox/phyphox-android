@@ -164,8 +164,12 @@ public class gpsInput implements Serializable {
                 dataAccuracy.append(event.getAccuracy());
             if (dataZAccuracy != null)
                 dataZAccuracy.append(0); //Android does not provide vertical accuracy
-            if (dataSatellites != null)
-                dataSatellites.append(event.getExtras().getInt("satellites", 0)); //Android does not provide vertical accuracy
+            if (dataSatellites != null) {
+                if (event.getExtras() != null)  //Not sure why this might happen, but there seem to be rare cases in which this leads to a crash
+                    dataSatellites.append(event.getExtras().getInt("satellites", 0));
+                else
+                    dataSatellites.append(0);
+            }
         } finally {
             dataLock.unlock();
         }
