@@ -928,7 +928,6 @@ public class ExperimentList extends AppCompatActivity {
         //Setup AlertDialog builder
         adb.setView(warningLayout);
         adb.setTitle(R.string.warning);
-        adb.setMessage(R.string.damageWarning);
         adb.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 //User clicked ok. Did the user decide to skip future warnings?
