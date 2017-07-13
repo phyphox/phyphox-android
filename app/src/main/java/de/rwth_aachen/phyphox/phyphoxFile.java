@@ -874,7 +874,9 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
 
-                    expView.valueElement ve = newView.new valueElement(label, null, inputs.get(0).buffer.name, null, null, parent.getResources()); //Only a value input
+                    Vector<String> inStrings = new Vector<>();
+                    inStrings.add(inputs.get(0).buffer.name);
+                    expView.valueElement ve = newView.new valueElement(label, null, inStrings, parent.getResources()); //Only a value input
                     for (ioBlockParser.AdditionalTag at : ats) {
                         if (!at.name.equals("map")) {
                             throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
@@ -905,11 +907,11 @@ public abstract class phyphoxFile {
                     break;
                 }
                 case "info": //An info element just shows some text
-                    expView.infoElement infoe = newView.new infoElement(label, null, null, null, null, parent.getResources()); //No inputs, just the label and resources
+                    expView.infoElement infoe = newView.new infoElement(label, null, null, parent.getResources()); //No inputs, just the label and resources
                     newView.elements.add(infoe);
                     break;
                 case "separator": //An info element just shows some text
-                    expView.separatorElement separatore = newView.new separatorElement(null, null, null, null, parent.getResources()); //No inputs, just the label and resources
+                    expView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
                     int c = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
                     float height = (float)getDoubleAttribute("height", 0.1);
                     separatore.setColor(c);
@@ -942,17 +944,18 @@ public abstract class phyphoxFile {
 
 
                     //Allowed input/output configuration
+                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; }},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; }}
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; }},
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, "axis")).process(); //Load inputs and outputs
-                    String bufferX = null;
-                    if (inputs.size() > 1)
-                        bufferX = inputs.get(1).buffer.name;
-                    String bufferY = inputs.get(0).buffer.name;
 
-                    expView.graphElement ge = newView.new graphElement(label, null, null, bufferX, bufferY, parent.getResources()); //Two array inputs
+                    Vector<String> inStrings = new Vector<>();
+                    for (dataInput input : inputs)
+                        inStrings.add(input.buffer.name);
+
+                    expView.graphElement ge = newView.new graphElement(label, null, inStrings, parent.getResources()); //Two array inputs
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
                     ge.setLine(!(lineStyle != null && lineStyle.equals("dots"))); //Everything but dots will be lines
                     ge.setLineWidth(lineWidth);
@@ -964,6 +967,7 @@ public abstract class phyphoxFile {
                     ge.setLabel(labelX, labelY);  //x- and y- label
                     ge.setLogScale(logX, logY); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision); //logarithmic scales for x/y axes
+//TODO                    ge.setInputs(inputs, ats);
                     newView.elements.add(ge);
                     break;
                 }
@@ -981,7 +985,7 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
-                    expView.editElement ie = newView.new editElement(label, outputs.get(0).buffer.name, null, null, null, parent.getResources()); //Ouput only
+                    expView.editElement ie = newView.new editElement(label, outputs.get(0).buffer.name, null, parent.getResources()); //Ouput only
                     ie.setUnit(unit); //A unit displayed next to the input box
                     ie.setFactor(factor); //A scaling factor. Mostly for matching units
                     ie.setSigned(signed); //May the entered number be negative?
@@ -1001,7 +1005,7 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, null)).process(); //Load inputs and outputs
 
-                    expView.buttonElement be = newView.new buttonElement(label, null, null, null, null, parent.getResources()); //This one is user-event driven and does not regularly read or write values
+                    expView.buttonElement be = newView.new buttonElement(label, null, null, parent.getResources()); //This one is user-event driven and does not regularly read or write values
                     be.setIO(inputs, outputs);
                     newView.elements.add(be);
                     break;

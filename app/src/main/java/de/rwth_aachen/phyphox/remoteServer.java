@@ -241,7 +241,7 @@ public class remoteServer extends Thread {
                             sb.append(id);
 
                             //The update method
-                            sb.append("\",\"partialUpdate\":\"");
+                            sb.append("\",\"updateMode\":\"");
                             sb.append(experiment.experimentViews.get(i).elements.get(j).getUpdateMode());
 
                             //The label size
@@ -256,32 +256,24 @@ public class remoteServer extends Thread {
                             sb.append("\",\"dataCompleteFunction\":");
                             sb.append(experiment.experimentViews.get(i).elements.get(j).dataCompleteHTML());
 
-                            //If this element takes single values, set the buffer and the JS function
-                            if (experiment.experimentViews.get(i).elements.get(j).getValueInput() != null) {
-                                sb.append(",\"valueInput\":\"");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).getValueInput().replace("\"","\\\""));
-                                sb.append("\",\"valueInputFunction\":\n");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).setValueHTML());
-                                sb.append("\n");
-                            }
-
                             //If this element takes an x array, set the buffer and the JS function
-                            if (experiment.experimentViews.get(i).elements.get(j).getDataXInput() != null) {
-                                sb.append(",\"dataXInput\":\"");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).getDataXInput().replace("\"","\\\""));
-                                sb.append("\",\"dataXInputFunction\":\n");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).setDataXHTML());
+                            if (experiment.experimentViews.get(i).elements.get(j).inputs != null) {
+                                sb.append(",\"dataInput\":[");
+                                boolean first = true;
+                                for (String input : experiment.experimentViews.get(i).elements.get(j).inputs) {
+                                    if (first)
+                                        first = false;
+                                    else
+                                        sb.append(",");
+                                    sb.append("\"");
+                                    sb.append(input.replace("\"", "\\\""));
+                                    sb.append("\"");
+                                }
+                                sb.append("],\"dataInputFunction\":\n");
+                                sb.append(experiment.experimentViews.get(i).elements.get(j).setDataHTML());
                                 sb.append("\n");
                             }
 
-                            //If this element takes an y array, set the buffer and the JS function
-                            if (experiment.experimentViews.get(i).elements.get(j).getDataYInput() != null) {
-                                sb.append(",\"dataYInput\":\"");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).getDataYInput().replace("\"","\\\""));
-                                sb.append("\",\"dataYInputFunction\":\n");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).setDataYHTML());
-                                sb.append("\n");
-                            }
                             sb.append("}"); //The element is complete
                             id++;
                         }

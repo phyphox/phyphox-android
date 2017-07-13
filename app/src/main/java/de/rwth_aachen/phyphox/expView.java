@@ -57,27 +57,25 @@ public class expView implements Serializable{
         protected String label; //Each element has a label. Usually naming the data shown
         protected float labelSize; //Size of the label
         protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
-        protected String valueInput; //Single valued data from this input can be displayed to the user
-        protected String dataXInput; //Array data from this input can be displayed to the user, usually used for x-axis
-        protected String dataYInput; //Array data from this input can be displayed to the user, usually used for y-axis
+        protected Vector<String> inputs;
 
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
         transient protected View rootView; //Holds the root view of the element
 
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
-        protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+        protected expViewElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             this.label = label;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.valueOutput = valueOutput;
-            this.valueInput = valueInput;
-            this.dataXInput = dataXInput;
-            this.dataYInput = dataYInput;
+            this.inputs = inputs;
 
             //If not set otherwise, set the input buffer to be identical to the output buffer
             //This allows to receive the old user-set value after the view has changed
-            if (this.valueInput == null && this.valueOutput != null)
-                this.valueInput = this.getValueOutput();
+            if (this.inputs == null && this.valueOutput != null) {
+                this.inputs = new Vector<>();
+                this.inputs.add(this.getValueOutput());
+            }
         }
 
         //Interface to change the label size
@@ -123,40 +121,10 @@ public class expView implements Serializable{
             return 0.;
         }
 
-        //setValue is the function through which the main process can write a single value that
-        //should be shown to the user
-        protected void setValue(double x) {
-
-        }
-
         //This function returns a JavaScript function. The argument of this function will receive
-        //a single value that should be shown to the user
-        protected String setValueHTML() {
+        //an array that contains fresh data to be shown to the user.
+        protected String setDataHTML() {
             return "function(x) {}";
-        }
-
-        //setDataX is the function through which the main process can write a full dataBuffer
-        // (array) that should be shown to the user. Usually used for x-data
-        protected void setDataX(dataBuffer x) {
-
-        }
-
-        //This function returns a JavaScript function. The argument of this function will receive
-        //an array that should be shown to the user. Usually used for x-data
-        protected String setDataXHTML() {
-            return "function(x) {}";
-        }
-
-        //setDataY is the function through which the main process can write a full dataBuffer
-        // (array) that should be shown to the user. Usually used for y-data
-        protected void setDataY(dataBuffer y) {
-
-        }
-
-        //This function returns a JavaScript function. The argument of this function will receive
-        //an array that should be shown to the user. Usually used for y-data
-        protected String setDataYHTML() {
-            return "function(y) {}";
         }
 
         //dataComplete will be called after all set-function have been called. This signifies that
@@ -182,26 +150,12 @@ public class expView implements Serializable{
             return false;
         }
 
+        //This is called when the analysis process is finished and the element is allowed to write to the buffers
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+        }
+
         //This is called when the element should be triggered (i.e. button press triggered by the remote interface)
         protected void trigger() {
-        }
-
-        //This returns the key name of the valueInput dataBuffer. Called by the main loop to figure
-        // out which values to write to this element
-        protected String getValueInput() {
-            return this.valueInput;
-        }
-
-        //This returns the key name of the dataXInput dataBuffer. Called by the main loop to figure
-        // out which buffer to write to this element as x
-        protected String getDataXInput() {
-            return this.dataXInput;
-        }
-
-        //This returns the key name of the dataYInput dataBuffer. Called by the main loop to figure
-        // out which buffer to write to this element as y
-        protected String getDataYInput() {
-            return this.dataYInput;
         }
 
         //This is called, when the data for the view has been reset
@@ -290,8 +244,8 @@ public class expView implements Serializable{
 
         //Constructor takes the same arguments as the expViewElement constructor
         //It sets a precision of 2 with fixed point notation as default and creates the formatter
-        valueElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        valueElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
             this.scientificNotation = false;
             this.precision = 2;
             updateFormatter();
@@ -404,7 +358,8 @@ public class expView implements Serializable{
 
         @Override
         //We just have to send calculated value and the unit to the textView
-        protected void setValue(double x) {
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            double x = experiment.getBuffer(inputs.get(0)).value;
             if (tv != null) {
                 String vStr = "";
                 String uStr = "";
@@ -437,10 +392,13 @@ public class expView implements Serializable{
 
         @Override
         //In Javascript we just have to set the content of the value <span> to the value using jquery
-        protected String setValueHTML() {
+        protected String setDataHTML() {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("function (x) {");
+            sb.append("function (data) {");
+            sb.append("     if (!data.hasOwnProperty(\""+inputs.get(0).replace("\"", "\\\"")+"\"))");
+            sb.append("         return;");
+            sb.append(      "var x = data[\""+inputs.get(0).replace("\"", "\\\"")+"\"];");
             sb.append(      "var v = null;");
 
             sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
@@ -473,8 +431,8 @@ public class expView implements Serializable{
     public class infoElement extends expViewElement implements Serializable {
 
         //Constructor takes the same arguments as the expViewElement constructor
-        infoElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        infoElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
         }
 
         @Override
@@ -519,11 +477,6 @@ public class expView implements Serializable{
                     "</div>";
         }
 
-        @Override
-        //In Javascript we don't have to do anything
-        protected String setValueHTML() {
-            return "function (x) {}";
-        }
     }
 
     //separatorElement implements a simple spacing, optionally showing line
@@ -532,8 +485,8 @@ public class expView implements Serializable{
         private float height = 0.1f;
 
         //Label is not used
-        separatorElement(String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super("", valueOutput, valueInput, dataXInput, dataYInput, res);
+        separatorElement(String valueOutput, Vector<String> inputs, Resources res) {
+            super("", valueOutput, inputs, res);
         }
 
         public void setColor(int c) {
@@ -577,11 +530,6 @@ public class expView implements Serializable{
                     "</div>";
         }
 
-        @Override
-        //In Javascript we don't have to do anything
-        protected String setValueHTML() {
-            return "function (x) {}";
-        }
     }
 
     //editElement implements a simple edit box which takes a single value from the user
@@ -598,8 +546,8 @@ public class expView implements Serializable{
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         //No special constructor. Just some defaults.
-        editElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
             this.unit = "";
             this.factor = 1.;
         }
@@ -802,11 +750,7 @@ public class expView implements Serializable{
             return currentValue;
         }
 
-        @Override
-        //Set the value if the element is not focused
-        protected void setValue(double v) {
-            //Enter value from buffer if it has not been changed by the user
-            //This ensures, that the old value is restored if the view has to be created after the views have been switched.
+        void setValue(double v) {
             if (!focused) {
                 if (Double.isNaN(v)) //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
                     currentValue = defaultValue;
@@ -818,9 +762,21 @@ public class expView implements Serializable{
         }
 
         @Override
+        //Set the value if the element is not focused
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            //Enter value from buffer if it has not been changed by the user
+            //This ensures, that the old value is restored if the view has to be created after the views have been switched.
+            double v = experiment.getBuffer(inputs.get(0)).value;
+            setValue(v);
+        }
+
+        @Override
         //The javascript function which updates the content of the input as it is updated on the phone
-        protected String setValueHTML() {
+        protected String setDataHTML() {
             return "function (x) {" +
+                    "if (!data.hasOwnProperty(\""+inputs.get(0).replace("\"", "\\\"")+"\"))" +
+                    "    return;" +
+                    "var x = data[\""+inputs.get(0).replace("\"", "\\\"")+"\"];" +
                     "if (!$(\"#element"+htmlID+" .value\").is(':focus'))" +
                         "$(\"#element"+htmlID+" .value\").val((x*"+factor+"))" +
                     "}";
@@ -834,8 +790,8 @@ public class expView implements Serializable{
         private boolean triggered = false;
 
         //No special constructor.
-        buttonElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        buttonElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
         }
 
         protected void setIO(Vector<dataInput> inputs, Vector<dataOutput> outputs) {
@@ -967,8 +923,8 @@ public class expView implements Serializable{
         double maxY = 0.;
 
         //Quite usual constructor...
-        graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        graphElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
             this.self = this;
 
             margin = res.getDimensionPixelSize(R.dimen.activity_vertical_margin);
@@ -980,6 +936,11 @@ public class expView implements Serializable{
             mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
             gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
         }
+
+        //TODO
+        //protected void setInputs(Vector<dataInput> inputs, Vector<phyphoxFile.ioBlockParser.AdditionalTag> ats) {
+
+        //}
 
         //Interface to change the height of the graph
         protected void setAspectRatio(double aspectRatio) {
@@ -1177,37 +1138,45 @@ public class expView implements Serializable{
         }
 
         @Override
-        //Store the x data array until we update
-        protected void setDataX(dataBuffer x) {
-            dataX = x.getFloatBuffer();
-            dataMinX = x.getMin();
-            dataMaxX = x.getMax();
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            if (inputs.size() > 1) {
+                dataBuffer x = experiment.getBuffer(inputs.get(1));
+                if (x != null) {
+                    dataX = x.getFloatBuffer();
+                    dataMinX = x.getMin();
+                    dataMaxX = x.getMax();
+                }
+            }
+
+            dataBuffer y = experiment.getBuffer(inputs.get(0));
+            if (y != null) {
+                dataY = y.getFloatBuffer();
+                dataMinY = y.getMin();
+                dataMaxY = y.getMax();
+            }
         }
 
+        //TODO
         @Override
         //Return a javascript function which stores the x data array for later use
-        protected String setDataXHTML() {
-            return "function (x) {"+
-                        "elementData["+htmlID+"][\"x\"] = x" +
-                    "}";
+        protected String setDataHTML() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("function (x) {");
+            sb.append("     if (!data.hasOwnProperty(\""+inputs.get(0).replace("\"", "\\\"")+"\"))");
+            sb.append("         return;");
+            sb.append("     var y = data[\""+inputs.get(0).replace("\"", "\\\"")+"\"];");
+            sb.append("     elementData["+htmlID+"][\"y\"] = y;");
+            if (inputs.size() > 1) {
+                sb.append("     if (!data.hasOwnProperty(\"" + inputs.get(1).replace("\"", "\\\"") + "\"))");
+                sb.append("         return;");
+                sb.append("     var x = data[\"" + inputs.get(1).replace("\"", "\\\"") + "\"];");
+                sb.append("     elementData[" + htmlID + "][\"x\"] = x;");
+            }
+            sb.append("}");
+            return sb.toString();
         }
 
-        @Override
-        //Store the y data array until we update
-        protected void setDataY(dataBuffer y) {
-            dataY = y.getFloatBuffer();
-            dataMinY = y.getMin();
-            dataMaxY = y.getMax();
-        }
-
-        @Override
-        //Return a javascript function which stores the y data array for later use
-        protected String setDataYHTML() {
-            return "function (y) {"+
-                        "elementData["+htmlID+"][\"y\"] = y" +
-                    "}";
-        }
-
+        //TODO
         @Override
         //Data complete, let's send it to the graphView
         //Also clear the data afterwards to avoid sending it multiple times if it is not updated for
@@ -1225,6 +1194,7 @@ public class expView implements Serializable{
             }
         }
 
+        //TODO
         @Override
         //This looks pretty ugly and indeed needs a clean-up...
         //This function returns a javascript function which updates the flot chart.

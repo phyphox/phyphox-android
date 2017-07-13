@@ -291,26 +291,9 @@ public class phyphoxExperiment implements Serializable {
             return true;
         if (dataLock.tryLock()) {
             try {
-                for (dataBuffer buffer : dataBuffers) { //Compare each buffer...
-                    for (expView experimentView : experimentViews) {
-                        for (expView.expViewElement eve : experimentView.elements) { //...to each view.
-                            try {
-                                //Set single value if the input buffer of the view matches the dataBuffer
-                                if (eve.getValueInput() != null && eve.getValueInput().equals(buffer.name)) {
-                                    eve.setValue(buffer.value);
-                                }
-                                //Set x array data if the input buffer of the view matches the dataBuffer
-                                if (eve.getDataXInput() != null && eve.getDataXInput().equals(buffer.name)) {
-                                    eve.setDataX(buffer);
-                                }
-                                //Set y array data if the input buffer of the view matches the dataBuffer
-                                if (eve.getDataYInput() != null && eve.getDataYInput().equals(buffer.name)) {
-                                    eve.setDataY(buffer);
-                                }
-                            } catch (Exception e) {
-                                Log.e("updateViews", "Unhandled exception in view module " + eve.toString() + " while sending data.", e);
-                            }
-                        }
+                for (expView experimentView : experimentViews) {
+                    for (expView.expViewElement eve : experimentView.elements) {
+                        eve.onMayReadFromBuffers(this); //Notify each view, that it should update from the buffers
                     }
                 }
             } finally {
@@ -319,7 +302,7 @@ public class phyphoxExperiment implements Serializable {
         } else
             return false; //This is not urgent. Try another time instead of blocking the UI thread!
         newData = false;
-        //Finally call dataComplete on every view to notify them that the data has been sent
+        //Finally call dataComplete on every view to notify them that the data has been sent - heavy operation can now be done by the views while the buffers have been unlocked again
         for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
             try {
                 eve.dataComplete();
