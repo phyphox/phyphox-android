@@ -1124,8 +1124,7 @@ public class expView implements Serializable{
             gv.setLogScale(logX, logY);
             gv.setPrecision(xPrecision, yPrecision);
 
-            //TODO Interactive graphs deactivated for now
-/*            gv.setOnClickListener(new View.OnClickListener() {
+            gv.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if (self.parent != null) {
@@ -1136,7 +1135,7 @@ public class expView implements Serializable{
                     }
                 }
             });
-*/
+
             fl.addView(plotAreaView);
             fl.addView(gv);
 
