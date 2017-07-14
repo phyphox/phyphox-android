@@ -395,7 +395,6 @@ public class graphView extends View {
             for (int i = nCurves - 1; i > 0; i--) {
                 this.graphY[i] = this.graphY[i - 1];
                 this.graphX[i] = this.graphX[i - 1];
-                Log.d("test", "i: " + i + ", n: " + this.graphY[i].size + ", n2: " + this.graphX[i].size);
                 this.histMinX[i] = this.histMinX[i - 1];
                 this.histMaxX[i] = this.histMaxX[i - 1];
                 this.histMinY[i] = this.histMinY[i - 1];

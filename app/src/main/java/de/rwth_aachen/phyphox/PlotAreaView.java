@@ -515,6 +515,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
     }
 
     public void deinitScene() {
@@ -570,8 +572,10 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             GLES20.glUniform4fv(colorHandle, 1, dataSet.color, 0);
 
             if (graphSetup.style.get(i) == graphView.Style.dots) {
-                GLES20.glUniform1f(sizeHandle,graphSetup.lineWidth.get(i)*4.f);
+                GLES20.glUniform1f(sizeHandle, graphSetup.lineWidth.get(i) * 4.f);
                 GLES20.glDrawArrays(GLES20.GL_POINTS, 0, dataSet.n);
+            } else if (graphSetup.style.get(i) == graphView.Style.hbars || graphSetup.style.get(i) == graphView.Style.vbars) {
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, dataSet.n);
             } else {
                 GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, dataSet.n);
             }

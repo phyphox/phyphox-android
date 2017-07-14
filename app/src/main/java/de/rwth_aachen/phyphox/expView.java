@@ -1167,7 +1167,12 @@ public class expView implements Serializable{
                 if (inputs.size() > i+1) {
                     dataBuffer x = experiment.getBuffer(inputs.get(i+1));
                     if (x != null) {
-                        dataX[i/2] = x.getFloatBuffer();
+                        if (style.get(i/2) == graphView.Style.hbars)
+                            dataX[i/2] = x.getFloatBufferBarValue();
+                        else if (style.get(i/2) == graphView.Style.vbars)
+                            dataX[i/2] = x.getFloatBufferBarAxis(lineWidth.get(i/2));
+                        else
+                            dataX[i/2] = x.getFloatBuffer();
                         if (i == 0) {
                             dataMinX = x.getMin();
                             dataMaxX = x.getMax();
@@ -1180,7 +1185,12 @@ public class expView implements Serializable{
 
                 dataBuffer y = experiment.getBuffer(inputs.get(i));
                 if (y != null) {
-                    dataY[i/2] = y.getFloatBuffer();
+                    if (style.get(i/2) == graphView.Style.hbars)
+                        dataY[i/2] = y.getFloatBufferBarAxis(lineWidth.get(i/2));
+                    else if (style.get(i/2) == graphView.Style.vbars)
+                        dataY[i/2] = y.getFloatBufferBarValue();
+                    else
+                        dataY[i/2] = y.getFloatBuffer();
                     if (i == 0) {
                         dataMinY = y.getMin();
                         dataMaxY = y.getMax();

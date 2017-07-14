@@ -28,8 +28,15 @@ public class dataBuffer implements Serializable {
     public boolean untouched = true;
     public Double [] init = new Double[0];
 
+    //This is not logically connected to the data Buffer itself, but it is more efficient to calculate only changes to the buffer, where we can keep track of those changes
     transient private floatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
+    transient private floatBufferRepresentation floatCopyBarValue = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
+    transient private floatBufferRepresentation floatCopyBarAxis = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
+    private double lineWidth = 1.0; //Used to calculate the right geometry of bar charts
+
     private int floatCopyCapacity = 0;
+    private int floatCopyBarValueCapacity = 0;
+    private int floatCopyBarAxisCapacity = 0;
 
     private double min = Double.NaN;
     private double max = Double.NaN;
@@ -45,9 +52,50 @@ public class dataBuffer implements Serializable {
         this.value = Double.NaN;
     }
 
+    private void putBarAxisValue(FloatBuffer buffer, double last, double value, int offset) {
+        if (Double.isNaN(last) || Double.isNaN(value)) {
+            buffer.put(offset, Float.NaN);
+            buffer.put(offset + 1, Float.NaN);
+            buffer.put(offset + 2, Float.NaN);
+            buffer.put(offset + 3, Float.NaN);
+            buffer.put(offset + 4, Float.NaN);
+            buffer.put(offset + 5, Float.NaN);
+        } else {
+            Log.d("test", "lw:" + lineWidth);
+            float d = (float)((value-last)*(1.-lineWidth)/2.);
+            float vOff = (float)value - d;
+            float lOff = (float)last + d;
+            buffer.put(offset, lOff);
+            buffer.put(offset + 1, vOff);
+            buffer.put(offset + 2, lOff);
+            buffer.put(offset + 3, vOff);
+            buffer.put(offset + 4, lOff);
+            buffer.put(offset + 5, vOff);
+        }
+    }
+
+    private void putBarValueValue(FloatBuffer buffer, double last, int offset) {
+        if (Double.isNaN(last)) {
+            buffer.put(offset, Float.NaN);
+            buffer.put(offset + 1, Float.NaN);
+            buffer.put(offset + 2, Float.NaN);
+            buffer.put(offset + 3, Float.NaN);
+            buffer.put(offset + 4, Float.NaN);
+            buffer.put(offset + 5, Float.NaN);
+        } else {
+            buffer.put(offset, 0.f);
+            buffer.put(offset + 1, 0.f);
+            buffer.put(offset + 2, (float) last);
+            buffer.put(offset + 3, (float) last);
+            buffer.put(offset + 4, (float) last);
+            buffer.put(offset + 5, 0.f);
+        }
+    }
+
     //Append a value to the buffer.
     public void append(double value) {
         untouched = false;
+        double last = this.value;
         this.value = value; //Update last value
         if (this.size > 0 && buffer.size()+1 > this.size) { //If the buffer becomes larger than the target size, remove the first item (queue!)
             buffer.poll();
@@ -59,6 +107,18 @@ public class dataBuffer implements Serializable {
                     floatCopy.size--;
                 }
             }
+            if (floatCopyBarAxis != null) {
+                synchronized (floatCopyBarAxis.lock) {
+                    floatCopyBarAxis.offset+=6;
+                    floatCopyBarAxis.size-=6;
+                }
+            }
+            if (floatCopyBarValue != null) {
+                synchronized (floatCopyBarValue.lock) {
+                    floatCopyBarValue.offset+=6;
+                    floatCopyBarValue.size-=6;
+                }
+            }
 
         }
         buffer.add(value);
@@ -67,20 +127,53 @@ public class dataBuffer implements Serializable {
         if (!Double.isNaN(max))
             max = Math.max(max, value);
 
-        if (floatCopy == null)
-            return;
-        synchronized (floatCopy.lock) {
-            if (floatCopyCapacity < floatCopy.offset + floatCopy.size + 1) {
-                if (floatCopyCapacity < buffer.size() * 2)
-                    floatCopyCapacity *= 2;
-                FloatBuffer newData = ByteBuffer.allocateDirect(floatCopyCapacity * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-                floatCopy.data.position(floatCopy.offset);
-                newData.put(floatCopy.data);
-                floatCopy.data = newData;
-                floatCopy.offset = 0;
+        if (floatCopy != null) {
+            synchronized (floatCopy.lock) {
+                if (floatCopyCapacity < floatCopy.offset + floatCopy.size + 1) {
+                    if (floatCopyCapacity < buffer.size() * 2)
+                        floatCopyCapacity *= 2;
+                    FloatBuffer newData = ByteBuffer.allocateDirect(floatCopyCapacity * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+                    floatCopy.data.position(floatCopy.offset);
+                    newData.put(floatCopy.data);
+                    floatCopy.data = newData;
+                    floatCopy.offset = 0;
+                }
+                floatCopy.data.put(floatCopy.offset + floatCopy.size, (float) value);
+                floatCopy.size++;
             }
-            floatCopy.data.put(floatCopy.offset + floatCopy.size, (float) value);
-            floatCopy.size++;
+        }
+
+        if (floatCopyBarValue != null) {
+            synchronized (floatCopyBarValue.lock) {
+                if (floatCopyBarValueCapacity < floatCopyBarValue.offset + floatCopyBarValue.size + 6) {
+                    if (floatCopyBarValueCapacity < buffer.size() * 2)
+                        floatCopyBarValueCapacity *= 2;
+                    FloatBuffer newData = ByteBuffer.allocateDirect(floatCopyBarValueCapacity * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+                    floatCopyBarValue.data.position(floatCopyBarValue.offset);
+                    newData.put(floatCopyBarValue.data);
+                    floatCopyBarValue.data = newData;
+                    floatCopyBarValue.offset = 0;
+                }
+
+                putBarValueValue(floatCopyBarValue.data, last, floatCopyBarValue.offset + floatCopyBarValue.size);
+                floatCopyBarValue.size += 6;
+            }
+        }
+        if (floatCopyBarAxis != null) {
+            synchronized (floatCopyBarAxis.lock) {
+                if (floatCopyBarAxisCapacity < floatCopyBarAxis.offset + floatCopyBarAxis.size + 6) {
+                    if (floatCopyBarAxisCapacity < buffer.size() * 2)
+                        floatCopyBarAxisCapacity *= 2;
+                    FloatBuffer newData = ByteBuffer.allocateDirect(floatCopyBarAxisCapacity * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+                    floatCopyBarAxis.data.position(floatCopyBarAxis.offset);
+                    newData.put(floatCopyBarAxis.data);
+                    floatCopyBarAxis.data = newData;
+                    floatCopyBarAxis.offset = 0;
+                }
+
+                putBarAxisValue(floatCopyBarAxis.data, last, value, floatCopyBarAxis.offset + floatCopyBarAxis.size);
+                floatCopyBarAxis.size += 6;
+            }
         }
     }
 
@@ -127,6 +220,16 @@ public class dataBuffer implements Serializable {
                 floatCopy = null;
             }
         }
+        if (floatCopyBarValue != null) {
+            synchronized (floatCopyBarValue.lock) {
+                floatCopyBarValue = null;
+            }
+        }
+        if (floatCopyBarAxis != null) {
+            synchronized (floatCopyBarAxis.lock) {
+                floatCopyBarAxis = null;
+            }
+        }
         min = Double.NaN;
         max = Double.NaN;
 
@@ -144,7 +247,6 @@ public class dataBuffer implements Serializable {
         return buffer.toArray(ret);
     }
 
-    //Get all values as a double array
     public floatBufferRepresentation getFloatBuffer() {
         int n = buffer.size();
         if (n == 0)
@@ -162,6 +264,51 @@ public class dataBuffer implements Serializable {
             floatCopy = new floatBufferRepresentation(data, 0, n);
         }
         return floatCopy;
+    }
+
+    public floatBufferRepresentation getFloatBufferBarAxis(double lineWidth) {
+        this.lineWidth = lineWidth;
+        int n = buffer.size()*6;
+        if (n <= 0)
+            return new floatBufferRepresentation(null, 0, 0);
+
+        if (floatCopyBarAxis == null) {
+            FloatBuffer data = ByteBuffer.allocateDirect(n * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            floatCopyBarAxisCapacity = n;
+            Iterator it = getIterator();
+            int i = 0;
+            double last = Double.NaN;
+            while (it.hasNext() && i < n) {
+                double value = (double)it.next();
+                putBarAxisValue(data, last, value, i);
+                last = value;
+                i+=6;
+            }
+            floatCopyBarAxis = new floatBufferRepresentation(data, 0, n);
+        }
+        return floatCopyBarAxis;
+    }
+
+    public floatBufferRepresentation getFloatBufferBarValue() {
+        int n = buffer.size()*6;
+        if (n <= 0)
+            return new floatBufferRepresentation(null, 0, 0);
+
+        if (floatCopyBarValue == null) {
+            FloatBuffer data = ByteBuffer.allocateDirect(n * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            floatCopyBarValueCapacity = n;
+            Iterator it = getIterator();
+            int i = 0;
+            double last = Double.NaN;
+            while (it.hasNext() && i < n) {
+                double value = (double)it.next();
+                putBarValueValue(data, last, i);
+                last = value;
+                i+=6;
+            }
+            floatCopyBarValue = new floatBufferRepresentation(data, 0, n);
+        }
+        return floatCopyBarValue;
     }
 
     //Get all values as a short array. The data will be scaled so that (-/+)1 matches (-/+)Short.MAX_VALUE, used for audio data

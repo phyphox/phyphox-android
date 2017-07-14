@@ -1008,7 +1008,6 @@ public abstract class phyphoxFile {
                         }
                         if (at.attributes.containsKey("linewidth")) {
                             try {
-                                Log.d("test", "lw: " + at.attributes.get("linewidth") + ", i:" + i);
                                 ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i/2);
                             } catch (Exception e) {
                                 throw new phyphoxFileException("Could not parse linewidth of input tag.", xpp.getLineNumber());
