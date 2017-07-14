@@ -39,7 +39,7 @@ import java.util.Vector;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.5";
+    final static String phyphoxFileVersion = "1.6";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -366,6 +366,14 @@ public abstract class phyphoxFile {
             else
                 mapping = null;
 
+            AdditionalTag at = null;
+            if (additionalTags != null) {
+                at = new AdditionalTag();
+                for (int i = 0; i < xpp.getAttributeCount(); i++)
+                    at.attributes.put(xpp.getAttributeName(i).toLowerCase(), xpp.getAttributeValue(i));
+                at.name = tag.toLowerCase();
+            }
+
             switch (tag.toLowerCase()) {
                 case "input":   //Input tag
                     if (inputMapping == null) //We did not even expect inputs here...
@@ -487,6 +495,8 @@ public abstract class phyphoxFile {
 
                         //This is a buffer. Let's see if it exists
                         String bufferName = getText();
+                        if (additionalTags != null)
+                            at.content = bufferName;
                         dataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
@@ -581,6 +591,8 @@ public abstract class phyphoxFile {
 
 
                     String bufferName = getText();
+                    if (additionalTags != null)
+                        at.content = bufferName;
                     dataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
@@ -591,12 +603,10 @@ public abstract class phyphoxFile {
                 default: //Unknown tag...
                     if (additionalTags == null)
                         throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
-                    AdditionalTag at = new AdditionalTag();
-                    for (int i = 0; i < xpp.getAttributeCount(); i++)
-                        at.attributes.put(xpp.getAttributeName(i).toLowerCase(), xpp.getAttributeValue(i));
-                    at.name = tag.toLowerCase();
                     at.content = getText();
-                    additionalTags.add(at);
+            }
+            if (additionalTags != null) {
+                additionalTags.add(at);
             }
         }
 
@@ -878,6 +888,8 @@ public abstract class phyphoxFile {
                     inStrings.add(inputs.get(0).buffer.name);
                     expView.valueElement ve = newView.new valueElement(label, null, inStrings, parent.getResources()); //Only a value input
                     for (ioBlockParser.AdditionalTag at : ats) {
+                        if (at.name.equals("input"))
+                            continue;
                         if (!at.name.equals("map")) {
                             throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
                         }
@@ -946,10 +958,10 @@ public abstract class phyphoxFile {
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; }},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; }}
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}}
                     };
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, "axis")).process(); //Load inputs and outputs
+                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, "axis", ats)).process(); //Load inputs and outputs
 
                     Vector<String> inStrings = new Vector<>();
                     for (dataInput input : inputs)
@@ -957,7 +969,11 @@ public abstract class phyphoxFile {
 
                     expView.graphElement ge = newView.new graphElement(label, null, inStrings, parent.getResources()); //Two array inputs
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
-                    ge.setLine(!(lineStyle != null && lineStyle.equals("dots"))); //Everything but dots will be lines
+
+
+                    if (lineStyle != null) {
+                        ge.setStyle(graphView.styleFromStr(lineStyle));
+                    }
                     ge.setLineWidth(lineWidth);
                     ge.setColor(color);
                     ge.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
@@ -967,7 +983,39 @@ public abstract class phyphoxFile {
                     ge.setLabel(labelX, labelY);  //x- and y- label
                     ge.setLogScale(logX, logY); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision); //logarithmic scales for x/y axes
-//TODO                    ge.setInputs(inputs, ats);
+
+                    for (int i = 0; i < ats.size(); i++) {
+                        ioBlockParser.AdditionalTag at = ats.get(i);
+                        if (!at.name.equals("input")) {
+                            throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
+                        }
+                        if (at.attributes.containsKey("style")) {
+                            try {
+                                graphView.Style style = graphView.styleFromStr(at.attributes.get("style"));
+                                if (style == graphView.Style.unknown)
+                                    throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
+                                ge.setStyle(style, i/2);
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Could not parse style of input tag.", xpp.getLineNumber());
+                            }
+                        }
+                        if (at.attributes.containsKey("color")) {
+                            try {
+                                ge.setColor(Integer.parseInt(at.attributes.get("color"), 16) | 0xff000000, i/2);
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
+                            }
+                        }
+                        if (at.attributes.containsKey("linewidth")) {
+                            try {
+                                Log.d("test", "lw: " + at.attributes.get("linewidth") + ", i:" + i);
+                                ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i/2);
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Could not parse linewidth of input tag.", xpp.getLineNumber());
+                            }
+                        }
+                    }
+
                     newView.elements.add(ge);
                     break;
                 }

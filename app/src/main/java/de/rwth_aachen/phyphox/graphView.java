@@ -21,6 +21,20 @@ import static android.view.MotionEvent.INVALID_POINTER_ID;
 //The graphView class implements an Android view which displays a data graph
 
 public class graphView extends View {
+    public enum Style {
+        lines, dots, hbars, vbars, unknown;
+    }
+
+    public static Style styleFromStr(String str) {
+        switch (str) {
+            case "lines": return Style.lines;
+            case "dots": return Style.dots;
+            case "hbars": return Style.hbars;
+            case "vbars": return Style.vbars;
+        }
+        return Style.unknown;
+    }
+
     private floatBufferRepresentation[] graphX; //The x data to be displayed
     private double[] histMinX, histMaxX;
     private floatBufferRepresentation[] graphY; //The y data to be displayed
@@ -29,9 +43,9 @@ public class graphView extends View {
     private double aspectRatio = 3.;
 
     private int historyLength; //If set to n > 1 the graph will also show the last n sets in a different color
-    private int historyFilled; //Tracks the number of entries in the history
+    private int nCurves; //Tracks the number of entries in the history
 
-    boolean line = false; //Show lines instead of points?
+    Style[] style; //Styles for each graph
 
     private final static int maxXTics = 6; //Constant to set a target number of tics on the x axis
     private final static int maxYTics = 6; //Constant to set a target number of tics on the y axis
@@ -42,8 +56,8 @@ public class graphView extends View {
     private int xPrecision = 3;
     private int yPrecision = 3;
 
-    private double lineWidth = 1.0;
-    private int color = 0xffffff;
+    private double[] lineWidth;
+    private int[] color;
 
     public enum scaleMode {
         auto, extend, fixed
@@ -247,14 +261,14 @@ public class graphView extends View {
 
     }
 
-    public void setColor(int color) {
-        this.color = color;
-        graphSetup.color = color;
+    public void setColor(int color, int i) {
+        this.color[i] = color;
+        graphSetup.color.set(i, color);
     }
 
-    public void setLineWidth(double lineWidth) {
-        this.lineWidth = lineWidth;
-        graphSetup.lineWidth = (float)lineWidth;
+    public void setLineWidth(double lineWidth, int i) {
+        this.lineWidth[i] = lineWidth;
+        graphSetup.lineWidth.set(i, (float)lineWidth);
     }
 
     @Override
@@ -284,22 +298,35 @@ public class graphView extends View {
     }
 
     //Interface to switch between lines and points
-    public void setLine(boolean line) {
-        this.line = line;
-        graphSetup.dots = !line;
+    public void setStyle(Style style, int i) {
+        this.style[i] = style;
+        graphSetup.style.set(i, style);
     }
 
     //Interface to set the history length
     public void setHistoryLength(int length) {
+        setCurves(length);
         this.historyLength = length;
-        this.historyFilled = 0;
-        graphX = new floatBufferRepresentation[historyLength];
-        graphY = new floatBufferRepresentation[historyLength];
+        this.nCurves = 0;
         histMinX = new double[historyLength];
         histMaxX = new double[historyLength];
         histMinY = new double[historyLength];
         histMaxY = new double[historyLength];
         graphSetup.historyLength = length;
+    }
+
+    public void setCurves(int n) {
+        nCurves = n;
+        graphX = new floatBufferRepresentation[n];
+        graphY = new floatBufferRepresentation[n];
+        histMinX = new double[n];
+        histMaxX = new double[n];
+        histMinY = new double[n];
+        histMaxY = new double[n];
+        color = new int[n];
+        style = new Style[n];
+        lineWidth = new double[n];
+        graphSetup.initSize(nCurves);
     }
 
     public void setScaleModeX(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
@@ -337,7 +364,7 @@ public class graphView extends View {
         double dataMinY = Double.POSITIVE_INFINITY;
         double dataMaxY = Double.NEGATIVE_INFINITY;
 
-        for (int i = 0; i < historyFilled; i++) {
+        for (int i = 0; i < nCurves && i < historyLength; i++) {
             if (!Double.isInfinite(histMinX[i]) && histMinX[i] < dataMinX)
                 dataMinX = histMinX[i];
             if (!Double.isInfinite(histMaxX[i]) && histMaxX[i] > dataMaxX)
@@ -359,34 +386,38 @@ public class graphView extends View {
     }
 
     //Add a new graph and (if enabled) push the old graphs back into history
-    public void addGraphData(floatBufferRepresentation graphY, double minY, double maxY, floatBufferRepresentation graphX, double minX, double maxX) {
-        if (graphY == null || graphX == null)
+    public void addGraphData(floatBufferRepresentation[] graphY, double minY, double maxY, floatBufferRepresentation[] graphX, double minX, double maxX) {
+        if (graphY == null || graphX == null || graphX[0] == null || graphY[0] == null)
             return;
 
-        //Push back data in the history
-        for (int i = historyFilled-1; i > 0; i--) {
-            this.graphY[i] = this.graphY[i-1];
-            this.graphX[i] = this.graphX[i-1];
-            this.histMinX[i] = this.histMinX[i-1];
-            this.histMaxX[i] = this.histMaxX[i-1];
-            this.histMinY[i] = this.histMinY[i-1];
-            this.histMaxY[i] = this.histMaxY[i-1];
+        if (historyLength > 1) {
+            //Push back data in the history
+            for (int i = nCurves - 1; i > 0; i--) {
+                this.graphY[i] = this.graphY[i - 1];
+                this.graphX[i] = this.graphX[i - 1];
+                Log.d("test", "i: " + i + ", n: " + this.graphY[i].size + ", n2: " + this.graphX[i].size);
+                this.histMinX[i] = this.histMinX[i - 1];
+                this.histMaxX[i] = this.histMaxX[i - 1];
+                this.histMinY[i] = this.histMinY[i - 1];
+                this.histMaxY[i] = this.histMaxY[i - 1];
+            }
+
+            //History increases
+            nCurves++;
+            if (nCurves > historyLength) //History full? Limit it.
+                nCurves = historyLength;
         }
 
-        //set new graph
-        this.graphY[0] = graphY;
-        this.graphX[0] = graphX;
+        for (int i = 0; i < graphY.length; i++) {
+            this.graphY[i] = graphY[i];
+            this.graphX[i] = graphX[i];
+        }
         this.histMinX[0] = minX;
         this.histMaxX[0] = maxX;
         this.histMinY[0] = minY;
         this.histMaxY[0] = maxY;
 
-        //History increases
-        historyFilled++;
-        if (historyFilled > historyLength) //History full? Limit it.
-            historyFilled = historyLength;
-
-        graphSetup.setData(this.graphX, this.graphY, historyFilled, plotRenderer);
+        graphSetup.setData(this.graphX, this.graphY, nCurves, plotRenderer);
 
         //Rescale and invalidate to update everything
         this.rescale();
@@ -394,23 +425,24 @@ public class graphView extends View {
     }
 
     //This overloads addGraphData to take pure y-data without x data
-    public void addGraphData(floatBufferRepresentation graphY, double min, double max) {
-        if (graphY == null)
+    public void addGraphData(floatBufferRepresentation[] graphY, double min, double max) {
+        if (graphY == null || graphY[0] == null)
             return;
         //Create standard x data with indices
-        if (graphY.size == 0) {
+        if (graphY[0].size == 0) {
             addGraphData(graphY, min, max, graphY, min, max);
             return;
         }
-        FloatBuffer data = ByteBuffer.allocateDirect(graphY.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        graphY.data.position(0);
-        for (int i = 0; i < graphY.size; i++)
+        FloatBuffer data = ByteBuffer.allocateDirect(graphY[0].size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        graphY[0].data.position(0);
+        for (int i = 0; i < graphY[0].size; i++)
             data.put((float)i);
 
-        floatBufferRepresentation graphX = new floatBufferRepresentation(data, 0, graphY.size);
+        floatBufferRepresentation[] graphX = new floatBufferRepresentation[1];
+        graphX[0] = new floatBufferRepresentation(data, 0, graphY[0].size);
 
         //Call the full addGraphData with the artificial x data
-        addGraphData(graphY, min, max, graphX, 0, graphY.size-1);
+        addGraphData(graphY, min, max, graphX, 0, graphY[0].size-1);
     }
 
     //Interface to set axis labels

@@ -887,15 +887,16 @@ public class expView implements Serializable{
         transient private graphView gv = null;
         transient private PlotRenderer plotRenderer = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
-        transient private floatBufferRepresentation dataX; //The x data to be displayed
-        transient private floatBufferRepresentation dataY; //The y data to be displayed
+        transient private floatBufferRepresentation[] dataX; //The x data to be displayed
+        transient private floatBufferRepresentation[] dataY; //The y data to be displayed
         private double dataMinX, dataMaxX, dataMinY, dataMaxY;
 
         private boolean isExclusive = false;
         private int margin;
 
-        private boolean line = false; //Show lines instead of points?
+        private Vector<graphView.Style> style = new Vector<>(); //Show lines instead of points?
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
+        private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
         private String labelY = null; //Label for the y-axis
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
@@ -903,10 +904,9 @@ public class expView implements Serializable{
         private boolean logY = false; //logarithmic scale for the y-axis?
         private int xPrecision = 3;
         private int yPrecision = 3;
-        private double lineWidth = 1.0;
-        private int color;
+        private Vector<Double> lineWidth = new Vector<>();
+        private Vector<Integer> color = new Vector<>();
 
-        private String highlightColor;
         private String backgroundGridRemoteColor;
         private String gridColor;
         private String mainRemoteColor;
@@ -930,41 +930,58 @@ public class expView implements Serializable{
             margin = res.getDimensionPixelSize(R.dimen.activity_vertical_margin);
 
             aspectRatio = 2.5;
-            color = res.getColor(R.color.highlight);
-            highlightColor = String.format("%08x", res.getColor(R.color.highlight)).substring(2);
             backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
             mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
             gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
+            nCurves = (inputs.size()+1)/2;
+
+            for (int i = 0; i < nCurves; i++) {
+                color.add(res.getColor(R.color.highlight));
+                lineWidth.add(1.0);
+                style.add(graphView.Style.lines);
+                dataX = new floatBufferRepresentation[nCurves];
+                dataY = new floatBufferRepresentation[nCurves];
+            }
         }
-
-        //TODO
-        //protected void setInputs(Vector<dataInput> inputs, Vector<phyphoxFile.ioBlockParser.AdditionalTag> ats) {
-
-        //}
 
         //Interface to change the height of the graph
         protected void setAspectRatio(double aspectRatio) {
             this.aspectRatio = aspectRatio;
         }
 
-        protected void setLineWidth(double lineWidth) {
-            this.lineWidth = lineWidth;
+        protected void setLineWidth(double lineWidth, int i) {
+            this.lineWidth.set(i, lineWidth);
             if (gv != null)
-                gv.setLineWidth(lineWidth);
+                gv.setLineWidth(lineWidth, i);
+        }
+
+        protected void setLineWidth(double lineWidth) {
+            for (int i = 0; i < nCurves || i < historyLength; i++)
+                setLineWidth(lineWidth, i);
+        }
+
+        protected void setColor(int color, int i) {
+            this.color.set(i, color);
+            if (gv != null)
+                gv.setColor(color, i);
         }
 
         protected void setColor(int color) {
-            this.color = color;
-            if (gv != null)
-                gv.setColor(color);
+            for (int i = 0; i < nCurves || i < historyLength; i++)
+                setColor(color, i);
             lineColor = String.format("%08x", color).substring(2);
         }
 
-        //Interface to switch between points and lines
-        protected void setLine(boolean line) {
-            this.line = line;
+        protected void setStyle(graphView.Style style, int i) {
+            this.style.set(i, style);
             if (gv != null)
-                gv.setLine(line);
+                gv.setStyle(style, i);
+        }
+
+        //Interface to switch between points and lines
+        protected void setStyle(graphView.Style style) {
+            for (int i = 0; i < nCurves || i < historyLength; i++)
+                setStyle(style, i);
         }
 
         public void setScaleModeX(graphView.scaleMode minMode, double minV, graphView.scaleMode maxMode, double maxV) {
@@ -981,8 +998,6 @@ public class expView implements Serializable{
             this.scaleMaxY = maxMode;
             this.minY = minV;
             this.maxY = maxV;
-            if (gv != null)
-                gv.setScaleModeY(minMode, minV, maxMode, maxV);
         }
 
         //Interface to set a history length
@@ -990,6 +1005,10 @@ public class expView implements Serializable{
             this.historyLength = hl;
             if (gv != null)
                 gv.setHistoryLength(hl);
+            if (hl > 1) {
+                dataX = new floatBufferRepresentation[1];
+                dataY = new floatBufferRepresentation[1];
+            }
         }
 
         //Interface to set the axis labels.
@@ -1075,12 +1094,17 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
             //Send our parameters to the graphView isntance
-            gv.setLine(line);
-            gv.setLineWidth(lineWidth);
-            gv.setColor(color);
+            if (historyLength > 1)
+                gv.setHistoryLength(historyLength);
+            else
+                gv.setCurves(nCurves);
+            for (int i = 0; i < nCurves; i++) {
+                gv.setStyle(style.get(i), i);
+                gv.setLineWidth(lineWidth.get(i), i);
+                gv.setColor(color.get(i), i);
+            }
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
-            gv.setHistoryLength(historyLength);
             gv.setLabel(labelX, labelY);
             gv.setLogScale(logX, logY);
             gv.setPrecision(xPrecision, yPrecision);
@@ -1139,20 +1163,32 @@ public class expView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
-            if (inputs.size() > 1) {
-                dataBuffer x = experiment.getBuffer(inputs.get(1));
-                if (x != null) {
-                    dataX = x.getFloatBuffer();
-                    dataMinX = x.getMin();
-                    dataMaxX = x.getMax();
+            for (int i = 0; i < inputs.size(); i+=2) {
+                if (inputs.size() > i+1) {
+                    dataBuffer x = experiment.getBuffer(inputs.get(i+1));
+                    if (x != null) {
+                        dataX[i/2] = x.getFloatBuffer();
+                        if (i == 0) {
+                            dataMinX = x.getMin();
+                            dataMaxX = x.getMax();
+                        } else {
+                            dataMinX = Math.min(dataMinX, x.getMin());
+                            dataMaxX = Math.max(dataMaxX, x.getMax());
+                        }
+                    }
                 }
-            }
 
-            dataBuffer y = experiment.getBuffer(inputs.get(0));
-            if (y != null) {
-                dataY = y.getFloatBuffer();
-                dataMinY = y.getMin();
-                dataMaxY = y.getMax();
+                dataBuffer y = experiment.getBuffer(inputs.get(i));
+                if (y != null) {
+                    dataY[i/2] = y.getFloatBuffer();
+                    if (i == 0) {
+                        dataMinY = y.getMin();
+                        dataMaxY = y.getMax();
+                    } else {
+                        dataMinY = Math.min(dataMinY, y.getMin());
+                        dataMaxY = Math.max(dataMaxY, y.getMax());
+                    }
+                }
             }
         }
 
@@ -1176,7 +1212,6 @@ public class expView implements Serializable{
             return sb.toString();
         }
 
-        //TODO
         @Override
         //Data complete, let's send it to the graphView
         //Also clear the data afterwards to avoid sending it multiple times if it is not updated for
@@ -1184,13 +1219,13 @@ public class expView implements Serializable{
         protected void dataComplete() {
             if (gv == null)
                 return;
-            if (dataY != null) {
-                if (dataX != null) {
+            if (dataY[0] != null) {
+                if (dataX[0] != null) {
                     gv.addGraphData(dataY, dataMinY, dataMaxY, dataX, dataMinX, dataMaxX);
-                    dataX = null;
+                    dataX[0] = null;
                 } else
                     gv.addGraphData(dataY, dataMinY, dataMaxY);
-                dataY = null;
+                dataY[0] = null;
             }
         }
 
@@ -1234,7 +1269,7 @@ public class expView implements Serializable{
                         "}" +
                         "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(line ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth)+"}, \"points\": {show:"+(!line ? "true" : "false")+"}, \"xaxis\": {" + scaleX + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + scaleY + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
+                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(style.get(0) == graphView.Style.lines ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth.get(0))+"}, \"points\": {show:"+(style.get(0) == graphView.Style.dots ? "true" : "false")+"}, \"xaxis\": {" + scaleX + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + scaleY + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
                     "}";
         }
 

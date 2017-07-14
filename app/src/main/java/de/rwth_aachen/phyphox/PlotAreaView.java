@@ -53,10 +53,10 @@ class GraphSetup {
     float minX, maxX, minY, maxY;
     public final Vector<CurveData> dataSets = new Vector<>();
     public float[] positionMatrix = new float[16];
-    public int color = 0xffffff;
+    public Vector<Integer> color = new Vector<>();
     public int historyLength = 1;
-    public boolean dots = false;
-    public float lineWidth = 2.f;
+    public Vector<graphView.Style> style = new Vector<>();
+    public Vector<Float> lineWidth = new Vector<>();
     public boolean logX = false;
     public boolean logY = false;
 
@@ -69,6 +69,17 @@ class GraphSetup {
         plotBoundW = 0;
         plotBoundH = 0;
         Matrix.setIdentityM(positionMatrix, 0);
+    }
+
+    public void initSize(int n) {
+        color.setSize(n);
+        style.setSize(n);
+        lineWidth.setSize(n);
+        for (int i = 0; i < n; i++) {
+            color.set(i, 0xffffff);
+            style.set(i, graphView.Style.lines);
+            lineWidth.set(i, 2.0f);
+        }
     }
 
     public void setPlotBounds(float l, float t, float w, float h) {
@@ -122,10 +133,10 @@ class GraphSetup {
         for (int i = 0; i < n; i++) {
             if (dataSets.size() <= i) {
                 CurveData newData = new CurveData();
-                if (i == 0) {
-                    newData.color[0] = ((color & 0xff0000) >> 16)/255.f;
-                    newData.color[1] = ((color & 0xff00) >> 8)/255.f;
-                    newData.color[2] = (color & 0xff)/255.f;
+                if (i == 0 || historyLength == 1) {
+                    newData.color[0] = ((color.get(i) & 0xff0000) >> 16)/255.f;
+                    newData.color[1] = ((color.get(i) & 0xff00) >> 8)/255.f;
+                    newData.color[2] = (color.get(i) & 0xff)/255.f;
                     newData.color[3] = 1.f;
                 } else {
                     newData.color[0] = 1.f;
@@ -541,11 +552,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glUniformMatrix4fv(positionMatrixHandle, 1, false, graphSetup.positionMatrix, 0);
         GLES20.glUniform1i(logXYHandle, (graphSetup.logX ? 0x01 : 0x00) | (graphSetup.logY ? 0x02 : 0x00));
 
-        GLES20.glLineWidth(2.f*graphSetup.lineWidth);
-
         for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {
+            GLES20.glLineWidth(2.f*graphSetup.lineWidth.get(i));
+
             CurveData dataSet = graphSetup.dataSets.get(i);
-            if (dataSet.n == 0 || (dataSet.n < 2 && !graphSetup.dots))
+            if (dataSet.n == 0 || (dataSet.n < 2 && !(graphSetup.style.get(i) == graphView.Style.dots)))
                 continue;
 
             GLES20.glEnableVertexAttribArray(positionXHandle);
@@ -558,8 +569,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
             GLES20.glUniform4fv(colorHandle, 1, dataSet.color, 0);
 
-            if (graphSetup.dots) {
-                GLES20.glUniform1f(sizeHandle,graphSetup.lineWidth*4.f);
+            if (graphSetup.style.get(i) == graphView.Style.dots) {
+                GLES20.glUniform1f(sizeHandle,graphSetup.lineWidth.get(i)*4.f);
                 GLES20.glDrawArrays(GLES20.GL_POINTS, 0, dataSet.n);
             } else {
                 GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, dataSet.n);
