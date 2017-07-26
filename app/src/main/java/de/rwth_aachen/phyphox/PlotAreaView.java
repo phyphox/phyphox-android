@@ -554,6 +554,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glUniformMatrix4fv(positionMatrixHandle, 1, false, graphSetup.positionMatrix, 0);
         GLES20.glUniform1i(logXYHandle, (graphSetup.logX ? 0x01 : 0x00) | (graphSetup.logY ? 0x02 : 0x00));
 
+        int lastValidX = 0;
         for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {
             GLES20.glLineWidth(2.f*graphSetup.lineWidth.get(i));
 
@@ -561,8 +562,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             if (dataSet.n == 0 || (dataSet.n < 2 && !(graphSetup.style.get(i) == graphView.Style.dots)))
                 continue;
 
+            if (dataSet.vboX != 0)
+                lastValidX = dataSet.vboX;
+            if (lastValidX == 0)
+                continue;
             GLES20.glEnableVertexAttribArray(positionXHandle);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboX);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, lastValidX);
             GLES20.glVertexAttribPointer(positionXHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboY);
@@ -589,23 +594,43 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     private void doUpdateBuffers() {
         for (CurveData data : graphSetup.dataSets) {
-            if (data.vboX == 0) {
-                int ref[] = new int[2];
-                GLES20.glGenBuffers(2, ref, 0);
-                data.vboX = ref[0];
-                data.vboY = ref[1];
+            if (data.vboY == 0) {
+                if (data.fbX != null) {
+                    int ref[] = new int[2];
+                    GLES20.glGenBuffers(2, ref, 0);
+                    data.vboX = ref[0];
+                    data.vboY = ref[1];
+                } else {
+                    int ref[] = new int[1];
+                    GLES20.glGenBuffers(1, ref, 0);
+                    data.vboX = 0;
+                    data.vboY = ref[0];
+                }
             }
 
-            if (data.fbX != null && data.fbY != null) {
-                synchronized (data.fbX.lock) {
-                    synchronized (data.fbY.lock) {
-                        data.n = Math.min(data.fbX.size, data.fbY.size);
+            if (data.fbY != null) {
+                synchronized (data.fbY.lock) {
+                    if (data.fbX != null) {
+                        synchronized (data.fbX.lock) {
+                            data.n = Math.min(data.fbX.size, data.fbY.size);
+
+                            if (data.n > 0) {
+
+                                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboX);
+                                data.fbX.data.position(data.fbX.offset);
+                                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data.n * 4, data.fbX.data, GLES20.GL_DYNAMIC_DRAW);
+
+                                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboY);
+                                data.fbY.data.position(data.fbY.offset);
+                                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data.n * 4, data.fbY.data, GLES20.GL_DYNAMIC_DRAW);
+
+                                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+                            }
+                        }
+                    } else {
+                        data.n = data.fbY.size;
 
                         if (data.n > 0) {
-
-                            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboX);
-                            data.fbX.data.position(data.fbX.offset);
-                            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data.n * 4, data.fbX.data, GLES20.GL_DYNAMIC_DRAW);
 
                             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboY);
                             data.fbY.data.position(data.fbY.offset);

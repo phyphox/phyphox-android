@@ -260,14 +260,39 @@ public abstract class phyphoxFile {
             return Boolean.valueOf(att);
         }
 
+        protected int parseColor(String colorStr, int defaultValue) {
+            if (colorStr == null)
+                return defaultValue;
+            //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
+            switch(colorStr.toLowerCase()) {
+                case "orange": return parent.getResources().getColor(R.color.presetOrange);
+                case "red": return parent.getResources().getColor(R.color.presetRed);
+                case "magenta": return parent.getResources().getColor(R.color.presetMagenta);
+                case "blue": return parent.getResources().getColor(R.color.presetBlue);
+                case "green": return parent.getResources().getColor(R.color.presetGreen);
+                case "yellow": return parent.getResources().getColor(R.color.presetYellow);
+                case "white": return parent.getResources().getColor(R.color.presetWhite);
+
+                case "weakorange": return parent.getResources().getColor(R.color.presetWeakOrange);
+                case "weakred": return parent.getResources().getColor(R.color.presetWeakRed);
+                case "weakmagenta": return parent.getResources().getColor(R.color.presetWeakMagenta);
+                case "weakblue": return parent.getResources().getColor(R.color.presetWeakBlue);
+                case "weakgreen": return parent.getResources().getColor(R.color.presetWeakGreen);
+                case "weakyellow": return parent.getResources().getColor(R.color.presetWeakYellow);
+                case "weakwhite": return parent.getResources().getColor(R.color.presetWeakWhite);
+            }
+
+            //Not a constant, so it hast to be hex...
+            if (colorStr.length() != 6)
+                return defaultValue;
+            return Integer.parseInt(colorStr, 16) | 0xff000000;
+        }
+
         //Helper to receive a color attribute, if invalid or not present, return default
         protected int getColorAttribute(String identifier, int defaultValue) {
             final String att = xpp.getAttributeValue(null, identifier);
-            if (att == null)
-                return defaultValue;
-            if (att.length() != 6)
-                return defaultValue;
-            return Integer.parseInt(att, 16) | 0xff000000;
+
+            return parseColor(att, defaultValue);
         }
 
         //These functions should be overriden with block-specific code
@@ -942,7 +967,12 @@ public abstract class phyphoxFile {
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
                     int xPrecision = getIntAttribute("xPrecision", 3);
                     int yPrecision = getIntAttribute("yPrecision", 3);
-                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.highlight));
+                    int color = parent.getResources().getColor(R.color.highlight);
+                    boolean globalColor = false;
+                    if (xpp.getAttributeValue(null, "color") != null) {
+                        color = getColorAttribute("color", parent.getResources().getColor(R.color.highlight));
+                        globalColor = true;
+                    }
 
                     graphView.scaleMode scaleMinX = parseScaleMode("scaleMinX");
                     graphView.scaleMode scaleMaxX = parseScaleMode("scaleMaxX");
@@ -964,8 +994,12 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, "axis", ats)).process(); //Load inputs and outputs
 
                     Vector<String> inStrings = new Vector<>();
-                    for (dataInput input : inputs)
-                        inStrings.add(input.buffer.name);
+                    for (dataInput input : inputs) {
+                        if (input != null)
+                            inStrings.add(input.buffer.name);
+                        else
+                            inStrings.add(null);
+                    }
 
                     expView.graphElement ge = newView.new graphElement(label, null, inStrings, parent.getResources()); //Two array inputs
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
@@ -1000,10 +1034,22 @@ public abstract class phyphoxFile {
                             }
                         }
                         if (at.attributes.containsKey("color")) {
-                            try {
-                                ge.setColor(Integer.parseInt(at.attributes.get("color"), 16) | 0xff000000, i/2);
-                            } catch (Exception e) {
-                                throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
+                            int localColor = parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.presetOrange));
+                            ge.setColor(localColor | 0xff000000, i/2);
+                        } else if (!globalColor) {
+                            switch ((i/2) % 6) {
+                                case 0: ge.setColor(parent.getResources().getColor(R.color.presetOrange), i/2);
+                                    break;
+                                case 1: ge.setColor(parent.getResources().getColor(R.color.presetGreen), i/2);
+                                    break;
+                                case 2: ge.setColor(parent.getResources().getColor(R.color.presetBlue), i/2);
+                                    break;
+                                case 3: ge.setColor(parent.getResources().getColor(R.color.presetYellow), i/2);
+                                    break;
+                                case 4: ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i/2);
+                                    break;
+                                case 5: ge.setColor(parent.getResources().getColor(R.color.presetRed), i/2);
+                                    break;
                             }
                         }
                         if (at.attributes.containsKey("linewidth")) {

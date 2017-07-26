@@ -409,7 +409,10 @@ public class graphView extends View {
 
         for (int i = 0; i < graphY.length; i++) {
             this.graphY[i] = graphY[i];
-            this.graphX[i] = graphX[i];
+            if (i < graphX.length)
+                this.graphX[i] = graphX[i];
+            else
+                this.graphX[i] = null;
         }
         this.histMinX[0] = minX;
         this.histMaxX[0] = maxX;
@@ -437,7 +440,9 @@ public class graphView extends View {
         for (int i = 0; i < graphY[0].size; i++)
             data.put((float)i);
 
-        floatBufferRepresentation[] graphX = new floatBufferRepresentation[1];
+        floatBufferRepresentation[] graphX = new floatBufferRepresentation[graphY.length];
+        for (int i = 0; i < graphY.length; i++)
+            graphX[i] = null;
         graphX[0] = new floatBufferRepresentation(data, 0, graphY[0].size);
 
         //Call the full addGraphData with the artificial x data

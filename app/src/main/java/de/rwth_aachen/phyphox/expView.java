@@ -1180,6 +1180,8 @@ public class expView implements Serializable{
                             dataMinX = Math.min(dataMinX, x.getMin());
                             dataMaxX = Math.max(dataMaxX, x.getMax());
                         }
+                    } else {
+                        dataX[i/2] = null;
                     }
                 }
 
@@ -1198,6 +1200,8 @@ public class expView implements Serializable{
                         dataMinY = Math.min(dataMinY, y.getMin());
                         dataMaxY = Math.max(dataMaxY, y.getMax());
                     }
+                } else {
+                    dataY[i/2] = null;
                 }
             }
         }

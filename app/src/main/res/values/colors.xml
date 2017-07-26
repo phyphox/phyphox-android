@@ -21,4 +21,20 @@
     <color name="highlight">#ff7e22</color>
     <color name="phyphox_color">#ff7e22</color>
     <color name="rwth">#00549f</color>
+
+    <color name="presetOrange">#ff7e22</color>
+    <color name="presetRed">#fe005d</color>
+    <color name="presetMagenta">#eb46f4</color>
+    <color name="presetBlue">#39a2ff</color>
+    <color name="presetGreen">#2bfb4c</color>
+    <color name="presetYellow">#edf668</color>
+    <color name="presetWhite">#ffffff</color>
+
+    <color name="presetWeakOrange">#ffc399</color>
+    <color name="presetWeakRed">#ff7cac</color>
+    <color name="presetWeakMagenta">#f6aafa</color>
+    <color name="presetWeakBlue">#9dd1ff</color>
+    <color name="presetWeakGreen">#a1fdaf</color>
+    <color name="presetWeakYellow">#e7e09b</color>
+    <color name="presetWeakWhite">#c4c4c4</color>
 </resources>
