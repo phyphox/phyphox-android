@@ -33,6 +33,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
@@ -143,6 +144,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     PopupWindow popupWindow = null;
 
+    Bluetooth.OnExceptionRunnable errorReaction; // will be executed if there is an error
+
     @Override
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
@@ -185,6 +188,36 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             (new phyphoxFile.loadXMLAsyncTask(intent, this)).execute();
         }
 
+        errorReaction = new Bluetooth.OnExceptionRunnable () {
+            private String message = "error";
+
+            @Override
+            public void run () {
+                if (measuring) {
+                    stopMeasurement();
+                    ContextThemeWrapper ctw = new ContextThemeWrapper(Experiment.this, R.style.phyphox);
+                    AlertDialog.Builder errorDialog = new AlertDialog.Builder(ctw);
+                    LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+                    View neLayout = neInflater.inflate(R.layout.error_dialog, null);
+                    errorDialog.setView(neLayout);
+                    TextView tv = (TextView) neLayout.findViewById(R.id.errorText);
+                    tv.setText(message);
+                    errorDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    });
+                    errorDialog.show();
+                }
+            }
+
+            @Override
+            public void setMessage (String message) {
+                this.message = message;
+            }
+
+        };
+
     }
 
     @Override
@@ -205,11 +238,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         shutdown = true; //Stop the loop
         stopMeasurement(); //Stop the measurement
         if (experiment != null && experiment.loaded) {
-            //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
-            for (bluetoothInput bti : experiment.bluetoothInputs)
-                bti.closeConnection();
-            for (bluetoothOutput bti : experiment.bluetoothOutputs)
-                bti.closeConnection();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
+                for (BluetoothInput bti : experiment.bluetoothInputs)
+                    bti.closeConnection();
+                for (BluetoothOutput bti : experiment.bluetoothOutputs)
+                    bti.closeConnection();
+            }
         }
 
         if (popupWindow != null)
@@ -1143,7 +1178,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         beforeStart = false;
 
         //Start the sensors
-        experiment.startAllIO();
+        experiment.startAllIO(errorReaction);
 
         //Set measurement state
         measuring = true;
@@ -1218,7 +1253,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Stop any inputs (Sensors, microphone) or outputs (speaker) that might still be running
         //be careful as stopMeasurement might be called without a valid experiment
         if (experiment != null) {
-            experiment.stopAllIO();
+            try {
+                experiment.stopAllIO();
+            } catch (Bluetooth.BluetoothException e) {
+                // do nothing for now
+            }
         }
 
         //refresh the options menu

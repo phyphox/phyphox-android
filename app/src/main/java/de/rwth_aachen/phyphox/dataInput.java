@@ -87,6 +87,19 @@ public class dataInput implements Serializable {
         }
     }
 
+    // Get all values as a byte array.
+    public byte[] getByteArray() {
+        if (isBuffer) {
+            return buffer.getByteArray();
+        } else if (isEmpty) {
+            return new byte[0];
+        } else {
+            byte[] ret = new byte[1];
+            ret[0] = (byte) value;
+            return ret;
+        }
+    }
+
     public void clear(boolean reset) {
         if (isBuffer)
             buffer.clear(reset);

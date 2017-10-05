@@ -176,6 +176,19 @@ public class dataBuffer implements Serializable {
         return ret;
     }
 
+    //Get all the values as a byte array because the value of a BluetoothGattCharacteristic is a byte array
+    public byte[] getByteArray() {
+        byte ret[] = new byte[buffer.size()];
+        Iterator it = getIterator();
+        int i = 0;
+        while (it.hasNext()) {
+            Object next = it.next();
+            ret = (next+"").getBytes(); //TODO
+            i++;
+        }
+        return ret;
+    }
+
     public dataBuffer copy() {
         dataBuffer db = new dataBuffer(this.name, this.size);
         db.append(this.getArray(), this.getFilledSize());

@@ -3,10 +3,15 @@ package de.rwth_aachen.phyphox;
 import android.app.Activity;
 import android.app.ActivityOptions;
 
+import android.app.ProgressDialog;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -17,11 +22,14 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
+import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
@@ -36,18 +44,21 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,10 +70,10 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Vector;
@@ -910,8 +921,52 @@ public class ExperimentList extends AppCompatActivity {
             }
         };
 
-        FloatingActionButton newExperimentB = (FloatingActionButton) findViewById(R.id.newExperiment);
+        final FloatingActionButton newExperimentB = (FloatingActionButton) findViewById(R.id.newExperiment);
         newExperimentB.setOnClickListener(neocl);
+
+        Button.OnClickListener neblocl = new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE))) {
+
+                    ContextThemeWrapper ctw = new ContextThemeWrapper(c, R.style.phyphox);
+                    final AlertDialog.Builder btDialog = new AlertDialog.Builder(ctw);
+                    btDialog.setTitle(R.string.bluetoothExperiment);
+                    final LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+
+                    // check if bluetooth is enabled and display the right dialog
+                    if (!Bluetooth.isEnabled()) {
+                        enableBluetoothDialog(c, btDialog, neInflater);
+                    } else {
+                        selectDeviceDialog(c, btDialog, neInflater);
+                    }
+
+                } else {
+                    Toast.makeText(c, "Bluetooth Low Energy is not supported on this device.", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+
+        final FloatingActionButton newBlExperimentB = (FloatingActionButton) findViewById(R.id.bluetoothExperiment);
+
+        newBlExperimentB.setOnClickListener(neblocl);
+
+        // toggle visibility of FloatingActionMenu buttons
+        Button.OnClickListener menuocl = new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (newExperimentB.getVisibility()==View.VISIBLE) {
+                    newExperimentB.setVisibility(View.GONE);
+                    newBlExperimentB.setVisibility(View.GONE);
+                } else {
+                    newExperimentB.setVisibility(View.VISIBLE);
+                    newBlExperimentB.setVisibility(View.VISIBLE);
+                }
+            }
+        };
+        FloatingActionButton menuB = (FloatingActionButton) findViewById(R.id.newExperimentMenu);
+        menuB.setOnClickListener(menuocl);
+
     }
 
     //Displays a warning message that some experiments might damage the phone
@@ -948,6 +1003,329 @@ public class ExperimentList extends AppCompatActivity {
         Boolean skipWarning = settings.getBoolean("skipWarning", false);
         if (!skipWarning)
             adb.show(); //User did not decide to skip, so show it.
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    // Displays the dialog to enable bluetooth before setting up a Bluetooth-Experiment
+    private void enableBluetoothDialog (final Context c, final AlertDialog.Builder btDialog, final LayoutInflater neInflater) {
+        View neLayout = neInflater.inflate(R.layout.enable_bluetooth, null);
+        btDialog.setView(neLayout);
+
+        final Handler h = new Handler();
+
+        btDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                h.removeCallbacksAndMessages(null); // stop checking if bluetooth is enabled
+            }
+        });
+
+        // Button to the Bluetooth menu
+        Button btSettings = (Button) neLayout.findViewById(R.id.bluetoothSettings);
+        Button.OnClickListener openSettings = new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity((new Intent()).setAction(Settings.ACTION_BLUETOOTH_SETTINGS));
+            }
+        };
+        btSettings.setOnClickListener(openSettings);
+
+        final AlertDialog dialog = btDialog.show();
+
+        // check regularily if bluetooth is enabled by now
+        final Runnable checkBt = new Runnable() {
+            @Override
+            public void run () {
+                if (Bluetooth.isEnabled()) {
+                    selectDeviceDialog(c, btDialog, neInflater);
+                    dialog.dismiss(); // remove previous AlertDialog
+                } else {
+                    h.postDelayed(this, 1000);
+                }
+            }
+        };
+        h.post(checkBt);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    // displays the dialog to select a bluetooth device
+    private void selectDeviceDialog (final Context c, final AlertDialog.Builder btDialog, final LayoutInflater neInflater) {
+        View neLayout = neInflater.inflate(R.layout.select_bluetooth_device, null);
+        btDialog.setView(neLayout);
+
+        final Spinner spinner = (Spinner) neLayout.findViewById(R.id.pairedDevices);
+
+        // set device names as spinner elements
+        ArrayList<String> deviceNames = new ArrayList<>();
+        for (BluetoothDevice b : Bluetooth.getPairedDevices()) {
+            deviceNames.add(b.getName());
+        }
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter(c, android.R.layout.simple_spinner_dropdown_item, deviceNames);
+        spinner.setAdapter(adapter);
+
+        btDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                //If the user aborts the dialog, we don't have to do anything
+            }
+        });
+        btDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick (DialogInterface dialog, int which) {
+                final String deviceName = spinner.getSelectedItem().toString();
+                // show a progress dialog while connecting to the bluetooth device
+                final ProgressDialog progress = ProgressDialog.show(c, res.getString(R.string.loadingTitle), res.getString(R.string.loadingBluetoothConnectionText), true);
+                // connect to the bluetooth device with an AsyncTask
+                new AsyncTask<Void, Void, Bluetooth>() {
+                    private String message = null; // holds the error message if there is one
+
+                    @Override
+                    protected Bluetooth doInBackground(Void ... voids) {
+                        Bluetooth b = null;
+                        try {
+                            b = new Bluetooth(deviceName, null, c, new Vector<Bluetooth.CharacteristicData>());
+                        } catch (Bluetooth.BluetoothException e) {
+                            message = e.getMessage();
+                        }
+                        return b;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Bluetooth b) {
+                        // show an error dialog if message is not null
+                        if (message != null) {
+                            progress.dismiss();
+                            ContextThemeWrapper ctw = new ContextThemeWrapper(c, R.style.phyphox);
+                            AlertDialog.Builder errorDialog = new AlertDialog.Builder(ctw);
+                            LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+                            View neLayout = neInflater.inflate(R.layout.error_dialog, null);
+                            errorDialog.setView(neLayout);
+                            TextView tv = (TextView) neLayout.findViewById(R.id.errorText);
+                            tv.setText(res.getString(R.string.bluetoothConnectionErrorDialog)+"\n"+this.message);
+                            errorDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // nothing to do
+                                }
+                            });
+                            errorDialog.show();
+                        } else {
+                            // show next dialog
+                            newBluetoothExperimentDialog(b, c, btDialog, neInflater, progress);
+                        }
+                    }
+
+                    @Override
+                    protected void onCancelled () {
+                        progress.dismiss();
+                    }
+                }.execute();
+
+            }
+        });
+
+        btDialog.show();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    // This displays a dialog to allow users to set up a simple bluetooth experiment
+    private void newBluetoothExperimentDialog (final Bluetooth bluetooth, final Context c, final AlertDialog.Builder btDialog, final LayoutInflater neInflater, final ProgressDialog progress) {
+        final View neLayout = neInflater.inflate(R.layout.new_bluetooth_experiment, null);
+
+        // references to some dialog elements
+        final LinearLayout cLayout = (LinearLayout) neLayout.findViewById(R.id.characteristics);
+        final Spinner mode = (Spinner) neLayout.findViewById(R.id.mode);
+        final LinearLayout rate = (LinearLayout) neLayout.findViewById(R.id.rate);
+
+        final ArrayList<String> selectedCharacteristics = new ArrayList<>(); // holds the selected characteristics
+
+        // possible options to select in the spinners
+        final String poll = res.getString(R.string.poll);
+        final String notification = res.getString(R.string.notification);
+        final String time = res.getString(R.string.time);
+        final String sequence = res.getString(R.string.sequence);
+
+        btDialog.setView(neLayout);
+
+        // display a list of characteristics sorted by services
+        for (BluetoothGattService g : bluetooth.getServices()) {
+            TextView tv = new TextView(c);
+            tv.setText(g.getUuid().toString());
+            cLayout.addView(tv);
+            List<BluetoothGattCharacteristic> characteristics = g.getCharacteristics();
+            for (BluetoothGattCharacteristic characteristic : characteristics) {
+                CheckBox cb = new CheckBox(c);
+                cb.setText(characteristic.getUuid().toString());
+                // add or remove characteristic from the list of selected Characteristics when checked or unchecked
+                cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                        if (isChecked) {
+                            selectedCharacteristics.add(compoundButton.getText().toString());
+                        } else {
+                            selectedCharacteristics.remove(compoundButton.getText().toString());
+                        }
+                    }
+                });
+                cLayout.addView(cb);
+            }
+        }
+
+        // display option to choose a rate only when mode poll is selected
+        mode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
+                if (adapterView.getSelectedItem().toString().equals(poll)) {
+                    rate.setVisibility(View.VISIBLE);
+                } else {
+                    rate.setVisibility(View.GONE);
+                }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        btDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick (DialogInterface dialog, int which) {
+                // create the experiment definition file
+
+                // variables from user input
+                String title = ((TextView)neLayout.findViewById(R.id.neTitle)).getText().toString();
+                String m = mode.getSelectedItem().toString();
+                if (!m.equals(poll) && !m.equals(notification)) {
+                    m = poll;
+                    Toast.makeText(ExperimentList.this, "Invalid mode. Fall back to mode poll.", Toast.LENGTH_LONG).show();
+                }
+                double rate = 0;
+                if (m.equals(poll)) {
+                    try {
+                        rate = Double.valueOf(((EditText) neLayout.findViewById(R.id.neRate)).getText().toString());
+                    } catch (Exception e) {
+                        rate = 0;
+                        Toast.makeText(ExperimentList.this, "Invaid sensor rate. Fall back to fastest rate.", Toast.LENGTH_LONG).show();
+                    }
+                }
+                String view = ((Spinner) neLayout.findViewById(R.id.viewOptions)).getSelectedItem().toString();
+                if (!view.equals(time) && !view.equals(sequence)) {
+                    view = time;
+                    Toast.makeText(ExperimentList.this, "Invalid view. Fall back to view against the time.", Toast.LENGTH_LONG).show();
+                }
+
+                if (selectedCharacteristics.size() == 0) {
+                    Toast.makeText(ExperimentList.this, "No Characteristic selected. Experiment will not be created.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                //Generate random file name
+                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox";
+
+                //Now write the whole file...
+                try {
+                    FileOutputStream output = c.openFileOutput(file, MODE_PRIVATE);
+                    output.write("<phyphox version=\"1.0\">".getBytes());
+
+                    //Title, standard category and standard description
+                    output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());
+                    output.write(("<category>"+res.getString(R.string.categoryNewExperiment)+"</category>").getBytes());
+                    output.write("<description>Get raw data from selected sensors.</description>".getBytes());
+
+                    //Buffers for each characteristic
+                    output.write("<data-containers>".getBytes());
+                    for (String s : selectedCharacteristics) {
+                        output.write(("<container size=\"0\">"+s+"</container>").getBytes());   // Name the buffers after the characteristic
+                    }
+                    // add buffers for the time if it should be displayed against the time
+                    if (view.equals(time)) {
+                        for (String s : selectedCharacteristics) {
+                            output.write(("<container size=\"0\">"+s+"_time</container>").getBytes());
+                        }
+                    }
+                    output.write("</data-containers>".getBytes());
+
+                    //Inputs for each characteristic
+                    output.write("<input>".getBytes());
+                    String line  = "<bluetooth name=\""+bluetooth.deviceName+"\" mode=\""+m+"\"";
+                    if (m.equals(poll)) {
+                        line += " rate=\""+rate+"\"";
+                    }
+                    output.write((line+">").getBytes());
+                    for (String s : selectedCharacteristics) {
+                        output.write(("<output char=\""+s+"\">"+s+"</output>").getBytes());
+                    }
+                    if (view.equals(time)) {
+                        for (String s : selectedCharacteristics) {
+                            output.write(("<output char=\""+s+"\" extra=\"time\">"+s+"_time</output>").getBytes());
+                        }
+                    }
+                    output.write("</bluetooth>".getBytes());
+                    output.write("</input>".getBytes());
+
+                    //Views for each characteristic
+                    output.write("<views>".getBytes());
+                    if (view.equals(time)) {
+                        for (String s : selectedCharacteristics) {
+                            output.write(("<view label=\""+s+"\">").getBytes());
+                            output.write(("<graph label=\""+s+"\" labelX=\"t (s)\" labelY=\"-\" partialUpdate=\"true\">").getBytes());
+                            output.write(("<input axis=\"x\">" + s + "_time</input>").getBytes());
+                            output.write(("<input axis=\"y\">" + s + "</input>").getBytes());
+                            output.write(("</graph>").getBytes());
+                            output.write("</view>".getBytes());
+                        }
+                    } else if (view.equals(sequence)) {
+                        for (String s : selectedCharacteristics) {
+                            output.write(("<view label=\""+s+"\">").getBytes());
+                            output.write(("<value label=\"" + s + "\" size=\"2\" precision=\"1\" unit=\"-\">\n").getBytes());
+                            output.write(("<input>"+s+"</input>").getBytes());
+                            output.write("</value>".getBytes());
+                            output.write("</view>".getBytes());
+                        }
+                    }
+                    output.write("</views>".getBytes());
+
+
+                    //Export definitions for each characteristic
+                    output.write("<export>".getBytes());
+                    if (view.equals(time)) {
+                        for (String s : selectedCharacteristics) {
+                            output.write(("<set name=\""+s+"\">").getBytes());
+                            output.write(("<data name=\"Time (s)\">"+s+"_time</data>").getBytes());
+                            output.write(("<data name=\""+s+"\">"+s+"</data>").getBytes());
+                            output.write("</set>".getBytes());
+                        }
+                    } else if (view.equals(sequence)) {
+                        for (String s : selectedCharacteristics) {
+                            output.write(("<set name=\""+s+"\">").getBytes());
+                            output.write(("<data name=\""+s+"\">"+s+"</data>").getBytes());
+                            output.write("</set>".getBytes());
+                        }
+                    }
+                    output.write("</export>".getBytes());
+
+                    //And finally, the closing tag
+                    output.write("</phyphox>".getBytes());
+
+                    output.close();
+
+                    //Create an intent for this new file
+                    Intent intent = new Intent(c, Experiment.class);
+                    intent.putExtra(EXPERIMENT_XML, file);
+                    intent.putExtra(EXPERIMENT_ISASSET, false);
+                    intent.setAction(Intent.ACTION_VIEW);
+
+                    //Start the new experiment
+                    c.startActivity(intent);
+                } catch (Exception e) {
+                    Log.e("newBluetoothExperiment", "Could not create new bluetooth experiment.", e);
+                }
+            }
+        });
+
+        btDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                //If the user aborts the dialog, we don't have to do anything
+            }
+        });
+
+        progress.dismiss();
+        btDialog.show();
     }
 
     //This displays a rather complex dialog to allow users to set up a simple experiment

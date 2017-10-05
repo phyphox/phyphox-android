@@ -32,6 +32,32 @@
     <string name="remotePhyphoxOrg">Hilfe zum Fernzugriff</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/fernsteuerung</string>
 
+    <string name="newExperimentMenu">Neues Experiment</string>
+    <string name="bluetoothExperiment">Neues Bluetooth Experiment</string>
+    <string name="enableBluetooth">Bluetooth ist auf diesem Gerät deaktiviert. Aktivieren Sie Bluetooth, um ein Bluetooth Experiment zu erstellen.</string>
+    <string name="activateBluetoothButton">zu den Bluetooth Einstellungen.</string>
+    <string name="selectDevice">Wählen Sie ein Gerät aus der Liste von Geräten mit Pairing aus.</string>
+    <string name="mode">mode</string>
+    <string-array name="mode">
+        <item name="poll">@string/poll</item>
+        <item name="notification">@string/notification</item>
+    </string-array>
+    <string name="poll">poll</string>
+    <string name="notification">notification</string>
+    <string name="viewOptionsInfo">Die Messwerte können entweder gegen die Zeit oder einfach als Sequenz dargestellt werden.</string>
+    <string-array name="viewOptions">
+        <item name="time">@string/time</item>
+        <item name="sequence">@string/sequence</item>
+    </string-array>
+    <string name="time">gegen die Zeit</string>
+    <string name="sequence">als Sequenz</string>
+    <string name="characteristics">Characteristics (nach Services sortiert)</string>
+
+    <string name="generalErrorDialog">Es ist ein Fehler aufgetreten.</string>
+    <string name="bluetoothConnectionErrorDialog">
+        Bei dem Versuch sich mit dem GATT Server des ausgewählten Geräts zu verbinden ist ein Fehler aufgetreten: </string>
+    <string name="loadingBluetoothConnectionText">Mit Bluetooth Gerät verbinden...</string>
+
     <string name="export">Daten exportieren</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
     <string name="export_subject">Daten aus phyphox</string>

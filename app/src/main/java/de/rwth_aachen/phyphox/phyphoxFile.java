@@ -13,6 +13,8 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -311,6 +313,115 @@ public abstract class phyphoxFile {
 
             done();
         }
+    }
+
+    // Blockparser for input or output assignments inside a bluetooth-block
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private static class bluetoothIoBlockParser extends xmlBlockParser {
+        Vector<dataOutput> outputList;
+        Vector<dataInput> inputList;
+        Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
+
+        bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
+            super(xpp, experiment, parent);
+            this.outputList = outputList;
+            this.inputList = inputList;
+            this.characteristics = characteristics;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            // get the attributes
+            String charUuid = getStringAttribute("char");
+            if (charUuid == null) {
+                throw new phyphoxFileException("Output needs a char attribute.", xpp.getLineNumber());
+            }
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(charUuid);
+            } catch (IllegalArgumentException e) {
+                throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
+            }
+            UUID config_uuid = null;
+            byte config_value = 0;
+            String configUuid = getStringAttribute("config");
+            if (configUuid != null) {
+                try {
+                    config_uuid = UUID.fromString(configUuid);
+                } catch (IllegalArgumentException e) {
+                    throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
+                }
+                String configValue = getStringAttribute("config_data");
+                if (configValue == null) {
+                    throw new phyphoxFileException("config Attribute needs a config_data Attribute.", xpp.getLineNumber());
+                }
+                try {
+                    config_value = Byte.parseByte(configValue);
+                } catch (NumberFormatException e) {
+                    throw new phyphoxFileException("config_value is not a parsable byte.", xpp.getLineNumber());
+                }
+            }
+            boolean extraTime = false;
+            String extra = getStringAttribute("extra");
+            if (extra != null) {
+                if (extra.equals("time")) {
+                    extraTime = true;
+                } else {
+                    throw new phyphoxFileException("unknown value for extra Attribute.", xpp.getLineNumber());
+                }
+            }
+            boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+
+            String bufferName = getText();
+
+            dataBuffer buffer = experiment.getBuffer(bufferName);
+
+            if (buffer == null) {
+                throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+            }
+
+            int index;
+            switch (tag.toLowerCase()) {
+                case "input": {
+                    if (inputList == null) {
+                        throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
+                    }
+
+                    for (index = 0; index < inputList.size(); index++) {
+                        if (inputList.get(index) == null) {
+                            break;
+                        }
+                    }
+                    if (index == inputList.size()) {
+                        inputList.setSize(index+1);
+                    }
+                    inputList.set(index, new dataInput(buffer, clearBeforeWrite));
+                    break;
+                }
+                case "output": {
+                    if (outputList == null) {
+                        throw new phyphoxFileException("No input expected.", xpp.getLineNumber());
+                    }
+
+                    for (index = 0; index < outputList.size(); index++) {
+                        if (outputList.get(index) == null) {
+                            break;
+                        }
+                    }
+                    if (index == outputList.size()) {
+                        outputList.setSize(index+1);
+                    }
+                    outputList.set(index, new dataOutput(buffer, clearBeforeWrite));
+                    break;
+                }
+
+                default: {
+                    throw new phyphoxFileException("Unknown tag \""+tag+"\"", xpp.getLineNumber());
+                }
+            }
+            characteristics.add(new Bluetooth.CharacteristicData(uuid, config_uuid, config_value, extraTime, index));
+        }
+
     }
 
     //Blockparser for any input and output assignments
@@ -1121,68 +1232,52 @@ public abstract class phyphoxFile {
                     break;
                 }
                 case "bluetooth": { //A serial bluetooth input
-                    double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
-                    boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                            throw new phyphoxFileException("The Android Version does not support Bluetooth LE.");
+                        } else {
+                            double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
 
-                    String nameFilter = getStringAttribute("name");
-                    String addressFilter = getStringAttribute("address");
+                            boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
 
-                    String protocolStr = getStringAttribute("protocol");
-                    Protocol protocol = null;
-                    switch (protocolStr) {
-                        case "simple": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = "\n";
+                            String nameFilter = getStringAttribute("name");
+                            String addressFilter = getStringAttribute("address");
+
+
+                            String modeStr = getStringAttribute("mode").toLowerCase();
+
+                            String modeFilter;
+                            switch (modeStr) {
+                                case "poll": {
+                                    modeFilter = "poll";
+                                    break;
+                                }
+                                case "notification": {
+                                    modeFilter = "notification";
+                                    break;
+                                }
+                                default: {
+                                    throw new phyphoxFileException("Unknown bluetooth mode: " + modeStr, xpp.getLineNumber());
+                                }
                             }
-                            protocol = new Protocol(new Protocol.simple(separator));
-                            break;
-                        }
-                        case "csv": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = ",";
+
+                            Vector<dataOutput> outputs = new Vector<>();
+                            Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
+                            BluetoothInput b;
+                            try {
+                                (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
+                                b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, average, outputs, experiment.dataLock, parent.getApplicationContext(), characteristics);
+
+                            } catch (Bluetooth.BluetoothException e) {
+                                throw new phyphoxFileException(e.getMessage());
                             }
-                            protocol = new Protocol(new Protocol.csv(separator));
-                            break;
-                        }
-                        case "json": {
-                            Vector<String> names = new Vector<>();
-                            int index = 1;
-                            String name = getStringAttribute("out"+index);
-                            while (name != null) {
-                                names.add(name);
-                                index++;
-                                name = getStringAttribute("out"+index);
+                            experiment.bluetoothInputs.add(b);
+
+                            //Check if the sensor is available on this device
+                            if (!experiment.bluetoothInputs.lastElement().isAvailable()) {
+                                throw new phyphoxFileException("Bluetooth device not found.");
                             }
-                            protocol = new Protocol(new Protocol.json(names));
-                            break;
                         }
-                        default: {
-                            throw new phyphoxFileException("Unknown bluetooth protocol: " + protocolStr, xpp.getLineNumber());
-                        }
-                    }
-
-                    //Allowed input/output configuration
-                    ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
-                    };
-                    Vector<dataOutput> outputs = new Vector<>();
-                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
-
-                    //Instantiate the input.
-                    try {
-                        experiment.bluetoothInputs.add(new bluetoothInput(nameFilter, addressFilter, rate, average, outputs, experiment.dataLock, protocol));
-                        experiment.bluetoothInputs.lastElement().openConnection();
-                    } catch (bluetoothInput.bluetoothException e) {
-                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
-                    }
-
-                    //Check if the sensor is available on this device
-                    if (!experiment.bluetoothInputs.lastElement().isAvailable()) {
-                        throw new phyphoxFileException("Bluetooth device not found.");
-                    }
-                    break;
+                        break;
                 }
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
@@ -1843,63 +1938,26 @@ public abstract class phyphoxFile {
                     break;
                 }
                 case "bluetooth": { //A serial bluetooth output
-                    String nameFilter = getStringAttribute("name");
-                    String addressFilter = getStringAttribute("address");
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                        throw new phyphoxFileException("The Android Version does not support Bluetooth LE.");
+                    } else {
+                        String nameFilter = getStringAttribute("name");
+                        String addressFilter = getStringAttribute("address");
 
-                    String protocolStr = getStringAttribute("protocol");
-                    Protocol protocol = null;
-                    switch (protocolStr) {
-                        case "simple": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = "\n";
-                            }
-                            protocol = new Protocol(new Protocol.simple(separator));
-                            break;
+                        Vector<dataInput> inputs = new Vector<>();
+                        Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
+                        BluetoothOutput b;
+                        try {
+                            (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
+                            b = new BluetoothOutput(nameFilter, addressFilter, parent.getApplicationContext(), inputs, characteristics);
+                        } catch (Bluetooth.BluetoothException e) {
+                            throw new phyphoxFileException(e.getMessage());
                         }
-                        case "csv": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = ",";
-                            }
-                            protocol = new Protocol(new Protocol.csv(separator));
-                            break;
+                        experiment.bluetoothOutputs.add(b);
+                        //Check if the sensor is available on this device
+                        if (!experiment.bluetoothOutputs.lastElement().isAvailable()) {
+                            throw new phyphoxFileException("Bluetooth device not found.");
                         }
-                        case "json": {
-                            Vector<String> names = new Vector<>();
-                            int index = 1;
-                            String name = getStringAttribute("in"+index);
-                            while (name != null) {
-                                names.add(name);
-                                index++;
-                                name = getStringAttribute("in"+index);
-                            }
-                            protocol = new Protocol(new Protocol.json(names));
-                            break;
-                        }
-                        default: {
-                            throw new phyphoxFileException("Unknown bluetooth protocol: " + protocolStr, xpp.getLineNumber());
-                        }
-                    }
-
-                    //Allowed input/output configuration
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
-                    };
-                    Vector<dataInput> inputs = new Vector<>();
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
-
-                    //Instantiate the input.
-                    try {
-                        experiment.bluetoothOutputs.add(new bluetoothOutput(nameFilter, addressFilter, inputs, protocol));
-                        experiment.bluetoothOutputs.lastElement().openConnection();
-                    } catch (bluetoothOutput.bluetoothException e) {
-                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
-                    }
-
-                    //Check if the sensor is available on this device
-                    if (!experiment.bluetoothOutputs.lastElement().isAvailable()) {
-                        throw new phyphoxFileException("Bluetooth device not found.");
                     }
                     break;
                 }
