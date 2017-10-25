@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
@@ -934,6 +935,9 @@ public class ExperimentList extends AppCompatActivity {
                     btDialog.setTitle(R.string.bluetoothExperiment);
                     final LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
 
+                    // lock current orientation so that the dialog does not close
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+
                     // check if bluetooth is enabled and display the right dialog
                     if (!Bluetooth.isEnabled()) {
                         enableBluetoothDialog(c, btDialog, neInflater);
@@ -1016,6 +1020,7 @@ public class ExperimentList extends AppCompatActivity {
         btDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 h.removeCallbacksAndMessages(null); // stop checking if bluetooth is enabled
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); // unlock orientation
             }
         });
 
@@ -1064,7 +1069,7 @@ public class ExperimentList extends AppCompatActivity {
 
         btDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                //If the user aborts the dialog, we don't have to do anything
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); // unlock orientation
             }
         });
         btDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
@@ -1143,6 +1148,9 @@ public class ExperimentList extends AppCompatActivity {
         final String sequence = res.getString(R.string.sequence);
 
         btDialog.setView(neLayout);
+
+        // set the device name as a default for the title of the experiment
+        ((TextView)neLayout.findViewById(R.id.neTitle)).setText(bluetooth.deviceName);
 
         // display a list of characteristics sorted by services
         for (BluetoothGattService g : bluetooth.getServices()) {
@@ -1224,7 +1232,7 @@ public class ExperimentList extends AppCompatActivity {
 
                     //Title, standard category and standard description
                     output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());
-                    output.write(("<category>"+res.getString(R.string.categoryNewExperiment)+"</category>").getBytes());
+                    output.write(("<category>Bluetooth</category>").getBytes());
                     output.write("<description>Get raw data from selected sensors.</description>".getBytes());
 
                     //Buffers for each characteristic
@@ -1263,7 +1271,7 @@ public class ExperimentList extends AppCompatActivity {
                     if (view.equals(time)) {
                         for (String s : selectedCharacteristics) {
                             output.write(("<view label=\""+s+"\">").getBytes());
-                            output.write(("<graph label=\""+s+"\" labelX=\"t (s)\" labelY=\"-\" partialUpdate=\"true\">").getBytes());
+                            output.write(("<graph label=\""+s+"\" labelX=\"t (s)\">").getBytes());
                             output.write(("<input axis=\"x\">" + s + "_time</input>").getBytes());
                             output.write(("<input axis=\"y\">" + s + "</input>").getBytes());
                             output.write(("</graph>").getBytes());
@@ -1272,7 +1280,7 @@ public class ExperimentList extends AppCompatActivity {
                     } else if (view.equals(sequence)) {
                         for (String s : selectedCharacteristics) {
                             output.write(("<view label=\""+s+"\">").getBytes());
-                            output.write(("<value label=\"" + s + "\" size=\"2\" precision=\"1\" unit=\"-\">\n").getBytes());
+                            output.write(("<value label=\"" + s + "\">\n").getBytes());
                             output.write(("<input>"+s+"</input>").getBytes());
                             output.write("</value>".getBytes());
                             output.write("</view>".getBytes());
@@ -1320,7 +1328,7 @@ public class ExperimentList extends AppCompatActivity {
 
         btDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                //If the user aborts the dialog, we don't have to do anything
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); // unlock orientation
             }
         });
 

@@ -343,7 +343,7 @@ public abstract class phyphoxFile {
                 throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
             }
             UUID config_uuid = null;
-            byte config_value = 0;
+            byte[] config_values = null;
             String configUuid = getStringAttribute("config");
             if (configUuid != null) {
                 try {
@@ -351,16 +351,44 @@ public abstract class phyphoxFile {
                 } catch (IllegalArgumentException e) {
                     throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
                 }
-                String configValue = getStringAttribute("config_data");
-                if (configValue == null) {
+                String configValues = getStringAttribute("config_data");
+                if (configValues == null) {
                     throw new phyphoxFileException("config Attribute needs a config_data Attribute.", xpp.getLineNumber());
                 }
                 try {
-                    config_value = Byte.parseByte(configValue);
+                    String[]tmp = configValues.split(",");
+                    config_values = new byte[tmp.length];
+                    for (int i = 0; i < tmp.length; i++) {
+                        config_values[i] = Byte.parseByte(tmp[i].trim());
+                    }
                 } catch (NumberFormatException e) {
-                    throw new phyphoxFileException("config_value is not a parsable byte.", xpp.getLineNumber());
+                    throw new phyphoxFileException("config_value is not valid.", xpp.getLineNumber());
                 }
             }
+            UUID period_uuid = null;
+            byte[] period_values = null;
+            String periodUuid = getStringAttribute("period");
+            if (periodUuid != null) {
+                try {
+                    period_uuid = UUID.fromString(periodUuid);
+                } catch (IllegalArgumentException e) {
+                    throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
+                }
+                String periodValues = getStringAttribute("period_data");
+                if (periodValues == null) {
+                    throw new phyphoxFileException("period Attribute needs a period_data Attribute.", xpp.getLineNumber());
+                }
+                try {
+                    String[]tmp = periodValues.split(",");
+                    period_values = new byte[tmp.length];
+                    for (int i = 0; i < tmp.length; i++) {
+                        period_values[i] = Byte.parseByte(tmp[i].trim());
+                    }
+                } catch (NumberFormatException e) {
+                    throw new phyphoxFileException("period_value is not valid.", xpp.getLineNumber());
+                }
+            }
+
             boolean extraTime = false;
             String extra = getStringAttribute("extra");
             if (extra != null) {
@@ -370,6 +398,8 @@ public abstract class phyphoxFile {
                     throw new phyphoxFileException("unknown value for extra Attribute.", xpp.getLineNumber());
                 }
             }
+            String conversionFunction = getStringAttribute("conversion");
+
             boolean clearBeforeWrite = getBooleanAttribute("clear", true);
 
             String bufferName = getText();
@@ -419,7 +449,11 @@ public abstract class phyphoxFile {
                     throw new phyphoxFileException("Unknown tag \""+tag+"\"", xpp.getLineNumber());
                 }
             }
-            characteristics.add(new Bluetooth.CharacteristicData(uuid, config_uuid, config_value, extraTime, index));
+            try {
+                characteristics.add(new Bluetooth.CharacteristicData(uuid, config_uuid, config_values, period_uuid, period_values, extraTime, index, conversionFunction));
+            } catch (Bluetooth.BluetoothException e) {
+                throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
+            }
         }
 
     }
@@ -1237,8 +1271,6 @@ public abstract class phyphoxFile {
                         } else {
                             double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
 
-                            boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
-
                             String nameFilter = getStringAttribute("name");
                             String addressFilter = getStringAttribute("address");
 
@@ -1265,7 +1297,7 @@ public abstract class phyphoxFile {
                             BluetoothInput b;
                             try {
                                 (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
-                                b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, average, outputs, experiment.dataLock, parent.getApplicationContext(), characteristics);
+                                b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent.getApplicationContext(), characteristics);
 
                             } catch (Bluetooth.BluetoothException e) {
                                 throw new phyphoxFileException(e.getMessage());

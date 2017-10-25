@@ -1,9 +1,12 @@
 package de.rwth_aachen.phyphox;
 
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
+
+import java.util.ArrayList;
 import java.util.Vector;
 
 
@@ -20,7 +23,9 @@ public class BluetoothOutput extends Bluetooth {
 
     }
 
+    @Override
     public void stop () {
+        super.stop();
         clear();
     }
 
@@ -34,11 +39,14 @@ public class BluetoothOutput extends Bluetooth {
                 mainHandler.post(handleException);
             }
         }
-        for (Characteristic c : mapping.values()) {
-            if (data.get(c.index).getFilledSize() != 0) {
-                c.characteristic.setValue(data.get(c.index).getByteArray());
-                add(new WriteCommand(btGatt, c.characteristic));
+        for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
+            for (Characteristic c : mapping.get(characteristic)) {
+                if (data.get(c.index).getFilledSize() != 0) {
+                    characteristic.setValue(data.get(c.index).getByteArray());
+                    add(new WriteCommand(btGatt, characteristic));
+                }
             }
         }
     }
+
 }

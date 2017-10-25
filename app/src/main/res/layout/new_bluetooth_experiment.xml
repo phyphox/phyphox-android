@@ -52,7 +52,6 @@
                     android:layout_alignParentRight="true"
                     android:layout_alignParentEnd="true"
                     android:hint="@string/newExperimentInputTitle"
-                    android:text="My Bluetooth Experiment"
                     android:singleLine="true" />
             </LinearLayout>
 

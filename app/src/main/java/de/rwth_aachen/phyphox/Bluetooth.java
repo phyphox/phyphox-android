@@ -13,7 +13,10 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +30,7 @@ import android.os.Handler;
 public class Bluetooth implements Serializable {
 
     transient private static BluetoothAdapter btAdapter = null;
+    protected static Class conversions = (new Conversions()).getClass();
 
     transient BluetoothDevice btDevice = null;
     transient BluetoothGatt btGatt = null;
@@ -40,31 +44,28 @@ public class Bluetooth implements Serializable {
     private LinkedList<BluetoothCommand> commandQueue = new LinkedList<>(); // As Gatt can only process one command at a time, the commands are passed to a queue
     private boolean isExecuting = false; // true if a command is executed at the moment
 
-    protected HashMap<BluetoothGattCharacteristic, Characteristic> mapping = new HashMap<>(); // maps each BluetoothGattCharacteristic to the corresponding Characteristic which contains additional information
-
     protected CountDownLatch cdl;
 
-    protected HashMap<Characteristic, byte[]>  receivedData = null; // holds the received data from the characteristics that is not retrieved yet
+    protected boolean isRunning = false; // indicates whether the device has called start()
+    protected boolean forcedBreak = false; // true if the experiment is running but the device disconnected
 
-    // Contains a BluetoothGattCharacteristic and the indices of the buffers
+    protected int valuesSize = 0; // number of values that should be written (time not included)
+
+    // maps all characteristics that have extra=time with the index of the buffer
+    protected HashMap<BluetoothGattCharacteristic, Integer> saveTime = new HashMap<>();
+
+    // each BluetoothGattCharacteristic that should be read maps with an array list of Characteristics
+    protected HashMap<BluetoothGattCharacteristic, ArrayList<Characteristic>> mapping = new HashMap<>();
     protected static class Characteristic {
-        BluetoothGattCharacteristic characteristic;
         public int index = -1; // index of the buffer the characteristic data should be saved in
-        public int timeIndex = -1; // index of the buffer the time should be saved in (-1 if the time should not be saved)
+        public Method conversionFunction = null; // conversion function for the value
 
-        public Characteristic (BluetoothGattCharacteristic characteristic) {
-            this.characteristic = characteristic;
-        }
-
-        public void setIndex (int index) {
+        public Characteristic (int index, Method conversionFunction) {
             this.index = index;
+            this.conversionFunction = conversionFunction;
         }
-
-        public void setTimeIndex (int timeIndex) {
-            this.timeIndex = timeIndex;
-        }
-
     }
+
 
     // Command on BluetoothGatt that should be queued
     protected abstract static class BluetoothCommand {
@@ -101,7 +102,7 @@ public class Bluetooth implements Serializable {
 
         @Override
         public String getErrorMessage() {
-            return "Error on writing characteristic with Uuuid "+characteristic.getUuid().toString()+".";
+            return "Error on writing characteristic with Uuid "+characteristic.getUuid().toString()+".";
         }
     }
 
@@ -119,7 +120,7 @@ public class Bluetooth implements Serializable {
 
         @Override
         public String getErrorMessage() {
-            return "Error on reading characteristic with Uuuid "+characteristic.getUuid().toString()+".";
+            return "Error on reading characteristic with Uuid "+characteristic.getUuid().toString()+".";
         }
     }
 
@@ -174,24 +175,40 @@ public class Bluetooth implements Serializable {
         isExecuting = false;
     }
 
-    // holds all data of a characteristic
+    // holds all data of a characteristic from a phyphox file
     public static class CharacteristicData {
         public UUID uuid;
         public UUID config_uuid = null; // characteristic whose value has to be changed
-        public byte config_value; // value that has to be written to the characteristic with the uuid config_uuid
-        public boolean extraTime; // whether the input has extra="time"
+        public byte[] config_values; // value that has to be written to the characteristic with the uuid config_uuid
+        public UUID period_uuid = null; // characteristic whose value has to be changed
+        public byte[] period_values; // value that will be written to the characteristic with the uuid period_uuid to set the sensor measurement period
+        public boolean extraTime; // true if the input has extra="time"
         public int index; // index of the buffer
+        public Method conversionFunction = null;
 
-        public CharacteristicData (UUID uuid, UUID config_uuid, byte config_value, boolean extraTime, int index) {
+        public CharacteristicData (UUID uuid, UUID config_uuid, byte[] config_values, UUID period_uuid, byte[] period_values, boolean extraTime, int index, String conversionFunctionName) throws BluetoothException {
             this.uuid = uuid;
             this.config_uuid = config_uuid;
-            this.config_value = config_value;
+            this.config_values = config_values;
+            this.period_uuid = period_uuid;
+            this.period_values = period_values;
             this.extraTime = extraTime;
             this.index = index;
+            if (conversionFunctionName != null) {
+                // test if the conversionFunction exists
+                try {
+                    this.conversionFunction = conversions.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
+                    if (!Modifier.isPublic(this.conversionFunction.getModifiers())) {
+                        throw new BluetoothException("The conversion \"" + conversionFunction + "\" does not exist.");
+                    }
+                } catch (NoSuchMethodException e) {
+                    throw new BluetoothException("The conversion \"" + conversionFunction + "\" does not exist.");
+                }
+            }
         }
     }
 
-    public class BluetoothException extends Exception {
+    public static class BluetoothException extends Exception {
         public BluetoothException(String message) {
             super(message);
         }
@@ -278,38 +295,35 @@ public class Bluetooth implements Serializable {
 
     // adds a Characteristic to the list
     protected void addCharacteristic (CharacteristicData characteristic) throws BluetoothException {
-        Characteristic toAdd = getCharacteristic(characteristic.uuid);
-        if (toAdd == null) {
-            BluetoothGattCharacteristic c = findCharacteristic(characteristic.uuid);
-
-            // Configure Characteristic if necessary
-            if (characteristic.config_uuid != null) {
-                BluetoothGattCharacteristic config_c = findCharacteristic(characteristic.config_uuid);
-                if (config_c == null) {
-                    throw new BluetoothException("Characteristic with Uuid "+characteristic.config_uuid+" not found. "+getDeviceData());
-                }
-                config_c.setValue(new byte[]{characteristic.config_value});
-                add(new WriteCommand(btGatt, config_c));
-            }
-            // Test if it is possible to read from characteristic (commented out because the function always returns zero) TODO
-            /*if (c.getPermissions() != BluetoothGattCharacteristic.PERMISSION_READ) {
-                throw new bluetoothException("Characteristic with Uuid "+characteristic.uuid+" has no read permission. "+getDeviceData());
-            }*/
-
-            toAdd = new Characteristic(c);
-            mapping.put(c, toAdd);
-        }
-        // overwrite the index
+        BluetoothGattCharacteristic c = findCharacteristic(characteristic.uuid);
         if (characteristic.extraTime) {
-            if (toAdd.timeIndex > -1) {
-                throw new BluetoothException("Characteristic with Uuid "+characteristic.config_uuid+" shouldn't be used twice with extra \"time\"."+getDeviceData());
-            }
-            toAdd.setTimeIndex(characteristic.index);
+            saveTime.put(c, characteristic.index);
         } else {
-            if (toAdd.index > -1) {
-                throw new BluetoothException("Characteristic with Uuid "+characteristic.config_uuid+" shouldn't be used twice. "+getDeviceData());
+            if (!mapping.containsKey(c)) {
+                // Configure Characteristic if necessary
+                if (characteristic.config_uuid != null) {
+                    BluetoothGattCharacteristic config_c = findCharacteristic(characteristic.config_uuid);
+                    if (config_c == null) {
+                        throw new BluetoothException("Characteristic with Uuid " + characteristic.config_uuid + " not found. " + getDeviceData());
+                    }
+                    config_c.setValue(characteristic.config_values);
+                    add(new WriteCommand(btGatt, config_c));
+                }
+                // Set the period to the specified value
+                if (characteristic.period_uuid != null) {
+                    BluetoothGattCharacteristic period_c = findCharacteristic(characteristic.period_uuid);
+                    if (period_c == null) {
+                        throw new BluetoothException("Characteristic with Uuid " + characteristic.period_uuid + " not found. "+getDeviceData());
+                    }
+                    period_c.setValue(characteristic.period_values);
+                    add(new WriteCommand(btGatt, period_c));
+                }
+                // add Characteristic to the list for its BluetoothGattCharacteristic
+                mapping.put(c, new ArrayList<Characteristic>());
             }
-            toAdd.setIndex(characteristic.index);
+            Characteristic toAdd = new Characteristic(characteristic.index, characteristic.conversionFunction);
+            valuesSize++;
+            mapping.get(c).add(toAdd);
         }
     }
 
@@ -317,18 +331,6 @@ public class Bluetooth implements Serializable {
     public void setOnExceptionRunnable (OnExceptionRunnable exceptionRunnable) {
         this.handleException = exceptionRunnable;
     }
-
-
-    // returns the characteristic if it is on the list
-    public Characteristic getCharacteristic (UUID uuid) {
-        for (Characteristic c : mapping.values()) {
-            if (c.characteristic.getUuid().equals(uuid)) {
-                return c;
-            }
-        }
-        return null;
-    }
-
 
     // searches for the device with the specified name or address on the list of paired devices
     public void findDevice() throws BluetoothException {
@@ -360,7 +362,7 @@ public class Bluetooth implements Serializable {
         boolean result = false;
         if (btDevice != null) {
             cdl = new CountDownLatch(1);
-            btGatt = btDevice.connectGatt(context, false, btleGattCallback);
+            btGatt = btDevice.connectGatt(context, true, btleGattCallback);
             try {
                 // it should not be possible to continue before the device is connected
                 // timeout after 5 seconds if the device could not be connected
@@ -403,17 +405,27 @@ public class Bluetooth implements Serializable {
         return ((btDevice != null) && (btGatt != null));
     }
 
+    // has to be overwritten by BluetoothInput / -Output
+    public void start() {
+        forcedBreak = false;
+        isRunning = true;
+    }
+    public void stop() {
+        isRunning = false;
+    }
+
     // has to be overwritten if it should be able to receive data from the device
-    protected void retrieveData(byte[] receivedData, Characteristic characteristic) {};
-    protected void retrieveData() {};
+    protected void retrieveData(byte[] receivedData, BluetoothGattCharacteristic characteristic) {}
+    protected void saveData(BluetoothGattCharacteristic characteristic, byte[] data) {}
+    protected void retrieveData() {}
 
     // Callback functions for Gatt operations
     private final BluetoothGattCallback btleGattCallback = new BluetoothGattCallback() {
 
         @Override
         public void onCharacteristicWrite (BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                handleException.setMessage("The writing operation on a bluetooth device was not successful. "+getDeviceData());
+            if (status != BluetoothGatt.GATT_SUCCESS && handleException != null) {
+                handleException.setMessage("The writing operation on a bluetooth device was not successful. " + getDeviceData());
                 mainHandler.post(handleException);
             }
             isExecuting = false;
@@ -424,17 +436,17 @@ public class Bluetooth implements Serializable {
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
             switch (newState) {
                 case BluetoothProfile.STATE_CONNECTED:
+                    if (forcedBreak) {
+                        start(); // start collecting / sending data again
+                    }
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     // fall through to default
                 default:
-                    btGatt = null;
-                    btDevice = null;
-                    if (handleException != null) {
-                        handleException.setMessage("Bluetooth device disconnected. " + getDeviceData());
-                        mainHandler.post(handleException);
+                    if (isRunning) {
+                        forcedBreak = true;
+                        stop(); // stop collecting / sending data
                     }
-                    isExecuting = false;
                     return;
             }
             if (cdl != null) {
@@ -446,7 +458,7 @@ public class Bluetooth implements Serializable {
 
         @Override
         public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
-            if (status != BluetoothGatt.GATT_SUCCESS) {
+            if (status != BluetoothGatt.GATT_SUCCESS && handleException != null) {
                 handleException.setMessage("Discovering the characteristics on a bluetooth device was not successful. "+getDeviceData());
                 mainHandler.post(handleException);
 
@@ -460,30 +472,22 @@ public class Bluetooth implements Serializable {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                handleException.setMessage("The reading operation on a bluetooth device was not successful. "+getDeviceData());
-                mainHandler.post(handleException);
-            } else {
-                if (receivedData != null) {
-                    if (receivedData.containsKey(mapping.get(characteristic))) {
-                        retrieveData(); // retrieve data if this is the second time we receive data from this characteristic
-                    } else {
-                        receivedData.put(mapping.get(characteristic), characteristic.getValue());
-                        if (receivedData.size() == mapping.size()) {
-                            retrieveData(); // retrieve data if we received data from every characteristic
-                        }
-                    }
-                }
+            byte[] data = null;
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                data = characteristic.getValue();
             }
-            isExecuting = false;
+            isExecuting = false; // allow queue to execute new command before calling saveData
             executeNext();
+            saveData(characteristic, data);
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            retrieveData(characteristic.getValue(), mapping.get(characteristic));
-            isExecuting = false;
+            // retrieve data directly when the characteristic has changed
+            byte[] data = characteristic.getValue();
+            isExecuting = false; // allow queue to execute new command before retrieving data
             executeNext();
+            retrieveData(data, characteristic);
         }
 
     };

@@ -8,6 +8,9 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.Vector;
@@ -20,18 +23,17 @@ import static java.lang.Math.pow;
 //The BluetoothInput class encapsulates a generic serial input to bluetooth devices
 public class BluetoothInput extends Bluetooth {
 
+    protected static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"); // Descriptor for Client Characteristic Configuration
+
     private long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     private long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
     private Vector<dataOutput> data = new Vector<>(); //Data-buffers
     private String mode; // "poll" or "notification"
-    private long lastReading; //Remember the time of the last reading to fullfill the rate
-    private Vector<Double> avg = new Vector<>(); //Used for averaging
-    private boolean average = false; //Average over aquisition period?
-    private Vector<Integer> aquisitions = new Vector<>(); //Number of aquisitions for this average
     private Lock dataLock;
+    protected HashMap<Integer, Double> outputs;
 
 
-    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics)
+    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics)
             throws BluetoothException {
 
         super(deviceName, deviceAddress, context, characteristics);
@@ -49,18 +51,13 @@ public class BluetoothInput extends Bluetooth {
         else
             this.period = (long)((1/rate)*1e9); //period in ns
 
-        this.average = average;
-
         this.data = buffers;
-        for (int i = 0; i < buffers.size(); i++) {
-            this.avg.add(0.);
-            this.aquisitions.add(0);
-        }
-
     }
 
     //Start the data acquisition
+    @Override
     public void start() {
+        super.start();
         if (!isAvailable()) {
             try {
                 reconnect();
@@ -69,12 +66,8 @@ public class BluetoothInput extends Bluetooth {
                 mainHandler.post(handleException);
             }
         }
-        receivedData = new HashMap<>();
+        outputs = new HashMap<>();
         this.t0 = 0; //Reset t0. This will be set by the first sensor event
-
-        //Reset averaging
-        this.lastReading = 0;
-        resetAveraging();
 
         switch (mode) {
             case "poll": {
@@ -113,8 +106,9 @@ public class BluetoothInput extends Bluetooth {
     }
 
     //Stop the data acquisition
-    public void stop() throws BluetoothException {
-        receivedData = null;
+    @Override
+    public void stop() {
+        super.stop();
         switch (mode) {
             case "poll": {
                 if (mainHandler != null) {
@@ -124,7 +118,11 @@ public class BluetoothInput extends Bluetooth {
             }
             case "notification": {
                 for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    setCharacteristicNotification(c, false);
+                    try {
+                        setCharacteristicNotification(c, false);
+                    } catch (BluetoothException e) {
+                        //TODO
+                    }
                 }
                 break;
             }
@@ -138,10 +136,10 @@ public class BluetoothInput extends Bluetooth {
 
     protected void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enable) throws BluetoothException {
         if (!isAvailable()) {
-            return; // the error will already be displayed if there is no connection
+            return; // TODO
         }
         btGatt.setCharacteristicNotification(characteristic, enable);
-        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")); // Descriptor for Client Characteristic Configuration
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
         if (descriptor == null) {
             if (enable) {
                 throw new BluetoothException("The characteristic notification could not be enabled. "+getDeviceData());
@@ -151,8 +149,32 @@ public class BluetoothInput extends Bluetooth {
         }
         descriptor.setValue(enable ? BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE : BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         boolean result = btGatt.writeDescriptor(descriptor); //descriptor write operation successfully initiated?
-        if (!result) {
+        if (!result && enable) {
             throw new BluetoothException("Turning on notifications for the Characteristic with the Uuid " + characteristic.getUuid().toString() + " was not successful. " + getDeviceData());
+        } else if (!result && !enable) {
+            throw new BluetoothException("Turning off notifications for the Characteristic with the Uuid " + characteristic.getUuid().toString() + " was not successful. " + getDeviceData());
+        }
+    }
+
+    @Override
+    // saves data from the characteristic in outputs and calls retrieveData it is time
+    protected void saveData (BluetoothGattCharacteristic characteristic, byte[] data) {
+        if (outputs != null) {
+            for (Characteristic c : mapping.get(characteristic)) {
+                // call retrieveData if the data from this characteristic is already stored
+                if (outputs.containsKey(c.index)) {
+                    retrieveData();
+                    return;
+                }
+                // convert data and add it to outputs if it was read successfully
+                if (data != null) {
+                    outputs.put(c.index, convertData(data, c.conversionFunction));
+                }
+            }
+            // call retrieveData if data from every characteristic is received
+            if (outputs.size() == valuesSize) {
+                retrieveData();
+            }
         }
     }
 
@@ -161,123 +183,95 @@ public class BluetoothInput extends Bluetooth {
     protected void retrieveData() {
         long t = System.nanoTime();
 
-        for (Characteristic c : mapping.values()) {
-            if (t0 == 0 && c.timeIndex >= 0 && data.get(c.timeIndex) != null && data.get(c.timeIndex).getFilledSize() > 0) {
-                t0 = t;
-                t0 -= data.get(c.timeIndex).getValue() * 1e9;
+        // set t0 if it is not yet set
+        if (t0 == 0) {
+            t0 = t;
+            for (Integer i : saveTime.values()) {
+                dataOutput dataOutput = data.get(i);
+                if (dataOutput != null && dataOutput.getFilledSize() > 0) {
+                    t0 -= dataOutput.getValue() * 1e9;
+                    break;
+                }
             }
-            double output = Double.NaN; // default value if we did not receive data from the characteristic
-            if (receivedData.get(c) != null && receivedData.get(c).length != 0) {
-                /*int mantissa;
-                int exponent;
-                Integer lowerByte = (int) receivedData.get(c)[0] & 0xFF;
-                Integer upperByte = (int) receivedData.get(c)[1] & 0xFF;
-                Integer sfloat= (upperByte << 8) + lowerByte;
-                mantissa = sfloat & 0x0FFF;
-                exponent = (sfloat >> 12) & 0xFF;
-                double magnitude = pow(2.0f, exponent);
-                output = (mantissa * magnitude) / 100.0f;*/
-                output = receivedData.get(c)[0]; //TODO
-            }
-            setAvgAndAquisitions(c, output);
         }
 
-        if (t0 == 0)
-            t0 = t;
-
-        receivedData.clear(); // remove values
-
-        if (lastReading + period <= t) {
-            //Average/waiting period is over
-            //Append the data to available buffers
-            dataLock.lock();
-            try {
-                for (int i = 0; i < data.size(); i++) {
-                    if (aquisitions.get(i) > 0) {
-                        data.get(i).append(avg.get(i) / aquisitions.get(i));
-                    }
+        //Append the data to available buffers
+        dataLock.lock();
+        try {
+            for (ArrayList<Characteristic> al : mapping.values()) {
+                for (Characteristic c : al) {
+                    data.get(c.index).append(outputs.get(c.index));
                 }
-                for (Characteristic c : mapping.values()) {
-                    if (c.timeIndex >= 0) {
-                        double time = (t-t0) / 1e9;
-                        data.get(c.timeIndex).append(time);
-                    }
-                }
-            } finally {
-                dataLock.unlock();
             }
-
-            resetAveraging();
-
-            this.lastReading = t;
+            // append time to buffers
+            for (Integer i : saveTime.values()) {
+                data.get(i).append((t - t0) / 1e9);
+            }
+        } finally {
+            dataLock.unlock();
+            outputs.clear(); // remove values from receivedData because it is retrieved now
         }
     }
 
 
     @Override
     // retrieve data from one characteristic (mode notification)
-    protected void retrieveData(byte[] receivedData, Characteristic characteristic) {
+    protected void retrieveData(byte[] receivedData, BluetoothGattCharacteristic characteristic) {
+        ArrayList<Characteristic> characteristics = mapping.get(characteristic);
         long t = System.nanoTime();
+        // set t0 if it is not yet set
         if (t0 == 0) {
             t0 = t;
-            if (characteristic.timeIndex >= 0 && data.get(characteristic.timeIndex) != null && data.get(characteristic.timeIndex).getFilledSize() > 0)
-                t0 -= data.get(characteristic.timeIndex).getValue() * 1e9;
-        }
-
-        /*int mantissa;
-        int exponent;
-        Integer lowerByte = (int) receivedData[0] & 0xFF;
-        Integer upperByte = (int) receivedData[1] & 0xFF;
-        Integer sfloat= (upperByte << 8) + lowerByte;
-        mantissa = sfloat & 0x0FFF;
-        exponent = (sfloat >> 12) & 0xFF;
-        double magnitude = pow(2.0f, exponent);
-        double output = (mantissa * magnitude) / 100.0f;*/
-        double output = receivedData[0]; // TODO
-
-        setAvgAndAquisitions(characteristic, output);
-
-        if (lastReading + period <= t) {
-            //Average/waiting period is over
-            //Append the data to available buffers
-            dataLock.lock();
-            try {
-                if (aquisitions.get(characteristic.index) > 0) {
-                    data.get(characteristic.index).append(avg.get(characteristic.index) / aquisitions.get(characteristic.index));
-                    if (characteristic.timeIndex >= 0) {
-                        double time = ((t-t0)/1e9);
-                        data.get(characteristic.timeIndex).append(time);
-                    }
+            for (Integer i : saveTime.values()) {
+                dataOutput dataOutput = data.get(i);
+                if (dataOutput != null && dataOutput.getFilledSize() > 0) {
+                    t0 -= dataOutput.getValue() * 1e9;
+                    break;
                 }
-            } finally {
-                dataLock.unlock();
-            }
-
-            resetAveraging();
-
-            this.lastReading = t;
-        }
-    }
-
-    // sets avg and aquisitions for the characteristic to the value data
-    private void setAvgAndAquisitions (Characteristic characteristic, double data) {
-        if (characteristic.index >= 0) {
-            if (average) {
-                avg.set(characteristic.index, avg.get(characteristic.index) + data);
-                aquisitions.set(characteristic.index, aquisitions.get(characteristic.index) + 1);
-            } else {
-                avg.set(characteristic.index, data);
-                aquisitions.set(characteristic.index, 1);
             }
         }
-    }
+        double[] outputs = new double[characteristics.size()];
+        for (Characteristic c : characteristics) {
+            outputs[characteristics.indexOf(c)] = convertData(receivedData, c.conversionFunction);
+        }
 
-    // resets all values in avg and aquisitions to 0
-    private void resetAveraging () {
-        for (int i = 0; i < data.size(); i++) {
-            avg.set(i, 0.);
-            aquisitions.set(i, 0);
+        //Append the data to available buffers
+        dataLock.lock();
+        try {
+            for (Characteristic c : characteristics) {
+                data.get(c.index).append(outputs[characteristics.indexOf(c)]);
+            }
+            // append time to buffer if extra=time is set
+            if (saveTime.containsKey(characteristic)) {
+                data.get(saveTime.get(characteristic)).append((t - t0) / 1e9);
+            }
+        } finally {
+            dataLock.unlock();
         }
     }
+
+    // converts a byte array to a double value with the specified conversion function.
+    // the method also handles exceptions by running handleException
+    private double convertData(byte[] data, Method conversionFunction) {
+        if (conversionFunction == null) {
+            return data[0]; // take the value as it is if no conversion function was specified
+        } else {
+            try {
+                return (double) conversionFunction.invoke(null, data);
+            } catch (InvocationTargetException e) {
+                if (handleException != null) {
+                    handleException.setMessage("An error occurred on the conversion \"" + conversionFunction + "\". " + getDeviceData());
+                    mainHandler.post(handleException);
+                }
+            } catch (IllegalAccessException e) {
+                if (handleException != null) {
+                    handleException.setMessage("The conversion \"" + conversionFunction + "\" is not available.");
+                    mainHandler.post(handleException);
+                }
+            }
+        }
+        return 0; // the method needs to return a double value
+    }
+
 }
 
