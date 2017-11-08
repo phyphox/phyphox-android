@@ -450,9 +450,9 @@ public abstract class phyphoxFile {
                 }
             }
             try {
-                characteristics.add(new Bluetooth.CharacteristicData(uuid, config_uuid, config_values, period_uuid, period_values, extraTime, index, conversionFunction));
+                characteristics.add(new Bluetooth.CharacteristicData(uuid, config_uuid, config_values, period_uuid, period_values, extraTime, index, conversionFunction, parent));
             } catch (Bluetooth.BluetoothException e) {
-                throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
+                throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
             }
         }
 
@@ -1294,19 +1294,12 @@ public abstract class phyphoxFile {
 
                             Vector<dataOutput> outputs = new Vector<>();
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
-                            BluetoothInput b;
+                            (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
-                                (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
-                                b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent.getApplicationContext(), characteristics);
-
+                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent, characteristics);
+                                experiment.bluetoothInputs.add(b);
                             } catch (Bluetooth.BluetoothException e) {
                                 throw new phyphoxFileException(e.getMessage());
-                            }
-                            experiment.bluetoothInputs.add(b);
-
-                            //Check if the sensor is available on this device
-                            if (!experiment.bluetoothInputs.lastElement().isAvailable()) {
-                                throw new phyphoxFileException("Bluetooth device not found.");
                             }
                         }
                         break;
@@ -1978,18 +1971,9 @@ public abstract class phyphoxFile {
 
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
-                        BluetoothOutput b;
-                        try {
-                            (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
-                            b = new BluetoothOutput(nameFilter, addressFilter, parent.getApplicationContext(), inputs, characteristics);
-                        } catch (Bluetooth.BluetoothException e) {
-                            throw new phyphoxFileException(e.getMessage());
-                        }
+                        (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
+                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent.getApplicationContext(), inputs, characteristics);
                         experiment.bluetoothOutputs.add(b);
-                        //Check if the sensor is available on this device
-                        if (!experiment.bluetoothOutputs.lastElement().isAvailable()) {
-                            throw new phyphoxFileException("Bluetooth device not found.");
-                        }
                     }
                     break;
                 }

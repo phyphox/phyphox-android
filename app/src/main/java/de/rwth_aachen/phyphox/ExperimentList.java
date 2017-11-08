@@ -1076,53 +1076,25 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick (DialogInterface dialog, int which) {
                 final String deviceName = spinner.getSelectedItem().toString();
-                // show a progress dialog while connecting to the bluetooth device
-                final ProgressDialog progress = ProgressDialog.show(c, res.getString(R.string.loadingTitle), res.getString(R.string.loadingBluetoothConnectionText), true);
+                final Bluetooth b = new Bluetooth(deviceName, null, c, new Vector<Bluetooth.CharacteristicData>());
                 // connect to the bluetooth device with an AsyncTask
-                new AsyncTask<Void, Void, Bluetooth>() {
-                    private String message = null; // holds the error message if there is one
-
+                Bluetooth.ConnectBluetoothTask ctask = new Bluetooth.ConnectBluetoothTask() {
                     @Override
-                    protected Bluetooth doInBackground(Void ... voids) {
-                        Bluetooth b = null;
-                        try {
-                            b = new Bluetooth(deviceName, null, c, new Vector<Bluetooth.CharacteristicData>());
-                        } catch (Bluetooth.BluetoothException e) {
-                            message = e.getMessage();
-                        }
-                        return b;
-                    }
-
-                    @Override
-                    protected void onPostExecute(Bluetooth b) {
+                    // override onPostExecute to show the next dialog if there was no error
+                    protected void onPostExecute(String result) {
+                        super.onPostExecute(result);
                         // show an error dialog if message is not null
-                        if (message != null) {
-                            progress.dismiss();
-                            ContextThemeWrapper ctw = new ContextThemeWrapper(c, R.style.phyphox);
-                            AlertDialog.Builder errorDialog = new AlertDialog.Builder(ctw);
-                            LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-                            View neLayout = neInflater.inflate(R.layout.error_dialog, null);
-                            errorDialog.setView(neLayout);
-                            TextView tv = (TextView) neLayout.findViewById(R.id.errorText);
-                            tv.setText(res.getString(R.string.bluetoothConnectionErrorDialog)+"\n"+this.message);
-                            errorDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // nothing to do
-                                }
-                            });
-                            errorDialog.show();
-                        } else {
+                        if (result == null) {
                             // show next dialog
                             newBluetoothExperimentDialog(b, c, btDialog, neInflater, progress);
                         }
                     }
-
-                    @Override
-                    protected void onCancelled () {
-                        progress.dismiss();
-                    }
-                }.execute();
-
+                };
+                ctask.progress = ProgressDialog.show(c, res.getString(R.string.loadingTitle), res.getString(R.string.loadingBluetoothConnectionText), true);
+                ctask.context = c;
+                Vector<Bluetooth> v = new Vector<>();
+                v.add(b);
+                ctask.execute(v);
             }
         });
 

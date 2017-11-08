@@ -353,7 +353,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 tabLayout.setVisibility(View.GONE);
 
             try {
-                experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
+                experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE), Experiment.this);
             } catch (Exception e) {
                 Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
             }

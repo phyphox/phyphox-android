@@ -8,7 +8,6 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +40,7 @@ public class BluetoothInput extends Bluetooth {
         this.mode = mode.toLowerCase();
 
         if (mode.equals("poll") && rate < 0) {
-            throw new BluetoothException("Invalid value for \"rate\". "+getDeviceData());
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_rate)+" "+getDeviceData());
         }
 
         this.dataLock = lock;
@@ -60,7 +59,7 @@ public class BluetoothInput extends Bluetooth {
         super.start();
         if (!isAvailable()) {
             try {
-                reconnect();
+                connect();
             } catch (BluetoothException e) {
                 handleException.setMessage(e.getMessage());
                 mainHandler.post(handleException);
@@ -97,7 +96,7 @@ public class BluetoothInput extends Bluetooth {
                 break;
             }
             default: {
-                handleException.setMessage("Unknown mode for bluetooth Input. "+getDeviceData());
+                handleException.setMessage(context.getResources().getString(R.string.bt_exception_mode)+" "+getDeviceData());
                 mainHandler.post(handleException);
             }
 
@@ -142,17 +141,17 @@ public class BluetoothInput extends Bluetooth {
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
         if (descriptor == null) {
             if (enable) {
-                throw new BluetoothException("The characteristic notification could not be enabled. "+getDeviceData());
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification)+" "+characteristic.getUuid().toString()+" "+context.getResources().getString(R.string.bt_exception_notification_enable)+" "+getDeviceData());
             } else {
-                throw new BluetoothException("The characteristic notification could not be disabled again. "+getDeviceData());
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification)+" "+characteristic.getUuid().toString()+" "+context.getResources().getString(R.string.bt_exception_notification_disable)+" "+getDeviceData());
             }
         }
         descriptor.setValue(enable ? BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE : BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         boolean result = btGatt.writeDescriptor(descriptor); //descriptor write operation successfully initiated?
         if (!result && enable) {
-            throw new BluetoothException("Turning on notifications for the Characteristic with the Uuid " + characteristic.getUuid().toString() + " was not successful. " + getDeviceData());
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable)+" " + characteristic.getUuid().toString() + " "+context.getResources().getString(R.string.bt_exception_notification_fail)+" "+ getDeviceData());
         } else if (!result && !enable) {
-            throw new BluetoothException("Turning off notifications for the Characteristic with the Uuid " + characteristic.getUuid().toString() + " was not successful. " + getDeviceData());
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_disable)+" "  + characteristic.getUuid().toString() + " "+context.getResources().getString(R.string.bt_exception_notification_fail)+" " + getDeviceData());
         }
     }
 
@@ -258,14 +257,9 @@ public class BluetoothInput extends Bluetooth {
         } else {
             try {
                 return (double) conversionFunction.invoke(null, data);
-            } catch (InvocationTargetException e) {
+            } catch (Exception e) {
                 if (handleException != null) {
-                    handleException.setMessage("An error occurred on the conversion \"" + conversionFunction + "\". " + getDeviceData());
-                    mainHandler.post(handleException);
-                }
-            } catch (IllegalAccessException e) {
-                if (handleException != null) {
-                    handleException.setMessage("The conversion \"" + conversionFunction + "\" is not available.");
+                    handleException.setMessage(context.getResources().getString(R.string.bt_exception_conversion3)+" \"" + conversionFunction + "\". " + getDeviceData());
                     mainHandler.post(handleException);
                 }
             }

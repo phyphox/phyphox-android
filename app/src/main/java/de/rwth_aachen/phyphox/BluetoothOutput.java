@@ -15,7 +15,7 @@ import java.util.Vector;
 public class BluetoothOutput extends Bluetooth {
     public Vector<dataInput> data = new Vector<>(); //Data-buffers
 
-    protected BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) throws BluetoothException {
+    protected BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
         super(deviceName, deviceAddress, context, characteristics);
 
@@ -33,9 +33,9 @@ public class BluetoothOutput extends Bluetooth {
     public void sendData () {
         if (!isAvailable()) {
             try {
-                reconnect();
+                connect();
             } catch (BluetoothException e) {
-                handleException.setMessage("A Bluetooth device is not connected. "+getDeviceData());
+                handleException.setMessage(e.getMessage());
                 mainHandler.post(handleException);
             }
         }

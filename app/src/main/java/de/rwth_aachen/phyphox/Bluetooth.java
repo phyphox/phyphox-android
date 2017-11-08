@@ -1,15 +1,23 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
 
 import java.io.Serializable;
@@ -25,6 +33,9 @@ import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Bluetooth implements Serializable {
@@ -42,7 +53,7 @@ public class Bluetooth implements Serializable {
     protected Handler mainHandler;
 
     private LinkedList<BluetoothCommand> commandQueue = new LinkedList<>(); // As Gatt can only process one command at a time, the commands are passed to a queue
-    private boolean isExecuting = false; // true if a command is executed at the moment
+    private Boolean isExecuting = false; // true if a command is executed at the moment
 
     protected CountDownLatch cdl;
 
@@ -53,6 +64,9 @@ public class Bluetooth implements Serializable {
 
     // maps all characteristics that have extra=time with the index of the buffer
     protected HashMap<BluetoothGattCharacteristic, Integer> saveTime = new HashMap<>();
+
+    // holds data to all characteristics to add them when the device is connected
+    Vector<CharacteristicData> characteristics;
 
     // each BluetoothGattCharacteristic that should be read maps with an array list of Characteristics
     protected HashMap<BluetoothGattCharacteristic, ArrayList<Characteristic>> mapping = new HashMap<>();
@@ -68,7 +82,7 @@ public class Bluetooth implements Serializable {
 
 
     // Command on BluetoothGatt that should be queued
-    protected abstract static class BluetoothCommand {
+    protected abstract class BluetoothCommand {
         BluetoothGatt gatt;
         BluetoothGattCharacteristic characteristic;
 
@@ -88,7 +102,7 @@ public class Bluetooth implements Serializable {
     }
 
 
-    protected static class WriteCommand extends BluetoothCommand {
+    protected class WriteCommand extends BluetoothCommand {
 
         public WriteCommand (BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super(gatt, characteristic);
@@ -102,12 +116,12 @@ public class Bluetooth implements Serializable {
 
         @Override
         public String getErrorMessage() {
-            return "Error on writing characteristic with Uuid "+characteristic.getUuid().toString()+".";
+            return context.getResources().getString(R.string.bt_error_writing)+" "+characteristic.getUuid().toString()+".";
         }
     }
 
 
-    protected static class ReadCommand extends BluetoothCommand {
+    protected class ReadCommand extends BluetoothCommand {
 
         public ReadCommand (BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super(gatt, characteristic);
@@ -120,12 +134,12 @@ public class Bluetooth implements Serializable {
 
         @Override
         public String getErrorMessage() {
-            return "Error on reading characteristic with Uuid "+characteristic.getUuid().toString()+".";
+            return context.getResources().getString(R.string.bt_error_reading)+" "+characteristic.getUuid().toString()+".";
         }
     }
 
 
-    protected static class DiscoverCommand extends BluetoothCommand {
+    protected class DiscoverCommand extends BluetoothCommand {
 
         public DiscoverCommand (BluetoothGatt gatt) {
             super(gatt);
@@ -138,24 +152,28 @@ public class Bluetooth implements Serializable {
 
         @Override
         public String getErrorMessage() {
-            return "Error on discovering the Services of the bluetooth device.";
+            return context.getResources().getString(R.string.bt_error_discovering);
         }
     }
 
     // Executes the next command in the queue if there is no command running and the queue is not empty
     protected void executeNext() {
-        if (isExecuting) {
-            return;
-        }
         if (commandQueue.size() == 0) {
             return;
         }
-        isExecuting = true;
+        synchronized (isExecuting) {
+            if (isExecuting) {
+                return;
+            }
+            isExecuting = true;
+        }
         BluetoothCommand btC = commandQueue.poll();
         boolean result = btC.execute();
-        if (!result) {
-            isExecuting = false;
-            handleException.setMessage(btC.getErrorMessage()+getDeviceData());
+            if (!result) {
+                synchronized (isExecuting) {
+                    isExecuting = false;
+                }
+            handleException.setMessage(btC.getErrorMessage()+" "+getDeviceData());
             mainHandler.post(handleException);
         }
         return;
@@ -172,7 +190,9 @@ public class Bluetooth implements Serializable {
     // clears the commandQueue
     protected void clear() {
         commandQueue.clear();
-        isExecuting = false;
+        synchronized (isExecuting) {
+            isExecuting = false;
+        }
     }
 
     // holds all data of a characteristic from a phyphox file
@@ -186,7 +206,7 @@ public class Bluetooth implements Serializable {
         public int index; // index of the buffer
         public Method conversionFunction = null;
 
-        public CharacteristicData (UUID uuid, UUID config_uuid, byte[] config_values, UUID period_uuid, byte[] period_values, boolean extraTime, int index, String conversionFunctionName) throws BluetoothException {
+        public CharacteristicData (UUID uuid, UUID config_uuid, byte[] config_values, UUID period_uuid, byte[] period_values, boolean extraTime, int index, String conversionFunctionName, Context context) throws BluetoothException {
             this.uuid = uuid;
             this.config_uuid = config_uuid;
             this.config_values = config_values;
@@ -199,10 +219,10 @@ public class Bluetooth implements Serializable {
                 try {
                     this.conversionFunction = conversions.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
                     if (!Modifier.isPublic(this.conversionFunction.getModifiers())) {
-                        throw new BluetoothException("The conversion \"" + conversionFunction + "\" does not exist.");
+                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_conversion)+" \"" + conversionFunctionName + " \"" + context.getResources().getString(R.string.bt_exception_conversion2));
                     }
                 } catch (NoSuchMethodException e) {
-                    throw new BluetoothException("The conversion \"" + conversionFunction + "\" does not exist.");
+                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_conversion) + " \"" + conversionFunctionName + " \"" + context.getResources().getString(R.string.bt_exception_conversion2));
                 }
             }
         }
@@ -248,15 +268,25 @@ public class Bluetooth implements Serializable {
 
 
 
-    public Bluetooth(String deviceName, String deviceAddress, Context context, Vector<CharacteristicData> characteristics) throws BluetoothException {
+    public Bluetooth(String deviceName, String deviceAddress, Context context, Vector<CharacteristicData> characteristics) {
         this.deviceName = deviceName;
         this.deviceAddress = deviceAddress;
 
         this.context = context;
         this.mainHandler = new Handler(context.getMainLooper());
-        findDevice();
-        openConnection();
 
+        this.characteristics = characteristics;
+
+    }
+
+    public void connect () throws BluetoothException {
+        if (btDevice == null) {
+            findDevice();
+        }
+        if (btGatt == null || !((BluetoothManager)context.getSystemService(context.BLUETOOTH_SERVICE)).getConnectedDevices(BluetoothProfile.GATT).contains(btDevice)) {
+            openConnection();
+        }
+        // add characteristics when the connection is established
         for (CharacteristicData cd : characteristics) {
             this.addCharacteristic(cd);
         }
@@ -264,12 +294,12 @@ public class Bluetooth implements Serializable {
 
     // returns the device data as a String to append it to Error-Messages
     public String getDeviceData () {
-        String result = "On device with";
+        String result = context.getResources().getString(R.string.bt_exception_device).toString();
         if (deviceAddress != null) {
-            result += " address \""+deviceAddress+"\"";
+            result += " "+context.getResources().getString(R.string.bt_exception_device_address)+" \""+deviceAddress+"\"";
         }
         if (deviceName != null) {
-            result += " name \""+deviceName+"\"";
+            result += " "+context.getResources().getString(R.string.bt_exception_device_name)+" \""+deviceName+"\"";
         }
         result += ".";
         return result;
@@ -290,7 +320,7 @@ public class Bluetooth implements Serializable {
                 }
             }
         }
-        throw new BluetoothException("Characteristic with Uuid "+uuid+" not found. "+getDeviceData());
+        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_uuid)+" "+uuid.toString()+" "+context.getResources().getString(R.string.bt_exception_uuid2)+" "+getDeviceData());
     }
 
     // adds a Characteristic to the list
@@ -304,7 +334,7 @@ public class Bluetooth implements Serializable {
                 if (characteristic.config_uuid != null) {
                     BluetoothGattCharacteristic config_c = findCharacteristic(characteristic.config_uuid);
                     if (config_c == null) {
-                        throw new BluetoothException("Characteristic with Uuid " + characteristic.config_uuid + " not found. " + getDeviceData());
+                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_uuid)+" "+characteristic.config_uuid.toString()+" "+context.getResources().getString(R.string.bt_exception_uuid2)+" "+getDeviceData());
                     }
                     config_c.setValue(characteristic.config_values);
                     add(new WriteCommand(btGatt, config_c));
@@ -313,7 +343,7 @@ public class Bluetooth implements Serializable {
                 if (characteristic.period_uuid != null) {
                     BluetoothGattCharacteristic period_c = findCharacteristic(characteristic.period_uuid);
                     if (period_c == null) {
-                        throw new BluetoothException("Characteristic with Uuid " + characteristic.period_uuid + " not found. "+getDeviceData());
+                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_uuid)+" "+characteristic.period_uuid.toString()+" "+context.getResources().getString(R.string.bt_exception_uuid2)+" "+getDeviceData());
                     }
                     period_c.setValue(characteristic.period_values);
                     add(new WriteCommand(btGatt, period_c));
@@ -336,9 +366,9 @@ public class Bluetooth implements Serializable {
     public void findDevice() throws BluetoothException {
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null)
-            throw new BluetoothException("Could not find a bluetooth adapter. Bluetooth is not supported on this hardware platform.");
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_adapter));
         if (!btAdapter.isEnabled())
-            throw new BluetoothException("Bluetooth is disabled. Please enable bluetooth and try again");
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled));
         // searches for the device
         for (BluetoothDevice d : getPairedDevices()) {
             if (deviceAddress == null || deviceAddress.isEmpty()) {
@@ -354,7 +384,7 @@ public class Bluetooth implements Serializable {
             }
         }
         if (btDevice == null)
-            throw new BluetoothException("Bluetooth device not found. (name filter: " + deviceName + ", address filter: " + deviceAddress+")");
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notfound)+" "+getDeviceData());
     }
 
     // connects to the GATT Server hosted by the specified device
@@ -371,7 +401,10 @@ public class Bluetooth implements Serializable {
             }
         }
         if (btGatt == null || !result) {
-            throw new BluetoothException("Bluetooth connection could not be opened. "+getDeviceData());
+            if (btGatt != null) {
+                btGatt.close();
+            }
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_connection)+" "+getDeviceData());
         }
         cdl = new CountDownLatch(1); // new CountDownLatch with count 1
         add(new DiscoverCommand(btGatt));
@@ -382,15 +415,8 @@ public class Bluetooth implements Serializable {
         } catch (InterruptedException e) {
         }
         if (!result) {
-            throw new BluetoothException("Services could not be discovered. "+getDeviceData());
+            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_services)+" "+getDeviceData());
         }
-    }
-
-    public void reconnect() throws BluetoothException {
-        if (btDevice == null)
-            findDevice();
-        if (btGatt == null)
-            openConnection();
     }
 
     public void closeConnection() {
@@ -425,10 +451,12 @@ public class Bluetooth implements Serializable {
         @Override
         public void onCharacteristicWrite (BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS && handleException != null) {
-                handleException.setMessage("The writing operation on a bluetooth device was not successful. " + getDeviceData());
+                handleException.setMessage(context.getResources().getString(R.string.bt_fail_writing)+" "+ getDeviceData());
                 mainHandler.post(handleException);
             }
-            isExecuting = false;
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
             executeNext();
         }
 
@@ -452,18 +480,21 @@ public class Bluetooth implements Serializable {
             if (cdl != null) {
                 cdl.countDown();
             }
-            isExecuting = false;
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
             executeNext();
         }
 
         @Override
         public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
             if (status != BluetoothGatt.GATT_SUCCESS && handleException != null) {
-                handleException.setMessage("Discovering the characteristics on a bluetooth device was not successful. "+getDeviceData());
+                handleException.setMessage(context.getResources().getString(R.string.bt_fail_discovering)+" "+getDeviceData());
                 mainHandler.post(handleException);
-
             }
-            isExecuting = false;
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
             if (cdl != null) {
                 cdl.countDown();
             }
@@ -476,7 +507,9 @@ public class Bluetooth implements Serializable {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 data = characteristic.getValue();
             }
-            isExecuting = false; // allow queue to execute new command before calling saveData
+            synchronized (isExecuting) { // allow queue to execute new command before calling saveData
+                isExecuting = false;
+            }
             executeNext();
             saveData(characteristic, data);
         }
@@ -485,12 +518,87 @@ public class Bluetooth implements Serializable {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             // retrieve data directly when the characteristic has changed
             byte[] data = characteristic.getValue();
-            isExecuting = false; // allow queue to execute new command before retrieving data
+            synchronized (isExecuting) { // allow queue to execute new command before calling saveData
+                isExecuting = false;
+            }
             executeNext();
             retrieveData(data, characteristic);
         }
 
     };
+
+    // AsyncTask to connect to BluetoothDevices.
+    // In case of connection errors it shows a dialog with the message and the option to try again
+    public static class ConnectBluetoothTask extends AsyncTask<Vector<? extends Bluetooth>, Void, String> {
+        public Context context = null; // needs to be set if the error message should be shown
+        public ProgressDialog progress = null; // will be dismissed when the task is done
+        private Vector<? extends Bluetooth>[] params; // params need to be saved to enable "try again"-option
+
+        @Override
+        protected String doInBackground(Vector<? extends Bluetooth>... params) {
+            this.params = params;
+            // try to connect all devices
+            try {
+                for (Vector<? extends Bluetooth> v : params) {
+                    for (Bluetooth b : v) {
+                        b.connect();
+                    }
+                }
+            } catch (Bluetooth.BluetoothException e) {
+                return e.getMessage();
+            }
+            return null; // no error message
+        }
+
+        @Override
+        protected void onPostExecute (String result) {
+            if (progress != null) {
+                progress.hide(); // don't dismiss progress yet because maybe "try again" will be called
+            }
+            // show the error dialog if the context is set
+            if (result != null && context != null) {
+                ContextThemeWrapper ctw = new ContextThemeWrapper(context, R.style.phyphox);
+                AlertDialog.Builder errorDialog = new AlertDialog.Builder(ctw);
+                LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(context.LAYOUT_INFLATER_SERVICE);
+                View neLayout = neInflater.inflate(R.layout.error_dialog, null);
+                errorDialog.setView(neLayout);
+                TextView tv = (TextView) neLayout.findViewById(R.id.errorText);
+                tv.setText(result); // set error message as text
+                errorDialog.setPositiveButton(context.getResources().getString(R.string.tryagain), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // start a new task with the same attributes and params
+                        ConnectBluetoothTask btTask = new ConnectBluetoothTask();
+                        btTask.progress = progress;
+                        btTask.context = context;
+                        // show ProgressDialog again
+                        if (btTask.progress != null) {
+                            btTask.progress.show();
+                        }
+                        btTask.execute(params);
+                    }
+                });
+                errorDialog.setNegativeButton(context.getResources().getString(R.string.cancel), new Dialog.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (progress != null) {
+                            progress.dismiss();
+                        }
+                    }
+                });
+                errorDialog.show();
+            } else {
+                if (progress != null) {
+                    progress.dismiss();
+                }
+            }
+        }
+
+        @Override
+        protected void onCancelled () {
+            if (progress != null) {
+                progress.dismiss();
+            }
+        }
+    }
 
 }
 

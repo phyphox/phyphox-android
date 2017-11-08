@@ -96,6 +96,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
 
     <string name="ok">OK</string>
+    <string name="tryagain">try again</string>
     <string name="close">Close</string>
     <string name="next">Next</string>
     <string name="cancel">Cancel</string>
@@ -169,4 +170,33 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="categoryRawSensor">Raw Sensors</string>
 
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
+
+    <string name="bt_exception_conversion">The conversion function "</string>
+    <string name="bt_exception_conversion2">does not exist.</string>
+    <string name="bt_exception_uuid">Characteristic with UUID "</string>
+    <string name="bt_exception_uuid2">not found.</string>
+    <string name="bt_exception_adapter">Could not find a bluetooth adapter. Bluetooth is not supported on this hardware platform.</string>
+    <string name="bt_exception_disabled">Bluetooth is disabled. Please enable bluetooth and try again.</string>
+    <string name="bt_exception_connection">Bluetooth connection could not be opened.</string>
+    <string name="bt_exception_notfound">Bluetooth device not found.</string>
+    <string name="bt_exception_services">Services could not be discovered.</string>
+    <string name="bt_exception_device">On device with</string>
+    <string name="bt_exception_device_address">address</string>
+    <string name="bt_exception_device_name">name</string>
+    <string name="bt_exception_rate">Invalid value for "rate".</string>
+    <string name="bt_exception_notification">The characteristic notification for the Characteristic with the UUID</string>
+    <string name="bt_exception_notification_enable">could not be enabled.</string>
+    <string name="bt_exception_notification_disable">could not be disabled again.</string>
+    <string name="bt_exception_notification_fail_enable">Turning on notifications for the Characteristic with the UUID</string>
+    <string name="bt_exception_notification_fail_disable">Turning off notifications for the Characteristic with the UUID</string>
+    <string name="bt_exception_notification_fail">was not successful.</string>
+    <string name="bt_exception_mode">Unknown mode for bluetooth input.</string>
+    <string name="bt_exception_conversion3">An error occurred on the conversion function</string>
+
+    <string name="bt_error_writing">Error on writing characteristic with UUID</string>
+    <string name="bt_error_reading">Error on reading characteristic with UUID</string>
+    <string name="bt_error_discovering">Error on discovering the Services of the bluetooth device.</string>
+    <string name="bt_fail_writing">The writing operation was not successful.</string>
+    <string name="bt_fail_discovering">Discovering the characteristics was not successful.</string>
+
 </resources>

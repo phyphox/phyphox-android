@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -397,7 +398,7 @@ public class phyphoxExperiment implements Serializable {
         //We will not start audio output here as it will be triggered by the analysis modules.
     }
 
-    public void init(SensorManager sensorManager, LocationManager locationManager) throws Exception {
+    public void init(SensorManager sensorManager, LocationManager locationManager, final Context c) throws Exception {
         //Update all the views
         for (int i = 0; i < experimentViews.size(); i++) {
             updateViews(i, true);
@@ -424,23 +425,12 @@ public class phyphoxExperiment implements Serializable {
             gpsIn.attachLocationManager(locationManager);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            //Reconnect bluetooth inputs
-            for (BluetoothInput bti : bluetoothInputs) {
-                try {
-                    bti.reconnect();
-                } catch (Bluetooth.BluetoothException e) {
-                    throw new Exception("Could not initialize bluetooth input. (" + e.getMessage() + ")");
-                }
-            }
-
-
-            //Reconnect bluetooth outputs
-            for (BluetoothOutput bto : bluetoothOutputs) {
-                try {
-                    bto.reconnect();
-                } catch (Bluetooth.BluetoothException e) {
-                    throw new Exception("Could not initialize bluetooth output. (" + e.getMessage() + ")");
-                }
+            //Connect bluetooth inputs if there are any
+            if (!(bluetoothInputs.isEmpty() && bluetoothOutputs.isEmpty())) {
+                Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
+                btTask.context = c;
+                btTask.progress = ProgressDialog.show(c, c.getResources().getString(R.string.loadingTitle), c.getResources().getString(R.string.loadingBluetoothConnectionText), true);
+                btTask.execute(bluetoothInputs, bluetoothOutputs);
             }
         }
     }
