@@ -61,8 +61,10 @@ public class BluetoothInput extends Bluetooth {
             try {
                 connect();
             } catch (BluetoothException e) {
-                handleException.setMessage(e.getMessage());
-                mainHandler.post(handleException);
+                if (handleException != null) {
+                    handleException.setMessage(e.getMessage());
+                    mainHandler.post(handleException);
+                }
             }
         }
         outputs = new HashMap<>();
@@ -89,15 +91,19 @@ public class BluetoothInput extends Bluetooth {
                     try {
                         setCharacteristicNotification(c, true);
                     } catch (BluetoothException e) {
-                        handleException.setMessage(e.getMessage());
-                        mainHandler.post(handleException);
+                        if (handleException != null) {
+                            handleException.setMessage(e.getMessage());
+                            mainHandler.post(handleException);
+                        }
                     }
                 }
                 break;
             }
             default: {
-                handleException.setMessage(context.getResources().getString(R.string.bt_exception_mode)+" "+getDeviceData());
-                mainHandler.post(handleException);
+                if (handleException != null) {
+                    handleException.setMessage(context.getResources().getString(R.string.bt_exception_mode) + " " + getDeviceData());
+                    mainHandler.post(handleException);
+                }
             }
 
         }

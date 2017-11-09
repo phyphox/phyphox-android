@@ -35,8 +35,10 @@ public class BluetoothOutput extends Bluetooth {
             try {
                 connect();
             } catch (BluetoothException e) {
-                handleException.setMessage(e.getMessage());
-                mainHandler.post(handleException);
+                if (handleException != null) {
+                    handleException.setMessage(e.getMessage());
+                    mainHandler.post(handleException);
+                }
             }
         }
         for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {

@@ -169,12 +169,14 @@ public class Bluetooth implements Serializable {
         }
         BluetoothCommand btC = commandQueue.poll();
         boolean result = btC.execute();
-            if (!result) {
-                synchronized (isExecuting) {
-                    isExecuting = false;
-                }
-            handleException.setMessage(btC.getErrorMessage()+" "+getDeviceData());
-            mainHandler.post(handleException);
+        if (!result) {
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            if (handleException != null) {
+                handleException.setMessage(btC.getErrorMessage() + " " + getDeviceData());
+                mainHandler.post(handleException);
+            }
         }
         return;
     }
@@ -290,6 +292,14 @@ public class Bluetooth implements Serializable {
         for (CharacteristicData cd : characteristics) {
             this.addCharacteristic(cd);
         }
+    }
+
+    public boolean isConnected() {
+        if (btAdapter == null)
+            return false;
+        if (!btAdapter.isEnabled())
+            return false;
+        return ((BluetoothManager)context.getSystemService(context.BLUETOOTH_SERVICE)).getConnectedDevices(BluetoothProfile.GATT).contains(btDevice);
     }
 
     // returns the device data as a String to append it to Error-Messages
@@ -420,7 +430,7 @@ public class Bluetooth implements Serializable {
     }
 
     public void closeConnection() {
-        if (btGatt != null) {
+        if (isConnected()) {
             btGatt.close();
         }
         clear();
@@ -541,7 +551,9 @@ public class Bluetooth implements Serializable {
             try {
                 for (Vector<? extends Bluetooth> v : params) {
                     for (Bluetooth b : v) {
-                        b.connect();
+                        if (!b.isConnected()) {
+                            b.connect();
+                        }
                     }
                 }
             } catch (Bluetooth.BluetoothException e) {
