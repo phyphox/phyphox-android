@@ -315,10 +315,6 @@ public class Bluetooth implements Serializable {
         return result;
     }
 
-    public List<BluetoothGattService> getServices() {
-        return btGatt.getServices();
-    }
-
     // Searches the device for the characteristic with the specified uuid
     protected BluetoothGattCharacteristic findCharacteristic (UUID uuid) throws BluetoothException {
         List<BluetoothGattService> services = btGatt.getServices();

@@ -12,28 +12,7 @@
     <string name="newExperimentInputRate">Sensor rate (in Hz, 0 = as fast as possible)</string>
     <string name="newExperimentInputSensors">Active sensors</string>
 
-    <string name="bluetoothExperiment">Add bluetooth experiment</string>
-    <string name="enableBluetooth">Bluetooth is disabled on this device. Enable bluetooth to create a new bluetooth-Experiment.</string>
-    <string name="activateBluetoothButton">Go to Bluetooth settings.</string>
-    <string name="selectDevice">Select the device for your experiment from the list of paired devices.</string>
-    <string name="mode">mode</string>
-    <string-array name="mode">
-        <item name="poll">@string/poll</item>
-        <item name="notification">@string/notification</item>
-    </string-array>
-    <string name="poll">poll</string>
-    <string name="notification">notification</string>
-    <string name="viewOptionsInfo">The measured values can either be displayed against the time or just as a sequence.</string>
-    <string-array name="viewOptions">
-        <item name="time">@string/time</item>
-        <item name="sequence">@string/sequence</item>
-    </string-array>
-    <string name="time">against the time</string>
-    <string name="sequence">as a sequence</string>
-    <string name="characteristics">Characteristics (sorted by services)</string>
-
     <string name="generalErrorDialog">An error has occurred.</string>
-    <string name="bluetoothConnectionErrorDialog">Error while trying to connect to the GATT Server hosted by the selected device: </string>
 
     <string name="help">Help and info</string>
     <string name="experimentsPhyphoxOrg">Experiment ideas and instructions</string>
