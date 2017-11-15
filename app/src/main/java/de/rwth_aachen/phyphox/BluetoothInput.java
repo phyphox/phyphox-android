@@ -32,10 +32,10 @@ public class BluetoothInput extends Bluetooth {
     protected HashMap<Integer, Double> outputs;
 
 
-    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics)
+    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics, Vector<ConfigData> configs)
             throws BluetoothException {
 
-        super(deviceName, deviceAddress, context, characteristics);
+        super(deviceName, deviceAddress, context, characteristics, configs);
 
         this.mode = mode.toLowerCase();
 

@@ -321,17 +321,19 @@ public abstract class phyphoxFile {
         Vector<dataOutput> outputList;
         Vector<dataInput> inputList;
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
+        Vector<Bluetooth.ConfigData> configs;
 
-        bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
+        bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics, Vector<Bluetooth.ConfigData> configs) {
             super(xpp, experiment, parent);
             this.outputList = outputList;
             this.inputList = inputList;
             this.characteristics = characteristics;
+            this.configs = configs;
         }
 
         @Override
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
-            // get the attributes
+            // get and check "char" attribute
             String charUuid = getStringAttribute("char");
             if (charUuid == null) {
                 throw new phyphoxFileException("Output needs a char attribute.", xpp.getLineNumber());
@@ -342,81 +344,40 @@ public abstract class phyphoxFile {
             } catch (IllegalArgumentException e) {
                 throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
             }
-            UUID config_uuid = null;
-            byte[] config_values = null;
-            String configUuid = getStringAttribute("config");
-            if (configUuid != null) {
-                try {
-                    config_uuid = UUID.fromString(configUuid);
-                } catch (IllegalArgumentException e) {
-                    throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
-                }
-                String configValues = getStringAttribute("config_data");
-                if (configValues == null) {
-                    throw new phyphoxFileException("config Attribute needs a config_data Attribute.", xpp.getLineNumber());
-                }
-                try {
-                    String[]tmp = configValues.split(",");
-                    config_values = new byte[tmp.length];
-                    for (int i = 0; i < tmp.length; i++) {
-                        config_values[i] = Byte.parseByte(tmp[i].trim());
-                    }
-                } catch (NumberFormatException e) {
-                    throw new phyphoxFileException("config_value is not valid.", xpp.getLineNumber());
-                }
-            }
-            UUID period_uuid = null;
-            byte[] period_values = null;
-            String periodUuid = getStringAttribute("period");
-            if (periodUuid != null) {
-                try {
-                    period_uuid = UUID.fromString(periodUuid);
-                } catch (IllegalArgumentException e) {
-                    throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
-                }
-                String periodValues = getStringAttribute("period_data");
-                if (periodValues == null) {
-                    throw new phyphoxFileException("period Attribute needs a period_data Attribute.", xpp.getLineNumber());
-                }
-                try {
-                    String[]tmp = periodValues.split(",");
-                    period_values = new byte[tmp.length];
-                    for (int i = 0; i < tmp.length; i++) {
-                        period_values[i] = Byte.parseByte(tmp[i].trim());
-                    }
-                } catch (NumberFormatException e) {
-                    throw new phyphoxFileException("period_value is not valid.", xpp.getLineNumber());
-                }
-            }
 
-            boolean extraTime = false;
-            String extra = getStringAttribute("extra");
-            if (extra != null) {
-                if (extra.equals("time")) {
-                    extraTime = true;
-                } else {
-                    throw new phyphoxFileException("unknown value for extra Attribute.", xpp.getLineNumber());
-                }
-            }
+            // get "conversion" attribute
             String conversionFunction = getStringAttribute("conversion");
-
-            boolean clearBeforeWrite = getBooleanAttribute("clear", true);
-
-            String bufferName = getText();
-
-            dataBuffer buffer = experiment.getBuffer(bufferName);
-
-            if (buffer == null) {
-                throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-            }
 
             int index;
             switch (tag.toLowerCase()) {
                 case "input": {
+                    // check if "input" is allowed here
                     if (inputList == null) {
                         throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
                     }
 
+                    // get and check "extra" attribute
+                    boolean extraTime = false;
+                    String extra = getStringAttribute("extra");
+                    if (extra != null) {
+                        if (extra.equals("time")) {
+                            extraTime = true;
+                        } else {
+                            throw new phyphoxFileException("unknown value for extra Attribute.", xpp.getLineNumber());
+                        }
+                    }
+
+                    // get "clear" attribute
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+
+                    // check if buffer exists
+                    String bufferName = getText();
+                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    if (buffer == null) {
+                        throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                    }
+
+                    // find index
                     for (index = 0; index < inputList.size(); index++) {
                         if (inputList.get(index) == null) {
                             break;
@@ -426,13 +387,45 @@ public abstract class phyphoxFile {
                         inputList.setSize(index+1);
                     }
                     inputList.set(index, new dataInput(buffer, clearBeforeWrite));
+
+                    // add data to characteristics
+                    try {
+                        characteristics.add(new Bluetooth.CharacteristicData(uuid, extraTime, index, conversionFunction, parent));
+                    } catch (Bluetooth.BluetoothException e) {
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
+                    }
+
                     break;
                 }
+
                 case "output": {
+                    // check if "output" is allowed here
                     if (outputList == null) {
                         throw new phyphoxFileException("No input expected.", xpp.getLineNumber());
                     }
 
+                    // get and check "extra" attribute
+                    boolean extraTime = false;
+                    String extra = this.getStringAttribute("extra");
+                    if (extra != null) {
+                        if (extra.equals("time")) {
+                            extraTime = true;
+                        } else {
+                            throw new phyphoxFileException("unknown value for extra Attribute.", xpp.getLineNumber());
+                        }
+                    }
+
+                    // get "clear" attribute
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+
+                    // check if buffer exists
+                    String bufferName = getText();
+                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    if (buffer == null) {
+                        throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                    }
+
+                    // find index
                     for (index = 0; index < outputList.size(); index++) {
                         if (outputList.get(index) == null) {
                             break;
@@ -442,17 +435,29 @@ public abstract class phyphoxFile {
                         outputList.setSize(index+1);
                     }
                     outputList.set(index, new dataOutput(buffer, clearBeforeWrite));
+
+                    // add data to characteristics
+                    try {
+                        characteristics.add(new Bluetooth.CharacteristicData(uuid, extraTime, index, conversionFunction, parent));
+                    } catch (Bluetooth.BluetoothException e) {
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
+                    }
                     break;
                 }
 
+                case "config": {
+                    try {
+                        // add data to configs
+                        String text = getText();
+                        configs.add(new Bluetooth.ConfigData(uuid, text, conversionFunction, parent));
+                    } catch (Bluetooth.BluetoothException e) {
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
+                    }
+                    break;
+                }
                 default: {
                     throw new phyphoxFileException("Unknown tag \""+tag+"\"", xpp.getLineNumber());
                 }
-            }
-            try {
-                characteristics.add(new Bluetooth.CharacteristicData(uuid, config_uuid, config_values, period_uuid, period_values, extraTime, index, conversionFunction, parent));
-            } catch (Bluetooth.BluetoothException e) {
-                throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
             }
         }
 
@@ -1294,9 +1299,10 @@ public abstract class phyphoxFile {
 
                             Vector<dataOutput> outputs = new Vector<>();
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
-                            (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
+                            Vector<Bluetooth.ConfigData> configs = new Vector<>();
+                            (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics, configs)).process();
                             try {
-                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent, characteristics);
+                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent, characteristics, configs);
                                 experiment.bluetoothInputs.add(b);
                             } catch (Bluetooth.BluetoothException e) {
                                 throw new phyphoxFileException(e.getMessage());
@@ -1971,8 +1977,9 @@ public abstract class phyphoxFile {
 
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
-                        (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
-                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent.getApplicationContext(), inputs, characteristics);
+                        Vector<Bluetooth.ConfigData> configs = new Vector<>();
+                        (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics, configs)).process();
+                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent.getApplicationContext(), inputs, characteristics, configs);
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;

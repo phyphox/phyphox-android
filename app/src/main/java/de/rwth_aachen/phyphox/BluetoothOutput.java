@@ -15,9 +15,9 @@ import java.util.Vector;
 public class BluetoothOutput extends Bluetooth {
     public Vector<dataInput> data = new Vector<>(); //Data-buffers
 
-    protected BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    protected BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics, Vector<ConfigData> configs) {
 
-        super(deviceName, deviceAddress, context, characteristics);
+        super(deviceName, deviceAddress, context, characteristics, configs);
 
         this.data = buffers;
 

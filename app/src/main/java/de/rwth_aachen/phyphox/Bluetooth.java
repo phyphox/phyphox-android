@@ -21,6 +21,7 @@ import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -67,6 +68,9 @@ public class Bluetooth implements Serializable {
 
     // holds data to all characteristics to add them when the device is connected
     Vector<CharacteristicData> characteristics;
+
+    // holds all the data to the characteristic that have to be configured
+    Vector<ConfigData> configs;
 
     // each BluetoothGattCharacteristic that should be read maps with an array list of Characteristics
     protected HashMap<BluetoothGattCharacteristic, ArrayList<Characteristic>> mapping = new HashMap<>();
@@ -200,20 +204,12 @@ public class Bluetooth implements Serializable {
     // holds all data of a characteristic from a phyphox file
     public static class CharacteristicData {
         public UUID uuid;
-        public UUID config_uuid = null; // characteristic whose value has to be changed
-        public byte[] config_values; // value that has to be written to the characteristic with the uuid config_uuid
-        public UUID period_uuid = null; // characteristic whose value has to be changed
-        public byte[] period_values; // value that will be written to the characteristic with the uuid period_uuid to set the sensor measurement period
         public boolean extraTime; // true if the input has extra="time"
         public int index; // index of the buffer
-        public Method conversionFunction = null;
+        public Method conversionFunction = null; //TODO default
 
-        public CharacteristicData (UUID uuid, UUID config_uuid, byte[] config_values, UUID period_uuid, byte[] period_values, boolean extraTime, int index, String conversionFunctionName, Context context) throws BluetoothException {
+        public CharacteristicData (UUID uuid, boolean extraTime, int index, String conversionFunctionName, Context context) throws BluetoothException {
             this.uuid = uuid;
-            this.config_uuid = config_uuid;
-            this.config_values = config_values;
-            this.period_uuid = period_uuid;
-            this.period_values = period_values;
             this.extraTime = extraTime;
             this.index = index;
             if (conversionFunctionName != null) {
@@ -226,6 +222,30 @@ public class Bluetooth implements Serializable {
                 } catch (NoSuchMethodException e) {
                     throw new BluetoothException(context.getResources().getString(R.string.bt_exception_conversion) + " \"" + conversionFunctionName + " \"" + context.getResources().getString(R.string.bt_exception_conversion2));
                 }
+            }
+        }
+    }
+
+    public static class ConfigData {
+        public UUID uuid;
+        public byte[] value; // value that should be written to the characteristic
+
+        public ConfigData(UUID uuid, String data, String conversionName, Context context) throws BluetoothException {
+            this.uuid = uuid;
+            try {
+                if (conversionName != null) {
+                    this.value = (byte[]) conversions.getDeclaredMethod(conversionName, new Class[]{byte[].class}).invoke(null, data);
+                } else {
+                    this.value = new byte[]{Byte.parseByte(data)}; //TODO default
+                }
+            } catch (IllegalAccessException e) {
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_conversion)+" \"" + conversionName + " \"" + context.getResources().getString(R.string.bt_exception_conversion2));
+            } catch (InvocationTargetException e) {
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_conversion3)+" \"" + conversionName + "\". ");
+            } catch (NoSuchMethodException e) {
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_conversion)+" \"" + conversionName + " \"" + context.getResources().getString(R.string.bt_exception_conversion2));
+            } catch (Exception e) { // catch any exception that occurs in the conversion function
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_conversion3)+" \"" + conversionName + "\". ");
             }
         }
     }
@@ -270,7 +290,7 @@ public class Bluetooth implements Serializable {
 
 
 
-    public Bluetooth(String deviceName, String deviceAddress, Context context, Vector<CharacteristicData> characteristics) {
+    public Bluetooth(String deviceName, String deviceAddress, Context context, Vector<CharacteristicData> characteristics, Vector<ConfigData> configs) {
         this.deviceName = deviceName;
         this.deviceAddress = deviceAddress;
 
@@ -278,7 +298,7 @@ public class Bluetooth implements Serializable {
         this.mainHandler = new Handler(context.getMainLooper());
 
         this.characteristics = characteristics;
-
+        this.configs = configs;
     }
 
     public void connect () throws BluetoothException {
@@ -288,7 +308,11 @@ public class Bluetooth implements Serializable {
         if (btGatt == null || !((BluetoothManager)context.getSystemService(context.BLUETOOTH_SERVICE)).getConnectedDevices(BluetoothProfile.GATT).contains(btDevice)) {
             openConnection();
         }
-        // add characteristics when the connection is established
+        // configure all the characteristics
+        for (ConfigData cd : configs) {
+            this.configureCharacteristic(cd);
+        }
+        // add characteristics
         for (CharacteristicData cd : characteristics) {
             this.addCharacteristic(cd);
         }
@@ -329,6 +353,13 @@ public class Bluetooth implements Serializable {
         throw new BluetoothException(context.getResources().getString(R.string.bt_exception_uuid)+" "+uuid.toString()+" "+context.getResources().getString(R.string.bt_exception_uuid2)+" "+getDeviceData());
     }
 
+    // configures a characteristic by writing a value to it
+    protected void configureCharacteristic (ConfigData data) throws BluetoothException {
+        BluetoothGattCharacteristic c = findCharacteristic(data.uuid);
+        c.setValue(data.value);
+        add(new WriteCommand(btGatt, c));
+    }
+
     // adds a Characteristic to the list
     protected void addCharacteristic (CharacteristicData characteristic) throws BluetoothException {
         BluetoothGattCharacteristic c = findCharacteristic(characteristic.uuid);
@@ -336,24 +367,6 @@ public class Bluetooth implements Serializable {
             saveTime.put(c, characteristic.index);
         } else {
             if (!mapping.containsKey(c)) {
-                // Configure Characteristic if necessary
-                if (characteristic.config_uuid != null) {
-                    BluetoothGattCharacteristic config_c = findCharacteristic(characteristic.config_uuid);
-                    if (config_c == null) {
-                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_uuid)+" "+characteristic.config_uuid.toString()+" "+context.getResources().getString(R.string.bt_exception_uuid2)+" "+getDeviceData());
-                    }
-                    config_c.setValue(characteristic.config_values);
-                    add(new WriteCommand(btGatt, config_c));
-                }
-                // Set the period to the specified value
-                if (characteristic.period_uuid != null) {
-                    BluetoothGattCharacteristic period_c = findCharacteristic(characteristic.period_uuid);
-                    if (period_c == null) {
-                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_uuid)+" "+characteristic.period_uuid.toString()+" "+context.getResources().getString(R.string.bt_exception_uuid2)+" "+getDeviceData());
-                    }
-                    period_c.setValue(characteristic.period_values);
-                    add(new WriteCommand(btGatt, period_c));
-                }
                 // add Characteristic to the list for its BluetoothGattCharacteristic
                 mapping.put(c, new ArrayList<Characteristic>());
             }
