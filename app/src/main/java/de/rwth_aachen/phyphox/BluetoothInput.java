@@ -32,10 +32,10 @@ public class BluetoothInput extends Bluetooth {
     protected HashMap<Integer, Double> outputs;
 
 
-    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics, Vector<ConfigData> configs)
+    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics)
             throws BluetoothException {
 
-        super(deviceName, deviceAddress, context, characteristics, configs);
+        super(deviceName, deviceAddress, context, characteristics);
 
         this.mode = mode.toLowerCase();
 
@@ -258,19 +258,15 @@ public class BluetoothInput extends Bluetooth {
     // converts a byte array to a double value with the specified conversion function.
     // the method also handles exceptions by running handleException
     private double convertData(byte[] data, Method conversionFunction) {
-        if (conversionFunction == null) {
-            return data[0]; // take the value as it is if no conversion function was specified
-        } else {
-            try {
-                return (double) conversionFunction.invoke(null, data);
-            } catch (Exception e) {
-                if (handleException != null) {
-                    handleException.setMessage(context.getResources().getString(R.string.bt_exception_conversion3)+" \"" + conversionFunction + "\". " + getDeviceData());
-                    mainHandler.post(handleException);
-                }
+        try {
+            return (double) conversionFunction.invoke(null, data);
+        } catch (Exception e) {
+            if (handleException != null) {
+                handleException.setMessage(context.getResources().getString(R.string.bt_exception_conversion3)+" \"" + conversionFunction + "\". " + getDeviceData());
+                mainHandler.post(handleException);
             }
         }
-        return 0; // the method needs to return a double value
+        return Double.NaN; // the method needs to return a double value
     }
 
 }

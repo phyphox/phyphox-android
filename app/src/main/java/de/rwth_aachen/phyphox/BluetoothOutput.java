@@ -6,6 +6,7 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -15,9 +16,9 @@ import java.util.Vector;
 public class BluetoothOutput extends Bluetooth {
     public Vector<dataInput> data = new Vector<>(); //Data-buffers
 
-    protected BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics, Vector<ConfigData> configs) {
+    protected BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
-        super(deviceName, deviceAddress, context, characteristics, configs);
+        super(deviceName, deviceAddress, context, characteristics);
 
         this.data = buffers;
 
@@ -27,6 +28,18 @@ public class BluetoothOutput extends Bluetooth {
     public void stop () {
         super.stop();
         clear();
+    }
+
+    private byte[] convertData (double value, Method conversionFunction) {
+        try {
+            return (byte[]) conversionFunction.invoke(null, value);
+        } catch (Exception e) {
+            if (handleException != null) {
+                handleException.setMessage(context.getResources().getString(R.string.bt_exception_conversion3)+" \"" + conversionFunction + "\". " + getDeviceData());
+                mainHandler.post(handleException);
+            }
+        }
+        return new byte[0]; // the method needs to return a byte array
     }
 
     //This is called when new data should be written to the device
@@ -44,7 +57,8 @@ public class BluetoothOutput extends Bluetooth {
         for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
             for (Characteristic c : mapping.get(characteristic)) {
                 if (data.get(c.index).getFilledSize() != 0) {
-                    characteristic.setValue(data.get(c.index).getByteArray());
+                    byte[] value = convertData(data.get(c.index).getValue(), c.conversionFunction);
+                    characteristic.setValue(value);
                     add(new WriteCommand(btGatt, characteristic));
                 }
             }
