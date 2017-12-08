@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Einstellungen</string>
@@ -73,7 +73,7 @@
     <string name="sensorMagneticField">Magnetfeld</string>
     <string name="sensorNotAvailableWarningText1">Der Sensor</string>
     <string name="sensorNotAvailableWarningText2">ist nicht verfügbar. Normalerweise bedeutet dies, dass Ihr Gerät über keinen solchen Sensor verfügt.</string>
-    <string name="sensorNotAvailableWarningTitle">Sensor nicht verfügbar.</string>
+    <string name="sensorNotAvailableWarningTitle">Sensor nicht verfügbar</string>
     <string name="sensorNotAvailableWarningMoreInfo">Weitere Infos</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/de/faq-de/#faqMissingSensor</string>
     <string name="sensorPressure">Druck</string>
