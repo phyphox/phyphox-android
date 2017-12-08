@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Settings</string>
@@ -119,7 +120,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="show_description">Experiment info</string>
     <string name="save_locally">Add experiment to collection</string>
-    <string name="save_locally_done">Experiment successfully added to collection</string>
+    <string name="save_locally_done">Experiment successfully added to collection.</string>
     <string name="save_locally_message">This experiment has been opened from a remote source. Do you want to add it to your experiment collection?</string>
     <string name="save_locally_button">Save to collection</string>
     <string name="save_state">Save experiment state</string>
