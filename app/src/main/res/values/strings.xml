@@ -65,7 +65,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="location">Location</string>
 
-    <string name="sensorNotAvailableWarningTitle">Sensor not available</string>
+    <string name="sensorNotAvailableWarningTitle">Sensor not available.</string>
     <string name="sensorNotAvailableWarningText1">The sensor</string>
     <string name="sensorNotAvailableWarningText2">is not available. Usually this means, that your device simply does not have this type of sensor.</string>
     <string name="sensorNotAvailableWarningMoreInfo">More info</string>
