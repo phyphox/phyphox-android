@@ -18,6 +18,11 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Remote control help</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Languages</string>
+    <string name="translationText">Phyphox will use the first language available from your preferred languages list. To change your preferences, go to your Android \"settings\" below. To learn which languages are available and how you can help, select \"visit website\".</string>
+    <string name="translationToSettings">Settings</string>
+    <string name="translationToWebsite">Visit website</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/faq/#faqTranslation</string>
 
     <string name="warning">Warning</string>
     <string name="donotshowagain">Do not show again</string>
@@ -145,4 +150,5 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="categoryRawSensor">Raw Sensors</string>
 
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
+
 </resources>

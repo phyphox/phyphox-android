@@ -4,4 +4,5 @@
     <item android:id="@+id/action_helpExperiments" android:title="@string/experimentsPhyphoxOrg" android:orderInCategory="2" />
     <item android:id="@+id/action_helpFAQ" android:title="@string/faqPhyphoxOrg" android:orderInCategory="3" />
     <item android:id="@+id/action_helpRemote" android:title="@string/remotePhyphoxOrg" android:orderInCategory="4" />
+    <item android:id="@+id/action_translationInfo" android:title="@string/translationInfo" android:orderInCategory="5" />
 </menu>
