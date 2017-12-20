@@ -110,6 +110,6 @@
     <string name="translationText">Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen benutzen. Um deine bevorzugten Sprachen zu ändern, gehen unten in die Android \"Einstellungen\". Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".</string>
     <string name="translationToSettings">Einstellungen</string>
     <string name="translationToWebsite">Zur Webseite</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/de/faq-de/#faqTranslation</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#de</string>
 
     </resources>
