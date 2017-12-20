@@ -610,6 +610,7 @@ public class ExperimentList extends AppCompatActivity {
             //This part is used to check sensor availability before launching the experiment
             SensorManager sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
             boolean inInput = false;
+            boolean inOutput = false;
             Integer unavailableSensor = -1;
 
             boolean perfectTranslationFound = false; //Becomes true if the global locale or a translation locale matches the system locale - if true, no other translations will be read.
@@ -683,6 +684,10 @@ public class ExperimentList extends AppCompatActivity {
                                 if (xpp.getDepth() == phyphoxDepth+1)
                                     inInput = true;
                                 break;
+                            case "output":
+                                if (xpp.getDepth() == phyphoxDepth+1)
+                                    inOutput = true;
+                                break;
                             case "sensor":
                                 if (!inInput || unavailableSensor >= 0)
                                     break;
@@ -704,6 +709,16 @@ public class ExperimentList extends AppCompatActivity {
                                     break;
                                 if (!gpsInput.isAvailable(this)) {
                                     unavailableSensor = R.string.location;
+                                }
+                                break;
+                            case "bluetooth":
+                                if ((!inInput && !inOutput) || unavailableSensor >= 0) {
+                                    break;
+                                }
+                                if (!Bluetooth.isSupported(this)) {
+                                    unavailableSensor = R.string.bluetooth;
+                                } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                                    unavailableSensor = R.string.bluetooth; // TODO ?
                                 }
                                 break;
                         }
@@ -728,6 +743,10 @@ public class ExperimentList extends AppCompatActivity {
                             case "input":
                                 if (xpp.getDepth() == phyphoxDepth+1)
                                     inInput = false;
+                                break;
+                            case "output":
+                                if (xpp.getDepth() == phyphoxDepth+1)
+                                    inOutput = false;
                                 break;
                         }
                         break;

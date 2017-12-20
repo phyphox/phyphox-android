@@ -30,6 +30,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Locale;
@@ -318,15 +320,20 @@ public abstract class phyphoxFile {
     // Blockparser for input or output assignments inside a bluetooth-block
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private static class bluetoothIoBlockParser extends xmlBlockParser {
+        protected static Class conversionsInput = (new ConversionsInput()).getClass();
+        protected static Class conversionsOutput = (new ConversionsOutput()).getClass();
+        protected static Class conversionsConfig = (new ConversionsConfig()).getClass();
         Vector<dataOutput> outputList;
         Vector<dataInput> inputList;
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
+        protected boolean hasExtraTime; // true if there is an extra=time attribute in the
 
         bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
             super(xpp, experiment, parent);
             this.outputList = outputList;
             this.inputList = inputList;
             this.characteristics = characteristics;
+            this.hasExtraTime = false;
         }
 
         @Override
@@ -344,7 +351,8 @@ public abstract class phyphoxFile {
             }
 
             // get "conversion" attribute
-            String conversionFunction = getStringAttribute("conversion");
+            String conversionFunctionName = getStringAttribute("conversion");
+            Method conversionFunction = null;
 
             int index;
             switch (tag.toLowerCase()) {
@@ -354,9 +362,17 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
                     }
 
-                    // check if conversion attribute exists
-                    if (conversionFunction == null) {
+                    // check conversion attribute
+                    if (conversionFunctionName == null) {
                         throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                    }
+                    try {
+                        conversionFunction = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
+                        if (!Modifier.isPublic(conversionFunction.getModifiers())) {
+                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        }
+                    } catch (NoSuchMethodException e) {
+                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
                     }
 
                     // get "clear" attribute
@@ -381,11 +397,7 @@ public abstract class phyphoxFile {
                     inputList.set(index, new dataInput(buffer, clearBeforeWrite));
 
                     // add data to characteristics
-                    try {
-                        characteristics.add(new Bluetooth.OutputData(uuid, index, conversionFunction, parent));
-                    } catch (Bluetooth.BluetoothException e) {
-                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
-                    }
+                    characteristics.add(new Bluetooth.OutputData(uuid, index, conversionFunction));
 
                     break;
                 }
@@ -401,15 +413,29 @@ public abstract class phyphoxFile {
                     String extra = this.getStringAttribute("extra");
                     if (extra != null) {
                         if (extra.equals("time")) {
+                            if (hasExtraTime) {
+                                throw new phyphoxFileException("extra=time attribute can be used only once inside a bluetooth tag.", xpp.getLineNumber());
+                            }
                             extraTime = true;
+                            hasExtraTime = true;
                         } else {
-                            throw new phyphoxFileException("unknown value for extra Attribute.", xpp.getLineNumber());
+                            throw new phyphoxFileException("unknown value for extra attribute.", xpp.getLineNumber());
                         }
                     }
 
-                    // check if conversion attribute exists
-                    if (!extraTime && conversionFunction == null) {
-                        throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                    // check conversion attribute
+                    if (!extraTime) {
+                       if (conversionFunctionName == null) {
+                           throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                       }
+                        try {
+                            conversionFunction = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
+                            if (!Modifier.isPublic(conversionFunction.getModifiers())) {
+                                throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                            }
+                        } catch (NoSuchMethodException e) {
+                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        }
                     }
 
                     // get "clear" attribute
@@ -434,18 +460,22 @@ public abstract class phyphoxFile {
                     outputList.set(index, new dataOutput(buffer, clearBeforeWrite));
 
                     // add data to characteristics
-                    try {
-                        characteristics.add(new Bluetooth.InputData(uuid, extraTime, index, conversionFunction, parent));
-                    } catch (Bluetooth.BluetoothException e) {
-                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
-                    }
+                    characteristics.add(new Bluetooth.InputData(uuid, extraTime, index, conversionFunction));
                     break;
                 }
 
                 case "config": {
                     // check if conversion attribute exists
-                    if (conversionFunction == null) {
+                    if (conversionFunctionName == null) {
                         throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                    }
+                    try {
+                        conversionFunction = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
+                        if (!Modifier.isPublic(conversionFunction.getModifiers())) {
+                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        }
+                    } catch (NoSuchMethodException e) {
+                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
                     }
                     try {
                         // add data to configs
@@ -453,8 +483,8 @@ public abstract class phyphoxFile {
                         characteristics.add(new Bluetooth.ConfigData(uuid, text, conversionFunction, parent));
                     } catch (NumberFormatException e) {
                         throw new phyphoxFileException("Configuration data has to be a valid double value.", xpp.getLineNumber());
-                    } catch (Bluetooth.BluetoothException e) {
-                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); //thrown when the conversion function is not valid
+                    } catch (phyphoxFileException e) {
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again but with LineNumber
                     }
                     break;
                 }
@@ -1274,8 +1304,8 @@ public abstract class phyphoxFile {
                     break;
                 }
                 case "bluetooth": { //A serial bluetooth input
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                            throw new phyphoxFileException("The Android Version does not support Bluetooth LE.");
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                            throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                         } else {
                             double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
 
@@ -1306,8 +1336,8 @@ public abstract class phyphoxFile {
                             try {
                                 BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent, characteristics);
                                 experiment.bluetoothInputs.add(b);
-                            } catch (Bluetooth.BluetoothException e) {
-                                throw new phyphoxFileException(e.getMessage());
+                            } catch (phyphoxFileException e) {
+                                throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
                             }
                         }
                         break;
@@ -1971,8 +2001,8 @@ public abstract class phyphoxFile {
                     break;
                 }
                 case "bluetooth": { //A serial bluetooth output
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                        throw new phyphoxFileException("The Android Version does not support Bluetooth LE.");
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                        throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                     } else {
                         String nameFilter = getStringAttribute("name");
                         String addressFilter = getStringAttribute("address");
@@ -1980,7 +2010,7 @@ public abstract class phyphoxFile {
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
-                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent.getApplicationContext(), inputs, characteristics);
+                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent, inputs, characteristics);
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;

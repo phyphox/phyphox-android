@@ -144,8 +144,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     PopupWindow popupWindow = null;
 
-    Bluetooth.OnExceptionRunnable errorReaction; // will be executed if there is an error
-
     @Override
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,36 +186,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             (new phyphoxFile.loadXMLAsyncTask(intent, this)).execute();
         }
 
-        errorReaction = new Bluetooth.OnExceptionRunnable () {
-            private String message = "error";
-
-            @Override
-            public void run () {
-                if (measuring) {
-                    stopMeasurement();
-                    ContextThemeWrapper ctw = new ContextThemeWrapper(Experiment.this, R.style.phyphox);
-                    AlertDialog.Builder errorDialog = new AlertDialog.Builder(ctw);
-                    LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-                    View neLayout = neInflater.inflate(R.layout.error_dialog, null);
-                    errorDialog.setView(neLayout);
-                    TextView tv = (TextView) neLayout.findViewById(R.id.errorText);
-                    tv.setText(message);
-                    errorDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-
-                        }
-                    });
-                    errorDialog.show();
-                }
-            }
-
-            @Override
-            public void setMessage (String message) {
-                this.message = message;
-            }
-
-        };
-
     }
 
     @Override
@@ -239,7 +207,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         stopMeasurement(); //Stop the measurement
         if (experiment != null && experiment.loaded) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
+                //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
                 for (BluetoothInput bti : experiment.bluetoothInputs)
                     bti.closeConnection();
                 for (BluetoothOutput bti : experiment.bluetoothOutputs)
@@ -289,6 +257,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = null;
         }
         if (result.equals("")) { //No error
+            // dismiss progressDialog and alertDialog from connecting to Bluetooth if necessary because of the return to the experiment selection
+            Bluetooth.errorDialog.dismiss();
             //Show that it has been successfull and return to the experiment selection so the user
             //  can see the new addition to his collection
             Toast.makeText(this, R.string.save_locally_done, Toast.LENGTH_LONG).show(); //Present message
@@ -1178,7 +1148,32 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         beforeStart = false;
 
         //Start the sensors
-        experiment.startAllIO(errorReaction);
+        try {
+            experiment.startAllIO();
+        } catch (Bluetooth.BluetoothException e) {
+            stopMeasurement(); // stop experiment
+            // show an error dialog
+            Bluetooth.errorDialog.message = e.getMessage();
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+              @Override
+                public void run() {
+                  Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
+                  btTask.context = Experiment.this;
+                  btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
+                  btTask.onSuccess = new Runnable() {
+                    @Override
+                      public void run() {
+                        startMeasurement(); // start measurement automatically when successfully connected
+                    }
+                  };
+                  btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+              }
+            };
+            Bluetooth.errorDialog.run();
+            return;
+        }
 
         //Set measurement state
         measuring = true;
@@ -1253,11 +1248,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Stop any inputs (Sensors, microphone) or outputs (speaker) that might still be running
         //be careful as stopMeasurement might be called without a valid experiment
         if (experiment != null) {
-            try {
-                experiment.stopAllIO();
-            } catch (Bluetooth.BluetoothException e) {
-                // do nothing for now
-            }
+            experiment.stopAllIO();
         }
 
         //refresh the options menu

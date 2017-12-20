@@ -277,7 +277,7 @@ public class phyphoxExperiment implements Serializable {
             audioTrack.play();
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+        if (measuring && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             //Send the results to the bluetooth outputs (if used)
             for (BluetoothOutput btOut : bluetoothOutputs) {
                 btOut.sendData();
@@ -337,7 +337,7 @@ public class phyphoxExperiment implements Serializable {
     }
 
     //Helper to stop all I/O of this experiment (i.e. when it should be stopped)
-    public void stopAllIO() throws Bluetooth.BluetoothException {
+    public void stopAllIO() {
         if (!loaded)
             return;
         //Recording
@@ -365,7 +365,7 @@ public class phyphoxExperiment implements Serializable {
 
 
     //Helper to start all I/O of this experiment (i.e. when it should be started)
-    public void startAllIO(Bluetooth.OnExceptionRunnable errorReaction) {
+    public void startAllIO() throws Bluetooth.BluetoothException {
 
         if (!loaded)
             return;
@@ -383,11 +383,10 @@ public class phyphoxExperiment implements Serializable {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             for (BluetoothInput bti : bluetoothInputs) {
-                bti.setOnExceptionRunnable(errorReaction);
                 bti.start();
             }
-            for (BluetoothOutput bto : bluetoothOutputs) {
-                bto.setOnExceptionRunnable(errorReaction);
+            for (BluetoothOutput btO : bluetoothOutputs) {
+                btO.start();
             }
         }
 
@@ -425,8 +424,8 @@ public class phyphoxExperiment implements Serializable {
             gpsIn.attachLocationManager(locationManager);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            //Connect bluetooth inputs if there are any
             if (!(bluetoothInputs.isEmpty() && bluetoothOutputs.isEmpty())) {
+                // connect all bluetooth devices with an asyncTask
                 Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
                 btTask.context = c;
                 btTask.progress = ProgressDialog.show(c, c.getResources().getString(R.string.loadingTitle), c.getResources().getString(R.string.loadingBluetoothConnectionText), true);

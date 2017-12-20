@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
@@ -13,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import static java.lang.Math.pow;
@@ -33,14 +36,14 @@ public class BluetoothInput extends Bluetooth {
 
 
     public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics)
-            throws BluetoothException {
+            throws phyphoxFile.phyphoxFileException {
 
         super(deviceName, deviceAddress, context, characteristics);
 
         this.mode = mode.toLowerCase();
 
         if (mode.equals("poll") && rate < 0) {
-            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_rate)+" "+getDeviceData());
+            throw new phyphoxFile.phyphoxFileException(context.getResources().getString(R.string.bt_exception_rate));
         }
 
         this.dataLock = lock;
@@ -53,22 +56,68 @@ public class BluetoothInput extends Bluetooth {
         this.data = buffers;
     }
 
-    //Start the data acquisition
     @Override
-    public void start() {
-        super.start();
-        if (!isAvailable()) {
-            try {
-                connect();
-            } catch (BluetoothException e) {
-                if (handleException != null) {
-                    handleException.setMessage(e.getMessage());
-                    mainHandler.post(handleException);
+    public void connect() throws BluetoothException {
+        super.connect(); // connect device
+
+        // enable descriptor for notification
+        if (mode.equals("notification")) {
+            for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
+                BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
+                if (descriptor == null) {
+                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
+                }
+                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                add(new WriteDescriptorCommand(btGatt, descriptor));
+                cdl = new CancellableLatch(1);
+                boolean result = false;
+                try {
+                    // it should not be possible to continue before the notifications are turned on
+                    // timeout after 3 seconds if the device could not be connected
+                    result = cdl.await(3, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {}
+                if (!result) {
+                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_fail), this);
                 }
             }
         }
+    }
+
+    @Override
+    public void closeConnection () {
+        // disable descriptor for notification
+        if (mode.equals("notification")) {
+            for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
+                BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
+                if (descriptor == null) {
+                    continue;
+                }
+                descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                add(new WriteDescriptorCommand(btGatt, descriptor));
+                cdl = new CancellableLatch(1);
+                boolean result = false;
+                try {
+                    // it should not be possible to continue before the notifications are turned on
+                    // timeout after 2 seconds if the device could not be connected
+                    result = cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait when closing an experiment
+                } catch (InterruptedException e) {
+                }
+                if (!result) {
+                    //TODO
+                }
+            }
+        }
+        super.closeConnection(); // close connection
+    }
+
+
+    //Start the data acquisition
+    @Override
+    public void start() throws BluetoothException {
         outputs = new HashMap<>();
-        this.t0 = 0; //Reset t0. This will be set by the first sensor event
+        if (!isRunning) { // don't reset t0 if the experiment is already running and bluetooth just paused because connection errors
+            this.t0 = 0; //Reset t0. This will be set by the first sensor event
+        }
 
         switch (mode) {
             case "poll": {
@@ -79,7 +128,7 @@ public class BluetoothInput extends Bluetooth {
                       for (BluetoothGattCharacteristic c : mapping.keySet()) {
                           add(new ReadCommand(btGatt, c));
                       }
-                      mainHandler.postDelayed(this, period / 1000000); // poll data again after the period is over
+                      mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
                   }
                 };
                 mainHandler.post(readData);
@@ -88,26 +137,15 @@ public class BluetoothInput extends Bluetooth {
             case "notification": {
                 // turn on characteristic notification for each characteristic
                 for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    try {
-                        setCharacteristicNotification(c, true);
-                    } catch (BluetoothException e) {
-                        if (handleException != null) {
-                            handleException.setMessage(e.getMessage());
-                            mainHandler.post(handleException);
-                        }
+                    boolean result = btGatt.setCharacteristicNotification(c, true);
+                    if (!result) {
+                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
                     }
                 }
                 break;
             }
-            default: {
-                if (handleException != null) {
-                    handleException.setMessage(context.getResources().getString(R.string.bt_exception_mode) + " " + getDeviceData());
-                    mainHandler.post(handleException);
-                }
-            }
-
         }
-
+        super.start();
     }
 
     //Stop the data acquisition
@@ -123,41 +161,13 @@ public class BluetoothInput extends Bluetooth {
             }
             case "notification": {
                 for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    try {
-                        setCharacteristicNotification(c, false);
-                    } catch (BluetoothException e) {
+                    boolean result = btGatt.setCharacteristicNotification(c, false);
+                    if (!result) {
                         //TODO
                     }
                 }
                 break;
             }
-        }
-
-        // reset commandQueue
-        clear();
-
-    }
-
-
-    protected void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enable) throws BluetoothException {
-        if (!isAvailable()) {
-            return; // TODO
-        }
-        btGatt.setCharacteristicNotification(characteristic, enable);
-        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
-        if (descriptor == null) {
-            if (enable) {
-                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification)+" "+characteristic.getUuid().toString()+" "+context.getResources().getString(R.string.bt_exception_notification_enable)+" "+getDeviceData());
-            } else {
-                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification)+" "+characteristic.getUuid().toString()+" "+context.getResources().getString(R.string.bt_exception_notification_disable)+" "+getDeviceData());
-            }
-        }
-        descriptor.setValue(enable ? BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE : BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-        boolean result = btGatt.writeDescriptor(descriptor); //descriptor write operation successfully initiated?
-        if (!result && enable) {
-            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable)+" " + characteristic.getUuid().toString() + " "+context.getResources().getString(R.string.bt_exception_notification_fail)+" "+ getDeviceData());
-        } else if (!result && !enable) {
-            throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_disable)+" "  + characteristic.getUuid().toString() + " "+context.getResources().getString(R.string.bt_exception_notification_fail)+" " + getDeviceData());
         }
     }
 
@@ -171,9 +181,11 @@ public class BluetoothInput extends Bluetooth {
                     retrieveData();
                     return;
                 }
-                // convert data and add it to outputs if it was read successfully
+                // convert data and add it to outputs if it was read successfully, else write NaN
                 if (data != null) {
                     outputs.put(c.index, convertData(data, c.conversionFunction));
+                } else {
+                    outputs.put(c.index, Double.NaN);
                 }
             }
             // call retrieveData if data from every characteristic is received
@@ -261,12 +273,8 @@ public class BluetoothInput extends Bluetooth {
         try {
             return (double) conversionFunction.invoke(null, data);
         } catch (Exception e) {
-            if (handleException != null) {
-                handleException.setMessage(context.getResources().getString(R.string.bt_exception_conversion3)+" \"" + conversionFunction + "\". " + getDeviceData());
-                mainHandler.post(handleException);
-            }
+            return Double.NaN; // return NaN if value could not be converted
         }
-        return Double.NaN; // the method needs to return a double value
     }
 
 }
