@@ -13,7 +13,11 @@
 
     <string name="info">Info</string>
     <string name="credits">Credits</string>
-    <string name="creditsNames">Entwicklung und Konzept:<br/><b>Dr. Sebastian Staacks</b><br/>Konzept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmierung:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">
+            <![CDATA[
+                Entwicklung und Konzept:<br/><b>Dr. Sebastian Staacks</b><br/>Konzept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmierung:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+            ]]>
+    </string>
     <string name="creditsLibs">
         Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliotheken \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) und \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), welche alle der MIT Lizenz unterliegen.
     </string>
