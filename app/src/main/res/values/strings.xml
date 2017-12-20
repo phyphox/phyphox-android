@@ -31,11 +31,7 @@
     <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
-    <string name="creditsNames">
-        <![CDATA[
-            Development and Concept:<br /><b>Dr. Sebastian Kuhlen</b><br />iOS implementation:<br /><b>Jonas Gessner</b><br />Concept:<br /><b>Prof. Christoph Stampfer</b><br />Design:<br /><b>Frank Posthoff (A.NikoPol)</b>
-        ]]>
-    </string>
+    <string name="creditsNames">Development and Concept:<br/><b>Dr. Sebastian Staacks</b><br/>Concept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programming:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="creditsLibs">
         The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.
     </string>
