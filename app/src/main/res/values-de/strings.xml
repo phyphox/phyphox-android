@@ -111,7 +111,7 @@
 
     <string name="bt_exception_uuid">Die Characteristic mit der UUID "</string>
     <string name="bt_exception_uuid2">wurde nicht gefunden.</string>
-    <string name="bt_exception_disabled">Bluetooth ist deaktiviert. Bitte aktivieren Sie Bluetooth und versuchen es noch einmal.</string>
+    <string name="bt_exception_disabled">Bluetooth ist deaktiviert. Bitte aktiviere Bluetooth und versuche es noch einmal.</string>
     <string name="bt_exception_connection">Es konnte keine Bluetooth-Verbindung hergestellt werden.</string>
     <string name="bt_exception_notfound">Das Bluetooth-Gerät konnte nicht gefunden werden.</string>
     <string name="bt_exception_services">Die Services konnten nicht gefunden werden.</string>

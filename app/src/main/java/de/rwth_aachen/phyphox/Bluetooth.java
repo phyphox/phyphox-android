@@ -467,13 +467,7 @@ public class Bluetooth implements Serializable {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                String errorMessage = context.getResources().getString(R.string.bt_fail_reading);
-                if (deviceName != null) {
-                    errorMessage += context.getResources().getString(R.string.bt_exception_device_name) + " " + deviceName;
-                } else {
-                    errorMessage += context.getResources().getString(R.string.bt_exception_device_address) + " " + deviceAddress;
-                }
-                displayErrorMessage(errorMessage + ")");
+                displayErrorMessage(context.getResources().getString(R.string.bt_fail_reading)+BluetoothException.getMessage(Bluetooth.this));
             }
             synchronized (isExecuting) {
                 isExecuting = false;
@@ -492,13 +486,7 @@ public class Bluetooth implements Serializable {
                 cdl.countDown();
             } else {
                 if (isRunning) {
-                    String errorMessage = context.getResources().getString(R.string.bt_fail_writing);
-                    if (deviceName != null) {
-                        errorMessage += context.getResources().getString(R.string.bt_exception_device_name) + " " + deviceName;
-                    } else {
-                        errorMessage += context.getResources().getString(R.string.bt_exception_device_address) + " " + deviceAddress;
-                    }
-                    displayErrorMessage(errorMessage + ")");
+                    displayErrorMessage(context.getResources().getString(R.string.bt_fail_writing)+BluetoothException.getMessage(Bluetooth.this));
                 } else {
                     cdl.cancel();
                 }
@@ -540,13 +528,7 @@ public class Bluetooth implements Serializable {
                         stop(); // stop collecting data
                         forcedBreak = true;
                         isRunning = true; // the experiment is still running, only bluetooth has stopped
-                        String errorMessage = context.getResources().getString(R.string.bt_exception_disconnected) + " (";
-                        if (deviceName != null) {
-                            errorMessage += context.getResources().getString(R.string.bt_exception_device_name) + " " + deviceName;
-                        } else {
-                            errorMessage += context.getResources().getString(R.string.bt_exception_device_address) + " " + deviceAddress;
-                        }
-                        displayErrorMessage(errorMessage + ")");
+                        displayErrorMessage(context.getResources().getString(R.string.bt_exception_disconnected) + BluetoothException.getMessage(Bluetooth.this));
                         (new ReconnectBluetoothTask()).execute(); // try to reconnect the device
                     }
                     return;
@@ -799,6 +781,9 @@ public class Bluetooth implements Serializable {
         // writes the configuration to the characteristic
         public void process(Bluetooth b) throws BluetoothException {
             BluetoothGattCharacteristic c = b.findCharacteristic(this.uuid);
+            if (c.getValue() != null && c.getValue().equals(this.value)) {
+                return; // value is already set
+            }
             boolean result = c.setValue(this.value);
             if (!result) {
                 throw new BluetoothException(context.getResources().getString(R.string.bt_exception_config) + " \"" + c.getUuid().toString() + "\" " + context.getResources().getString(R.string.bt_exception_config2), b);
@@ -820,28 +805,18 @@ public class Bluetooth implements Serializable {
 
 
     public static class BluetoothException extends Exception {
-        Context context;
-        String deviceAddress;
-        String deviceName;
 
         public BluetoothException(String message, Bluetooth b) {
-            super(message);
-            // save necessary data for a more detailed error message
-            this.context = b.context;
-            this.deviceAddress = b.deviceAddress;
-            this.deviceName = b.deviceName;
+            super(message+getMessage(b));
         }
 
-        @Override
-        // returns the message and adds data about the device so the user knows where the error happened.
-        public String getMessage() {
-            String message = super.getMessage();
-            message += System.getProperty("line.separator") + context.getResources().getString(R.string.bt_exception_device);
-            if (deviceAddress != null) {
-                message += " " + context.getResources().getString(R.string.bt_exception_device_address) + " \"" + deviceAddress + "\"";
+        public static String getMessage(Bluetooth b) {
+            String message = System.getProperty("line.separator") + b.context.getResources().getString(R.string.bt_exception_device);
+            if (b.deviceAddress != null) {
+                message += " " + b.context.getResources().getString(R.string.bt_exception_device_address) + " \"" + b.deviceAddress + "\"";
             }
-            if (deviceName != null) {
-                message += " " + context.getResources().getString(R.string.bt_exception_device_name) + " \"" + deviceName + "\"";
+            if (b.deviceName != null) {
+                message += " " + b.context.getResources().getString(R.string.bt_exception_device_name) + " \"" + b.deviceName + "\"";
             }
             message += ".";
             return message;

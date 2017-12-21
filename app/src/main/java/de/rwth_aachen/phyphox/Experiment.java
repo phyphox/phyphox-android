@@ -367,16 +367,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 saveLocallyDismissed = true;
-                                connectBluetoothDevices(false);
+                                connectBluetoothDevices(false, false);
                             }
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();
             } else {
-                connectBluetoothDevices(false);
+                connectBluetoothDevices(false, false);
             }
-        } else {
-            connectBluetoothDevices(false);
+        } else if (experiment.loaded) {
+            connectBluetoothDevices(false, false);
         }
 
         //An explanation is not necessary for raw sensors and of course we don't want it if there is an error
@@ -390,7 +390,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     // connects to the bluetooth devices in an async task and locks the screen while connecting
     // if startMeasurement is true the measurement will be started automatically once all devices are connected
-    public void connectBluetoothDevices(boolean startMeasurement) {
+    public void connectBluetoothDevices(boolean startMeasurement, final boolean timed) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
                 lockScreen();
@@ -409,7 +409,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                       @Override
                         public void run () {
                           enableScreenRotation.run();
-                          startMeasurement();
+                          if (timed) {
+                              startTimedMeasurement();
+                          } else {
+                              startMeasurement();
+                          }
                       }
                     };
                 } else {
@@ -1194,7 +1198,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             Bluetooth.errorDialog.tryAgain = new Runnable() {
               @Override
                 public void run() {
-                  connectBluetoothDevices(true);
+                  connectBluetoothDevices(true, false);
               }
             };
             Bluetooth.errorDialog.run();
@@ -1236,6 +1240,37 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Lock the screen and keep it on. No more screen rotation or turning off during the measurement
         lockScreen();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // check if all Bluetooth devices are connected and display an errorDialog if not
+        Bluetooth notConnectedDevice = null;
+        for (Bluetooth b : experiment.bluetoothInputs) {
+            if (!b.isConnected()) {
+                notConnectedDevice = b;
+                break;
+            }
+        }
+        if (notConnectedDevice == null) {
+            for (Bluetooth b : experiment.bluetoothOutputs) {
+                if (!b.isConnected()) {
+                    notConnectedDevice = b;
+                    break;
+                }
+            }
+        }
+        if (notConnectedDevice != null) {
+            // show an error dialog
+            Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+                @Override
+                public void run() {
+                    connectBluetoothDevices(true, true);
+                }
+            };
+            Bluetooth.errorDialog.run();
+            return;
+        }
 
         //Not much more to do here. Just set up a countdown that will start the measurement
         millisUntilFinished = Math.round(timedRunStartDelay*1000);
