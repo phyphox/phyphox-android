@@ -257,8 +257,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = null;
         }
         if (result.equals("")) { //No error
-            // dismiss progressDialog and alertDialog from connecting to Bluetooth if necessary because of the return to the experiment selection
-            Bluetooth.errorDialog.dismiss();
             //Show that it has been successfull and return to the experiment selection so the user
             //  can see the new addition to his collection
             Toast.makeText(this, R.string.save_locally_done, Toast.LENGTH_LONG).show(); //Present message
@@ -323,7 +321,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 tabLayout.setVisibility(View.GONE);
 
             try {
-                experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE), Experiment.this);
+                experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
             } catch (Exception e) {
                 Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
             }
@@ -350,7 +348,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             tv.setVisibility(View.VISIBLE);
             this.experiment = null;
         }
-
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED); //We are ready. Now the user may rotate.
 
         //If this experiment has been loaded from a external source, we offer to save it locally
@@ -370,11 +367,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 saveLocallyDismissed = true;
+                                connectBluetoothDevices(false);
                             }
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();
+            } else {
+                connectBluetoothDevices(false);
             }
+        } else {
+            connectBluetoothDevices(false);
         }
 
         //An explanation is not necessary for raw sensors and of course we don't want it if there is an error
@@ -386,6 +388,38 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     }
 
+    // connects to the bluetooth devices in an async task and locks the screen while connecting
+    // if startMeasurement is true the measurement will be started automatically once all devices are connected
+    public void connectBluetoothDevices(boolean startMeasurement) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
+                lockScreen();
+                // connect all bluetooth devices with an asyncTask
+                Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
+                btTask.context = Experiment.this;
+                btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
+                final Runnable enableScreenRotation = new Runnable () {
+                    @Override
+                    public void run () {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    }
+                };
+                if (startMeasurement) {
+                    btTask.onSuccess = new Runnable () {
+                      @Override
+                        public void run () {
+                          enableScreenRotation.run();
+                          startMeasurement();
+                      }
+                    };
+                } else {
+                    btTask.onSuccess = enableScreenRotation;
+                }
+                Bluetooth.errorDialog.cancel = enableScreenRotation; // enable screen rotation again if errorDialog is cancelled
+                btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+            }
+        }
+    }
 
     private void showMenuHint() {
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -1152,6 +1186,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             experiment.startAllIO();
         } catch (Bluetooth.BluetoothException e) {
             stopMeasurement(); // stop experiment
+            lockScreen(); // lock screen because an errorDialog will be displayed
             // show an error dialog
             Bluetooth.errorDialog.message = e.getMessage();
             Bluetooth.errorDialog.context = Experiment.this;
@@ -1159,16 +1194,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             Bluetooth.errorDialog.tryAgain = new Runnable() {
               @Override
                 public void run() {
-                  Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
-                  btTask.context = Experiment.this;
-                  btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
-                  btTask.onSuccess = new Runnable() {
-                    @Override
-                      public void run() {
-                        startMeasurement(); // start measurement automatically when successfully connected
-                    }
-                  };
-                  btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+                  connectBluetoothDevices(true);
               }
             };
             Bluetooth.errorDialog.run();

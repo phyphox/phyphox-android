@@ -397,7 +397,7 @@ public class phyphoxExperiment implements Serializable {
         //We will not start audio output here as it will be triggered by the analysis modules.
     }
 
-    public void init(SensorManager sensorManager, LocationManager locationManager, final Context c) throws Exception {
+    public void init(SensorManager sensorManager, LocationManager locationManager) throws Exception {
         //Update all the views
         for (int i = 0; i < experimentViews.size(); i++) {
             updateViews(i, true);
@@ -423,15 +423,6 @@ public class phyphoxExperiment implements Serializable {
         if (gpsIn != null)
             gpsIn.attachLocationManager(locationManager);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (!(bluetoothInputs.isEmpty() && bluetoothOutputs.isEmpty())) {
-                // connect all bluetooth devices with an asyncTask
-                Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
-                btTask.context = c;
-                btTask.progress = ProgressDialog.show(c, c.getResources().getString(R.string.loadingTitle), c.getResources().getString(R.string.loadingBluetoothConnectionText), true);
-                btTask.execute(bluetoothInputs, bluetoothOutputs);
-            }
-        }
     }
 
     public String writeStateFile(String customTitle, OutputStream os) {

@@ -68,8 +68,8 @@ public class BluetoothInput extends Bluetooth {
                         throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
                 }
                 descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                add(new WriteDescriptorCommand(btGatt, descriptor));
                 cdl = new CancellableLatch(1);
+                add(new WriteDescriptorCommand(btGatt, descriptor));
                 boolean result = false;
                 try {
                     // it should not be possible to continue before the notifications are turned on
@@ -93,17 +93,14 @@ public class BluetoothInput extends Bluetooth {
                     continue;
                 }
                 descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                add(new WriteDescriptorCommand(btGatt, descriptor));
                 cdl = new CancellableLatch(1);
+                add(new WriteDescriptorCommand(btGatt, descriptor));
                 boolean result = false;
                 try {
                     // it should not be possible to continue before the notifications are turned on
                     // timeout after 2 seconds if the device could not be connected
                     result = cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait when closing an experiment
                 } catch (InterruptedException e) {
-                }
-                if (!result) {
-                    //TODO
                 }
             }
         }
@@ -162,9 +159,6 @@ public class BluetoothInput extends Bluetooth {
             case "notification": {
                 for (BluetoothGattCharacteristic c : mapping.keySet()) {
                     boolean result = btGatt.setCharacteristicNotification(c, false);
-                    if (!result) {
-                        //TODO
-                    }
                 }
                 break;
             }
@@ -173,7 +167,7 @@ public class BluetoothInput extends Bluetooth {
 
     @Override
     // saves data from the characteristic in outputs and calls retrieveData it is time
-    protected void saveData (BluetoothGattCharacteristic characteristic, byte[] data) {
+    protected void saveData (byte[] data, BluetoothGattCharacteristic characteristic) {
         if (outputs != null) {
             for (Characteristic c : mapping.get(characteristic)) {
                 // call retrieveData if the data from this characteristic is already stored
@@ -195,7 +189,6 @@ public class BluetoothInput extends Bluetooth {
         }
     }
 
-    @Override
     // retrieve Data from all characteristics (mode poll)
     protected void retrieveData() {
         long t = System.nanoTime();
