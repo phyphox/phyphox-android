@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -326,14 +327,14 @@ public abstract class phyphoxFile {
         Vector<dataOutput> outputList;
         Vector<dataInput> inputList;
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
-        protected boolean hasExtraTime; // true if there is an extra=time attribute in the
+        HashSet<UUID> characteristicsWithExtraTime; // uuids of all characteristics that have extra=time to make sure they can't have it twice
 
         bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
             super(xpp, experiment, parent);
             this.outputList = outputList;
             this.inputList = inputList;
             this.characteristics = characteristics;
-            this.hasExtraTime = false;
+            characteristicsWithExtraTime = new HashSet<>();
         }
 
         @Override
@@ -413,11 +414,12 @@ public abstract class phyphoxFile {
                     String extra = this.getStringAttribute("extra");
                     if (extra != null) {
                         if (extra.equals("time")) {
-                            if (hasExtraTime) {
-                                throw new phyphoxFileException("extra=time attribute can be used only once inside a bluetooth tag.", xpp.getLineNumber());
-                            }
                             extraTime = true;
-                            hasExtraTime = true;
+                            if (characteristicsWithExtraTime.contains(uuid)) {
+                                throw new phyphoxFileException("extra=time can be used only once for a characteristic.");
+                            } else {
+                                characteristicsWithExtraTime.add(uuid);
+                            }
                         } else {
                             throw new phyphoxFileException("unknown value for extra attribute.", xpp.getLineNumber());
                         }
