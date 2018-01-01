@@ -111,4 +111,22 @@
     <string name="categoryRawSensor">Nieskalibrowane czujniki</string>
 
     <string name="experimentinfo_hint">Sprawdź informacje nt. eksperymentu by dowiedzieć się więcej.</string>
-</resources>
+<string name="translationInfo">Języki</string>
+    <string name="translationText">Phyphox używa pierwszego z języków z listy języków preferowanych. Zmiany języka można dokonać w systemie Android po wybraniu opcji \"ustawienia\" znajdującej się poniżej. Lista dostępnych języków oraz dodatkowe informacje znajdują się na stronie projektu, na którą przekierowuje opcja \"odwiedź stronę\".</string>
+    <string name="translationToSettings">Ustawienia</string>
+    <string name="translationToWebsite">Odwiedź stronę</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/faq-pl/#faqTranslation</string>
+
+    <string name="info">Info</string>
+    <string name="creditsNames">Koncepcja i rozwój:<br/><b>Dr. Sebastian Staacks</b><br/>Koncepcja:<br/><b>Prof. Christoph Stampfer</b><br/>Projekt graficzny:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programowanie:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA i Ole Laursen) oraz \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), dostępnych w licencji MIT.</string>
+    <string name="sensorTemperature">Temperatura</string>
+    <string name="sensorHumidity">Wilgotność</string>
+    <string name="enableTimedRun">Określ czas trwania</string>
+
+    <string name="remoteServer">Dostęp zdalny</string>
+    <string name="remoteServerActive">Dostęp zdalny włączony. Eksperyment dostępny pod adresem URL: 
+\n%1$s</string>
+    <string name="calibrated_magnetometer">Użyj kalibrowanego magnetometru</string>
+
+    </resources>
