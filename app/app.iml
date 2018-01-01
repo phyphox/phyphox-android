@@ -93,6 +93,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-classes" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-runtime-classes" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-safeguard" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-verifier" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-resources" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-support" />
@@ -102,6 +103,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/prebuild" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/reload-dex" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/res" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/restart-dex" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/rs" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/shaders" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/split-apk" />
@@ -112,26 +114,26 @@
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
     </content>
-    <orderEntry type="jdk" jdkName="Android API 26 Platform" jdkType="Android SDK" />
+    <orderEntry type="jdk" jdkName="Android API 27 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="com.android.support:support-media-compat-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:support-compat-26.1.0" level="project" />
+    <orderEntry type="library" name="com.android.support:animated-vector-drawable-27.0.2" level="project" />
+    <orderEntry type="library" name="com.android.support:appcompat-v7-27.0.2" level="project" />
+    <orderEntry type="library" name="android.arch.lifecycle:common:1.0.3@jar" level="project" />
     <orderEntry type="library" name="org.apache.poi:poi:3.13@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:recyclerview-v7-26.1.0" level="project" />
-    <orderEntry type="library" name="android.arch.lifecycle:common:1.0.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-annotations:27.0.2@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:design-27.0.2" level="project" />
     <orderEntry type="library" name="android.arch.core:common:1.0.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-fragment-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:support-vector-drawable-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:support-v4-26.1.0" level="project" />
-    <orderEntry type="library" name="android.arch.lifecycle:runtime-1.0.0" level="project" />
+    <orderEntry type="library" name="com.android.support:support-core-ui-27.0.2" level="project" />
+    <orderEntry type="library" name="com.android.support:support-compat-27.0.2" level="project" />
+    <orderEntry type="library" name="com.android.support:transition-27.0.2" level="project" />
+    <orderEntry type="library" name="com.android.support:recyclerview-v7-27.0.2" level="project" />
     <orderEntry type="library" name="commons-codec:commons-codec:1.9@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:appcompat-v7-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:animated-vector-drawable-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:support-annotations:26.1.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-core-utils-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:design-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:transition-26.1.0" level="project" />
-    <orderEntry type="library" name="com.android.support:support-core-ui-26.1.0" level="project" />
-    <orderEntry type="library" name="org.apache.http.legacy-android-26" level="project" />
+    <orderEntry type="library" name="com.android.support:support-core-utils-27.0.2" level="project" />
+    <orderEntry type="library" name="com.android.support:support-fragment-27.0.2" level="project" />
+    <orderEntry type="library" name="com.android.support:support-media-compat-27.0.2" level="project" />
+    <orderEntry type="library" name="android.arch.lifecycle:runtime-1.0.3" level="project" />
+    <orderEntry type="library" name="com.android.support:support-vector-drawable-27.0.2" level="project" />
+    <orderEntry type="library" name="com.android.support:support-v4-27.0.2" level="project" />
+    <orderEntry type="library" name="org.apache.http.legacy-android-27" level="project" />
   </component>
 </module>
