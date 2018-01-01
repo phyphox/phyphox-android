@@ -4,7 +4,7 @@
     <string name="title_activity_experiment">phyphox</string>
 
     <string name="newExperiment">Dodaj eksperyment</string>
-    <string name="newExperimentPhyphoxInfo">Aby przygotować zaawansowane doświadczenia zawierające analizę danych oraz by dzielić się doświadczeniami z innymi odwiedź stronę phyphox.org</string>
+    <string name="newExperimentPhyphoxInfo">Aby przygotować zaawansowane doświadczenia zawierające analizę danych oraz by dzielić się doświadczeniami z innymi odwiedź stronę phyphox.org.</string>
     <string name="newExperimentInputTitle">Tytuł</string>
     <string name="newExperimentInputBufferSize">Rozmiar bufora (liczba przechowywanych wartości)</string>
     <string name="newExperimentInputRate">Częstotliwość czujnika (w Hz, 0 = maksymalna dozwolona)</string>
@@ -22,19 +22,19 @@
     <string name="donotshowagain">Nie pokazuj ponownie</string>
     <string name="damageWarning">Postępuj rozważnie by nie uszkodzić swojego telefony podczas eksperymentu. Zadbaj, by telefon nie spadł na twarde podłoże i nie był narażony na znaczne pole magnetyczne. Autorzy phyphox\'a nie odpowiadają za szkody powstałe podczas doświadczeń z telefonem.</string>
 
-    <string name="credits">Credits</string>
+    <string name="credits">Autorzy</string>
     <string name="creditsRWTH">phyphox powstał w II Instytucie Fizyki Uniwersytetu RWTH w Aachen.</string>
     <string name="sensorLinearAcceleration">Przyspieszenie liniowe</string>
-    <string name="sensorLight">Światło</string>
+    <string name="sensorLight">Światła</string>
     <string name="sensorGyroscope">Żyroskop</string>
     <string name="sensorAccelerometer">Akcelerometr (czujnik przyspieszenia)</string>
     <string name="sensorMagneticField">Pole magnetyczne</string>
     <string name="sensorPressure">Ciśnienie</string>
-    <string name="sensorProximity">Czujnik zbliżeniowy</string>
+    <string name="sensorProximity">Zbliżeniowy</string>
 
     <string name="location">Położenie</string>
 
-    <string name="sensorNotAvailableWarningTitle">Czujnik niedostępny</string>
+    <string name="sensorNotAvailableWarningTitle">Czujnik niedostępny.</string>
     <string name="sensorNotAvailableWarningText1">Czujnik</string>
     <string name="sensorNotAvailableWarningText2">niedostępny. Zazwyczaj oznacza to, że urządzenie nie jest wyposażone w tego typu czujnik.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Więcej informacji</string>
@@ -48,7 +48,7 @@
 
     <string name="delete">Usuń</string>
     <string name="confirmDelete">Czy usunąć eksperyment z twojego zbioru?</string>
-    <string name="confirmDeleteTitle">Potwierdź usunięcie</string>
+    <string name="confirmDeleteTitle">Akceptujesz usunięcie?</string>
 
     <string name="stop">Zatrzymaj</string>
     <string name="start">Uruchom</string>
@@ -61,7 +61,7 @@
     <string name="loadingTitle">Ładowanie</string>
     <string name="loadingText">Ładowanie eksperymentu…</string>
 
-    <string name="timedRunDialogTitle">Czas sesji</string>
+    <string name="timedRunDialogTitle">Czas sesji pomiarowej</string>
     <string name="timedRunStartDelay">Opóźnienie uruchomienia</string>
     <string name="timedRunStopDelay">Czas trwania eksperymentu</string>
     <string name="export">Eksportuj dane</string>
@@ -77,7 +77,7 @@
 \nDla zwiększenia bezpieczeństaw zalecamy połączenie przez opcję tethering\'u (punkt dostępowy).
 \n
 \nPo naciśnięciu ok, wyniki pomiarów będą dostępne w przeglądarce uruchomionej w tej samej sieci.</string>
-    <string name="remoteServerWarningTitle">Ostrzeżenie bezpieczeństwa</string>
+    <string name="remoteServerWarningTitle">Ostrzeżenie bezpieczeństwa!</string>
     <string name="hotspotSettings">Ustawienia punktu dostępowego</string>
 
     <string name="switchToPhoneLayout">Widok: Ograniczony</string>
@@ -90,7 +90,7 @@
     <string name="save_locally_done">Eksperyment pomyślnie dodany do zbioru.</string>
     <string name="save_locally_message">Eksperyment otwarty ze zdalnego źrodła. Czy dodać go do twojego zbioru eksperymentów?</string>
     <string name="save_locally_button">Zapisz do zbioru</string>
-    <string name="save_state">Zapisz postęp eksperymentu</string>
+    <string name="save_state">Zapisz status eksperymentu</string>
     <string name="save_state_category">Satus eksperymentu zapisany</string>
     <string name="save_state_message">Możesz zapisać status eksperymentu wraz z wynikami w swoim zbiorze lub udostępnić go innej aplikacji.</string>
     <string name="save_state_title">Tytuł</string>
@@ -107,7 +107,7 @@
 
     <string name="noDrawableData">Brak zaznaczonych danych.</string>
 
-    <string name="categoryNewExperiment">Proste standardowe eksperymenty</string>
+    <string name="categoryNewExperiment">Własne eksperymenty</string>
     <string name="categoryRawSensor">Nieskalibrowane czujniki</string>
 
     <string name="experimentinfo_hint">Sprawdź informacje nt. eksperymentu by dowiedzieć się więcej.</string>
@@ -122,7 +122,7 @@
     <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA i Ole Laursen) oraz \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), dostępnych w licencji MIT.</string>
     <string name="sensorTemperature">Temperatura</string>
     <string name="sensorHumidity">Wilgotność</string>
-    <string name="enableTimedRun">Określ czas trwania</string>
+    <string name="enableTimedRun">Określ czas trwania sesji pomiarowej</string>
 
     <string name="remoteServer">Dostęp zdalny</string>
     <string name="remoteServerActive">Dostęp zdalny włączony. Eksperyment dostępny pod adresem URL: 
