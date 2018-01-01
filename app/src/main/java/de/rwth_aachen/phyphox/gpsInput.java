@@ -8,6 +8,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.location.OnNmeaMessageListener;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -34,6 +35,8 @@ public class gpsInput implements Serializable {
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
 
     private Lock dataLock;
+    private int lastStatus = 0;
+    private double geoidCorrection = Double.NaN;
 
     //The constructor
     protected gpsInput(Vector<dataOutput> buffers, Lock lock) {
@@ -78,9 +81,14 @@ public class gpsInput implements Serializable {
     //Start the data aquisition by registering a listener for this location manager.
     public void start() {
         this.t0 = 0; //Reset t0. This will be set by the first sensor event
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+            this.lastStatus = 0;
+        else
+            this.lastStatus = -1;
 
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            locationManager.addNmeaListener(nmeaListener);
         } catch (SecurityException e) {
             Log.e("gps start", "Security exception when requesting location updates: " + e.getMessage());
         }
@@ -90,6 +98,7 @@ public class gpsInput implements Serializable {
     //Stop the data aquisition by unregistering the listener for this location manager
     public void stop() {
         locationManager.removeUpdates(locationListener);
+        locationManager.removeNmeaListener(nmeaListener);
     }
 
     LocationListener locationListener = new LocationListener() {
@@ -110,6 +119,22 @@ public class gpsInput implements Serializable {
         }
     };
 
+    GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
+        @Override
+        public void onNmeaReceived(long timestamp, String nmea) {
+            if (nmea.startsWith("$GPGGA")) {
+                String[] parts = nmea.split(",");
+                if (parts.length < 10)
+                    return;
+                try {
+                    geoidCorrection = Double.parseDouble(parts[11]);
+                } catch (Exception e) {
+                    return;
+                }
+            }
+        }
+    };
+
     public void onStatusUpdate(int status) {
         if (dataStatus == null)
             return;
@@ -117,7 +142,13 @@ public class gpsInput implements Serializable {
         dataLock.lock();
         try {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                dataStatus.append(status == LocationProvider.AVAILABLE ? 1 : 0);
+                if (status == LocationProvider.AVAILABLE)
+                    if (Double.isNaN(geoidCorrection))
+                        dataStatus.append(2);
+                    else
+                        dataStatus.append(1);
+                else
+                    dataStatus.append(0);
             else
                 dataStatus.append(-1);
         } finally {
@@ -146,8 +177,12 @@ public class gpsInput implements Serializable {
                 dataLat.append(event.getLatitude());
             if (dataLon != null)
                 dataLon.append(event.getLongitude());
-            if (dataZ != null)
-                dataZ.append(event.getAltitude());
+            if (dataZ != null) {
+                if (Double.isNaN(geoidCorrection))
+                    dataZ.append(event.getAltitude());
+                else
+                    dataZ.append(event.getAltitude() - geoidCorrection);
+            }
             if (dataV != null)
                 dataV.append(event.getSpeed());
             if (dataDir != null)
