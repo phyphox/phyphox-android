@@ -889,7 +889,7 @@ public class ExperimentList extends AppCompatActivity {
                                 }
                             }
                             return true;
-/*                            case R.id.action_translationInfo: {
+                            case R.id.action_translationInfo: {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
                                 builder.setMessage(res.getString(R.string.translationText))
                                         .setTitle(R.string.translationInfo)
@@ -919,7 +919,7 @@ public class ExperimentList extends AppCompatActivity {
                                         });
                                 AlertDialog dialog = builder.create();
                                 dialog.show();
-                            }*/
+                            }
                             default:
                                 return false;
                         }
