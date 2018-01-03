@@ -54,6 +54,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:host="*" android:scheme="content" android:mimeType="application/octet-stream" android:pathPattern=".*" />
                 <data android:host="*" android:scheme="content" android:mimeType="text/plain" android:pathPattern=".*" />
+                <data android:host="*" android:scheme="content" android:mimeType="text/xml" android:pathPattern=".*" />
             </intent-filter>
         </activity>
         <provider

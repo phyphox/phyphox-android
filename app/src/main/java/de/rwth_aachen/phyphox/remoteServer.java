@@ -381,6 +381,7 @@ public class remoteServer extends Thread {
             //Setup server socket
             ServerSocket serverSocket = new ServerSocket(HttpServerPORT);
             serverSocket.setReuseAddress(true);
+            serverSocket.setSoTimeout(3000);
 
             //The actual loop
             while (RUNNING) {
