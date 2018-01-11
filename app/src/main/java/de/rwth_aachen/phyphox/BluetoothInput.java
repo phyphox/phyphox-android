@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.os.Build;
-import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
@@ -14,27 +13,63 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import static java.lang.Math.pow;
 
 
+/**
+ * The BluetoothInput class encapsulates an input to Bluetooth devices.
+ */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-//The BluetoothInput class encapsulates a generic serial input to bluetooth devices
 public class BluetoothInput extends Bluetooth {
 
-    protected static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"); // Descriptor for Client Characteristic Configuration
+    /**
+     * UUID of the Descriptor for Client Characteristic Configuration
+     */
+    protected static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
-    private long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
-    private long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
-    private Vector<dataOutput> data = new Vector<>(); //Data-buffers
-    private String mode; // "poll" or "notification"
+    /**
+     * Used mode ("poll" or "notification")
+     */
+    private String mode;
+
+    /**
+     * Sensor acquisiton period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
+     */
+    private long period;
+
+    /**
+     * Start time of the measurement or last measurement before a break to allow timestamps relative to the beginning of a measurement
+     */
+    private long t0 = 0;
+
+    /**
+     * Data-buffers
+     */
+    private Vector<dataOutput> data = new Vector<>();
+
     private Lock dataLock;
+
+    /**
+     * Used to store data in mode "poll" before it will be retrieved all together
+     */
     protected HashMap<Integer, Double> outputs;
 
-
+    /**
+     * Create a new BluetoothInput.
+     *
+     * @param deviceName      name of the device (can be null if deviceAddress is not null)
+     * @param deviceAddress   address of the device (can be null if deviceName is not null)
+     * @param mode            mode that should be used (can be "poll" or "notification")
+     * @param rate            rate in Hz (only for mode "poll")
+     * @param buffers         list of dataOutputs to write the values
+     * @param lock            lock to write data to the buffers
+     * @param context         context
+     * @param characteristics list of all characteristics the object should be able to operate on
+     * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
+     */
     public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics)
             throws phyphoxFile.phyphoxFileException {
 
@@ -51,11 +86,19 @@ public class BluetoothInput extends Bluetooth {
         if (rate <= 0)
             this.period = 0; // as fast as possible
         else
-            this.period = (long)((1/rate)*1e9); //period in ns
+            this.period = (long) ((1 / rate) * 1e9); //period in ns
 
         this.data = buffers;
     }
 
+    /**
+     * Connect with the device and enable notifications if mode is "notification".
+     * The call to setValue of the BluetoothGattDescriptor to enable notifications has a lock because it should not be possible to continue before it succeeds.
+     *
+     * The timeout of the lock is set to 3 seconds.
+     *
+     * @throws BluetoothException if there is an error on findDevice, openConnection, process CharacteristicData or enable notifications.
+     */
     @Override
     public void connect() throws BluetoothException {
         super.connect(); // connect device
@@ -65,7 +108,7 @@ public class BluetoothInput extends Bluetooth {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
                 BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
                 if (descriptor == null) {
-                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
+                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
                 }
                 descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 cdl = new CancellableLatch(1);
@@ -75,7 +118,8 @@ public class BluetoothInput extends Bluetooth {
                     // it should not be possible to continue before the notifications are turned on
                     // timeout after 3 seconds if the device could not be connected
                     result = cdl.await(3, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
                 if (!result) {
                     throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_fail), this);
                 }
@@ -83,8 +127,16 @@ public class BluetoothInput extends Bluetooth {
         }
     }
 
+    /**
+     * Disable descriptor for notification again and then close the connection.
+     * The call to setValue of the BluetoothGattDescriptor to disable notifications has a lock because it should not be possible to continue before it succeeds,
+     * but there will be no error message if disabling notifications fails.
+     *
+     * The timeout of the lock is set to 2 seconds.
+     *
+     */
     @Override
-    public void closeConnection () {
+    public void closeConnection() {
         // disable descriptor for notification
         if (mode.equals("notification")) {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
@@ -108,7 +160,11 @@ public class BluetoothInput extends Bluetooth {
     }
 
 
-    //Start the data acquisition
+    /**
+     * Start the data acquisition.
+     *
+     * @throws BluetoothException if a notification could not be set.
+     */
     @Override
     public void start() throws BluetoothException {
         outputs = new HashMap<>();
@@ -119,14 +175,14 @@ public class BluetoothInput extends Bluetooth {
         switch (mode) {
             case "poll": {
                 final Runnable readData = new Runnable() {
-                  @Override
-                    public void run () {
-                      // read data from all characteristics
-                      for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                          add(new ReadCommand(btGatt, c));
-                      }
-                      mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
-                  }
+                    @Override
+                    public void run() {
+                        // read data from all characteristics
+                        for (BluetoothGattCharacteristic c : mapping.keySet()) {
+                            add(new ReadCommand(btGatt, c));
+                        }
+                        mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
+                    }
                 };
                 mainHandler.post(readData);
                 break;
@@ -145,7 +201,10 @@ public class BluetoothInput extends Bluetooth {
         super.start();
     }
 
-    //Stop the data acquisition
+
+    /**
+     * Stop the data acquisition.
+     */
     @Override
     public void stop() {
         super.stop();
@@ -165,9 +224,16 @@ public class BluetoothInput extends Bluetooth {
         }
     }
 
+    /**
+     * Called when a Characteristic was read.
+     * Save data from the characteristic and call retrieveData if data from all characteristics is saved or if data from this characteristic is already saved and not retrieved yet.
+     * If data is null, NaN will be saved.
+     *
+     * @param data           data read from the characteristic
+     * @param characteristic characteristic that was read
+     */
     @Override
-    // saves data from the characteristic in outputs and calls retrieveData it is time
-    protected void saveData (byte[] data, BluetoothGattCharacteristic characteristic) {
+    protected void saveData(byte[] data, BluetoothGattCharacteristic characteristic) {
         if (outputs != null) {
             for (Characteristic c : mapping.get(characteristic)) {
                 // call retrieveData if the data from this characteristic is already stored
@@ -189,8 +255,55 @@ public class BluetoothInput extends Bluetooth {
         }
     }
 
-    // retrieve Data from all characteristics (mode poll)
-    protected void retrieveData() {
+    /**
+     * Called when there was a notification that the value of a Characteristic has changed.
+     * Write data to the buffer immediately.
+     *
+     * @param data           data read from the characteristic
+     * @param characteristic characteristic that got the notification
+     */
+    @Override
+    protected void retrieveData(byte[] data, BluetoothGattCharacteristic characteristic) {
+        ArrayList<Characteristic> characteristics = mapping.get(characteristic);
+        long t = System.nanoTime();
+        // set t0 if it is not yet set
+        if (t0 == 0) {
+            t0 = t;
+            // find the last time data was retrieved
+            double max = 0;
+            for (Integer i : saveTime.values()) {
+                dataOutput dataOutput = this.data.get(i);
+                if (dataOutput != null && dataOutput.getFilledSize() > 0 && dataOutput.getValue() > max) {
+                    max = dataOutput.getValue();
+                }
+            }
+            t0 -= max * 1e9;
+        }
+        double[] outputs = new double[characteristics.size()];
+        for (Characteristic c : characteristics) {
+            outputs[characteristics.indexOf(c)] = convertData(data, c.conversionFunction);
+        }
+
+        //Append the data to available buffers
+        dataLock.lock();
+        try {
+            for (Characteristic c : characteristics) {
+                this.data.get(c.index).append(outputs[characteristics.indexOf(c)]);
+            }
+            // append time to buffer if extra=time is set
+            if (saveTime.containsKey(characteristic)) {
+                this.data.get(saveTime.get(characteristic)).append((t - t0) / 1e9);
+            }
+        } finally {
+            dataLock.unlock();
+        }
+    }
+
+
+    /**
+     * Write data from all Characteristics to the buffers (mode "poll").
+     */
+    private void retrieveData() {
         long t = System.nanoTime();
 
         // set t0 if it is not yet set
@@ -224,44 +337,14 @@ public class BluetoothInput extends Bluetooth {
     }
 
 
-    @Override
-    // retrieve data from one characteristic (mode notification)
-    protected void retrieveData(byte[] receivedData, BluetoothGattCharacteristic characteristic) {
-        ArrayList<Characteristic> characteristics = mapping.get(characteristic);
-        long t = System.nanoTime();
-        // set t0 if it is not yet set
-        if (t0 == 0) {
-            t0 = t;
-            for (Integer i : saveTime.values()) {
-                dataOutput dataOutput = data.get(i);
-                if (dataOutput != null && dataOutput.getFilledSize() > 0) {
-                    t0 -= dataOutput.getValue() * 1e9;
-                    break;
-                }
-            }
-        }
-        double[] outputs = new double[characteristics.size()];
-        for (Characteristic c : characteristics) {
-            outputs[characteristics.indexOf(c)] = convertData(receivedData, c.conversionFunction);
-        }
-
-        //Append the data to available buffers
-        dataLock.lock();
-        try {
-            for (Characteristic c : characteristics) {
-                data.get(c.index).append(outputs[characteristics.indexOf(c)]);
-            }
-            // append time to buffer if extra=time is set
-            if (saveTime.containsKey(characteristic)) {
-                data.get(saveTime.get(characteristic)).append((t - t0) / 1e9);
-            }
-        } finally {
-            dataLock.unlock();
-        }
-    }
-
-    // converts a byte array to a double value with the specified conversion function.
-    // the method also handles exceptions by running handleException
+    /**
+     * Convert data using the specified conversion function.
+     * Return NaN in case of an exception.
+     *
+     * @param data               data that should be converted
+     * @param conversionFunction method to convert data (from ConversionsInput)
+     * @return the converted value
+     */
     private double convertData(byte[] data, Method conversionFunction) {
         try {
             return (double) conversionFunction.invoke(null, data);
@@ -270,5 +353,4 @@ public class BluetoothInput extends Bluetooth {
         }
     }
 
-}
-
+} // end of class BluetoothInput

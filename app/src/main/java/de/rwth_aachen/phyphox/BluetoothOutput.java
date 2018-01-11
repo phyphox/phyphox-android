@@ -10,29 +10,38 @@ import java.lang.reflect.Method;
 import java.util.Vector;
 
 
-//The BluetoothOutput class encapsulates a generic serial output to bluetooth devices
+/**
+ * The BluetoothOutput class encapsulates an output to Bluetooth devices.
+ */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BluetoothOutput extends Bluetooth {
-    public Vector<dataInput> data = new Vector<>(); //Data-buffers
 
-    protected BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    /**
+     * Data-buffers
+     */
+    public Vector<dataInput> data;
+
+    /**
+     * Create a new BluetoothOutput.
+     *
+     * @param deviceName      name of the device (can be null if deviceAddress is not null)
+     * @param deviceAddress   address of the device (can be null if deviceName is not null)
+     * @param context         context
+     * @param buffers         list of dataOutputs to write the values
+     * @param characteristics list of all characteristics the object should be able to operate on
+     */
+    public BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
         super(deviceName, deviceAddress, context, characteristics);
 
         this.data = buffers;
-
     }
 
-    private byte[] convertData (double value, Method conversionFunction) {
-        try {
-            return (byte[]) conversionFunction.invoke(null, value);
-        } catch (Exception e) {
-            return new byte[0]; // the method needs to return a byte array
-        }
-    }
 
-    //This is called when new data should be written to the device
-    public void sendData () {
+    /**
+     * Write data to the Characteristics.
+     */
+    public void sendData() {
         if (!forcedBreak) {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
                 for (Characteristic c : mapping.get(characteristic)) {
@@ -46,4 +55,20 @@ public class BluetoothOutput extends Bluetooth {
         }
     }
 
-}
+    /**
+     * Convert data using the specified conversion function.
+     * Return a byte array with size 1 in case of an exception.
+     *
+     * @param data               data that should be converted
+     * @param conversionFunction method to convert data (from ConversionsOutput)
+     * @return the converted value
+     */
+    private byte[] convertData(double data, Method conversionFunction) {
+        try {
+            return (byte[]) conversionFunction.invoke(null, data);
+        } catch (Exception e) {
+            return new byte[0]; // the method needs to return a byte array
+        }
+    }
+
+} // end of class BluetoothOutput

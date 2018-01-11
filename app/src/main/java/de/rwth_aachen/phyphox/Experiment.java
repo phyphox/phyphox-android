@@ -395,8 +395,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
                 lockScreen();
                 // connect all bluetooth devices with an asyncTask
-                Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
-                btTask.context = Experiment.this;
+                final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
                 btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
                 final Runnable enableScreenRotation = new Runnable () {
                     @Override
@@ -404,6 +403,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     }
                 };
+
+                // define onSuccess
                 if (startMeasurement) {
                     btTask.onSuccess = new Runnable () {
                       @Override
@@ -419,7 +420,30 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 } else {
                     btTask.onSuccess = enableScreenRotation;
                 }
-                Bluetooth.errorDialog.cancel = enableScreenRotation; // enable screen rotation again if errorDialog is cancelled
+
+                // set attributes of errorDialog
+                Bluetooth.errorDialog.context = Experiment.this;
+                Bluetooth.errorDialog.cancel = new Runnable () {
+                    @Override
+                    public void run () {
+                        btTask.progress.dismiss();
+                        enableScreenRotation.run(); // enable screen rotation again if errorDialog is cancelled
+                    }
+                };
+                Bluetooth.errorDialog.tryAgain = new Runnable() {
+                    @Override
+                    public void run() {
+                        // start a new task with the same attributes
+                        Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
+                        newBtTask.progress = btTask.progress;
+                        newBtTask.onSuccess = btTask.onSuccess;
+                        // show ProgressDialog again
+                        if (btTask.progress != null) {
+                            btTask.progress.show();
+                        }
+                        newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+                    }
+                };
                 btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
             }
         }

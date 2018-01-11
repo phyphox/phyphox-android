@@ -124,7 +124,6 @@
     <string name="bt_exception_notification_disable">konnte nicht wieder deaktiviert werden.</string>
     <string name="bt_exception_notification_fail_enable">Aktivieren der Notifications für die Characteristic mit der UUID</string>
     <string name="bt_exception_notification_fail">war nicht erfolgreich.</string>
-    <string name="bt_exception_conversion3">Es ist ein Fehler aufgetreten bei der Umwandlungsfunktion</string>
     <string name="bt_exception_no_connection">Es besteht keine Verbindung zu dem Bluetooth Gerät. Das Experiment kann nicht gestartet werden.</string>
     <string name="bt_exception_disconnected">Die Verbindung zu dem Bluetooth Gerät wurde getrennt.</string>
     <string name="bt_default_error_message">Es ist ein Fehler mit einem Bluetooth Gerät aufgetreten.</string>

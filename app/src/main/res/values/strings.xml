@@ -166,7 +166,6 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="bt_exception_notification_disable">could not be disabled again.</string>
     <string name="bt_exception_notification_fail_enable">Turning on notifications for the Characteristic with the UUID</string>
     <string name="bt_exception_notification_fail">was not successful.</string>
-    <string name="bt_exception_conversion3">An error occurred on the conversion function</string>
     <string name="bt_exception_config">The value for the characteristic</string>
     <string name="bt_exception_config2">could not be set.</string>
     <string name="bt_exception_no_connection">The Bluetooth device is not connected. Experiment can not be started.</string>
