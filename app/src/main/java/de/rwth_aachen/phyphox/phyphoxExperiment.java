@@ -86,6 +86,7 @@ public class phyphoxExperiment implements Serializable {
     //Parameters for audio record
     transient AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
     String micOutput; //The key name of the buffer which receives the data from audio recording.
+    String micRateOutput; //The key name of the buffer which receives the sample rate of audio recording.
     int micRate = 48000; //The recording rate in Hz
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
@@ -166,6 +167,9 @@ public class phyphoxExperiment implements Serializable {
 
         //Get the data from the audio recording if used
         if (audioRecord != null && measuring) {
+            dataBuffer sampleRateBuffer = null;
+            if (!micRateOutput.isEmpty())
+                sampleRateBuffer = getBuffer(micRateOutput);
             dataBuffer recording = getBuffer(micOutput);
             final int readBufferSize = Math.max(Math.min(recording.size, 4800),minBufferSize); //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
@@ -175,6 +179,8 @@ public class phyphoxExperiment implements Serializable {
                 try {
                     if (recordingUsed) {
                         recording.clear(false); //We only want fresh data
+                        if (sampleRateBuffer != null)
+                            sampleRateBuffer.append(audioRecord.getSampleRate());
                         recordingUsed = false;
                     }
                     recording.append(buffer, bytesRead);

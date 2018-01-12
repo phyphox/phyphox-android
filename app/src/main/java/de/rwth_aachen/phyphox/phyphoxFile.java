@@ -39,7 +39,7 @@ import java.util.Vector;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.5";
+    final static String phyphoxFileVersion = "1.6";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -1055,7 +1055,7 @@ public abstract class phyphoxFile {
                     }
                     break;
                 }
-                case "location": { //Audio input, aka microphone
+                case "location": { //GPS input
                     //Check for recording permission
                     if (ContextCompat.checkSelfPermission(parent, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         //No permission? Request it (Android 6+, only)
@@ -1101,12 +1101,17 @@ public abstract class phyphoxFile {
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "rate"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                     };
                     Vector<dataOutput> outputs = new Vector<>();
-                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
+                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     experiment.micOutput = outputs.get(0).buffer.name;
                     experiment.micBufferSize = outputs.get(0).size()*2; //Output-buffer size
+                    if (outputs.size() > 1)
+                        experiment.micRateOutput = outputs.get(1).buffer.name;
+                    else
+                        experiment.micRateOutput = "";
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
                     experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
