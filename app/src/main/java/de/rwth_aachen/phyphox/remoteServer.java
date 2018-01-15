@@ -10,18 +10,30 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.SparseIntArray;
 
+import org.apache.http.ConnectionReuseStrategy;
+import org.apache.http.Header;
+import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.HttpVersion;
+import org.apache.http.ParseException;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.TokenIterator;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ContentProducer;
 import org.apache.http.entity.EntityTemplate;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.DefaultHttpServerConnection;
+import org.apache.http.message.BasicTokenIterator;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.BasicHttpProcessor;
+import org.apache.http.protocol.ExecutionContext;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.protocol.HttpRequestHandlerRegistry;
@@ -32,6 +44,7 @@ import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -360,7 +373,7 @@ public class remoteServer extends Thread {
             //Setup server socket
             ServerSocket serverSocket = new ServerSocket(HttpServerPORT);
             serverSocket.setReuseAddress(true);
-            serverSocket.setSoTimeout(5000);
+            serverSocket.setSoTimeout(3000);
 
             //The actual loop
             while (RUNNING) {
@@ -375,7 +388,14 @@ public class remoteServer extends Thread {
                         httpServerConnection.bind(socket, new BasicHttpParams());
 
                         //Do what has been requested and answer (see handle registry below)
-                        httpService.handleRequest(httpServerConnection, basicHttpContext);
+                        //while (httpServerConnection.isOpen() && RUNNING) {
+                            httpService.handleRequest(httpServerConnection, basicHttpContext);
+                        //}
+                        //Note about the commented while-loop:
+                        //In theory, this loop should improve performance by allowing persistent connections, but for some reason many requests
+                        //fail if they are send in rapid succession. Not sure why... One idea is, that the second request is send while the first
+                        //one is still being handled and hence entirely ignored. If we close the connection instead, the browser is forced to
+                        //send it again at a more convenient timing... Not entirely convinced. For now let's use the version that works better...
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -393,6 +413,7 @@ public class remoteServer extends Thread {
             e.printStackTrace();
         }
     }
+
 
     //This starts the http service and registers the handlers for several requests
     private synchronized void startHttpService() {
@@ -432,23 +453,14 @@ public class remoteServer extends Thread {
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
 
-            HttpEntity httpEntity = new EntityTemplate(
-                    new ContentProducer() {
-
-                        public void writeTo(final OutputStream outstream)
-                                throws IOException {
-
-                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
-                                    outstream, "UTF-8");
-
-                            outputStreamWriter.write(indexHTML);
-                            outputStreamWriter.flush();
-                        }
-                    });
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = new ByteArrayInputStream(indexHTML.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
 
             //Set the header and THEN send the file
             response.setHeader("Content-Type", "text/html");
-            response.setEntity(httpEntity);
+            response.setEntity(entity);
         }
 
     }
@@ -460,23 +472,14 @@ public class remoteServer extends Thread {
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
 
-            HttpEntity httpEntity = new EntityTemplate(
-                    new ContentProducer() {
-
-                        public void writeTo(final OutputStream outstream)
-                                throws IOException {
-
-                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
-                                    outstream, "UTF-8");
-
-                            outputStreamWriter.write(styleCSS);
-                            outputStreamWriter.flush();
-                        }
-                    });
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = new ByteArrayInputStream(styleCSS.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
 
             //Set the header and THEN send the file
             response.setHeader("Content-Type", "text/css");
-            response.setEntity(httpEntity);
+            response.setEntity(entity);
         }
 
     }
@@ -488,26 +491,13 @@ public class remoteServer extends Thread {
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
 
-            HttpEntity httpEntity = new EntityTemplate(
-                    new ContentProducer() {
-
-                        public void writeTo(final OutputStream outstream)
-                                throws IOException {
-
-                            InputStream is = res.openRawResource(R.raw.phyphox_orange);
-
-                            byte[] buffer = new byte[1024];
-                            int len = is.read(buffer);
-                            while (len != -1) {
-                                outstream.write(buffer, 0, len);
-                                len = is.read(buffer);
-                            }
-                        }
-                    });
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = res.openRawResource(R.raw.phyphox_orange);
+            entity.setContent(inputStream);
 
             //Set the header and THEN send the file
             response.setHeader("Content-Type", "image/png");
-            response.setEntity(httpEntity);
+            response.setEntity(entity);
         }
 
     }
@@ -701,20 +691,13 @@ public class remoteServer extends Thread {
             //Done. Build a string and return it as usual
             final String result = sb.toString();
 
-            HttpEntity httpEntity = new EntityTemplate(
-                    new ContentProducer() {
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
 
-                        public void writeTo(final OutputStream outstream)
-                                throws IOException {
-
-                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
-                                    outstream, "UTF-8");
-                            outputStreamWriter.write(result);
-                            outputStreamWriter.flush();
-                        }
-                    });
             response.setHeader("Content-Type", "application/json");
-            response.setEntity(httpEntity);
+            response.setEntity(entity);
         }
 
     }
@@ -805,21 +788,13 @@ public class remoteServer extends Thread {
             } else
                 result = "{\"result\" = false}";
 
-            //Write the result string to the output stream
-            HttpEntity httpEntity = new EntityTemplate(
-                    new ContentProducer() {
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
 
-                        public void writeTo(final OutputStream outstream)
-                                throws IOException {
-
-                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
-                                    outstream, "UTF-8");
-                            outputStreamWriter.write(result);
-                            outputStreamWriter.flush();
-                        }
-                    });
             response.setHeader("Content-Type", "application/json");
-            response.setEntity(httpEntity);
+            response.setEntity(entity);
         }
 
     }
@@ -839,25 +814,18 @@ public class remoteServer extends Thread {
 
             //We will build this entity depending on the format. If it is invalid we will repons
             //with an error
-            HttpEntity httpEntity;
+            BasicHttpEntity entity;
             int formatInt = Integer.parseInt(format);
             if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
                 //Not good. Build an error entity
                 final String result = "{\"error\" = \"Format out of range.\"}";
-                httpEntity = new EntityTemplate(
-                        new ContentProducer() {
 
-                            public void writeTo(final OutputStream outstream)
-                                    throws IOException {
+                entity = new BasicHttpEntity();
+                InputStream inputStream = new ByteArrayInputStream(result.getBytes());
+                entity.setContent(inputStream);
+                entity.setContentLength(inputStream.available());
 
-                                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
-                                        outstream, "UTF-8");
-                                outputStreamWriter.write(result);
-                                outputStreamWriter.flush();
-                            }
-                        });
                 response.setHeader("Content-Type", "application/json");
-                response.setEntity(httpEntity);
             } else {
                 //Alright, let's go on with the export
 
@@ -867,22 +835,10 @@ public class remoteServer extends Thread {
                 //Use the experiment's exporter to create the file
                 final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir());
 
-                //Now we only have to read the file and pass it to the output stream
-                httpEntity = new EntityTemplate(
-                        new ContentProducer() {
-                            public void writeTo(final OutputStream outstream)
-                                throws IOException {
-
-
-                                InputStream is = new FileInputStream(exportFile);
-                                byte[] buffer = new byte[1024];
-                                int len = is.read(buffer);
-                                while (len != -1) {
-                                    outstream.write(buffer, 0, len);
-                                    len = is.read(buffer);
-                                }
-                            }
-                        });
+                entity = new BasicHttpEntity();
+                InputStream inputStream = new FileInputStream(exportFile);
+                entity.setContent(inputStream);
+                entity.setContentLength(inputStream.available());
 
                 //Set the content type and set "Content-Disposition" to force the browser to handle this as a download with a default file name
                 response.setHeader("Content-Type", type);
@@ -890,7 +846,7 @@ public class remoteServer extends Thread {
             }
 
             //Send error or file
-            response.setEntity(httpEntity);
+            response.setEntity(entity);
 
         }
 

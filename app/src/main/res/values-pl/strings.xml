@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Ustawienia</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Dodaj eksperyment</string>
+    <string name="newExperimentPhyphoxInfo">Aby przygotować zaawansowane doświadczenia zawierające analizę danych oraz by dzielić się doświadczeniami z innymi odwiedź stronę phyphox.org.</string>
+    <string name="newExperimentInputTitle">Tytuł</string>
+    <string name="newExperimentInputBufferSize">Rozmiar bufora (liczba przechowywanych wartości)</string>
+    <string name="newExperimentInputRate">Częstotliwość czujnika (w Hz, 0 = maksymalna dozwolona)</string>
+    <string name="newExperimentInputSensors">Aktywne czujniki</string>
+
+    <string name="help">Pomoc i informacje</string>
+    <string name="experimentsPhyphoxOrg">Pomysły na eksperyment i instrukcje</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Najczęściej zadawane pytania</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Pomoc zdalnego dostępu</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+
+    <string name="warning">Uwaga</string>
+    <string name="donotshowagain">Nie pokazuj ponownie</string>
+    <string name="damageWarning">Postępuj rozważnie by nie uszkodzić swojego telefony podczas eksperymentu. Zadbaj, by telefon nie spadł na twarde podłoże i nie był narażony na znaczne pole magnetyczne. Autorzy phyphox\'a nie odpowiadają za szkody powstałe podczas doświadczeń z telefonem.</string>
+
+    <string name="credits">Autorzy</string>
+    <string name="creditsRWTH">phyphox powstał w II Instytucie Fizyki Uniwersytetu RWTH w Aachen.</string>
+    <string name="sensorLinearAcceleration">Przyspieszenie liniowe</string>
+    <string name="sensorLight">Światła</string>
+    <string name="sensorGyroscope">Żyroskop</string>
+    <string name="sensorAccelerometer">Akcelerometr (czujnik przyspieszenia)</string>
+    <string name="sensorMagneticField">Pole magnetyczne</string>
+    <string name="sensorPressure">Ciśnienie</string>
+    <string name="sensorProximity">Zbliżeniowy</string>
+
+    <string name="location">Położenie</string>
+
+    <string name="sensorNotAvailableWarningTitle">Czujnik niedostępny.</string>
+    <string name="sensorNotAvailableWarningText1">Czujnik</string>
+    <string name="sensorNotAvailableWarningText2">niedostępny. Zazwyczaj oznacza to, że urządzenie nie jest wyposażone w tego typu czujnik.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Więcej informacji</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Zamknij</string>
+    <string name="next">Następny</string>
+    <string name="cancel">Zaniechaj</string>
+    <string name="unknown">nieznany</string>
+
+    <string name="delete">Usuń</string>
+    <string name="confirmDelete">Czy usunąć eksperyment z twojego zbioru?</string>
+    <string name="confirmDeleteTitle">Akceptujesz usunięcie?</string>
+
+    <string name="stop">Zatrzymaj</string>
+    <string name="start">Uruchom</string>
+    <string name="clear_data">Usuń dane</string>
+    <string name="clear_data_question">Usunąć zapisane wyniki?</string>
+    <string name="clear">Wyczyść</string>
+    <string name="timed_stop">Zatrzymaj sesję pomiarową</string>
+    <string name="timed_start">Rozpocznij sesję pomiarową</string>
+
+    <string name="loadingTitle">Ładowanie</string>
+    <string name="loadingText">Ładowanie eksperymentu…</string>
+
+    <string name="timedRunDialogTitle">Czas sesji pomiarowej</string>
+    <string name="timedRunStartDelay">Opóźnienie uruchomienia</string>
+    <string name="timedRunStopDelay">Czas trwania eksperymentu</string>
+    <string name="export">Eksportuj dane</string>
+    <string name="export_subject">Dane z phyphox\'a</string>
+    <string name="export_pick_share">Wybierz metodę eksportowania</string>
+
+    <string name="share">Udostępnij zrzut ekranu</string>
+    <string name="share_subject">Zrzut ekranu z phyphox\'a</string>
+    <string name="share_pick_share">Wybierz metodę udostępniania</string>
+
+    <string name="remoteServerWarning">Zamierzasz zezwolić na dostęp zdalny do danych. Procedura ta winna być uruchamiana tylko w zaufanej sieci! Należy pamiętać, że bezpośrednie połączenie między urządzeniami nie będzie możliwe w większości sieci korporacyjnych i uniwersyteckich.
+\n
+\nDla zwiększenia bezpieczeństaw zalecamy połączenie przez opcję tethering\'u (punkt dostępowy).
+\n
+\nPo naciśnięciu ok, wyniki pomiarów będą dostępne w przeglądarce uruchomionej w tej samej sieci.</string>
+    <string name="remoteServerWarningTitle">Ostrzeżenie bezpieczeństwa!</string>
+    <string name="hotspotSettings">Ustawienia punktu dostępowego</string>
+
+    <string name="switchToPhoneLayout">Widok: Ograniczony</string>
+    <string name="switchColumns1">Widok: 1 kolumna</string>
+    <string name="switchColumns2">Widok: 2 kolumna</string>
+    <string name="switchColumns3">Widok: 3 kolumna</string>
+
+    <string name="show_description">Informacje o eksperymencie</string>
+    <string name="save_locally">Dodaj eksperyment do zbioru</string>
+    <string name="save_locally_done">Eksperyment pomyślnie dodany do zbioru.</string>
+    <string name="save_locally_message">Eksperyment otwarty ze zdalnego źrodła. Czy dodać go do twojego zbioru eksperymentów?</string>
+    <string name="save_locally_button">Zapisz do zbioru</string>
+    <string name="save_state">Zapisz status eksperymentu</string>
+    <string name="save_state_category">Satus eksperymentu zapisany</string>
+    <string name="save_state_message">Możesz zapisać status eksperymentu wraz z wynikami w swoim zbiorze lub udostępnić go innej aplikacji.</string>
+    <string name="save_state_title">Tytuł</string>
+    <string name="save_state_save">Do zbioru</string>
+    <string name="save_state_share">Udostępnij</string>
+    <string name="save_state_subject">Status eksperymentu dla phyphox\'a</string>
+    <string name="save_state_default_title">Pomiary</string>
+    <string name="save_state_success">Status został zapisany w twoim zbiorze.</string>
+
+    <string name="timedRun">Czas trwania</string>
+
+    <string name="pick_exportSets">Wybierz zakres danym do wyeksportowania.</string>
+    <string name="pick_exportFormat">Wybierz format danych.</string>
+
+    <string name="noDrawableData">Brak zaznaczonych danych.</string>
+
+    <string name="categoryNewExperiment">Własne eksperymenty</string>
+    <string name="categoryRawSensor">Nieskalibrowane czujniki</string>
+
+    <string name="experimentinfo_hint">Sprawdź informacje nt. eksperymentu by dowiedzieć się więcej.</string>
+<string name="translationInfo">Języki</string>
+    <string name="translationText">Phyphox używa pierwszego z języków z listy języków preferowanych. Zmiany języka można dokonać w systemie Android po wybraniu opcji \"ustawienia\" znajdującej się poniżej. Lista dostępnych języków oraz dodatkowe informacje znajdują się na stronie projektu, na którą przekierowuje opcja \"odwiedź stronę\".</string>
+    <string name="translationToSettings">Ustawienia</string>
+    <string name="translationToWebsite">Odwiedź stronę</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/faq-pl/#faqTranslation</string>
+
+    <string name="info">Info</string>
+    <string name="creditsNames">Koncepcja i rozwój:<br/><b>Dr. Sebastian Staacks</b><br/>Koncepcja:<br/><b>Prof. Christoph Stampfer</b><br/>Projekt graficzny:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programowanie:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA i Ole Laursen) oraz \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), dostępnych w licencji MIT.</string>
+    <string name="sensorTemperature">Temperatura</string>
+    <string name="sensorHumidity">Wilgotność</string>
+    <string name="enableTimedRun">Określ czas trwania sesji pomiarowej</string>
+
+    <string name="remoteServer">Dostęp zdalny</string>
+    <string name="remoteServerActive">Dostęp zdalny włączony. Eksperyment dostępny pod adresem URL: 
+\n%1$s</string>
+    <string name="calibrated_magnetometer">Użyj kalibrowanego magnetometru</string>
+
+    </resources>

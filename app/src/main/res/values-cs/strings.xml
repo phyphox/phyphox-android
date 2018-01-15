@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="switchColumns1">Zobrazit: 1 sloupec</string>
@@ -6,7 +6,7 @@
     <string name="switchColumns2">Zobrazit: 2 sloupce</string>
     <string name="help">Nápověda a informace</string>
     <string name="newExperimentPhyphoxInfo">Na stránce phyphox.org můžete vytvářet další pokročilé experimenty obsahující i analýzu naměřených dat. Takto vytvořené experimenty můžete sdílet se svými kolegy, studenty a přáteli.</string>
-    <string name="loadingText">Načítám experimentâ€¦</string>
+    <string name="loadingText">Načítám experimentâ…</string>
     <string name="save_state_success">Stav experimentu byl uložen.</string>
     <string name="save_state">Uložit stav experimentu</string>
     <string name="location">Pozice</string>
@@ -21,7 +21,7 @@
     <string name="save_state_title">Nadpis</string>
     <string name="newExperimentInputBufferSize">Velikost vyrovnávací paměti (počet ukládaných hodnot)</string>
     <string name="sensorLinearAcceleration">Lineární Akcelerace</string>
-    <string name="categoryRawSensor">Výstup senzorů</string>
+    <string name="categoryRawSensor">Senzory</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="save_locally_button">Uložit do sbírky</string>
     <string name="save_state_message">Můžete uložit současný stav experimentu včetně nasbíraných dat do své sbírky nebo jej sdílet s dalšími aplikacemi.</string>
@@ -79,12 +79,18 @@
     <string name="save_state_category">Uložené experimenty</string>
     <string name="warning">Varování</string>
     <string name="damageWarning">Prosím vyvarujte se během experimentování poškození svého mobilního telefonu. Obzvláště se vyhněte upuštění mobilu na tvrdý povrch anebo jeho přiblížení k příliš silnému magnetickému poli. Autoři phyphoxu nejsou zodpovědní za žádné poškození vzniklé na vašem mobilním zařízení.</string>
-    <string name="creditsRWTH">phyphox byl vytvořen na Druhém Institutu Fyziky na RWTH Univerzitě v Aachen</string>
+    <string name="creditsRWTH">phyphox byl vytvořen na Druhém Institutu Fyziky na RWTH Univerzitě v Aachen.</string>
     <string name="sensorMagneticField">Magnetické pole</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="confirmDelete">Chcete tento experiment smazat ze své sbírky?</string>
-    <string name="creditsNames"><![CDATA[             Vývoj a koncept:<br /><b>Dr. Sebastian Kuhlen</b><br />iOS implementace:<br /><b>Jonas Gessner</b><br />Koncept:<br /><b>Prof. Christoph Stampfer</b><br />Dizajn:<br /><b>Frank Posthoff (A.NikoPol)</b>         ]]></string>
-    <string name="remoteServerWarning">Právě se chystáte povolit aplikaci vzdálený přístup k naměřeným datům. Prosím ověřte si, že jste připojeni na důvěryhodné síti! Zároveň vás chceme upozornit, že přímé spojení přístrojů není na mnoha univerzitní či firemních sítích povoleno a tedy ani umožněno.\n\Pro zajištění maximální bezpečnosti a výkonu doporučujeme připojení tohoto zařízení pomocí tetheringu (vytvoření mobilního hotspotu).\n\Po zmáčknutí tlačítka Ok můžete svá měření zobrazit jakýmkoliv internetovým prohlížečem na stejné ethernetové síti.</string>
+    <string name="creditsNames">
+        <![CDATA[
+            Vývoj a koncept:<br/><b>Dr. Sebastian Staacks</b><br/>Koncept:<br/><b>Prof. Christoph Stampfer</b><br/>Dizajn:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programování:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
+    <string name="remoteServerWarning">Právě se chystáte povolit aplikaci vzdálený přístup k naměřeným datům. Prosím ověřte si, že jste připojeni na důvěryhodné síti! Zároveň vás chceme upozornit, že přímé spojení přístrojů není na mnoha univerzitní či firemních sítích povoleno a tedy ani umožněno.
+\nPro zajištění maximální bezpečnosti a výkonu doporučujeme připojení tohoto zařízení pomocí tetheringu (vytvoření mobilního hotspotu).
+\nPo zmáčknutí tlačítka Ok můžete svá měření zobrazit jakýmkoliv internetovým prohlížečem na stejné ethernetové síti.</string>
     <string name="sensorHumidity">Vlhkost</string>
     <string name="export_pick_share">Vyberte si, jak chcete exportovat</string>
     <string name="sensorNotAvailableWarningTitle">Senzor není dostupný.</string>

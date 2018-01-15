@@ -1276,12 +1276,12 @@ public class expView implements Serializable{
                         "var d = [];" +
                         "if (!elementData["+htmlID+"].hasOwnProperty(\"y\"))" +
                             "return;" +
-                        "if (!elementData["+htmlID+"].hasOwnProperty(\"x\") || elementData["+htmlID+"][\"x\"].length < elementData["+htmlID+"][\"y\"].length) {" +
+                        "if (!elementData["+htmlID+"].hasOwnProperty(\"x\") || elementData["+htmlID+"][\"x\"].length == 0) {" +
                             "elementData["+htmlID+"][\"x\"] = [];" +
                             "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
                                 "elementData["+htmlID+"][\"x\"][i] = i" +
                         "}" +
-                        "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
+                        "for (i = 0; i < elementData["+htmlID+"][\"y\"].length && i < elementData[" + htmlID + "][\"x\"].length; i++)" +
                             "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
                         "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(style.get(0) == graphView.Style.lines ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth.get(0))+"}, \"points\": {show:"+(style.get(0) == graphView.Style.dots ? "true" : "false")+"}, \"xaxis\": {" + scaleX + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + scaleY + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
                     "}";

@@ -29,6 +29,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
@@ -53,8 +54,8 @@ public class phyphoxExperiment implements Serializable {
     String category = ""; //The category of this experiment
     String icon = ""; //The icon. This is either a base64-encoded drawable (typically png) or (if its length is 3 or less characters) it is a short form which should be used in a simple generated logo (like "gyr" for gyroscope). (The experiment list will use the first three characters of the title if this is completely empty)
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment
-    public Map<String, String> links = new HashMap<>(); //This contains links to external documentation or similar stuff
-    public Map<String, String> highlightedLinks = new HashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
+    public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
+    public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
     public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
     public gpsInput gpsIn = null;
@@ -85,6 +86,7 @@ public class phyphoxExperiment implements Serializable {
     //Parameters for audio record
     transient AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
     String micOutput; //The key name of the buffer which receives the data from audio recording.
+    String micRateOutput; //The key name of the buffer which receives the sample rate of audio recording.
     int micRate = 48000; //The recording rate in Hz
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
@@ -165,6 +167,9 @@ public class phyphoxExperiment implements Serializable {
 
         //Get the data from the audio recording if used
         if (audioRecord != null && measuring) {
+            dataBuffer sampleRateBuffer = null;
+            if (!micRateOutput.isEmpty())
+                sampleRateBuffer = getBuffer(micRateOutput);
             dataBuffer recording = getBuffer(micOutput);
             final int readBufferSize = Math.max(Math.min(recording.size, 4800),minBufferSize); //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
@@ -174,6 +179,8 @@ public class phyphoxExperiment implements Serializable {
                 try {
                     if (recordingUsed) {
                         recording.clear(false); //We only want fresh data
+                        if (sampleRateBuffer != null)
+                            sampleRateBuffer.append(audioRecord.getSampleRate());
                         recordingUsed = false;
                     }
                     recording.append(buffer, bytesRead);

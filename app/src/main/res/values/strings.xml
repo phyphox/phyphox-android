@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Settings</string>
@@ -17,6 +18,11 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Remote control help</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Languages</string>
+    <string name="translationText">Phyphox will use the first language available from your preferred languages list. To change your preferences, go to your Android \"settings\" below. To learn which languages are available and how you can help, select \"visit website\".</string>
+    <string name="translationToSettings">Settings</string>
+    <string name="translationToWebsite">Visit website</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/faq/#faqTranslation</string>
 
     <string name="warning">Warning</string>
     <string name="donotshowagain">Do not show again</string>
@@ -27,7 +33,7 @@
     <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
     <string name="creditsNames">
         <![CDATA[
-            Development and Concept:<br /><b>Dr. Sebastian Kuhlen</b><br />iOS implementation:<br /><b>Jonas Gessner</b><br />Concept:<br /><b>Prof. Christoph Stampfer</b><br />Design:<br /><b>Frank Posthoff (A.NikoPol)</b>
+            Development and Concept:<br/><b>Dr. Sebastian Staacks</b><br/>Concept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programming:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
         ]]>
     </string>
     <string name="creditsLibs">
@@ -64,7 +70,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="location">Location</string>
 
-    <string name="sensorNotAvailableWarningTitle">Sensor not available</string>
+    <string name="sensorNotAvailableWarningTitle">Sensor not available.</string>
     <string name="sensorNotAvailableWarningText1">The sensor</string>
     <string name="sensorNotAvailableWarningText2">is not available. Usually this means, that your device simply does not have this type of sensor.</string>
     <string name="sensorNotAvailableWarningMoreInfo">More info</string>
@@ -107,7 +113,8 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="remoteServer">Allow remote access</string>
     <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.</string>
     <string name="remoteServerWarningTitle">Security warning!</string>
-    <string name="remoteServerActive">Remote access enabled. Access this experiment from te following URL:\n%1$s</string>
+    <string name="remoteServerActive">Remote access enabled. Access this experiment from the following URL:
+\n%1$s</string>
     <string name="hotspotSettings">Hotspot Settings</string>
 
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
@@ -119,7 +126,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="show_description">Experiment info</string>
     <string name="save_locally">Add experiment to collection</string>
-    <string name="save_locally_done">Experiment successfully added to collection</string>
+    <string name="save_locally_done">Experiment successfully added to collection.</string>
     <string name="save_locally_message">This experiment has been opened from a remote source. Do you want to add it to your experiment collection?</string>
     <string name="save_locally_button">Save to collection</string>
     <string name="save_state">Save experiment state</string>
@@ -143,4 +150,5 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="categoryRawSensor">Raw Sensors</string>
 
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
+
 </resources>

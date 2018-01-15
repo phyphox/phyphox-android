@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox;
 import android.app.Activity;
 import android.app.ActivityOptions;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -888,6 +889,37 @@ public class ExperimentList extends AppCompatActivity {
                                 }
                             }
                             return true;
+                            case R.id.action_translationInfo: {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                                builder.setMessage(res.getString(R.string.translationText))
+                                        .setTitle(R.string.translationInfo)
+                                        .setPositiveButton(R.string.translationToWebsite, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                Uri uri = Uri.parse(res.getString(R.string.translationToWebsiteURL));
+                                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                                if (intent.resolveActivity(getPackageManager()) != null) {
+                                                    startActivity(intent);
+                                                }
+                                            }
+                                        })
+                                        .setNeutralButton(R.string.translationToSettings, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                final Intent intent = new Intent(Intent.ACTION_MAIN, null);
+                                                intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                                                final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.LanguageSettings");
+                                                intent.setComponent(cn);
+                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                startActivity( intent);
+                                            }
+                                        })
+                                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+
+                                            }
+                                        });
+                                AlertDialog dialog = builder.create();
+                                dialog.show();
+                            }
                             default:
                                 return false;
                         }
