@@ -395,10 +395,12 @@ public class expView implements Serializable{
         protected String setDataHTML() {
             StringBuilder sb = new StringBuilder();
 
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+
             sb.append("function (data) {");
-            sb.append("     if (!data.hasOwnProperty(\""+inputs.get(0).replace("\"", "\\\"")+"\"))");
+            sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
             sb.append("         return;");
-            sb.append(      "var x = data[\""+inputs.get(0).replace("\"", "\\\"")+"\"];");
+            sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
             sb.append(      "var v = null;");
 
             sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
@@ -773,10 +775,11 @@ public class expView implements Serializable{
         @Override
         //The javascript function which updates the content of the input as it is updated on the phone
         protected String setDataHTML() {
-            return "function (x) {" +
-                    "if (!data.hasOwnProperty(\""+inputs.get(0).replace("\"", "\\\"")+"\"))" +
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+            return "function (data) {" +
+                    "if (!data.hasOwnProperty(\""+bufferName+"\"))" +
                     "    return;" +
-                    "var x = data[\""+inputs.get(0).replace("\"", "\\\"")+"\"];" +
+                    "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];" +
                     "if (!$(\"#element"+htmlID+" .value\").is(':focus'))" +
                         "$(\"#element"+htmlID+" .value\").val((x*"+factor+"))" +
                     "}";
@@ -1157,7 +1160,7 @@ public class expView implements Serializable{
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"></div></div>" +
+                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"><canvas width=\"1000\" height=\""+(1000.0/this.aspectRatio)+"\"></canvas></div></div>" +
                     "</div>";
         }
 
@@ -1211,16 +1214,12 @@ public class expView implements Serializable{
         //Return a javascript function which stores the x data array for later use
         protected String setDataHTML() {
             StringBuilder sb = new StringBuilder();
-            sb.append("function (x) {");
-            sb.append("     if (!data.hasOwnProperty(\""+inputs.get(0).replace("\"", "\\\"")+"\"))");
-            sb.append("         return;");
-            sb.append("     var y = data[\""+inputs.get(0).replace("\"", "\\\"")+"\"];");
-            sb.append("     elementData["+htmlID+"][\"y\"] = y;");
-            if (inputs.size() > 1) {
-                sb.append("     if (!data.hasOwnProperty(\"" + inputs.get(1).replace("\"", "\\\"") + "\"))");
-                sb.append("         return;");
-                sb.append("     var x = data[\"" + inputs.get(1).replace("\"", "\\\"") + "\"];");
-                sb.append("     elementData[" + htmlID + "][\"x\"] = x;");
+            sb.append("function (data) {");
+            sb.append("     elementData[" + htmlID + "][\"datasets\"] = [];");
+            for (int i = 0; i < inputs.size(); i++) {
+                sb.append("if (!data.hasOwnProperty(\""+inputs.get(i).replace("\"", "\\\"")+"\"))");
+                sb.append("    return;");
+                sb.append("elementData["+htmlID+"][\"datasets\"]["+i+"] = data[\""+inputs.get(i).replace("\"", "\\\"")+"\"];");
             }
             sb.append("}");
             return sb.toString();
@@ -1251,16 +1250,6 @@ public class expView implements Serializable{
         //function (which has to setup some JSON itself) and return the whole nightmare. There
         //certainly is a way to beautify this, but it's not too obvious...
         protected String dataCompleteHTML() {//TODO: Create intelligent function to setup ticks on log scales
-            String transformX, transformY;
-            if (logX)
-                transformX = "ticks: [0.1,1,10,100,1000,10000], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, ";
-            else
-                transformX = "\"ticks\": 3, ";
-            if (logY)
-                transformY = "ticks: [0.01,0.1,1,10], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, ";
-            else
-                transformY = "\"ticks\": 3, ";
-
             String scaleX = "";
             if (scaleMinX == graphView.scaleMode.fixed && !Double.isNaN(minX))
                 scaleX += "\"min\":" + minX + ", ";
@@ -1272,18 +1261,152 @@ public class expView implements Serializable{
             if (scaleMaxY == graphView.scaleMode.fixed && !Double.isNaN(maxY))
                 scaleY += "\"max\":" + maxY + ", ";
 
+            String styleDetection = "switch (i/2) {";
+            String graphSetup = "[";
+            for (int i = 0; i < inputs.size(); i+=2) {
+
+                graphSetup +=   "{"+
+                                    "type: \"scatter\"," +
+                                    "showLine: "+ (style.get(i/2) != graphView.Style.dots ? "true" : "false") +"," +
+                                    "fill: "+(style.get(i/2) == graphView.Style.vbars || style.get(i/2) == graphView.Style.hbars ? "\"origin\"" : "false")+"," +
+                                    "pointRadius: "+ (style.get(i/2) == graphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"," +
+                                    "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
+                                    "pointHoverRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
+                                    "lineTension: 0," +
+                                    "borderCapStyle: \"butt\"," +
+                                    "borderJoinStyle: \"round\"," +
+                                    "spanGaps: false," +
+                                    "borderColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
+                                    "backgroundColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
+                                    "borderWidth: " + (style.get(i/2) == graphView.Style.vbars || style.get(i/2) == graphView.Style.hbars ? 0.0 : 2.0*lineWidth.get(i/2)) + "," +
+                                    "xAxisID: \"xaxis\"," +
+                                    "yAxisID: \"yaxis\"," +
+                                    "data: d[" + i + "]," +
+                                "},";
+
+                styleDetection += "case " + (i/2) + ": type = \"" + style.get(i/2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "; break;";
+            }
+            styleDetection += "}";
+            graphSetup += "],";
+
             return "function () {" +
-                        "var d = [];" +
-                        "if (!elementData["+htmlID+"].hasOwnProperty(\"y\"))" +
+                        "if (elementData["+htmlID+"][\"datasets\"].length < 1)" +
                             "return;" +
-                        "if (!elementData["+htmlID+"].hasOwnProperty(\"x\") || elementData["+htmlID+"][\"x\"].length == 0) {" +
-                            "elementData["+htmlID+"][\"x\"] = [];" +
-                            "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
-                                "elementData["+htmlID+"][\"x\"][i] = i" +
+                        "var changed = false;" +
+                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i++) {" +
+                            "if (elementData["+htmlID+"][\"datasets\"][i][\"changed\"])" +
+                                "changed = true;" +
                         "}" +
-                        "for (i = 0; i < elementData["+htmlID+"][\"y\"].length && i < elementData[" + htmlID + "][\"x\"].length; i++)" +
-                            "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(style.get(0) == graphView.Style.lines ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth.get(0))+"}, \"points\": {show:"+(style.get(0) == graphView.Style.dots ? "true" : "false")+"}, \"xaxis\": {" + scaleX + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + scaleY + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
+                        "if (!changed)" +
+                            "return;" +
+                        "var d = [];" +
+                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
+                            "d[i/2] = [];" +
+                            "var xIndexed = ((i+1 >= elementData["+htmlID+"][\"datasets\"].length) || elementData["+htmlID+"][\"datasets\"][i+1][\"data\"].length == 0);" +
+                            "var type;" +
+                            "var lineWidth;" +
+                            styleDetection +
+                            "var lastX = false;" +
+                            "var lastY = false;" +
+                            "for (j = 0; j < elementData["+htmlID+"][\"datasets\"][i][\"data\"].length && (xIndexed || j < elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length); j++) {" +
+                                "var x = xIndexed ? j : elementData["+htmlID+"][\"datasets\"][i+1][\"data\"][j];"+
+                                "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
+                                "if (type == \""+graphView.Style.vbars+"\") {" +
+                                    "if (lastX !== false && lastY !== false) {"+
+                                        "var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
+                                        "d[i/2][j*3+0] = {x: lastX+offset, y: lastY};" +
+                                        "d[i/2][j*3+1] = {x: x-offset, y: lastY};" +
+                                        "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+                                    "}"+
+                                "} else if (type == \""+graphView.Style.hbars+"\") {" +
+                                    "if (lastX !== false && lastY !== false) {"+
+                                        "var offset = (y-lastX)*(1.0-lineWidth)/2.;" +
+                                        "d[i/2][j*3+0] = {x: lastX, y: lastY+offset};" +
+                                        "d[i/2][j*3+1] = {x: lastX, y: y-offset};" +
+                                        "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+                                    "}"+
+                                "} else {" +
+                                    "d[i/2][j] = {x: x, y: y};" +
+                                "}" +
+                                "lastX = x;" +
+                                "lastY = y;" +
+                            "}" +
+
+                        "}" +
+
+
+
+                        "if (elementData["+htmlID+"][\"graph\"]) {" +
+                            "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
+                                "elementData["+htmlID+"][\"graph\"].data.datasets[i/2].data = d[i/2];" +
+                            "}" +
+                            "elementData["+htmlID+"][\"graph\"].update();" +
+                        "} else {" +
+                            "var ctx = $(\"#element"+htmlID+" .graph canvas\");" +
+                            "elementData["+htmlID+"][\"graph\"] = new Chart(ctx, {" +
+                                "type: \"scatter\"," +
+                                "data: {datasets: "+
+                                    graphSetup +
+                                "}," +
+                                "options: {" +
+                                    "responsive: false, " +
+                                    "animation: false," +
+                                    "legend: false," +
+                                    "scales: {" +
+                                        "xAxes: [{" +
+                                            "id: \"xaxis\"," +
+                                            "type: \""+(logX ? "logarithmic" : "linear")+"\"," +
+                                            "position: \"bottom\"," +
+                                            "gridLines: {" +
+                                                "color: \"#"+gridColor+"\"," +
+                                                "zeroLineColor: \"#"+gridColor+"\"," +
+                                                "tickMarkLength: 0," +
+                                            "}," +
+                                            "scaleLabel: {" +
+                                                "display: true," +
+                                                "labelString: \""+this.labelX+"\"," +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 0, "+
+                                            "}," +
+                                            "ticks: {" +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 6, "+
+                                                "autoSkip: true," +
+                                                "maxTicksLimit: 10," +
+                                                scaleX+
+                                            "}" +
+                                        "}]," +
+                                        "yAxes: [{" +
+                                            "id: \"yaxis\"," +
+                                            "type: \""+(logX ? "logarithmic" : "linear")+"\"," +
+                                            "position: \"bottom\"," +
+                                            "gridLines: {" +
+                                                "color: \"#"+gridColor+"\"," +
+                                                "zeroLineColor: \"#"+gridColor+"\"," +
+                                                "tickMarkLength: 0," +
+                                            "}," +
+                                            "scaleLabel: {" +
+                                                "display: true," +
+                                                "labelString: \""+this.labelY+"\"," +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 6, "+
+                                            "}," +
+                                            "ticks: {" +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 6, "+
+                                                "autoSkip: true," +
+                                                "maxTicksLimit: 5," +
+                                                scaleY+
+                                            "}" +
+                                        "}]," +
+                                    "}" +
+                                "}" +
+                            "});" +
+                        "}" +
                     "}";
         }
 
