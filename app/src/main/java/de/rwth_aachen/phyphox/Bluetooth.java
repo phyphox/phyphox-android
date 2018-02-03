@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -22,7 +23,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -97,6 +97,7 @@ public class Bluetooth implements Serializable {
      */
     private Boolean isExecuting;
 
+    protected Activity activity;
     protected Context context;
     /**
      * used to display errors while the experiment is running
@@ -160,10 +161,11 @@ public class Bluetooth implements Serializable {
      * @param context         context
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public Bluetooth(String deviceName, String deviceAddress, Context context, Vector<CharacteristicData> characteristics) {
+    public Bluetooth(String deviceName, String deviceAddress, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
         this.deviceName = deviceName;
         this.deviceAddress = deviceAddress;
 
+        this.activity = activity;
         this.context = context;
         this.mainHandler = new Handler(this.context.getMainLooper());
         // create toast to show error messages while the experiment is running
@@ -227,10 +229,10 @@ public class Bluetooth implements Serializable {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
-        // searches for the device
+        // First check paired devices - those get precedence
         for (BluetoothDevice d : getPairedDevices()) {
-            if (deviceAddress == null || deviceAddress.isEmpty()) {
-                if (d.getName().equals(deviceName)) {
+            if (!deviceName.isEmpty() && (deviceAddress == null || deviceAddress.isEmpty())) {
+                if (d.getName().contains(deviceName)) {
                     btDevice = d;
                     break;
                 }
@@ -241,8 +243,19 @@ public class Bluetooth implements Serializable {
                 }
             }
         }
-        if (btDevice == null)
+        if (btDevice == null && deviceAddress != null && !deviceAddress.isEmpty()) {
+            btDevice = btAdapter.getRemoteDevice(deviceAddress);
+        }
+        if (btDevice == null) {
+            //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
+
+            BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
+            btDevice = bsd.getBluetoothDevice(deviceName);
+        }
+        if (btDevice == null) {
+            //still null? Give up and complain
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notfound), this);
+        }
     }
 
     /**
@@ -264,11 +277,11 @@ public class Bluetooth implements Serializable {
         boolean result = false;
 
         cdl = new CancellableLatch(1);
-        btGatt = btDevice.connectGatt(context, true, btLeGattCallback);
+        btGatt = btDevice.connectGatt(context, false, btLeGattCallback);
         try {
             // it should not be possible to continue before the device is connected
             // timeout after 5 seconds if the device could not be connected
-            result = cdl.await(5, TimeUnit.SECONDS);
+            result = cdl.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
         // throw exception if it was not possible to connect
@@ -285,7 +298,7 @@ public class Bluetooth implements Serializable {
         try {
             // it should not be possible to continue before the services are discovered
             // timeout after 5 seconds if the services could not be discovered
-            result = cdl.await(5, TimeUnit.SECONDS);
+            result = cdl.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
         if (!result) {
@@ -623,7 +636,9 @@ public class Bluetooth implements Serializable {
         /**
          * Method that will be called to convert the value of the characteristic.
          */
-        public Method conversionFunction = null;
+        public ConversionsConfig.ConfigConversion configConversionFunction = null;
+        public ConversionsInput.InputConversion inputConversionFunction = null;
+        public ConversionsOutput.OutputConversion outputConversionFunction = null;
 
         /**
          * Create a new Characteristic.
@@ -631,9 +646,19 @@ public class Bluetooth implements Serializable {
          * @param index              Index of the buffer the characteristic value should be saved in
          * @param conversionFunction Method that will be called to convert the value of the characteristic
          */
-        public Characteristic(int index, Method conversionFunction) {
+        public Characteristic(int index, ConversionsConfig.ConfigConversion conversionFunction) {
             this.index = index;
-            this.conversionFunction = conversionFunction;
+            this.configConversionFunction = conversionFunction;
+        }
+
+        public Characteristic(int index, ConversionsInput.InputConversion conversionFunction) {
+            this.index = index;
+            this.inputConversionFunction = conversionFunction;
+        }
+
+        public Characteristic(int index, ConversionsOutput.OutputConversion conversionFunction) {
+            this.index = index;
+            this.outputConversionFunction = conversionFunction;
         }
     } // end of class Characteristic
 
@@ -875,7 +900,7 @@ public class Bluetooth implements Serializable {
         /**
          * Method that will be called to convert the value of the characteristic
          */
-        public Method conversionFunction;
+        public ConversionsInput.InputConversion conversionFunction;
 
         /**
          * Create a new InputData.
@@ -883,9 +908,9 @@ public class Bluetooth implements Serializable {
          * @param uuid               UUID of the Characteristic
          * @param extraTime          true if the time and not the value should be saved
          * @param index              index of the buffer
-         * @param conversionFunction method that will be called to convert the value of the characteristic
+         * @param conversionFunction InputConversion instance that will used to convert the value of the characteristic
          */
-        public InputData(UUID uuid, boolean extraTime, int index, Method conversionFunction) {
+        public InputData(UUID uuid, boolean extraTime, int index, ConversionsInput.InputConversion conversionFunction) {
             this.uuid = uuid;
             this.extraTime = extraTime;
             this.index = index;
@@ -929,16 +954,16 @@ public class Bluetooth implements Serializable {
         /**
          * Method that will be called to convert the value of the characteristic.
          */
-        public Method conversionFunction;
+        public ConversionsOutput.OutputConversion conversionFunction;
 
         /**
          * Create a new OutputData.
          *
          * @param uuid               UUID of the Characteristic
          * @param index              index of the buffer
-         * @param conversionFunction method that will be called to convert the value of the characteristic
+         * @param conversionFunction OutputConversion instance that will be used to convert the value of the characteristic
          */
-        public OutputData(UUID uuid, int index, Method conversionFunction) {
+        public OutputData(UUID uuid, int index, ConversionsOutput.OutputConversion conversionFunction) {
             this.uuid = uuid;
             this.index = index;
             this.conversionFunction = conversionFunction;
@@ -978,15 +1003,15 @@ public class Bluetooth implements Serializable {
          *
          * @param uuid               UUID of the characteristic
          * @param data               data that will be converted to the value that should be written
-         * @param conversionFunction method that will be called to convert the value of the characteristic
+         * @param conversionFunction ConfigConversion instance that will be used to convert the value of the characteristic
          * @throws phyphoxFile.phyphoxFileException if there is an error while converting the data
          */
-        public ConfigData(UUID uuid, String data, Method conversionFunction) throws phyphoxFile.phyphoxFileException {
+        public ConfigData(UUID uuid, String data, ConversionsConfig.ConfigConversion conversionFunction) throws phyphoxFile.phyphoxFileException {
             this.uuid = uuid;
             try {
-                this.value = (byte[]) conversionFunction.invoke(null, data);
+                this.value = conversionFunction.convert(data);
             } catch (Exception e) { // catch any exception that occurs in the conversion function
-                throw new phyphoxFile.phyphoxFileException("An error occurred on the conversion function" + " \"" + conversionFunction.getName() + "\". ");
+                throw new phyphoxFile.phyphoxFileException("An error occurred on the conversion function" + " \"" + conversionFunction.getClass().getName() + "\". ");
             }
         }
 

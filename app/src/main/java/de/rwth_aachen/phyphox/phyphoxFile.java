@@ -353,7 +353,9 @@ public abstract class phyphoxFile {
 
             // get "conversion" attribute
             String conversionFunctionName = getStringAttribute("conversion");
-            Method conversionFunction = null;
+            ConversionsConfig.ConfigConversion configConversionFunction = null;
+            ConversionsInput.InputConversion inputConversionFunction = null;
+            ConversionsOutput.OutputConversion outputConversionFunction = null;
 
             switch (tag.toLowerCase()) {
                 case "input": {
@@ -367,9 +369,12 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
                     }
                     try {
-                        conversionFunction = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
-                        if (!Modifier.isPublic(conversionFunction.getModifiers())) {
-                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        try {
+                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.conversionsOutput." + conversionFunctionName);
+                            outputConversionFunction = (ConversionsOutput.OutputConversion)conversionClass.getConstructor(xpp.getClass()).newInstance(xpp);
+                        } catch (Exception e) {
+                            Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
+                            outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
                         }
                     } catch (NoSuchMethodException e) {
                         throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
@@ -388,7 +393,7 @@ public abstract class phyphoxFile {
                     inputList.add(new dataInput(buffer, clearBeforeWrite));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, conversionFunction));
+                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
 
                     break;
                 }
@@ -421,9 +426,12 @@ public abstract class phyphoxFile {
                            throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
                        }
                         try {
-                            conversionFunction = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
-                            if (!Modifier.isPublic(conversionFunction.getModifiers())) {
-                                throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                            try {
+                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.conversionsInput." + conversionFunctionName);
+                                inputConversionFunction = (ConversionsInput.InputConversion)conversionClass.getConstructor(xpp.getClass()).newInstance(xpp);
+                            } catch (Exception e) {
+                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
+                                inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod);
                             }
                         } catch (NoSuchMethodException e) {
                             throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
@@ -443,7 +451,7 @@ public abstract class phyphoxFile {
                     outputList.add(new dataOutput(buffer, clearBeforeWrite));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.InputData(uuid, extraTime, outputList.size()-1, conversionFunction));
+                    characteristics.add(new Bluetooth.InputData(uuid, extraTime, outputList.size()-1, inputConversionFunction));
                     break;
                 }
 
@@ -453,9 +461,12 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
                     }
                     try {
-                        conversionFunction = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
-                        if (!Modifier.isPublic(conversionFunction.getModifiers())) {
-                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        try {
+                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.conversionsConfig." + conversionFunctionName);
+                            configConversionFunction = (ConversionsConfig.ConfigConversion)conversionClass.getConstructor(xpp.getClass()).newInstance(xpp);
+                        } catch (Exception e) {
+                            Method conversionMethod = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
+                            configConversionFunction = new ConversionsConfig.SimpleConfigConversion(conversionMethod);
                         }
                     } catch (NoSuchMethodException e) {
                         throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
@@ -463,7 +474,7 @@ public abstract class phyphoxFile {
                     try {
                         // add data to configs
                         String text = getText();
-                        characteristics.add(new Bluetooth.ConfigData(uuid, text, conversionFunction));
+                        characteristics.add(new Bluetooth.ConfigData(uuid, text, configConversionFunction));
                     } catch (NumberFormatException e) {
                         throw new phyphoxFileException("Configuration data has to be a valid double value.", xpp.getLineNumber());
                     } catch (phyphoxFileException e) {
@@ -1317,7 +1328,7 @@ public abstract class phyphoxFile {
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
-                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent, characteristics);
+                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent, parent, characteristics);
                                 experiment.bluetoothInputs.add(b);
                             } catch (phyphoxFileException e) {
                                 throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
@@ -1993,7 +2004,7 @@ public abstract class phyphoxFile {
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
-                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent, inputs, characteristics);
+                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent, parent, inputs, characteristics);
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;

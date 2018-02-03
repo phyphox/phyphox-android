@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 
+import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
@@ -8,7 +9,6 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
@@ -70,10 +70,10 @@ public class BluetoothInput extends Bluetooth {
      * @param characteristics list of all characteristics the object should be able to operate on
      * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Context context, Vector<CharacteristicData> characteristics)
+    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
             throws phyphoxFile.phyphoxFileException {
 
-        super(deviceName, deviceAddress, context, characteristics);
+        super(deviceName, deviceAddress, activity, context, characteristics);
 
         this.mode = mode.toLowerCase();
 
@@ -243,7 +243,7 @@ public class BluetoothInput extends Bluetooth {
                 }
                 // convert data and add it to outputs if it was read successfully, else write NaN
                 if (data != null) {
-                    outputs.put(c.index, convertData(data, c.conversionFunction));
+                    outputs.put(c.index, convertData(data, c.inputConversionFunction));
                 } else {
                     outputs.put(c.index, Double.NaN);
                 }
@@ -281,7 +281,7 @@ public class BluetoothInput extends Bluetooth {
         }
         double[] outputs = new double[characteristics.size()];
         for (Characteristic c : characteristics) {
-            outputs[characteristics.indexOf(c)] = convertData(data, c.conversionFunction);
+            outputs[characteristics.indexOf(c)] = convertData(data, c.inputConversionFunction);
         }
 
         //Append the data to available buffers
@@ -342,12 +342,12 @@ public class BluetoothInput extends Bluetooth {
      * Return NaN in case of an exception.
      *
      * @param data               data that should be converted
-     * @param conversionFunction method to convert data (from ConversionsInput)
+     * @param conversionFunction InputConversion instance to convert data (from ConversionsInput)
      * @return the converted value
      */
-    private double convertData(byte[] data, Method conversionFunction) {
+    private double convertData(byte[] data, ConversionsInput.InputConversion conversionFunction) {
         try {
-            return (double) conversionFunction.invoke(null, data);
+            return conversionFunction.convert(data);
         } catch (Exception e) {
             return Double.NaN; // return NaN if value could not be converted
         }

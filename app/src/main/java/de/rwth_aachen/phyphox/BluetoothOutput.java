@@ -1,12 +1,10 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
-
-import java.lang.reflect.Method;
 import java.util.Vector;
 
 
@@ -30,9 +28,9 @@ public class BluetoothOutput extends Bluetooth {
      * @param buffers         list of dataOutputs to write the values
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public BluetoothOutput(String deviceName, String deviceAddress, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    public BluetoothOutput(String deviceName, String deviceAddress, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
-        super(deviceName, deviceAddress, context, characteristics);
+        super(deviceName, deviceAddress, activity, context, characteristics);
 
         this.data = buffers;
     }
@@ -46,7 +44,7 @@ public class BluetoothOutput extends Bluetooth {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
                 for (Characteristic c : mapping.get(characteristic)) {
                     if (data.get(c.index).getFilledSize() != 0) {
-                        byte[] value = convertData(data.get(c.index).getValue(), c.conversionFunction);
+                        byte[] value = convertData(data.get(c.index).getValue(), c.outputConversionFunction);
                         characteristic.setValue(value);
                         add(new WriteCommand(btGatt, characteristic));
                     }
@@ -63,9 +61,9 @@ public class BluetoothOutput extends Bluetooth {
      * @param conversionFunction method to convert data (from ConversionsOutput)
      * @return the converted value
      */
-    private byte[] convertData(double data, Method conversionFunction) {
+    private byte[] convertData(double data, ConversionsOutput.OutputConversion conversionFunction) {
         try {
-            return (byte[]) conversionFunction.invoke(null, data);
+            return conversionFunction.convert(data);
         } catch (Exception e) {
             return new byte[0]; // the method needs to return a byte array
         }

@@ -1,7 +1,36 @@
 package de.rwth_aachen.phyphox;
 
+import java.io.Serializable;
+import java.lang.reflect.Method;
+
 // The class holds public static functions which convert double values to a byte array that can be written to a characteristic.
 public class ConversionsOutput {
+
+    public static class OutputConversion implements Serializable {
+        OutputConversion() {
+
+        }
+        protected byte[] convert(double data) {
+            return null;
+        }
+    }
+
+    public static class SimpleOutputConversion extends OutputConversion implements Serializable {
+        private Method conversionFunction;
+        SimpleOutputConversion(Method conversionFunction) {
+            super();
+            this.conversionFunction = conversionFunction;
+        }
+
+        @Override
+        protected byte[] convert(double data) {
+            try {
+                return (byte[]) conversionFunction.invoke(null, data);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
 
     public static byte[] stringAsByteArray (double data) {
         return (data+"").getBytes();

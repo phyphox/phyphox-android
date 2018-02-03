@@ -1,8 +1,37 @@
 package de.rwth_aachen.phyphox;
 
 
+import java.io.Serializable;
+import java.lang.reflect.Method;
+
 // The class holds public static functions which convert values from a string to a byte array.
 public class ConversionsConfig {
+
+    public static class ConfigConversion implements Serializable {
+        ConfigConversion() {
+
+        }
+        protected byte[] convert(String data) {
+            return null;
+        }
+    }
+
+    public static class SimpleConfigConversion extends ConfigConversion implements Serializable {
+        private Method conversionFunction;
+        SimpleConfigConversion(Method conversionFunction) {
+            super();
+            this.conversionFunction = conversionFunction;
+        }
+
+        @Override
+        protected byte[] convert(String data) {
+            try {
+                return (byte[]) conversionFunction.invoke(null, data);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
 
     public static byte[] stringAsByteArray (String data) {
         return (data).getBytes();

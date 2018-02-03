@@ -715,10 +715,10 @@ public class ExperimentList extends AppCompatActivity {
                                 if ((!inInput && !inOutput) || unavailableSensor >= 0) {
                                     break;
                                 }
-                                if (!Bluetooth.isSupported(this)) {
+                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
                                     unavailableSensor = R.string.bluetooth;
-                                } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                                    unavailableSensor = R.string.bluetooth; // TODO ?
+                                } else if (!Bluetooth.isSupported(this)) {
+                                    unavailableSensor = R.string.bluetooth;
                                 }
                                 break;
                         }
