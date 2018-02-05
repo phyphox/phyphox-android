@@ -1,2 +1,25 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Configurações</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Adicionar experimento simples</string>
+    <string name="newExperimentPhyphoxInfo">Visite phyphox.org para criar outros experimentos incluindo análise de dados e compartilha-los com seus colega, alunos e amigos.</string>
+    <string name="newExperimentInputTitle">Título</string>
+    <string name="newExperimentInputRate">Taxa de leitura do sensor (em Hz, 0 = mais rápido possível)</string>
+    <string name="newExperimentInputSensors">Sensores ativos</string>
+
+    <string name="help">Ajuda e informacões</string>
+    <string name="experimentsPhyphoxOrg">Ideias de experimentos e instruções</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Perguntas frequentes</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Ajuda do Acesso remoto</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Idiomas</string>
+    <string name="translationText">Phyphox usa o primeiro idioma disponível da sua lista de idiomas preferidos. Para mudar suas preferências, vá em \"Configurações\" abaixo. Para ver quais idiomas estão disponíveis e ver como você pode nos ajudar, selecione \"Visitar website\".</string>
+    <string name="translationToSettings">Configurações</string>
+    <string name="donotshowagain">Não mostrar novamente</string>
+    <string name="experimentinfo_hint">Veja informações sobre o experimento para aprender como usá-lo.</string>
+
+</resources>
