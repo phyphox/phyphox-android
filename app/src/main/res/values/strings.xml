@@ -136,6 +136,10 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="save_state_default_title">Measurement</string>
     <string name="save_state_success">State has been saved to your collection.</string>
 
+    <string name="open_zip_title">Opening a set of experiments</string>
+    <string name="open_zip_dialog_instructions">This ressource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or select to save them all to your collection at once.</string>
+    <string name="open_zip_dialog_save_all">Save all</string>
+
     <string name="timedRun">Timed run</string>
 
     <string name="pick_exportSets">Pick the data sets to export.</string>

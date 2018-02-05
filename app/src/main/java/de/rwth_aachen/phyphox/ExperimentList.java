@@ -4,15 +4,11 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -28,9 +24,6 @@ import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
-import android.provider.Settings;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
@@ -48,18 +41,14 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,17 +56,19 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
@@ -86,6 +77,7 @@ public class ExperimentList extends AppCompatActivity {
 
     //Strings which define extra information for intents starting an experiment from local files
     public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
+    public final static String EXPERIMENT_ISTEMP= "com.dicon.phyphox.EXPERIMENT_ISTEMP";
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
     public final static String EXPERIMENT_SENSORREADY = "com.dicon.phyphox.EXPERIMENT_SENSORREADY";
     public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
@@ -95,6 +87,8 @@ public class ExperimentList extends AppCompatActivity {
 
     //A resource reference for easy access
     private Resources res;
+
+    ProgressDialog progress = null;
 
     private Vector<category> categories = new Vector<>(); //The list of categories. The category class (see below) holds a category and all its experiment items
 
@@ -218,7 +212,8 @@ public class ExperimentList extends AppCompatActivity {
         Vector<String> titles = new Vector<>(); //List of titles for each experiment
         Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
         Vector<String> xmlFiles = new Vector<>(); //List of xmlFile name for each experiment (has to be provided in the intent if the user wants to load this)
-        Vector<Boolean> isAssetList = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
+        Vector<Boolean> isTemp = new Vector<>(); //List of booleans for each experiment, which track whether the file is a temporary file
+        Vector<Boolean> isAsset = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
         Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
 
         //The constructor takes the activity reference. That's all.
@@ -247,7 +242,8 @@ public class ExperimentList extends AppCompatActivity {
             //Create the intent and place the experiment location in it
             Intent intent = new Intent(v.getContext(), Experiment.class);
             intent.putExtra(EXPERIMENT_XML, xmlFiles.get(position));
-            intent.putExtra(EXPERIMENT_ISASSET, isAssetList.get(position));
+            intent.putExtra(EXPERIMENT_ISTEMP, isTemp.get(position));
+            intent.putExtra(EXPERIMENT_ISASSET, isAsset.get(position));
             intent.putExtra(EXPERIMENT_UNAVAILABLESENSOR, unavailableSensorList.get(position));
             intent.setAction(Intent.ACTION_VIEW);
 
@@ -264,7 +260,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(Drawable icon, String title, String info, String xmlFile, boolean isAsset, Integer unavailableSensor) {
+        public void addExperiment(Drawable icon, String title, String info, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -278,7 +274,8 @@ public class ExperimentList extends AppCompatActivity {
             titles.insertElementAt(title, i);
             infos.insertElementAt(info, i);
             xmlFiles.insertElementAt(xmlFile, i);
-            isAssetList.insertElementAt(isAsset, i);
+            this.isTemp.insertElementAt(isTemp, i);
+            this.isAsset.insertElementAt(isAsset, i);
             unavailableSensorList.insertElementAt(unavailableSensor, i);
 
             //Notify the adapter that we changed its contents
@@ -357,7 +354,7 @@ public class ExperimentList extends AppCompatActivity {
             }
 
             //Handle the delete button. Set it visible only for non-assets
-            if (isAssetList.get(position))
+            if (isTemp.get(position) || isAsset.get(position))
                 holder.deleteBtn.setVisibility(ImageView.GONE); //Asset - no delete button
             else {
                 //No asset. Delete button visible and it needs an onClickListener
@@ -532,8 +529,8 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter.
-        public void addExperiment(String exp, Drawable image, String description, final String xmlFile, boolean isAsset, Integer unavailableSensor) {
-            experiments.addExperiment(image, exp, description, xmlFile, isAsset, unavailableSensor);
+        public void addExperiment(String exp, Drawable image, String description, final String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
+            experiments.addExperiment(image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor);
         }
 
         //Helper to check if the name of this category matches a given string
@@ -561,18 +558,18 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isAsset, Integer unavailableSensor) {
+    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor, Vector<category> categories) {
         //Check all categories for the category of the new experiment
         for (category icat : categories) {
             if (icat.hasName(cat)) {
                 //Found it. Add the experiment and return
-                icat.addExperiment(exp, image, description, xmlFile, isAsset, unavailableSensor);
+                icat.addExperiment(exp, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
                 return;
             }
         }
         //Category does not yet exist. Create it and add the experiment
         categories.add(new category(cat, this));
-        categories.lastElement().addExperiment(exp, image, description, xmlFile, isAsset, unavailableSensor);
+        categories.lastElement().addExperiment(exp, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
     }
 
     //Decode the experiment icon (base64) and return a bitmap
@@ -582,7 +579,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
-    private void loadExperimentInfo(InputStream input, String experimentXML, boolean isAsset) {
+    private void loadExperimentInfo(InputStream input, String experimentXML, boolean isTemp, boolean isAsset, Vector<category> categories) {
         XmlPullParser xpp;
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             //Prepare the PullParser
@@ -778,7 +775,7 @@ public class ExperimentList extends AppCompatActivity {
                 image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
 
             //We have all the information. Add the experiment.
-            addExperiment(title, category, image, description, experimentXML, isAsset, unavailableSensor);
+            addExperiment(title, category, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             Toast.makeText(this, "Error loading " + experimentXML + " (XML Exception)", Toast.LENGTH_LONG).show();
@@ -810,7 +807,7 @@ public class ExperimentList extends AppCompatActivity {
             for (File file : files) {
                 //Load details for each experiment
                 InputStream input = openFileInput(file.getName());
-                loadExperimentInfo(input, file.getName(), false);
+                loadExperimentInfo(input, file.getName(), false, false, categories);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
@@ -823,7 +820,7 @@ public class ExperimentList extends AppCompatActivity {
             for (String experimentXML : experimentXMLs) {
                 //Load details for each experiment
                 InputStream input = assetManager.open("experiments/" + experimentXML);
-                loadExperimentInfo(input, experimentXML, true);
+                loadExperimentInfo(input, experimentXML, false,true, categories);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
@@ -842,6 +839,170 @@ public class ExperimentList extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadExperimentList();
+    }
+
+    //This asyncTask extracts a zip file to a temporary directory
+    //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
+    protected static class handleZipIntent extends AsyncTask<String, Void, String> {
+        private Intent intent; //The intent to read from
+        private WeakReference<ExperimentList> parent;
+
+        //The constructor takes the intent to copy from and the parent activity to call back when finished.
+        handleZipIntent(Intent intent, ExperimentList parent) {
+            this.intent = intent;
+            this.parent = new WeakReference<ExperimentList>(parent);
+        }
+
+        //Copying is done on a second thread...
+        protected String doInBackground(String... params) {
+            phyphoxFile.PhyphoxStream phyphoxStream = phyphoxFile.openXMLInputStream(intent, parent.get());
+            if (!phyphoxStream.errorMessage.isEmpty()) {
+                return phyphoxStream.errorMessage;
+            }
+
+            //Copy the input stream to a random file name
+            try {
+                //Prepare temporary directory
+                File tempPath = new File(parent.get().getFilesDir(), "temp");
+                if (!tempPath.exists()) {
+                    if (!tempPath.mkdirs())
+                        return "Could not create temporary directory to extract zip file.";
+                }
+                String[] files = tempPath.list();
+                for (String file : files) {
+                    if (!(new File(tempPath, file).delete()))
+                        return "Could not clear temporary directory to extract zip file.";
+                }
+
+                ZipInputStream zis = new ZipInputStream(phyphoxStream.inputStream);
+
+                ZipEntry entry;
+                byte[] buffer = new byte[2048];
+                while((entry = zis.getNextEntry()) != null) {
+                    FileOutputStream out = new FileOutputStream(new File(tempPath, entry.getName()));
+                    int size = 0;
+                    while ((size = zis.read(buffer)) > 0)
+                    {
+                        out.write(buffer, 0, size);
+                    }
+                    out.close();
+                }
+                zis.close();
+            } catch (Exception e) {
+                return "Error loading zip file: " + e.getMessage();
+            }
+
+            return "";
+        }
+
+        @Override
+        //Call the parent callback when we are done.
+        protected void onPostExecute(String result) {
+            parent.get().zipReady(result);
+        }
+    }
+
+    public void zipReady(String result) {
+        progress.dismiss();
+        if (result.isEmpty()) {
+            File tempPath = new File(getFilesDir(), "temp");
+            final File[] files = tempPath.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String filename) {
+                    return filename.endsWith(".phyphox");
+                }
+            });
+            if (files.length == 0) {
+                Toast.makeText(this, "Error: There is no valid phyphox experiment in this zip file.", Toast.LENGTH_LONG).show();
+            } else if (files.length == 1) {
+                //Create an intent for this file
+                Intent intent = new Intent(this, Experiment.class);
+                intent.setData(Uri.fromFile(files[0]));
+                intent.setAction(Intent.ACTION_VIEW);
+
+                //Open the file
+                startActivity(intent);
+            } else {
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+                View view = inflater.inflate(R.layout.open_zip_dialog, null);
+                builder.setView(view)
+                        .setPositiveButton(R.string.open_zip_dialog_save_all, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int id) {
+                                for (File file : files) {
+                                    file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
+                                }
+                                loadExperimentList();
+                                dialog.dismiss();
+                            }
+
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                            }
+
+                        });
+                AlertDialog dialog = builder.create();
+
+                LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_zip_dialog_list);
+
+                dialog.setTitle(getResources().getString(R.string.open_zip_title));
+
+                Vector<category> zipExperiments = new Vector<>();
+
+                //Load experiments from local files
+                for (File file : files) {
+                    //Load details for each experiment
+                    try {
+                        InputStream input = new FileInputStream(file);
+                        loadExperimentInfo(input, file.getName(), true, false, zipExperiments);
+                        input.close();
+                    } catch (IOException e) {
+                        Log.e("zip", e.getMessage());
+                        Toast.makeText(this, "Error: Could not load experiment \"" + file + "\" from zip file.", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                Collections.sort(zipExperiments, new categoryComparator());
+
+                for (category cat : zipExperiments) {
+                    cat.addToParent(catList);
+                }
+
+                dialog.show();
+            }
+        } else {
+            Toast.makeText(ExperimentList.this, result, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    protected void handleIntent(Intent intent) {
+        String scheme = intent.getScheme();
+        if (scheme == null)
+            return;
+        boolean isZip = false;
+        if (scheme.equals(ContentResolver.SCHEME_FILE) || scheme.equals("phyphox")) {
+            Uri uri = intent.getData();
+            isZip = (uri != null && intent.getData().getPath().endsWith(".zip"));
+        } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
+            String type = intent.getType();
+            isZip = type != null && type.equals("application/zip");
+        }
+        if (!isZip) {
+            //This is just a single experiment - Start the Experiment activity and let it handle the intent
+            Intent forwardedIntent = new Intent(intent);
+            forwardedIntent.setClass(this, Experiment.class);
+            this.startActivity(forwardedIntent);
+        } else {
+            //We got a zip-file. Let's see what's inside...
+            progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+            new handleZipIntent(intent, this).execute();
+        }
     }
 
     @Override
@@ -943,6 +1104,8 @@ public class ExperimentList extends AppCompatActivity {
 
         final FloatingActionButton newExperimentB = (FloatingActionButton) findViewById(R.id.newExperiment);
         newExperimentB.setOnClickListener(neocl);
+
+        handleIntent(getIntent());
 
     }
 
@@ -1311,6 +1474,7 @@ public class ExperimentList extends AppCompatActivity {
                     //Create an intent for this new file
                     Intent intent = new Intent(c, Experiment.class);
                     intent.putExtra(EXPERIMENT_XML, file);
+                    intent.putExtra(EXPERIMENT_ISTEMP, false);
                     intent.putExtra(EXPERIMENT_ISASSET, false);
                     intent.setAction(Intent.ACTION_VIEW);
 

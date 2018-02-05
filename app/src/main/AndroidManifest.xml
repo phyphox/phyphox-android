@@ -25,15 +25,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name="de.rwth_aachen.phyphox.Experiment"
-            android:label="@string/title_activity_experiment"
-            android:theme="@style/phyphox"
-            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.rwth_aachen.phyphox.ExperimentList" />
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -42,6 +33,10 @@
                 <data android:host="*" android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\.phyphox" />
                 <data android:host="*" android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\.phyphox" />
                 <data android:host="*" android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\..*\\.phyphox" />
+                <data android:host="*" android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\.zip" />
+                <data android:host="*" android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\.zip" />
+                <data android:host="*" android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\.zip" />
+                <data android:host="*" android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\..*\\.zip" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -54,7 +49,20 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:host="*" android:scheme="content" android:mimeType="application/octet-stream" android:pathPattern=".*" />
+                <data android:host="*" android:scheme="content" android:mimeType="text/plain" android:pathPattern=".*" />
+                <data android:host="*" android:scheme="content" android:mimeType="application/xml" android:pathPattern=".*" />
+                <data android:host="*" android:scheme="content" android:mimeType="text/xml" android:pathPattern=".*" />
+                <data android:host="*" android:scheme="content" android:mimeType="application/zip" android:pathPattern=".*" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="de.rwth_aachen.phyphox.Experiment"
+            android:label="@string/title_activity_experiment"
+            android:theme="@style/phyphox"
+            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.rwth_aachen.phyphox.ExperimentList" />
         </activity>
         <provider
             android:name="android.support.v4.content.FileProvider"

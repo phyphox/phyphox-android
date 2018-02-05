@@ -26,10 +26,13 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -114,14 +117,23 @@ public abstract class phyphoxFile {
             String scheme = intent.getScheme();
 
             if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) { //If the file location is found in the extra EXPERIMENT_XML, it is a local file
-                phyphoxStream.isLocal = true;
+                phyphoxStream.isLocal = !intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false);
                 if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISASSET, true)) { //The local file is an asser
                     AssetManager assetManager = parent.getAssets();
                     try {
                         phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
-                        phyphoxStream.errorMessage = "Error loading this experiment from assets: "+e.getMessage();
+                        phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
+                    }
+                } else if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false)) {
+                    //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
+                    try {
+                        File tempDir = new File(parent.getFilesDir(), "temp");
+                        phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
+                        remoteInputToMemory(phyphoxStream);
+                    } catch (Exception e) {
+                        phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
                 } else { //The local file is in the private directory
                     try {
@@ -136,9 +148,13 @@ public abstract class phyphoxFile {
             } else if (scheme.equals(ContentResolver.SCHEME_FILE )) {//The intent refers to a file
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
+                if (uri == null) {
+                    phyphoxStream.errorMessage = "Missing uri.";
+                    return phyphoxStream;
+                }
                 ContentResolver resolver = parent.getContentResolver();
                 //We will need read permissions for pretty much any file...
-                if (ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (!uri.getPath().startsWith(parent.getFilesDir().getPath()) && ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                     //Android 6.0: No permission? Request it!
                     ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
                     //We will stop with a no permission error. If the user grants the permission, the permission callback will restart the action with the same intent
@@ -2074,11 +2090,11 @@ public abstract class phyphoxFile {
     //onExperimentLoaded of the activity given in the constructor.
     protected static class loadXMLAsyncTask extends AsyncTask<String, Void, phyphoxExperiment> {
         private Intent intent;
-        private Experiment parent;
+        private WeakReference<Experiment> parent;
 
         loadXMLAsyncTask(Intent intent, Experiment parent) {
             this.intent = intent;
-            this.parent = parent;
+            this.parent = new WeakReference<Experiment>(parent);
         }
 
         //Load the file from the intent
@@ -2087,7 +2103,7 @@ public abstract class phyphoxFile {
             phyphoxExperiment experiment = new phyphoxExperiment();
 
             //Open the input stream (see above)
-            PhyphoxStream input = openXMLInputStream(intent, parent);
+            PhyphoxStream input = openXMLInputStream(intent, parent.get());
             if (input.inputStream == null) { //If this failed, abort and relay the error message
                 experiment.message = input.errorMessage;
                 return experiment;
@@ -2139,7 +2155,7 @@ public abstract class phyphoxFile {
                             if (globalLocale != null && globalLocale.equals(Locale.getDefault().getLanguage()))
                                 perfectLocaleFound = true;
                         }
-                        (new phyphoxBlockParser(xpp, experiment, parent)).process();
+                        (new phyphoxBlockParser(xpp, experiment, parent.get())).process();
                     }
                     eventType = xpp.next();
                 }
@@ -2169,7 +2185,7 @@ public abstract class phyphoxFile {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(phyphoxExperiment experiment) {
-            parent.onExperimentLoaded(experiment);
+            parent.get().onExperimentLoaded(experiment);
         }
     }
 
@@ -2177,23 +2193,23 @@ public abstract class phyphoxFile {
     //It calls onCopyXMLCompleted of the activity given in the constructor when it's done.
     protected static class CopyXMLTask extends AsyncTask<String, Void, String> {
         private Intent intent; //The intent to read from
-        private Experiment parent; //The calling Activity
+        private WeakReference<Experiment> parent; //The calling Activity
 
         //The constructor takes the intent to copy from and the parent activity to call back when finished.
         CopyXMLTask(Intent intent, Experiment parent) {
             this.intent = intent;
-            this.parent = parent;
+            this.parent = new WeakReference<Experiment>(parent);
         }
 
         //Copying is done on a second thread...
         protected String doInBackground(String... params) {
             InputStream input;
-            if (parent.experiment.source != null) {
+            if (parent.get().experiment.source != null) {
                 //We have stored the original source file...
-                input = new ByteArrayInputStream(parent.experiment.source);
+                input = new ByteArrayInputStream(parent.get().experiment.source);
             } else {
                 //If not, open the remote source, but usually this should not happen...
-                phyphoxFile.PhyphoxStream ps = phyphoxFile.openXMLInputStream(intent, parent);
+                phyphoxFile.PhyphoxStream ps = phyphoxFile.openXMLInputStream(intent, parent.get());
                 input = ps.inputStream;
             }
             if (input == null)
@@ -2202,7 +2218,7 @@ public abstract class phyphoxFile {
             //Copy the input stream to a random file name
             try {
                 String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
-                FileOutputStream output = parent.openFileOutput(file, Activity.MODE_PRIVATE);
+                FileOutputStream output = parent.get().openFileOutput(file, Activity.MODE_PRIVATE);
                 byte[] buffer = new byte[1024];
                 int count;
                 while ((count = input.read(buffer)) != -1)
@@ -2218,7 +2234,7 @@ public abstract class phyphoxFile {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(String result) {
-            parent.onCopyXMLCompleted(result);
+            parent.get().onCopyXMLCompleted(result);
         }
     }
 }
