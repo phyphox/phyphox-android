@@ -41,7 +41,7 @@
 
     <string name="location">Localização</string>
 
-    <string name="sensorNotAvailableWarningTitle">Sensor não disponível</string>
+    <string name="sensorNotAvailableWarningTitle">Sensor não disponível.</string>
     <string name="sensorNotAvailableWarningText1">O sensor</string>
     <string name="sensorNotAvailableWarningText2">não está disponível. Normalmente isto significa que seu dispositivo não possue este tipo de sensor.</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
@@ -51,5 +51,29 @@
     <string name="next">Próximo</string>
     <string name="cancel">Cancelar</string>
     <string name="unknown">desconhecido</string>
+
+    <string name="sensorNotAvailableWarningMoreInfo">Outras informações</string>
+    <string name="delete">Apagar</string>
+    <string name="confirmDelete">Você deseja apagar este experimento da sua coleção?</string>
+    <string name="stop">Parar</string>
+    <string name="start">Começar</string>
+    <string name="clear_data">Limpar dados</string>
+    <string name="clear_data_question">Limpar dados gravados?</string>
+    <string name="clear">Limpar</string>
+    <string name="loadingTitle">Carregando</string>
+    <string name="loadingText">Carregando experimento…</string>
+
+    <string name="timedRunStartDelay">Atraso inicial (s)</string>
+    <string name="timedRunStopDelay">Duração do experimento (s)</string>
+    <string name="export">Exportar Dados</string>
+    <string name="export_subject">Dados do phyphox</string>
+    <string name="export_pick_share">Escolha um método para exportar</string>
+
+    <string name="share">Compartilhar captura de tela</string>
+    <string name="share_subject">Captura de tela do phyphox</string>
+    <string name="share_pick_share">Escolha um método para compartilhar</string>
+
+    <string name="remoteServer">Permitir acesso remoto</string>
+    <string name="hotspotSettings">Configurações do ponto de acesso</string>
 
     </resources>
