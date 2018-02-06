@@ -107,6 +107,6 @@
     <string name="translationText">Phyphox se zobrazuje v tom jazyce, který je první na seznamu preferovaných jazyků v nastavení systému android vašeho zařízení. Přímý odkaz k příslušnému nastavení najdete pod tímto textem (tlačítko \"nastavení\"). Ne všechny jazyky jsou ovšem aplikací phyphox podporovány. Chcete-li zjistit, které jazyky jsou k dispozici, nebo byste chtěli pomoci s překladem, zmáčkěte tlačítko \"Navštivte internetovou stránku\".</string>
     <string name="translationToSettings">Nastavení</string>
     <string name="translationToWebsite">Navštivte internetovou stránku</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/faq/#faqTranslation</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages</string>
 
     </resources>
