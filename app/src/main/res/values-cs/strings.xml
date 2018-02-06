@@ -6,7 +6,7 @@
     <string name="switchColumns2">Zobrazit: 2 sloupce</string>
     <string name="help">Nápověda a informace</string>
     <string name="newExperimentPhyphoxInfo">Na stránce phyphox.org můžete vytvářet další pokročilé experimenty obsahující i analýzu naměřených dat a sdílet je se svými kolegy, studenty a přáteli.</string>
-    <string name="loadingText">Načítám experimentâ…</string>
+    <string name="loadingText">Načítám experiment…</string>
     <string name="save_state_success">Stav experimentu byl uložen.</string>
     <string name="save_state">Uložit stav experimentu</string>
     <string name="location">Pozice</string>
