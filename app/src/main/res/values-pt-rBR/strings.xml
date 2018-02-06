@@ -22,4 +22,34 @@
     <string name="donotshowagain">Não mostrar novamente</string>
     <string name="experimentinfo_hint">Veja informações sobre o experimento para aprender como usá-lo.</string>
 
-</resources>
+<string name="translationToWebsite">Visitar website</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/faq/#faqTranslation</string>
+
+    <string name="info">Informações</string>
+    <string name="creditsRWTH">phyphox foi criado pelo 2º Instituto de Física da Universidade RWTH Aachen.</string>
+    <string name="creditsNames">Concepção e Desenvolvimento:<br/><b>Dr. Sebastian Staacks</b><br/>Concepção:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programação:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">A interface-web para acesso remoto usa as bibliotecas JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA e Ole Laursen) e \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), todas disponíveis através da licença MIT.</string>
+    <string name="sensorLinearAcceleration">Aceleração Linear</string>
+    <string name="sensorLight">Luz</string>
+    <string name="sensorGyroscope">Giroscópio</string>
+    <string name="sensorAccelerometer">Acelerômetro</string>
+    <string name="sensorMagneticField">Campo Magnético</string>
+    <string name="sensorPressure">Pressão</string>
+    <string name="sensorTemperature">Temperatura</string>
+    <string name="sensorHumidity">Umidade</string>
+    <string name="sensorProximity">Aproximação</string>
+
+    <string name="location">Localização</string>
+
+    <string name="sensorNotAvailableWarningTitle">Sensor não disponível</string>
+    <string name="sensorNotAvailableWarningText1">O sensor</string>
+    <string name="sensorNotAvailableWarningText2">não está disponível. Normalmente isto significa que seu dispositivo não possue este tipo de sensor.</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Fechar</string>
+    <string name="next">Próximo</string>
+    <string name="cancel">Cancelar</string>
+    <string name="unknown">desconhecido</string>
+
+    </resources>
