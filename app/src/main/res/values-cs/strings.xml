@@ -5,12 +5,12 @@
     <string name="switchColumns3">Zobrazit: 3 sloupce</string>
     <string name="switchColumns2">Zobrazit: 2 sloupce</string>
     <string name="help">Nápověda a informace</string>
-    <string name="newExperimentPhyphoxInfo">Na stránce phyphox.org můžete vytvářet další pokročilé experimenty obsahující i analýzu naměřených dat. Takto vytvořené experimenty můžete sdílet se svými kolegy, studenty a přáteli.</string>
+    <string name="newExperimentPhyphoxInfo">Na stránce phyphox.org můžete vytvářet další pokročilé experimenty obsahující i analýzu naměřených dat a sdílet je se svými kolegy, studenty a přáteli.</string>
     <string name="loadingText">Načítám experimentâ…</string>
     <string name="save_state_success">Stav experimentu byl uložen.</string>
     <string name="save_state">Uložit stav experimentu</string>
     <string name="location">Pozice</string>
-    <string name="remoteServer">Povolit vzdálený přístup</string>
+    <string name="remoteServer">Umožnit vzdálený přístup</string>
     <string name="faqPhyphoxOrg">Často kladené otázky</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
     <string name="timedRunStartDelay">Zpoždění startu (s)</string>
@@ -49,14 +49,14 @@
     <string name="hotspotSettings">Nastavení Hotspotu</string>
     <string name="timedRunStopDelay">Doba trvání experimentu (s)</string>
     <string name="newExperimentInputTitle">Nadpis</string>
-    <string name="enableTimedRun">Provést stopovaný úsek</string>
+    <string name="enableTimedRun">Načasovat měření</string>
     <string name="save_locally">Přidat experiment do sbírky</string>
-    <string name="timed_stop">Ukončit časovaný úsek</string>
+    <string name="timed_stop">Ukončit časované měření</string>
     <string name="cancel">Zrušit</string>
     <string name="sensorGyroscope">Gyroskop</string>
     <string name="switchToPhoneLayout">Zobrazení: Úzké</string>
     <string name="sensorProximity">Senzor přiblížení</string>
-    <string name="unknown">Neznámé</string>
+    <string name="unknown">neznámé</string>
     <string name="next">Další</string>
     <string name="start">Start</string>
     <string name="clear_data">Vymazat data</string>
@@ -88,19 +88,25 @@
             Vývoj a koncept:<br/><b>Dr. Sebastian Staacks</b><br/>Koncept:<br/><b>Prof. Christoph Stampfer</b><br/>Dizajn:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programování:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
         ]]>
     </string>
-    <string name="remoteServerWarning">Právě se chystáte povolit aplikaci vzdálený přístup k naměřeným datům. Prosím ověřte si, že jste připojeni na důvěryhodné síti! Zároveň vás chceme upozornit, že přímé spojení přístrojů není na mnoha univerzitní či firemních sítích povoleno a tedy ani umožněno.
+    <string name="remoteServerWarning">Právě se chystáte povolit aplikaci vzdálený přístup k naměřeným datům. Prosím ověřte si, že jste připojeni k důvěryhodné síti! Zároveň vás chceme upozornit, že přímé spojení přístrojů není na mnoha univerzitních či firemních sítích povoleno a tedy ani umožněno.
 \nPro zajištění maximální bezpečnosti a výkonu doporučujeme připojení tohoto zařízení pomocí tetheringu (vytvoření mobilního hotspotu).
 \nPo zmáčknutí tlačítka Ok můžete svá měření zobrazit jakýmkoliv internetovým prohlížečem na stejné ethernetové síti.</string>
     <string name="sensorHumidity">Vlhkost</string>
-    <string name="export_pick_share">Vyberte si, jak chcete exportovat</string>
+    <string name="export_pick_share">Vyberte si způsob exportu</string>
     <string name="sensorNotAvailableWarningTitle">Senzor není dostupný.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Více informací</string>
     <string name="clear">Vymazat</string>
     <string name="save_state_default_title">Měření</string>
     <string name="export_subject">Data z phyphoxu</string>
-    <string name="experimentinfo_hint">Prosím pročtěte si informace k tomuto experimentu, abyste zjistili detaily k jeho úspěšnému provedení.</string>
+    <string name="experimentinfo_hint">Prosím pročtěte si informace k tomuto experimentu pro jeho snadnější používaní.</string>
     <string name="timedRun">Časované měření</string>
     <string name="loadingTitle">Načítám</string>
-    <string name="experimentsPhyphoxOrg">Nápady a instrukce k experimentu</string>
+    <string name="experimentsPhyphoxOrg">Nápady a návody k experimentům</string>
     <string name="save_state_share">Sdílet</string>
-</resources>
+<string name="translationInfo">Volba jazyka</string>
+    <string name="translationText">Phyphox se zobrazuje v tom jazyce, který je první na seznamu preferovaných jazyků v nastavení systému android vašeho zařízení. Přímý odkaz k příslušnému nastavení najdete pod tímto textem (tlačítko \"nastavení\"). Ne všechny jazyky jsou ovšem aplikací phyphox podporovány. Chcete-li zjistit, které jazyky jsou k dispozici, nebo byste chtěli pomoci s překladem, zmáčkěte tlačítko \"Navštivte internetovou stránku\".</string>
+    <string name="translationToSettings">Nastavení</string>
+    <string name="translationToWebsite">Navštivte internetovou stránku</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/faq/#faqTranslation</string>
+
+    </resources>
