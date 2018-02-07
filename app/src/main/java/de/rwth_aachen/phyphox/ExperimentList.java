@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityOptions;
 
@@ -9,7 +10,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -24,7 +28,9 @@ import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
@@ -37,10 +43,15 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -52,6 +63,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
+import org.w3c.dom.Text;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -62,11 +77,14 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -79,7 +97,6 @@ public class ExperimentList extends AppCompatActivity {
     public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
     public final static String EXPERIMENT_ISTEMP= "com.dicon.phyphox.EXPERIMENT_ISTEMP";
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
-    public final static String EXPERIMENT_SENSORREADY = "com.dicon.phyphox.EXPERIMENT_SENSORREADY";
     public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
 
     //String constant to identify our preferences
@@ -89,6 +106,12 @@ public class ExperimentList extends AppCompatActivity {
     private Resources res;
 
     ProgressDialog progress = null;
+
+    long currentQRcrc32 = -1;
+    int currentQRsize = -1;
+    byte[][] currentQRdataPackets = null;
+
+    boolean newExperimentDialogOpen = false;
 
     private Vector<category> categories = new Vector<>(); //The list of categories. The category class (see below) holds a category and all its experiment items
 
@@ -903,7 +926,8 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     public void zipReady(String result) {
-        progress.dismiss();
+        if (progress != null)
+            progress.dismiss();
         if (result.isEmpty()) {
             File tempPath = new File(getFilesDir(), "temp");
             final File[] files = tempPath.listFiles(new FilenameFilter() {
@@ -946,6 +970,12 @@ public class ExperimentList extends AppCompatActivity {
                                 dialog.dismiss();
                             }
 
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialogInterface) {
+                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                            }
                         });
                 AlertDialog dialog = builder.create();
 
@@ -987,6 +1017,13 @@ public class ExperimentList extends AppCompatActivity {
             return;
         boolean isZip = false;
         if (scheme.equals(ContentResolver.SCHEME_FILE) || scheme.equals("phyphox")) {
+            if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                //Android 6.0: No permission? Request it!
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+                //We will stop with a no permission error. If the user grants the permission, the permission callback will restart the action with the same intent
+                Toast.makeText(ExperimentList.this, "No permission to read external storage.", Toast.LENGTH_LONG).show();
+                return;
+            }
             Uri uri = intent.getData();
             isZip = (uri != null && intent.getData().getPath().endsWith(".zip"));
         } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
@@ -997,11 +1034,257 @@ public class ExperimentList extends AppCompatActivity {
             //This is just a single experiment - Start the Experiment activity and let it handle the intent
             Intent forwardedIntent = new Intent(intent);
             forwardedIntent.setClass(this, Experiment.class);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
             this.startActivity(forwardedIntent);
         } else {
             //We got a zip-file. Let's see what's inside...
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
             new handleZipIntent(intent, this).execute();
+        }
+    }
+
+    protected void showNewExperimentDialog() {
+        newExperimentDialogOpen = true;
+        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
+        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
+        final FloatingActionButton newExperimentBluetooth= (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
+        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
+        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
+        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
+        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
+        final View backgroundDimmer = (View) findViewById(R.id.experimentListDimmer);
+
+        Animation rotate45In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate45);
+        Animation fabIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_in);
+        Animation labelIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_in);
+        Animation fadeDark = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_dark);
+
+        newExperimentButton.startAnimation(rotate45In);
+        newExperimentSimple.startAnimation(fabIn);
+        newExperimentSimpleLabel.startAnimation(labelIn);
+        newExperimentBluetooth.startAnimation(fabIn);
+        newExperimentBluetoothLabel.startAnimation(labelIn);
+        newExperimentQR.startAnimation(fabIn);
+        newExperimentQRLabel.startAnimation(labelIn);
+        backgroundDimmer.startAnimation(fadeDark);
+
+        newExperimentSimple.setClickable(true);
+        newExperimentSimpleLabel.setClickable(true);
+        newExperimentBluetooth.setClickable(true);
+        newExperimentBluetoothLabel.setClickable(true);
+        newExperimentQR.setClickable(true);
+        newExperimentQRLabel.setClickable(true);
+        backgroundDimmer.setClickable(true);
+    }
+
+    protected void hideNewExperimentDialog() {
+        newExperimentDialogOpen = false;
+        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
+        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
+        final FloatingActionButton newExperimentBluetooth= (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
+        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
+        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
+        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
+        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
+        final View backgroundDimmer = (View) findViewById(R.id.experimentListDimmer);
+
+        Animation rotate0In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate0);
+        Animation fabOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_out);
+        Animation labelOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_out);
+        Animation fadeTransparent = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_transparent);
+
+        newExperimentSimple.setClickable(false);
+        newExperimentSimpleLabel.setClickable(false);
+        newExperimentBluetooth.setClickable(false);
+        newExperimentBluetoothLabel.setClickable(false);
+        newExperimentQR.setClickable(false);
+        newExperimentQRLabel.setClickable(false);
+        backgroundDimmer.setClickable(false);
+
+        newExperimentButton.startAnimation(rotate0In);
+        newExperimentSimple.startAnimation(fabOut);
+        newExperimentSimpleLabel.startAnimation(labelOut);
+        newExperimentBluetooth.startAnimation(fabOut);
+        newExperimentBluetoothLabel.startAnimation(labelOut);
+        newExperimentQR.startAnimation(fabOut);
+        newExperimentQRLabel.startAnimation(labelOut);
+        backgroundDimmer.startAnimation(fadeTransparent);
+
+    }
+
+    protected void scanQRCode() {
+        IntentIntegrator qrScan = new IntentIntegrator(this);
+
+        qrScan.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+        qrScan.setPrompt(getResources().getString(R.string.newExperimentQRscan));
+        qrScan.setBeepEnabled(false);
+        qrScan.setOrientationLocked(true);
+
+        lockScreen();
+        qrScan.initiateScan();
+    }
+
+    //This function prevents the screen from rotating. it finds out the current orientation and
+    // requests exactly this orientation. Just a "no-sensor"-mode is insufficient as it might revert
+    // to the default orientation, but the user shall be able to rotate the screen if the experiment
+    // is paused. After that it should stay the way it is...
+    private void lockScreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+        } else {
+            Display display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            int rotation = display.getRotation();
+            int tempOrientation = this.getResources().getConfiguration().orientation;
+            int orientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
+            switch (tempOrientation) {
+                case Configuration.ORIENTATION_LANDSCAPE:
+                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_90)
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                    else
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                    break;
+                case Configuration.ORIENTATION_PORTRAIT:
+                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270)
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                    else
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+            }
+            setRequestedOrientation(orientation);
+        }
+    }
+
+    @Override
+    //Callback for premission requests done during the activity. (since Android 6 / Marshmallow)
+    //If a new permission has been granted, we will just restart the activity to reload the experiment
+    //   with the formerly missing permission
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            this.recreate();
+        }
+    }
+
+    protected void showQRScanError(String msg, Boolean isError) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(msg)
+                .setTitle(isError ? R.string.newExperimentQRErrorTitle : R.string.newExperimentQR)
+                .setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        scanQRCode();
+                    }
+                })
+                .setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                    }
+                })
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        String textResult;
+        if (scanResult != null && (textResult = scanResult.getContents()) != null) {
+            if (textResult.toLowerCase().startsWith("http://") || textResult.toLowerCase().startsWith("https://") || textResult.toLowerCase().startsWith("phyphox://")) {
+                //This is an URL, open it
+                //Create an intent for this new file
+                Intent URLintent = new Intent(this, Experiment.class);
+                URLintent.setData(Uri.parse("phyphox://" + textResult.split("//", 2)[1]));
+                URLintent.setAction(Intent.ACTION_VIEW);
+                handleIntent(URLintent);
+
+            } else if (textResult.startsWith("phyphox")) {
+                //The QR code contains the experiment itself. The first 13 bytes are:
+                // p h y p h o x [crc32] [i] [n]
+                //"phyphox" as string (7 bytes)
+                //crc32 hash (big endian) of the submitted experiment (has to be the same for each qr code if the experiment is spread across multiple codes)
+                //i is the index of this code in a sequence of n code (starting at zero, so i starts at 0 and end with n-1
+                //n is the total number of codes for this experiment
+                byte[] data = intent.getByteArrayExtra("SCAN_RESULT_BYTE_SEGMENTS_0");
+                if (data == null) {
+                    Toast.makeText(ExperimentList.this, "Unexpected error: Could not retrieve data from QR code.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                long crc32 = ((data[7] << 24)&0xff000000 | (data[8] << 16)&0x00ff0000 | (data[9]<< 8)&0x0000ff00 | data[10]&0x000000ff);
+                int index = data[11];
+                int count = data[12];
+
+                if ((currentQRcrc32 >= 0 && currentQRcrc32 != crc32) || (currentQRsize >= 0 && count != currentQRsize) || (currentQRsize >= 0 && index >= currentQRsize)) {
+                    showQRScanError(res.getString(R.string.newExperimentQRcrcMismatch), true);
+                    currentQRsize = -1;
+                    currentQRcrc32 = -1;
+                }
+                if (currentQRcrc32 < 0) {
+                    currentQRcrc32 = crc32;
+                    currentQRsize = count;
+                    currentQRdataPackets = new byte[count][];
+                }
+                currentQRdataPackets[index] = Arrays.copyOfRange(data, 13, data.length);
+                int missing = 0;
+                for (int i = 0; i < currentQRsize; i++) {
+                    if (currentQRdataPackets[i] == null)
+                        missing++;
+                }
+                if (missing == 0) {
+                    //We have all the data. Write it to a temporary file and give it to our default intent handler...
+                    File tempPath = new File(getFilesDir(), "temp_qr");
+                    if (!tempPath.exists()) {
+                        if (!tempPath.mkdirs()) {
+                            showQRScanError("Could not create temporary directory to write zip file.", true);
+                            return;
+                        }
+                    }
+                    String[] files = tempPath.list();
+                    for (String file : files) {
+                        if (!(new File(tempPath, file).delete())) {
+                            showQRScanError("Could not clear temporary directory to extract zip file.", true);
+                            return;
+                        }
+                    }
+
+                    CRC32 crc32Received = new CRC32();
+
+                    File zipFile;
+                    try {
+                        zipFile = new File(tempPath, "qr.zip");
+                        FileOutputStream out = new FileOutputStream(zipFile);
+                        for (int i = 0; i < currentQRsize; i++) {
+                            out.write(currentQRdataPackets[i]);
+                            crc32Received.update(currentQRdataPackets[i]);
+                        }
+                        out.close();
+                    } catch (Exception e) {
+                        showQRScanError("Could not write QR content to zip file.", true);
+                        return;
+                    }
+                    if (crc32Received.getValue() != crc32) {
+                        Log.e("qrscan", "Received CRC32 " + crc32Received.getValue() + " but expected " + crc32);
+                        showQRScanError(res.getString(R.string.newExperimentQRBadCRC), true);
+                        return;
+                    }
+                    currentQRsize = -1;
+                    currentQRcrc32 = -1;
+
+                    Intent zipIntent = new Intent(this, Experiment.class);
+                    zipIntent.setData(Uri.fromFile(zipFile));
+                    zipIntent.setAction(Intent.ACTION_VIEW);
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    new handleZipIntent(zipIntent, this).execute();
+                } else {
+                    showQRScanError(res.getString(R.string.newExperimentQRCodesMissing1) + " " + currentQRsize + " " + res.getString(R.string.newExperimentQRCodesMissing2) + " " + missing, false);
+                }
+            } else {
+                //QR code does not contain or reference a phyphox experiment
+                showQRScanError(res.getString(R.string.newExperimentQRNoExperiment), true);
+            }
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
 
@@ -1044,6 +1327,8 @@ public class ExperimentList extends AppCompatActivity {
                                 tv.setText(Html.fromHtml(res.getString(R.string.creditsNames)));
                                 TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
                                 tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
+                                TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
+                                tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
 
                                 //Finish alertDialog builder
                                 credits.setView(creditLayout);
@@ -1095,15 +1380,60 @@ public class ExperimentList extends AppCompatActivity {
 
         //Setup the on-click-listener for the create-new-experiment button
         final Context c = this; //Context needs to be accessed in the onClickListener
+
         Button.OnClickListener neocl = new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (newExperimentDialogOpen)
+                    hideNewExperimentDialog();
+                else
+                    showNewExperimentDialog();
+            }
+        };
+
+        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
+        final View experimentListDimmer = (View) findViewById(R.id.experimentListDimmer);
+        newExperimentButton.setOnClickListener(neocl);
+        experimentListDimmer.setOnClickListener(neocl);
+
+        Button.OnClickListener neoclSimple = new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideNewExperimentDialog();
                 newExperimentDialog(c);
             }
         };
 
-        final FloatingActionButton newExperimentB = (FloatingActionButton) findViewById(R.id.newExperiment);
-        newExperimentB.setOnClickListener(neocl);
+        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
+        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
+        newExperimentSimple.setOnClickListener(neoclSimple);
+        newExperimentSimpleLabel.setOnClickListener(neoclSimple);
+
+        Button.OnClickListener neoclBluetooth = new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideNewExperimentDialog();
+                //TODO
+            }
+        };
+
+        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
+        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
+        newExperimentBluetooth.setOnClickListener(neoclBluetooth);
+        newExperimentBluetoothLabel.setOnClickListener(neoclBluetooth);
+
+        Button.OnClickListener neoclQR = new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideNewExperimentDialog();
+                scanQRCode();
+            }
+        };
+
+        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
+        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
+        newExperimentQR.setOnClickListener(neoclQR);
+        newExperimentQRLabel.setOnClickListener(neoclQR);
 
         handleIntent(getIntent());
 

@@ -3,12 +3,25 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_experiment">phyphox</string>
 
-    <string name="newExperiment">Add simple experiment</string>
+    <string name="newExperiment">Add experiments</string>
+
+    <string name="newExperimentSimple">Add simple experiment</string>
     <string name="newExperimentPhyphoxInfo">Visit phyphox.org to create more advanced experiments including data analysis and share them with colleagues, students and friends.</string>
     <string name="newExperimentInputTitle">Title</string>
     <string name="newExperimentInputBufferSize">Buffer size (number of values to be stored)</string>
     <string name="newExperimentInputRate">Sensor rate (in Hz, 0 = as fast as possible)</string>
     <string name="newExperimentInputSensors">Active sensors</string>
+
+    <string name="newExperimentBluetooth">Add experiment for Bluetooth device</string>
+    <string name="newExperimentQR">Add experiment from QR code</string>
+
+    <string name="newExperimentQRscan">Scan a QR code that contains a phyphox experiment.</string>
+    <string name="newExperimentQRErrorTitle">QR code error.</string>
+    <string name="newExperimentQRNoExperiment">Could not find a QR code that contains a phyphox experiment.</string>
+    <string name="newExperimentQRcrcMismatch">The QR code you just scanned does not seem to match to the previous codes. Please make sure to only scan the codes belonging to the same experiment.</string>
+    <string name="newExperimentQRCodesMissing1">The QR code you just scanned is part of a set of</string>
+    <string name="newExperimentQRCodesMissing2">codes. Please press continue to scan the remaining codes. Codes still missing: </string>
+    <string name="newExperimentQRBadCRC">Invalid checksum. This means that either the QR code is bad or something went wrong while scanning it.</string>
 
     <string name="generalErrorDialog">An error has occurred.</string>
 
@@ -50,8 +63,29 @@ This product contains the Piccolo XML Parser for Java (http://piccolo.sourceforg
 <br />
 This product contains the chunks_parse_cmds.tbl file from the vsdump program. Copyright (C) 2006-2007 Valek Filippov (frob@df.ru)<br />
 <br />
-This product contains parts of the eID Applet project (http://eid-applet.googlecode.com). Copyright (c) 2009-2014 FedICT (federal ICT department of Belgium), e-Contract.be BVBA (https://www.e-contract.be), Bart Hanssens from FedICT
+This product contains parts of the eID Applet project (http://eid-applet.googlecode.com). Copyright (c) 2009-2014 FedICT (federal ICT department of Belgium), e-Contract.be BVBA (https://www.e-contract.be), Bart Hanssens from FedICT<br />
+<br />
         ]]>
+    </string>
+    <string name="creditsZxing" translatable="false">
+        <![CDATA[
+        <b>Zxing</b><br />
+        The QR code scanner function uses ZXing (https://github.com/zxing/zxing), licenced under the Apache licence v2.0 (please see the webpage for details on the licence ans contributors. <br />
+        <br />
+NOTICES FOR BARCODE4J<br />
+<br />
+Barcode4J<br />
+Copyright 2002-2010 Jeremias Märki<br />
+Copyright 2005-2006 Dietmar Bürkle<br />
+<br />
+Portions of this software were contributed under section 5 of the<br />
+Apache License. Contributors are listed under:<br />
+http://barcode4j.sourceforge.net/contributors.html<br />
+<br />
+NOTICES FOR JCOMMANDER<br />
+<br />
+Copyright 2010 Cedric Beust cedric@beust.com
+]]>
     </string>
 
     <string name="sensorLinearAcceleration">Linear Acceleration</string>
@@ -73,7 +107,8 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
 
     <string name="ok">OK</string>
-    <string name="tryagain">try again</string>
+    <string name="tryagain">Try again</string>
+    <string name="doContinue">Continue</string>
     <string name="close">Close</string>
     <string name="next">Next</string>
     <string name="cancel">Cancel</string>
@@ -137,7 +172,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="save_state_success">State has been saved to your collection.</string>
 
     <string name="open_zip_title">Opening a set of experiments</string>
-    <string name="open_zip_dialog_instructions">This ressource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or select to save them all to your collection at once.</string>
+    <string name="open_zip_dialog_instructions">This ressource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.</string>
     <string name="open_zip_dialog_save_all">Save all</string>
 
     <string name="timedRun">Timed run</string>

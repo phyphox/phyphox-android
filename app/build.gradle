@@ -26,4 +26,5 @@ dependencies {
     compile 'org.apache.poi:poi:3.13'
     compile 'com.android.support:support-v4:27.0.2'
     compile 'com.android.support:design:27.0.2'
+    compile 'com.journeyapps:zxing-android-embedded:3.5.0'
 }

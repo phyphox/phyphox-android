@@ -64,6 +64,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="de.rwth_aachen.phyphox.ExperimentList" />
         </activity>
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="unspecified"
+            tools:replace="screenOrientation" />
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="de.rwth_aachen.phyphox.exportProvider"

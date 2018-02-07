@@ -21,4 +21,8 @@
     <color name="highlight">#ff7e22</color>
     <color name="phyphox_color">#ff7e22</color>
     <color name="rwth">#00549f</color>
+
+    <color name="bluetooth">#2260a5</color>
+    <color name="qrFabBG">#e0e0e0</color>
+    <color name="newExperimentFabBG">#fe005d</color>
 </resources>

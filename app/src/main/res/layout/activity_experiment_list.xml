@@ -67,6 +67,100 @@
             android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
     </ScrollView>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"
+        android:id="@+id/experimentListDimmer"
+        android:background="@color/background"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/newExperimentQR"
+        android:text="@string/newExperimentQR"
+        android:id="@+id/newExperimentQR"
+        android:src="@drawable/new_experiment_qr"
+        app:backgroundTint="@color/qrFabBG"
+        app:fabSize="mini"
+        android:visibility="invisible"
+        android:clickable="false"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
+        android:layout_above="@id/newExperimentBluetooth"
+        android:layout_alignRight="@id/newExperiment"
+        android:elevation="12dp"
+        />
+
+    <TextView
+        android:id="@+id/newExperimentQRLabel"
+        android:text="@string/newExperimentQR"
+        android:layout_toLeftOf="@id/newExperimentQR"
+        android:layout_alignTop="@id/newExperimentQR"
+        android:layout_width="wrap_content"
+        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
+        android:gravity="center"
+        android:visibility="invisible"
+        android:layout_height="40dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/newExperimentBluetooth"
+        android:text="@string/newExperimentBluetooth"
+        android:id="@+id/newExperimentBluetooth"
+        android:src="@drawable/new_experiment_bluetooth"
+        app:backgroundTint="@color/bluetooth"
+        app:fabSize="mini"
+        android:visibility="invisible"
+        android:clickable="false"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
+        android:layout_above="@id/newExperimentSimple"
+        android:layout_alignRight="@id/newExperiment"
+        android:elevation="12dp"
+        />
+
+    <TextView
+        android:id="@+id/newExperimentBluetoothLabel"
+        android:text="@string/newExperimentBluetooth"
+        android:layout_toLeftOf="@id/newExperimentBluetooth"
+        android:layout_alignTop="@id/newExperimentBluetooth"
+        android:layout_width="wrap_content"
+        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
+        android:gravity="center"
+        android:visibility="invisible"
+        android:layout_height="40dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/newExperimentSimple"
+        android:text="@string/newExperimentSimple"
+        android:id="@+id/newExperimentSimple"
+        android:src="@drawable/new_experiment_simple"
+        app:backgroundTint="@color/newExperimentFabBG"
+        app:fabSize="mini"
+        android:visibility="invisible"
+        android:clickable="false"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
+        android:layout_above="@id/newExperiment"
+        android:layout_alignRight="@id/newExperiment"
+        android:elevation="12dp"
+        />
+
+    <TextView
+        android:id="@+id/newExperimentSimpleLabel"
+        android:text="@string/newExperimentSimple"
+        android:layout_toLeftOf="@id/newExperimentSimple"
+        android:layout_alignTop="@id/newExperimentSimple"
+        android:layout_width="wrap_content"
+        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
+        android:gravity="center"
+        android:visibility="invisible"
+        android:layout_height="40dp" />
+
     <android.support.design.widget.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -76,7 +170,7 @@
         android:src="@drawable/new_experiment"
         app:fabSize="normal"
         android:layout_marginRight="@dimen/activity_horizontal_button_margin"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:elevation="12dp"
