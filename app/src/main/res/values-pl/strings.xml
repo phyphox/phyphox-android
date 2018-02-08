@@ -20,19 +20,19 @@
 
     <string name="warning">Uwaga</string>
     <string name="donotshowagain">Nie pokazuj ponownie</string>
-    <string name="damageWarning">Postępuj rozważnie by nie uszkodzić swojego telefony podczas eksperymentu. Zadbaj, by telefon nie spadł na twarde podłoże i nie był narażony na znaczne pole magnetyczne. Autorzy phyphox\'a nie odpowiadają za szkody powstałe podczas doświadczeń z telefonem.</string>
+    <string name="damageWarning">Postępuj rozważnie by nie uszkodzić swojego telefony podczas eksperymentu. Zadbaj, by telefon nie spadł na twarde podłoże i nie był narażony na działanie znacznego pola magnetycznego. Autorzy phyphox\'a nie odpowiadają za szkody powstałe podczas doświadczeń z telefonem.</string>
 
     <string name="credits">Autorzy</string>
     <string name="creditsRWTH">phyphox powstał w II Instytucie Fizyki Uniwersytetu RWTH w Aachen.</string>
-    <string name="sensorLinearAcceleration">Przyspieszenie liniowe</string>
+    <string name="sensorLinearAcceleration">Przyspieszenia liniowego</string>
     <string name="sensorLight">Światła</string>
     <string name="sensorGyroscope">Żyroskop</string>
-    <string name="sensorAccelerometer">Akcelerometr (czujnik przyspieszenia)</string>
-    <string name="sensorMagneticField">Pole magnetyczne</string>
-    <string name="sensorPressure">Ciśnienie</string>
+    <string name="sensorAccelerometer">Akcelerometr</string>
+    <string name="sensorMagneticField">Pola magnetycznego</string>
+    <string name="sensorPressure">Ciśnienia</string>
     <string name="sensorProximity">Zbliżeniowy</string>
 
-    <string name="location">Położenie</string>
+    <string name="location">Położenia</string>
 
     <string name="sensorNotAvailableWarningTitle">Czujnik niedostępny.</string>
     <string name="sensorNotAvailableWarningText1">Czujnik</string>
@@ -88,10 +88,10 @@
     <string name="show_description">Informacje o eksperymencie</string>
     <string name="save_locally">Dodaj eksperyment do zbioru</string>
     <string name="save_locally_done">Eksperyment pomyślnie dodany do zbioru.</string>
-    <string name="save_locally_message">Eksperyment otwarty ze zdalnego źrodła. Czy dodać go do twojego zbioru eksperymentów?</string>
+    <string name="save_locally_message">Eksperyment otwarty ze zdalnego źródła. Czy dodać go do twojego zbioru eksperymentów?</string>
     <string name="save_locally_button">Zapisz do zbioru</string>
     <string name="save_state">Zapisz status eksperymentu</string>
-    <string name="save_state_category">Satus eksperymentu zapisany</string>
+    <string name="save_state_category">Status eksperymentu zapisany</string>
     <string name="save_state_message">Możesz zapisać status eksperymentu wraz z wynikami w swoim zbiorze lub udostępnić go innej aplikacji.</string>
     <string name="save_state_title">Tytuł</string>
     <string name="save_state_save">Do zbioru</string>
@@ -118,10 +118,10 @@
     <string name="translationToWebsiteURL">http://phyphox.org/faq-pl/#faqTranslation</string>
 
     <string name="info">Info</string>
-    <string name="creditsNames">Koncepcja i rozwój:<br/><b>Dr. Sebastian Staacks</b><br/>Koncepcja:<br/><b>Prof. Christoph Stampfer</b><br/>Projekt graficzny:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programowanie:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">Koncepcja i rozwój: <br/><b>Dr. Sebastian Staacks</b><br/>Koncepcja: <br/><b>Prof. Christoph Stampfer</b><br/>Projekt graficzny: <br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programowanie: <br/><b>Camilla Lummerzheim </b><br/><b>Jonas Gessner</b></string>
     <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA i Ole Laursen) oraz \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), dostępnych w licencji MIT.</string>
-    <string name="sensorTemperature">Temperatura</string>
-    <string name="sensorHumidity">Wilgotność</string>
+    <string name="sensorTemperature">Temperatury</string>
+    <string name="sensorHumidity">Wilgotności</string>
     <string name="enableTimedRun">Określ czas trwania sesji pomiarowej</string>
 
     <string name="remoteServer">Dostęp zdalny</string>
