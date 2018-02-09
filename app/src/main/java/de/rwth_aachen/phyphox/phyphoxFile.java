@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -386,8 +387,9 @@ public abstract class phyphoxFile {
                     }
                     try {
                         try {
-                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.conversionsOutput." + conversionFunctionName);
-                            outputConversionFunction = (ConversionsOutput.OutputConversion)conversionClass.getConstructor(xpp.getClass()).newInstance(xpp);
+                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsOutput$" + conversionFunctionName);
+                            Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                            outputConversionFunction = (ConversionsOutput.OutputConversion)constructor.newInstance(xpp);
                         } catch (Exception e) {
                             Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
                             outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
@@ -443,10 +445,11 @@ public abstract class phyphoxFile {
                        }
                         try {
                             try {
-                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.conversionsInput." + conversionFunctionName);
-                                inputConversionFunction = (ConversionsInput.InputConversion)conversionClass.getConstructor(xpp.getClass()).newInstance(xpp);
+                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsInput$" + conversionFunctionName);
+                                Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                                inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
                             } catch (Exception e) {
-                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
+                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
                                 inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod);
                             }
                         } catch (NoSuchMethodException e) {
@@ -478,8 +481,9 @@ public abstract class phyphoxFile {
                     }
                     try {
                         try {
-                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.conversionsConfig." + conversionFunctionName);
-                            configConversionFunction = (ConversionsConfig.ConfigConversion)conversionClass.getConstructor(xpp.getClass()).newInstance(xpp);
+                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsConfig$" + conversionFunctionName);
+                            Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                            configConversionFunction = (ConversionsConfig.ConfigConversion)constructor.newInstance(xpp);
                         } catch (Exception e) {
                             Method conversionMethod = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
                             configConversionFunction = new ConversionsConfig.SimpleConfigConversion(conversionMethod);

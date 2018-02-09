@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -66,7 +68,6 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import org.w3c.dom.Text;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -76,11 +77,12 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.Vector;
@@ -98,6 +100,7 @@ public class ExperimentList extends AppCompatActivity {
     public final static String EXPERIMENT_ISTEMP= "com.dicon.phyphox.EXPERIMENT_ISTEMP";
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
     public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
+    public final static String EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS= "com.dicon.phyphox.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS";
 
     //String constant to identify our preferences
     public static final String PREFS_NAME = "phyphox";
@@ -113,7 +116,8 @@ public class ExperimentList extends AppCompatActivity {
 
     boolean newExperimentDialogOpen = false;
 
-    private Vector<category> categories = new Vector<>(); //The list of categories. The category class (see below) holds a category and all its experiment items
+    private Vector<ExperimentsInCategory> categories = new Vector<>(); //The list of categories. The ExperimentsInCategory class (see below) holds a ExperimentsInCategory and all its experiment items
+    private HashMap<String, Vector<String>> bluetoothDeviceList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
 
     //The class TextIcon is a drawable that displays up to three characters in a rectangle as a
     //substitution icon, used if an experiment does not have its own icon
@@ -227,8 +231,10 @@ public class ExperimentList extends AppCompatActivity {
 
     //This adapter is used to fill the gridView of the categories in the experiment list.
     //So, this can be considered to be the experiment entries within an category
-    private class experimentItemAdapter extends BaseAdapter {
+    private class ExperimentItemAdapter extends BaseAdapter {
         final private Activity parentActivity; //Reference to the main activity for the alertDialog when deleting files
+
+        private String preselectedBluetoothAddress = null;
 
         //Experiment data
         Vector<Drawable> icons = new Vector<>(); //List of icons for each experiment
@@ -240,8 +246,12 @@ public class ExperimentList extends AppCompatActivity {
         Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
 
         //The constructor takes the activity reference. That's all.
-        public experimentItemAdapter(Activity parentActivity) {
+        public ExperimentItemAdapter(Activity parentActivity) {
             this.parentActivity = parentActivity;
+        }
+
+        public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
+            this.preselectedBluetoothAddress = preselectedBluetoothAddress;
         }
 
         //The number of elements is just the number of icons. (Any of the lists should do)
@@ -268,6 +278,8 @@ public class ExperimentList extends AppCompatActivity {
             intent.putExtra(EXPERIMENT_ISTEMP, isTemp.get(position));
             intent.putExtra(EXPERIMENT_ISASSET, isAsset.get(position));
             intent.putExtra(EXPERIMENT_UNAVAILABLESENSOR, unavailableSensorList.get(position));
+            if (this.preselectedBluetoothAddress != null)
+                intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, this.preselectedBluetoothAddress);
             intent.setAction(Intent.ACTION_VIEW);
 
             //If we are on a recent API, we can add a nice zoom animation
@@ -413,13 +425,13 @@ public class ExperimentList extends AppCompatActivity {
 
     //The category class wraps all experiment entries and their views of a category, including the
     //grid view and the category headline
-    private class category {
+    private class ExperimentsInCategory {
         private Context parentContext; //Needed to create views
         public String name; //Category name (headline)
         private LinearLayout catLayout; //This is the base layout of the category, which will contain the headline and the gridView showing all the experiments
         private TextView categoryHeadline; //The TextView to display the headline
         private ExpandableHeightGridView experimentSubList; //The gridView holding experiment items. (See implementation below for the custom flavor "ExpandableHeightGridView")
-        private experimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
+        private ExperimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
 
         //ExpandableHeightGridView is derived from the original Android GridView.
         //The structure of our experiment list is such that we want to scroll the entire list, which
@@ -485,7 +497,7 @@ public class ExperimentList extends AppCompatActivity {
         //Constructor for the category class, takes a category name, the layout into which it should
         // place its views and the calling activity (mostly to display the dialog in the onClick
         // listener of the delete button for each element - maybe this should be restructured).
-        public category(String name, Activity parentActivity) {
+        public ExperimentsInCategory(String name, Activity parentActivity) {
             //Store what we need.
             this.name = name;
             parentContext = parentActivity;
@@ -530,7 +542,7 @@ public class ExperimentList extends AppCompatActivity {
             experimentSubList.setExpanded(true);
 
             //Create the adapter and give it to the gridView
-            experiments = new experimentItemAdapter(parentActivity);
+            experiments = new ExperimentItemAdapter(parentActivity);
             experimentSubList.setAdapter(experiments);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -544,6 +556,10 @@ public class ExperimentList extends AppCompatActivity {
             //Add headline and experiment list to our base layout
             catLayout.addView(categoryHeadline);
             catLayout.addView(experimentSubList);
+        }
+
+        public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
+            experiments.setPreselectedBluetoothAddress(preselectedBluetoothAddress);
         }
 
         public void addToParent(LinearLayout parentLayout) {
@@ -562,8 +578,8 @@ public class ExperimentList extends AppCompatActivity {
         }
     }
 
-    class categoryComparator implements Comparator<category> {
-        public int compare(category a, category b) {
+    class categoryComparator implements Comparator<ExperimentsInCategory> {
+        public int compare(ExperimentsInCategory a, ExperimentsInCategory b) {
             if (a.name.equals(res.getString(R.string.categoryRawSensor)))
                 return -1;
             if (b.name.equals(res.getString(R.string.categoryRawSensor)))
@@ -577,13 +593,13 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //The third addExperiment function:
-    //experimentItemAdapter.addExperiment(...) is called by category.addExperiment(...), which in
+    //ExperimentItemAdapter.addExperiment(...) is called by category.addExperiment(...), which in
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor, Vector<category> categories) {
+    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor, Vector<ExperimentsInCategory> categories) {
         //Check all categories for the category of the new experiment
-        for (category icat : categories) {
+        for (ExperimentsInCategory icat : categories) {
             if (icat.hasName(cat)) {
                 //Found it. Add the experiment and return
                 icat.addExperiment(exp, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
@@ -591,7 +607,7 @@ public class ExperimentList extends AppCompatActivity {
             }
         }
         //Category does not yet exist. Create it and add the experiment
-        categories.add(new category(cat, this));
+        categories.add(new ExperimentsInCategory(cat, this));
         categories.lastElement().addExperiment(exp, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
     }
 
@@ -602,14 +618,14 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
-    private void loadExperimentInfo(InputStream input, String experimentXML, boolean isTemp, boolean isAsset, Vector<category> categories) {
+    private void loadExperimentInfo(InputStream input, String experimentXML, boolean isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories, HashMap<String, Vector<String>> bluetoothDeviceList) {
         XmlPullParser xpp;
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             //Prepare the PullParser
             xpp = Xml.newPullParser();
             xpp.setInput(input, "UTF-8");
         } catch (XmlPullParserException e) {
-            Toast.makeText(this, "Cannot open " + experimentXML + " as it misses a title.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Cannot open " + experimentXML + ".", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -735,6 +751,14 @@ public class ExperimentList extends AppCompatActivity {
                                 if ((!inInput && !inOutput) || unavailableSensor >= 0) {
                                     break;
                                 }
+                                String name = xpp.getAttributeValue(null, "name");
+                                if (name != null && !name.isEmpty()) {
+                                    if (bluetoothDeviceList != null) {
+                                        if (!bluetoothDeviceList.containsKey(name))
+                                            bluetoothDeviceList.put(name, new Vector<String>());
+                                        bluetoothDeviceList.get(name).add(experimentXML);
+                                    }
+                                }
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
                                     unavailableSensor = R.string.bluetooth;
                                 } else if (!Bluetooth.isSupported(this)) {
@@ -798,7 +822,8 @@ public class ExperimentList extends AppCompatActivity {
                 image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
 
             //We have all the information. Add the experiment.
-            addExperiment(title, category, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
+            if (categories != null)
+                addExperiment(title, category, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             Toast.makeText(this, "Error loading " + experimentXML + " (XML Exception)", Toast.LENGTH_LONG).show();
@@ -814,6 +839,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //Clear the old list first
         categories.clear();
+        bluetoothDeviceList.clear();
         LinearLayout catList = (LinearLayout)findViewById(R.id.experimentList);
         catList.removeAllViews();
 
@@ -830,7 +856,7 @@ public class ExperimentList extends AppCompatActivity {
             for (File file : files) {
                 //Load details for each experiment
                 InputStream input = openFileInput(file.getName());
-                loadExperimentInfo(input, file.getName(), false, false, categories);
+                loadExperimentInfo(input, file.getName(), false, false, categories, null);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
@@ -842,17 +868,32 @@ public class ExperimentList extends AppCompatActivity {
             final String[] experimentXMLs = assetManager.list("experiments"); //All experiments are placed in the experiments folder
             for (String experimentXML : experimentXMLs) {
                 //Load details for each experiment
+                if (!experimentXML.endsWith(".phyphox"))
+                    continue;
                 InputStream input = assetManager.open("experiments/" + experimentXML);
-                loadExperimentInfo(input, experimentXML, false,true, categories);
+                loadExperimentInfo(input, experimentXML, false,true, categories, null);
             }
         } catch (IOException e) {
-            Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: Could not load internal experiment list: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
         Collections.sort(categories, new categoryComparator());
 
-        for (category cat : categories) {
+        for (ExperimentsInCategory cat : categories) {
             cat.addToParent(catList);
+        }
+
+        //Load hidden bluetooth experiments - these are not shown but will be offered if a matching Bluetooth device is found during a scan
+        try {
+            AssetManager assetManager = getAssets();
+            final String[] experimentXMLs = assetManager.list("experiments/bluetooth");
+            for (String experimentXML : experimentXMLs) {
+                //Load details for each experiment
+                InputStream input = assetManager.open("experiments/bluetooth/" + experimentXML);
+                loadExperimentInfo(input, experimentXML, false,true, null, bluetoothDeviceList);
+            }
+        } catch (IOException e) {
+            Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -951,9 +992,9 @@ public class ExperimentList extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-                View view = inflater.inflate(R.layout.open_zip_dialog, null);
+                View view = inflater.inflate(R.layout.open_multipe_dialog, null);
                 builder.setView(view)
-                        .setPositiveButton(R.string.open_zip_dialog_save_all, new DialogInterface.OnClickListener() {
+                        .setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
                                 for (File file : files) {
@@ -979,18 +1020,20 @@ public class ExperimentList extends AppCompatActivity {
                         });
                 AlertDialog dialog = builder.create();
 
-                LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_zip_dialog_list);
+                ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_zip_dialog_instructions);
+
+                LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_multiple_dialog_list);
 
                 dialog.setTitle(getResources().getString(R.string.open_zip_title));
 
-                Vector<category> zipExperiments = new Vector<>();
+                Vector<ExperimentsInCategory> zipExperiments = new Vector<>();
 
                 //Load experiments from local files
                 for (File file : files) {
                     //Load details for each experiment
                     try {
                         InputStream input = new FileInputStream(file);
-                        loadExperimentInfo(input, file.getName(), true, false, zipExperiments);
+                        loadExperimentInfo(input, file.getName(), true, false, zipExperiments, null);
                         input.close();
                     } catch (IOException e) {
                         Log.e("zip", e.getMessage());
@@ -1000,7 +1043,7 @@ public class ExperimentList extends AppCompatActivity {
 
                 Collections.sort(zipExperiments, new categoryComparator());
 
-                for (category cat : zipExperiments) {
+                for (ExperimentsInCategory cat : zipExperiments) {
                     cat.addToParent(catList);
                 }
 
@@ -1011,6 +1054,120 @@ public class ExperimentList extends AppCompatActivity {
         }
     }
 
+    //The BluetoothScanDialog has been written to block execution until a device is found, so we should not run it on the UI thread.
+    protected class runBluetoothScan extends AsyncTask<String, Void, BluetoothDevice> {
+        private WeakReference<ExperimentList> parent;
+
+        //The constructor takes the intent to copy from and the parent activity to call back when finished.
+        runBluetoothScan(ExperimentList parent) {
+            this.parent = new WeakReference<>(parent);
+        }
+
+        //Copying is done on a second thread...
+        protected BluetoothDevice doInBackground(String... params) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent.get())) {
+                showBluetoothScanError(getResources().getString(R.string.bt_android_version), true, true);
+                return null;
+            } else {
+                BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+                if (btAdapter == null || !Bluetooth.isEnabled()) {
+                    showBluetoothScanError(getResources().getString(R.string.bt_exception_disabled), true, false);
+                    return null;
+                }
+                BluetoothScanDialog bsd = new BluetoothScanDialog(parent.get(), parent.get(), btAdapter);
+                return bsd.getBluetoothDevice(null, bluetoothDeviceList.keySet());
+            }
+        }
+
+        @Override
+        //Call the parent callback when we are done.
+        protected void onPostExecute(BluetoothDevice result) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+            if (result != null)
+                openBluetoothExperiments(result);
+        }
+    }
+
+    public void openBluetoothExperiments(final BluetoothDevice device) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        View view = inflater.inflate(R.layout.open_multipe_dialog, null);
+        builder.setView(view)
+                .setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        AssetManager assetManager = getAssets();
+                        try {
+                            for (String file : bluetoothDeviceList.get(device.getName())) {
+                                InputStream in = assetManager.open("experiments/bluetooth/"+file);
+                                OutputStream out = new FileOutputStream(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
+                                byte[] buffer = new byte[1024];
+                                int count;
+                                while((count = in.read(buffer)) != -1){
+                                    out.write(buffer, 0, count);
+                                }
+                                in.close();
+                                out.flush();
+                                out.close();
+                            }
+                        } catch (Exception e) {
+                            Toast.makeText(ExperimentList.this, "Error: Could not retrieve assets.", Toast.LENGTH_LONG).show();
+                        }
+
+                        loadExperimentList();
+                        dialog.dismiss();
+                    }
+
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+
+                })
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    }
+                });
+        AlertDialog dialog = builder.create();
+
+        ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_bluetooth_assets);
+
+        LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_multiple_dialog_list);
+
+        dialog.setTitle(getResources().getString(R.string.open_bluetooth_assets_title));
+
+        //Load experiments from assets
+        AssetManager assetManager = getAssets();
+        Vector<ExperimentsInCategory> bluetoothExperiments = new Vector<>();
+        for (String file : bluetoothDeviceList.get(device.getName())) {
+            //Load details for each experiment
+            try {
+                InputStream input = assetManager.open("experiments/bluetooth/"+file);
+                loadExperimentInfo(input, "bluetooth/"+file, true, true, bluetoothExperiments, null);
+                input.close();
+            } catch (IOException e) {
+                Log.e("bluetooth", e.getMessage());
+                Toast.makeText(this, "Error: Could not load experiment \"" + file + "\" from asset.", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        Collections.sort(bluetoothExperiments, new categoryComparator());
+
+        for (ExperimentsInCategory cat : bluetoothExperiments) {
+            cat.setPreselectedBluetoothAddress(device.getAddress());
+            cat.addToParent(catList);
+        }
+
+        dialog.show();
+    }
+
+
     protected void handleIntent(Intent intent) {
         String scheme = intent.getScheme();
         if (scheme == null)
@@ -1020,8 +1177,7 @@ public class ExperimentList extends AppCompatActivity {
             if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 //Android 6.0: No permission? Request it!
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
-                //We will stop with a no permission error. If the user grants the permission, the permission callback will restart the action with the same intent
-                Toast.makeText(ExperimentList.this, "No permission to read external storage.", Toast.LENGTH_LONG).show();
+                //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
                 return;
             }
             Uri uri = intent.getData();
@@ -1182,6 +1338,32 @@ public class ExperimentList extends AppCompatActivity {
                     public void onDismiss(DialogInterface dialogInterface) {
                         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    protected void showBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(msg)
+                .setTitle(isError ? R.string.newExperimentBluetoothErrorTitle : R.string.newExperimentBluetooth);
+        if (!isFatal) {
+            builder.setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                scanQRCode();
+                }
+            });
+        }
+        builder.setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+
+            }
+        })
+        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
                 });
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -1379,7 +1561,7 @@ public class ExperimentList extends AppCompatActivity {
         creditsV.setOnClickListener(ocl);
 
         //Setup the on-click-listener for the create-new-experiment button
-        final Context c = this; //Context needs to be accessed in the onClickListener
+        final ExperimentList thisRef = this; //Context needs to be accessed in the onClickListener
 
         Button.OnClickListener neocl = new Button.OnClickListener() {
             @Override
@@ -1400,7 +1582,7 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 hideNewExperimentDialog();
-                newExperimentDialog(c);
+                newExperimentDialog(thisRef);
             }
         };
 
@@ -1413,7 +1595,8 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 hideNewExperimentDialog();
-                //TODO
+                lockScreen();
+                (new runBluetoothScan(thisRef)).execute();
             }
         };
 

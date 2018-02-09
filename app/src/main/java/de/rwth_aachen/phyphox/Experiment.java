@@ -66,6 +66,8 @@ import org.w3c.dom.Document;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -77,6 +79,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.zip.CRC32;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
@@ -90,7 +93,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private static final String STATE_TIMED_RUN = "timed_run"; //Are timed runs activated?
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
     private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay"; //The stop delay for a timed run
-    private static final String STATE_EXPERIMENT = "experiment"; //The actual experiment
     private static final String STATE_HINT_DISMISSED = "hint_dismissed";
     private static final String STATE_SAVE_LOCALLY_DISMISSED = "save_locally_dismissed";
 
@@ -282,6 +284,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         this.experiment = experiment; //Store the loaded experiment
         if (experiment.loaded) { //Everything went fine, no errors
+            //If the experiment has been launched from a Bluetooth scan, we need to set the bluetooth device in the experiment so it does not ask the user again
+            String btAddress = intent.getStringExtra(ExperimentList.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
+            if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                for (Bluetooth bt : this.experiment.bluetoothInputs)
+                    bt.deviceAddress = btAddress;
+                for (Bluetooth bt : this.experiment.bluetoothOutputs)
+                    bt.deviceAddress = btAddress;
+            }
+
             //We should set the experiment title....
             ((TextView) findViewById(R.id.titleText)).setText(experiment.title);
 
@@ -350,6 +361,38 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED); //We are ready. Now the user may rotate.
 
+        //Check if experiment is already in list and if so, flag it as local.
+        if (experiment.source != null) {
+            CRC32 crc32 = new CRC32();
+            crc32.update(experiment.source);
+            long refCRC32 = crc32.getValue();
+
+                    File[] files = getFilesDir().listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String filename) {
+                    return filename.endsWith(".phyphox");
+                }
+            });
+
+            for (File file : files) {
+                crc32.reset();
+
+                try {
+                    InputStream input = openFileInput(file.getName());
+                    byte[] buffer = new byte[1024];
+                    int count;
+                    while ((count = input.read(buffer)) != -1) {
+                        crc32.update(buffer, 0, count);
+                    }
+                }catch (Exception e) {
+                    continue;
+                }
+                if (refCRC32 == crc32.getValue()) {
+                    experiment.isLocal = true;
+                    break;
+                }
+            }
+        }
         //If this experiment has been loaded from a external source, we offer to save it locally
         if (!experiment.isLocal && experiment.loaded) {
             hintDismissed = true; //Do not show menu hint for external experiments

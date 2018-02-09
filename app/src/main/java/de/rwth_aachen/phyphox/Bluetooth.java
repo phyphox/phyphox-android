@@ -57,8 +57,8 @@ public class Bluetooth implements Serializable {
 
     protected transient BluetoothDevice btDevice;
     protected transient BluetoothGatt btGatt;
-    private String deviceName;
-    private String deviceAddress;
+    public String deviceName;
+    public String deviceAddress;
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -162,7 +162,7 @@ public class Bluetooth implements Serializable {
      * @param characteristics list of all characteristics the object should be able to operate on
      */
     public Bluetooth(String deviceName, String deviceAddress, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
-        this.deviceName = deviceName;
+        this.deviceName = (deviceName == null ? "" : deviceName);
         this.deviceAddress = deviceAddress;
 
         this.activity = activity;
@@ -250,7 +250,7 @@ public class Bluetooth implements Serializable {
             //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
-            btDevice = bsd.getBluetoothDevice(deviceName);
+            btDevice = bsd.getBluetoothDevice(deviceName, null);
         }
         if (btDevice == null) {
             //still null? Give up and complain

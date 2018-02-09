@@ -1,14 +1,19 @@
 package de.rwth_aachen.phyphox;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +25,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.Vector;
 
 /**
  * Created by Sebastian Staacks on 03.02.18.
@@ -39,8 +47,9 @@ public class BluetoothScanDialog {
     private final Object lock = new Object();
 
     private String nameFilter;
+    private Set<String> supportedNameFiler;
 
-    BluetoothScanDialog(Activity activity, final Context context, BluetoothAdapter bta) {
+    BluetoothScanDialog(final Activity activity, final Context context, BluetoothAdapter bta) {
         this.parentActivity = activity;
         this.ctx = context;
         this.bta = bta;
@@ -48,6 +57,7 @@ public class BluetoothScanDialog {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
                 LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -69,7 +79,9 @@ public class BluetoothScanDialog {
                 list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                        selectedDevice = listAdapter.getDevice(pos);
+                        if (!listAdapter.getDevice(pos).supported)
+                            return;
+                        selectedDevice = listAdapter.getDevice(pos).device;
                         dialog.dismiss();
                     }
                 });
@@ -90,27 +102,81 @@ public class BluetoothScanDialog {
     private BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
                 @Override
                 public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
+
+                    /*
+                    //Search scanRecord for UUIDs
+                    int index = 0;
+                    while (index < scanRecord.length - 2) {
+                        int length = scanRecord[index];
+                        if (length == 0)
+                            break;
+                        int type = scanRecord[index+1];
+
+                        if (type == 0x06 || type == 0x07) {
+                            //We are only interested in 128 bit UUIDs
+                            Log.d("test", device.getName());
+                            for (int i = 0; i < length; i++) {
+                                Log.d("test", "...." + scanRecord[index + i +1]);
+                            }
+                        }
+                        index += length+1;
+                    }
+                    */
+                    //TODO Liste erweitern um eigenschaften "experiment on device" und "experiment in phyphox"
+                    //TODO on device setzen bei bestimmter UUID oder "phyphox" im Namen
+
+                    if (device.getName() == null || (!(nameFilter == null || nameFilter.isEmpty()) && !device.getName().contains(nameFilter))) {
+                        return;
+                    }
+
+                    final boolean supported = (supportedNameFiler == null || supportedNameFiler.isEmpty() || supportedNameFiler.contains(device.getName()));
+
                     parentActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (device.getName() == null || (!nameFilter.isEmpty() && !device.getName().contains(nameFilter))) {
-                                return;
-                            }
-                            listAdapter.addDevice(device);
+                            listAdapter.addDevice(new BluetoothDeviceInfo(device, supported));
                             listAdapter.notifyDataSetChanged();
                         }
                 });
             }
         };
 
-    public BluetoothDevice getBluetoothDevice(final String nameFilter) {
+    public BluetoothDevice getBluetoothDevice(final String nameFilter, final Set<String> supportedNameFilter) {
         this.nameFilter = nameFilter;
+        this.supportedNameFiler = supportedNameFilter;
+
+        if (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            //Android 6.0: No permission? Request it!
+            final Activity parent = this.parentActivity;
+
+            parent.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+                    builder.setMessage(parent.getResources().getText(R.string.bt_location_explanation));
+                    builder.setCancelable(false);
+                    builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
+                                    //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
+                                }
+                            });
+                    final AlertDialog alert = builder.create();
+                    alert.show();
+                }
+            });
+
+            return null;
+        }
+
         bta.startLeScan(scanCallback);
 
         parentActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (nameFilter.isEmpty()) {
+                if (nameFilter == null || nameFilter.isEmpty()) {
                     title.setText(ctx.getResources().getString(R.string.bt_scanning_generic));
                 } else {
                     title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2));
@@ -132,21 +198,36 @@ public class BluetoothScanDialog {
     }
 
 
+    private class BluetoothDeviceInfo {
+        BluetoothDevice device;
+        Boolean supported;
+
+        BluetoothDeviceInfo (BluetoothDevice device, Boolean supported) {
+            this.device = device;
+            this.supported = supported;
+        }
+    }
+
     // Adapter for holding devices found through scanning.
     private class DeviceListAdapter extends BaseAdapter {
-        private ArrayList<BluetoothDevice> devices;
+        private ArrayList<BluetoothDeviceInfo> devices;
         private LayoutInflater inflator;
         public DeviceListAdapter() {
             super();
-            devices = new ArrayList<BluetoothDevice>();
+            devices = new ArrayList<BluetoothDeviceInfo>();
             inflator = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
-        public void addDevice(BluetoothDevice device) {
-            if(!devices.contains(device)) {
-                devices.add(device);
+        public void addDevice(BluetoothDeviceInfo device) {
+            boolean inList = false;
+            for (BluetoothDeviceInfo item : devices) {
+                if (item.device.equals(device.device)) {
+                    inList = true;
+                }
             }
+            if (!inList)
+                devices.add(device);
         }
-        public BluetoothDevice getDevice(int position) {
+        public BluetoothDeviceInfo getDevice(int position) {
             return devices.get(position);
         }
         public void clear() {
@@ -173,17 +254,24 @@ public class BluetoothScanDialog {
                 subViews = new SubViews();
                 subViews.deviceAddress = (TextView) view.findViewById(R.id.device_address);
                 subViews.deviceName = (TextView) view.findViewById(R.id.device_name);
+                subViews.notSupported = (TextView) view.findViewById(R.id.device_not_supported);
                 view.setTag(subViews);
             } else {
                 subViews = (SubViews) view.getTag();
             }
-            BluetoothDevice device = devices.get(i);
-            final String deviceName = device.getName();
+            BluetoothDeviceInfo deviceInfo = devices.get(i);
+            final String deviceName = deviceInfo.device.getName();
             if (deviceName != null && deviceName.length() > 0)
                 subViews.deviceName.setText(deviceName);
             else
                 subViews.deviceName.setText(R.string.unknown);
-            subViews.deviceAddress.setText(device.getAddress());
+            subViews.deviceAddress.setText(deviceInfo.device.getAddress());
+            subViews.notSupported.setVisibility(deviceInfo.supported ? View.INVISIBLE : View.VISIBLE);
+
+            int color = deviceInfo.supported ? ctx.getResources().getColor(R.color.main) : ctx.getResources().getColor(R.color.mainDisabled);
+            subViews.deviceName.setTextColor(color);
+            subViews.deviceAddress.setTextColor(color);
+
             return view;
         }
     }
@@ -191,5 +279,6 @@ public class BluetoothScanDialog {
     static class SubViews {
         TextView deviceName;
         TextView deviceAddress;
+        TextView notSupported;
     }
 }

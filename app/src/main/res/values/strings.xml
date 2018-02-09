@@ -13,6 +13,8 @@
     <string name="newExperimentInputSensors">Active sensors</string>
 
     <string name="newExperimentBluetooth">Add experiment for Bluetooth device</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth scan error</string>
+
     <string name="newExperimentQR">Add experiment from QR code</string>
 
     <string name="newExperimentQRscan">Scan a QR code that contains a phyphox experiment.</string>
@@ -173,7 +175,10 @@ Copyright 2010 Cedric Beust cedric@beust.com
 
     <string name="open_zip_title">Opening a set of experiments</string>
     <string name="open_zip_dialog_instructions">This ressource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.</string>
-    <string name="open_zip_dialog_save_all">Save all</string>
+    <string name="open_save_all">Save all</string>
+
+    <string name="open_bluetooth_assets_title">Experiments for Bluetooth device</string>
+    <string name="open_bluetooth_assets">The following experiments for your device are available from phyphox. You can either just open and use them or add them all to your collection to easily acces them from the main menu.</string>
 
     <string name="timedRun">Timed run</string>
 
@@ -194,6 +199,9 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="bt_scanning_generic">Scanning for Bluetooth devices...</string>
     <string name="bt_scanning_specific1">Scanning for Bluetooth devices with</string>
     <string name="bt_scanning_specific2">in their name...</string>
+    <string name="bt_device_not_supported">No experiment available.</string>
+
+    <string name="bt_location_explanation">Android requires a location permission for Bluetooth scans as the result could be used to derive location information. We will now request these permissions. You need to grant them in order to do a Bluetooth scan.</string>
 
     <string name="bt_exception_uuid">Characteristic with UUID "</string>
     <string name="bt_exception_uuid2">not found.</string>

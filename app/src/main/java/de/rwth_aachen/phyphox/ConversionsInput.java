@@ -1,6 +1,8 @@
 package de.rwth_aachen.phyphox;
 
 
+import android.util.Log;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.Serializable;
@@ -197,10 +199,8 @@ public class ConversionsInput {
                 s[0] = new String(data);
             } else
                 s = (new String(data)).split(this.separator);
-
             if (s.length <= this.index)
                 return Double.NaN;
-
             if (this.label.isEmpty()) {
                 //Use the index to pick the entry (CSV style)
                 try {
@@ -213,7 +213,7 @@ public class ConversionsInput {
                 for (String entry : s) {
                     if (entry.startsWith(label)) {
                         try {
-                            return Double.parseDouble(entry);
+                            return Double.parseDouble(entry.substring(label.length()));
                         } catch (Exception e) {
                             return Double.NaN;
                         }
@@ -229,6 +229,7 @@ public class ConversionsInput {
     }
 
 
+    //TODO create generic conversion functions to cover the specific ones
     /* specific functions for the TI CC2650 SensorTag */
 
     private static final float SCALE_LSB = 0.03125f; // constant value for the temperature sensor
@@ -270,10 +271,10 @@ public class ConversionsInput {
     /*
      * Accelerometer ranges in G
      * possible values: 2, 4, 8, 16
-     * default: 16
+     * default: 8
      * at the moment, it is not possible to change the value of accRange.
      */
-    public static int accRange = 16;
+    public static int accRange = 8;
 
     public static double ti_acc_x (byte[] data) {
         float v = (float) ((int16LittleEndian(data[6], data[7]) * 1.0) / (32768/accRange));

@@ -5,7 +5,7 @@
     android:padding="@dimen/activity_vertical_padding">
 
     <TextView
-        android:text="@string/open_zip_dialog_instructions"
+        android:id="@+id/open_multiple_dialog_instructions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
@@ -21,7 +21,7 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/open_zip_dialog_list"
+            android:id="@+id/open_multiple_dialog_list"
             android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
     </ScrollView>
 
