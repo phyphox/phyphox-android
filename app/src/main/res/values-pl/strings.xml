@@ -118,7 +118,11 @@
     <string name="translationToWebsiteURL">http://phyphox.org/languages#pl</string>
 
     <string name="info">Info</string>
-    <string name="creditsNames">Koncepcja i rozwój: <br/><b>Dr. Sebastian Staacks</b><br/>Koncepcja: <br/><b>Prof. Christoph Stampfer</b><br/>Projekt graficzny: <br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programowanie: <br/><b>Camilla Lummerzheim </b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">
+        <![CDATA[
+        Koncepcja i rozwój: <br/><b>Dr. Sebastian Staacks</b><br/>Koncepcja: <br/><b>Prof. Christoph Stampfer</b><br/>Projekt graficzny: <br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programowanie: <br/><b>Camilla Lummerzheim </b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
     <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA i Ole Laursen) oraz \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), dostępnych w licencji MIT.</string>
     <string name="sensorTemperature">Temperatury</string>
     <string name="sensorHumidity">Wilgotności</string>
