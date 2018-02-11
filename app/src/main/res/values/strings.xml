@@ -22,7 +22,7 @@
     <string name="translationText">Phyphox will use the first language available from your preferred languages list. To change your preferences, go to your Android \"settings\" below. To learn which languages are available and how you can help, select \"visit website\".</string>
     <string name="translationToSettings">Settings</string>
     <string name="translationToWebsite">Visit website</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/faq/#faqTranslation</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
     <string name="warning">Warning</string>
     <string name="donotshowagain">Do not show again</string>
