@@ -449,7 +449,7 @@ public abstract class phyphoxFile {
                                 Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
                                 inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
                             } catch (Exception e) {
-                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
+                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
                                 inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod);
                             }
                         } catch (NoSuchMethodException e) {
