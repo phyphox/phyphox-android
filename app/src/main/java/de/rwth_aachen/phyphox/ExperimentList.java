@@ -783,7 +783,7 @@ public class ExperimentList extends AppCompatActivity {
                 loadExperimentInfo(input, file.getName(), false);
             }
         } catch (IOException e) {
-            Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: Could not load internal experiment list. " + e.toString(), Toast.LENGTH_LONG).show();
         }
 
         //Load experiments from assets
@@ -796,7 +796,7 @@ public class ExperimentList extends AppCompatActivity {
                 loadExperimentInfo(input, experimentXML, true);
             }
         } catch (IOException e) {
-            Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: Could not load internal experiment list. " + e.toString(), Toast.LENGTH_LONG).show();
         }
 
         Collections.sort(categories, new categoryComparator());
