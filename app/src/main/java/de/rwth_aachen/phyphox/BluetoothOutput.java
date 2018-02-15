@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+
+import java.util.UUID;
 import java.util.Vector;
 
 
@@ -24,13 +26,14 @@ public class BluetoothOutput extends Bluetooth {
      *
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
+     * @param uuidFilter       Optional filter to identify devices by advertices service or attribute UUIDs
      * @param context         context
      * @param buffers         list of dataOutputs to write the values
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public BluetoothOutput(String deviceName, String deviceAddress, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    public BluetoothOutput(String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
-        super(deviceName, deviceAddress, activity, context, characteristics);
+        super(deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
 
         this.data = buffers;
     }

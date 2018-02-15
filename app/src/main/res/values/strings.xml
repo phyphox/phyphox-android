@@ -14,6 +14,8 @@
 
     <string name="newExperimentBluetooth">Add experiment for Bluetooth device</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth scan error</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Load from device</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">This device provides its own phyphox experiment. Select "load from device" to open it.</string>
 
     <string name="newExperimentQR">Add experiment from QR code</string>
 
@@ -24,6 +26,9 @@
     <string name="newExperimentQRCodesMissing1">The QR code you just scanned is part of a set of</string>
     <string name="newExperimentQRCodesMissing2">codes. Please press continue to scan the remaining codes. Codes still missing: </string>
     <string name="newExperimentQRBadCRC">Invalid checksum. This means that either the QR code is bad or something went wrong while scanning it.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Bluetooth experiment error.</string>
+    <string name="newExperimentBTReadErrorCorrupted">The transmitted experiment data is corrupted.</string>
 
     <string name="generalErrorDialog">An error has occurred.</string>
 

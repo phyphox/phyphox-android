@@ -1317,7 +1317,7 @@ public abstract class phyphoxFile {
 
                     break;
                 }
-                case "bluetooth": { //A serial bluetooth input
+                case "bluetooth": { //A bluetooth input
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
                             throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                         } else {
@@ -1325,6 +1325,15 @@ public abstract class phyphoxFile {
 
                             String nameFilter = getStringAttribute("name");
                             String addressFilter = getStringAttribute("address");
+                            String uuidFilterStr = getStringAttribute("uuid");
+                            UUID uuidFilter = null;
+                            if (uuidFilterStr != null && !uuidFilterStr.isEmpty()) {
+                                try {
+                                    uuidFilter = UUID.fromString(uuidFilterStr);
+                                } catch (Exception e) {
+                                    throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
+                                }
+                            }
 
 
                             String modeStr = getStringAttribute("mode").toLowerCase();
@@ -1348,7 +1357,7 @@ public abstract class phyphoxFile {
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
-                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, rate, outputs, experiment.dataLock, parent, parent, characteristics);
+                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, uuidFilter, rate, outputs, experiment.dataLock, parent, parent, characteristics);
                                 experiment.bluetoothInputs.add(b);
                             } catch (phyphoxFileException e) {
                                 throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
@@ -2014,17 +2023,26 @@ public abstract class phyphoxFile {
 
                     break;
                 }
-                case "bluetooth": { //A serial bluetooth output
+                case "bluetooth": { //A bluetooth output
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                     } else {
                         String nameFilter = getStringAttribute("name");
                         String addressFilter = getStringAttribute("address");
+                        String uuidFilterStr = getStringAttribute("uuid");
+                        UUID uuidFilter = null;
+                        if (uuidFilterStr != null && !uuidFilterStr.isEmpty()) {
+                            try {
+                                uuidFilter = UUID.fromString(uuidFilterStr);
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
+                            }
+                        }
 
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
-                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, parent, parent, inputs, characteristics);
+                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, uuidFilter, parent, parent, inputs, characteristics);
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;

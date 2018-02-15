@@ -7,6 +7,12 @@ import android.app.ActivityOptions;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothProfile;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -31,6 +37,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -83,12 +90,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import static de.rwth_aachen.phyphox.BluetoothInput.CONFIG_DESCRIPTOR;
 
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
@@ -114,10 +126,17 @@ public class ExperimentList extends AppCompatActivity {
     int currentQRsize = -1;
     byte[][] currentQRdataPackets = null;
 
+    byte[] currentBluetoothData = null;
+    int currentBluetoothDataSize = 0;
+    int currentBluetoothDataIndex = 0;
+    long currentBluetoothDataCRC32 = 0;
+    CRC32 currentBluetoothDataActualCRC32 = new CRC32();
+
     boolean newExperimentDialogOpen = false;
 
     private Vector<ExperimentsInCategory> categories = new Vector<>(); //The list of categories. The ExperimentsInCategory class (see below) holds a ExperimentsInCategory and all its experiment items
-    private HashMap<String, Vector<String>> bluetoothDeviceList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
+    private HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
+    private HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>(); //This will collect uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
 
     //The class TextIcon is a drawable that displays up to three characters in a rectangle as a
     //substitution icon, used if an experiment does not have its own icon
@@ -618,7 +637,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
-    private void loadExperimentInfo(InputStream input, String experimentXML, boolean isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories, HashMap<String, Vector<String>> bluetoothDeviceList) {
+    private void loadExperimentInfo(InputStream input, String experimentXML, boolean isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories, HashMap<String, Vector<String>> bluetoothDeviceNameList, HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList) {
         XmlPullParser xpp;
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             //Prepare the PullParser
@@ -752,11 +771,20 @@ public class ExperimentList extends AppCompatActivity {
                                     break;
                                 }
                                 String name = xpp.getAttributeValue(null, "name");
+                                String uuidStr = xpp.getAttributeValue(null, "uuid");
+                                UUID uuid = (uuidStr == null ? null : UUID.fromString(uuidStr));
                                 if (name != null && !name.isEmpty()) {
-                                    if (bluetoothDeviceList != null) {
-                                        if (!bluetoothDeviceList.containsKey(name))
-                                            bluetoothDeviceList.put(name, new Vector<String>());
-                                        bluetoothDeviceList.get(name).add(experimentXML);
+                                    if (bluetoothDeviceNameList != null) {
+                                        if (!bluetoothDeviceNameList.containsKey(name))
+                                            bluetoothDeviceNameList.put(name, new Vector<String>());
+                                        bluetoothDeviceNameList.get(name).add(experimentXML);
+                                    }
+                                }
+                                if (uuid != null) {
+                                    if (bluetoothDeviceUUIDList != null) {
+                                        if (!bluetoothDeviceUUIDList.containsKey(uuid))
+                                            bluetoothDeviceUUIDList.put(uuid, new Vector<String>());
+                                        bluetoothDeviceUUIDList.get(uuid).add(experimentXML);
                                     }
                                 }
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -839,7 +867,8 @@ public class ExperimentList extends AppCompatActivity {
 
         //Clear the old list first
         categories.clear();
-        bluetoothDeviceList.clear();
+        bluetoothDeviceNameList.clear();
+        bluetoothDeviceUUIDList.clear();
         LinearLayout catList = (LinearLayout)findViewById(R.id.experimentList);
         catList.removeAllViews();
 
@@ -856,7 +885,7 @@ public class ExperimentList extends AppCompatActivity {
             for (File file : files) {
                 //Load details for each experiment
                 InputStream input = openFileInput(file.getName());
-                loadExperimentInfo(input, file.getName(), false, false, categories, null);
+                loadExperimentInfo(input, file.getName(), false, false, categories, null, null);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
@@ -871,7 +900,7 @@ public class ExperimentList extends AppCompatActivity {
                 if (!experimentXML.endsWith(".phyphox"))
                     continue;
                 InputStream input = assetManager.open("experiments/" + experimentXML);
-                loadExperimentInfo(input, experimentXML, false,true, categories, null);
+                loadExperimentInfo(input, experimentXML, false,true, categories, null, null);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -890,7 +919,7 @@ public class ExperimentList extends AppCompatActivity {
             for (String experimentXML : experimentXMLs) {
                 //Load details for each experiment
                 InputStream input = assetManager.open("experiments/bluetooth/" + experimentXML);
-                loadExperimentInfo(input, experimentXML, false,true, null, bluetoothDeviceList);
+                loadExperimentInfo(input, experimentXML, false,true, null, bluetoothDeviceNameList, bluetoothDeviceUUIDList);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
@@ -1033,7 +1062,7 @@ public class ExperimentList extends AppCompatActivity {
                     //Load details for each experiment
                     try {
                         InputStream input = new FileInputStream(file);
-                        loadExperimentInfo(input, file.getName(), true, false, zipExperiments, null);
+                        loadExperimentInfo(input, file.getName(), true, false, zipExperiments, null, null);
                         input.close();
                     } catch (IOException e) {
                         Log.e("zip", e.getMessage());
@@ -1055,7 +1084,8 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //The BluetoothScanDialog has been written to block execution until a device is found, so we should not run it on the UI thread.
-    protected class runBluetoothScan extends AsyncTask<String, Void, BluetoothDevice> {
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    protected class runBluetoothScan extends AsyncTask<String, Void, BluetoothScanDialog.BluetoothDeviceInfo> {
         private WeakReference<ExperimentList> parent;
 
         //The constructor takes the intent to copy from and the parent activity to call back when finished.
@@ -1064,7 +1094,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Copying is done on a second thread...
-        protected BluetoothDevice doInBackground(String... params) {
+        protected BluetoothScanDialog.BluetoothDeviceInfo doInBackground(String... params) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent.get())) {
                 showBluetoothScanError(getResources().getString(R.string.bt_android_version), true, true);
                 return null;
@@ -1075,68 +1105,258 @@ public class ExperimentList extends AppCompatActivity {
                     return null;
                 }
                 BluetoothScanDialog bsd = new BluetoothScanDialog(parent.get(), parent.get(), btAdapter);
-                return bsd.getBluetoothDevice(null, bluetoothDeviceList.keySet());
+                return bsd.getBluetoothDevice(null, null, bluetoothDeviceNameList.keySet(), bluetoothDeviceUUIDList.keySet());
             }
         }
 
         @Override
         //Call the parent callback when we are done.
-        protected void onPostExecute(BluetoothDevice result) {
+        protected void onPostExecute(BluetoothScanDialog.BluetoothDeviceInfo result) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
             if (result != null)
-                openBluetoothExperiments(result);
+                openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
         }
     }
 
-    public void openBluetoothExperiments(final BluetoothDevice device) {
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void loadExperimentFromBluetoothDevice(final BluetoothDevice device) {
+        final ExperimentList parent = this;
+        currentBluetoothData = null;
+        currentBluetoothDataSize = 0;
+        currentBluetoothDataIndex = 0;
+        currentBluetoothDataActualCRC32.reset();
+        final BluetoothGatt gatt = device.connectGatt(this, false, new BluetoothGattCallback() {
+
+            @Override
+            public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
+                switch (newState) {
+                    case BluetoothProfile.STATE_CONNECTED:
+
+                        //Find characteristic
+                        BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                        if (phyphoxService == null) {
+                            gatt.disconnect();
+                            showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no phyphox service)", device);
+                            return;
+                        }
+                        BluetoothGattCharacteristic experimentCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentCharacteristicUUID);
+                        if (experimentCharacteristic == null) {
+                            gatt.disconnect();
+                            showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no experiment characteristic)", device);
+                            return;
+                        }
+
+                        //Enable notifications
+                        BluetoothGattDescriptor descriptor = experimentCharacteristic.getDescriptor(CONFIG_DESCRIPTOR);
+                        if (descriptor == null) {
+                            gatt.disconnect();
+                            showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (descriptor failed)", device);
+                            return;
+                        }
+                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                        gatt.writeDescriptor(descriptor);
+
+                        //From here we can estimate the progress, so let's show a determinate progress dialog instead
+                        progress.dismiss();
+                        progress = ProgressDialog.show(parent, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), false, true, new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialogInterface) {
+                                gatt.disconnect();
+                            }
+                        });
+                        progress.setProgress(0);
+                        break;
+                    case BluetoothProfile.STATE_DISCONNECTED:
+                        // fall through to default
+                    default:
+                        progress.dismiss();
+                        gatt.close();
+                        return;
+                }
+            }
+
+            @Override
+            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+                byte[] data = characteristic.getValue();
+                if (currentBluetoothData == null) {
+                    String header = new String(data);
+                    if (!header.startsWith("phyphox")) {
+                        gatt.disconnect();
+                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid header)", device);
+                    }
+                    currentBluetoothDataSize = 0;
+                    currentBluetoothDataIndex = 0;
+                    for (int i = 0; i < 4; i++) {
+                        currentBluetoothDataSize <<= 8;
+                        currentBluetoothDataSize |= (data[7+i] & 0xFF);
+                    }
+                    currentBluetoothDataActualCRC32.reset();
+                    currentBluetoothDataCRC32 = 0;
+                    for (int i = 0; i < 4; i++) {
+                        currentBluetoothDataCRC32 <<= 8;
+                        currentBluetoothDataCRC32 |= (data[7+4+i] & 0xFF);
+                    }
+                    currentBluetoothData = new byte[currentBluetoothDataSize];
+                } else {
+                    int size = data.length;
+                    if (currentBluetoothDataIndex + size > currentBluetoothDataSize) {
+                        gatt.disconnect();
+                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (too large)", device);
+                    }
+                    System.arraycopy(data, 0, currentBluetoothData, currentBluetoothDataIndex, size);
+                    currentBluetoothDataActualCRC32.update(data);
+                    currentBluetoothDataIndex += size;
+
+                    if (currentBluetoothDataIndex == currentBluetoothDataSize) {
+                        //We are done. Check and use result
+
+                        if (currentBluetoothDataActualCRC32.getValue() != currentBluetoothDataCRC32) {
+                            gatt.disconnect();
+                            showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (CRC32)", device);
+                        }
+
+                        gatt.disconnect();
+
+                        File tempPath = new File(getFilesDir(), "temp_bt");
+                        if (!tempPath.exists()) {
+                            if (!tempPath.mkdirs()) {
+                                gatt.disconnect();
+                                showBluetoothExperimentReadError("Could not create temporary directory to write bluetooth experiment file.", device);
+                                return;
+                            }
+                        }
+                        String[] files = tempPath.list();
+                        for (String file : files) {
+                            if (!(new File(tempPath, file).delete())) {
+                                gatt.disconnect();
+                                showBluetoothExperimentReadError("Could not clear temporary directory to extract bluetooth experiment file.", device);
+                                return;
+                            }
+                        }
+
+                        File zipFile;
+                        try {
+                            zipFile = new File(tempPath, "bt.zip");
+                            FileOutputStream out = new FileOutputStream(zipFile);
+                            out.write(currentBluetoothData);
+                            out.close();
+                        } catch (Exception e) {
+                            gatt.disconnect();
+                            showBluetoothExperimentReadError("Could not write Bluetooth experiment content to zip file.", device);
+                            return;
+                        }
+
+                        Intent zipIntent = new Intent(parent, Experiment.class);
+                        zipIntent.setData(Uri.fromFile(zipFile));
+                        zipIntent.setAction(Intent.ACTION_VIEW);
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                        new handleZipIntent(zipIntent, parent).execute();
+                    }
+                }
+            }
+
+            @Override
+            public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    gatt.disconnect();
+                    showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write)", device);
+                }
+            }
+        });
+
+        progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true, true, new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                gatt.disconnect();
+                progress.dismiss();
+            }
+        });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {
+
+        Set<String> experiments = new HashSet<>();
+        if (device.getName() != null && bluetoothDeviceNameList.get(device.getName()) != null)
+            experiments.addAll(bluetoothDeviceNameList.get(device.getName()));
+        for (UUID uuid : uuids) {
+            Vector<String> experimentsForUUID = bluetoothDeviceUUIDList.get(uuid);
+            if (experimentsForUUID != null)
+                experiments.addAll(experimentsForUUID);
+        }
+        final Set<String> supportedExperiments = experiments;
+
+        if (supportedExperiments.isEmpty() && phyphoxService) {
+            //We do not have any experiments for this device, so there is no choice. Just load the experiment provided by the device.
+            loadExperimentFromBluetoothDevice(device);
+        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         View view = inflater.inflate(R.layout.open_multipe_dialog, null);
-        builder.setView(view)
-                .setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                        AssetManager assetManager = getAssets();
-                        try {
-                            for (String file : bluetoothDeviceList.get(device.getName())) {
-                                InputStream in = assetManager.open("experiments/bluetooth/"+file);
-                                OutputStream out = new FileOutputStream(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
-                                byte[] buffer = new byte[1024];
-                                int count;
-                                while((count = in.read(buffer)) != -1){
-                                    out.write(buffer, 0, count);
-                                }
-                                in.close();
-                                out.flush();
-                                out.close();
+        builder.setView(view);
+        if (!supportedExperiments.isEmpty()) {
+            builder.setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+                    AssetManager assetManager = getAssets();
+                    try {
+                        for (String file : supportedExperiments) {
+                            InputStream in = assetManager.open("experiments/bluetooth/" + file);
+                            OutputStream out = new FileOutputStream(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
+                            byte[] buffer = new byte[1024];
+                            int count;
+                            while ((count = in.read(buffer)) != -1) {
+                                out.write(buffer, 0, count);
                             }
-                        } catch (Exception e) {
-                            Toast.makeText(ExperimentList.this, "Error: Could not retrieve assets.", Toast.LENGTH_LONG).show();
+                            in.close();
+                            out.flush();
+                            out.close();
                         }
-
-                        loadExperimentList();
-                        dialog.dismiss();
+                    } catch (Exception e) {
+                        Toast.makeText(ExperimentList.this, "Error: Could not retrieve assets.", Toast.LENGTH_LONG).show();
                     }
 
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
+                    loadExperimentList();
+                    dialog.dismiss();
                     }
 
-                })
-                .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                    }
                 });
+        }
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.dismiss();
+                }
+
+            })
+            .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialogInterface) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                }
+            });
+
+        String instructions = "";
+        if (!supportedExperiments.isEmpty()) {
+            instructions += res.getString(R.string.open_bluetooth_assets);
+        }
+        if (!supportedExperiments.isEmpty() && phyphoxService)
+            instructions += "\n\n";
+        if (phyphoxService) {
+            instructions += res.getString(R.string.newExperimentBluetoothLoadFromDeviceInfo);
+            builder.setNeutralButton(R.string.newExperimentBluetoothLoadFromDevice, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+                    loadExperimentFromBluetoothDevice(device);
+                    dialog.dismiss();
+                }
+            });
+        }
         AlertDialog dialog = builder.create();
 
-        ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_bluetooth_assets);
+        ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(instructions);
 
         LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_multiple_dialog_list);
 
@@ -1145,11 +1365,11 @@ public class ExperimentList extends AppCompatActivity {
         //Load experiments from assets
         AssetManager assetManager = getAssets();
         Vector<ExperimentsInCategory> bluetoothExperiments = new Vector<>();
-        for (String file : bluetoothDeviceList.get(device.getName())) {
+        for (String file : supportedExperiments) {
             //Load details for each experiment
             try {
                 InputStream input = assetManager.open("experiments/bluetooth/"+file);
-                loadExperimentInfo(input, "bluetooth/"+file, true, true, bluetoothExperiments, null);
+                loadExperimentInfo(input, "bluetooth/"+file, true, true, bluetoothExperiments, null, null);
                 input.close();
             } catch (IOException e) {
                 Log.e("bluetooth", e.getMessage());
@@ -1364,6 +1584,31 @@ public class ExperimentList extends AppCompatActivity {
                     public void onDismiss(DialogInterface dialogInterface) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    protected void showBluetoothExperimentReadError(String msg, final BluetoothDevice device) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(msg)
+                .setTitle(R.string.newExperimentBTReadErrorTitle)
+                .setPositiveButton(R.string.tryagain, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        loadExperimentFromBluetoothDevice(device);
+                    }
+                })
+                .setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                    }
+                })
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    }
                 });
         AlertDialog dialog = builder.create();
         dialog.show();

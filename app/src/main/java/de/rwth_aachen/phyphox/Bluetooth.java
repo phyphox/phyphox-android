@@ -52,6 +52,10 @@ import android.widget.Toast;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Bluetooth implements Serializable {
 
+    public final static UUID baseUUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");
+    public final static UUID phyphoxServiceUUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a");
+    public final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
+
     transient private static BluetoothAdapter btAdapter;
     public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
 
@@ -59,6 +63,7 @@ public class Bluetooth implements Serializable {
     protected transient BluetoothGatt btGatt;
     public String deviceName;
     public String deviceAddress;
+    public UUID uuidFilter;
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -158,12 +163,14 @@ public class Bluetooth implements Serializable {
      *
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
+     * @param uuidFilter      Optional filter to identify a device by an advertised service or characteristic
      * @param context         context
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public Bluetooth(String deviceName, String deviceAddress, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
+    public Bluetooth(String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
         this.deviceName = (deviceName == null ? "" : deviceName);
         this.deviceAddress = deviceAddress;
+        this.uuidFilter = uuidFilter;
 
         this.activity = activity;
         this.context = context;
@@ -250,7 +257,7 @@ public class Bluetooth implements Serializable {
             //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
-            btDevice = bsd.getBluetoothDevice(deviceName, null);
+            btDevice = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null).device;
         }
         if (btDevice == null) {
             //still null? Give up and complain

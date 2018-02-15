@@ -62,6 +62,7 @@ public class BluetoothInput extends Bluetooth {
      *
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
+     * @param uuidFilter      Optional filter to identify devices by an advertised service or characteristic
      * @param mode            mode that should be used (can be "poll" or "notification")
      * @param rate            rate in Hz (only for mode "poll")
      * @param buffers         list of dataOutputs to write the values
@@ -70,10 +71,10 @@ public class BluetoothInput extends Bluetooth {
      * @param characteristics list of all characteristics the object should be able to operate on
      * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String deviceName, String deviceAddress, String mode, double rate, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
+    public BluetoothInput(String deviceName, String deviceAddress, String mode, UUID uuidFilter, double rate, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
             throws phyphoxFile.phyphoxFileException {
 
-        super(deviceName, deviceAddress, activity, context, characteristics);
+        super(deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
 
         this.mode = mode.toLowerCase();
 
