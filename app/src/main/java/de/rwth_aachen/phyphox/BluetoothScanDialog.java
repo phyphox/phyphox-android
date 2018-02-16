@@ -85,7 +85,7 @@ public class BluetoothScanDialog {
                 list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                        if (!listAdapter.getDevice(pos).supported)
+                        if (!listAdapter.getDevice(pos).supported && !listAdapter.getDevice(pos).phyphoxService)
                             return;
                         selectedDevice = listAdapter.getDevice(pos);
                         dialog.dismiss();
@@ -153,9 +153,6 @@ public class BluetoothScanDialog {
                         }
                         index += length+1;
                     }
-
-                    //TODO Liste erweitern um eigenschaften "experiment on device" und "experiment in phyphox"
-                    //TODO on device setzen bei bestimmter UUID oder "phyphox" im Namen
 
                     if (device.getName() == null || (!(nameFilter == null || nameFilter.isEmpty()) && !device.getName().contains(nameFilter))) {
                         return;

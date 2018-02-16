@@ -1125,44 +1125,13 @@ public class ExperimentList extends AppCompatActivity {
         currentBluetoothDataIndex = 0;
         final BluetoothGatt gatt = device.connectGatt(this, false, new BluetoothGattCallback() {
 
+            BluetoothGattDescriptor descriptor = null;
+
             @Override
             public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
                 switch (newState) {
                     case BluetoothProfile.STATE_CONNECTED:
-
-                        //Find characteristic
-                        BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                        if (phyphoxService == null) {
-                            gatt.disconnect();
-                            showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no phyphox service)", device);
-                            return;
-                        }
-                        BluetoothGattCharacteristic experimentCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentCharacteristicUUID);
-                        if (experimentCharacteristic == null) {
-                            gatt.disconnect();
-                            showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no experiment characteristic)", device);
-                            return;
-                        }
-
-                        //Enable notifications
-                        BluetoothGattDescriptor descriptor = experimentCharacteristic.getDescriptor(CONFIG_DESCRIPTOR);
-                        if (descriptor == null) {
-                            gatt.disconnect();
-                            showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (descriptor failed)", device);
-                            return;
-                        }
-                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                        gatt.writeDescriptor(descriptor);
-
-                        //From here we can estimate the progress, so let's show a determinate progress dialog instead
-                        progress.dismiss();
-                        progress = ProgressDialog.show(parent, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), false, true, new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialogInterface) {
-                                gatt.disconnect();
-                            }
-                        });
-                        progress.setProgress(0);
+                        gatt.discoverServices();
                         break;
                     case BluetoothProfile.STATE_DISCONNECTED:
                         // fall through to default
@@ -1174,11 +1143,73 @@ public class ExperimentList extends AppCompatActivity {
             }
 
             @Override
+            public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (could not discover services)", device);
+                }
+
+                //Find characteristic
+                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                if (phyphoxService == null) {
+                    gatt.disconnect();
+                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no phyphox service)", device);
+                    return;
+                }
+                BluetoothGattCharacteristic experimentCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentCharacteristicUUID);
+                if (experimentCharacteristic == null) {
+                    gatt.disconnect();
+                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no experiment characteristic)", device);
+                    return;
+                }
+
+                //Enable notifications
+                if (!gatt.setCharacteristicNotification(experimentCharacteristic, true)) {
+                    gatt.disconnect();
+                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (set char notification failed)", device);
+                    return;
+                }
+                descriptor = experimentCharacteristic.getDescriptor(CONFIG_DESCRIPTOR);
+                if (descriptor == null) {
+                    gatt.disconnect();
+                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (descriptor failed)", device);
+                    return;
+                }
+
+                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                gatt.writeDescriptor(descriptor);
+
+                //From here we can estimate the progress, so let's show a determinate progress dialog instead
+                progress.dismiss();
+                parent.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progress = ProgressDialog.show(parent, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), false, true, new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialogInterface) {
+                                if (descriptor != null) {
+                                    descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                                    gatt.writeDescriptor(descriptor);
+                                }
+                                gatt.disconnect();
+                            }
+                        });
+                    }
+                });
+                progress.setProgress(0);
+            }
+
+            @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+                if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
+                    return;
                 byte[] data = characteristic.getValue();
                 if (currentBluetoothData == null) {
                     String header = new String(data);
                     if (!header.startsWith("phyphox")) {
+                        if (descriptor != null) {
+                            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+                        }
                         gatt.disconnect();
                         showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid header)", device);
                     }
@@ -1193,7 +1224,10 @@ public class ExperimentList extends AppCompatActivity {
                         currentBluetoothDataCRC32 <<= 8;
                         currentBluetoothDataCRC32 |= (data[7+4+i] & 0xFF);
                     }
+
                     currentBluetoothData = new byte[currentBluetoothDataSize];
+
+                    progress.setMax(currentBluetoothDataSize);
                 } else {
                     int size = data.length;
 
@@ -1203,23 +1237,26 @@ public class ExperimentList extends AppCompatActivity {
                     System.arraycopy(data, 0, currentBluetoothData, currentBluetoothDataIndex, size);
                     currentBluetoothDataIndex += size;
 
+                    progress.setProgress(currentBluetoothDataIndex);
                     if (currentBluetoothDataIndex >= currentBluetoothDataSize) {
                         //We are done. Check and use result
 
+                        if (descriptor != null) {
+                            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+                        }
+                        gatt.disconnect();
 
                         CRC32 crc32 = new CRC32();
                         crc32.update(currentBluetoothData);
                         if (crc32.getValue() != currentBluetoothDataCRC32) {
-                            gatt.disconnect();
                             showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (CRC32)", device);
+                            return;
                         }
-
-                        gatt.disconnect();
 
                         File tempPath = new File(getFilesDir(), "temp_bt");
                         if (!tempPath.exists()) {
                             if (!tempPath.mkdirs()) {
-                                gatt.disconnect();
                                 showBluetoothExperimentReadError("Could not create temporary directory to write bluetooth experiment file.", device);
                                 return;
                             }
@@ -1227,7 +1264,6 @@ public class ExperimentList extends AppCompatActivity {
                         String[] files = tempPath.list();
                         for (String file : files) {
                             if (!(new File(tempPath, file).delete())) {
-                                gatt.disconnect();
                                 showBluetoothExperimentReadError("Could not clear temporary directory to extract bluetooth experiment file.", device);
                                 return;
                             }
@@ -1240,7 +1276,6 @@ public class ExperimentList extends AppCompatActivity {
                             out.write(currentBluetoothData);
                             out.close();
                         } catch (Exception e) {
-                            gatt.disconnect();
                             showBluetoothExperimentReadError("Could not write Bluetooth experiment content to zip file.", device);
                             return;
                         }
@@ -1288,6 +1323,7 @@ public class ExperimentList extends AppCompatActivity {
         if (supportedExperiments.isEmpty() && phyphoxService) {
             //We do not have any experiments for this device, so there is no choice. Just load the experiment provided by the device.
             loadExperimentFromBluetoothDevice(device);
+            return;
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1590,7 +1626,7 @@ public class ExperimentList extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     protected void showBluetoothExperimentReadError(String msg, final BluetoothDevice device) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
                 .setTitle(R.string.newExperimentBTReadErrorTitle)
                 .setPositiveButton(R.string.tryagain, new DialogInterface.OnClickListener() {
@@ -1609,8 +1645,13 @@ public class ExperimentList extends AppCompatActivity {
                         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     }
                 });
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
