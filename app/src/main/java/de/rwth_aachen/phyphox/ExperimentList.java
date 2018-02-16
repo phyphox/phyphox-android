@@ -130,7 +130,6 @@ public class ExperimentList extends AppCompatActivity {
     int currentBluetoothDataSize = 0;
     int currentBluetoothDataIndex = 0;
     long currentBluetoothDataCRC32 = 0;
-    CRC32 currentBluetoothDataActualCRC32 = new CRC32();
 
     boolean newExperimentDialogOpen = false;
 
@@ -1124,7 +1123,6 @@ public class ExperimentList extends AppCompatActivity {
         currentBluetoothData = null;
         currentBluetoothDataSize = 0;
         currentBluetoothDataIndex = 0;
-        currentBluetoothDataActualCRC32.reset();
         final BluetoothGatt gatt = device.connectGatt(this, false, new BluetoothGattCallback() {
 
             @Override
@@ -1190,7 +1188,6 @@ public class ExperimentList extends AppCompatActivity {
                         currentBluetoothDataSize <<= 8;
                         currentBluetoothDataSize |= (data[7+i] & 0xFF);
                     }
-                    currentBluetoothDataActualCRC32.reset();
                     currentBluetoothDataCRC32 = 0;
                     for (int i = 0; i < 4; i++) {
                         currentBluetoothDataCRC32 <<= 8;
@@ -1199,18 +1196,20 @@ public class ExperimentList extends AppCompatActivity {
                     currentBluetoothData = new byte[currentBluetoothDataSize];
                 } else {
                     int size = data.length;
-                    if (currentBluetoothDataIndex + size > currentBluetoothDataSize) {
-                        gatt.disconnect();
-                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (too large)", device);
-                    }
+
+                    if (currentBluetoothDataIndex + size > currentBluetoothDataSize)
+                        size = currentBluetoothDataSize - currentBluetoothDataIndex;
+
                     System.arraycopy(data, 0, currentBluetoothData, currentBluetoothDataIndex, size);
-                    currentBluetoothDataActualCRC32.update(data);
                     currentBluetoothDataIndex += size;
 
-                    if (currentBluetoothDataIndex == currentBluetoothDataSize) {
+                    if (currentBluetoothDataIndex >= currentBluetoothDataSize) {
                         //We are done. Check and use result
 
-                        if (currentBluetoothDataActualCRC32.getValue() != currentBluetoothDataCRC32) {
+
+                        CRC32 crc32 = new CRC32();
+                        crc32.update(currentBluetoothData);
+                        if (crc32.getValue() != currentBluetoothDataCRC32) {
                             gatt.disconnect();
                             showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (CRC32)", device);
                         }
