@@ -450,7 +450,7 @@ public abstract class phyphoxFile {
                                 inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
                             } catch (Exception e) {
                                 Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
-                                inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod);
+                                inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod, xpp);
                             }
                         } catch (NoSuchMethodException e) {
                             throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
@@ -1346,6 +1346,10 @@ public abstract class phyphoxFile {
                                 }
                                 case "notification": {
                                     modeFilter = "notification";
+                                    break;
+                                }
+                                case "indication": {
+                                    modeFilter = "indication";
                                     break;
                                 }
                                 default: {

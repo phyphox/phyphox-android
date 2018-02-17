@@ -1083,7 +1083,6 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //The BluetoothScanDialog has been written to block execution until a device is found, so we should not run it on the UI thread.
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     protected class runBluetoothScan extends AsyncTask<String, Void, BluetoothScanDialog.BluetoothDeviceInfo> {
         private WeakReference<ExperimentList> parent;
 
@@ -1111,9 +1110,10 @@ public class ExperimentList extends AppCompatActivity {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(BluetoothScanDialog.BluetoothDeviceInfo result) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-            if (result != null)
+            if (result != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
                 openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
+            else
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
 
@@ -1361,7 +1361,7 @@ public class ExperimentList extends AppCompatActivity {
 
                     loadExperimentList();
                     dialog.dismiss();
-                    }
+                }
 
                 });
         }
@@ -1581,7 +1581,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     protected void showQRScanError(String msg, Boolean isError) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
                 .setTitle(isError ? R.string.newExperimentQRErrorTitle : R.string.newExperimentQR)
                 .setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
@@ -1600,12 +1600,17 @@ public class ExperimentList extends AppCompatActivity {
                         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     }
                 });
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
     }
 
     protected void showBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
                 .setTitle(isError ? R.string.newExperimentBluetoothErrorTitle : R.string.newExperimentBluetooth);
         if (!isFatal) {
@@ -1623,11 +1628,16 @@ public class ExperimentList extends AppCompatActivity {
         .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        }
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    }
                 });
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)

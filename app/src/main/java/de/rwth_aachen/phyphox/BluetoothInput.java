@@ -31,7 +31,7 @@ public class BluetoothInput extends Bluetooth {
     protected static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     /**
-     * Used mode ("poll" or "notification")
+     * Used mode ("poll", "notification" or "indication")
      */
     private String mode;
 
@@ -63,7 +63,7 @@ public class BluetoothInput extends Bluetooth {
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
      * @param uuidFilter      Optional filter to identify devices by an advertised service or characteristic
-     * @param mode            mode that should be used (can be "poll" or "notification")
+     * @param mode            mode that should be used (can be "poll", "notification" or "indication")
      * @param rate            rate in Hz (only for mode "poll")
      * @param buffers         list of dataOutputs to write the values
      * @param lock            lock to write data to the buffers
@@ -93,25 +93,28 @@ public class BluetoothInput extends Bluetooth {
     }
 
     /**
-     * Connect with the device and enable notifications if mode is "notification".
+     * Connect with the device and enable notifications if mode is "notification" or indications if it is "indication".
      * The call to setValue of the BluetoothGattDescriptor to enable notifications has a lock because it should not be possible to continue before it succeeds.
      *
      * The timeout of the lock is set to 3 seconds.
      *
-     * @throws BluetoothException if there is an error on findDevice, openConnection, process CharacteristicData or enable notifications.
+     * @throws BluetoothException if there is an error on findDevice, openConnection, process CharacteristicData or enable notifications/indications.
      */
     @Override
     public void connect() throws BluetoothException {
         super.connect(); // connect device
 
         // enable descriptor for notification
-        if (mode.equals("notification")) {
+        if (mode.equals("notification") || mode.equals("indication")) {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
                 BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
                 if (descriptor == null) {
                     throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
                 }
-                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                if (mode.equals("notification"))
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                else
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
                 cdl = new CancellableLatch(1);
                 add(new WriteDescriptorCommand(btGatt, descriptor));
                 boolean result = false;
@@ -129,7 +132,7 @@ public class BluetoothInput extends Bluetooth {
     }
 
     /**
-     * Disable descriptor for notification again and then close the connection.
+     * Disable descriptor for notification/indication again and then close the connection.
      * The call to setValue of the BluetoothGattDescriptor to disable notifications has a lock because it should not be possible to continue before it succeeds,
      * but there will be no error message if disabling notifications fails.
      *
@@ -188,7 +191,8 @@ public class BluetoothInput extends Bluetooth {
                 mainHandler.post(readData);
                 break;
             }
-            case "notification": {
+            case "notification":
+            case "indication": {
                 // turn on characteristic notification for each characteristic
                 for (BluetoothGattCharacteristic c : mapping.keySet()) {
                     boolean result = btGatt.setCharacteristicNotification(c, true);
@@ -216,7 +220,8 @@ public class BluetoothInput extends Bluetooth {
                 }
                 break;
             }
-            case "notification": {
+            case "notification":
+            case "indication": {
                 for (BluetoothGattCharacteristic c : mapping.keySet()) {
                     boolean result = btGatt.setCharacteristicNotification(c, false);
                 }
