@@ -164,8 +164,10 @@ public class BluetoothScanDialog {
 
                     boolean isSupported = (supportedNameFilter == null || supportedNameFilter.isEmpty() || supportedNameFilter.contains(device.getName()));
 
-                    for (UUID uuid : supportedUUIDFilter) {
-                        isSupported |= uuids.contains(uuid);
+                    if (supportedUUIDFilter != null) {
+                        for (UUID uuid : supportedUUIDFilter) {
+                            isSupported |= uuids.contains(uuid);
+                        }
                     }
 
                     final boolean supported = isSupported;

@@ -1177,29 +1177,10 @@ public class ExperimentList extends AppCompatActivity {
 
                 descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 gatt.writeDescriptor(descriptor);
-
-                //From here we can estimate the progress, so let's show a determinate progress dialog instead
-                progress.dismiss();
-                parent.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progress = ProgressDialog.show(parent, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), false, true, new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialogInterface) {
-                                if (descriptor != null) {
-                                    descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                                    gatt.writeDescriptor(descriptor);
-                                }
-                                gatt.disconnect();
-                            }
-                        });
-                    }
-                });
-                progress.setProgress(0);
             }
 
             @Override
-            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            public void onCharacteristicChanged(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                 if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
                     return;
                 byte[] data = characteristic.getValue();
@@ -1218,7 +1199,7 @@ public class ExperimentList extends AppCompatActivity {
                     for (int i = 0; i < 4; i++) {
                         currentBluetoothDataSize <<= 8;
                         currentBluetoothDataSize |= (data[7+i] & 0xFF);
-                    }
+                    };
                     currentBluetoothDataCRC32 = 0;
                     for (int i = 0; i < 4; i++) {
                         currentBluetoothDataCRC32 <<= 8;
@@ -1227,7 +1208,32 @@ public class ExperimentList extends AppCompatActivity {
 
                     currentBluetoothData = new byte[currentBluetoothDataSize];
 
-                    progress.setMax(currentBluetoothDataSize);
+                    //From here we can estimate the progress, so let's show a determinate progress dialog instead
+                    progress.dismiss();
+                    parent.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress = new ProgressDialog(parent);
+                            progress.setTitle(res.getString(R.string.loadingTitle));
+                            progress.setMessage(res.getString(R.string.loadingText));
+                            progress.setIndeterminate(false);
+                            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                            progress.setCancelable(true);
+                            progress.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialogInterface) {
+                                    if (descriptor != null) {
+                                        descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                                        gatt.writeDescriptor(descriptor);
+                                    }
+                                    gatt.disconnect();
+                                }
+                            });
+                            progress.setProgress(0);
+                            progress.setMax(currentBluetoothDataSize);
+                            progress.show();
+                        }
+                    });
                 } else {
                     int size = data.length;
 

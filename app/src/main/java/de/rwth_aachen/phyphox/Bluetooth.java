@@ -56,6 +56,7 @@ public class Bluetooth implements Serializable {
     public final static UUID phyphoxServiceUUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a");
     public final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
 
+
     transient private static BluetoothAdapter btAdapter;
     public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
 
@@ -257,7 +258,9 @@ public class Bluetooth implements Serializable {
             //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
-            btDevice = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null).device;
+            BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null);
+            if (bdi != null)
+                btDevice = bdi.device;
         }
         if (btDevice == null) {
             //still null? Give up and complain
