@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="switchColumns1">Vista: 1 colonna</string>
     <string name="switchColumns3">Vista: 3 colonne</string>
     <string name="switchColumns2">Vista: 2 colonne</string>
     <string name="help">Help ed info</string>
-    <string name="newExperimentPhyphoxInfo">Vai su phyphox.org per creare il tuo esperimento e per condividerlo con colleghi, studenti ed amici</string>
+    <string name="newExperimentPhyphoxInfo">Vai su phyphox.org per creare il tuo esperimento e per condividerlo con colleghi, studenti ed amici.</string>
     <string name="loadingText">Carico esperimento…</string>
     <string name="remoteServer">Permetti accesso remoto</string>
     <string name="faqPhyphoxOrg">Domande ricorrenti</string>
@@ -62,7 +62,7 @@
     <string name="pick_exportFormat">Scegli il formato dei dati</string>
     <string name="share_subject">Screenshot da phyphox</string>
     <string name="title_activity_experiment">phyphox</string>
-    <string name="save_locally_done">L’esperimento è stato aggiunto alla collezione</string>
+    <string name="save_locally_done">L’esperimento è stato aggiunto alla collezione.</string>
     <string name="delete">Cancella</string>
     <string name="share_pick_share">Scegli come distribuire</string>
     <string name="newExperimentInputRate">Frequenza sensore (in Hz, 0 = il più veloce possibile)</string>
@@ -72,11 +72,11 @@
     <string name="sensorMagneticField">Campo magnetico</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="confirmDelete">Vuoi cancellare questo esperimento dalla tua collezione?</string>
-    <string name="creditsNames"></string>
+    <string name="creditsNames"/>
     <string name="remoteServerWarning">Stai per abilitare l’accesso remoto ai dati acquisiti. Quest operazione deve essere effettuata solo su di una rete fidata! Nota inoltre che l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su varie reti aziendali ed universitarie.\n\nPer massimizzare la sicurezza e la performance occorre connettersi a questo dispositivo col tethering (hotspot mobile).\n\nDopo aver schiacciato oK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.</string>
     <string name="sensorHumidity">Umidità</string>
     <string name="export_pick_share">Seleziona un metodo per esportare</string>
-    <string name="sensorNotAvailableWarningTitle">Sensore non disponibile</string>
+    <string name="sensorNotAvailableWarningTitle">Sensore non disponibile.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Più info</string>
     <string name="export_subject">Dati da phyphox</string>
     <string name="experimentinfo_hint">Per sapere come funziona questo esperimento, guarda le info relative.</string>
