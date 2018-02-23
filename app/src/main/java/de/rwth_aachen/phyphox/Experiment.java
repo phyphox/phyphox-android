@@ -412,6 +412,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 saveLocallyDismissed = true;
                                 connectBluetoothDevices(false, false);
                             }
+                        }).setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                saveLocallyDismissed = true;
+                                connectBluetoothDevices(false, false);
+                            }
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();

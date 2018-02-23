@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -27,6 +28,7 @@ import android.widget.TextView;
 import org.apache.poi.hssf.util.HSSFColor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -107,8 +109,7 @@ public class BluetoothScanDialog {
 
     private BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
                 @Override
-                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-
+                public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
                     final Set<UUID> uuids = new HashSet<>();
 
                     //Search scanRecord for UUIDs
@@ -177,7 +178,7 @@ public class BluetoothScanDialog {
                     parentActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            listAdapter.addDevice(new BluetoothDeviceInfo(device, supported, phyphoxService, uuids));
+                            listAdapter.addDevice(new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi));
                             listAdapter.notifyDataSetChanged();
                         }
                 });
@@ -248,12 +249,14 @@ public class BluetoothScanDialog {
         Boolean supported;
         Boolean phyphoxService;
         Set<UUID> uuids;
+        int lastRSSI;
 
-        BluetoothDeviceInfo (BluetoothDevice device, Boolean supported, Boolean phyphoxService, Set<UUID> uuids) {
+        BluetoothDeviceInfo (BluetoothDevice device, Boolean supported, Boolean phyphoxService, Set<UUID> uuids, int lastRSSI) {
             this.device = device;
             this.supported = supported;
             this.phyphoxService = phyphoxService;
             this.uuids = uuids;
+            this.lastRSSI = lastRSSI;
         }
     }
 
@@ -274,6 +277,7 @@ public class BluetoothScanDialog {
                     item.uuids.addAll(device.uuids);
                     item.supported |= device.supported;
                     item.phyphoxService |= device.phyphoxService;
+                    item.lastRSSI = device.lastRSSI;
                 }
             }
             if (!inList)
@@ -307,6 +311,7 @@ public class BluetoothScanDialog {
                 subViews.deviceAddress = (TextView) view.findViewById(R.id.device_address);
                 subViews.deviceName = (TextView) view.findViewById(R.id.device_name);
                 subViews.notSupported = (TextView) view.findViewById(R.id.device_not_supported);
+                subViews.signalStrength = (ImageView) view.findViewById(R.id.signal_strength);
                 view.setTag(subViews);
             } else {
                 subViews = (SubViews) view.getTag();
@@ -324,6 +329,17 @@ public class BluetoothScanDialog {
             subViews.deviceName.setTextColor(color);
             subViews.deviceAddress.setTextColor(color);
 
+            if (deviceInfo.lastRSSI > -30)
+                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_4);
+            else if (deviceInfo.lastRSSI > -50)
+                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_3);
+            else if (deviceInfo.lastRSSI > -70)
+                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_2);
+            else if (deviceInfo.lastRSSI > -90)
+                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_1);
+            else
+                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_0);
+
             return view;
         }
     }
@@ -332,5 +348,6 @@ public class BluetoothScanDialog {
         TextView deviceName;
         TextView deviceAddress;
         TextView notSupported;
+        ImageView signalStrength;
     }
 }

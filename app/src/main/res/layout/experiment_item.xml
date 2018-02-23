@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:clickable="false"
     android:clipToPadding="false"
@@ -57,7 +58,7 @@
             android:id="@+id/deleteButton"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:src="@drawable/delete"
+            app:srcCompat="@drawable/delete"
             android:layout_alignTop="@+id/expTitle"
             android:layout_alignBottom="@+id/expInfo"
             android:clickable="true"
