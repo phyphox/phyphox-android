@@ -917,7 +917,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Load hidden bluetooth experiments - these are not shown but will be offered if a matching Bluetooth device is found during a scan
-        try import java.util.Iterator;{
+        try {
             AssetManager assetManager = getAssets();
             final String[] experimentXMLs = assetManager.list("experiments/bluetooth");
             for (String experimentXML : experimentXMLs) {
