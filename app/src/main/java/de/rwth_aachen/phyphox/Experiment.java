@@ -33,6 +33,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
@@ -65,6 +66,8 @@ import org.w3c.dom.Document;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -76,6 +79,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.zip.CRC32;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
@@ -89,7 +93,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private static final String STATE_TIMED_RUN = "timed_run"; //Are timed runs activated?
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
     private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay"; //The stop delay for a timed run
-    private static final String STATE_EXPERIMENT = "experiment"; //The actual experiment
     private static final String STATE_HINT_DISMISSED = "hint_dismissed";
     private static final String STATE_SAVE_LOCALLY_DISMISSED = "save_locally_dismissed";
 
@@ -205,11 +208,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         shutdown = true; //Stop the loop
         stopMeasurement(); //Stop the measurement
         if (experiment != null && experiment.loaded) {
-            //Close all bluetooth connections, when the activity is recreated, they will be reestablished in the phyphoxFile class
-            for (bluetoothInput bti : experiment.bluetoothInputs)
-                bti.closeConnection();
-            for (bluetoothOutput bti : experiment.bluetoothOutputs)
-                bti.closeConnection();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
+                for (BluetoothInput bti : experiment.bluetoothInputs)
+                    bti.closeConnection();
+                for (BluetoothOutput bti : experiment.bluetoothOutputs)
+                    bti.closeConnection();
+            }
         }
 
         if (popupWindow != null)
@@ -279,6 +284,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         this.experiment = experiment; //Store the loaded experiment
         if (experiment.loaded) { //Everything went fine, no errors
+            //If the experiment has been launched from a Bluetooth scan, we need to set the bluetooth device in the experiment so it does not ask the user again
+            String btAddress = intent.getStringExtra(ExperimentList.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
+            if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                for (Bluetooth bt : this.experiment.bluetoothInputs)
+                    bt.deviceAddress = btAddress;
+                for (Bluetooth bt : this.experiment.bluetoothOutputs)
+                    bt.deviceAddress = btAddress;
+            }
+
             //We should set the experiment title....
             ((TextView) findViewById(R.id.titleText)).setText(experiment.title);
 
@@ -345,9 +359,40 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             tv.setVisibility(View.VISIBLE);
             this.experiment = null;
         }
-
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED); //We are ready. Now the user may rotate.
 
+        //Check if experiment is already in list and if so, flag it as local.
+        if (experiment.source != null) {
+            CRC32 crc32 = new CRC32();
+            crc32.update(experiment.source);
+            long refCRC32 = crc32.getValue();
+
+                    File[] files = getFilesDir().listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String filename) {
+                    return filename.endsWith(".phyphox");
+                }
+            });
+
+            for (File file : files) {
+                crc32.reset();
+
+                try {
+                    InputStream input = openFileInput(file.getName());
+                    byte[] buffer = new byte[1024];
+                    int count;
+                    while ((count = input.read(buffer)) != -1) {
+                        crc32.update(buffer, 0, count);
+                    }
+                }catch (Exception e) {
+                    continue;
+                }
+                if (refCRC32 == crc32.getValue()) {
+                    experiment.isLocal = true;
+                    break;
+                }
+            }
+        }
         //If this experiment has been loaded from a external source, we offer to save it locally
         if (!experiment.isLocal && experiment.loaded) {
             hintDismissed = true; //Do not show menu hint for external experiments
@@ -365,11 +410,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 saveLocallyDismissed = true;
+                                connectBluetoothDevices(false, false);
+                            }
+                        }).setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                saveLocallyDismissed = true;
+                                connectBluetoothDevices(false, false);
                             }
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();
+            } else {
+                connectBluetoothDevices(false, false);
             }
+        } else if (experiment.loaded) {
+            connectBluetoothDevices(false, false);
         }
 
         //An explanation is not necessary for raw sensors and of course we don't want it if there is an error
@@ -381,6 +437,66 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     }
 
+    // connects to the bluetooth devices in an async task and locks the screen while connecting
+    // if startMeasurement is true the measurement will be started automatically once all devices are connected
+    public void connectBluetoothDevices(boolean startMeasurement, final boolean timed) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
+                lockScreen();
+                // connect all bluetooth devices with an asyncTask
+                final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
+                btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
+                final Runnable enableScreenRotation = new Runnable () {
+                    @Override
+                    public void run () {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    }
+                };
+
+                // define onSuccess
+                if (startMeasurement) {
+                    btTask.onSuccess = new Runnable () {
+                      @Override
+                        public void run () {
+                          enableScreenRotation.run();
+                          if (timed) {
+                              startTimedMeasurement();
+                          } else {
+                              startMeasurement();
+                          }
+                      }
+                    };
+                } else {
+                    btTask.onSuccess = enableScreenRotation;
+                }
+
+                // set attributes of errorDialog
+                Bluetooth.errorDialog.context = Experiment.this;
+                Bluetooth.errorDialog.cancel = new Runnable () {
+                    @Override
+                    public void run () {
+                        btTask.progress.dismiss();
+                        enableScreenRotation.run(); // enable screen rotation again if errorDialog is cancelled
+                    }
+                };
+                Bluetooth.errorDialog.tryAgain = new Runnable() {
+                    @Override
+                    public void run() {
+                        // start a new task with the same attributes
+                        Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
+                        newBtTask.progress = btTask.progress;
+                        newBtTask.onSuccess = btTask.onSuccess;
+                        // show ProgressDialog again
+                        if (btTask.progress != null) {
+                            btTask.progress.show();
+                        }
+                        newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+                    }
+                };
+                btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+            }
+        }
+    }
 
     private void showMenuHint() {
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -1143,7 +1259,24 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         beforeStart = false;
 
         //Start the sensors
-        experiment.startAllIO();
+        try {
+            experiment.startAllIO();
+        } catch (Bluetooth.BluetoothException e) {
+            stopMeasurement(); // stop experiment
+            lockScreen(); // lock screen because an errorDialog will be displayed
+            // show an error dialog
+            Bluetooth.errorDialog.message = e.getMessage();
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+              @Override
+                public void run() {
+                  connectBluetoothDevices(true, false);
+              }
+            };
+            Bluetooth.errorDialog.run();
+            return;
+        }
 
         //Set measurement state
         measuring = true;
@@ -1180,6 +1313,37 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Lock the screen and keep it on. No more screen rotation or turning off during the measurement
         lockScreen();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // check if all Bluetooth devices are connected and display an errorDialog if not
+        Bluetooth notConnectedDevice = null;
+        for (Bluetooth b : experiment.bluetoothInputs) {
+            if (!b.isConnected()) {
+                notConnectedDevice = b;
+                break;
+            }
+        }
+        if (notConnectedDevice == null) {
+            for (Bluetooth b : experiment.bluetoothOutputs) {
+                if (!b.isConnected()) {
+                    notConnectedDevice = b;
+                    break;
+                }
+            }
+        }
+        if (notConnectedDevice != null) {
+            // show an error dialog
+            Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+                @Override
+                public void run() {
+                    connectBluetoothDevices(true, true);
+                }
+            };
+            Bluetooth.errorDialog.run();
+            return;
+        }
 
         //Not much more to do here. Just set up a countdown that will start the measurement
         millisUntilFinished = Math.round(timedRunStartDelay*1000);

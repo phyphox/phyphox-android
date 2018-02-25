@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Einstellungen</string>
@@ -35,6 +35,9 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq-de</string>
     <string name="remotePhyphoxOrg">Hilfe zum Fernzugriff</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/fernsteuerung</string>
+
+    <string name="generalErrorDialog">Es ist ein Fehler aufgetreten.</string>
+    <string name="loadingBluetoothConnectionText">Mit Bluetooth Gerät verbinden...</string>
 
     <string name="export">Daten exportieren</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
@@ -101,6 +104,7 @@
     <string name="timed_start">Zeitautomatik starten</string>
     <string name="timed_stop">Zeitautomatik stoppen</string>
     <string name="title_activity_experiment">phyphox</string>
+    <string name="tryagain">nochmal versuchen</string>
     <string name="unknown">unbekannt</string>
     <string name="warning">Warnung</string>
     <string name="noDrawableData">Keine darstellbaren Daten.</string>
@@ -112,4 +116,30 @@
     <string name="translationToWebsite">Zur Webseite</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#de</string>
 
-    </resources>
+    <string name="bt_android_version">Bluetooth Low Energy wird von bei Android Versionen kleiner als 4.3 nicht unterstützt.</string>
+
+    <string name="bt_exception_uuid">Die Characteristic mit der UUID "</string>
+    <string name="bt_exception_uuid2">wurde nicht gefunden.</string>
+    <string name="bt_exception_disabled">Bluetooth ist deaktiviert. Bitte aktiviere Bluetooth und versuche es noch einmal.</string>
+    <string name="bt_exception_connection">Es konnte keine Bluetooth-Verbindung hergestellt werden.</string>
+    <string name="bt_exception_notfound">Das Bluetooth-Gerät konnte nicht gefunden werden.</string>
+    <string name="bt_exception_services">Die Services konnten nicht gefunden werden.</string>
+    <string name="bt_exception_device">Betrifft das Gerät mit</string>
+    <string name="bt_exception_device_address">Adresse</string>
+    <string name="bt_exception_device_name">Name</string>
+    <string name="bt_exception_rate">Ungültiger Wert für "rate".</string>
+    <string name="bt_exception_notification">Die Characteristic Notification für die Characteristic mit der UUID</string>
+    <string name="bt_exception_notification_enable">konnte nicht aktiviert werden.</string>
+    <string name="bt_exception_notification_disable">konnte nicht wieder deaktiviert werden.</string>
+    <string name="bt_exception_notification_fail_enable">Aktivieren der Notifications für die Characteristic mit der UUID</string>
+    <string name="bt_exception_notification_fail">war nicht erfolgreich.</string>
+    <string name="bt_exception_no_connection">Es besteht keine Verbindung zu dem Bluetooth Gerät. Das Experiment kann nicht gestartet werden.</string>
+    <string name="bt_exception_disconnected">Die Verbindung zu dem Bluetooth Gerät wurde getrennt.</string>
+    <string name="bt_default_error_message">Es ist ein Fehler mit einem Bluetooth Gerät aufgetreten.</string>
+
+    <string name="bt_error_writing">Fehler beim Schreiben der Characteristic mit der UUID</string>
+    <string name="bt_error_reading">Fehler beim Lesen der Characteristic mit der UUID</string>
+    <string name="bt_error_discovering">Fehler beim Finden der Services des Bluetooth Geräts.</string>
+    <string name="bt_fail_reading">Die Leseoperation war nicht erfolgreich.</string>
+    <string name="bt_fail_writing">Die Schreiboperation war nicht erfolgreich.</string>
+</resources>

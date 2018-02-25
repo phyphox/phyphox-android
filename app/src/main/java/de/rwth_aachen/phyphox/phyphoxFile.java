@@ -13,6 +13,8 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -24,12 +26,19 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -109,14 +118,23 @@ public abstract class phyphoxFile {
             String scheme = intent.getScheme();
 
             if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) { //If the file location is found in the extra EXPERIMENT_XML, it is a local file
-                phyphoxStream.isLocal = true;
+                phyphoxStream.isLocal = !intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false);
                 if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISASSET, true)) { //The local file is an asser
                     AssetManager assetManager = parent.getAssets();
                     try {
                         phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
-                        phyphoxStream.errorMessage = "Error loading this experiment from assets: "+e.getMessage();
+                        phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
+                    }
+                } else if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false)) {
+                    //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
+                    try {
+                        File tempDir = new File(parent.getFilesDir(), "temp");
+                        phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
+                        remoteInputToMemory(phyphoxStream);
+                    } catch (Exception e) {
+                        phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
                 } else { //The local file is in the private directory
                     try {
@@ -131,9 +149,13 @@ public abstract class phyphoxFile {
             } else if (scheme.equals(ContentResolver.SCHEME_FILE )) {//The intent refers to a file
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
+                if (uri == null) {
+                    phyphoxStream.errorMessage = "Missing uri.";
+                    return phyphoxStream;
+                }
                 ContentResolver resolver = parent.getContentResolver();
                 //We will need read permissions for pretty much any file...
-                if (ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                if (!uri.getPath().startsWith(parent.getFilesDir().getPath()) && ContextCompat.checkSelfPermission(parent, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                     //Android 6.0: No permission? Request it!
                     ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
                     //We will stop with a no permission error. If the user grants the permission, the permission callback will restart the action with the same intent
@@ -311,6 +333,181 @@ public abstract class phyphoxFile {
 
             done();
         }
+    }
+
+    // Blockparser for input or output assignments inside a bluetooth-block
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private static class bluetoothIoBlockParser extends xmlBlockParser {
+        protected static Class conversionsInput = (new ConversionsInput()).getClass();
+        protected static Class conversionsOutput = (new ConversionsOutput()).getClass();
+        protected static Class conversionsConfig = (new ConversionsConfig()).getClass();
+        Vector<dataOutput> outputList;
+        Vector<dataInput> inputList;
+        Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
+        HashSet<UUID> characteristicsWithExtraTime; // uuids of all characteristics that have extra=time to make sure they can't have it twice
+
+        bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
+            super(xpp, experiment, parent);
+            this.outputList = outputList;
+            this.inputList = inputList;
+            this.characteristics = characteristics;
+            characteristicsWithExtraTime = new HashSet<>();
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            // get and check "char" attribute
+            String charUuid = getStringAttribute("char");
+            if (charUuid == null) {
+                throw new phyphoxFileException("Tag needs a char attribute.", xpp.getLineNumber());
+            }
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(charUuid);
+            } catch (IllegalArgumentException e) {
+                throw new phyphoxFileException("invalid UUID.", xpp.getLineNumber());
+            }
+
+            // get "conversion" attribute
+            String conversionFunctionName = getStringAttribute("conversion");
+            ConversionsConfig.ConfigConversion configConversionFunction = null;
+            ConversionsInput.InputConversion inputConversionFunction = null;
+            ConversionsOutput.OutputConversion outputConversionFunction = null;
+
+            switch (tag.toLowerCase()) {
+                case "input": {
+                    // check if "input" is allowed here
+                    if (inputList == null) {
+                        throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
+                    }
+
+                    // check conversion attribute
+                    if (conversionFunctionName == null) {
+                        throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                    }
+                    try {
+                        try {
+                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsOutput$" + conversionFunctionName);
+                            Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                            outputConversionFunction = (ConversionsOutput.OutputConversion)constructor.newInstance(xpp);
+                        } catch (Exception e) {
+                            Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
+                            outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
+                        }
+                    } catch (NoSuchMethodException e) {
+                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                    }
+
+                    // get "clear" attribute
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+
+                    // check if buffer exists
+                    String bufferName = getText();
+                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    if (buffer == null) {
+                        throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                    }
+
+                    inputList.add(new dataInput(buffer, clearBeforeWrite));
+
+                    // add data to characteristics
+                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
+
+                    break;
+                }
+
+                case "output": {
+                    // check if "output" is allowed here
+                    if (outputList == null) {
+                        throw new phyphoxFileException("No input expected.", xpp.getLineNumber());
+                    }
+
+                    // get and check "extra" attribute
+                    boolean extraTime = false;
+                    String extra = this.getStringAttribute("extra");
+                    if (extra != null) {
+                        if (extra.equals("time")) {
+                            extraTime = true;
+                            if (characteristicsWithExtraTime.contains(uuid)) {
+                                throw new phyphoxFileException("extra=time can be used only once for a characteristic.");
+                            } else {
+                                characteristicsWithExtraTime.add(uuid);
+                            }
+                        } else {
+                            throw new phyphoxFileException("unknown value for extra attribute.", xpp.getLineNumber());
+                        }
+                    }
+
+                    // check conversion attribute
+                    if (!extraTime) {
+                       if (conversionFunctionName == null) {
+                           throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                       }
+                        try {
+                            try {
+                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsInput$" + conversionFunctionName);
+                                Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                                inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
+                            } catch (Exception e) {
+                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
+                                inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod, xpp);
+                            }
+                        } catch (NoSuchMethodException e) {
+                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        }
+                    }
+
+                    // get "clear" attribute
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+
+                    // check if buffer exists
+                    String bufferName = getText();
+                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    if (buffer == null) {
+                        throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                    }
+
+                    outputList.add(new dataOutput(buffer, clearBeforeWrite));
+
+                    // add data to characteristics
+                    characteristics.add(new Bluetooth.InputData(uuid, extraTime, outputList.size()-1, inputConversionFunction));
+                    break;
+                }
+
+                case "config": {
+                    // check if conversion attribute exists
+                    if (conversionFunctionName == null) {
+                        throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                    }
+                    try {
+                        try {
+                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsConfig$" + conversionFunctionName);
+                            Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                            configConversionFunction = (ConversionsConfig.ConfigConversion)constructor.newInstance(xpp);
+                        } catch (Exception e) {
+                            Method conversionMethod = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
+                            configConversionFunction = new ConversionsConfig.SimpleConfigConversion(conversionMethod);
+                        }
+                    } catch (NoSuchMethodException e) {
+                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                    }
+                    try {
+                        // add data to configs
+                        String text = getText();
+                        characteristics.add(new Bluetooth.ConfigData(uuid, text, configConversionFunction));
+                    } catch (NumberFormatException e) {
+                        throw new phyphoxFileException("Configuration data has to be a valid double value.", xpp.getLineNumber());
+                    } catch (phyphoxFileException e) {
+                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again but with LineNumber
+                    }
+                    break;
+                }
+                default: {
+                    throw new phyphoxFileException("Unknown tag \""+tag+"\"", xpp.getLineNumber());
+                }
+            }
+        }
+
     }
 
     //Blockparser for any input and output assignments
@@ -1125,69 +1322,57 @@ public abstract class phyphoxFile {
 
                     break;
                 }
-                case "bluetooth": { //A serial bluetooth input
-                    double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
-                    boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
+                case "bluetooth": { //A bluetooth input
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                            throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
+                        } else {
+                            double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
 
-                    String nameFilter = getStringAttribute("name");
-                    String addressFilter = getStringAttribute("address");
-
-                    String protocolStr = getStringAttribute("protocol");
-                    Protocol protocol = null;
-                    switch (protocolStr) {
-                        case "simple": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = "\n";
+                            String nameFilter = getStringAttribute("name");
+                            String addressFilter = getStringAttribute("address");
+                            String uuidFilterStr = getStringAttribute("uuid");
+                            UUID uuidFilter = null;
+                            if (uuidFilterStr != null && !uuidFilterStr.isEmpty()) {
+                                try {
+                                    uuidFilter = UUID.fromString(uuidFilterStr);
+                                } catch (Exception e) {
+                                    throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
+                                }
                             }
-                            protocol = new Protocol(new Protocol.simple(separator));
-                            break;
-                        }
-                        case "csv": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = ",";
+
+
+                            String modeStr = getStringAttribute("mode").toLowerCase();
+
+                            String modeFilter;
+                            switch (modeStr) {
+                                case "poll": {
+                                    modeFilter = "poll";
+                                    break;
+                                }
+                                case "notification": {
+                                    modeFilter = "notification";
+                                    break;
+                                }
+                                case "indication": {
+                                    modeFilter = "indication";
+                                    break;
+                                }
+                                default: {
+                                    throw new phyphoxFileException("Unknown bluetooth mode: " + modeStr, xpp.getLineNumber());
+                                }
                             }
-                            protocol = new Protocol(new Protocol.csv(separator));
-                            break;
-                        }
-                        case "json": {
-                            Vector<String> names = new Vector<>();
-                            int index = 1;
-                            String name = getStringAttribute("out"+index);
-                            while (name != null) {
-                                names.add(name);
-                                index++;
-                                name = getStringAttribute("out"+index);
+
+                            Vector<dataOutput> outputs = new Vector<>();
+                            Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
+                            (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
+                            try {
+                                BluetoothInput b = new BluetoothInput(nameFilter, addressFilter, modeFilter, uuidFilter, rate, outputs, experiment.dataLock, parent, parent, characteristics);
+                                experiment.bluetoothInputs.add(b);
+                            } catch (phyphoxFileException e) {
+                                throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
                             }
-                            protocol = new Protocol(new Protocol.json(names));
-                            break;
                         }
-                        default: {
-                            throw new phyphoxFileException("Unknown bluetooth protocol: " + protocolStr, xpp.getLineNumber());
-                        }
-                    }
-
-                    //Allowed input/output configuration
-                    ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
-                    };
-                    Vector<dataOutput> outputs = new Vector<>();
-                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
-
-                    //Instantiate the input.
-                    try {
-                        experiment.bluetoothInputs.add(new bluetoothInput(nameFilter, addressFilter, rate, average, outputs, experiment.dataLock, protocol));
-                        experiment.bluetoothInputs.lastElement().openConnection();
-                    } catch (bluetoothInput.bluetoothException e) {
-                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
-                    }
-
-                    //Check if the sensor is available on this device
-                    if (!experiment.bluetoothInputs.lastElement().isAvailable()) {
-                        throw new phyphoxFileException("Bluetooth device not found.");
-                    }
-                    break;
+                        break;
                 }
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
@@ -1847,64 +2032,27 @@ public abstract class phyphoxFile {
 
                     break;
                 }
-                case "bluetooth": { //A serial bluetooth output
-                    String nameFilter = getStringAttribute("name");
-                    String addressFilter = getStringAttribute("address");
-
-                    String protocolStr = getStringAttribute("protocol");
-                    Protocol protocol = null;
-                    switch (protocolStr) {
-                        case "simple": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = "\n";
+                case "bluetooth": { //A bluetooth output
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                        throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
+                    } else {
+                        String nameFilter = getStringAttribute("name");
+                        String addressFilter = getStringAttribute("address");
+                        String uuidFilterStr = getStringAttribute("uuid");
+                        UUID uuidFilter = null;
+                        if (uuidFilterStr != null && !uuidFilterStr.isEmpty()) {
+                            try {
+                                uuidFilter = UUID.fromString(uuidFilterStr);
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
                             }
-                            protocol = new Protocol(new Protocol.simple(separator));
-                            break;
                         }
-                        case "csv": {
-                            String separator = getStringAttribute("separator");
-                            if (separator == null || separator.equals("")) {
-                                separator = ",";
-                            }
-                            protocol = new Protocol(new Protocol.csv(separator));
-                            break;
-                        }
-                        case "json": {
-                            Vector<String> names = new Vector<>();
-                            int index = 1;
-                            String name = getStringAttribute("in"+index);
-                            while (name != null) {
-                                names.add(name);
-                                index++;
-                                name = getStringAttribute("in"+index);
-                            }
-                            protocol = new Protocol(new Protocol.json(names));
-                            break;
-                        }
-                        default: {
-                            throw new phyphoxFileException("Unknown bluetooth protocol: " + protocolStr, xpp.getLineNumber());
-                        }
-                    }
 
-                    //Allowed input/output configuration
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
-                    };
-                    Vector<dataInput> inputs = new Vector<>();
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
-
-                    //Instantiate the input.
-                    try {
-                        experiment.bluetoothOutputs.add(new bluetoothOutput(nameFilter, addressFilter, inputs, protocol));
-                        experiment.bluetoothOutputs.lastElement().openConnection();
-                    } catch (bluetoothOutput.bluetoothException e) {
-                        throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
-                    }
-
-                    //Check if the sensor is available on this device
-                    if (!experiment.bluetoothOutputs.lastElement().isAvailable()) {
-                        throw new phyphoxFileException("Bluetooth device not found.");
+                        Vector<dataInput> inputs = new Vector<>();
+                        Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
+                        (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
+                        BluetoothOutput b = new BluetoothOutput(nameFilter, addressFilter, uuidFilter, parent, parent, inputs, characteristics);
+                        experiment.bluetoothOutputs.add(b);
                     }
                     break;
                 }
@@ -1973,11 +2121,11 @@ public abstract class phyphoxFile {
     //onExperimentLoaded of the activity given in the constructor.
     protected static class loadXMLAsyncTask extends AsyncTask<String, Void, phyphoxExperiment> {
         private Intent intent;
-        private Experiment parent;
+        private WeakReference<Experiment> parent;
 
         loadXMLAsyncTask(Intent intent, Experiment parent) {
             this.intent = intent;
-            this.parent = parent;
+            this.parent = new WeakReference<Experiment>(parent);
         }
 
         //Load the file from the intent
@@ -1986,7 +2134,7 @@ public abstract class phyphoxFile {
             phyphoxExperiment experiment = new phyphoxExperiment();
 
             //Open the input stream (see above)
-            PhyphoxStream input = openXMLInputStream(intent, parent);
+            PhyphoxStream input = openXMLInputStream(intent, parent.get());
             if (input.inputStream == null) { //If this failed, abort and relay the error message
                 experiment.message = input.errorMessage;
                 return experiment;
@@ -2038,7 +2186,7 @@ public abstract class phyphoxFile {
                             if (globalLocale != null && globalLocale.equals(Locale.getDefault().getLanguage()))
                                 perfectLocaleFound = true;
                         }
-                        (new phyphoxBlockParser(xpp, experiment, parent)).process();
+                        (new phyphoxBlockParser(xpp, experiment, parent.get())).process();
                     }
                     eventType = xpp.next();
                 }
@@ -2068,7 +2216,7 @@ public abstract class phyphoxFile {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(phyphoxExperiment experiment) {
-            parent.onExperimentLoaded(experiment);
+            parent.get().onExperimentLoaded(experiment);
         }
     }
 
@@ -2076,23 +2224,23 @@ public abstract class phyphoxFile {
     //It calls onCopyXMLCompleted of the activity given in the constructor when it's done.
     protected static class CopyXMLTask extends AsyncTask<String, Void, String> {
         private Intent intent; //The intent to read from
-        private Experiment parent; //The calling Activity
+        private WeakReference<Experiment> parent; //The calling Activity
 
         //The constructor takes the intent to copy from and the parent activity to call back when finished.
         CopyXMLTask(Intent intent, Experiment parent) {
             this.intent = intent;
-            this.parent = parent;
+            this.parent = new WeakReference<Experiment>(parent);
         }
 
         //Copying is done on a second thread...
         protected String doInBackground(String... params) {
             InputStream input;
-            if (parent.experiment.source != null) {
+            if (parent.get().experiment.source != null) {
                 //We have stored the original source file...
-                input = new ByteArrayInputStream(parent.experiment.source);
+                input = new ByteArrayInputStream(parent.get().experiment.source);
             } else {
                 //If not, open the remote source, but usually this should not happen...
-                phyphoxFile.PhyphoxStream ps = phyphoxFile.openXMLInputStream(intent, parent);
+                phyphoxFile.PhyphoxStream ps = phyphoxFile.openXMLInputStream(intent, parent.get());
                 input = ps.inputStream;
             }
             if (input == null)
@@ -2101,7 +2249,7 @@ public abstract class phyphoxFile {
             //Copy the input stream to a random file name
             try {
                 String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
-                FileOutputStream output = parent.openFileOutput(file, Activity.MODE_PRIVATE);
+                FileOutputStream output = parent.get().openFileOutput(file, Activity.MODE_PRIVATE);
                 byte[] buffer = new byte[1024];
                 int count;
                 while ((count = input.read(buffer)) != -1)
@@ -2117,7 +2265,7 @@ public abstract class phyphoxFile {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(String result) {
-            parent.onCopyXMLCompleted(result);
+            parent.get().onCopyXMLCompleted(result);
         }
     }
 }

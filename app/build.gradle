@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "26.0.2"
 
     defaultConfig {
         applicationId "de.rwth_aachen.phyphox"
@@ -11,6 +10,7 @@ android {
         versionCode 34
         versionName "1.0.11"
         resConfigs "cs", "de", "en", "pl"
+        vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
         release {
@@ -28,4 +28,5 @@ dependencies {
     compile 'org.apache.poi:poi:3.13'
     compile 'com.android.support:support-v4:27.0.2'
     compile 'com.android.support:design:27.0.2'
+    compile 'com.journeyapps:zxing-android-embedded:3.5.0'
 }

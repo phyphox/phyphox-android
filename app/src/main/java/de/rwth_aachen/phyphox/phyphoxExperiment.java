@@ -2,7 +2,9 @@ package de.rwth_aachen.phyphox;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -11,9 +13,11 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -59,8 +63,8 @@ public class phyphoxExperiment implements Serializable {
     public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
     public gpsInput gpsIn = null;
-    public Vector<bluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
-    public Vector<bluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
+    public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
+    public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
     public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
     public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
@@ -280,9 +284,11 @@ public class phyphoxExperiment implements Serializable {
             audioTrack.play();
         }
 
-        //Send the results to the bluetooth outputs (if used)
-        for (bluetoothOutput btOut : bluetoothOutputs) {
-            btOut.sendData();
+        if (measuring && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            //Send the results to the bluetooth outputs (if used)
+            for (BluetoothOutput btOut : bluetoothOutputs) {
+                btOut.sendData();
+            }
         }
 
         recordingUsed = true;
@@ -355,13 +361,19 @@ public class phyphoxExperiment implements Serializable {
         if (gpsIn != null)
             gpsIn.stop();
 
-        //Bluetooth
-        for (bluetoothInput bti : bluetoothInputs)
-            bti.stop();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            //Bluetooth
+            for (BluetoothInput bti : bluetoothInputs)
+                bti.stop();
+            for (BluetoothOutput bto : bluetoothOutputs)
+                bto.stop();
+        }
     }
 
+
     //Helper to start all I/O of this experiment (i.e. when it should be started)
-    public void startAllIO() {
+    public void startAllIO() throws Bluetooth.BluetoothException {
+
         if (!loaded)
             return;
 
@@ -376,8 +388,14 @@ public class phyphoxExperiment implements Serializable {
         if (gpsIn != null)
             gpsIn.start();
 
-        for (bluetoothInput bti : bluetoothInputs)
-            bti.start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            for (BluetoothInput bti : bluetoothInputs) {
+                bti.start();
+            }
+            for (BluetoothOutput btO : bluetoothOutputs) {
+                btO.start();
+            }
+        }
 
         //Audio Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
@@ -412,23 +430,6 @@ public class phyphoxExperiment implements Serializable {
         if (gpsIn != null)
             gpsIn.attachLocationManager(locationManager);
 
-        //Reconnect bluetooth inputs
-        for (bluetoothInput bti : bluetoothInputs) {
-            try {
-                bti.reconnect(BluetoothAdapter.getDefaultAdapter());
-            } catch (bluetoothInput.bluetoothException e) {
-                throw new Exception("Could not initialize bluetooth input. (" + e.getMessage() + ")");
-            }
-        }
-
-        //Reconnect bluetooth outputs
-        for (bluetoothOutput bto : bluetoothOutputs) {
-            try {
-                bto.reconnect(BluetoothAdapter.getDefaultAdapter());
-            } catch (bluetoothOutput.bluetoothException e) {
-                throw new Exception("Could not initialize bluetooth output. (" + e.getMessage() + ")");
-            }
-        }
     }
 
     public String writeStateFile(String customTitle, OutputStream os) {
