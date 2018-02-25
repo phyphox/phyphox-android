@@ -59,7 +59,7 @@
         ]]>
     </string>
     <string name="creditsLibs">
-        The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.
+        The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.) and \"Chart.js\" (http://chartjs.org), both available under the MIT licence.
     </string>
     <string name="creditsApache" translatable="false">
         <![CDATA[

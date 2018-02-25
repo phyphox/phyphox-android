@@ -57,27 +57,25 @@ public class expView implements Serializable{
         protected String label; //Each element has a label. Usually naming the data shown
         protected float labelSize; //Size of the label
         protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
-        protected String valueInput; //Single valued data from this input can be displayed to the user
-        protected String dataXInput; //Array data from this input can be displayed to the user, usually used for x-axis
-        protected String dataYInput; //Array data from this input can be displayed to the user, usually used for y-axis
+        protected Vector<String> inputs;
 
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
         transient protected View rootView; //Holds the root view of the element
 
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
-        protected expViewElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
+        protected expViewElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             this.label = label;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.valueOutput = valueOutput;
-            this.valueInput = valueInput;
-            this.dataXInput = dataXInput;
-            this.dataYInput = dataYInput;
+            this.inputs = inputs;
 
             //If not set otherwise, set the input buffer to be identical to the output buffer
             //This allows to receive the old user-set value after the view has changed
-            if (this.valueInput == null && this.valueOutput != null)
-                this.valueInput = this.getValueOutput();
+            if (this.inputs == null && this.valueOutput != null) {
+                this.inputs = new Vector<>();
+                this.inputs.add(this.getValueOutput());
+            }
         }
 
         //Interface to change the label size
@@ -123,40 +121,10 @@ public class expView implements Serializable{
             return 0.;
         }
 
-        //setValue is the function through which the main process can write a single value that
-        //should be shown to the user
-        protected void setValue(double x) {
-
-        }
-
         //This function returns a JavaScript function. The argument of this function will receive
-        //a single value that should be shown to the user
-        protected String setValueHTML() {
+        //an array that contains fresh data to be shown to the user.
+        protected String setDataHTML() {
             return "function(x) {}";
-        }
-
-        //setDataX is the function through which the main process can write a full dataBuffer
-        // (array) that should be shown to the user. Usually used for x-data
-        protected void setDataX(dataBuffer x) {
-
-        }
-
-        //This function returns a JavaScript function. The argument of this function will receive
-        //an array that should be shown to the user. Usually used for x-data
-        protected String setDataXHTML() {
-            return "function(x) {}";
-        }
-
-        //setDataY is the function through which the main process can write a full dataBuffer
-        // (array) that should be shown to the user. Usually used for y-data
-        protected void setDataY(dataBuffer y) {
-
-        }
-
-        //This function returns a JavaScript function. The argument of this function will receive
-        //an array that should be shown to the user. Usually used for y-data
-        protected String setDataYHTML() {
-            return "function(y) {}";
         }
 
         //dataComplete will be called after all set-function have been called. This signifies that
@@ -182,26 +150,12 @@ public class expView implements Serializable{
             return false;
         }
 
+        //This is called when the analysis process is finished and the element is allowed to write to the buffers
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+        }
+
         //This is called when the element should be triggered (i.e. button press triggered by the remote interface)
         protected void trigger() {
-        }
-
-        //This returns the key name of the valueInput dataBuffer. Called by the main loop to figure
-        // out which values to write to this element
-        protected String getValueInput() {
-            return this.valueInput;
-        }
-
-        //This returns the key name of the dataXInput dataBuffer. Called by the main loop to figure
-        // out which buffer to write to this element as x
-        protected String getDataXInput() {
-            return this.dataXInput;
-        }
-
-        //This returns the key name of the dataYInput dataBuffer. Called by the main loop to figure
-        // out which buffer to write to this element as y
-        protected String getDataYInput() {
-            return this.dataYInput;
         }
 
         //This is called, when the data for the view has been reset
@@ -290,8 +244,8 @@ public class expView implements Serializable{
 
         //Constructor takes the same arguments as the expViewElement constructor
         //It sets a precision of 2 with fixed point notation as default and creates the formatter
-        valueElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        valueElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
             this.scientificNotation = false;
             this.precision = 2;
             updateFormatter();
@@ -404,7 +358,8 @@ public class expView implements Serializable{
 
         @Override
         //We just have to send calculated value and the unit to the textView
-        protected void setValue(double x) {
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            double x = experiment.getBuffer(inputs.get(0)).value;
             if (tv != null) {
                 String vStr = "";
                 String uStr = "";
@@ -437,10 +392,15 @@ public class expView implements Serializable{
 
         @Override
         //In Javascript we just have to set the content of the value <span> to the value using jquery
-        protected String setValueHTML() {
+        protected String setDataHTML() {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("function (x) {");
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+
+            sb.append("function (data) {");
+            sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
+            sb.append("         return;");
+            sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
             sb.append(      "var v = null;");
 
             sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
@@ -473,8 +433,8 @@ public class expView implements Serializable{
     public class infoElement extends expViewElement implements Serializable {
 
         //Constructor takes the same arguments as the expViewElement constructor
-        infoElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        infoElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
         }
 
         @Override
@@ -519,11 +479,6 @@ public class expView implements Serializable{
                     "</div>";
         }
 
-        @Override
-        //In Javascript we don't have to do anything
-        protected String setValueHTML() {
-            return "function (x) {}";
-        }
     }
 
     //separatorElement implements a simple spacing, optionally showing line
@@ -532,8 +487,8 @@ public class expView implements Serializable{
         private float height = 0.1f;
 
         //Label is not used
-        separatorElement(String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super("", valueOutput, valueInput, dataXInput, dataYInput, res);
+        separatorElement(String valueOutput, Vector<String> inputs, Resources res) {
+            super("", valueOutput, inputs, res);
         }
 
         public void setColor(int c) {
@@ -577,11 +532,6 @@ public class expView implements Serializable{
                     "</div>";
         }
 
-        @Override
-        //In Javascript we don't have to do anything
-        protected String setValueHTML() {
-            return "function (x) {}";
-        }
     }
 
     //editElement implements a simple edit box which takes a single value from the user
@@ -598,8 +548,8 @@ public class expView implements Serializable{
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         //No special constructor. Just some defaults.
-        editElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
             this.unit = "";
             this.factor = 1.;
         }
@@ -802,11 +752,7 @@ public class expView implements Serializable{
             return currentValue;
         }
 
-        @Override
-        //Set the value if the element is not focused
-        protected void setValue(double v) {
-            //Enter value from buffer if it has not been changed by the user
-            //This ensures, that the old value is restored if the view has to be created after the views have been switched.
+        void setValue(double v) {
             if (!focused) {
                 if (Double.isNaN(v)) //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
                     currentValue = defaultValue;
@@ -818,9 +764,22 @@ public class expView implements Serializable{
         }
 
         @Override
+        //Set the value if the element is not focused
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            //Enter value from buffer if it has not been changed by the user
+            //This ensures, that the old value is restored if the view has to be created after the views have been switched.
+            double v = experiment.getBuffer(inputs.get(0)).value;
+            setValue(v);
+        }
+
+        @Override
         //The javascript function which updates the content of the input as it is updated on the phone
-        protected String setValueHTML() {
-            return "function (x) {" +
+        protected String setDataHTML() {
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+            return "function (data) {" +
+                    "if (!data.hasOwnProperty(\""+bufferName+"\"))" +
+                    "    return;" +
+                    "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];" +
                     "if (!$(\"#element"+htmlID+" .value\").is(':focus'))" +
                         "$(\"#element"+htmlID+" .value\").val((x*"+factor+"))" +
                     "}";
@@ -834,8 +793,8 @@ public class expView implements Serializable{
         private boolean triggered = false;
 
         //No special constructor.
-        buttonElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        buttonElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
         }
 
         protected void setIO(Vector<dataInput> inputs, Vector<dataOutput> outputs) {
@@ -931,15 +890,16 @@ public class expView implements Serializable{
         transient private graphView gv = null;
         transient private PlotRenderer plotRenderer = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
-        transient private floatBufferRepresentation dataX; //The x data to be displayed
-        transient private floatBufferRepresentation dataY; //The y data to be displayed
+        transient private floatBufferRepresentation[] dataX; //The x data to be displayed
+        transient private floatBufferRepresentation[] dataY; //The y data to be displayed
         private double dataMinX, dataMaxX, dataMinY, dataMaxY;
 
         private boolean isExclusive = false;
         private int margin;
 
-        private boolean line = false; //Show lines instead of points?
+        private Vector<graphView.Style> style = new Vector<>(); //Show lines instead of points?
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
+        private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
         private String labelY = null; //Label for the y-axis
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
@@ -947,10 +907,9 @@ public class expView implements Serializable{
         private boolean logY = false; //logarithmic scale for the y-axis?
         private int xPrecision = 3;
         private int yPrecision = 3;
-        private double lineWidth = 1.0;
-        private int color;
+        private Vector<Double> lineWidth = new Vector<>();
+        private Vector<Integer> color = new Vector<>();
 
-        private String highlightColor;
         private String backgroundGridRemoteColor;
         private String gridColor;
         private String mainRemoteColor;
@@ -967,18 +926,25 @@ public class expView implements Serializable{
         double maxY = 0.;
 
         //Quite usual constructor...
-        graphElement(String label, String valueOutput, String valueInput, String dataXInput, String dataYInput, Resources res) {
-            super(label, valueOutput, valueInput, dataXInput, dataYInput, res);
+        graphElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
             this.self = this;
 
             margin = res.getDimensionPixelSize(R.dimen.activity_vertical_margin);
 
             aspectRatio = 2.5;
-            color = res.getColor(R.color.highlight);
-            highlightColor = String.format("%08x", res.getColor(R.color.highlight)).substring(2);
             backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
             mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
             gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
+            nCurves = (inputs.size()+1)/2;
+
+            for (int i = 0; i < nCurves; i++) {
+                color.add(res.getColor(R.color.highlight));
+                lineWidth.add(1.0);
+                style.add(graphView.Style.lines);
+                dataX = new floatBufferRepresentation[nCurves];
+                dataY = new floatBufferRepresentation[nCurves];
+            }
         }
 
         //Interface to change the height of the graph
@@ -986,24 +952,39 @@ public class expView implements Serializable{
             this.aspectRatio = aspectRatio;
         }
 
-        protected void setLineWidth(double lineWidth) {
-            this.lineWidth = lineWidth;
+        protected void setLineWidth(double lineWidth, int i) {
+            this.lineWidth.set(i, lineWidth);
             if (gv != null)
-                gv.setLineWidth(lineWidth);
+                gv.setLineWidth(lineWidth, i);
+        }
+
+        protected void setLineWidth(double lineWidth) {
+            for (int i = 0; i < nCurves || i < historyLength; i++)
+                setLineWidth(lineWidth, i);
+        }
+
+        protected void setColor(int color, int i) {
+            this.color.set(i, color);
+            if (gv != null)
+                gv.setColor(color, i);
         }
 
         protected void setColor(int color) {
-            this.color = color;
-            if (gv != null)
-                gv.setColor(color);
+            for (int i = 0; i < nCurves || i < historyLength; i++)
+                setColor(color, i);
             lineColor = String.format("%08x", color).substring(2);
         }
 
-        //Interface to switch between points and lines
-        protected void setLine(boolean line) {
-            this.line = line;
+        protected void setStyle(graphView.Style style, int i) {
+            this.style.set(i, style);
             if (gv != null)
-                gv.setLine(line);
+                gv.setStyle(style, i);
+        }
+
+        //Interface to switch between points and lines
+        protected void setStyle(graphView.Style style) {
+            for (int i = 0; i < nCurves || i < historyLength; i++)
+                setStyle(style, i);
         }
 
         public void setScaleModeX(graphView.scaleMode minMode, double minV, graphView.scaleMode maxMode, double maxV) {
@@ -1020,8 +1001,6 @@ public class expView implements Serializable{
             this.scaleMaxY = maxMode;
             this.minY = minV;
             this.maxY = maxV;
-            if (gv != null)
-                gv.setScaleModeY(minMode, minV, maxMode, maxV);
         }
 
         //Interface to set a history length
@@ -1029,6 +1008,10 @@ public class expView implements Serializable{
             this.historyLength = hl;
             if (gv != null)
                 gv.setHistoryLength(hl);
+            if (hl > 1) {
+                dataX = new floatBufferRepresentation[1];
+                dataY = new floatBufferRepresentation[1];
+            }
         }
 
         //Interface to set the axis labels.
@@ -1114,18 +1097,22 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
             //Send our parameters to the graphView isntance
-            gv.setLine(line);
-            gv.setLineWidth(lineWidth);
-            gv.setColor(color);
+            if (historyLength > 1)
+                gv.setHistoryLength(historyLength);
+            else
+                gv.setCurves(nCurves);
+            for (int i = 0; i < nCurves; i++) {
+                gv.setStyle(style.get(i), i);
+                gv.setLineWidth(lineWidth.get(i), i);
+                gv.setColor(color.get(i), i);
+            }
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
-            gv.setHistoryLength(historyLength);
             gv.setLabel(labelX, labelY);
             gv.setLogScale(logX, logY);
             gv.setPrecision(xPrecision, yPrecision);
 
-            //TODO Interactive graphs deactivated for now
-/*            gv.setOnClickListener(new View.OnClickListener() {
+            gv.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if (self.parent != null) {
@@ -1136,7 +1123,7 @@ public class expView implements Serializable{
                     }
                 }
             });
-*/
+
             fl.addView(plotAreaView);
             fl.addView(gv);
 
@@ -1173,40 +1160,69 @@ public class expView implements Serializable{
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"></div></div>" +
+                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"><canvas width=\"1000\" height=\""+(1000.0/this.aspectRatio)+"\"></canvas></div></div>" +
                     "</div>";
         }
 
         @Override
-        //Store the x data array until we update
-        protected void setDataX(dataBuffer x) {
-            dataX = x.getFloatBuffer();
-            dataMinX = x.getMin();
-            dataMaxX = x.getMax();
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            for (int i = 0; i < inputs.size(); i+=2) {
+                if (inputs.size() > i+1) {
+                    dataBuffer x = experiment.getBuffer(inputs.get(i+1));
+                    if (x != null) {
+                        if (style.get(i/2) == graphView.Style.hbars)
+                            dataX[i/2] = x.getFloatBufferBarValue();
+                        else if (style.get(i/2) == graphView.Style.vbars)
+                            dataX[i/2] = x.getFloatBufferBarAxis(lineWidth.get(i/2));
+                        else
+                            dataX[i/2] = x.getFloatBuffer();
+                        if (i == 0) {
+                            dataMinX = x.getMin();
+                            dataMaxX = x.getMax();
+                        } else {
+                            dataMinX = Math.min(dataMinX, x.getMin());
+                            dataMaxX = Math.max(dataMaxX, x.getMax());
+                        }
+                    } else {
+                        dataX[i/2] = null;
+                    }
+                }
+
+                dataBuffer y = experiment.getBuffer(inputs.get(i));
+                if (y != null) {
+                    if (style.get(i/2) == graphView.Style.hbars)
+                        dataY[i/2] = y.getFloatBufferBarAxis(lineWidth.get(i/2));
+                    else if (style.get(i/2) == graphView.Style.vbars)
+                        dataY[i/2] = y.getFloatBufferBarValue();
+                    else
+                        dataY[i/2] = y.getFloatBuffer();
+                    if (i == 0) {
+                        dataMinY = y.getMin();
+                        dataMaxY = y.getMax();
+                    } else {
+                        dataMinY = Math.min(dataMinY, y.getMin());
+                        dataMaxY = Math.max(dataMaxY, y.getMax());
+                    }
+                } else {
+                    dataY[i/2] = null;
+                }
+            }
         }
 
+        //TODO
         @Override
         //Return a javascript function which stores the x data array for later use
-        protected String setDataXHTML() {
-            return "function (x) {"+
-                        "elementData["+htmlID+"][\"x\"] = x" +
-                    "}";
-        }
-
-        @Override
-        //Store the y data array until we update
-        protected void setDataY(dataBuffer y) {
-            dataY = y.getFloatBuffer();
-            dataMinY = y.getMin();
-            dataMaxY = y.getMax();
-        }
-
-        @Override
-        //Return a javascript function which stores the y data array for later use
-        protected String setDataYHTML() {
-            return "function (y) {"+
-                        "elementData["+htmlID+"][\"y\"] = y" +
-                    "}";
+        protected String setDataHTML() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("function (data) {");
+            sb.append("     elementData[" + htmlID + "][\"datasets\"] = [];");
+            for (int i = 0; i < inputs.size(); i++) {
+                sb.append("if (!data.hasOwnProperty(\""+inputs.get(i).replace("\"", "\\\"")+"\"))");
+                sb.append("    return;");
+                sb.append("elementData["+htmlID+"][\"datasets\"]["+i+"] = data[\""+inputs.get(i).replace("\"", "\\\"")+"\"];");
+            }
+            sb.append("}");
+            return sb.toString();
         }
 
         @Override
@@ -1216,16 +1232,17 @@ public class expView implements Serializable{
         protected void dataComplete() {
             if (gv == null)
                 return;
-            if (dataY != null) {
-                if (dataX != null) {
+            if (dataY[0] != null) {
+                if (dataX[0] != null) {
                     gv.addGraphData(dataY, dataMinY, dataMaxY, dataX, dataMinX, dataMaxX);
-                    dataX = null;
+                    dataX[0] = null;
                 } else
                     gv.addGraphData(dataY, dataMinY, dataMaxY);
-                dataY = null;
+                dataY[0] = null;
             }
         }
 
+        //TODO
         @Override
         //This looks pretty ugly and indeed needs a clean-up...
         //This function returns a javascript function which updates the flot chart.
@@ -1233,16 +1250,6 @@ public class expView implements Serializable{
         //function (which has to setup some JSON itself) and return the whole nightmare. There
         //certainly is a way to beautify this, but it's not too obvious...
         protected String dataCompleteHTML() {//TODO: Create intelligent function to setup ticks on log scales
-            String transformX, transformY;
-            if (logX)
-                transformX = "ticks: [0.1,1,10,100,1000,10000], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, ";
-            else
-                transformX = "\"ticks\": 3, ";
-            if (logY)
-                transformY = "ticks: [0.01,0.1,1,10], transform: function (v) { if (v >= 0.001) return Math.log(v); else return Math.log(0.001) }, inverseTransform: function (v) { return Math.exp(v); }, ";
-            else
-                transformY = "\"ticks\": 3, ";
-
             String scaleX = "";
             if (scaleMinX == graphView.scaleMode.fixed && !Double.isNaN(minX))
                 scaleX += "\"min\":" + minX + ", ";
@@ -1254,18 +1261,152 @@ public class expView implements Serializable{
             if (scaleMaxY == graphView.scaleMode.fixed && !Double.isNaN(maxY))
                 scaleY += "\"max\":" + maxY + ", ";
 
+            String styleDetection = "switch (i/2) {";
+            String graphSetup = "[";
+            for (int i = 0; i < inputs.size(); i+=2) {
+
+                graphSetup +=   "{"+
+                                    "type: \"scatter\"," +
+                                    "showLine: "+ (style.get(i/2) != graphView.Style.dots ? "true" : "false") +"," +
+                                    "fill: "+(style.get(i/2) == graphView.Style.vbars || style.get(i/2) == graphView.Style.hbars ? "\"origin\"" : "false")+"," +
+                                    "pointRadius: "+ (style.get(i/2) == graphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"," +
+                                    "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
+                                    "pointHoverRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
+                                    "lineTension: 0," +
+                                    "borderCapStyle: \"butt\"," +
+                                    "borderJoinStyle: \"round\"," +
+                                    "spanGaps: false," +
+                                    "borderColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
+                                    "backgroundColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
+                                    "borderWidth: " + (style.get(i/2) == graphView.Style.vbars || style.get(i/2) == graphView.Style.hbars ? 0.0 : 2.0*lineWidth.get(i/2)) + "," +
+                                    "xAxisID: \"xaxis\"," +
+                                    "yAxisID: \"yaxis\"," +
+                                    "data: d[" + i + "]," +
+                                "},";
+
+                styleDetection += "case " + (i/2) + ": type = \"" + style.get(i/2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "; break;";
+            }
+            styleDetection += "}";
+            graphSetup += "],";
+
             return "function () {" +
-                        "var d = [];" +
-                        "if (!elementData["+htmlID+"].hasOwnProperty(\"y\"))" +
+                        "if (elementData["+htmlID+"][\"datasets\"].length < 1)" +
                             "return;" +
-                        "if (!elementData["+htmlID+"].hasOwnProperty(\"x\") || elementData["+htmlID+"][\"x\"].length == 0) {" +
-                            "elementData["+htmlID+"][\"x\"] = [];" +
-                            "for (i = 0; i < elementData["+htmlID+"][\"y\"].length; i++)" +
-                                "elementData["+htmlID+"][\"x\"][i] = i" +
+                        "var changed = false;" +
+                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i++) {" +
+                            "if (elementData["+htmlID+"][\"datasets\"][i][\"changed\"])" +
+                                "changed = true;" +
                         "}" +
-                        "for (i = 0; i < elementData["+htmlID+"][\"y\"].length && i < elementData[" + htmlID + "][\"x\"].length; i++)" +
-                            "d[i] = [elementData["+htmlID+"][\"x\"][i], elementData["+htmlID+"][\"y\"][i]];" +
-                        "$.plot(\"#element"+htmlID+" .graph\", [{ \"color\": \"" + "#"+ lineColor + "\" , \"data\": d }], {\"lines\": {show:"+(line ? "true" : "false")+", \"lineWidth\": "+(2.0*lineWidth)+"}, \"points\": {show:"+(!line ? "true" : "false")+"}, \"xaxis\": {" + scaleX + transformX + "\"axisLabel\": \""+this.labelX+"\", \"tickColor\": \""+ "#"+gridColor +"\"}, \"yaxis\": {" + scaleY + transformY + "\"axisLabel\": \""+this.labelY+"\", \"tickColor\": \""+ "#"+ gridColor +"\"}, \"grid\": {\"borderColor\": \""+ "#"+ mainRemoteColor +"\", \"backgroundColor\": \""+ "#"+backgroundGridRemoteColor +"\"}});" +
+                        "if (!changed)" +
+                            "return;" +
+                        "var d = [];" +
+                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
+                            "d[i/2] = [];" +
+                            "var xIndexed = ((i+1 >= elementData["+htmlID+"][\"datasets\"].length) || elementData["+htmlID+"][\"datasets\"][i+1][\"data\"].length == 0);" +
+                            "var type;" +
+                            "var lineWidth;" +
+                            styleDetection +
+                            "var lastX = false;" +
+                            "var lastY = false;" +
+                            "for (j = 0; j < elementData["+htmlID+"][\"datasets\"][i][\"data\"].length && (xIndexed || j < elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length); j++) {" +
+                                "var x = xIndexed ? j : elementData["+htmlID+"][\"datasets\"][i+1][\"data\"][j];"+
+                                "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
+                                "if (type == \""+graphView.Style.vbars+"\") {" +
+                                    "if (lastX !== false && lastY !== false) {"+
+                                        "var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
+                                        "d[i/2][j*3+0] = {x: lastX+offset, y: lastY};" +
+                                        "d[i/2][j*3+1] = {x: x-offset, y: lastY};" +
+                                        "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+                                    "}"+
+                                "} else if (type == \""+graphView.Style.hbars+"\") {" +
+                                    "if (lastX !== false && lastY !== false) {"+
+                                        "var offset = (y-lastX)*(1.0-lineWidth)/2.;" +
+                                        "d[i/2][j*3+0] = {x: lastX, y: lastY+offset};" +
+                                        "d[i/2][j*3+1] = {x: lastX, y: y-offset};" +
+                                        "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+                                    "}"+
+                                "} else {" +
+                                    "d[i/2][j] = {x: x, y: y};" +
+                                "}" +
+                                "lastX = x;" +
+                                "lastY = y;" +
+                            "}" +
+
+                        "}" +
+
+
+
+                        "if (elementData["+htmlID+"][\"graph\"]) {" +
+                            "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
+                                "elementData["+htmlID+"][\"graph\"].data.datasets[i/2].data = d[i/2];" +
+                            "}" +
+                            "elementData["+htmlID+"][\"graph\"].update();" +
+                        "} else {" +
+                            "var ctx = $(\"#element"+htmlID+" .graph canvas\");" +
+                            "elementData["+htmlID+"][\"graph\"] = new Chart(ctx, {" +
+                                "type: \"scatter\"," +
+                                "data: {datasets: "+
+                                    graphSetup +
+                                "}," +
+                                "options: {" +
+                                    "responsive: false, " +
+                                    "animation: false," +
+                                    "legend: false," +
+                                    "scales: {" +
+                                        "xAxes: [{" +
+                                            "id: \"xaxis\"," +
+                                            "type: \""+(logX ? "logarithmic" : "linear")+"\"," +
+                                            "position: \"bottom\"," +
+                                            "gridLines: {" +
+                                                "color: \"#"+gridColor+"\"," +
+                                                "zeroLineColor: \"#"+gridColor+"\"," +
+                                                "tickMarkLength: 0," +
+                                            "}," +
+                                            "scaleLabel: {" +
+                                                "display: true," +
+                                                "labelString: \""+this.labelX+"\"," +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 0, "+
+                                            "}," +
+                                            "ticks: {" +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 6, "+
+                                                "autoSkip: true," +
+                                                "maxTicksLimit: 10," +
+                                                scaleX+
+                                            "}" +
+                                        "}]," +
+                                        "yAxes: [{" +
+                                            "id: \"yaxis\"," +
+                                            "type: \""+(logX ? "logarithmic" : "linear")+"\"," +
+                                            "position: \"bottom\"," +
+                                            "gridLines: {" +
+                                                "color: \"#"+gridColor+"\"," +
+                                                "zeroLineColor: \"#"+gridColor+"\"," +
+                                                "tickMarkLength: 0," +
+                                            "}," +
+                                            "scaleLabel: {" +
+                                                "display: true," +
+                                                "labelString: \""+this.labelY+"\"," +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 6, "+
+                                            "}," +
+                                            "ticks: {" +
+                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontSize: 30," +
+                                                "padding: 6, "+
+                                                "autoSkip: true," +
+                                                "maxTicksLimit: 5," +
+                                                scaleY+
+                                            "}" +
+                                        "}]," +
+                                    "}" +
+                                "}" +
+                            "});" +
+                        "}" +
                     "}";
         }
 

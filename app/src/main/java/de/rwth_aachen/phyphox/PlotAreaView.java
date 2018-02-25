@@ -53,10 +53,10 @@ class GraphSetup {
     float minX, maxX, minY, maxY;
     public final Vector<CurveData> dataSets = new Vector<>();
     public float[] positionMatrix = new float[16];
-    public int color = 0xffffff;
+    public Vector<Integer> color = new Vector<>();
     public int historyLength = 1;
-    public boolean dots = false;
-    public float lineWidth = 2.f;
+    public Vector<graphView.Style> style = new Vector<>();
+    public Vector<Float> lineWidth = new Vector<>();
     public boolean logX = false;
     public boolean logY = false;
 
@@ -69,6 +69,17 @@ class GraphSetup {
         plotBoundW = 0;
         plotBoundH = 0;
         Matrix.setIdentityM(positionMatrix, 0);
+    }
+
+    public void initSize(int n) {
+        color.setSize(n);
+        style.setSize(n);
+        lineWidth.setSize(n);
+        for (int i = 0; i < n; i++) {
+            color.set(i, 0xffffff);
+            style.set(i, graphView.Style.lines);
+            lineWidth.set(i, 2.0f);
+        }
     }
 
     public void setPlotBounds(float l, float t, float w, float h) {
@@ -122,10 +133,10 @@ class GraphSetup {
         for (int i = 0; i < n; i++) {
             if (dataSets.size() <= i) {
                 CurveData newData = new CurveData();
-                if (i == 0) {
-                    newData.color[0] = ((color & 0xff0000) >> 16)/255.f;
-                    newData.color[1] = ((color & 0xff00) >> 8)/255.f;
-                    newData.color[2] = (color & 0xff)/255.f;
+                if (i == 0 || historyLength == 1) {
+                    newData.color[0] = ((color.get(i) & 0xff0000) >> 16)/255.f;
+                    newData.color[1] = ((color.get(i) & 0xff00) >> 8)/255.f;
+                    newData.color[2] = (color.get(i) & 0xff)/255.f;
                     newData.color[3] = 1.f;
                 } else {
                     newData.color[0] = 1.f;
@@ -504,6 +515,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
     }
 
     public void deinitScene() {
@@ -541,15 +554,20 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glUniformMatrix4fv(positionMatrixHandle, 1, false, graphSetup.positionMatrix, 0);
         GLES20.glUniform1i(logXYHandle, (graphSetup.logX ? 0x01 : 0x00) | (graphSetup.logY ? 0x02 : 0x00));
 
-        GLES20.glLineWidth(2.f*graphSetup.lineWidth);
-
+        int lastValidX = 0;
         for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {
+            GLES20.glLineWidth(2.f*graphSetup.lineWidth.get(i));
+
             CurveData dataSet = graphSetup.dataSets.get(i);
-            if (dataSet.n == 0 || (dataSet.n < 2 && !graphSetup.dots))
+            if (dataSet.n == 0 || (dataSet.n < 2 && !(graphSetup.style.get(i) == graphView.Style.dots)))
                 continue;
 
+            if (dataSet.vboX != 0)
+                lastValidX = dataSet.vboX;
+            if (lastValidX == 0)
+                continue;
             GLES20.glEnableVertexAttribArray(positionXHandle);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboX);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, lastValidX);
             GLES20.glVertexAttribPointer(positionXHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboY);
@@ -558,9 +576,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
             GLES20.glUniform4fv(colorHandle, 1, dataSet.color, 0);
 
-            if (graphSetup.dots) {
-                GLES20.glUniform1f(sizeHandle,graphSetup.lineWidth*4.f);
+            if (graphSetup.style.get(i) == graphView.Style.dots) {
+                GLES20.glUniform1f(sizeHandle, graphSetup.lineWidth.get(i) * 4.f);
                 GLES20.glDrawArrays(GLES20.GL_POINTS, 0, dataSet.n);
+            } else if (graphSetup.style.get(i) == graphView.Style.hbars || graphSetup.style.get(i) == graphView.Style.vbars) {
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, dataSet.n);
             } else {
                 GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, dataSet.n);
             }
@@ -574,23 +594,43 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     private void doUpdateBuffers() {
         for (CurveData data : graphSetup.dataSets) {
-            if (data.vboX == 0) {
-                int ref[] = new int[2];
-                GLES20.glGenBuffers(2, ref, 0);
-                data.vboX = ref[0];
-                data.vboY = ref[1];
+            if (data.vboY == 0) {
+                if (data.fbX != null) {
+                    int ref[] = new int[2];
+                    GLES20.glGenBuffers(2, ref, 0);
+                    data.vboX = ref[0];
+                    data.vboY = ref[1];
+                } else {
+                    int ref[] = new int[1];
+                    GLES20.glGenBuffers(1, ref, 0);
+                    data.vboX = 0;
+                    data.vboY = ref[0];
+                }
             }
 
-            if (data.fbX != null && data.fbY != null) {
-                synchronized (data.fbX.lock) {
-                    synchronized (data.fbY.lock) {
-                        data.n = Math.min(data.fbX.size, data.fbY.size);
+            if (data.fbY != null) {
+                synchronized (data.fbY.lock) {
+                    if (data.fbX != null) {
+                        synchronized (data.fbX.lock) {
+                            data.n = Math.min(data.fbX.size, data.fbY.size);
+
+                            if (data.n > 0) {
+
+                                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboX);
+                                data.fbX.data.position(data.fbX.offset);
+                                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data.n * 4, data.fbX.data, GLES20.GL_DYNAMIC_DRAW);
+
+                                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboY);
+                                data.fbY.data.position(data.fbY.offset);
+                                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data.n * 4, data.fbY.data, GLES20.GL_DYNAMIC_DRAW);
+
+                                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+                            }
+                        }
+                    } else {
+                        data.n = data.fbY.size;
 
                         if (data.n > 0) {
-
-                            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboX);
-                            data.fbX.data.position(data.fbX.offset);
-                            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, data.n * 4, data.fbX.data, GLES20.GL_DYNAMIC_DRAW);
 
                             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboY);
                             data.fbY.data.position(data.fbY.offset);
