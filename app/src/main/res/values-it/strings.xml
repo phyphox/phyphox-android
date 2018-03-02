@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
-    <string name="app_name">phyphox</string>
+    <string name="app_name">Phyphox</string>
     <string name="switchColumns1">Vista: 1 colonna</string>
     <string name="switchColumns3">Vista: 3 colonne</string>
     <string name="switchColumns2">Visualizzazione: 2 colonne</string>
@@ -30,7 +30,7 @@
     <string name="remotePhyphoxOrg">Help controllo remoto</string>
     <string name="save_locally_message">Questo esperimento è stato aperto da una fonte esterna. Vuoi aggiungerlo alla tua collezione di esperimenti?</string>
     <string name="show_description">Info esperimento</string>
-    <string name="creditsLibs">L’interfaccia web per l’accesso remoto usa le librerie JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), tutte disponibili sotto licenza MIT.</string>
+    <string name="creditsLibs">L’interfaccia web per l’accesso remoto usa le librerie JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) e \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), tutte disponibili sotto licenza MIT.</string>
     <string name="newExperiment">Aggiungi esperimento semplice</string>
     <string name="donotshowagain">Non mostrare ancora</string>
     <string name="credits">Crediti</string>
@@ -62,13 +62,13 @@
     <string name="pick_exportFormat">Scegli il formato dei dati.</string>
     <string name="share_subject">Screenshot da phyphox</string>
     <string name="title_activity_experiment">phyphox</string>
-    <string name="save_locally_done">L’esperimento è stato aggiunto alla collezione.</string>
+    <string name="save_locally_done">L’esperimento è stato correttamente aggiunto alla collezione.</string>
     <string name="delete">Cancella</string>
     <string name="share_pick_share">Scegli come distribuire</string>
     <string name="newExperimentInputRate">Frequenza sensore (in Hz, 0 = il più veloce possibile)</string>
-    <string name="share">Condividi screeshot</string>
+    <string name="share">Condividi screenshot</string>
     <string name="warning">Avvertenza</string>
-    <string name="damageWarning">Fate attenzione a non danneggiare il vostro telefono facendo esperimenti. Abbiate cura in particolare di non fatelo cadere sul duro e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di alcun danno al vostro telefono.</string>
+    <string name="damageWarning">Fate attenzione a non danneggiare il vostro telefono facendo esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di alcun danno al vostro telefono.</string>
     <string name="sensorMagneticField">Campo magnetico</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="confirmDelete">Vuoi cancellare questo esperimento dalla tua collezione?</string>
@@ -77,7 +77,7 @@
     <string name="sensorHumidity">Umidità</string>
     <string name="export_pick_share">Seleziona un metodo per esportare</string>
     <string name="sensorNotAvailableWarningTitle">Sensore non disponibile.</string>
-    <string name="sensorNotAvailableWarningMoreInfo">Più info</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Più informazioni</string>
     <string name="export_subject">Dati da phyphox</string>
     <string name="experimentinfo_hint">Per sapere come funziona questo esperimento, guarda le info relative.</string>
     <string name="timedRun">Partenza ritardata</string>
@@ -99,5 +99,10 @@
     <string name="save_state_subject">Stato dell\'esperimento per phyphox</string>
     <string name="save_state_default_title">Misura</string>
     <string name="save_state_success">Lo stato è stato salvato nella tua collezione.</string>
+
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#it</string>
+
+    <string name="creditsRWTH">Phyphox è stato realizzato nel secondo Istituto di Fisica alla RWTH Aachen University</string>
+    <string name="location">Posizione</string>
 
     </resources>
