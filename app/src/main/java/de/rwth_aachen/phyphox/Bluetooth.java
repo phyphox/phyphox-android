@@ -745,7 +745,8 @@ public class Bluetooth implements Serializable {
          */
         @Override
         public boolean execute() {
-            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+            //No response does not work with the BBC Micro Bit. Need to investigate further...
+            //characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
             return gatt.writeCharacteristic(characteristic);
         }
 
