@@ -102,9 +102,9 @@
     <string name="switchColumns2">Beeld: 2 kolommen</string>
     <string name="switchColumns3">Beeld: 3 kolommen</string>
 
-    <string name="show_description">Experiment info</string>
+    <string name="show_description">Info over experiment</string>
     <string name="save_locally">Voeg experiment toe aan experimentenlijst</string>
-    <string name="save_locally_done">Experiment met succes toegevoegd aan experimentenlijst.</string>
+    <string name="save_locally_done">Experiment toegevoegd aan experimentenlijst.</string>
     <string name="save_locally_message">Dit experiment is geopend vanuit een bron op afstand. Wilt u dit toevoegen aan uw experimentenlijst?</string>
     <string name="save_locally_button">Toevoegen aan experimentenlijst</string>
     <string name="save_state">Sla experimentstatus op</string>
@@ -119,7 +119,7 @@
 
     <string name="timedRun">Getimede meting</string>
 
-    <string name="pick_exportSets">Kies data set om te exporteren.</string>
+    <string name="pick_exportSets">Kies datasets om te exporteren.</string>
     <string name="pick_exportFormat">Kies data formaat.</string>
 
     <string name="noDrawableData">Geen visualiseerbare data.</string>
