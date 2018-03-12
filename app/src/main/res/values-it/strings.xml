@@ -68,7 +68,7 @@
     <string name="newExperimentInputRate">Frequenza sensore (in Hz, 0 = il più veloce possibile)</string>
     <string name="share">Condividi screenshot</string>
     <string name="warning">Avvertenza</string>
-    <string name="damageWarning">Fate attenzione a non danneggiare il vostro telefono facendo esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di alcun danno al vostro telefono.</string>
+    <string name="damageWarning">Fate attenzione a non danneggiare il telefono facendo gli esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di eventuali danni al vostro telefono.</string>
     <string name="sensorMagneticField">Campo magnetico</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="confirmDelete">Vuoi cancellare questo esperimento dalla tua collezione?</string>
