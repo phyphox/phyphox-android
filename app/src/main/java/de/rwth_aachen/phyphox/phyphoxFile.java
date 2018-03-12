@@ -471,7 +471,7 @@ public abstract class phyphoxFile {
                         try {
                             try {
                                 Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsInput$" + conversionFunctionName);
-                                Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                                Constructor constructor = conversionClass.getDeclaredConstructor(new Class[]{XmlPullParser.class});
                                 inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
                             } catch (Exception e) {
                                 Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
