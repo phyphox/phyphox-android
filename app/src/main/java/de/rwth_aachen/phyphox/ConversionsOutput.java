@@ -1,5 +1,7 @@
 package de.rwth_aachen.phyphox;
 
+import android.util.Log;
+
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
@@ -10,7 +12,7 @@ public class ConversionsOutput {
         OutputConversion() {
 
         }
-        protected byte[] convert(double data) {
+        protected byte[] convert(dataBuffer data) {
             return null;
         }
     }
@@ -23,16 +25,20 @@ public class ConversionsOutput {
         }
 
         @Override
-        protected byte[] convert(double data) {
+        protected byte[] convert(dataBuffer data) {
             try {
                 return (byte[]) conversionFunction.invoke(null, data);
             } catch (Exception e) {
-                return null;
+                try {
+                    return (byte[]) conversionFunction.invoke(null, data.value);
+                } catch (Exception e2) {
+                    return null;
+                }
             }
         }
     }
 
-    public static byte[] stringAsByteArray (double data) {
+    public static byte[] string (double data) {
         return (data+"").getBytes();
     }
 
@@ -73,8 +79,16 @@ public class ConversionsOutput {
         return new byte[] {lowerByte, mLowerByte, mUpperByte, upperByte};
     }
 
-    public static byte[] parseByte (double data) {
+    public static byte[] singleByte (double data) {
         return new byte[]{(byte)data};
+    }
+
+    public static byte[] byteArray (dataBuffer data) {
+        Double[] dataArray = data.getArray();
+        byte[] result = new byte[dataArray.length];
+        for (int i = 0; i < dataArray.length; i++)
+            result[i] = (byte)(double)dataArray[i];
+        return result;
     }
 
 }

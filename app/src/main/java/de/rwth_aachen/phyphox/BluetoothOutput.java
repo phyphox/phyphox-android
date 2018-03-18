@@ -48,7 +48,7 @@ public class BluetoothOutput extends Bluetooth {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
                 for (Characteristic c : mapping.get(characteristic)) {
                     if (data.get(c.index).getFilledSize() != 0) {
-                        byte[] value = convertData(data.get(c.index).getValue(), c.outputConversionFunction);
+                        byte[] value = convertData(data.get(c.index).buffer, c.outputConversionFunction);
                         characteristic.setValue(value);
                         add(new WriteCommand(btGatt, characteristic));
                     }
@@ -65,7 +65,7 @@ public class BluetoothOutput extends Bluetooth {
      * @param conversionFunction method to convert data (from ConversionsOutput)
      * @return the converted value
      */
-    private byte[] convertData(double data, ConversionsOutput.OutputConversion conversionFunction) {
+    private byte[] convertData(dataBuffer data, ConversionsOutput.OutputConversion conversionFunction) {
         try {
             return conversionFunction.convert(data);
         } catch (Exception e) {

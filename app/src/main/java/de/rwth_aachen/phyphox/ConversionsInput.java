@@ -241,7 +241,7 @@ public class ConversionsInput {
         }
     }
 
-    public static double firstByte (byte[] data) {
+    public static double singleByte (byte[] data) {
         return data[0];
     }
 

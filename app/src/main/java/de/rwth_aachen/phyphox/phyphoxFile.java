@@ -412,9 +412,14 @@ public abstract class phyphoxFile {
                     }
                     try {
                         try {
-                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsOutput$" + conversionFunctionName);
-                            Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
-                            outputConversionFunction = (ConversionsOutput.OutputConversion)constructor.newInstance(xpp);
+                            try {
+                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsOutput$" + conversionFunctionName);
+                                Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                                outputConversionFunction = (ConversionsOutput.OutputConversion) constructor.newInstance(xpp);
+                            } catch (Exception e) {
+                                Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{dataBuffer.class});
+                                outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
+                            }
                         } catch (Exception e) {
                             Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
                             outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);

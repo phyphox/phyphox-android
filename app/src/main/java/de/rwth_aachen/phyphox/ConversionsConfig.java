@@ -61,7 +61,7 @@ public class ConversionsConfig {
         return ConversionsOutput.uInt32LittleEndian(Double.parseDouble(data));
     }
 
-    public static byte[] parseByte (String data) {
+    public static byte[] singleByte (String data) {
         return new byte[]{Byte.parseByte(data)};
     }
 
