@@ -1,2 +1,76 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Podešavanja</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Dodaj jednostavan eksperiment</string>
+    <string name="newExperimentPhyphoxInfo">Posetite phyphox.org kako biste sproveli naprednije eksperimente, uključujući analizu podataka i deljenje istih sa kolegama, studentima i prijateljima.</string>
+    <string name="newExperimentInputTitle">Naslov</string>
+    <string name="newExperimentInputBufferSize">Veličina bafera</string>
+    <string name="newExperimentInputRate">Brzina senzora (u Hz, 0=najbrže moguće)</string>
+    <string name="newExperimentInputSensors">Aktivni senzori</string>
+
+    <string name="help">Pomoć i informacije</string>
+    <string name="experimentsPhyphoxOrg">Ideje za eksperimente i uputstva</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Često postavljana pitanja</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Pomoć za daljinsko upravljanje</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/daljinsko-upravljanje</string>
+    <string name="translationInfo">Jezik</string>
+    <string name="translationText">Phyphox će koristiti prvi mogući jezik sa vaše liste omiljenih. Kako biste promenili vaše opcije, idite na \"podešavanje\" ispod. Da vidite koji su mogući jezici i kako vi mođete da pomognete, izaberite \"poseti vebsajt\".</string>
+    <string name="translationToSettings">Podešavanja</string>
+    <string name="translationToWebsite">Poseti vebsajt</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#sr</string>
+
+    <string name="warning">Upozorenje</string>
+    <string name="donotshowagain">Ne pokazuj ponovo</string>
+    <string name="damageWarning">Molimo vas da budete oprezni prilikom izvođenja eksperimenata, kako ne biste oštetili vaš telefon. Molimo vas da posebno povedete računa o ispuštanju telefona na čvrste površine i da ga ne izlažete jakom magnetnom polju. Autori Phyphox-a nisu odgovorni za bilo kakva oštećenja vašeg telefona.</string>
+
+    <string name="info">Informacije</string>
+    <string name="credits">Bodovi</string>
+    <string name="creditsRWTH">phyphox je nastao na drugom institutu za fiziku, Univerzitet u Aachan RWTH</string>
+    <string name="creditsNames">Razvoj i koncept:<br/><b>Dr. Sebastian Staacks</b><br/>Koncept:<br/><b>Prof. Christoph Stampfer</b><br/>Dizajn:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programiranje:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"jQuery\"((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), svi su dostupni pod MIT licencom.</string>
+    <string name="sensorLinearAcceleration">Linearno ubrzanje</string>
+    <string name="sensorLight">Svetlost</string>
+    <string name="sensorGyroscope">Žiroskop</string>
+    <string name="sensorAccelerometer">Brzinometar</string>
+    <string name="sensorMagneticField">Magnetno polje</string>
+    <string name="sensorPressure">Pritisak</string>
+    <string name="sensorTemperature">Temperatura</string>
+    <string name="sensorHumidity">Vlažnost</string>
+    <string name="sensorProximity">Blizina</string>
+
+    <string name="location">Položaj</string>
+
+    <string name="sensorNotAvailableWarningTitle">Senzor nije dostupan.</string>
+    <string name="sensorNotAvailableWarningText1">Senzor</string>
+    <string name="sensorNotAvailableWarningText2">nije dostupa. Uobičajeno ovo znači da vaš uređaj ne poseduje ovaj tip senzora.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Više informacija</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Zatvori</string>
+    <string name="next">Sledeće</string>
+    <string name="cancel">Poništi</string>
+    <string name="unknown">nepoznato</string>
+
+    <string name="delete">Obriši</string>
+    <string name="confirmDelete">Da li želite da obrišete ovaj esperiment iz vaše kolekcije?</string>
+    <string name="confirmDeleteTitle">Potvrdi brisanje?</string>
+
+    <string name="stop">Zaustavi</string>
+    <string name="start">Početak</string>
+    <string name="clear_data">Obriši podatke</string>
+    <string name="clear_data_question">Obriši snimljene podatke?</string>
+    <string name="clear">Obriši</string>
+    <string name="timed_stop">Zaustavi tajmer</string>
+    <string name="timed_start">Pokreni tajmer</string>
+
+    <string name="loadingTitle">Učitavanje</string>
+    <string name="loadingText">Učitavanje eksperimenta…</string>
+
+    <string name="timedRunStartDelay">Odloženi start (s)</string>
+    <string name="timedRunStopDelay">Trajanje eksperimenta (s)</string>
+    </resources>
