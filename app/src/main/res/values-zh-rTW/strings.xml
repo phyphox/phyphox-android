@@ -1,4 +1,76 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources><string name="action_settings">設定</string>
     <string name="translationInfo">語言</string>
-    </resources>
+    <string name="app_name">手機物理實作</string>
+    <string name="title_activity_experiment">手機物理實作</string>
+
+    <string name="newExperiment">增加一個新的實驗</string>
+    <string name="newExperimentPhyphoxInfo">參考phyphox.org網站資訊，創設更好的手機實作，並包括數據分析，可與同事，學生和朋友分享。</string>
+    <string name="newExperimentInputTitle">標題</string>
+    <string name="newExperimentInputBufferSize">緩衝區大小(以數字表示取樣數)</string>
+    <string name="newExperimentInputRate">感應器感應速率(用赫為單位，0代表最快)</string>
+    <string name="newExperimentInputSensors">選擇感應器</string>
+
+    <string name="help">協助訊息</string>
+    <string name="experimentsPhyphoxOrg">實驗設計與說明</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">經常問的問題</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">遠程控制協助說明</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationText">Phyphox將使用您首選語言列表中的第一種語言。 要更改您的偏好設定，請用下方的Android“設定”。 要了解哪些語言可用以及如何提供協助，請選擇“拜訪網站”。</string>
+    <string name="translationToSettings">設定</string>
+    <string name="translationToWebsite">拜訪網站</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="warning">警示</string>
+    <string name="donotshowagain">不要再顯示</string>
+    <string name="damageWarning">使用phyphox實作時，請注意不要損壞手機。 尤其特別注意要避免將手機掉落在堅硬的表面上，並且不要將其暴露在過強的電磁場中。 phyphox的作者對於您手機的任何損壞概不負責。</string>
+
+    <string name="info">訊息</string>
+    <string name="credits">創立團隊</string>
+    <string name="creditsRWTH">phyphox是由亞琛工業大學第二物理學院所開發。</string>
+    <string name="creditsNames">Development and Concept:<br/><b>Dr. Sebastian Staacks</b><br/>Concept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programming:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
+    <string name="sensorLinearAcceleration">線性加速度</string>
+    <string name="sensorLight">光感應</string>
+    <string name="sensorGyroscope">陀螺儀</string>
+    <string name="sensorAccelerometer">加速度量測計</string>
+    <string name="sensorMagneticField">磁場量測計</string>
+    <string name="sensorPressure">壓力計</string>
+    <string name="sensorTemperature">溫度計</string>
+    <string name="sensorHumidity">濕度計</string>
+    <string name="sensorProximity">距離檢測計</string>
+
+    <string name="location">GPS偵測器</string>
+
+    <string name="sensorNotAvailableWarningTitle">感應裝置不可用</string>
+    <string name="sensorNotAvailableWarningText1">感應裝置</string>
+    <string name="sensorNotAvailableWarningText2">不可用。 表示您的設備沒有這種類型的感應器。</string>
+    <string name="sensorNotAvailableWarningMoreInfo">更多資訊</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">確認</string>
+    <string name="close">關閉</string>
+    <string name="next">下一步</string>
+    <string name="cancel">取消</string>
+    <string name="unknown">未知的</string>
+
+    <string name="delete">刪除</string>
+    <string name="confirmDelete">你想從你的收存中刪除這個實驗嗎？</string>
+    <string name="confirmDeleteTitle">確認刪除嗎？</string>
+
+    <string name="stop">停止</string>
+    <string name="start">開始</string>
+    <string name="clear_data">清除數據</string>
+    <string name="clear_data_question">清除數據紀錄？</string>
+    <string name="clear">清除</string>
+    <string name="timed_stop">停止定時計時</string>
+    <string name="timed_start">開始定時計時</string>
+
+    <string name="loadingTitle">載入</string>
+    <string name="loadingText">載入實驗</string>
+
+    <string name="experimentinfo_hint">查看與此手機實作相關資訊，以了解該如何使用。</string>
+
+</resources>
