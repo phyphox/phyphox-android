@@ -1260,8 +1260,6 @@ public class ExperimentList extends AppCompatActivity {
 
                         CRC32 crc32 = new CRC32();
                         crc32.update(currentBluetoothData);
-                        Log.d("test", String.format("calc: %08x", crc32.getValue()));
-                        Log.d("test", String.format("rec: %08x", currentBluetoothDataCRC32));
                         if (crc32.getValue() != currentBluetoothDataCRC32) {
                             showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (CRC32)", device);
                             return;

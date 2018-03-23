@@ -108,25 +108,25 @@ public class BluetoothInput extends Bluetooth {
         if (mode.equals("notification") || mode.equals("indication")) {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
                 BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
-                if (descriptor == null) {
-                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
+                if (descriptor != null) {
+                    if (mode.equals("notification"))
+                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    else
+                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                    cdl = new CancellableLatch(1);
+                    add(new WriteDescriptorCommand(btGatt, descriptor));
+                    boolean result = false;
+                    try {
+                        // it should not be possible to continue before the notifications are turned on
+                        // timeout after 3 seconds if the device could not be connected
+                        result = cdl.await(3, TimeUnit.SECONDS);
+                    } catch (InterruptedException e) {
+                    }
+                    if (!result) {
+                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_fail), this);
+                    }
                 }
-                if (mode.equals("notification"))
-                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                else
-                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
-                cdl = new CancellableLatch(1);
-                add(new WriteDescriptorCommand(btGatt, descriptor));
-                boolean result = false;
-                try {
-                    // it should not be possible to continue before the notifications are turned on
-                    // timeout after 3 seconds if the device could not be connected
-                    result = cdl.await(3, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                }
-                if (!result) {
-                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_fail), this);
-                }
+                //If there is no config descriptor, the device might still be sending notifications permanently, so we can still continue
             }
         }
     }
