@@ -72,7 +72,7 @@
     <string name="sensorMagneticField">Campo magnetico</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="confirmDelete">Vuoi cancellare questo esperimento dalla tua collezione?</string>
-    <string name="creditsNames">Sviluppatore e progettatore:<br/><b>Dr. Sebastian Staacks</b><br/>Creatore:<br/><b>Prof. Christoph Stampfer</b><br/>Disegnatore:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmatori:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">Sviluppatore e progettista:<br/><b>Dr. Sebastian Staacks</b><br/>Creatore:<br/><b>Prof. Christoph Stampfer</b><br/>Disegnatore:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmatori:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="remoteServerWarning">Stai per abilitare l’accesso remoto ai dati acquisiti. Quest operazione deve essere effettuata solo su di una rete fidata! Nota inoltre che l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su varie reti aziendali ed universitarie.\n\nPer massimizzare la sicurezza e la performance occorre connettersi a questo dispositivo col tethering (hotspot mobile).\n\nDopo aver schiacciato oK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.</string>
     <string name="sensorHumidity">Umidità</string>
     <string name="export_pick_share">Seleziona un metodo per esportare</string>
