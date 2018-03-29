@@ -1,2 +1,132 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Установки</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Добавить простой эксперимент</string>
+    <string name="newExperimentPhyphoxInfo">Посетите phyphox.org, чтобы создать эксперименты более высокого уровня и поделиться ими с коллегами, студентами и друзьями.</string>
+    <string name="newExperimentInputTitle">Название</string>
+    <string name="newExperimentInputBufferSize">Размер буфера (количество сохраняемых значений)</string>
+    <string name="newExperimentInputRate">Скорость датчика (в Гц, 0 = как можно быстрее)</string>
+    <string name="newExperimentInputSensors">Активные датчики</string>
+
+    <string name="help">Помощь и информация</string>
+    <string name="experimentsPhyphoxOrg">Экспериментальные идеи и инструкции</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Часто задаваемые вопросы</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Дистанционная помощь</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Языки</string>
+    <string name="translationText">Phyphox использует первый язык, доступный в вашем списке предпочитаемых языков. Чтобы изменить язык, перейдите в «Настройки» вашего мобильного устроиства (Android). Чтобы узнать, какие языки доступны и как вы можете помочь разработчикам, выберите «Посетить веб-сайт».</string>
+    <string name="translationToSettings">Настройки</string>
+    <string name="translationToWebsite">Посетить веб-сайт</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="warning">Предупреждение</string>
+    <string name="donotshowagain">Не показывать снова</string>
+    <string name="damageWarning">Будьте осторожны, чтобы не повредить телефон во время экспериментов. Не бросайте его на твердые поверхности и не подвергайте его воздействию чрезмерных магнитных полей. Авторы phyphox не несут ответственности за любой ущерб, нанесённый вашему телефону.</string>
+
+    <string name="info">Информация</string>
+    <string name="credits">Авторы</string>
+    <string name="creditsRWTH">phyphox был создан во 2-м физическом институте физики Рейнско-Вестфальского технического университета Ахена.</string>
+    <string name="creditsNames">Разработка и концепция:<br/> 1<b> 2Dr. Sebastian Staacks</b> 3<br/> 4Концепция:<br/> 5<b> 6Prof. Christoph Stampfer</b> 7<br/> 8Дизайн:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеки JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) и \"Axis Labels Plugin for flot\" ((c) 2010 Сюань Луо), доступные по лицензии MIT.</string>
+    <string name="sensorLinearAcceleration">Линейное ускорение</string>
+    <string name="sensorLight">Свет</string>
+    <string name="sensorGyroscope">Гироскоп</string>
+    <string name="sensorAccelerometer">Акселерометр</string>
+    <string name="sensorMagneticField">Магнитное поле</string>
+    <string name="sensorPressure">Давление</string>
+    <string name="sensorTemperature">Температура</string>
+    <string name="sensorHumidity">Влажность</string>
+    <string name="sensorProximity">Бесконтактный датчик</string>
+
+    <string name="location">Местоположение</string>
+
+    <string name="sensorNotAvailableWarningTitle">Датчик недоступен.</string>
+    <string name="sensorNotAvailableWarningText1">Датчик</string>
+    <string name="sensorNotAvailableWarningText2">недоступен. Обычно это означает, что на вашем устройстве нет такого типа датчиков.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Больше информации</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Закрыть</string>
+    <string name="next">Следующий</string>
+    <string name="cancel">Отмена</string>
+    <string name="unknown">неизвестный</string>
+
+    <string name="delete">Удалить</string>
+    <string name="confirmDelete">Вы хотите удалить этот эксперимент из своей коллекции?</string>
+    <string name="confirmDeleteTitle">Подтвердите удаление!</string>
+
+    <string name="stop">Стоп</string>
+    <string name="start">Старт</string>
+    <string name="clear_data">Удалить данные</string>
+    <string name="clear_data_question">Удалить записанные данные?</string>
+    <string name="clear">Удалить</string>
+    <string name="timed_stop">Остановить таймер</string>
+    <string name="timed_start">Запустить таймер</string>
+
+    <string name="loadingTitle">Загрузка</string>
+    <string name="loadingText">Загрузка эксперимента…</string>
+
+    <string name="timedRunDialogTitle">Хронометраж</string>
+    <string name="timedRunStartDelay">Задержка запуска (с)</string>
+    <string name="timedRunStopDelay">Продолжительность эксперимента (с)</string>
+    <string name="enableTimedRun">Провести хронометраж</string>
+
+    <string name="export">Экспорт данных</string>
+    <string name="export_subject">Данные из phyphox</string>
+    <string name="export_pick_share">Выберите способ экспорта</string>
+
+    <string name="share">Поделиться скриншотом</string>
+    <string name="share_subject">Скриншот из phyphox</string>
+    <string name="share_pick_share">Выберите метод раздачи</string>
+
+    <string name="remoteServer">Разрешить удаленный доступ</string>
+    <string name="remoteServerWarning">Вы собираетесь включить удаленный доступ к полученным данным. Рекомендуется делать это только в надежной сети! Также обратите внимание, что прямой доступ между устройствами может быть невозможен во многих корпоративных или университетских сетях.
+\n
+\nДля обеспечения максимальной безопасности и производительности рекомендуется подключиться к этому устройству через опцию привязки (мобильная точка доступа).
+\n
+\nПосле нажатия ok вы можете получить доступ к своим измерениям из любого веб-браузера в той же сети.</string>
+    <string name="remoteServerWarningTitle">Предупреждение системы безопасности!</string>
+    <string name="remoteServerActive">Удаленный доступ включен. Получите доступ к этому эксперименту по указанному URL:
+\n%1$s</string>
+    <string name="hotspotSettings">Настройки мобильной точки доступа</string>
+
+    <string name="calibrated_magnetometer">Используйте калиброванный магнитометр</string>
+
+    <string name="switchToPhoneLayout">Вид: узкий</string>
+    <string name="switchColumns1">Вид: 1 колонка</string>
+    <string name="switchColumns2">Вид: 2 колонки</string>
+    <string name="switchColumns3">Вид: 3 колонки</string>
+
+    <string name="show_description">Информация об эксрепименте</string>
+    <string name="save_locally">Добавить эксперимент в коллекцию</string>
+    <string name="save_locally_done">Эксперимент успешно добавлен в коллекцию.</string>
+    <string name="save_locally_message">Этот эксперимент был загружен из удаленного источника. Вы хотите добавить его в свою коллекцию экспериментов?</string>
+    <string name="save_locally_button">Сохранить в коллекции</string>
+    <string name="save_state">Сохранить эксперимент</string>
+    <string name="save_state_category">Сохраненные эксперименты</string>
+    <string name="save_state_message">Вы можете сохранить этот эксперимент, включая полученные данные, в своей коллекции или поделиться им с другим приложением.</string>
+    <string name="save_state_title">Название</string>
+    <string name="save_state_save">В коллекцию</string>
+    <string name="save_state_share">Поделиться</string>
+    <string name="save_state_subject">Эксперимент для phyphox</string>
+    <string name="save_state_default_title">Измерение</string>
+    <string name="save_state_success">Эксперимент сохранен в вашей коллекции.</string>
+
+    <string name="timedRun">Хронометраж</string>
+
+    <string name="pick_exportSets">Выберите данные для экспорта.</string>
+    <string name="pick_exportFormat">Выберите формат данных.</string>
+
+    <string name="noDrawableData">Данные не могут быть отображены.</string>
+
+    <string name="categoryNewExperiment">Простые пользовательские эксперименты</string>
+    <string name="categoryRawSensor">Исходные датчики</string>
+
+    <string name="experimentinfo_hint">Ознакомьтесь с информацией об экспериментах, чтобы узнать, как использовать этот эксперимент.</string>
+
+</resources>
