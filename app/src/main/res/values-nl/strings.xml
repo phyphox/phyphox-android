@@ -125,7 +125,7 @@
     <string name="noDrawableData">Geen visualiseerbare data.</string>
 
     <string name="categoryNewExperiment">Simpele aangepaste experimenten</string>
-    <string name="categoryRawSensor">Ruwe Sensoren</string>
+    <string name="categoryRawSensor">Onbewerkte sensoren</string>
 
     <string name="experimentinfo_hint">Bekijk de experimenteninfo om te weten hoe u dit experiment moet gebruiken.</string>
 
