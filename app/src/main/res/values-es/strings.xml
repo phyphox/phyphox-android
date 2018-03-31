@@ -1,2 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="action_settings">Opciones</string>
+    <string name="newExperiment">Añadir un experimento sencillo</string>
+    <string name="newExperimentPhyphoxInfo">Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y para compartirlos con colegas, estudiantes y amigos.</string>
+    <string name="newExperimentInputTitle">Título</string>
+    <string name="newExperimentInputBufferSize">Tamaño del búfer (cantidad de valores a ser almacenados)</string>
+    <string name="newExperimentInputRate">Tasa de muestreo del sensor (en Hz, 0 = lo más rápido posible)</string>
+    <string name="newExperimentInputSensors">Sensores Activos</string>
+
+    <string name="help">Ayuda e información</string>
+    <string name="experimentsPhyphoxOrg">Ideas para experimentos e instrucciones</string>
+    <string name="faqPhyphoxOrg">Preguntas más frecuentes</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/controlador-remoto</string>
+    <string name="translationInfo">Idiomas</string>
+    <string name="translationText">Phyphox usará el primer idioma disponible de su lista de idiomas preferidos en la configuración de su dispositivo. Para cambiar sus preferencias, vaya a \"Ajustes\" de Android seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"visitar sitio web\".</string>
+    <string name="translationToSettings">Ajustes</string>
+    <string name="translationToWebsite">Visitar sitio web</string>
+    <string name="warning">Advertencia</string>
+    <string name="donotshowagain">No mostrar de nuevo</string>
+    <string name="damageWarning">Por favor, tenga cuidado de no dañar su dispositivo durante los experimentos. Por favor, tome las precauciones necesarias para evitar dejarlo caer sobre superficies duras y no lo exponga a campos magnéticos de alta intensidad. Los autores de phyphox no se hacen responsables de cualquier posible daño a su dispositivo.</string>
+
+    <string name="info">Información</string>
+    <string name="credits">Reconocimientos</string>
+    <string name="creditsRWTH">phyphox fue creado en el Instituto de Física 2 de la Universidad RWTH Aachen.</string>
+    <string name="creditsNames">Desarrollo y Concepto:<br/> 1<b> 2Dr. Sebastian Staacks</b> 3<br/> 4Concepto:<br/> 5<b> 6Prof. Christoph Stampfer</b> 7<br/> 8Diseño:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>Programación:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">La interfaz web para el acceso remoto utiliza las bibliotecas de JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA y Ole Laursen) y \"Axis Labels Plugin for flot\" \"((c) 2010 Xuan Luo), todas disponibles bajo la licencia MIT.</string>
+    <string name="sensorLinearAcceleration">Aceleración Lineal</string>
+    <string name="sensorLight">Luz</string>
+    <string name="sensorGyroscope">Giroscopio</string>
+    <string name="sensorAccelerometer">Acelerómetro</string>
+    <string name="sensorMagneticField">Campo Magnético</string>
+    <string name="sensorPressure">Presión</string>
+    <string name="sensorTemperature">Temperatura</string>
+    <string name="sensorHumidity">Humedad</string>
+    </resources>
