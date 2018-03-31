@@ -27,7 +27,11 @@
 
     <string name="info">Informações</string>
     <string name="creditsRWTH">phyphox foi criado pelo 2º Instituto de Física da Universidade RWTH Aachen.</string>
-    <string name="creditsNames">Concepção e Desenvolvimento:<br/><b>Dr. Sebastian Staacks</b><br/>Concepção:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programação:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">
+        <![CDATA[
+        Concepção e Desenvolvimento:<br/><b>Dr. Sebastian Staacks</b><br/>Concepção:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programação:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
     <string name="creditsLibs">A interface-web para acesso remoto usa as bibliotecas JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA e Ole Laursen) e \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), todas disponíveis através da licença MIT.</string>
     <string name="sensorLinearAcceleration">Aceleração Linear</string>
     <string name="sensorLight">Luz</string>

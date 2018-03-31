@@ -30,7 +30,11 @@
     <string name="info">Информация</string>
     <string name="credits">Авторы</string>
     <string name="creditsRWTH">phyphox был создан во 2-м физическом институте физики Рейнско-Вестфальского технического университета Ахена.</string>
-    <string name="creditsNames">Разработка и концепция:<br/> 1<b> 2Dr. Sebastian Staacks</b> 3<br/> 4Концепция:<br/> 5<b> 6Prof. Christoph Stampfer</b> 7<br/> 8Дизайн:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">
+        <![CDATA[
+        Разработка и концепция:<br/><b>Dr. Sebastian Staacks</b><br/>Концепция:<br/><b>Prof. Christoph Stampfer</b><br/>Дизайн:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
     <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеки JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) и \"Axis Labels Plugin for flot\" ((c) 2010 Сюань Луо), доступные по лицензии MIT.</string>
     <string name="sensorLinearAcceleration">Линейное ускорение</string>
     <string name="sensorLight">Свет</string>
