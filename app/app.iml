@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":app" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/.." external.system.id="GRADLE" external.system.module.group="phyphox-android" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":app" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/.." external.system.id="GRADLE" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
@@ -98,6 +98,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-support" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/javaPrecompile" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/jniLibs" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/lint" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/manifests" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/prebuild" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/reload-dex" />
@@ -110,30 +111,34 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/transforms" />
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
+      <excludeFolder url="file://$MODULE_DIR$/build/reports" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
     </content>
     <orderEntry type="jdk" jdkName="Android API 27 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="com.android.support:animated-vector-drawable-27.0.2" level="project" />
-    <orderEntry type="library" name="com.android.support:appcompat-v7-27.0.2" level="project" />
-    <orderEntry type="library" name="android.arch.lifecycle:common:1.0.3@jar" level="project" />
-    <orderEntry type="library" name="org.apache.poi:poi:3.13@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-annotations:27.0.2@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:design-27.0.2" level="project" />
-    <orderEntry type="library" name="com.journeyapps:zxing-android-embedded-3.5.0" level="project" />
-    <orderEntry type="library" name="android.arch.core:common:1.0.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-core-ui-27.0.2" level="project" />
-    <orderEntry type="library" name="com.android.support:support-compat-27.0.2" level="project" />
-    <orderEntry type="library" name="com.android.support:transition-27.0.2" level="project" />
-    <orderEntry type="library" name="com.android.support:recyclerview-v7-27.0.2" level="project" />
-    <orderEntry type="library" name="commons-codec:commons-codec:1.9@jar" level="project" />
-    <orderEntry type="library" name="com.google.zxing:core:3.3.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-core-utils-27.0.2" level="project" />
-    <orderEntry type="library" name="com.android.support:support-fragment-27.0.2" level="project" />
-    <orderEntry type="library" name="com.android.support:support-media-compat-27.0.2" level="project" />
-    <orderEntry type="library" name="android.arch.lifecycle:runtime-1.0.3" level="project" />
-    <orderEntry type="library" name="com.android.support:support-vector-drawable-27.0.2" level="project" />
-    <orderEntry type="library" name="com.android.support:support-v4-27.0.2" level="project" />
-    <orderEntry type="library" name="org.apache.http.legacy-android-27" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:transition-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: android.arch.lifecycle:common:1.1.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: com.journeyapps:zxing-android-embedded-3.5.0" level="project" />
+    <orderEntry type="library" name="Gradle: commons-codec:commons-codec:1.9@jar" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-fragment-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:design-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: android.arch.core:runtime-1.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:animated-vector-drawable-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:appcompat-v7-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: android.arch.lifecycle:viewmodel-1.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-compat-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-v4-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.google.zxing:core:3.3.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:recyclerview-v7-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: android.arch.lifecycle:livedata-core-1.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.poi:poi:3.13@jar" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-media-compat-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-vector-drawable-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-annotations:27.1.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-core-utils-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: android.arch.core:common:1.1.0@jar" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:support-core-ui-27.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: android.arch.lifecycle:runtime-1.1.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.http.legacy-android-27" level="project" />
   </component>
 </module>
