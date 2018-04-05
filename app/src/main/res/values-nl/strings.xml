@@ -89,11 +89,11 @@
     <string name="share_pick_share">Kies een methode om te delen</string>
 
     <string name="remoteServer">Sta bediening op afstand toe</string>
-    <string name="remoteServerWarning">U staat op het punt om toegang tot de bekomen data op afstand toe te staan. Doe dit alleen via een betrouwbaar netwerk! Let er ook op dat een directe connectie tussen toestellen niet mogelijk kan zijn op vele bedrijfs- of universiteitsnetwerken.
-\n
-\nVoor de beste beveiliging en prestatie kunt u dit toestel beter koppelen via een tethering optie (mobiele hotspot).
-\n
-\nNa het drukken op oke heeft u toegang tot uw meting vanop elke webbrowser op hetzelfde netwerk.</string>
+    <string name="remoteServerWarning">U staat op het punt om toegang op afstand tot de verkregen data mogelijk te maken. Doe dit alleen via een betrouwbaar netwerk! Let er ook op dat een directe toegang tussen toestellen niet mogelijk kan zijn op vele bedrijfs- of universiteitsnetwerken. 
+\n 
+\nVoor de beste beveiliging en prestatie kunt u dit toestel beter koppelen via een tethering optie (mobiele hotspot). 
+\n 
+\nNa het drukken op OK heeft u toegang tot uw meting vanuit elke webbrowser op hetzelfde netwerk.</string>
     <string name="remoteServerWarningTitle">Beveiligingswaarschuwing!</string>
     <string name="remoteServerActive">Bediening op afstand ingeschakeld. Krijg toegang tot dit experiment via volgende URL:
 \n%1$s</string>
