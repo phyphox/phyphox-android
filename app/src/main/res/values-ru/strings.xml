@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources><string name="app_name">phyphox (фифокс)</string>
     <string name="action_settings">Установки</string>
-    <string name="title_activity_experiment">phyphox</string>
+    <string name="title_activity_experiment">phyphox (фифокс)</string>
 
-    <string name="newExperiment">Добавить простой эксперимент</string>
+    <string name="newExperiment">Добавить эксперимент</string>
     <string name="newExperimentPhyphoxInfo">Посетите phyphox.org, чтобы создать эксперименты более высокого уровня и поделиться ими с коллегами, студентами и друзьями.</string>
     <string name="newExperimentInputTitle">Название</string>
     <string name="newExperimentInputBufferSize">Размер буфера (количество сохраняемых значений)</string>
@@ -18,7 +18,7 @@
     <string name="remotePhyphoxOrg">Дистанционная помощь</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationInfo">Языки</string>
-    <string name="translationText">Phyphox использует первый язык, доступный в вашем списке предпочитаемых языков. Чтобы изменить язык, перейдите в «Настройки» вашего мобильного устроиства (Android). Чтобы узнать, какие языки доступны и как вы можете помочь разработчикам, выберите «Посетить веб-сайт».</string>
+    <string name="translationText">Phyphox использует первый язык, доступный в списке выбранных языков в ваших системных настройках. Чтобы изменить язык, перейдите в «Настройки» вашего мобильного устроиства (Android). Чтобы узнать, какие языки доступны и как вы можете помочь разработчикам, выберите «Посетить веб-сайт».</string>
     <string name="translationToSettings">Настройки</string>
     <string name="translationToWebsite">Посетить веб-сайт</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
@@ -29,7 +29,7 @@
 
     <string name="info">Информация</string>
     <string name="credits">Авторы</string>
-    <string name="creditsRWTH">phyphox был создан во 2-м физическом институте физики Рейнско-Вестфальского технического университета Ахена.</string>
+    <string name="creditsRWTH">phyphox был создан во 2-м институте физики Рейнско-Вестфальского Технического Университета Ахена.</string>
     <string name="creditsNames">
         <![CDATA[
         Разработка и концепция:<br/><b>Dr. Sebastian Staacks</b><br/>Концепция:<br/><b>Prof. Christoph Stampfer</b><br/>Дизайн:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
@@ -62,7 +62,7 @@
 
     <string name="delete">Удалить</string>
     <string name="confirmDelete">Вы хотите удалить этот эксперимент из своей коллекции?</string>
-    <string name="confirmDeleteTitle">Подтвердите удаление!</string>
+    <string name="confirmDeleteTitle">Подтвердить удаление?</string>
 
     <string name="stop">Стоп</string>
     <string name="start">Старт</string>
