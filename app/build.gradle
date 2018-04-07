@@ -8,7 +8,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 27
         versionCode 34
-        versionName "1.0.11"
+        versionName "1.0.12"
         resConfigs "cs", "de", "en", "nl", "pl"
     }
     buildTypes {
@@ -23,8 +23,8 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:27.1.0'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'org.apache.poi:poi:3.13'
-    implementation 'com.android.support:support-v4:27.1.0'
-    implementation 'com.android.support:design:27.1.0'
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
 }
