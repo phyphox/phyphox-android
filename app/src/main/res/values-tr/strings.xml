@@ -79,4 +79,40 @@
 
     <string name="experimentinfo_hint">Deneyin nasıl kullanılacağını öğrenmek için deney bilgisi kısmını kontrol edin.</string>
 
-</resources>
+<string name="newExperimentPhyphoxInfo">Veri analizi de dahil olmak üzere daha ileri düzey deneyler oluşturmak için phyphox.org adresini ziyaret edin. Meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşın.</string>
+    <string name="newExperimentInputBufferSize">Ara bellek boyutu (depolanacak değerlerin sayısı)</string>
+    <string name="newExperimentInputRate">Sensör oranı (Hertz, 0 = mümkün olduğunca hızlı)</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationText">Phyphox, tercih ettiğiniz diller listesinden ulaşabileceği ilk dili kullanacaktır. Tercihlerinizi değiştirmek için aşağıdan Android \"ayarlarına\" gidin. Hangi dillerin uygun olduğunu ve nasıl yardımcı olabileceğinizi öğrenmek için \"web sitesini ziyaret et\" seçeneğini seçin.</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="damageWarning">Deney yaparken telefonunuza zarar vermemeye lütfen dikkat edin. Sert yüzeyler üzerine düşürmemek için özel dikkat gösterin ve aşırı manyetik alanlara maruz bırakmayın. Telefonunuzdaki herhangi bir hasardan Phyphox\'un yazarları sorumlu değildir.</string>
+
+    <string name="creditsRWTH">phyphox, RWTH Aachen Üniversitesi 2. Fizik Enstitüsü\'nde kuruldu.</string>
+    <string name="creditsNames">Fikir ve Geliştirme:<br/><b>Dr. Sebastian Staacks</b><br/>Fikir:<br/><b>Prof. Christoph Stampfer</b><br/>Tasarım:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Yazılım:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
+    <string name="sensorNotAvailableWarningText2">mevcut değil. Genellikle cihazınızın bu tip bir sensöre sahip olmadığı anlamına gelir.</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="timed_stop">Zamanlı denemeyi durdur</string>
+    <string name="timed_start">Zamanlı denemeyi başlat</string>
+
+    <string name="timedRunDialogTitle">Zamanlı deneme</string>
+    <string name="timedRunStartDelay">Başlangıç gecikmesi (s)</string>
+    <string name="enableTimedRun">Zamanlı deneme yap</string>
+
+    <string name="export">Veriyi dışa aktar</string>
+    <string name="export_subject">Phyphox verileri</string>
+    <string name="export_pick_share">Dışa aktarma yöntemi seç</string>
+
+    <string name="share_subject">Phyphox ekran görüntüsü</string>
+    <string name="remoteServer">Uzaktan erişime izin ver</string>
+    <string name="remoteServerActive">Uzaktan erişim etkinleştirildi. Bu deneye aşağıdaki linkten ulaşabilirsiniz:
+\n%1$s</string>
+    <string name="switchColumns2">Görünüm: 2 sütün</string>
+    <string name="switchColumns3">Görünüm: 3 sütun</string>
+
+    <string name="save_locally_message">Bu deney uzak bir kaynaktan açıldı. Deneyi koleksiyonunuza eklemek ister misiniz?</string>
+    </resources>
