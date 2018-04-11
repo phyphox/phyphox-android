@@ -115,4 +115,12 @@
     <string name="switchColumns3">Görünüm: 3 sütun</string>
 
     <string name="save_locally_message">Bu deney uzak bir kaynaktan açıldı. Deneyi koleksiyonunuza eklemek ister misiniz?</string>
+    <string name="credits">Emeği geçenler</string>
+    <string name="save_state_message">Verilerinizi içeren bu deneyin durumunu koleksiyonunuza kaydedebilir veya farklı bir uygulama kullanarak paylaşabilirsiniz.</string>
+    <string name="save_state_subject">Phyphox için deney durumları</string>
+    <string name="timedRun">Zamanlı deneme</string>
+
+    <string name="categoryNewExperiment">Basit özel deneyler</string>
+    <string name="categoryRawSensor">Ham sensörler</string>
+
     </resources>
