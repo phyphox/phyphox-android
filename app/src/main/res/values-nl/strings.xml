@@ -25,7 +25,7 @@
 
     <string name="warning">Waarschuwing</string>
     <string name="donotshowagain">Niet opnieuw tonen</string>
-    <string name="damageWarning">Let op dat je tijdens het experimenteren je smartphone niet beschadigt. Pas goed op dat u hem niet laat vallen op harde oppervlakken en stel hem niet bloot aan sterke magnetische velden. De auteurs van phyphox zijn niet verantwoordelijk voor enige schade aan uw smartphone.</string>
+    <string name="damageWarning">Let op dat tijdens het experimenteren je smartphone niet beschadigd wordt. Laat hem niet vallen op een hard oppervlak en stel hem niet bloot aan sterke magnetische velden. De auteurs van phyphox zijn niet verantwoordelijk voor enige schade aan je smartphone.</string>
 
     <string name="info">Info</string>
     <string name="credits">Credits</string>
