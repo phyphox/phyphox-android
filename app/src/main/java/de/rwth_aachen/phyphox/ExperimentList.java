@@ -1699,7 +1699,7 @@ public class ExperimentList extends AppCompatActivity {
                     Toast.makeText(ExperimentList.this, "Unexpected error: Could not retrieve data from QR code.", Toast.LENGTH_LONG).show();
                     return;
                 }
-                long crc32 = ((data[7] << 24)&0xff000000 | (data[8] << 16)&0x00ff0000 | (data[9]<< 8)&0x0000ff00 | data[10]&0x000000ff);
+                long crc32 = (((long)(data[7] & 0xff) << 24) | ((long)(data[8] & 0xff) << 16) | ((long)(data[9] & 0xff) << 8) | ((long)(data[10] & 0xff)));
                 int index = data[11];
                 int count = data[12];
 
