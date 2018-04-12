@@ -858,7 +858,7 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             String label = getTranslatedAttribute("label");
             double factor = getDoubleAttribute("factor", 1.);
-            String unit = getStringAttribute("unit");
+            String unit = getTranslatedAttribute("unit");
             Vector<dataInput> inputs = new Vector<>();
             Vector<dataOutput> outputs = new Vector<>();
             switch (tag.toLowerCase()) {
