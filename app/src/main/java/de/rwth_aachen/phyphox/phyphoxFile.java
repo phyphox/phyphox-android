@@ -428,9 +428,6 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
                     }
 
-                    // get "clear" attribute
-                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
-
                     // check if buffer exists
                     String bufferName = getText();
                     dataBuffer buffer = experiment.getBuffer(bufferName);
@@ -438,7 +435,7 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                     }
 
-                    inputList.add(new dataInput(buffer, clearBeforeWrite));
+                    inputList.add(new dataInput(buffer, false));
 
                     // add data to characteristics
                     characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
@@ -449,7 +446,7 @@ public abstract class phyphoxFile {
                 case "output": {
                     // check if "output" is allowed here
                     if (outputList == null) {
-                        throw new phyphoxFileException("No input expected.", xpp.getLineNumber());
+                        throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
                     }
 
                     // get and check "extra" attribute
@@ -487,9 +484,6 @@ public abstract class phyphoxFile {
                         }
                     }
 
-                    // get "clear" attribute
-                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
-
                     // check if buffer exists
                     String bufferName = getText();
                     dataBuffer buffer = experiment.getBuffer(bufferName);
@@ -497,7 +491,7 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                     }
 
-                    outputList.add(new dataOutput(buffer, clearBeforeWrite));
+                    outputList.add(new dataOutput(buffer, false));
 
                     // add data to characteristics
                     characteristics.add(new Bluetooth.InputData(uuid, extraTime, outputList.size()-1, inputConversionFunction));

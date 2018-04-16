@@ -124,33 +124,40 @@ public class BluetoothScanDialog {
                             break;
                         int type = scanRecord[index+1];
 
-                        if (length == 3 && (type == 0x02 || type == 0x03)) {
-                            String uuid16str = String.format("%02x%02x", scanRecord[index+2+1], scanRecord[index+2]);
-                            UUID uuid = UUID.fromString(Bluetooth.baseUUID.toString().substring(0, 4) + uuid16str + Bluetooth.baseUUID.toString().substring(8));
-                            uuids.add(uuid);
-                            Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 16bit: " + uuid.toString());
-                        } else if (length == 5 && (type == 0x04 || type == 0x05)) {
-                            String uuid32str = String.format("%02x%02x%02x%02x", scanRecord[index+2+3], scanRecord[index+2+2], scanRecord[index+2+1], scanRecord[index+2]);
-                            UUID uuid = UUID.fromString(uuid32str + Bluetooth.baseUUID.toString().substring(8));
-                            uuids.add(uuid);
-                            Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 32bit: " + uuid.toString());
+                        if (type == 0x02 || type == 0x03) {
+                            for (int subindex = 0; subindex < length-1; subindex += 2) {
+                                String uuid16str = String.format("%02x%02x", scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
+                                UUID uuid = UUID.fromString(Bluetooth.baseUUID.toString().substring(0, 4) + uuid16str + Bluetooth.baseUUID.toString().substring(8));
+                                uuids.add(uuid);
+//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 16bit: " + uuid.toString());
+                            }
+                        } else if (type == 0x04 || type == 0x05) {
+                            for (int subindex = 0; subindex < length-1; subindex += 4) {
+                                String uuid32str = String.format("%02x%02x%02x%02x", scanRecord[index + subindex + 2 + 3], scanRecord[index + subindex + 2 + 2], scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
+                                UUID uuid = UUID.fromString(uuid32str + Bluetooth.baseUUID.toString().substring(8));
+                                uuids.add(uuid);
+//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 32bit: " + uuid.toString());
+                            }
                         } else if (length == 17 && (type == 0x06 || type == 0x07)) {
                             //128 bit UUIDs
+                            for (int subindex = 0; subindex < length-1; subindex += 16) {
 
-                            long leastSignificant = 0;
-                            for (int i = 7; i >= 0; i--) {
-                                leastSignificant <<= 8;
-                                leastSignificant |= (scanRecord[index+2+i] & 0xFF);
+                                long leastSignificant = 0;
+                                for (int i = 7; i >= 0; i--) {
+                                    leastSignificant <<= 8;
+                                    leastSignificant |= (scanRecord[index + subindex + 2 + i] & 0xFF);
+                                }
+
+                                long mostSignificant = 0;
+                                for (int i = 7; i >= 0; i--) {
+                                    mostSignificant <<= 8;
+                                    mostSignificant |= (scanRecord[index + subindex + 2 + 8 + i] & 0xFF);
+                                }
+
+                                uuids.add(new UUID(mostSignificant, leastSignificant));
+//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 128bit: " + new UUID(mostSignificant, leastSignificant).toString());
+
                             }
-
-                            long mostSignificant = 0;
-                            for (int i = 7; i >= 0; i--) {
-                                mostSignificant <<= 8;
-                                mostSignificant |= (scanRecord[index+2+8+i] & 0xFF);
-                            }
-
-                            uuids.add(new UUID(mostSignificant, leastSignificant));
-                            Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 128bit: " + new UUID(mostSignificant, leastSignificant).toString());
                         }
                         index += length+1;
                     }
