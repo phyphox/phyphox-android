@@ -18,7 +18,7 @@
     <string name="remotePhyphoxOrg">Дистанционная помощь</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationInfo">Языки</string>
-    <string name="translationText">Phyphox (фифокс) использует первый язык, доступный в списке выбранных языков в ваших системных настройках. Чтобы изменить язык, перейдите в «Настройки» вашего мобильного устроиства (Android). Чтобы узнать, какие языки доступны и как вы можете помочь разработчикам, выберите «Посетить веб-сайт».</string>
+    <string name="translationText">Phyphox (фюфокс) использует первый язык, доступный в списке выбранных языков в ваших системных настройках. Чтобы изменить язык, перейдите в «Настройки» вашего мобильного устроиства (Android). Чтобы узнать, какие языки доступны и как вы можете помочь разработчикам, выберите «Посетить веб-сайт».</string>
     <string name="translationToSettings">Настройки</string>
     <string name="translationToWebsite">Посетить веб-сайт</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
