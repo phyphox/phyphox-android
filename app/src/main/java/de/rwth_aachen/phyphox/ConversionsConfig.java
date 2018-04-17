@@ -33,7 +33,7 @@ public class ConversionsConfig {
         }
     }
 
-    public static byte[] stringAsByteArray (String data) {
+    public static byte[] string (String data) {
         return (data).getBytes();
     }
 
@@ -59,6 +59,30 @@ public class ConversionsConfig {
 
     public static byte[] uInt32LittleEndian (String data) {
         return ConversionsOutput.uInt32LittleEndian(Double.parseDouble(data));
+    }
+
+    public static byte[] int16BigEndian (String data) {
+        return ConversionsOutput.int16BigEndian(Double.parseDouble(data));
+    }
+
+    public static byte[] uInt16BigEndian (String data) {
+        return int16BigEndian(data);
+    }
+
+    public static byte[] int24BigEndian (String data) {
+        return ConversionsOutput.int24BigEndian(Double.parseDouble(data));
+    }
+
+    public static byte[] uInt24BigEndian (String data) {
+        return int24BigEndian(data);
+    }
+
+    public static byte[] int32BigEndian (String data) {
+        return ConversionsOutput.int32BigEndian(Double.parseDouble(data));
+    }
+
+    public static byte[] uInt32BigEndian (String data) {
+        return ConversionsOutput.uInt32BigEndian(Double.parseDouble(data));
     }
 
     public static byte[] singleByte (String data) {

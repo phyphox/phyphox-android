@@ -184,7 +184,7 @@ public class ConversionsInput {
         return Double.longBitsToDouble(bits);
     }
 
-    public static double stringAsDouble (byte[] data) {
+    public static double string (byte[] data) {
         String s = new String(data);
         try {
             return Double.parseDouble(s);

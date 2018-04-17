@@ -170,7 +170,14 @@ public class BluetoothScanDialog {
                         return;
                     }
 
-                    boolean isSupported = (supportedNameFilter == null || supportedNameFilter.isEmpty() || supportedNameFilter.contains(device.getName()));
+                    boolean isSupported = (supportedNameFilter == null || supportedNameFilter.isEmpty());
+                    if (!isSupported) {
+                        for (String name : supportedNameFilter)
+                            if (device.getName().contains(name)) {
+                                isSupported = true;
+                                break;
+                            }
+                    }
 
                     if (supportedUUIDFilter != null) {
                         for (UUID uuid : supportedUUIDFilter) {

@@ -79,6 +79,43 @@ public class ConversionsOutput {
         return new byte[] {lowerByte, mLowerByte, mUpperByte, upperByte};
     }
 
+    public static byte[] int16BigEndian (double data) {
+        byte lowerByte = (byte) data;
+        byte upperByte = (byte) ((int)data >> 8);
+        return new byte[] {upperByte, lowerByte};
+    }
+
+    public static byte[] uInt16BigEndian (double data) {
+        return int16BigEndian(data);
+    }
+
+    public static byte[] int24BigEndian (double data) {
+        byte lowerByte = (byte) data;
+        byte mediumByte = (byte) ((int) data >> 8);
+        byte upperByte = (byte) ((int) data >> 16);
+        return new byte[] {upperByte, mediumByte, lowerByte};
+    }
+
+    public static byte[] uInt24BigEndian (double data) {
+        return int24BigEndian(data);
+    }
+
+    public static byte[] int32BigEndian (double data) {
+        byte lowerByte = (byte) data;
+        byte mLowerByte = (byte) ((int) data >> 8);
+        byte mUpperByte = (byte) ((int) data >> 16);
+        byte upperByte = (byte) ((int) data >> 24);
+        return new byte[] {upperByte, mUpperByte, mLowerByte, lowerByte};
+    }
+
+    public static byte[] uInt32BigEndian (double data) {
+        byte lowerByte = (byte) ((long)data);
+        byte mLowerByte = (byte) ((long) data >> 8);
+        byte mUpperByte = (byte) ((long) data >> 16);
+        byte upperByte = (byte) ((long) data >> 24);
+        return new byte[] {upperByte, mUpperByte, mLowerByte, lowerByte};
+    }
+
     public static byte[] singleByte (double data) {
         return new byte[]{(byte)data};
     }

@@ -1322,8 +1322,13 @@ public class ExperimentList extends AppCompatActivity {
     public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {
 
         Set<String> experiments = new HashSet<>();
-        if (device.getName() != null && bluetoothDeviceNameList.get(device.getName()) != null)
-            experiments.addAll(bluetoothDeviceNameList.get(device.getName()));
+        if (device.getName() != null) {
+            for (String name : bluetoothDeviceNameList.keySet()) {
+                if (device.getName().contains(name))
+                    experiments.addAll(bluetoothDeviceNameList.get(name));
+            }
+        }
+
         for (UUID uuid : uuids) {
             Vector<String> experimentsForUUID = bluetoothDeviceUUIDList.get(uuid);
             if (experimentsForUUID != null)
