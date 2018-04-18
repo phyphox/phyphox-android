@@ -1,2 +1,27 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">手机物理工坊</string>
+    <string name="action_settings">设置</string>
+    <string name="title_activity_experiment">手机物理工坊</string>
+
+    <string name="newExperiment">增加一个新的实验</string>
+    <string name="newExperimentPhyphoxInfo">参考phyphox.org网站信息，创设更好的手机实验，并包括数据分析，可与同事，学生和朋友们分享。</string>
+    <string name="newExperimentInputTitle">标题</string>
+    <string name="newExperimentInputBufferSize">缓冲区大小（需存储数值的数目）</string>
+    <string name="newExperimentInputRate">传感器速率（单位Hz，数值0表示最快）</string>
+    <string name="newExperimentInputSensors">可选传感器</string>
+
+    <string name="help">帮助信息</string>
+    <string name="experimentsPhyphoxOrg">实验设计与说明</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">常见问题库</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">远程控制帮助</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">语言</string>
+    <string name="translationToSettings">设置</string>
+    <string name="translationToWebsite">访问网站</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="warning">警告</string>
+    <string name="donotshowagain">不再显示</string>
+    </resources>
