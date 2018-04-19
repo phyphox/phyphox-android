@@ -96,10 +96,10 @@
 \nPara uma melhor performance e segurança, conecte o dispositivo através de uma opcão de vínculo (ponto de acesso).
 \n
 \nDepois de pressionar ok, você pode acessar suas medidas a partir de qualquer navegador na mesma rede.</string>
-    <string name="remoteServerWarningTitle">Aviso de segurança</string>
+    <string name="remoteServerWarningTitle">Aviso de segurança!</string>
     <string name="remoteServerActive">Acesso remoto ativado. Acesse este experimento na seguinte URL:
 \n%1$s</string>
-    <string name="calibrated_magnetometer">Usar magnetômetro calibrado.</string>
+    <string name="calibrated_magnetometer">Usar magnetômetro calibrado</string>
 
     <string name="show_description">Informacões sobre o experimento</string>
     <string name="save_locally">Adicionar a coleção de experimentos</string>
@@ -118,7 +118,7 @@
 
     <string name="timedRun">Medidas temporizadas</string>
 
-    <string name="pick_exportSets">Escolha o conjunto de dados para exportar</string>
+    <string name="pick_exportSets">Escolha o conjunto de dados para exportar.</string>
     <string name="pick_exportFormat">Escolha o formato dos dados.</string>
 
     <string name="noDrawableData">Dados não disponíveis para visualização.</string>
