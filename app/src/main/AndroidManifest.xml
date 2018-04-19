@@ -60,6 +60,7 @@
             android:name="de.rwth_aachen.phyphox.Experiment"
             android:label="@string/title_activity_experiment"
             android:theme="@style/phyphox"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

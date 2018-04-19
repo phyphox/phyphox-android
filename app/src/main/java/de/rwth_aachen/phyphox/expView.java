@@ -1079,7 +1079,7 @@ public class expView implements Serializable{
                         if (isExclusive)
                             self.parent.leaveExclusive();
                         else {
-                            interactiveGV.requestF  ocus();
+                            interactiveGV.requestFocus();
                             self.parent.requestExclusive(self);
                         }
                     }
