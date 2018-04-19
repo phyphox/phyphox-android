@@ -6,7 +6,6 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.TextureView;
 
 import java.nio.ByteBuffer;
@@ -55,7 +54,7 @@ class GraphSetup {
     public float[] positionMatrix = new float[16];
     public Vector<Integer> color = new Vector<>();
     public int historyLength = 1;
-    public Vector<graphView.Style> style = new Vector<>();
+    public Vector<GraphView.Style> style = new Vector<>();
     public Vector<Float> lineWidth = new Vector<>();
     public boolean logX = false;
     public boolean logY = false;
@@ -77,7 +76,7 @@ class GraphSetup {
         lineWidth.setSize(n);
         for (int i = 0; i < n; i++) {
             color.set(i, 0xffffff);
-            style.set(i, graphView.Style.lines);
+            style.set(i, GraphView.Style.lines);
             lineWidth.set(i, 2.0f);
         }
     }
@@ -559,7 +558,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             GLES20.glLineWidth(2.f*graphSetup.lineWidth.get(i));
 
             CurveData dataSet = graphSetup.dataSets.get(i);
-            if (dataSet.n == 0 || (dataSet.n < 2 && !(graphSetup.style.get(i) == graphView.Style.dots)))
+            if (dataSet.n == 0 || (dataSet.n < 2 && !(graphSetup.style.get(i) == GraphView.Style.dots)))
                 continue;
 
             if (dataSet.vboX != 0)
@@ -576,10 +575,10 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
             GLES20.glUniform4fv(colorHandle, 1, dataSet.color, 0);
 
-            if (graphSetup.style.get(i) == graphView.Style.dots) {
+            if (graphSetup.style.get(i) == GraphView.Style.dots) {
                 GLES20.glUniform1f(sizeHandle, graphSetup.lineWidth.get(i) * 4.f);
                 GLES20.glDrawArrays(GLES20.GL_POINTS, 0, dataSet.n);
-            } else if (graphSetup.style.get(i) == graphView.Style.hbars || graphSetup.style.get(i) == graphView.Style.vbars) {
+            } else if (graphSetup.style.get(i) == GraphView.Style.hbars || graphSetup.style.get(i) == GraphView.Style.vbars) {
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, dataSet.n);
             } else {
                 GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, dataSet.n);

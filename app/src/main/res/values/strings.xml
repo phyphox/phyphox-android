@@ -4,6 +4,11 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_experiment">phyphox</string>
 
+    <string name="graph_tools_pan_and_zoom">Pan and zoom</string>
+    <string name="graph_tools_pick">Pick data</string>
+    <string name="graph_tools_reset">Reset zoom</string>
+    <string name="graph_tools_more">More tools</string>
+
     <string name="newExperiment">Add experiments</string>
 
     <string name="newExperimentSimple">Add simple experiment</string>

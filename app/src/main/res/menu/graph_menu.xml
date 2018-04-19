@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/graph_tools_pan"
+        android:title="@string/graph_tools_pan_and_zoom"
+        android:icon="@drawable/pan_tool"
+        android:orderInCategory="1" />
+    <item android:id="@+id/graph_tools_pick"
+        android:title="@string/graph_tools_pick"
+        android:icon="@drawable/pick_point"
+        android:orderInCategory="2" />
+    <item android:id="@+id/graph_tools_more"
+        android:title="@string/graph_tools_more"
+        android:icon="@drawable/more_horiz"
+        android:orderInCategory="3" />
+</menu>

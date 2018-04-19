@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -33,7 +32,6 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
@@ -55,27 +53,21 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
 
-import org.w3c.dom.Document;
-
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
@@ -550,7 +542,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     @Override
-    //Create options menu from out layout
+    //Create options menu from our layout
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_experiment, menu);
         return true;
@@ -711,10 +703,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return l;
     }
 
-    public Vector<graphView> getAllGraphViews(View v) {
-        Vector<graphView> l = new Vector<>();
-        if (v instanceof graphView) {
-            l.add((graphView)v);
+    public Vector<GraphView> getAllGraphViews(View v) {
+        Vector<GraphView> l = new Vector<>();
+        if (v instanceof GraphView) {
+            l.add((GraphView)v);
         } else if (v instanceof ViewGroup) {
             ViewGroup vg = (ViewGroup)v;
             for (int i = 0; i < vg.getChildCount(); i++) {
@@ -941,8 +933,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 canvas.drawBitmap(bmp, location[0], location[1], null);
             }
 
-            Vector<graphView> gvList = getAllGraphViews(screenView);
-            for (graphView gv : gvList) {
+            Vector<GraphView> gvList = getAllGraphViews(screenView);
+            for (GraphView gv : gvList) {
                 gv.setDrawingCacheEnabled(true);
                 Bitmap bmp = Bitmap.createBitmap(gv.getDrawingCache());
                 gv.setDrawingCacheEnabled(false);

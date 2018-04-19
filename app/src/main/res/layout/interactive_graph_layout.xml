@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:id="@+id/graph_expand_image"
+        android:background="@drawable/unfold_more"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_margin="@dimen/expElementMargin"
+        />
+
+    <ImageView
+        android:id="@+id/graph_collapse_image"
+        android:background="@drawable/unfold_less"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:visibility="invisible"
+        android:layout_margin="@dimen/expElementMargin"
+        />
+
+    <TextView
+        android:id="@+id/graph_label"
+        android:layout_marginLeft="@dimen/graph_label_start_margin"
+        android:layout_toRightOf="@id/graph_expand_image"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"/>
+
+    <FrameLayout
+        android:id="@+id/graph_frame"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_below="@id/graph_label"
+        android:layout_above="@id/graph_toolbar">
+
+    </FrameLayout>
+
+    <android.support.design.widget.BottomNavigationView
+        android:visibility="gone"
+        android:id="@+id/graph_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+         />
+
+
+
+</merge>

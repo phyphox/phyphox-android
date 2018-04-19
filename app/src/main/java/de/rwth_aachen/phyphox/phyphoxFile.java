@@ -10,7 +10,6 @@ import android.content.res.AssetManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -35,7 +34,6 @@ import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1063,16 +1061,16 @@ public abstract class phyphoxFile {
     private static class viewBlockParser extends xmlBlockParser {
         private expView newView;
 
-        graphView.scaleMode parseScaleMode(String attribute) {
+        GraphView.scaleMode parseScaleMode(String attribute) {
             String scaleStr = getStringAttribute(attribute);
-            graphView.scaleMode scale = graphView.scaleMode.auto;
+            GraphView.scaleMode scale = GraphView.scaleMode.auto;
             if (scaleStr != null) {
                 switch (scaleStr) {
-                    case "auto": scale = graphView.scaleMode.auto;
+                    case "auto": scale = GraphView.scaleMode.auto;
                         break;
-                    case "extend": scale = graphView.scaleMode.extend;
+                    case "extend": scale = GraphView.scaleMode.extend;
                         break;
-                    case "fixed": scale = graphView.scaleMode.fixed;
+                    case "fixed": scale = GraphView.scaleMode.fixed;
                         break;
                 }
             }
@@ -1170,10 +1168,10 @@ public abstract class phyphoxFile {
                         globalColor = true;
                     }
 
-                    graphView.scaleMode scaleMinX = parseScaleMode("scaleMinX");
-                    graphView.scaleMode scaleMaxX = parseScaleMode("scaleMaxX");
-                    graphView.scaleMode scaleMinY = parseScaleMode("scaleMinY");
-                    graphView.scaleMode scaleMaxY = parseScaleMode("scaleMaxY");
+                    GraphView.scaleMode scaleMinX = parseScaleMode("scaleMinX");
+                    GraphView.scaleMode scaleMaxX = parseScaleMode("scaleMaxX");
+                    GraphView.scaleMode scaleMinY = parseScaleMode("scaleMinY");
+                    GraphView.scaleMode scaleMaxY = parseScaleMode("scaleMaxY");
 
                     double minX = getDoubleAttribute("minX", 0.);
                     double maxX = getDoubleAttribute("maxX", 0.);
@@ -1202,7 +1200,7 @@ public abstract class phyphoxFile {
 
 
                     if (lineStyle != null) {
-                        ge.setStyle(graphView.styleFromStr(lineStyle));
+                        ge.setStyle(GraphView.styleFromStr(lineStyle));
                     }
                     ge.setLineWidth(lineWidth);
                     ge.setColor(color);
@@ -1221,8 +1219,8 @@ public abstract class phyphoxFile {
                         }
                         if (at.attributes.containsKey("style")) {
                             try {
-                                graphView.Style style = graphView.styleFromStr(at.attributes.get("style"));
-                                if (style == graphView.Style.unknown)
+                                GraphView.Style style = GraphView.styleFromStr(at.attributes.get("style"));
+                                if (style == GraphView.Style.unknown)
                                     throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
                                 ge.setStyle(style, i/2);
                             } catch (Exception e) {

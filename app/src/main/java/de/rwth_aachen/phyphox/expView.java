@@ -1,36 +1,30 @@
 package de.rwth_aachen.phyphox;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.opengl.GLSurfaceView;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatEditText;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
-import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
 import java.io.Serializable;
-import java.util.Iterator;
 import java.util.Vector;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
@@ -886,9 +880,8 @@ public class expView implements Serializable{
     public class graphElement extends expViewElement implements Serializable {
         private final graphElement self;
         transient private expViewFragment parent = null;
-        transient private TextView labelView = null;
-        transient private graphView gv = null;
-        transient private PlotRenderer plotRenderer = null;
+        transient private GraphView gv = null;
+        transient private InteractiveGraphView interactiveGV = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
         transient private floatBufferRepresentation[] dataX; //The x data to be displayed
         transient private floatBufferRepresentation[] dataY; //The y data to be displayed
@@ -897,7 +890,7 @@ public class expView implements Serializable{
         private boolean isExclusive = false;
         private int margin;
 
-        private Vector<graphView.Style> style = new Vector<>(); //Show lines instead of points?
+        private Vector<GraphView.Style> style = new Vector<>(); //Show lines instead of points?
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
         private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
@@ -915,10 +908,10 @@ public class expView implements Serializable{
         private String mainRemoteColor;
         private String lineColor;
 
-        graphView.scaleMode scaleMinX = graphView.scaleMode.auto;
-        graphView.scaleMode scaleMaxX = graphView.scaleMode.auto;
-        graphView.scaleMode scaleMinY = graphView.scaleMode.auto;
-        graphView.scaleMode scaleMaxY = graphView.scaleMode.auto;
+        GraphView.scaleMode scaleMinX = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMaxX = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMinY = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMaxY = GraphView.scaleMode.auto;
 
         double minX = 0.;
         double maxX = 0.;
@@ -941,7 +934,7 @@ public class expView implements Serializable{
             for (int i = 0; i < nCurves; i++) {
                 color.add(res.getColor(R.color.highlight));
                 lineWidth.add(1.0);
-                style.add(graphView.Style.lines);
+                style.add(GraphView.Style.lines);
                 dataX = new floatBufferRepresentation[nCurves];
                 dataY = new floatBufferRepresentation[nCurves];
             }
@@ -975,19 +968,19 @@ public class expView implements Serializable{
             lineColor = String.format("%08x", color).substring(2);
         }
 
-        protected void setStyle(graphView.Style style, int i) {
+        protected void setStyle(GraphView.Style style, int i) {
             this.style.set(i, style);
             if (gv != null)
                 gv.setStyle(style, i);
         }
 
         //Interface to switch between points and lines
-        protected void setStyle(graphView.Style style) {
+        protected void setStyle(GraphView.Style style) {
             for (int i = 0; i < nCurves || i < historyLength; i++)
                 setStyle(style, i);
         }
 
-        public void setScaleModeX(graphView.scaleMode minMode, double minV, graphView.scaleMode maxMode, double maxV) {
+        public void setScaleModeX(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
             this.scaleMinX = minMode;
             this.scaleMaxX = maxMode;
             this.minX = minV;
@@ -996,7 +989,7 @@ public class expView implements Serializable{
                 gv.setScaleModeX(minMode, minV, maxMode, maxV);
         }
 
-        public void setScaleModeY(graphView.scaleMode minMode, double minV, graphView.scaleMode maxMode, double maxV) {
+        public void setScaleModeY(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
             this.scaleMinY = minMode;
             this.scaleMaxY = maxMode;
             this.minY = minV;
@@ -1054,45 +1047,11 @@ public class expView implements Serializable{
 
             this.parent = parent;
 
-            //We need a label and want to put the graph below. So we wrap everything into a vertical
-            //linear layout (Axis labels are handled by the graphView)
-            LinearLayout gvll = new LinearLayout(c);
-            gvll.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-            gvll.setOrientation(LinearLayout.VERTICAL);
-
-            //Create the label
-            labelView = new TextView(c);
-            TableRow.LayoutParams lp = new TableRow.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            lp.setMargins((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.graph_label_start_margin), res.getDisplayMetrics()), 0, 0, 0);
-            labelView.setLayoutParams(lp);
-            labelView.setText(this.label);
-            labelView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
-
-            FrameLayout fl = new FrameLayout(c);
-            fl.setLayoutParams(new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-
-            PlotAreaView plotAreaView = new PlotAreaView(c);
-            plotAreaView.setLayoutParams(new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
-
-            plotRenderer = new PlotRenderer(res);
-            plotRenderer.start();
-            plotAreaView.setSurfaceTextureListener(plotRenderer);
-
-
             //Create the graphView
-            gv = new graphView(c, aspectRatio, plotAreaView, plotRenderer);
-            gv.setLayoutParams(new FrameLayout.LayoutParams(
+            interactiveGV = new InteractiveGraphView(c);
+            gv = interactiveGV.graphView;
+            interactiveGV.setLabel(this.label);
+            interactiveGV.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -1106,48 +1065,39 @@ public class expView implements Serializable{
                 gv.setLineWidth(lineWidth.get(i), i);
                 gv.setColor(color.get(i), i);
             }
+            gv.setAspectRatio(aspectRatio);
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setLabel(labelX, labelY);
             gv.setLogScale(logX, logY);
             gv.setPrecision(xPrecision, yPrecision);
 
-            gv.setOnClickListener(new View.OnClickListener() {
+            interactiveGV.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if (self.parent != null) {
                         if (isExclusive)
                             self.parent.leaveExclusive();
-                        else
+                        else {
+                            interactiveGV.requestF  ocus();
                             self.parent.requestExclusive(self);
+                        }
                     }
                 }
             });
 
-            fl.addView(plotAreaView);
-            fl.addView(gv);
-
-            //Add label and graphView to our own wrapper linear layout
-            gvll.addView(labelView);
-            gvll.addView(fl);
-
             //Add the wrapper layout to the linear layout given to this function
-            rootView = gvll;
-            rootView.setFocusableInTouchMode(true);
+            rootView = interactiveGV;
+            rootView.setFocusableInTouchMode(false);
             ll.addView(rootView);
 
         }
 
         @Override
         public void cleanView() {
-            plotRenderer.halt();
-            try {
-                plotRenderer.join();
-            } catch (InterruptedException e) {
-                Log.e("cleanView", "Renderer: Interrupted execution.");
-            }
-            plotRenderer = null;
+            interactiveGV.stop();
             gv = null;
+            interactiveGV = null;
         }
 
         @Override
@@ -1170,9 +1120,9 @@ public class expView implements Serializable{
                 if (inputs.size() > i+1) {
                     dataBuffer x = experiment.getBuffer(inputs.get(i+1));
                     if (x != null) {
-                        if (style.get(i/2) == graphView.Style.hbars)
+                        if (style.get(i/2) == GraphView.Style.hbars)
                             dataX[i/2] = x.getFloatBufferBarValue();
-                        else if (style.get(i/2) == graphView.Style.vbars)
+                        else if (style.get(i/2) == GraphView.Style.vbars)
                             dataX[i/2] = x.getFloatBufferBarAxis(lineWidth.get(i/2));
                         else
                             dataX[i/2] = x.getFloatBuffer();
@@ -1190,9 +1140,9 @@ public class expView implements Serializable{
 
                 dataBuffer y = experiment.getBuffer(inputs.get(i));
                 if (y != null) {
-                    if (style.get(i/2) == graphView.Style.hbars)
+                    if (style.get(i/2) == GraphView.Style.hbars)
                         dataY[i/2] = y.getFloatBufferBarAxis(lineWidth.get(i/2));
-                    else if (style.get(i/2) == graphView.Style.vbars)
+                    else if (style.get(i/2) == GraphView.Style.vbars)
                         dataY[i/2] = y.getFloatBufferBarValue();
                     else
                         dataY[i/2] = y.getFloatBuffer();
@@ -1251,14 +1201,14 @@ public class expView implements Serializable{
         //certainly is a way to beautify this, but it's not too obvious...
         protected String dataCompleteHTML() {//TODO: Create intelligent function to setup ticks on log scales
             String scaleX = "";
-            if (scaleMinX == graphView.scaleMode.fixed && !Double.isNaN(minX))
+            if (scaleMinX == GraphView.scaleMode.fixed && !Double.isNaN(minX))
                 scaleX += "\"min\":" + minX + ", ";
-            if (scaleMaxX == graphView.scaleMode.fixed && !Double.isNaN(maxX))
+            if (scaleMaxX == GraphView.scaleMode.fixed && !Double.isNaN(maxX))
                 scaleX += "\"max\":" + maxX + ", ";
             String scaleY = "";
-            if (scaleMinY == graphView.scaleMode.fixed && !Double.isNaN(minY))
+            if (scaleMinY == GraphView.scaleMode.fixed && !Double.isNaN(minY))
                 scaleY += "\"min\":" + minY + ", ";
-            if (scaleMaxY == graphView.scaleMode.fixed && !Double.isNaN(maxY))
+            if (scaleMaxY == GraphView.scaleMode.fixed && !Double.isNaN(maxY))
                 scaleY += "\"max\":" + maxY + ", ";
 
             String styleDetection = "switch (i/2) {";
@@ -1267,9 +1217,9 @@ public class expView implements Serializable{
 
                 graphSetup +=   "{"+
                                     "type: \"scatter\"," +
-                                    "showLine: "+ (style.get(i/2) != graphView.Style.dots ? "true" : "false") +"," +
-                                    "fill: "+(style.get(i/2) == graphView.Style.vbars || style.get(i/2) == graphView.Style.hbars ? "\"origin\"" : "false")+"," +
-                                    "pointRadius: "+ (style.get(i/2) == graphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"," +
+                                    "showLine: "+ (style.get(i/2) != GraphView.Style.dots ? "true" : "false") +"," +
+                                    "fill: "+(style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? "\"origin\"" : "false")+"," +
+                                    "pointRadius: "+ (style.get(i/2) == GraphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"," +
                                     "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
                                     "pointHoverRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
                                     "lineTension: 0," +
@@ -1278,7 +1228,7 @@ public class expView implements Serializable{
                                     "spanGaps: false," +
                                     "borderColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
                                     "backgroundColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
-                                    "borderWidth: " + (style.get(i/2) == graphView.Style.vbars || style.get(i/2) == graphView.Style.hbars ? 0.0 : 2.0*lineWidth.get(i/2)) + "," +
+                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : 2.0*lineWidth.get(i/2)) + "," +
                                     "xAxisID: \"xaxis\"," +
                                     "yAxisID: \"yaxis\"," +
                                     "data: d[" + i + "]," +
@@ -1311,14 +1261,14 @@ public class expView implements Serializable{
                             "for (j = 0; j < elementData["+htmlID+"][\"datasets\"][i][\"data\"].length && (xIndexed || j < elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length); j++) {" +
                                 "var x = xIndexed ? j : elementData["+htmlID+"][\"datasets\"][i+1][\"data\"][j];"+
                                 "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
-                                "if (type == \""+graphView.Style.vbars+"\") {" +
+                                "if (type == \""+ GraphView.Style.vbars+"\") {" +
                                     "if (lastX !== false && lastY !== false) {"+
                                         "var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
                                         "d[i/2][j*3+0] = {x: lastX+offset, y: lastY};" +
                                         "d[i/2][j*3+1] = {x: x-offset, y: lastY};" +
                                         "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
                                     "}"+
-                                "} else if (type == \""+graphView.Style.hbars+"\") {" +
+                                "} else if (type == \""+ GraphView.Style.hbars+"\") {" +
                                     "if (lastX !== false && lastY !== false) {"+
                                         "var offset = (y-lastX)*(1.0-lineWidth)/2.;" +
                                         "d[i/2][j*3+0] = {x: lastX, y: lastY+offset};" +
@@ -1412,39 +1362,33 @@ public class expView implements Serializable{
 
         @Override
         protected void clear() {
-            //Set our scale mode again to reset scaling from old data
-            if (gv != null) {
-                gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
-                gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
-                gv.setAllowZooming(false);
-            }
+
         }
 
         @Override
         protected void restore() {
             super.restore();
-            if (rootView != null && gv != null && parent != null) {
+            if (rootView != null && interactiveGV != null && parent != null) {
                 isExclusive = false;
 
-                gv.setLayoutParams(new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT));
+                interactiveGV.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                interactiveGV.requestLayout();
 
-                gv.setAllowZooming(false);
+
+                interactiveGV.setInteractive(false);
             }
         }
 
         @Override
         protected void maximize() {
             super.maximize();
-            if (rootView != null && gv != null && parent != null) {
+            if (rootView != null && interactiveGV != null && parent != null) {
                 isExclusive = true;
 
-                gv.setLayoutParams(new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        parent.root.getMeasuredHeight() - labelView.getMeasuredHeight() - 2*margin));
+                interactiveGV.getLayoutParams().height = parent.root.getMeasuredHeight() - 2*margin;
+                interactiveGV.requestLayout();
 
-                gv.setAllowZooming(true);
+                interactiveGV.setInteractive(true);
             }
         }
     }
