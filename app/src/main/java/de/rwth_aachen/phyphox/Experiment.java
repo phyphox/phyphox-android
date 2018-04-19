@@ -142,7 +142,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        lockScreen(); //We do not want the activity to reload because of a screen rotation until the experiment has been loaded
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -228,6 +227,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //   be confusing otherwise.
 
         invalidateOptionsMenu();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
     }
 
     @Override
@@ -351,7 +355,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             tv.setVisibility(View.VISIBLE);
             this.experiment = null;
         }
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED); //We are ready. Now the user may rotate.
 
         //Check if experiment is already in list and if so, flag it as local.
         if (experiment.source != null) {
@@ -429,28 +432,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     }
 
-    // connects to the bluetooth devices in an async task and locks the screen while connecting
+    // connects to the bluetooth devices in an async task
     // if startMeasurement is true the measurement will be started automatically once all devices are connected
     public void connectBluetoothDevices(boolean startMeasurement, final boolean timed) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
-                lockScreen();
                 // connect all bluetooth devices with an asyncTask
                 final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
                 btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
-                final Runnable enableScreenRotation = new Runnable () {
-                    @Override
-                    public void run () {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                    }
-                };
 
                 // define onSuccess
                 if (startMeasurement) {
                     btTask.onSuccess = new Runnable () {
                       @Override
                         public void run () {
-                          enableScreenRotation.run();
                           if (timed) {
                               startTimedMeasurement();
                           } else {
@@ -458,8 +453,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                           }
                       }
                     };
-                } else {
-                    btTask.onSuccess = enableScreenRotation;
                 }
 
                 // set attributes of errorDialog
@@ -468,7 +461,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     @Override
                     public void run () {
                         btTask.progress.dismiss();
-                        enableScreenRotation.run(); // enable screen rotation again if errorDialog is cancelled
                     }
                 };
                 Bluetooth.errorDialog.tryAgain = new Runnable() {
@@ -1216,34 +1208,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     };
 
-    //This function prevents the screen from rotating. it finds out the current orientation and
-    // requests exactly this orientation. Just a "no-sensor"-mode is insufficient as it might revert
-    // to the default orientation, but the user shall be able to rotate the screen if the experiment
-    // is paused. After that it should stay the way it is...
-    private void lockScreen() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
-        } else {
-            Display display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            int rotation = display.getRotation();
-            int tempOrientation = this.getResources().getConfiguration().orientation;
-            int orientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
-            switch (tempOrientation) {
-                case Configuration.ORIENTATION_LANDSCAPE:
-                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_90)
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-                    else
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-                    break;
-                case Configuration.ORIENTATION_PORTRAIT:
-                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270)
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-                    else
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-            }
-            setRequestedOrientation(orientation);
-        }
-    }
 
     //Start a measurement
     public void startMeasurement() {
@@ -1255,7 +1219,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             experiment.startAllIO();
         } catch (Bluetooth.BluetoothException e) {
             stopMeasurement(); // stop experiment
-            lockScreen(); // lock screen because an errorDialog will be displayed
             // show an error dialog
             Bluetooth.errorDialog.message = e.getMessage();
             Bluetooth.errorDialog.context = Experiment.this;
@@ -1273,8 +1236,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Set measurement state
         measuring = true;
 
-        //Lock the screen and keep it on. No more screen rotation or turning off during the measurement
-        lockScreen();
+        //No more turning off during the measurement
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         //Start the analysis "loop"
@@ -1302,8 +1264,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Start a timed measurement
     public void startTimedMeasurement() {
-        //Lock the screen and keep it on. No more screen rotation or turning off during the measurement
-        lockScreen();
+        //No more turning off during the measurement
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // check if all Bluetooth devices are connected and display an errorDialog if not
@@ -1362,7 +1323,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
         if (!serverEnabled)
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
         //Deactivate any timer
         if (cdTimer != null) {

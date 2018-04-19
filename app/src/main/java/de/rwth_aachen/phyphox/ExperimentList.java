@@ -1044,12 +1044,6 @@ public class ExperimentList extends AppCompatActivity {
                                 dialog.dismiss();
                             }
 
-                        })
-                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                            @Override
-                            public void onDismiss(DialogInterface dialogInterface) {
-                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                            }
                         });
                 AlertDialog dialog = builder.create();
 
@@ -1117,8 +1111,6 @@ public class ExperimentList extends AppCompatActivity {
         protected void onPostExecute(BluetoothScanDialog.BluetoothDeviceInfo result) {
             if (result != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
                 openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
-            else
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
 
@@ -1294,7 +1286,6 @@ public class ExperimentList extends AppCompatActivity {
                         Intent zipIntent = new Intent(parent, Experiment.class);
                         zipIntent.setData(Uri.fromFile(zipFile));
                         zipIntent.setAction(Intent.ACTION_VIEW);
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                         new handleZipIntent(zipIntent, parent).execute();
                     }
                 }
@@ -1381,12 +1372,6 @@ public class ExperimentList extends AppCompatActivity {
                     dialog.dismiss();
                 }
 
-            })
-            .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialogInterface) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                }
             });
 
         String instructions = "";
@@ -1461,7 +1446,6 @@ public class ExperimentList extends AppCompatActivity {
             //This is just a single experiment - Start the Experiment activity and let it handle the intent
             Intent forwardedIntent = new Intent(intent);
             forwardedIntent.setClass(this, Experiment.class);
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
             this.startActivity(forwardedIntent);
         } else {
             //We got a zip-file. Let's see what's inside...
@@ -1547,37 +1531,7 @@ public class ExperimentList extends AppCompatActivity {
         qrScan.setBeepEnabled(false);
         qrScan.setOrientationLocked(true);
 
-        lockScreen();
         qrScan.initiateScan();
-    }
-
-    //This function prevents the screen from rotating. it finds out the current orientation and
-    // requests exactly this orientation. Just a "no-sensor"-mode is insufficient as it might revert
-    // to the default orientation, but the user shall be able to rotate the screen if the experiment
-    // is paused. After that it should stay the way it is...
-    private void lockScreen() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
-        } else {
-            Display display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            int rotation = display.getRotation();
-            int tempOrientation = this.getResources().getConfiguration().orientation;
-            int orientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
-            switch (tempOrientation) {
-                case Configuration.ORIENTATION_LANDSCAPE:
-                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_90)
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-                    else
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-                    break;
-                case Configuration.ORIENTATION_PORTRAIT:
-                    if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270)
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-                    else
-                        orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-            }
-            setRequestedOrientation(orientation);
-        }
     }
 
     @Override
@@ -1602,12 +1556,6 @@ public class ExperimentList extends AppCompatActivity {
                 .setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
 
-                    }
-                })
-                .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     }
                 });
         this.runOnUiThread(new Runnable() {
@@ -1634,13 +1582,7 @@ public class ExperimentList extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int id) {
 
             }
-        })
-        .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                    }
-                });
+        });
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1663,12 +1605,6 @@ public class ExperimentList extends AppCompatActivity {
                 .setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
 
-                    }
-                })
-                .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     }
                 });
         this.runOnUiThread(new Runnable() {
@@ -1767,7 +1703,6 @@ public class ExperimentList extends AppCompatActivity {
                     Intent zipIntent = new Intent(this, Experiment.class);
                     zipIntent.setData(Uri.fromFile(zipFile));
                     zipIntent.setAction(Intent.ACTION_VIEW);
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     new handleZipIntent(zipIntent, this).execute();
                 } else {
                     showQRScanError(res.getString(R.string.newExperimentQRCodesMissing1) + " " + currentQRsize + " " + res.getString(R.string.newExperimentQRCodesMissing2) + " " + missing, false);
@@ -1776,8 +1711,6 @@ public class ExperimentList extends AppCompatActivity {
                 //QR code does not contain or reference a phyphox experiment
                 showQRScanError(res.getString(R.string.newExperimentQRNoExperiment), true);
             }
-        } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
 
@@ -1937,7 +1870,6 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 hideNewExperimentDialog();
-                lockScreen();
                 (new runBluetoothScan(thisRef)).execute();
             }
         };

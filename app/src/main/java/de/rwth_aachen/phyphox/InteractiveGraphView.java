@@ -90,10 +90,18 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         plotAreaView.setSurfaceTextureListener(plotRenderer);
 
         this.graphView = new GraphView(context, plotAreaView, plotRenderer);
+        graphView.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
         graphView.setPointInfoListener(this);
 
         graphFrame.addView(plotAreaView);
         graphFrame.addView(graphView);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
     }
 
     public void setInteractive(boolean interactive) {

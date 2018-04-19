@@ -46,6 +46,10 @@ import java.util.Vector;
 
 public class expView implements Serializable{
 
+    public static enum State {
+        hidden, normal, maximized;
+    }
+
     //Abstract expViewElement class defining the interface for any element of an experiment view
     public abstract class expViewElement implements Serializable {
         protected String label; //Each element has a label. Usually naming the data shown
@@ -56,6 +60,8 @@ public class expView implements Serializable{
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
         transient protected View rootView; //Holds the root view of the element
+
+        public State state = State.normal;
 
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -158,22 +164,26 @@ public class expView implements Serializable{
         }
 
         protected void hide() {
+            state = State.hidden;
             if (rootView != null) {
                 rootView.setVisibility(View.GONE);
             }
         }
 
         protected void restore() {
+            state = State.normal;
             if (rootView != null) {
                 rootView.setVisibility(View.VISIBLE);
             }
         }
 
         protected void maximize() {
+            state = State.maximized;
             if (rootView != null) {
                 rootView.setVisibility(View.VISIBLE);
             }
         }
+
     }
 
     //valueElement implements a simple text display for a single value with an unit and a given
@@ -1050,10 +1060,11 @@ public class expView implements Serializable{
             //Create the graphView
             interactiveGV = new InteractiveGraphView(c);
             gv = interactiveGV.graphView;
-            interactiveGV.setLabel(this.label);
-            interactiveGV.setLayoutParams(new ViewGroup.LayoutParams(
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            interactiveGV.setLayoutParams(lp);
+            interactiveGV.setLabel(this.label);
 
             //Send our parameters to the graphView isntance
             if (historyLength > 1)
@@ -1385,12 +1396,13 @@ public class expView implements Serializable{
             if (rootView != null && interactiveGV != null && parent != null) {
                 isExclusive = true;
 
-                interactiveGV.getLayoutParams().height = parent.root.getMeasuredHeight() - 2*margin;
+                interactiveGV.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
                 interactiveGV.requestLayout();
 
                 interactiveGV.setInteractive(true);
             }
         }
+
     }
 
     //Remember? We are in the expView class.

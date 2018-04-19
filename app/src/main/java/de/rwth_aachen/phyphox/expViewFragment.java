@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox;
 
 import android.animation.LayoutTransition;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -19,13 +21,16 @@ public class expViewFragment extends Fragment {
     private static final String ARG_INDEX = "index";
 
     private int index;
-    public View root;
+    public ScrollView root;
 
     public expViewFragment() {
         // Required empty public constructor
     }
 
     public void requestExclusive(expView.expViewElement caller) {
+        if (root == null)
+            return;
+        root.setFillViewport(true);
         LayoutTransition layoutTransition = new LayoutTransition();
         layoutTransition.setDuration(150);
         layoutTransition.setStartDelay(LayoutTransition.DISAPPEARING, 0);
@@ -47,6 +52,9 @@ public class expViewFragment extends Fragment {
     }
 
     public void leaveExclusive() {
+        if (root == null)
+            return;
+        root.setFillViewport(false);
         LayoutTransition layoutTransition = new LayoutTransition();
         layoutTransition.setDuration(150);
         layoutTransition.setStartDelay(LayoutTransition.APPEARING, 0);
@@ -102,6 +110,8 @@ public class expViewFragment extends Fragment {
         if(isVisibleToUser) {
             if (getActivity() != null && ((Experiment)getActivity()).experiment != null)
                 ((Experiment) getActivity()).experiment.updateViews(index, true);
+        } else {
+            leaveExclusive();
         }
     }
 
@@ -109,7 +119,7 @@ public class expViewFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        root = inflater.inflate(R.layout.fragment_exp_view, container, false);
+        root = (ScrollView)inflater.inflate(R.layout.fragment_exp_view, container, false);
 
         final LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setOnFocusChangeListener(new View.OnFocusChangeListener() {

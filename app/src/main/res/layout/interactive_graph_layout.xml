@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    >
 
     <ImageView
         android:id="@+id/graph_expand_image"
@@ -22,6 +23,7 @@
 
     <TextView
         android:id="@+id/graph_label"
+        android:layout_alignParentTop="true"
         android:layout_marginLeft="@dimen/graph_label_start_margin"
         android:layout_toRightOf="@id/graph_expand_image"
         android:layout_height="wrap_content"
@@ -33,7 +35,6 @@
         android:layout_width="match_parent"
         android:layout_below="@id/graph_label"
         android:layout_above="@id/graph_toolbar">
-
     </FrameLayout>
 
     <android.support.design.widget.BottomNavigationView

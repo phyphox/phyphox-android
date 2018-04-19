@@ -256,13 +256,20 @@ public class GraphView extends View {
         if (pointInfoListener == null)
             return true;
 
+        final float x = event.getX();
+        final float y = event.getY();
+
+        if (!processingGesture
+                && (!(x > graphSetup.plotBoundL && x < graphSetup.plotBoundL + graphSetup.plotBoundW && y > graphSetup.plotBoundT && y < graphSetup.plotBoundT + graphSetup.plotBoundH)))
+            return super.onTouchEvent(event);
+
         final int action = event.getAction();
 
         switch (action) {
             case MotionEvent.ACTION_DOWN: {
                 processingGesture = true;
 
-                highlightNearestPoint(event.getX(), event.getY());
+                highlightNearestPoint(x, y);
 
                 getParent().requestDisallowInterceptTouchEvent(true);
                 break;
@@ -272,7 +279,7 @@ public class GraphView extends View {
                 if (!processingGesture)
                     break;
 
-                highlightNearestPoint(event.getX(), event.getY());
+                highlightNearestPoint(x, y);
 
                 getParent().requestDisallowInterceptTouchEvent(true);
                 break;
