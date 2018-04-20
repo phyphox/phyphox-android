@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Instellingen</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Voeg eenvoudig experiment toe</string>
+    <string name="newExperimentPhyphoxInfo">Ga naar phyphox.org om geavanceerdere experimenten te maken, inclusief data-analyse en deel deze met collega\'s, studenten en vrienden.</string>
+    <string name="newExperimentInputTitle">Titel</string>
+    <string name="newExperimentInputBufferSize">Buffer omvang (aantal op te slaan getallen)</string>
+    <string name="newExperimentInputRate">Sensor frequentie</string>
+    <string name="newExperimentInputSensors">Actieve sensoren</string>
+
+    <string name="help">Help en info</string>
+    <string name="experimentsPhyphoxOrg">Experiment: ideeën en instructies</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Vaak gestelde vragen</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Afstandsbediening: help</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Talen</string>
+    <string name="translationText">Phyphox gebruikt de eerste taal die beschikbaar is in de lijst met voorkeurstalen. Ga naar je Android-instellingen hieronder om je voorkeuren te wijzigen. Om te weten welke talen beschikbaar zijn en hoe u kunt helpen, selecteert u \'website bezoeken\'.</string>
+    <string name="translationToSettings">Instellingen</string>
+    <string name="translationToWebsite">Bezoek website</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="warning">Waarschuwing</string>
+    <string name="donotshowagain">Niet opnieuw tonen</string>
+    <string name="damageWarning">Let op dat tijdens het experimenteren je smartphone niet beschadigd wordt. Laat hem niet vallen op een hard oppervlak en stel hem niet bloot aan sterke magnetische velden. De auteurs van phyphox zijn niet verantwoordelijk voor enige schade aan je smartphone.</string>
+
+    <string name="info">Info</string>
+    <string name="credits">Credits</string>
+    <string name="creditsRWTH">phyphox werd ontwikkeld aan het Instituut voor Fysica aan de RWTH Aachen University.</string>
+    <string name="creditsNames">
+        <![CDATA[
+        Concept en uitwerking:<br/><b>Dr. Sebastian Staacks</b><br/>Concept:<br/><b>Prof. Christoph Stampfer</b><br/>Ontwerp:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmering:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
+    <string name="creditsLibs">De webinterface voor afstandsbediening gebruikt de JavaScript-bibliotheken \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA en Ole Laursen) en \"Axis Labels Plugin for flot \"((c) 2010 Xuan Luo), alle beschikbaar onder de MIT-licentie.</string>
+    <string name="sensorLinearAcceleration">Lineaire Versnelling</string>
+    <string name="sensorLight">Licht</string>
+    <string name="sensorGyroscope">Gyroscoop</string>
+    <string name="sensorAccelerometer">Accelerometer</string>
+    <string name="sensorMagneticField">Magnetisch Veld</string>
+    <string name="sensorPressure">Druk</string>
+    <string name="sensorTemperature">Temperatuur</string>
+    <string name="sensorHumidity">Vochtigheid</string>
+    <string name="sensorProximity">Nabijheid/Afstand</string>
+
+    <string name="location">Locatie</string>
+
+    <string name="sensorNotAvailableWarningTitle">Sensor niet beschikbaar.</string>
+    <string name="sensorNotAvailableWarningText1">De sensor</string>
+    <string name="sensorNotAvailableWarningText2">is niet beschikbaar. Meestal betekent dit dat uw apparaat niet over dit type sensor beschikt.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Meer informatie</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OKE</string>
+    <string name="close">Sluiten</string>
+    <string name="next">Volgende</string>
+    <string name="cancel">Annuleer</string>
+    <string name="unknown">onbekend</string>
+
+    <string name="delete">Verwijder</string>
+    <string name="confirmDelete">Wil u dit experiment uit de lijst verwijderen?</string>
+    <string name="confirmDeleteTitle">Verwijderen?</string>
+
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
+    <string name="clear_data">Verwijder data</string>
+    <string name="clear_data_question">Verwijder de bekomen data?</string>
+    <string name="clear">Verwijder</string>
+    <string name="timed_stop">Stop getimede meting</string>
+    <string name="timed_start">Start getimede meting</string>
+
+    <string name="loadingTitle">Wordt geladen</string>
+    <string name="loadingText">Experiment wordt geladen …</string>
+
+    <string name="timedRunDialogTitle">Getimede meting</string>
+    <string name="timedRunStartDelay">Uitgestelde start (s)</string>
+    <string name="timedRunStopDelay">Duur experiment (s)</string>
+    <string name="enableTimedRun">Doe een getimede meting</string>
+
+    <string name="export">Export Data</string>
+    <string name="export_subject">Data van phyphox</string>
+    <string name="export_pick_share">Kies een export methode</string>
+
+    <string name="share">Schermafbeelding delen</string>
+    <string name="share_subject">Schermafbeelding van phyphox</string>
+    <string name="share_pick_share">Kies een methode om te delen</string>
+
+    <string name="remoteServer">Sta bediening op afstand toe</string>
+    <string name="remoteServerWarning">U staat op het punt om toegang op afstand tot de verkregen data mogelijk te maken. Doe dit alleen via een betrouwbaar netwerk! Let er ook op dat een directe toegang tussen toestellen niet mogelijk kan zijn op vele bedrijfs- of universiteitsnetwerken. 
+\n 
+\nVoor de beste beveiliging en prestatie kunt u dit toestel beter koppelen via een tethering optie (mobiele hotspot). 
+\n 
+\nNa het drukken op OK heeft u toegang tot uw meting vanuit elke webbrowser op hetzelfde netwerk.</string>
+    <string name="remoteServerWarningTitle">Beveiligingswaarschuwing!</string>
+    <string name="remoteServerActive">Bediening op afstand ingeschakeld. Krijg toegang tot dit experiment via volgende URL:
+\n%1$s</string>
+    <string name="hotspotSettings">Hotspot Instellingen</string>
+
+    <string name="calibrated_magnetometer">Gebruik gekalibreerde magnetometer</string>
+
+    <string name="switchToPhoneLayout">Beeld: Smal</string>
+    <string name="switchColumns1">Beeld: 1 kolom</string>
+    <string name="switchColumns2">Beeld: 2 kolommen</string>
+    <string name="switchColumns3">Beeld: 3 kolommen</string>
+
+    <string name="show_description">Info over experiment</string>
+    <string name="save_locally">Voeg experiment toe aan experimentenlijst</string>
+    <string name="save_locally_done">Experiment toegevoegd aan experimentenlijst.</string>
+    <string name="save_locally_message">Dit experiment is geopend vanuit een bron op afstand. Wilt u dit toevoegen aan uw experimentenlijst?</string>
+    <string name="save_locally_button">Toevoegen aan experimentenlijst</string>
+    <string name="save_state">Sla experimentstatus op</string>
+    <string name="save_state_category">Opgeslagen experimentenstatussen</string>
+    <string name="save_state_message">U kan de status van dit experiment samen met uw data aan uw experimentenlijst toevoegen of delen via een third-party app.</string>
+    <string name="save_state_title">Titel</string>
+    <string name="save_state_save">Naar experimentenlijst</string>
+    <string name="save_state_share">Delen</string>
+    <string name="save_state_subject">Status van het experiment voor phyphox</string>
+    <string name="save_state_default_title">Meting</string>
+    <string name="save_state_success">Status is opgeslagen in uw experimentenlijst.</string>
+
+    <string name="timedRun">Getimede meting</string>
+
+    <string name="pick_exportSets">Kies datasets om te exporteren.</string>
+    <string name="pick_exportFormat">Kies data formaat.</string>
+
+    <string name="noDrawableData">Geen visualiseerbare data.</string>
+
+    <string name="categoryNewExperiment">Simpele aangepaste experimenten</string>
+    <string name="categoryRawSensor">Onbewerkte sensoren</string>
+
+    <string name="experimentinfo_hint">Bekijk de experimenteninfo om te weten hoe u dit experiment moet gebruiken.</string>
+
+</resources>

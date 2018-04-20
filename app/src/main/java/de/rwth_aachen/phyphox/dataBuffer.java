@@ -233,7 +233,8 @@ public class dataBuffer implements Serializable {
         min = Double.NaN;
         max = Double.NaN;
 
-        this.append(init, init.length);
+        if (reset)
+            this.append(init, init.length);
     }
 
     //Retrieve the iterator of the BlockingQueue

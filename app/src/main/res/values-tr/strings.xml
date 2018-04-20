@@ -1,0 +1,126 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Ayarlar</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Basit deney ekle</string>
+    <string name="newExperimentInputTitle">Başlık</string>
+    <string name="newExperimentInputSensors">Aktif sensörler</string>
+
+    <string name="help">Yardım ve bilgi</string>
+    <string name="experimentsPhyphoxOrg">Deney fikirleri ve eğitimleri</string>
+    <string name="faqPhyphoxOrg">Sıkça sorulan sorular</string>
+    <string name="remotePhyphoxOrg">Uzaktan yardım</string>
+    <string name="translationInfo">Diller</string>
+    <string name="translationToSettings">Ayarlar</string>
+    <string name="translationToWebsite">Siteyi ziyaret edin</string>
+    <string name="warning">Uyarı</string>
+    <string name="donotshowagain">Bir daha gösterme</string>
+    <string name="info">Bilgi</string>
+    <string name="sensorLinearAcceleration">Doğrusal ivme</string>
+    <string name="sensorLight">Işık</string>
+    <string name="sensorGyroscope">Jiroskop</string>
+    <string name="sensorAccelerometer">İvmeölçer</string>
+    <string name="sensorMagneticField">Manyetik alan</string>
+    <string name="sensorPressure">Basınç</string>
+    <string name="sensorTemperature">Sıcaklık</string>
+    <string name="sensorHumidity">Nem</string>
+    <string name="sensorProximity">Yakınlık</string>
+
+    <string name="location">Konum</string>
+
+    <string name="sensorNotAvailableWarningTitle">Sensör mevcut değil.</string>
+    <string name="sensorNotAvailableWarningText1">Sensör</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Daha fazla bilgi</string>
+    <string name="ok">Tamam</string>
+    <string name="close">Kapat</string>
+    <string name="next">Sonraki</string>
+    <string name="cancel">İptal</string>
+    <string name="unknown">Bilinmeyen</string>
+
+    <string name="delete">Sil</string>
+    <string name="confirmDelete">Bu deneyi koleksiyonundan silmek istiyor musun?</string>
+    <string name="confirmDeleteTitle">Silmeyi onayla?</string>
+
+    <string name="stop">Dur</string>
+    <string name="start">Başla</string>
+    <string name="clear_data">Veriyi temizle</string>
+    <string name="clear_data_question">Kaydedilmiş veriyi temizle?</string>
+    <string name="clear">Temizle</string>
+    <string name="loadingTitle">Yükleniyor</string>
+    <string name="loadingText">Deney yükleniyor…</string>
+
+    <string name="timedRunStopDelay">Deney süresi (s)</string>
+    <string name="share">Ekran görüntüsü paylaş</string>
+    <string name="share_pick_share">Paylaşım yöntemi seç</string>
+
+    <string name="remoteServerWarningTitle">Güvenlik uyarısı!</string>
+    <string name="hotspotSettings">Paylaşım noktası ayarları</string>
+
+    <string name="calibrated_magnetometer">Kalibre edilmiş manyetometre kullan</string>
+
+    <string name="switchToPhoneLayout">Görünüm: Dar</string>
+    <string name="switchColumns1">Görünüm: 1 sütun</string>
+    <string name="show_description">Deney bilgisi</string>
+    <string name="save_locally">Deneyi koleksiyona ekle</string>
+    <string name="save_locally_done">Deney başarıyla koleksiyona eklendi.</string>
+    <string name="save_locally_button">Koleksiyona kaydet</string>
+    <string name="save_state">Deney durumunu kaydet</string>
+    <string name="save_state_category">Kaydedilmiş deney durumları</string>
+    <string name="save_state_title">Başlık</string>
+    <string name="save_state_save">Koleksiyona</string>
+    <string name="save_state_share">Paylaş</string>
+    <string name="save_state_default_title">Ölçüm</string>
+    <string name="save_state_success">Durum koleksiyonuna kaydedildi.</string>
+
+    <string name="pick_exportFormat">Veri biçimini seçin.</string>
+
+    <string name="noDrawableData">Çizilebilir veri yok.</string>
+
+    <string name="experimentinfo_hint">Deneyin nasıl kullanılacağını öğrenmek için deney bilgisi kısmını kontrol edin.</string>
+
+<string name="newExperimentPhyphoxInfo">Veri analizi de dahil olmak üzere daha ileri düzey deneyler oluşturmak için phyphox.org adresini ziyaret edin. Meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşın.</string>
+    <string name="newExperimentInputBufferSize">Ara bellek boyutu (depolanacak değerlerin sayısı)</string>
+    <string name="newExperimentInputRate">Sensör oranı (Hertz, 0 = mümkün olduğunca hızlı)</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationText">Phyphox, tercih ettiğiniz diller listesinden ulaşabileceği ilk dili kullanacaktır. Tercihlerinizi değiştirmek için aşağıdan Android \"ayarlarına\" gidin. Hangi dillerin uygun olduğunu ve nasıl yardımcı olabileceğinizi öğrenmek için \"web sitesini ziyaret et\" seçeneğini seçin.</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="damageWarning">Deney yaparken telefonunuza zarar vermemeye lütfen dikkat edin. Sert yüzeyler üzerine düşürmemek için özel dikkat gösterin ve aşırı manyetik alanlara maruz bırakmayın. Telefonunuzdaki herhangi bir hasardan Phyphox\'un yazarları sorumlu değildir.</string>
+
+    <string name="creditsRWTH">phyphox, RWTH Aachen Üniversitesi 2. Fizik Enstitüsü\'nde kuruldu.</string>
+    <string name="creditsNames">Fikir ve Geliştirme:<br/><b>Dr. Sebastian Staacks</b><br/>Fikir:<br/><b>Prof. Christoph Stampfer</b><br/>Tasarım:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Yazılım:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
+    <string name="sensorNotAvailableWarningText2">mevcut değil. Genellikle cihazınızın bu tip bir sensöre sahip olmadığı anlamına gelir.</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="timed_stop">Zamanlı denemeyi durdur</string>
+    <string name="timed_start">Zamanlı denemeyi başlat</string>
+
+    <string name="timedRunDialogTitle">Zamanlı deneme</string>
+    <string name="timedRunStartDelay">Başlangıç gecikmesi (s)</string>
+    <string name="enableTimedRun">Zamanlı deneme yap</string>
+
+    <string name="export">Veriyi dışa aktar</string>
+    <string name="export_subject">Phyphox verileri</string>
+    <string name="export_pick_share">Dışa aktarma yöntemi seç</string>
+
+    <string name="share_subject">Phyphox ekran görüntüsü</string>
+    <string name="remoteServer">Uzaktan erişime izin ver</string>
+    <string name="remoteServerActive">Uzaktan erişim etkinleştirildi. Bu deneye aşağıdaki linkten ulaşabilirsiniz:
+\n%1$s</string>
+    <string name="switchColumns2">Görünüm: 2 sütün</string>
+    <string name="switchColumns3">Görünüm: 3 sütun</string>
+
+    <string name="save_locally_message">Bu deney uzak bir kaynaktan açıldı. Deneyi koleksiyonunuza eklemek ister misiniz?</string>
+    <string name="credits">Emeği geçenler</string>
+    <string name="save_state_message">Verilerinizi içeren bu deneyin durumunu koleksiyonunuza kaydedebilir veya farklı bir uygulama kullanarak paylaşabilirsiniz.</string>
+    <string name="save_state_subject">Phyphox için deney durumları</string>
+    <string name="timedRun">Zamanlı deneme</string>
+
+    <string name="categoryNewExperiment">Basit özel deneyler</string>
+    <string name="categoryRawSensor">Ham sensörler</string>
+
+    </resources>
