@@ -126,4 +126,10 @@
     <string name="categoryNewExperiment">Experimentos personalizados simples</string>
     <string name="categoryRawSensor">Sensores</string>
 
+    <string name="confirmDeleteTitle">"Confirmar a eliminação? "</string>
+
+    <string name="switchColumns1">Visualização: 1 coluna</string>
+    <string name="switchColumns2">Visualização: 2 colunas</string>
+    <string name="switchColumns3">Visualização: 3 colunas</string>
+
     </resources>
