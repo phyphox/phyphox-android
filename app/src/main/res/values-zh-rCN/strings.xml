@@ -24,4 +24,8 @@
 
     <string name="warning">警告</string>
     <string name="donotshowagain">不再显示</string>
+    <string name="translationText">Phyphox将使用您首选语言列表中的第一种语言。如要更改您的首选项，请转到下面的Android“设置”。要了解哪些语言是可用的，以及如何帮助，请选择“访问网站”。</string>
+    <string name="info">消息</string>
+    <string name="credits">创建团队</string>
+    <string name="creditsRWTH">Phyphox是由亚琛工业大学第二物理研究所开发。</string>
     </resources>
