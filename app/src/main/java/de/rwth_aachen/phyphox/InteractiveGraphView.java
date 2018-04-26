@@ -1,11 +1,13 @@
 package de.rwth_aachen.phyphox;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Point;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.internal.BottomNavigationMenu;
 import android.support.design.widget.BottomNavigationView;
+import android.support.v7.app.AlertDialog;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -18,8 +20,11 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+import android.widget.RadioButton;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toolbar;
 
@@ -74,6 +79,36 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     case R.id.graph_tools_pick:
                         graphView.setTouchMode(GraphView.TouchMode.pick);
                         return true;
+                    case R.id.graph_tools_more:
+                        PopupMenu popup = new PopupMenu(getContext(), findViewById(R.id.graph_tools_more));
+                        popup.getMenuInflater().inflate(R.menu.graph_tools_menu, popup.getMenu());
+                        popup.getMenu().findItem(R.id.graph_tools_follow).setChecked(graphView.zoomFollows);
+
+                        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem menuItem) {
+                                switch (menuItem.getItemId()) {
+                                    case R.id.graph_tools_reset:
+                                        graphView.zoomFollows = false;
+                                        graphView.zoomMinX = Double.NaN;
+                                        graphView.zoomMaxX = Double.NaN;
+                                        graphView.zoomMinY = Double.NaN;
+                                        graphView.zoomMaxY = Double.NaN;
+                                        graphView.invalidate();
+                                        break;
+                                    case R.id.graph_tools_follow:
+                                        if (Double.isNaN(graphView.zoomMinX) || Double.isNaN(graphView.zoomMaxX)) {
+                                            graphView.zoomMinX = graphView.minX;
+                                            graphView.zoomMaxX = graphView.maxX;
+                                        }
+                                        graphView.zoomFollows = !graphView.zoomFollows;
+                                        break;
+                                }
+                                return false;
+                            }
+                        });
+
+                        popup.show();
                 }
                 removeMarker();
                 return false;
@@ -104,7 +139,96 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         super.onLayout(changed, left, top, right, bottom);
     }
 
+    public void leaveDialog(final expViewFragment parent, boolean canFollow, final String bufferX, final String bufferY, final String unitX, final String unitY) {
+        if (Double.isNaN(graphView.zoomMinX) && Double.isNaN(graphView.zoomMinY) && Double.isNaN(graphView.zoomMaxX) && Double.isNaN(graphView.zoomMaxY)) {
+            parent.leaveExclusive();
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        final View dialogView = inflate(getContext(), R.layout.apply_zoom_dialog, null);
+        builder.setView(dialogView);
+        final TextView tvLabelX = (TextView) dialogView.findViewById(R.id.applyZoomXLabel);
+        final TextView tvLabelY = (TextView) dialogView.findViewById(R.id.applyZoomYLabel);
+        final RadioButton rbResetX = (RadioButton) dialogView.findViewById(R.id.applyZoomXReset);
+        final RadioButton rbKeepX = (RadioButton) dialogView.findViewById(R.id.applyZoomXKeep);
+        final RadioButton rbFollowX = (RadioButton) dialogView.findViewById(R.id.applyZoomXFollow);
+        final RadioButton rbResetY = (RadioButton) dialogView.findViewById(R.id.applyZoomYReset);
+        final RadioButton rbKeepY = (RadioButton) dialogView.findViewById(R.id.applyZoomYKeep);
+        final Spinner sApplyX = (Spinner) dialogView.findViewById(R.id.applyZoomXApplyTo);
+        final Spinner sApplyY = (Spinner) dialogView.findViewById(R.id.applyZoomYApplyTo);
+        tvLabelX.setText(graphView.getLabelAndUnitX());
+        tvLabelY.setText(graphView.getLabelAndUnitY());
+        rbFollowX.setVisibility(canFollow ? VISIBLE : GONE);
+        if (graphView.zoomFollows && canFollow && !Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
+            rbFollowX.setChecked(true);
+        } else if (!Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
+            rbKeepX.setChecked(true);
+        } else {
+            rbResetX.setChecked(true);
+        }
+
+        if (!Double.isNaN(graphView.zoomMinY) && !Double.isNaN(graphView.zoomMaxY)) {
+            rbKeepY.setChecked(true);
+        } else {
+            rbResetY.setChecked(true);
+        }
+
+        builder.setTitle(R.string.applyZoomTitle)
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        double minX, maxX, minY, maxY;
+                        if (rbResetX.isChecked()) {
+                            minX = Double.NaN;
+                            maxX = Double.NaN;
+                        } else {
+                            minX = graphView.zoomMinX;
+                            maxX = graphView.zoomMaxX;
+                        }
+                        if (rbResetY.isChecked()) {
+                            minY = Double.NaN;
+                            maxY = Double.NaN;
+                        } else {
+                            minY = graphView.zoomMinY;
+                            maxY = graphView.zoomMaxY;
+                        }
+                        graphView.zoomMinX = minX;
+                        graphView.zoomMaxX = maxX;
+                        graphView.zoomMinY = minY;
+                        graphView.zoomMaxY = maxY;
+                        graphView.zoomFollows = rbFollowX.isChecked();
+
+                        switch (sApplyX.getSelectedItemPosition()) {
+                            case 1: parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false);
+                                break;
+                            case 2: parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false);
+                                break;
+                            case 3: parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false);
+                                break;
+                        }
+
+                        switch (sApplyY.getSelectedItemPosition()) {
+                            case 1: parent.applyZoom(minY, maxY, false, null, bufferY, true);
+                                break;
+                            case 2: parent.applyZoom(minY, maxY, false, unitY, null, true);
+                                break;
+                            case 3: parent.applyZoom(minY, maxY, false, null, null, true);
+                                break;
+                        }
+
+                        parent.leaveExclusive();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     public void setInteractive(boolean interactive) {
+
         if (!interactive) {
             graphView.setTouchMode(GraphView.TouchMode.off);
             removeMarker();

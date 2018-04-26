@@ -1156,6 +1156,8 @@ public abstract class phyphoxFile {
                     int history = getIntAttribute("history", 1);
                     String labelX = getTranslatedAttribute("labelX");
                     String labelY = getTranslatedAttribute("labelY");
+                    String unitX = getTranslatedAttribute("unitX");
+                    String unitY = getTranslatedAttribute("unitY");
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
@@ -1208,7 +1210,7 @@ public abstract class phyphoxFile {
                     ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
-                    ge.setLabel(labelX, labelY);  //x- and y- label
+                    ge.setLabel(labelX, labelY, unitX, unitY);  //x- and y- label and units
                     ge.setLogScale(logX, logY); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision); //logarithmic scales for x/y axes
 

@@ -66,6 +66,8 @@ public class GraphView extends View {
     private final static int maxYTics = 6; //Constant to set a target number of tics on the y axis
     private String labelX = null; //Label for the x-axis
     private String labelY = null; //Label for the y-axis
+    private String unitX = null; //Label for the x-axis
+    private String unitY = null; //Label for the y-axis
     private boolean logX = false; //logarithmic scale for the x-axis?
     private boolean logY = false; //logarithmic scale for the y-axis?
     private int xPrecision = 3;
@@ -93,6 +95,7 @@ public class GraphView extends View {
     double zoomMaxX = Double.NaN;
     double zoomMinY = Double.NaN;
     double zoomMaxY = Double.NaN;
+    boolean zoomFollows = false;
 
     Paint paint; //Anti-Aliased paint used all over this class
 
@@ -123,6 +126,8 @@ public class GraphView extends View {
 
             if (!(scaleXStart > graphSetup.plotBoundL && scaleXStart < graphSetup.plotBoundL + graphSetup.plotBoundW && scaleYStart > graphSetup.plotBoundT && scaleYStart < graphSetup.plotBoundT + graphSetup.plotBoundH))
                 return false;
+
+            zoomFollows = false;
 
             scaleXStartSpan = scaleGestureDetector.getCurrentSpanX();
             scaleYStartSpan = scaleGestureDetector.getCurrentSpanY();
@@ -316,6 +321,7 @@ public class GraphView extends View {
             return super.onTouchEvent(event);
 
         final int action = event.getAction();
+        zoomFollows = false;
 
         switch (action) {
             case MotionEvent.ACTION_DOWN: {
@@ -500,6 +506,14 @@ public class GraphView extends View {
             minY = dataMinY;
         if (scaleMaxY == scaleMode.auto || (scaleMaxY == scaleMode.extend && maxY < dataMaxY))
             maxY = dataMaxY;
+
+        if (!Double.isNaN(zoomMinX) && !Double.isNaN(zoomMaxX)) {
+            if (zoomFollows) {
+                double w = zoomMaxX - zoomMinX;
+                zoomMinX = dataMaxX - w;
+                zoomMaxX = dataMaxX;
+            }
+        }
     }
 
     //Add a new graph and (if enabled) push the old graphs back into history
@@ -566,10 +580,26 @@ public class GraphView extends View {
         addGraphData(graphY, min, max, graphX, 0, graphY[0].size-1);
     }
 
+    public String getLabelAndUnitX() {
+        if (unitX != null && !unitX.isEmpty())
+            return labelX +  " (" + unitX + ")";
+        else
+            return labelX;
+    }
+
+    public String getLabelAndUnitY() {
+        if (unitY != null && !unitY.isEmpty())
+            return labelY +  " (" + unitY + ")";
+        else
+            return labelY;
+    }
+
     //Interface to set axis labels
-    public void setLabel(String labelX, String labelY) {
+    public void setLabel(String labelX, String labelY, String unitX, String unitY) {
         this.labelX = labelX;
         this.labelY = labelY;
+        this.unitX = unitX;
+        this.unitY = unitY;
     }
 
     //Interface to configure logarithmic scales
@@ -780,11 +810,11 @@ public class GraphView extends View {
         //Labels
         paint.setTextAlign(Paint.Align.CENTER);
         if (labelX != null)
-            canvas.drawText(labelX, graphL+graphW/2, h-(int)(res.getDimensionPixelSize(R.dimen.graph_font)*0.1), paint);
+            canvas.drawText(getLabelAndUnitX(), graphL+graphW/2, h-(int)(res.getDimensionPixelSize(R.dimen.graph_font)*0.1), paint);
         if (labelY != null) {
             canvas.save();
             canvas.rotate(-90, res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2);
-            canvas.drawText(labelY, res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2, paint);
+            canvas.drawText(getLabelAndUnitY(), res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2, paint);
             canvas.restore();
         }
 

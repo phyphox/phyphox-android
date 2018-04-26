@@ -27,6 +27,25 @@ public class expViewFragment extends Fragment {
         // Required empty public constructor
     }
 
+    public int getGraphCount() {
+        int n = 0;
+        for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            if (element.getClass() == expView.graphElement.class)
+                n++;
+        }
+        return n;
+    }
+
+    //Apply zoom to all graphs on the current page.
+    public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
+        for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            if (element.getClass() == expView.graphElement.class) {
+                expView.graphElement ge = (expView.graphElement)element;
+                ge.applyZoom(min, max, follow, unit, buffer, yAxis);
+            }
+        }
+    }
+
     public void requestExclusive(expView.expViewElement caller) {
         if (root == null)
             return;

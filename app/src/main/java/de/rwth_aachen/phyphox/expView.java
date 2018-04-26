@@ -905,6 +905,8 @@ public class expView implements Serializable{
         private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
         private String labelY = null; //Label for the y-axis
+        private String unitX = null; //Label for the x-axis
+        private String unitY = null; //Label for the y-axis
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
@@ -1018,11 +1020,13 @@ public class expView implements Serializable{
         }
 
         //Interface to set the axis labels.
-        protected void setLabel(String labelX, String labelY) {
+        protected void setLabel(String labelX, String labelY, String unitX, String unitY) {
             this.labelX = labelX;
             this.labelY = labelY;
+            this.unitX = unitX;
+            this.unitY = unitY;
             if (gv != null)
-                gv.setLabel(labelX, labelY);
+                gv.setLabel(labelX, labelY, unitX, unitY);
         }
 
         //Interface to set log scales
@@ -1079,7 +1083,7 @@ public class expView implements Serializable{
             gv.setAspectRatio(aspectRatio);
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
-            gv.setLabel(labelX, labelY);
+            gv.setLabel(labelX, labelY, unitX, unitY);
             gv.setLogScale(logX, logY);
             gv.setPrecision(xPrecision, yPrecision);
 
@@ -1087,9 +1091,9 @@ public class expView implements Serializable{
                 @Override
                 public void onClick(View view) {
                     if (self.parent != null) {
-                        if (isExclusive)
-                            self.parent.leaveExclusive();
-                        else {
+                        if (isExclusive) {
+                            interactiveGV.leaveDialog(self.parent, partialUpdate, inputs.size() > 1 ? inputs.get(1) : null, inputs.size() > 0 ? inputs.get(0) : null, unitX, unitY);
+                        } else {
                             interactiveGV.requestFocus();
                             self.parent.requestExclusive(self);
                         }
@@ -1325,7 +1329,7 @@ public class expView implements Serializable{
                                             "}," +
                                             "scaleLabel: {" +
                                                 "display: true," +
-                                                "labelString: \""+this.labelX+"\"," +
+                                                "labelString: \""+this.labelX+(this.unitX != null && !this.unitX.isEmpty() ? " (" + this.unitX + ")" : "")+"\"," +
                                                 "fontColor: \"#"+mainRemoteColor+"\"," +
                                                 "fontSize: 30," +
                                                 "padding: 0, "+
@@ -1350,7 +1354,7 @@ public class expView implements Serializable{
                                             "}," +
                                             "scaleLabel: {" +
                                                 "display: true," +
-                                                "labelString: \""+this.labelY+"\"," +
+                                                "labelString: \""+this.labelY+(this.unitY != null && !this.unitY.isEmpty() ? " (" + this.unitY + ")" : "")+"\"," +
                                                 "fontColor: \"#"+mainRemoteColor+"\"," +
                                                 "fontSize: 30," +
                                                 "padding: 6, "+
@@ -1400,6 +1404,48 @@ public class expView implements Serializable{
                 interactiveGV.requestLayout();
 
                 interactiveGV.setInteractive(true);
+            }
+        }
+
+        //Apply zoom to all graphs on the current page.
+        //If min or max are NaN, they are reset
+        //Follow is only allowed for x-axis if partialUpdate is set
+        //If unit AND buffer are null, the zoom is applied to the same axis on all graphs
+        //If unit is set, it is applied to all axes with the same unit on all graphs
+        //If buffer is set, it is applied to all axes with the same buffer on all graphs
+        public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
+            if (unit != null) {
+                if (unitX.equals(unit)) {
+                    gv.zoomMinX = min;
+                    gv.zoomMaxX = max;
+                    gv.zoomFollows = follow;
+                }
+                if (unitY.equals(unit)) {
+                    gv.zoomMinY = min;
+                    gv.zoomMaxY = max;
+                }
+            } else if (buffer != null) {
+                for (int i = 0; i < inputs.size(); i++) {
+                    if (inputs.get(i).equals(buffer)) {
+                        if (i % 2 == 1) {
+                            gv.zoomMinX = min;
+                            gv.zoomMaxX = max;
+                            gv.zoomFollows = follow;
+                        } else {
+                            gv.zoomMinY = min;
+                            gv.zoomMaxY = max;
+                        }
+                    }
+                }
+            } else {
+                if (!yAxis) {
+                    gv.zoomMinX = min;
+                    gv.zoomMaxX = max;
+                    gv.zoomFollows = follow;
+                } else {
+                    gv.zoomMinY = min;
+                    gv.zoomMaxY = max;
+                }
             }
         }
 
