@@ -580,6 +580,14 @@ public class GraphView extends View {
         addGraphData(graphY, min, max, graphX, 0, graphY[0].size-1);
     }
 
+    public String getUnitX() {
+        return unitX;
+    }
+
+    public String getUnitY() {
+        return unitY;
+    }
+
     public String getLabelAndUnitX() {
         if (unitX != null && !unitX.isEmpty())
             return labelX +  " (" + unitX + ")";

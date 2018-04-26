@@ -266,6 +266,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             removeMarker();
             return;
         }
+
+        if (viewX < graphView.graphSetup.plotBoundL|| viewX > graphView.graphSetup.plotBoundL + graphView.graphSetup.plotBoundW
+                || viewY < graphView.graphSetup.plotBoundT || viewY > graphView.graphSetup.plotBoundT + graphView.graphSetup.plotBoundH) {
+            removeMarker();
+            return;
+        }
+
         int pos[] = new int[2];
         graphView.getLocationInWindow(pos);
 
@@ -307,11 +314,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         } else {
             popupWindowInfo.update(infoX, infoY, -1, -1);
         }
-        popupWindowText.setText("(" + pointX + ", " + pointY + ")");
+        popupWindowText.setText(pointX + (graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "") +"\n"
+                + pointY + (graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : ""));
 
     }
 
     public void stop() {
+        removeMarker();
         plotRenderer.halt();
         try {
             plotRenderer.join();

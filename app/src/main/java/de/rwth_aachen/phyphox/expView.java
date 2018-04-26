@@ -1389,7 +1389,6 @@ public class expView implements Serializable{
                 interactiveGV.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
                 interactiveGV.requestLayout();
 
-
                 interactiveGV.setInteractive(false);
             }
         }

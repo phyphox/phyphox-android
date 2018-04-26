@@ -163,6 +163,7 @@ public class expViewFragment extends Fragment {
     public void onStop() {
         if (root == null)
             return;
+        root.setFillViewport(false);
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.removeAllViews();
 
