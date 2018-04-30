@@ -6,4 +6,5 @@
     <string name="translationInfo">زبان‌ها</string>
     <string name="translationToSettings">تنظیمات</string>
     <string name="sensorLight">نور</string>
+    <string name="sensorGyroscope">ژیروسکوپ</string>
     </resources>
