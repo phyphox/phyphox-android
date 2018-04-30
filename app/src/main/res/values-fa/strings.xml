@@ -1,2 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="newExperimentInputTitle">عنوان</string>
+    <string name="newExperimentInputSensors">حسگرهای فعال</string>
+
+    <string name="faqPhyphoxOrg">پرسشگان</string>
+    <string name="translationInfo">زبان‌ها</string>
+    <string name="translationToSettings">تنظیمات</string>
+    <string name="sensorLight">نور</string>
+    </resources>
