@@ -8,7 +8,7 @@
     <string name="newExperimentPhyphoxInfo">參考phyphox.org網站資訊，創設更好的手機實作，並包括數據分析，可與同事，學生和朋友分享。</string>
     <string name="newExperimentInputTitle">標題</string>
     <string name="newExperimentInputBufferSize">緩衝區大小(以數字表示取樣數)</string>
-    <string name="newExperimentInputRate">感應器感應速率(用赫為單位，0代表最快)</string>
+    <string name="newExperimentInputRate">感應器感應速率(用赫茲為單位，0代表最快)</string>
     <string name="newExperimentInputSensors">選擇感應器</string>
 
     <string name="help">協助訊息</string>
@@ -75,5 +75,43 @@
 
 <string name="export">匯出數據</string>
     <string name="pick_exportFormat">選擇數據格式</string>
+
+    <string name="timedRunStopDelay">實驗長短(秒)</string>
+    <string name="export_subject">phyphox的數據</string>
+    <string name="export_pick_share">選擇輸出模式</string>
+
+    <string name="share">分享螢幕截圖</string>
+    <string name="share_subject">phyphox的螢幕截圖</string>
+    <string name="share_pick_share">選擇分享模式</string>
+
+    <string name="remoteServer">允許遠端存取</string>
+    <string name="remoteServerWarningTitle">安全性警告 !</string>
+    <string name="remoteServerActive">遠端存取已啟用。從下列網址存取實驗</string>
+    <string name="hotspotSettings">熱點設定</string>
+
+    <string name="calibrated_magnetometer">使用已校準的磁力計</string>
+
+    <string name="switchToPhoneLayout">觀看模式：窄</string>
+    <string name="switchColumns1">觀看模式：1 欄</string>
+    <string name="switchColumns2">觀看模式：2 欄</string>
+    <string name="switchColumns3">觀看模式：3 欄</string>
+
+    <string name="show_description">實驗資訊</string>
+    <string name="save_locally">增加實驗到珍藏集</string>
+    <string name="save_locally_done">實驗已成功加入珍藏集</string>
+    <string name="save_locally_message">這個實驗已由遠端開啟。你要把它加到珍藏集嗎?</string>
+    <string name="save_locally_button">儲存到珍藏集</string>
+    <string name="save_state">儲存實驗狀態</string>
+    <string name="save_state_category">已儲存的實驗狀態</string>
+    <string name="save_state_message">你可以儲存這個實驗狀態(含數據)到你的珍藏集，或經由第三方app分享出去。</string>
+    <string name="save_state_title">標題</string>
+    <string name="save_state_save">收藏</string>
+    <string name="save_state_share">分享</string>
+    <string name="save_state_subject">phyphox的實驗狀態</string>
+    <string name="save_state_default_title">測量</string>
+    <string name="save_state_success">狀態已存入珍藏集</string>
+
+    <string name="pick_exportSets">輸出挑選的數據組</string>
+    <string name="noDrawableData">無繪製的數據</string>
 
     </resources>
