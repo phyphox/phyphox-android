@@ -242,7 +242,7 @@ public class ConversionsInput {
     }
 
     public static double singleByte (byte[] data) {
-        return data[0];
+        return data[0] & 0xff;
     }
 
 }

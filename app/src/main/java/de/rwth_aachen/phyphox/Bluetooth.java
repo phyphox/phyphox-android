@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
@@ -62,6 +63,7 @@ public class Bluetooth implements Serializable {
 
     protected transient BluetoothDevice btDevice;
     protected transient BluetoothGatt btGatt;
+    public String idString;
     public String deviceName;
     public String deviceAddress;
     public UUID uuidFilter;
@@ -162,13 +164,15 @@ public class Bluetooth implements Serializable {
     /**
      * Create a new Bluetooth object.
      *
+     * @param idString        An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
      * @param uuidFilter      Optional filter to identify a device by an advertised service or characteristic
      * @param context         context
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public Bluetooth(String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
+    public Bluetooth(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
+        this.idString = idString;
         this.deviceName = (deviceName == null ? "" : deviceName);
         this.deviceAddress = deviceAddress;
         this.uuidFilter = uuidFilter;
@@ -210,9 +214,9 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if there is an error on findDevice, openConnection or process CharacteristicData
      */
-    public void connect() throws BluetoothException {
+    public void connect(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
         if (btDevice == null) {
-            findDevice();
+            findDevice(knownDevices);
         }
         // check if a device was found and if it is already connected
         if (btGatt == null || !isConnected()) {
@@ -233,10 +237,17 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is disabled or if the device could not be found
      */
-    public void findDevice() throws BluetoothException {
+    public void findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
+
+        //First check if we have already connected to a device with the same idString
+        if (idString != null && !idString.isEmpty() && knownDevices != null && knownDevices.containsKey(idString)) {
+            btDevice = knownDevices.get(idString);
+            return;
+        }
+
         // First check paired devices - those get precedence
         for (BluetoothDevice d : getPairedDevices()) {
             if (!deviceName.isEmpty() && (deviceAddress == null || deviceAddress.isEmpty())) {
@@ -258,7 +269,7 @@ public class Bluetooth implements Serializable {
             //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
-            BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null);
+            BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null, idString);
             if (bdi != null)
                 btDevice = bdi.device;
         }
@@ -1154,6 +1165,16 @@ public class Bluetooth implements Serializable {
         }
     } // end of class OnExceptionRunnable
 
+    public static Map<String, BluetoothDevice> knownDevicesFromIO(final Vector<? extends Bluetooth>... list) {
+        Map<String, BluetoothDevice> knownDevices = new HashMap<>();
+        for (Vector<? extends Bluetooth> v : list) {
+            for (Bluetooth b : v) {
+                if (b.btDevice != null && b.idString != null && !b.idString.isEmpty())
+                    knownDevices.put(b.idString, b.btDevice);
+            }
+        }
+        return knownDevices;
+    }
 
     /**
      * AsyncTask to connect all Bluetooth devices.
@@ -1182,7 +1203,7 @@ public class Bluetooth implements Serializable {
                 for (Bluetooth b : v) {
                     b.clear(); // clear command queue because there could be remains from the previous attempt
                     try {
-                        b.connect();
+                        b.connect(knownDevicesFromIO(params));
                     } catch (Bluetooth.BluetoothException e) {
                         b.displayErrorMessage(e.getMessage(), true);
                         return e.getMessage();
@@ -1241,7 +1262,7 @@ public class Bluetooth implements Serializable {
         protected String doInBackground(Void... params) {
             try {
                 clear(); // clear command queue because there could be remains from the previous attempt
-                connect();
+                connect(null);
             } catch (Bluetooth.BluetoothException e) {
                 return e.getMessage();
             }

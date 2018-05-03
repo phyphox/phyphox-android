@@ -116,8 +116,56 @@ public class ConversionsOutput {
         return new byte[] {upperByte, mUpperByte, mLowerByte, lowerByte};
     }
 
+    public static byte[] float32LittleEndian (double data) {
+        int bits = Float.floatToIntBits((float)data);
+
+        byte lowerByte = (byte) (bits);
+        byte mLowerByte = (byte) (bits >> 8);
+        byte mUpperByte = (byte) (bits >> 16);
+        byte upperByte = (byte) (bits >> 24);
+        return new byte[] {lowerByte, mLowerByte, mUpperByte, upperByte};
+    }
+
+    public static byte[] float32BigEndian (double data) {
+        int bits = Float.floatToIntBits((float)data);
+
+        byte lowerByte = (byte) bits;
+        byte mLowerByte = (byte) (bits >> 8);
+        byte mUpperByte = (byte) (bits >> 16);
+        byte upperByte = (byte) (bits >> 24);
+        return new byte[] {upperByte, mUpperByte, mLowerByte, lowerByte};
+    }
+
+    public static byte[] float64LittleEndian (double data) {
+        long bits = Double.doubleToLongBits(data);
+
+        byte b0 = (byte) (bits);
+        byte b1 = (byte) (bits >> 8);
+        byte b2 = (byte) (bits >> 16);
+        byte b3 = (byte) (bits >> 24);
+        byte b4 = (byte) (bits >> 32);
+        byte b5 = (byte) (bits >> 40);
+        byte b6 = (byte) (bits >> 48);
+        byte b7 = (byte) (bits >> 56);
+        return new byte[] {b0, b1, b2, b3, b4, b5, b6, b7};
+    }
+
+    public static byte[] float64BigEndian (double data) {
+        long bits = Double.doubleToLongBits(data);
+
+        byte b0 = (byte) (bits);
+        byte b1 = (byte) (bits >> 8);
+        byte b2 = (byte) (bits >> 16);
+        byte b3 = (byte) (bits >> 24);
+        byte b4 = (byte) (bits >> 32);
+        byte b5 = (byte) (bits >> 40);
+        byte b6 = (byte) (bits >> 48);
+        byte b7 = (byte) (bits >> 56);
+        return new byte[] {b7, b6, b5, b4, b3, b2, b1, b0};
+    }
+
     public static byte[] singleByte (double data) {
-        return new byte[]{(byte)data};
+        return new byte[]{(byte)((int)data)};
     }
 
     public static byte[] byteArray (dataBuffer data) {

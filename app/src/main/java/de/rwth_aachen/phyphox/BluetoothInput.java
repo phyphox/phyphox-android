@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox;
 
 
 import android.app.Activity;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
@@ -11,6 +12,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +36,11 @@ public class BluetoothInput extends Bluetooth {
      * Used mode ("poll", "notification" or "indication")
      */
     private String mode;
+
+    /**
+     * If true, phyphox will subscribe to notifications when the measurement starts instead of subscribing after a connection has been established
+     */
+    private Boolean subscribeOnStart;
 
     /**
      * Sensor acquisiton period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
@@ -60,23 +67,26 @@ public class BluetoothInput extends Bluetooth {
     /**
      * Create a new BluetoothInput.
      *
-     * @param deviceName      name of the device (can be null if deviceAddress is not null)
-     * @param deviceAddress   address of the device (can be null if deviceName is not null)
-     * @param uuidFilter      Optional filter to identify devices by an advertised service or characteristic
-     * @param mode            mode that should be used (can be "poll", "notification" or "indication")
-     * @param rate            rate in Hz (only for mode "poll")
-     * @param buffers         list of dataOutputs to write the values
-     * @param lock            lock to write data to the buffers
-     * @param context         context
-     * @param characteristics list of all characteristics the object should be able to operate on
+     * @param idString        An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
+     * @param deviceName       name of the device (can be null if deviceAddress is not null)
+     * @param deviceAddress    address of the device (can be null if deviceName is not null)
+     * @param uuidFilter       Optional filter to identify devices by an advertised service or characteristic
+     * @param mode             mode that should be used (can be "poll", "notification" or "indication")
+     * @param subscribeOnStart Only subscribe to notifications when the measurement starts instead of after establishing a connection
+     * @param rate             rate in Hz (only for mode "poll")
+     * @param buffers          list of dataOutputs to write the values
+     * @param lock             lock to write data to the buffers
+     * @param context          context
+     * @param characteristics  list of all characteristics the object should be able to operate on
      * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String deviceName, String deviceAddress, String mode, UUID uuidFilter, double rate, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
+    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, double rate, boolean subscribeOnStart, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
             throws phyphoxFile.phyphoxFileException {
 
-        super(deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
+        super(idString, deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
 
         this.mode = mode.toLowerCase();
+        this.subscribeOnStart = subscribeOnStart;
 
         if (mode.equals("poll") && rate < 0) {
             throw new phyphoxFile.phyphoxFileException(context.getResources().getString(R.string.bt_exception_rate));
@@ -92,6 +102,50 @@ public class BluetoothInput extends Bluetooth {
         this.data = buffers;
     }
 
+    private void subscribeToNotifications() throws BluetoothException {
+        for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
+            if (descriptor != null) {
+                if (mode.equals("notification"))
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                else
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                cdl = new CancellableLatch(1);
+                add(new WriteDescriptorCommand(btGatt, descriptor));
+                boolean result = false;
+                try {
+                    // it should not be possible to continue before the notifications are turned on
+                    // timeout after 3 seconds if the device could not be connected
+                    result = cdl.await(3, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                }
+                if (!result) {
+                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_fail), this);
+                }
+            }
+            //If there is no config descriptor, the device might still be sending notifications permanently, so we can still continue
+        }
+    }
+
+    private void unsubscribeFromNotifications() {
+        for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
+            if (descriptor == null) {
+                continue;
+            }
+            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+            cdl = new CancellableLatch(1);
+            add(new WriteDescriptorCommand(btGatt, descriptor));
+            boolean result = false;
+            try {
+                // it should not be possible to continue before the notifications are turned on
+                // timeout after 2 seconds if the device could not be connected
+                result = cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait when closing an experiment
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+
     /**
      * Connect with the device and enable notifications if mode is "notification" or indications if it is "indication".
      * The call to setValue of the BluetoothGattDescriptor to enable notifications has a lock because it should not be possible to continue before it succeeds.
@@ -101,33 +155,12 @@ public class BluetoothInput extends Bluetooth {
      * @throws BluetoothException if there is an error on findDevice, openConnection, process CharacteristicData or enable notifications/indications.
      */
     @Override
-    public void connect() throws BluetoothException {
-        super.connect(); // connect device
+    public void connect(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
+        super.connect(knownDevices); // connect device
 
         // enable descriptor for notification
-        if (mode.equals("notification") || mode.equals("indication")) {
-            for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
-                BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
-                if (descriptor != null) {
-                    if (mode.equals("notification"))
-                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    else
-                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
-                    cdl = new CancellableLatch(1);
-                    add(new WriteDescriptorCommand(btGatt, descriptor));
-                    boolean result = false;
-                    try {
-                        // it should not be possible to continue before the notifications are turned on
-                        // timeout after 3 seconds if the device could not be connected
-                        result = cdl.await(3, TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
-                    }
-                    if (!result) {
-                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_fail), this);
-                    }
-                }
-                //If there is no config descriptor, the device might still be sending notifications permanently, so we can still continue
-            }
+        if (!subscribeOnStart && (mode.equals("notification") || mode.equals("indication"))) {
+            subscribeToNotifications();
         }
     }
 
@@ -142,23 +175,8 @@ public class BluetoothInput extends Bluetooth {
     @Override
     public void closeConnection() {
         // disable descriptor for notification
-        if (mode.equals("notification")) {
-            for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
-                BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
-                if (descriptor == null) {
-                    continue;
-                }
-                descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                cdl = new CancellableLatch(1);
-                add(new WriteDescriptorCommand(btGatt, descriptor));
-                boolean result = false;
-                try {
-                    // it should not be possible to continue before the notifications are turned on
-                    // timeout after 2 seconds if the device could not be connected
-                    result = cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait when closing an experiment
-                } catch (InterruptedException e) {
-                }
-            }
+        if (!subscribeOnStart && mode.equals("notification")) {
+            unsubscribeFromNotifications();
         }
         super.closeConnection(); // close connection
     }
@@ -203,6 +221,12 @@ public class BluetoothInput extends Bluetooth {
                 break;
             }
         }
+
+        // enable descriptor for notification
+        if (subscribeOnStart && (mode.equals("notification") || mode.equals("indication"))) {
+            subscribeToNotifications();
+        }
+
         super.start();
     }
 
@@ -213,6 +237,11 @@ public class BluetoothInput extends Bluetooth {
     @Override
     public void stop() {
         super.stop();
+
+        if (subscribeOnStart && mode.equals("notification")) {
+            unsubscribeFromNotifications();
+        }
+
         switch (mode) {
             case "poll": {
                 if (mainHandler != null) {

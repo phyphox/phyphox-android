@@ -25,6 +25,7 @@ public class BluetoothOutput extends Bluetooth {
     /**
      * Create a new BluetoothOutput.
      *
+     * @param idString        An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
      * @param uuidFilter       Optional filter to identify devices by advertices service or attribute UUIDs
@@ -32,9 +33,9 @@ public class BluetoothOutput extends Bluetooth {
      * @param buffers         list of dataOutputs to write the values
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public BluetoothOutput(String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    public BluetoothOutput(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
-        super(deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
+        super(idString, deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
 
         this.data = buffers;
     }

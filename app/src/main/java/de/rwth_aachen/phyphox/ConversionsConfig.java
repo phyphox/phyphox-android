@@ -85,6 +85,22 @@ public class ConversionsConfig {
         return ConversionsOutput.uInt32BigEndian(Double.parseDouble(data));
     }
 
+    public static byte[] float32LittleEndian (String data) {
+        return ConversionsOutput.float32LittleEndian(Double.parseDouble(data));
+    }
+
+    public static byte[] float32BigEndian (String data) {
+        return ConversionsOutput.float32BigEndian(Double.parseDouble(data));
+    }
+
+    public static byte[] float64LittleEndian (String data) {
+        return ConversionsOutput.float64LittleEndian(Double.parseDouble(data));
+    }
+
+    public static byte[] float64BigEndian (String data) {
+        return ConversionsOutput.float64BigEndian(Double.parseDouble(data));
+    }
+
     public static byte[] singleByte (String data) {
         return new byte[]{Byte.parseByte(data)};
     }

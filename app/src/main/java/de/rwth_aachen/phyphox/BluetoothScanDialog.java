@@ -199,7 +199,7 @@ public class BluetoothScanDialog {
             }
         };
 
-    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter,  final Set<UUID> supportedUUIDFilter) {
+    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter, final Set<UUID> supportedUUIDFilter, final String idString) {
         this.nameFilter = nameFilter;
         this.uuidFilter = uuidFilter;
         this.supportedNameFilter = supportedNameFilter;
@@ -237,9 +237,9 @@ public class BluetoothScanDialog {
             @Override
             public void run() {
                 if (nameFilter == null || nameFilter.isEmpty()) {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_generic));
+                    title.setText(ctx.getResources().getString(R.string.bt_scanning_generic) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : ""));
                 } else {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2));
+                    title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : ""));
                 }
                 dialog.show();
             }
