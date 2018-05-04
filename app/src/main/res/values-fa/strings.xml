@@ -7,9 +7,9 @@
     <string name="translationToSettings">تنظیمات</string>
     <string name="sensorLight">نور</string>
     <string name="sensorGyroscope">ژیروسکوپ</string>
-    <string name="app_name">فای‌فاکس</string>
+    <string name="app_name">فیفاکس</string>
     <string name="action_settings">تنظیمات</string>
-    <string name="title_activity_experiment">فای‌فاکس</string>
+    <string name="title_activity_experiment">فیفاکس</string>
 
     <string name="newExperiment">افزودن آزمایش ساده</string>
     <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستانتان به اشتراک بگذارید.</string>
@@ -18,12 +18,12 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">راهنمای کنترل از راه دور</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationText">فای‌فاکس از نخستین زبان موجود در لیست زبان‌های انتخاب شده تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات زبان، به بخش «تنظیمات» اندروید در زیر بروید. جهت اطلاع از زبان‌های موجود و نحوه بهبود آنها، \"بازدید از وب‌سایت\" را انتخاب کنید.</string>
+    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست زبان‌های انتخاب شده تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات زبان، به بخش «تنظیمات» اندروید در زیر بروید. جهت اطلاع از زبان‌های موجود و نحوه بهبود آنها، \"بازدید از وب‌سایت\" را انتخاب کنید.</string>
     <string name="translationToWebsite">بازدید از وب‌سایت</string>
     <string name="warning">هشدار</string>
     <string name="donotshowagain">دوباره نشان نده</string>
     <string name="info">اطلاعات</string>
-    <string name="creditsRWTH">فای‌فاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن ایجاد شده است.</string>
+    <string name="creditsRWTH">فیفاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن ایجاد شده است.</string>
     <string name="sensorLinearAcceleration">شتاب خطی</string>
     <string name="sensorAccelerometer">شتاب‌سنج</string>
     <string name="sensorMagneticField">میدان مغناطیسی</string>
@@ -75,4 +75,24 @@
 
     <string name="experimentinfo_hint">اطلاعات آزمایش را بررسی کنید تا بیاموزید چگونه از این آزمایش استفاده کنید.</string>
 
-</resources>
+<string name="newExperimentInputRate">سرعت سنسور (به هرتز، 0=سریع‌ترین حالت ممکن)</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="damageWarning">لطفا مراقب باشید در حین انجام آزمایش به تلفن همراه خود آسیبی نرسانید. لطفا مراقبت ویژه ای را برای جلوگیری از افتادن آن بر روی سطوح سخت انجام دهید و آن را در معرض میدان‌های مغناطیسی بیش از حد قرار ندهید. سازندگان فایفاکس مسئول هیچگونه آسیبی به دستگاه شما نخواهند بود.</string>
+
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="timedRunStartDelay">تاخیر در آغاز (ثانیه)</string>
+    <string name="export_subject">داده‌ها از فیفاکس</string>
+    <string name="share_subject">اسکرین‌شات از فایفاکس</string>
+    <string name="remoteServer">اجازه‌ی دسترسی از راه دور</string>
+    <string name="hotspotSettings">تنظیمات هات‌اسپات</string>
+
+    <string name="switchToPhoneLayout">نما: باریک</string>
+    <string name="switchColumns1">نما: ۱ ستون</string>
+    <string name="switchColumns2">نما: ۲ ستون</string>
+    <string name="switchColumns3">نما: ۳ ستون</string>
+
+    <string name="save_state_save">افزودن به مجموعه</string>
+    </resources>
