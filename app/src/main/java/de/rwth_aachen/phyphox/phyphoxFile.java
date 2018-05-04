@@ -41,6 +41,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
@@ -55,7 +57,7 @@ public abstract class phyphoxFile {
     //Simple helper to return either the translated term or the original one, if no translation could be found
     private static String translate(String input) {
         if (input == null)
-            return "";
+            return null;
         if (translation.containsKey(input.trim()))
             return translation.get(input.trim());
         else
@@ -1158,6 +1160,21 @@ public abstract class phyphoxFile {
                     String labelY = getTranslatedAttribute("labelY");
                     String unitX = getTranslatedAttribute("unitX");
                     String unitY = getTranslatedAttribute("unitY");
+                    if (unitX == null && unitY == null && labelX != null && labelY != null) {
+                        Pattern pattern = Pattern.compile("^(.+)\\ \\((.+)\\)$");
+
+                        Matcher matcherX = pattern.matcher(labelX);
+                        if (matcherX.find()) {
+                            labelX =  matcherX.group(1);
+                            unitX =  matcherX.group(2);
+                        }
+
+                        Matcher matcherY = pattern.matcher(labelY);
+                        if (matcherY.find()) {
+                            labelY =  matcherY.group(1);
+                            unitY =  matcherY.group(2);
+                        }
+                    }
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
