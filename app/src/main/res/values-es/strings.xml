@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="action_settings">Opciones</string>
+<resources><string name="action_settings">Ajustes</string>
     <string name="newExperiment">Añadir un experimento sencillo</string>
     <string name="newExperimentPhyphoxInfo">Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y para compartirlos con colegas, estudiantes y amigos.</string>
     <string name="newExperimentInputTitle">Título</string>
@@ -36,4 +36,22 @@
     <string name="sensorPressure">Presión</string>
     <string name="sensorTemperature">Temperatura</string>
     <string name="sensorHumidity">Humedad</string>
+    <string name="app_name">phyphox</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="sensorProximity">Proximidad</string>
+
+    <string name="location">Posición</string>
+
+    <string name="sensorNotAvailableWarningTitle">Sensor no disponible.</string>
+    <string name="sensorNotAvailableWarningText1">El sensor</string>
+    <string name="sensorNotAvailableWarningText2">no está disponible. Normalmente esto significa que tu dispositivo no dispone de un sensor de este tipo.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Más información</string>
+    <string name="close">Cerrar</string>
+    <string name="next">Siguiente</string>
+    <string name="cancel">Cancelar</string>
+    <string name="unknown">desconocido</string>
+
+    <string name="delete">Borrar</string>
+    <string name="confirmDelete">¿Deseas borrar este experimento de tu colección?</string>
     </resources>
