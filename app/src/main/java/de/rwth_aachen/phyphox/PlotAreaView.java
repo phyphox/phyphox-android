@@ -6,6 +6,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
 import java.nio.ByteBuffer;
@@ -593,7 +594,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     private void doUpdateBuffers() {
         for (CurveData data : graphSetup.dataSets) {
-            if (data.vboY == 0) {
+            if (data.vboY == 0 || (data.vboX == 0 && data.fbX != null)) {
                 if (data.fbX != null) {
                     int ref[] = new int[2];
                     GLES20.glGenBuffers(2, ref, 0);
@@ -612,7 +613,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     if (data.fbX != null) {
                         synchronized (data.fbX.lock) {
                             data.n = Math.min(data.fbX.size, data.fbY.size);
-
                             if (data.n > 0) {
 
                                 GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboX);
