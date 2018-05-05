@@ -10,6 +10,10 @@
     <string name="graph_tools_reset">Reset zoom</string>
     <string name="graph_tools_follow">Follow new data</string>
 
+    <string name="graph_point_label">Point</string>
+    <string name="graph_slope_label">Slope</string>
+    <string name="graph_difference_label">Difference</string>
+
     <string name="applyZoomTitle">Apply zoom</string>
     <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom position and if you want to apply it to other graphs on the same page as well.</string>
 

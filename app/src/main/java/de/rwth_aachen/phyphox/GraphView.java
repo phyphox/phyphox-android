@@ -41,14 +41,15 @@ public class GraphView extends View {
     }
 
     interface PointInfo {
-        void showPointInfo(float viewX, float viewY, float pointX, float pointY);
+        void showPointInfo(float viewX, float viewY, float pointX, float pointY, int index);
     }
 
     private PointInfo pointInfoListener= null;
     public void setPointInfoListener (PointInfo pointInfoListener){
         this.pointInfoListener = pointInfoListener;
     }
-    private int pickedPointIndex = -1;
+    final int maxPicked = 2;
+    private int pickedPointIndex[] = new int[maxPicked];
 
     private floatBufferRepresentation[] graphX; //The x data to be displayed
     private double[] histMinX, histMaxX;
@@ -117,6 +118,9 @@ public class GraphView extends View {
     private double scaleYOrigin = Double.NaN;
     private double scaleXStartScale = Double.NaN;
     private double scaleYStartScale = Double.NaN;
+
+    private float pickXStart = Float.NaN;
+    private float pickYStart = Float.NaN;
 
     private ScaleGestureDetector.OnScaleGestureListener scaleListener = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
         @Override
@@ -190,6 +194,8 @@ public class GraphView extends View {
     //Initialize some stuff...
     public GraphView(Context context, PlotAreaView plotAreaView, PlotRenderer plotRenderer) {
         super(context);
+        for (int i = 0; i < maxPicked; i++)
+            pickedPointIndex[i] = -1;
         this.plotAreaView = plotAreaView;
         this.plotRenderer = plotRenderer;
         this.graphSetup = new GraphSetup();
@@ -202,8 +208,10 @@ public class GraphView extends View {
 
     public void setTouchMode(TouchMode touchMode) {
         this.touchMode = touchMode;
-        pickedPointIndex = -1;
-        pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN);
+        for (int i = 0; i < maxPicked; i++) {
+            pickedPointIndex[i] = -1;
+            pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, i);
+        }
     }
 
     @Override
@@ -217,7 +225,7 @@ public class GraphView extends View {
         return super.onTouchEvent(event);
     }
 
-    private void highlightNearestPoint(float x, float y) {
+    private void highlightNearestPoint(float x, float y, int index) {
 
         double minDist = Double.POSITIVE_INFINITY;
         int minIndex = -1;
@@ -252,8 +260,8 @@ public class GraphView extends View {
         }
 
 
-        pointInfoListener.showPointInfo((float)minVX, (float)minVY, (float)minX, (float)minY);
-        pickedPointIndex = minIndex;
+        pointInfoListener.showPointInfo((float)minVX, (float)minVY, (float)minX, (float)minY, index);
+        pickedPointIndex[index] = minIndex;
     }
 
     private boolean onTouchEventPick(MotionEvent event) {
@@ -274,17 +282,25 @@ public class GraphView extends View {
             case MotionEvent.ACTION_DOWN: {
                 processingGesture = true;
 
-                highlightNearestPoint(x, y);
+                pickXStart = x;
+                pickYStart = y;
+
+                pickedPointIndex[1] = -1;
+                pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, 1);
+                highlightNearestPoint(x, y, 0);
 
                 getParent().requestDisallowInterceptTouchEvent(true);
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
 
-                if (!processingGesture)
+                final float dx = x - pickXStart;
+                final float dy = y - pickYStart;
+
+                if (!processingGesture || (dx*dx+dy*dy < 1000))
                     break;
 
-                highlightNearestPoint(x, y);
+                highlightNearestPoint(x, y, 1);
 
                 getParent().requestDisallowInterceptTouchEvent(true);
                 break;
@@ -835,18 +851,22 @@ public class GraphView extends View {
         canvas.drawRect(graphL + 1, 1, w - 1, h - graphB - 1, paint);
 
         //Update the marker if a datapoint has been selected
-        if (pickedPointIndex >= 0) {
-            double xi, yi, vxi, vyi, d;
-            try {
-                xi = graphSetup.dataSets.get(0).fbX.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex);
-                yi = graphSetup.dataSets.get(0).fbY.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex);
+        for (int i = 0; i < maxPicked; i++) {
+            if (pickedPointIndex[i] >= 0) {
+                double xi, yi, vxi, vyi, d;
+                try {
+                    xi = graphSetup.dataSets.get(0).fbX.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex[i]);
+                    yi = graphSetup.dataSets.get(0).fbY.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex[i]);
 
-                vxi = dataXToViewX(xi);
-                vyi = dataYToViewY(yi);
+                    vxi = dataXToViewX(xi);
+                    vyi = dataYToViewY(yi);
 
-                pointInfoListener.showPointInfo((float)vxi, (float)vyi, (float)xi, (float)yi);
-            } catch (Exception e) {
-                pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN);
+                    pointInfoListener.showPointInfo((float) vxi, (float) vyi, (float) xi, (float) yi, i);
+                } catch (Exception e) {
+                    pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, i);
+                }
+            } else {
+                pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, i);
             }
         }
 

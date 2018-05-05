@@ -30,6 +30,8 @@ import android.widget.Toolbar;
 
 import org.w3c.dom.Text;
 
+import java.util.Vector;
+
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
 
     private boolean interactive = false;
@@ -43,10 +45,58 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     View rootView;
     FrameLayout graphFrame;
 
+    private class Marker {
+        boolean active = false;
+        PopupWindow popupWindowMarker = null;
+        ImageView markerView = null;
+        float viewX, viewY;
+        float dataX, dataY;
+
+        Marker() {
+
+        }
+
+        public void remove() {
+            active = false;
+            if (popupWindowMarker != null) {
+                popupWindowMarker.dismiss();
+                popupWindowMarker = null;
+            }
+            updateInfo();
+        }
+
+        public void set(float viewX, float viewY, float dataX, float dataY) {
+            active = true;
+            this.viewX = viewX;
+            this.viewY = viewY;
+            this.dataX = dataX;
+            this.dataY = dataY;
+
+            int markerX = Math.round(viewX - getRootView().getWidth()/2.f);
+            int markerY = Math.round(viewY - getRootView().getHeight()/2.f);
+
+            if (popupWindowMarker == null) {
+                markerView = new ImageView(getContext());
+                markerView.setImageResource(R.drawable.point_marker);
+                popupWindowMarker = new PopupWindow(markerView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                if (Build.VERSION.SDK_INT >= 21){
+                    popupWindowMarker.setElevation(4.0f);
+                }
+                popupWindowMarker.setOutsideTouchable(false);
+                popupWindowMarker.setTouchable(false);
+                popupWindowMarker.setFocusable(false);
+                popupWindowMarker.showAtLocation(graphFrame,  Gravity.CENTER, markerX, markerY);
+            } else {
+                popupWindowMarker.update(markerX, markerY, -1, -1);
+            }
+            updateInfo();
+        }
+    }
+
+    final int markerMax = 2;
+    Marker marker[] = new Marker[markerMax];
     PopupWindow popupWindowInfo = null;
-    PopupWindow popupWindowMarker = null;
     TextView popupWindowText = null;
-    ImageView markerView = null;
 
     public InteractiveGraphView(Context context) {
         super(context);
@@ -61,6 +111,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private void init(Context context) {
         rootView = inflate(context, R.layout.interactive_graph_layout, this);
 
+        for (int i = 0; i < markerMax; i++)
+            marker[i] = new Marker();
+
         graphFrame = (FrameLayout)this.findViewById(R.id.graph_frame);
         graphLabel = (TextView)this.findViewById(R.id.graph_label);
         expandImage = (ImageView)this.findViewById(R.id.graph_expand_image);
@@ -73,7 +126,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.graph_tools_pan:
-                        removeMarker();
+                        for (int i = 0; i < markerMax; i++)
+                            marker[i].remove();
                         graphView.setTouchMode(GraphView.TouchMode.zoom);
                         return true;
                     case R.id.graph_tools_pick:
@@ -110,7 +164,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
                         popup.show();
                 }
-                removeMarker();
+                for (int i = 0; i < markerMax; i++)
+                    marker[i].remove();
                 return false;
             }
         });
@@ -231,7 +286,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
         if (!interactive) {
             graphView.setTouchMode(GraphView.TouchMode.off);
-            removeMarker();
+            for (int i = 0; i < markerMax; i++)
+                marker[i].remove();
         }
         else if (toolbar.getSelectedItemId() == R.id.graph_tools_pan)
             graphView.setTouchMode(GraphView.TouchMode.zoom);
@@ -250,56 +306,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         graphLabel.setText(label);
     }
 
-    private void removeMarker() {
-        if (popupWindowMarker != null) {
-            popupWindowMarker.dismiss();
-            popupWindowMarker = null;
-        }
-        if (popupWindowInfo != null) {
-            popupWindowInfo.dismiss();
-            popupWindowInfo = null;
-        }
-    }
-
-    public void showPointInfo(float viewX, float viewY, float pointX, float pointY) {
-        if (Float.isInfinite(viewX) || Float.isNaN(viewX) || Float.isInfinite(viewY) || Float.isNaN(viewY)) {
-            removeMarker();
-            return;
-        }
-
-        if (viewX < graphView.graphSetup.plotBoundL|| viewX > graphView.graphSetup.plotBoundL + graphView.graphSetup.plotBoundW
-                || viewY < graphView.graphSetup.plotBoundT || viewY > graphView.graphSetup.plotBoundT + graphView.graphSetup.plotBoundH) {
-            removeMarker();
-            return;
-        }
-
-        int pos[] = new int[2];
-        graphView.getLocationInWindow(pos);
-
-        float x = viewX + pos[0];
-        float y = viewY + pos[1];
-
-        int markerX = Math.round(x - getRootView().getWidth()/2.f);
-        int markerY = Math.round(y - getRootView().getHeight()/2.f);
-
-        if (popupWindowMarker == null) {
-            markerView = new ImageView(getContext());
-            markerView.setImageResource(R.drawable.point_marker);
-            popupWindowMarker = new PopupWindow(markerView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            if (Build.VERSION.SDK_INT >= 21){
-                popupWindowMarker.setElevation(4.0f);
-            }
-            popupWindowMarker.setOutsideTouchable(false);
-            popupWindowMarker.setTouchable(false);
-            popupWindowMarker.setFocusable(false);
-            popupWindowMarker.showAtLocation(graphFrame,  Gravity.CENTER, markerX, markerY);
-        } else {
-            popupWindowMarker.update(markerX, markerY, -1, -1);
-        }
-
-        int infoX = markerX;
-        int infoY = getRootView().getHeight() - Math.round(y - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
-
+    private void setPopupInfo(int x, int y, String text) {
         if (popupWindowInfo == null) {
             View pointInfoView = inflate(getContext(), R.layout.point_info, null);
             popupWindowText = (TextView)pointInfoView.findViewById(R.id.point_info_text);
@@ -310,17 +317,93 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             popupWindowInfo.setOutsideTouchable(false);
             popupWindowInfo.setTouchable(false);
             popupWindowInfo.setFocusable(false);
-            popupWindowInfo.showAtLocation(graphFrame, Gravity.BOTTOM | Gravity.CENTER, infoX, infoY);
+            popupWindowInfo.showAtLocation(graphFrame, Gravity.BOTTOM | Gravity.CENTER, x, y);
         } else {
-            popupWindowInfo.update(infoX, infoY, -1, -1);
+            popupWindowInfo.update(x, y, -1, -1);
         }
-        popupWindowText.setText(pointX + (graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "") +"\n"
-                + pointY + (graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : ""));
+        popupWindowText.setText(text);
+    }
 
+    private void updateInfo() {
+        if (marker[0].active && marker[1].active) {
+            int infoX = Math.round((marker[0].viewX + marker[1].viewX)/2.f - getRootView().getWidth()/2.f);
+            int infoY = getRootView().getHeight() - Math.round(Math.min(marker[0].viewY, marker[1].viewY) - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(getResources().getString(R.string.graph_difference_label));
+            sb.append("\n    ");
+            sb.append(Math.abs(marker[0].dataX - marker[1].dataX));
+            sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+            sb.append("\n    ");
+            sb.append(Math.abs(marker[0].dataY - marker[1].dataY));
+            sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+            sb.append("\n");
+            sb.append(getResources().getString(R.string.graph_slope_label));
+            sb.append("\n    ");
+            float dx = marker[0].dataX - marker[1].dataX;
+            if (dx != 0) {
+                sb.append((marker[0].dataY - marker[1].dataY) / (marker[0].dataX - marker[1].dataX));
+                sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+                sb.append(" / ");
+                sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+            } else {
+                sb.append("-");
+            }
+
+            setPopupInfo(infoX, infoY, sb.toString());
+
+        } else if (marker[0].active || marker[1].active) {
+            Marker activeMarker = marker[0].active ? marker[0] : marker[1];
+
+            int infoX = Math.round(activeMarker.viewX - getRootView().getWidth()/2.f);
+            int infoY = getRootView().getHeight() - Math.round(activeMarker.viewY - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(getResources().getString(R.string.graph_point_label));
+            sb.append("\n    ");
+            sb.append(activeMarker.dataX);
+            sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+            sb.append("\n    ");
+            sb.append(activeMarker.dataY);
+            sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+
+
+            setPopupInfo(infoX, infoY, sb.toString());
+
+        } else {
+            if (popupWindowInfo != null) {
+                popupWindowInfo.dismiss();
+                popupWindowInfo = null;
+            }
+        }
+    }
+
+    public void showPointInfo(float viewX, float viewY, float pointX, float pointY, int index) {
+        if (index >= markerMax)
+            return;
+        if (Float.isInfinite(viewX) || Float.isNaN(viewX) || Float.isInfinite(viewY) || Float.isNaN(viewY)) {
+            marker[index].remove();
+            return;
+        }
+
+        if (viewX < graphView.graphSetup.plotBoundL|| viewX > graphView.graphSetup.plotBoundL + graphView.graphSetup.plotBoundW
+                || viewY < graphView.graphSetup.plotBoundT || viewY > graphView.graphSetup.plotBoundT + graphView.graphSetup.plotBoundH) {
+            marker[index].remove();
+            return;
+        }
+
+        int pos[] = new int[2];
+        graphView.getLocationInWindow(pos);
+
+        float x = viewX + pos[0];
+        float y = viewY + pos[1];
+
+        marker[index].set(x, y, pointX, pointY);
     }
 
     public void stop() {
-        removeMarker();
+        for (int i = 0; i < markerMax; i++)
+            marker[i].remove();
         plotRenderer.halt();
         try {
             plotRenderer.join();
