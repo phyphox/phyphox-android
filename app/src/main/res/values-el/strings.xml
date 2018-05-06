@@ -95,4 +95,35 @@
 \n%1$s</string>
     <string name="hotspotSettings">Ρυθμίσεις Hotspot</string>
 
-    </resources>
+    <string name="switchToPhoneLayout">Όψη: περιορισμένη</string>
+    <string name="switchColumns1">Όψη: 1 στήλη</string>
+    <string name="switchColumns2">Όψη: 2 στήλες</string>
+    <string name="switchColumns3">Όψη: 3 στήλες</string>
+
+    <string name="show_description">Πληροφορίες πειράματος</string>
+    <string name="save_locally">Προσθήκη πειράματος στη συλλογή</string>
+    <string name="save_locally_done">Το πειράμα προστέθηκε με επιτυχία στη συλλογή.</string>
+    <string name="save_locally_message">Αυτό το πείραμα έχει ανοίξει από μια απομακρυσμένη πηγή. Θέλετε να το προσθέσετε στη συλλογή πειραμάτων σας;</string>
+    <string name="save_locally_button">Αποθήκευση στη συλλογή</string>
+    <string name="save_state">Αποθήκευση κατάστασης πειράματος</string>
+    <string name="save_state_category">Αποθηκευμένες καταστάσεις πειράματος</string>
+    <string name="save_state_message">Μπορείτε να αποθηκεύσετε την κατάσταση του πειράματος συμπεριλαμβανομένων των δεδομένων στη συλλογή σας ή να την μοιραστείτε με μια τρίτη εφαρμογή.</string>
+    <string name="save_state_title">Τίτλος</string>
+    <string name="save_state_save">Σε συλλογή</string>
+    <string name="save_state_share">Διαμοιρασμός</string>
+    <string name="save_state_subject">Κατάσταση πειράματος για phyphox</string>
+    <string name="save_state_default_title">Μέτρηση</string>
+    <string name="save_state_success">Η κατάσταση αποθηκεύτηκε στη συλλογή σας.</string>
+
+    <string name="timedRun">Χρονομετρημένη εκτέλεση</string>
+
+    <string name="pick_exportSets">Επιλέξτε τα σύνολα δεδομένων για εξαγωγή.</string>
+    <string name="pick_exportFormat">Επλέξτε το format των δεδομένων.</string>
+
+    <string name="noDrawableData">Μη απεικονίσημα δεδομένα.</string>
+
+    <string name="categoryRawSensor">Πρωτογενή δεδομένα</string>
+
+    <string name="experimentinfo_hint">Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.</string>
+
+</resources>
