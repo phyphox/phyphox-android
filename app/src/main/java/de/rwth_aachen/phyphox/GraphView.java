@@ -206,11 +206,17 @@ public class GraphView extends View {
         scaleGestureDetector = new ScaleGestureDetector(context, scaleListener);
     }
 
-    public void setTouchMode(TouchMode touchMode) {
-        this.touchMode = touchMode;
+    public void resetPicks() {
         for (int i = 0; i < maxPicked; i++) {
             pickedPointIndex[i] = -1;
             pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, i);
+        }
+    }
+
+    public void setTouchMode(TouchMode touchMode) {
+        this.touchMode = touchMode;
+        if (touchMode == TouchMode.off) {
+            resetPicks();
         }
     }
 
@@ -728,14 +734,14 @@ public class GraphView extends View {
         return tics; //Done
     }
 
-    private double dataXToViewX(double dx) {
+    public double dataXToViewX(double dx) {
         if (logX)
             return  (Math.log(dx/graphSetup.minX))/(Math.log(graphSetup.maxX/graphSetup.minX))*(graphSetup.plotBoundW-1)+graphSetup.plotBoundL;
         else
             return (dx-graphSetup.minX)/(graphSetup.maxX-graphSetup.minX)*(graphSetup.plotBoundW-1)+graphSetup.plotBoundL;
     }
 
-    private double dataYToViewY(double dy) {
+    public double dataYToViewY(double dy) {
         if (logY)
             return graphSetup.plotBoundH-(Math.log(dy/graphSetup.minY))/(Math.log(graphSetup.maxY/graphSetup.minY))*(graphSetup.plotBoundH-1);
         else

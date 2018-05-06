@@ -7,4 +7,7 @@
         android:title="@string/graph_tools_follow"
         android:checkable="true"
         android:orderInCategory="2" />
+    <item android:id="@+id/graph_tools_linear_fit"
+        android:title="@string/graph_tools_linear_fit"
+        android:orderInCategory="3" />
 </menu>
