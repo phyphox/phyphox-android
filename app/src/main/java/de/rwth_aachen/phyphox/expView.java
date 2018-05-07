@@ -1111,6 +1111,8 @@ public class expView implements Serializable{
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setLabel(labelX, labelY, unitX, unitY);
             gv.setLogScale(logX, logY);
+            interactiveGV.allowLogX = logX;
+            interactiveGV.allowLogY = logY;
             gv.setPrecision(xPrecision, yPrecision);
 
             interactiveGV.setOnClickListener(new View.OnClickListener() {

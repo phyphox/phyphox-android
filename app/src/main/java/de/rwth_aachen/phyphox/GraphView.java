@@ -69,8 +69,8 @@ public class GraphView extends View {
     private String labelY = null; //Label for the y-axis
     private String unitX = null; //Label for the x-axis
     private String unitY = null; //Label for the y-axis
-    private boolean logX = false; //logarithmic scale for the x-axis?
-    private boolean logY = false; //logarithmic scale for the y-axis?
+    public boolean logX = false; //logarithmic scale for the x-axis?
+    public boolean logY = false; //logarithmic scale for the y-axis?
     private int xPrecision = 3;
     private int yPrecision = 3;
 
@@ -109,6 +109,8 @@ public class GraphView extends View {
     private float panYStart = Float.NaN;
     private double panXOrigin = Double.NaN;
     private double panYOrigin = Double.NaN;
+    private double panWOrigin = Double.NaN;
+    private double panHOrigin = Double.NaN;
 
     private float scaleXStart = Float.NaN;
     private float scaleYStart = Float.NaN;
@@ -116,8 +118,10 @@ public class GraphView extends View {
     private float scaleYStartSpan = Float.NaN;
     private double scaleXOrigin = Double.NaN;
     private double scaleYOrigin = Double.NaN;
-    private double scaleXStartScale = Double.NaN;
-    private double scaleYStartScale = Double.NaN;
+    private double scaleXStartMin = Double.NaN;
+    private double scaleYStartMin = Double.NaN;
+    private double scaleXStartMax = Double.NaN;
+    private double scaleYStartMax = Double.NaN;
 
     private float pickXStart = Float.NaN;
     private float pickYStart = Float.NaN;
@@ -141,10 +145,12 @@ public class GraphView extends View {
             final double cmaxX = Double.isNaN(zoomMaxX) ? maxX : zoomMaxX;
             final double cmaxY = Double.isNaN(zoomMaxY) ? maxY : zoomMaxY;
 
-            scaleXStartScale = cmaxX-cminX;
-            scaleYStartScale = cmaxY-cminY;
-            scaleXOrigin = cminX + (scaleXStart - graphSetup.plotBoundL) / (graphSetup.plotBoundW) * (scaleXStartScale);
-            scaleYOrigin = cmaxY - (scaleYStart - graphSetup.plotBoundT) / (graphSetup.plotBoundH) * (scaleYStartScale);
+            scaleXStartMin = cminX;
+            scaleYStartMin = cminY;
+            scaleXStartMax = cmaxX;
+            scaleYStartMax = cmaxY;
+            scaleXOrigin = viewXToDataX(scaleXStart);
+            scaleYOrigin = viewYToDataY(scaleYStart);
 
             processingGesture = false;
             return true;
@@ -160,25 +166,25 @@ public class GraphView extends View {
             double scaleX, scaleY;
 
             if (scaleXStartSpan/scaleYStartSpan > 0.5)
-                scaleX = scaleXStartSpan / spanX * scaleXStartScale;
+                scaleX = spanX / scaleXStartSpan;
             else
-                scaleX = scaleXStartScale;
+                scaleX = 1.;
 
             if (scaleYStartSpan/scaleXStartSpan > 0.5)
-                scaleY = scaleYStartSpan / spanY * scaleYStartScale;
+                scaleY = spanY / scaleYStartSpan;
             else
-                scaleY = scaleYStartScale;
+                scaleY = 1.;
 
-            if (scaleX > 10*scaleXStartScale)
-                scaleX = 10*scaleXStartScale;
+            if (scaleX > 10)
+                scaleX = 10;
 
-            if (scaleY > 10*scaleYStartScale)
-                scaleY = 10*scaleYStartScale;
+            if (scaleY > 10)
+                scaleY = 10;
 
-            zoomMinX = scaleXOrigin - (focusX - graphSetup.plotBoundL) / graphSetup.plotBoundW * scaleX;
-            zoomMaxX = zoomMinX + scaleX;
-            zoomMaxY = scaleYOrigin + (focusY - graphSetup.plotBoundT) / graphSetup.plotBoundH * scaleY;
-            zoomMinY = zoomMaxY - scaleY;
+            zoomMinX = viewXToDataX(dataXToViewX(scaleXOrigin)-(dataXToViewX(scaleXOrigin)-dataXToViewX(scaleXStartMin))/scaleX + scaleXStart-focusX);
+            zoomMinY = viewYToDataY(dataYToViewY(scaleYOrigin)-(dataYToViewY(scaleYOrigin)-dataYToViewY(scaleYStartMin))/scaleY + scaleYStart-focusY);
+            zoomMaxX = viewXToDataX(dataXToViewX(scaleXOrigin)-(dataXToViewX(scaleXOrigin)-dataXToViewX(scaleXStartMax))/scaleX + scaleXStart-focusX);
+            zoomMaxY = viewYToDataY(dataYToViewY(scaleYOrigin)-(dataYToViewY(scaleYOrigin)-dataYToViewY(scaleYStartMax))/scaleY + scaleYStart-focusY);
 
             invalidate();
 
@@ -351,6 +357,8 @@ public class GraphView extends View {
                 panYStart = y;
                 panXOrigin = Double.NaN;
                 panYOrigin = Double.NaN;
+                panWOrigin = Double.NaN;
+                panHOrigin = Double.NaN;
                 processingGesture = true;
                 getParent().requestDisallowInterceptTouchEvent(true);
                 break;
@@ -365,15 +373,14 @@ public class GraphView extends View {
                 if (Double.isNaN(panXOrigin)) {
                     panXOrigin = Double.isNaN(zoomMinX) ? minX : zoomMinX;
                     panYOrigin = Double.isNaN(zoomMinY) ? minY : zoomMinY;
+                    panWOrigin = (Double.isNaN(zoomMaxX) ? maxX : zoomMaxX) - (Double.isNaN(zoomMinX) ? minX : zoomMinX);
+                    panHOrigin = (Double.isNaN(zoomMaxY) ? maxY : zoomMaxY) - (Double.isNaN(zoomMinY) ? minY : zoomMinY);
                 }
 
-                double w = (Double.isNaN(zoomMaxX) ? maxX : zoomMaxX) - (Double.isNaN(zoomMinX) ? minX : zoomMinX);
-                double h = (Double.isNaN(zoomMaxY) ? maxY : zoomMaxY) - (Double.isNaN(zoomMinY) ? minY : zoomMinY);
-
-                zoomMinX = panXOrigin - dx * w / graphSetup.plotBoundW;
-                zoomMinY = panYOrigin + dy * h / graphSetup.plotBoundH;
-                zoomMaxX = zoomMinX + w;
-                zoomMaxY = zoomMinY + h;
+                zoomMinX = viewXToDataX(dataXToViewX(panXOrigin) - dx);
+                zoomMinY = viewYToDataY(dataYToViewY(panYOrigin) - dy);
+                zoomMaxX = viewXToDataX(dataXToViewX(panXOrigin + panWOrigin) - dx);
+                zoomMaxY = viewYToDataY(dataYToViewY(panYOrigin + panHOrigin) - dy);
 
                 invalidate();
 
@@ -748,6 +755,20 @@ public class GraphView extends View {
             return graphSetup.plotBoundH-(dy-graphSetup.minY)/(graphSetup.maxY-graphSetup.minY)*(graphSetup.plotBoundH-1);
     }
 
+    public double viewXToDataX(double vx) {
+        if (logX)
+            return Math.pow((graphSetup.maxX/graphSetup.minX),(vx-graphSetup.plotBoundL)/(graphSetup.plotBoundW-1))*graphSetup.minX;
+        else
+            return graphSetup.minX+(vx-graphSetup.plotBoundL)*(graphSetup.maxX-graphSetup.minX)/(graphSetup.plotBoundW-1);
+    }
+
+    public double viewYToDataY(double vy) {
+        if (logY)
+            return Math.pow((graphSetup.maxY/graphSetup.minY),(graphSetup.plotBoundH-vy)/(graphSetup.plotBoundH-1))*graphSetup.minY;
+        else
+            return graphSetup.minY + (graphSetup.plotBoundH-vy)*(graphSetup.maxY-graphSetup.minY)/(graphSetup.plotBoundH-1);
+    }
+
     @Override
     //Draw the graph!
     protected void onDraw(Canvas canvas) {
@@ -782,10 +803,10 @@ public class GraphView extends View {
 
         //On log scales zero is a problem. We just set a minimum which works for most plots.
         //However, this is a compromise.
-        if (logX && workingMinX < 0.001)
-            workingMinX = 0.001;
-        if (logY && workingMinY < 0.001)
-            workingMinY = 0.001;
+        if (logX && workingMinX < 0.000001)
+            workingMinX = 0.000001;
+        if (logY && workingMinY < 0.000001)
+            workingMinY = 0.000001;
 
         //Generate the tics
         double[] xTics = getTics(workingMinX, workingMaxX, maxXTics, logX);

@@ -38,6 +38,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private TextView graphLabel;
     private ImageView expandImage, collapseImage;
     private BottomNavigationView toolbar;
+    public boolean allowLogX = false;
+    public boolean allowLogY = false;
 
     private PlotRenderer plotRenderer = null;
 
@@ -116,6 +118,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         popup.getMenuInflater().inflate(R.menu.graph_tools_menu, popup.getMenu());
                         popup.getMenu().findItem(R.id.graph_tools_follow).setChecked(graphView.zoomFollows);
                         popup.getMenu().findItem(R.id.graph_tools_export).setVisible(dataExport != null);
+                        popup.getMenu().findItem(R.id.graph_tools_log_x).setVisible(allowLogX);
+                        popup.getMenu().findItem(R.id.graph_tools_log_y).setVisible(allowLogY);
+                        popup.getMenu().findItem(R.id.graph_tools_log_x).setChecked(graphView.logX);
+                        popup.getMenu().findItem(R.id.graph_tools_log_y).setChecked(graphView.logY);
+                        popup.getMenu().findItem(R.id.graph_tools_linear_fit).setVisible(!(allowLogX || allowLogY));
 
                         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             @Override
@@ -140,6 +147,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                             graphView.zoomMaxX = graphView.maxX;
                                         }
                                         graphView.zoomFollows = !graphView.zoomFollows;
+                                        graphView.invalidate();
                                         break;
                                     case R.id.graph_tools_export:
                                         Context ctx = getContext();
@@ -153,6 +161,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                         if (act == null)
                                             break;
                                         dataExport.export(act, true);
+                                        break;
+                                    case R.id.graph_tools_log_x:
+                                        graphView.setLogScale(!graphView.logX, graphView.logY);
+                                        graphView.invalidate();
+                                        break;
+                                    case R.id.graph_tools_log_y:
+                                        graphView.setLogScale(graphView.logX, !graphView.logY);
+                                        graphView.invalidate();
                                         break;
                                 }
                                 return false;

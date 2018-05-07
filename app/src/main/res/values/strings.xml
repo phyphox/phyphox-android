@@ -11,6 +11,8 @@
     <string name="graph_tools_follow">Follow new data</string>
     <string name="graph_tools_linear_fit">Linear fit</string>
     <string name="graph_tools_export">Export this dataset</string>
+    <string name="graph_tools_log_x">Logarithmic x axis</string>
+    <string name="graph_tools_log_y">Logarithmic y axis</string>
 
     <string name="graph_point_label">Point</string>
     <string name="graph_slope_label">Slope</string>
