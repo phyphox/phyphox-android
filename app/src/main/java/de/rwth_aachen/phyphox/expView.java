@@ -1,6 +1,8 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -1061,6 +1063,15 @@ public class expView implements Serializable{
 
             this.parent = parent;
 
+            Context ctx = c;
+            Activity act = null;
+            while (ctx instanceof ContextWrapper) {
+                if (ctx instanceof Activity) {
+                    act = (Activity) ctx;
+                }
+                ctx = ((ContextWrapper)ctx).getBaseContext();
+            }
+
             //Create the graphView
             interactiveGV = new InteractiveGraphView(c);
             gv = interactiveGV.graphView;
@@ -1069,6 +1080,21 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             interactiveGV.setLayoutParams(lp);
             interactiveGV.setLabel(this.label);
+
+            if (act != null && act instanceof Experiment) {
+                phyphoxExperiment experiment = ((Experiment)act).experiment;
+                DataExport dataExport = new DataExport(experiment);
+
+                DataExport.ExportSet set = dataExport.new ExportSet(this.label);
+                for (int i = 0; i < inputs.size(); i+=2) {
+                    if (i+1 < inputs.size())
+                        set.addSource(this.labelX + (i > 1 ? " " + (i / 2 + 1) : "") + (unitX != null && !unitX.isEmpty() ? " (" + unitX +")" : ""), inputs.get(i+1));
+                    set.addSource(this.labelY + (i > 1 ? " " + (i / 2 + 1) : "") + (unitY != null && !unitY.isEmpty() ? " (" + unitY + ")" : ""), inputs.get(i));
+                }
+                dataExport.addSet(set);
+
+                interactiveGV.assignDataExporter(dataExport);
+            }
 
             //Send our parameters to the graphView isntance
             if (historyLength > 1)

@@ -1,11 +1,6 @@
 package de.rwth_aachen.phyphox;
 
-import android.Manifest;
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
@@ -14,10 +9,7 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
-import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -25,7 +17,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -95,11 +86,11 @@ public class phyphoxExperiment implements Serializable {
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
 
-    public dataExport exporter; //An instance of the dataExport class for exporting functionality (see dataExport.java)
+    public DataExport exporter; //An instance of the DataExport class for exporting functionality (see DataExport.java)
 
-    //The constructor will just instantiate the dataExport. Everything else will be set directly by the phyphoxFile loading function (see phyphoxFile.java)
+    //The constructor will just instantiate the DataExport. Everything else will be set directly by the phyphoxFile loading function (see phyphoxFile.java)
     phyphoxExperiment() {
-        exporter = new dataExport(this);
+        exporter = new DataExport(this);
     }
 
     //Create a new buffer
@@ -125,9 +116,9 @@ public class phyphoxExperiment implements Serializable {
         return dataBuffers.get(index);
     }
 
-    //Do the export using the dataExport class (see dataExport.java)
+    //Do the export using the DataExport class (see DataExport.java)
     public void export(Activity c) {
-        exporter.export(c);
+        exporter.export(c, false);
     }
 
     //This function gets called in the main loop and takes care of any inputElements in the current experiment view

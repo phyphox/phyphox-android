@@ -25,7 +25,6 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -33,46 +32,46 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-//The dataExport class provides export functionality for a phyphoxExperiment.
+//The DataExport class provides export functionality for a phyphoxExperiment.
 //it provides multiple export formats and the dialogs to control them
-public class dataExport implements Serializable {
+public class DataExport implements Serializable {
 
-    //exportSet class
+    //ExportSet class
     //An export set is a collection of related dataBuffers, which (ideally) have the same size
     //exportSets are defined for each experiments and represent logical subsets of all dataBuffers which the user might want to export
-    public class exportSet implements Serializable {
+    public class ExportSet implements Serializable {
         String name;
 
-        //This class maps dataBuffers (by their key name) to a name in this exportSet
-        protected class sourceMapping implements Serializable {
+        //This class maps dataBuffers (by their key name) to a name in this ExportSet
+        protected class SourceMapping implements Serializable {
             String name;
             String source;
 
-            sourceMapping(String name, String source) {
+            SourceMapping(String name, String source) {
                 this.name = name;
                 this.source = source;
             }
         }
 
         //The set consists of an arbitrary number of sourceMappings. So each entry in the dataSet has a name and a dataBuffer-source
-        Vector<sourceMapping> sources = new Vector<>();
+        Vector<SourceMapping> sources = new Vector<>();
 
         //We will also hold an array with all the data. The idea is to let all dataSets collect their
         // data as fast as possible (like a snapshot) and then take care of pushing the data to an
-        // exporter. So after instantiating an exportSet (with a name), addSource is called for
+        // exporter. So after instantiating an ExportSet (with a name), addSource is called for
         // each dataBuffer that should be added to the collection. Then getData is called so the
         // content of these buffers is collected and finally the dataSet is given to an instance
-        // of exportFormat (see below).
+        // of ExportFormat (see below).
         Double[][] data;
 
         //constructor with name for this set
-        exportSet(String name) {
+        ExportSet(String name) {
             this.name = name;
         }
 
         //Add dataBuffers with names to this set
         public void addSource(String name, String source) {
-            this.sources.add(new sourceMapping(name, source));
+            this.sources.add(new SourceMapping(name, source));
         }
 
         //Retrieve all data from the dataBuffers
@@ -85,11 +84,11 @@ public class dataExport implements Serializable {
         }
     }
 
-    private phyphoxExperiment experiment; //The phyphoxExperiment which uses this dataExport
-    public Vector<exportSet> exportSets = new Vector<>(); //The available export sets
+    private phyphoxExperiment experiment; //The phyphoxExperiment which uses this DataExport
+    public Vector<ExportSet> exportSets = new Vector<>(); //The available export sets
 
     //This abstract class defines the interface for a specific export format
-    protected abstract class exportFormat implements Serializable {
+    protected abstract class ExportFormat implements Serializable {
         protected String filenameBase = "phyphox";
 
         public void setFilenameBase (String fb) {
@@ -97,28 +96,28 @@ public class dataExport implements Serializable {
         }
 
         protected abstract String getName(); //Returns the name or description of the format
-        protected abstract File export (Vector<exportSet> sets, File exportPath); //The actual export routine, which returns a datafile
-        protected abstract String getType(); //Returns the mime-type of the exported file.
-        protected abstract String getFilename(); //Returns a default file name for the exported file
+        protected abstract File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic); //The actual export routine, which returns a datafile
+        protected abstract String getType(boolean minimalistic); //Returns the mime-type of the exported file.
+        protected abstract String getFilename(boolean minimalistic); //Returns a default file name for the exported file
     }
 
     //Implements the CSV (Comma-separated values) format.
     //Despite its name you can change the separator to something mot practical (i.e. tab-separated)
     //To provite multiple datasets, the plain-text files are grouped into a single zip-file.
-    protected class csvFormat extends exportFormat implements Serializable {
+    protected class CsvFormat extends ExportFormat implements Serializable {
         protected char separator; //The separator, typically "," or "\t"
         protected char decimalPoint; //The separator, typically "," or "\t"
         protected String name; //The name of this format can be changed to describe different separators
 
         //This constructor allows to set a separator and a name
-        csvFormat(char separator, char decimalPoint, String name) {
+        CsvFormat(char separator, char decimalPoint, String name) {
             this.separator = separator;
             this.decimalPoint = decimalPoint;
             this.name = name;
         }
 
         //the default constructor uses a comma-separator (",") and an appropriate name
-        csvFormat() {
+        CsvFormat() {
             this(',', '.', "Comma-separated values (CSV)");
         }
 
@@ -128,8 +127,8 @@ public class dataExport implements Serializable {
         }
 
         @Override
-        protected File export (Vector<exportSet> sets, File exportPath) {
-            File file = new File(exportPath, "/"+getFilename()); // Create a file with default filename in the given path
+        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic) {
+            File file = new File(exportPath, "/"+getFilename(minimalistic)); // Create a file with default filename in the given path
 
             DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
             format.applyPattern("0.000000000E0");
@@ -140,11 +139,16 @@ public class dataExport implements Serializable {
 
             try { // A lot can go wrong here... Let's catch em all...
                 FileOutputStream stream = new FileOutputStream(file); //Open a basic output stream
-                ZipOutputStream zstream = new ZipOutputStream(stream); //We will pack all datasets into a single zip
+                ZipOutputStream zstream = null;
+                if (!minimalistic)
+                    zstream = new ZipOutputStream(stream); //We will pack all datasets into a single zip
                 try {
-                    for (exportSet set : sets) { // For each dataset...
-                        ZipEntry entry = new ZipEntry(set.name + ".csv"); //Create a new file for this dataset...
-                        zstream.putNextEntry(entry); //...and add it to the zip-file
+                    for (ExportSet set : sets) { // For each dataset...
+                        ZipEntry entry;
+                        if (!minimalistic) {
+                            entry = new ZipEntry(set.name + ".csv"); //Create a new file for this dataset...
+                            zstream.putNextEntry(entry); //...and add it to the zip-file
+                        }
 
                         //Contruct the table header in the first line
                         String header = "";
@@ -154,7 +158,10 @@ public class dataExport implements Serializable {
                                 header += separator;
                         }
                         header += "\n";
-                        zstream.write(header.getBytes()); //Write the header to the zip-file
+                        if (minimalistic)
+                            stream.write(header.getBytes());
+                        else
+                            zstream.write(header.getBytes()); //Write the header to the zip-file
 
                         //Then add all the data
                         for (int i = 0; i < set.data[0].length; i++) { //For each row of data... The first column determines the number of rows
@@ -169,16 +176,23 @@ public class dataExport implements Serializable {
                                     data.append(separator);
                             }
                             data.append("\n");
-                            zstream.write(data.toString().getBytes()); //Write to zip-file
+                            if (minimalistic)
+                                stream.write(data.toString().getBytes());
+                            else
+                                zstream.write(data.toString().getBytes()); //Write to zip-file
                         }
 
-                        zstream.closeEntry(); //This dataset is complete. Close its file within the zip
+                        if (!minimalistic)
+                            zstream.closeEntry(); //This dataset is complete. Close its file within the zip
                     }
                 } catch (Exception e) {
                     //This could be done better. Any error during CSV/ZIP compiling ends up here
                     Log.e("csvExport", "Unhandled exception during write.", e);
                 } finally {
-                    zstream.close();
+                    if (minimalistic)
+                        stream.close();
+                    else
+                        zstream.close();
                 }
             } catch (Exception e) {
                 //This could be done better. Any error during file opening ends up here
@@ -189,19 +203,25 @@ public class dataExport implements Serializable {
         }
 
         @Override
-        protected String getType () {
-            return "application/zip";
+        protected String getType (boolean minimalistic) {
+            if (minimalistic)
+                return "text/csv";
+            else
+                return "application/zip";
         }
         @Override
-        protected String getFilename () {
-            return this.filenameBase + ".zip";
+        protected String getFilename (boolean minimalistic) {
+            if (minimalistic)
+                return this.filenameBase + ".csv";
+            else
+                return this.filenameBase + ".zip";
         }
     }
 
     //This class implements an Microsoft Excel export using the Apache POI library
-    protected class excelFormat extends exportFormat implements Serializable {
+    protected class ExcelFormat extends ExportFormat implements Serializable {
         //Nothing to do or configure in the constructor
-        excelFormat() {
+        ExcelFormat() {
         }
 
         @Override
@@ -210,13 +230,13 @@ public class dataExport implements Serializable {
         }
 
         @Override
-        protected File export (Vector<exportSet> sets, File exportPath) {
+        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic) {
             //New excel workbook
             Workbook wb = new HSSFWorkbook();
-            File file = new File(exportPath, "/"+getFilename()); //Create file with default filename
+            File file = new File(exportPath, "/"+getFilename(minimalistic)); //Create file with default filename
 
             try { // A lot can go wrong here. Catch em all...
-                for (exportSet set : sets) { //For each dataset...
+                for (ExportSet set : sets) { //For each dataset...
                     Sheet sheet = wb.createSheet(set.name);//..create a new sheet within the Excel document
 
                     //Create a style (just bold font) for the table header
@@ -267,45 +287,45 @@ public class dataExport implements Serializable {
 
         @Override
         //This mime-typ is ugly, but seems to be the "official" one, while there are many others in use.
-        protected String getType () {
+        protected String getType (boolean minimalistic) {
             return "application/vnd.ms-excel";
         }
 
         @Override
-        protected String getFilename () {
+        protected String getFilename (boolean minimalistic) {
             return filenameBase + ".xls";
         }
     }
 
     //This array holds instances of all export formats that should be presented to the user
-    public final exportFormat[] exportFormats = {
-            new excelFormat(),
-            new csvFormat(',', '.', "CSV (Comma, decimal point)"),
-            new csvFormat('\t', '.', "CSV (Tabulator, decimal point)"),
-            new csvFormat(';', '.', "CSV (Semicolon, decimal point)"),
-            new csvFormat('\t', ',', "CSV (Tabulator, decimal comma)"),
-            new csvFormat(';', ',', "CSV (Semicolon, decimal comma)")
+    public final ExportFormat[] exportFormats = {
+            new ExcelFormat(),
+            new CsvFormat(',', '.', "CSV (Comma, decimal point)"),
+            new CsvFormat('\t', '.', "CSV (Tabulator, decimal point)"),
+            new CsvFormat(';', '.', "CSV (Semicolon, decimal point)"),
+            new CsvFormat('\t', ',', "CSV (Tabulator, decimal comma)"),
+            new CsvFormat(';', ',', "CSV (Semicolon, decimal comma)")
     };
 
     //The constructor just has to store a reference to the experiment
-    dataExport(phyphoxExperiment experiment) {
+    DataExport(phyphoxExperiment experiment) {
         this.experiment = experiment;
     }
 
-    //Add an exportSet to this exporter
-    public void addSet(exportSet set) {
+    //Add an ExportSet to this exporter
+    public void addSet(ExportSet set) {
         this.exportSets.add(set);
     }
 
     //Export the data (this will show dialogs to the user)
-    public void export(Activity c) {
+    public void export(Activity c, boolean minimalistic) {
 
         //Retrieve all the data
         for (int i = 0; i < exportSets.size(); i++) {
             exportSets.get(i).getData();
         }
 
-        showFormatDialog(exportSets, c);
+        showFormatDialog(exportSets, c, minimalistic);
     }
 
     //Annoying class to make the integer mutable.
@@ -319,7 +339,7 @@ public class dataExport implements Serializable {
     //Let the user select a fiile format. This takes a list of chosen sets as it is supposed to be
     //  called after the user has already chosen the sets to export.
     //If successfull it will trigger the actual export as a share intent
-    protected void showFormatDialog(final Vector<exportSet> chosenSets, final Activity c) {
+    protected void showFormatDialog(final Vector<ExportSet> chosenSets, final Activity c, final boolean minimalistic) {
         final mutableInteger selected = new mutableInteger(); //This will hold the result
 
         //Create the charsequences that should be presented to the user
@@ -347,14 +367,14 @@ public class dataExport implements Serializable {
                         exportFormats[selected.value].setFilenameBase("phyphox " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
 
                         //Call the export filter to write the data to a file
-                        File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir());
+                        File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic);
 
                         //Use a FileProvider so we can send this file to other apps
                         final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", exportFile);
 
                         //Create a share intent
                         final Intent intent = ShareCompat.IntentBuilder.from(c)
-                                .setType(exportFormats[selected.value].getType()) //mime type from the export filter
+                                .setType(exportFormats[selected.value].getType(minimalistic)) //mime type from the export filter
                                 .setSubject(c.getString(R.string.export_subject))
                                 .setStream(uri)
                                 .getIntent()
@@ -382,19 +402,19 @@ public class dataExport implements Serializable {
     }
 
     //This function allows to export the data without dialogs. Hence it takes a list of selected
-    //   exportSets (as an array of their indices), the selected exportFormat and the directory to
+    //   exportSets (as an array of their indices), the selected ExportFormat and the directory to
     //   write to.
     //This function is used when all the dialogs are not done in the app, but on the web interface.
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
-    protected File exportDirect(exportFormat format, File cacheDir) {
+    protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic) {
         for (int i = 0; i < exportSets.size(); i++) {
             exportSets.get(i).getData();
         }
 
         format.setFilenameBase("phyphox_" + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
 
-        return format.export(exportSets, cacheDir);
+        return format.export(exportSets, cacheDir, minimalistic);
     }
 
 }

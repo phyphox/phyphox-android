@@ -822,7 +822,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return true;
         }
 
-        //Export button. Call the export function of the dataExport class
+        //Export button. Call the export function of the DataExport class
         if (id == R.id.action_export) {
             experiment.export(this);
             return true;

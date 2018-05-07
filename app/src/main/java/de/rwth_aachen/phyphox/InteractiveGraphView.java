@@ -1,6 +1,8 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -38,6 +40,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private BottomNavigationView toolbar;
 
     private PlotRenderer plotRenderer = null;
+
+    private DataExport dataExport = null;
 
     View rootView;
     FrameLayout graphFrame;
@@ -111,6 +115,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         PopupMenu popup = new PopupMenu(getContext(), findViewById(R.id.graph_tools_more));
                         popup.getMenuInflater().inflate(R.menu.graph_tools_menu, popup.getMenu());
                         popup.getMenu().findItem(R.id.graph_tools_follow).setChecked(graphView.zoomFollows);
+                        popup.getMenu().findItem(R.id.graph_tools_export).setVisible(dataExport != null);
 
                         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             @Override
@@ -135,6 +140,19 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                             graphView.zoomMaxX = graphView.maxX;
                                         }
                                         graphView.zoomFollows = !graphView.zoomFollows;
+                                        break;
+                                    case R.id.graph_tools_export:
+                                        Context ctx = getContext();
+                                        Activity act = null;
+                                        while (ctx instanceof ContextWrapper) {
+                                            if (ctx instanceof Activity) {
+                                                act = (Activity) ctx;
+                                            }
+                                            ctx = ((ContextWrapper)ctx).getBaseContext();
+                                        }
+                                        if (act == null)
+                                            break;
+                                        dataExport.export(act, true);
                                         break;
                                 }
                                 return false;
@@ -171,6 +189,10 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 ViewGroup.LayoutParams.MATCH_PARENT));
         markerOverlayView.setGraphSetup(graphView.graphSetup);
         graphFrame.addView(markerOverlayView);
+    }
+
+    public void assignDataExporter(DataExport dataExport) {
+        this.dataExport = dataExport;
     }
 
     @Override

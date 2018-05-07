@@ -2195,7 +2195,7 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, IOException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "set": //An export set. These just group some dataBuffers to be exported as a set
-                    dataExport.exportSet set = experiment.exporter.new exportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
+                    DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
                     (new setBlockParser(xpp, experiment, parent, set)).process(); //Parse the information within
                     experiment.exporter.addSet(set); //Add the set
                 break;
@@ -2212,10 +2212,10 @@ public abstract class phyphoxFile {
 
     //Blockparser for the individual set blocks
     private static class setBlockParser extends xmlBlockParser {
-        private dataExport.exportSet set;
+        private DataExport.ExportSet set;
 
         //This constructor takes an additional argument: The export set to be filled
-        setBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, dataExport.exportSet set) {
+        setBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, DataExport.ExportSet set) {
             super(xpp, experiment, parent);
             this.set = set;
         }

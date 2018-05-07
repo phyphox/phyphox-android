@@ -10,4 +10,7 @@
     <item android:id="@+id/graph_tools_linear_fit"
         android:title="@string/graph_tools_linear_fit"
         android:orderInCategory="3" />
+    <item android:id="@+id/graph_tools_export"
+        android:title="@string/graph_tools_export"
+        android:orderInCategory="4" />
 </menu>

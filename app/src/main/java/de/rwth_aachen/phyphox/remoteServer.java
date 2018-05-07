@@ -830,10 +830,10 @@ public class remoteServer extends Thread {
                 //Alright, let's go on with the export
 
                 //Get the content-type
-                String type = experiment.exporter.exportFormats[formatInt].getType();
+                String type = experiment.exporter.exportFormats[formatInt].getType(false);
 
                 //Use the experiment's exporter to create the file
-                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir());
+                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false);
 
                 entity = new BasicHttpEntity();
                 InputStream inputStream = new FileInputStream(exportFile);
@@ -842,7 +842,7 @@ public class remoteServer extends Thread {
 
                 //Set the content type and set "Content-Disposition" to force the browser to handle this as a download with a default file name
                 response.setHeader("Content-Type", type);
-                response.setHeader("Content-Disposition", "attachment; filename="+experiment.exporter.exportFormats[formatInt].getFilename());
+                response.setHeader("Content-Disposition", "attachment; filename="+experiment.exporter.exportFormats[formatInt].getFilename(false));
             }
 
             //Send error or file
