@@ -126,4 +126,7 @@
 
     <string name="experimentinfo_hint">Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.</string>
 
-</resources>
+<string name="calibrated_magnetometer"></string>
+
+    <string name="categoryNewExperiment"></string>
+    </resources>
