@@ -12,18 +12,18 @@
     <string name="title_activity_experiment">فیفاکس</string>
 
     <string name="newExperiment">افزودن آزمایش ساده</string>
-    <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستانتان به اشتراک بگذارید.</string>
+    <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستان خود به اشتراک بگذارید.</string>
     <string name="help">راهنما و اطلاعات</string>
     <string name="experimentsPhyphoxOrg">ایده‌ها و دستورالعمل‌های آزمایش</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">راهنمای کنترل از راه دور</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست زبان‌های انتخاب شده تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات زبان، به بخش «تنظیمات» اندروید در زیر بروید. جهت اطلاع از زبان‌های موجود و نحوه بهبود آنها، \"بازدید از وب‌سایت\" را انتخاب کنید.</string>
+    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست «تنظیمات برگزیده زبان» تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات برگزیده زبان، به بخش «تنظیمات» اندروید در زیر بروید. جهت اطلاع از زبان‌های موجود و اینکه چگونه می‌توانید کمک کنید، \"بازدید از وب‌سایت\" را انتخاب کنید.</string>
     <string name="translationToWebsite">بازدید از وب‌سایت</string>
     <string name="warning">هشدار</string>
     <string name="donotshowagain">دوباره نشان نده</string>
     <string name="info">اطلاعات</string>
-    <string name="creditsRWTH">فیفاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن ایجاد شده است.</string>
+    <string name="creditsRWTH">فیفاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن (RWTH Aachen University) ایجاد شده است.</string>
     <string name="sensorLinearAcceleration">شتاب خطی</string>
     <string name="sensorAccelerometer">شتاب‌سنج</string>
     <string name="sensorMagneticField">میدان مغناطیسی</string>
@@ -36,7 +36,7 @@
 
     <string name="sensorNotAvailableWarningTitle">حسگر در دسترس نیست.</string>
     <string name="sensorNotAvailableWarningText1">حسگر</string>
-    <string name="sensorNotAvailableWarningText2">در دسترس نیست. معمولا این بدان معنی است که دستگاه شما این حسگر را ندارد.</string>
+    <string name="sensorNotAvailableWarningText2">در دسترس نیست. معمولا این به معنای آن است که دستگاه شما این نوع حسگر را ندارد.</string>
     <string name="sensorNotAvailableWarningMoreInfo">اطلاعات بیشتر</string>
     <string name="ok">تصویب</string>
     <string name="close">بستن</string>
@@ -45,7 +45,7 @@
     <string name="unknown">ناشناخته</string>
 
     <string name="delete">حذف</string>
-    <string name="confirmDelete">آیا مایلید این آزمایش را از مجموعه خود حذف کنید؟</string>
+    <string name="confirmDelete">آیا می‌خواهید این آزمایش را از مجموعه خود حذف کنید؟</string>
     <string name="confirmDeleteTitle">تایید حذف؟</string>
 
     <string name="stop">توقف</string>
@@ -56,26 +56,26 @@
     <string name="loadingTitle">بارگیری</string>
     <string name="loadingText">در حال بارگیری آزمایش…</string>
 
-    <string name="timedRunStopDelay">مدت زمان آزمایش (به ثانیه - s)</string>
-    <string name="share">اشتراک‌گذاری اسکرین‌شات</string>
-    <string name="share_pick_share">یک روش اشتراک‌گذاری را انتخاب کنید</string>
+    <string name="timedRunStopDelay">مدت زمان آزمایش (s)</string>
+    <string name="share">به اشتراک‌گذاری اسکرین‌شات</string>
+    <string name="share_pick_share">یک روش به اشتراک‌گذاری را انتخاب کنید</string>
 
     <string name="remoteServerWarningTitle">هشدار امنیتی!</string>
     <string name="calibrated_magnetometer">استفاده از مغناطیس‌سنج کالیبره‌شده</string>
 
     <string name="show_description">اطلاعات آزمایش</string>
     <string name="save_locally">افزودن آزمایش به مجموعه</string>
-    <string name="save_locally_done">آزمایش با موفقیت به مجموعه اضافه شد.</string>
-    <string name="save_locally_message">این آزمایش از یک منبع از راه دور باز شده است. آیا مایلید آن را به مجموعه آزمایش خود اضافه کنید؟</string>
+    <string name="save_locally_done">آزمایش با موفقیت به مجموعه افزوده شد.</string>
+    <string name="save_locally_message">این آزمایش از یک منبع از راه دور باز شده است. آیا می‌خواهید آن را به مجموعه آزمایش خود افزوده کنید؟</string>
     <string name="save_locally_button">ذخیره در مجموعه</string>
     <string name="save_state_title">عنوان</string>
-    <string name="save_state_share">اشتراک‌گذاری</string>
-    <string name="save_state_default_title">سنجش</string>
+    <string name="save_state_share">به اشتراک‌گذاری</string>
+    <string name="save_state_default_title">اندازه‌گیری</string>
     <string name="pick_exportFormat">فرمت داده‌ها را انتخاب کنید.</string>
 
     <string name="experimentinfo_hint">اطلاعات آزمایش را بررسی کنید تا بیاموزید چگونه از این آزمایش استفاده کنید.</string>
 
-<string name="newExperimentInputRate">سرعت سنسور (به هرتز، 0=سریع‌ترین حالت ممکن)</string>
+<string name="newExperimentInputRate">نرخ نمونه‌برداری سنسور (به هرتز، ۰=سریع‌ترین حالت ممکن)</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
@@ -83,9 +83,9 @@
 
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
 
-    <string name="timedRunStartDelay">تاخیر در آغاز (ثانیه)</string>
+    <string name="timedRunStartDelay">تاخیر در آغاز (s)</string>
     <string name="export_subject">داده‌ها از فیفاکس</string>
-    <string name="share_subject">اسکرین‌شات از فایفاکس</string>
+    <string name="share_subject">اسکرین‌شات از فیفاکس</string>
     <string name="remoteServer">اجازه‌ی دسترسی از راه دور</string>
     <string name="hotspotSettings">تنظیمات هات‌اسپات</string>
 
@@ -95,4 +95,28 @@
     <string name="switchColumns3">نما: ۳ ستون</string>
 
     <string name="save_state_save">افزودن به مجموعه</string>
+    <string name="newExperimentInputBufferSize">اندازه بافر (تعداد مقادیری که ذخیره شود)</string>
+    <string name="credits">دست‌اندرکاران</string>
+    <string name="timed_stop">متوقف‌ کردن آزمایش زمان‌بندی شده</string>
+    <string name="timed_start">آغاز آزمایش زمان‌بندی شده</string>
+
+    <string name="timedRunDialogTitle">آزمایش زمان‌بندی شده</string>
+    <string name="enableTimedRun">انجام آزمایش زمان‌بندی شده</string>
+
+    <string name="export">خروجی گرفتن داده‌ها</string>
+    <string name="export_pick_share">یک روش خروجی گرفتن را انتخاب کنید</string>
+
+    <string name="save_state">ذخیره‌ وضعیت آزمایش</string>
+    <string name="save_state_category">وضعیت آزمایش ذخیره شده</string>
+    <string name="save_state_message">شما می‌توانید وضعیت این آزمایش از جمله داده‌های خود را در مجموعه خود ذخیره کنید یا آن را با یک برنامه شخص ثالث به اشتراک بگذارید.</string>
+    <string name="save_state_subject">وضعیت آزمایش برای فیفاکس</string>
+    <string name="save_state_success">وضعیت آزمایش در مجموعه شما ذخیره شده است.</string>
+
+    <string name="timedRun">آزمایش زمان‌بندی شده</string>
+
+    <string name="pick_exportSets">دسته داده‌ها را برای خروجی گرفتن انتخاب کنید.</string>
+    <string name="noDrawableData">بدون داده‌های قابل رسم.</string>
+
+    <string name="categoryRawSensor">حسگرهای خام</string>
+
     </resources>
