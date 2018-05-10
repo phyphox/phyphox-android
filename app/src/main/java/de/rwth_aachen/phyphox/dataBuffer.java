@@ -61,7 +61,6 @@ public class dataBuffer implements Serializable {
             buffer.put(offset + 4, Float.NaN);
             buffer.put(offset + 5, Float.NaN);
         } else {
-            Log.d("test", "lw:" + lineWidth);
             float d = (float)((value-last)*(1.-lineWidth)/2.);
             float vOff = (float)value - d;
             float lOff = (float)last + d;

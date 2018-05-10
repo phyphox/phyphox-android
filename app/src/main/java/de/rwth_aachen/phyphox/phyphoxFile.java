@@ -1154,13 +1154,25 @@ public abstract class phyphoxFile {
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
+                    int mapWidth= getIntAttribute("mapWidth", 0);
                     boolean partialUpdate = getBooleanAttribute("partialUpdate", false);
                     int history = getIntAttribute("history", 1);
                     String labelX = getTranslatedAttribute("labelX");
                     String labelY = getTranslatedAttribute("labelY");
+                    String labelZ = getTranslatedAttribute("labelZ");
                     String unitX = getTranslatedAttribute("unitX");
                     String unitY = getTranslatedAttribute("unitY");
-                    if (unitX == null && unitY == null && labelX != null && labelY != null) {
+                    String unitZ = getTranslatedAttribute("unitZ");
+
+                    Vector<Integer> colorScale = new Vector<>();
+                    int colorStepIndex = 1;
+                    while (xpp.getAttributeValue(null,"mapColor"+colorStepIndex) != null) {
+                        int color = getColorAttribute("mapColor"+colorStepIndex, parent.getResources().getColor(R.color.highlight));
+                        colorScale.add(color);
+                        colorStepIndex++;
+                    }
+
+                    if (unitX == null && unitY == null && unitZ == null && labelX != null && labelY != null) {
                         Pattern pattern = Pattern.compile("^(.+)\\ \\((.+)\\)$");
 
                         Matcher matcherX = pattern.matcher(labelX);
@@ -1174,12 +1186,22 @@ public abstract class phyphoxFile {
                             labelY =  matcherY.group(1);
                             unitY =  matcherY.group(2);
                         }
+
+                        if (labelZ != null) {
+                            Matcher matcherZ = pattern.matcher(labelZ);
+                            if (matcherZ.find()) {
+                                labelZ = matcherZ.group(1);
+                                unitZ = matcherZ.group(2);
+                            }
+                        }
                     }
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
+                    boolean logZ = getBooleanAttribute("logZ", false);
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
                     int xPrecision = getIntAttribute("xPrecision", 3);
                     int yPrecision = getIntAttribute("yPrecision", 3);
+                    int zPrecision = getIntAttribute("zPrecision", 3);
                     int color = parent.getResources().getColor(R.color.highlight);
                     boolean globalColor = false;
                     if (xpp.getAttributeValue(null, "color") != null) {
@@ -1191,27 +1213,44 @@ public abstract class phyphoxFile {
                     GraphView.scaleMode scaleMaxX = parseScaleMode("scaleMaxX");
                     GraphView.scaleMode scaleMinY = parseScaleMode("scaleMinY");
                     GraphView.scaleMode scaleMaxY = parseScaleMode("scaleMaxY");
+                    GraphView.scaleMode scaleMinZ = parseScaleMode("scaleMinZ");
+                    GraphView.scaleMode scaleMaxZ = parseScaleMode("scaleMaxZ");
 
                     double minX = getDoubleAttribute("minX", 0.);
                     double maxX = getDoubleAttribute("maxX", 0.);
                     double minY = getDoubleAttribute("minY", 0.);
                     double maxY = getDoubleAttribute("maxY", 0.);
+                    double minZ = getDoubleAttribute("minZ", 0.);
+                    double maxZ = getDoubleAttribute("maxZ", 0.);
 
 
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}}
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}},
+                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 2;}}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, "axis", ats)).process(); //Load inputs and outputs
 
                     Vector<String> inStrings = new Vector<>();
-                    for (dataInput input : inputs) {
-                        if (input != null)
-                            inStrings.add(input.buffer.name);
-                        else
-                            inStrings.add(null);
+                    for (int i = 0; i < inputs.size(); i++) {
+                        if (i % 3 == 2) {
+                            //This is a z entry. For efficiency reasons, we only handle x and y and encode z as an additional graph of different style
+                            if (inputs.get(i) != null) {
+                                inStrings.add(inputs.get(i).buffer.name);
+                                inStrings.add(null);
+                                ioBlockParser.AdditionalTag at = new ioBlockParser.AdditionalTag();
+                                at.name = ats.get(i).name;
+                                at.attributes.put("style", "mapZ");
+                                ats.add(i+1, at);
+                            }
+                        } else {
+                            if (inputs.get(i) != null)
+                                inStrings.add(inputs.get(i).buffer.name);
+                            else
+                                inStrings.add(null);
+                        }
                     }
 
                     expView.graphElement ge = newView.new graphElement(label, null, inStrings, parent.getResources()); //Two array inputs
@@ -1221,16 +1260,18 @@ public abstract class phyphoxFile {
                     if (lineStyle != null) {
                         ge.setStyle(GraphView.styleFromStr(lineStyle));
                     }
+                    ge.setMapWidth(mapWidth);
+                    ge.setColorScale(colorScale);
                     ge.setLineWidth(lineWidth);
                     ge.setColor(color);
                     ge.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
                     ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
+                    ge.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
-                    ge.setLabel(labelX, labelY, unitX, unitY);  //x- and y- label and units
-                    ge.setLogScale(logX, logY); //logarithmic scales for x/y axes
-                    ge.setPrecision(xPrecision, yPrecision); //logarithmic scales for x/y axes
-
+                    ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);  //x- and y- label and units
+                    ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
+                    ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     for (int i = 0; i < ats.size(); i++) {
                         ioBlockParser.AdditionalTag at = ats.get(i);
                         if (!at.name.equals("input")) {
@@ -1241,35 +1282,42 @@ public abstract class phyphoxFile {
                                 GraphView.Style style = GraphView.styleFromStr(at.attributes.get("style"));
                                 if (style == GraphView.Style.unknown)
                                     throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
-                                ge.setStyle(style, i/2);
+                                ge.setStyle(style, i/3);
                             } catch (Exception e) {
                                 throw new phyphoxFileException("Could not parse style of input tag.", xpp.getLineNumber());
                             }
                         }
                         if (at.attributes.containsKey("color")) {
                             int localColor = parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.presetOrange));
-                            ge.setColor(localColor | 0xff000000, i/2);
+                            ge.setColor(localColor | 0xff000000, i/3);
                         } else if (!globalColor) {
-                            switch ((i/2) % 6) {
-                                case 0: ge.setColor(parent.getResources().getColor(R.color.presetOrange), i/2);
+                            switch ((i/3) % 6) {
+                                case 0: ge.setColor(parent.getResources().getColor(R.color.presetOrange), i/3);
                                     break;
-                                case 1: ge.setColor(parent.getResources().getColor(R.color.presetGreen), i/2);
+                                case 1: ge.setColor(parent.getResources().getColor(R.color.presetGreen), i/3);
                                     break;
-                                case 2: ge.setColor(parent.getResources().getColor(R.color.presetBlue), i/2);
+                                case 2: ge.setColor(parent.getResources().getColor(R.color.presetBlue), i/3);
                                     break;
-                                case 3: ge.setColor(parent.getResources().getColor(R.color.presetYellow), i/2);
+                                case 3: ge.setColor(parent.getResources().getColor(R.color.presetYellow), i/3);
                                     break;
-                                case 4: ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i/2);
+                                case 4: ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i/3);
                                     break;
-                                case 5: ge.setColor(parent.getResources().getColor(R.color.presetRed), i/2);
+                                case 5: ge.setColor(parent.getResources().getColor(R.color.presetRed), i/3);
                                     break;
                             }
                         }
                         if (at.attributes.containsKey("linewidth")) {
                             try {
-                                ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i/2);
+                                ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i/3);
                             } catch (Exception e) {
                                 throw new phyphoxFileException("Could not parse linewidth of input tag.", xpp.getLineNumber());
+                            }
+                        }
+                        if (at.attributes.containsKey("mapwidth")) {
+                            try {
+                                ge.setMapWidth(Integer.valueOf(at.attributes.get("mapwidth")), i/3);
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Could not parse mapWidth of input tag.", xpp.getLineNumber());
                             }
                         }
                     }

@@ -897,23 +897,29 @@ public class expView implements Serializable{
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
         transient private floatBufferRepresentation[] dataX; //The x data to be displayed
         transient private floatBufferRepresentation[] dataY; //The y data to be displayed
-        private double dataMinX, dataMaxX, dataMinY, dataMaxY;
+        private double dataMinX, dataMaxX, dataMinY, dataMaxY, dataMinZ, dataMaxZ;
 
         private boolean isExclusive = false;
         private int margin;
 
         private Vector<GraphView.Style> style = new Vector<>(); //Show lines instead of points?
+        private Vector<Integer> mapWidth = new Vector<>();
+        private Vector<Integer> colorScale = new Vector<>();
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
         private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
         private String labelY = null; //Label for the y-axis
+        private String labelZ = null; //Label for the z-axis
         private String unitX = null; //Label for the x-axis
         private String unitY = null; //Label for the y-axis
+        private String unitZ = null; //Label for the z-axis
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
+        private boolean logZ = false; //logarithmic scale for the z-axis?
         private int xPrecision = 3;
         private int yPrecision = 3;
+        private int zPrecision = 3;
         private Vector<Double> lineWidth = new Vector<>();
         private Vector<Integer> color = new Vector<>();
 
@@ -926,11 +932,15 @@ public class expView implements Serializable{
         GraphView.scaleMode scaleMaxX = GraphView.scaleMode.auto;
         GraphView.scaleMode scaleMinY = GraphView.scaleMode.auto;
         GraphView.scaleMode scaleMaxY = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMinZ = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMaxZ = GraphView.scaleMode.auto;
 
         double minX = 0.;
         double maxX = 0.;
         double minY = 0.;
         double maxY = 0.;
+        double minZ = 0.;
+        double maxZ = 0.;
 
         //Quite usual constructor...
         graphElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -949,6 +959,7 @@ public class expView implements Serializable{
                 color.add(res.getColor(R.color.highlight));
                 lineWidth.add(1.0);
                 style.add(GraphView.Style.lines);
+                mapWidth.add(0);
                 dataX = new floatBufferRepresentation[nCurves];
                 dataY = new floatBufferRepresentation[nCurves];
             }
@@ -994,6 +1005,23 @@ public class expView implements Serializable{
                 setStyle(style, i);
         }
 
+        protected void setColorScale(Vector<Integer> scale) {
+            this.colorScale = scale;
+            if (gv != null)
+                gv.setColorScale(scale);
+        }
+
+        protected void setMapWidth(int width, int i) {
+            this.mapWidth.set(i, width);
+            if (gv != null)
+                gv.setMapWidth(width, i);
+        }
+
+        protected void setMapWidth(int width) {
+            for (int i = 0; i < nCurves || i < historyLength; i++)
+                setMapWidth(width, i);
+        }
+
         public void setScaleModeX(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
             this.scaleMinX = minMode;
             this.scaleMaxX = maxMode;
@@ -1008,6 +1036,17 @@ public class expView implements Serializable{
             this.scaleMaxY = maxMode;
             this.minY = minV;
             this.maxY = maxV;
+            if (gv != null)
+                gv.setScaleModeY(minMode, minV, maxMode, maxV);
+        }
+
+        public void setScaleModeZ(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
+            this.scaleMinZ = minMode;
+            this.scaleMaxZ = maxMode;
+            this.minZ = minV;
+            this.maxZ = maxV;
+            if (gv != null)
+                gv.setScaleModeZ(minMode, minV, maxMode, maxV);
         }
 
         //Interface to set a history length
@@ -1022,29 +1061,35 @@ public class expView implements Serializable{
         }
 
         //Interface to set the axis labels.
-        protected void setLabel(String labelX, String labelY, String unitX, String unitY) {
+        protected void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ) {
             this.labelX = labelX;
             this.labelY = labelY;
+            this.labelZ = labelZ;
             this.unitX = unitX;
             this.unitY = unitY;
+            this.unitZ = unitZ;
             if (gv != null)
-                gv.setLabel(labelX, labelY, unitX, unitY);
+                gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);
         }
 
         //Interface to set log scales
-        protected void setLogScale(boolean logX, boolean logY) {
+        protected void setLogScale(boolean logX, boolean logY, boolean logZ) {
             this.logX = logX;
             this.logY = logY;
+            this.logZ = logZ;
         }
 
-        protected void setPrecision(int xPrecision, int yPrecision) {
+        protected void setPrecision(int xPrecision, int yPrecision, int zPrecision) {
             this.xPrecision = xPrecision;
             this.yPrecision = yPrecision;
+            this.zPrecision = zPrecision;
         }
 
         //Interface to set partial updates vs. full updates of the data sets
         protected void setPartialUpdate(boolean pu) {
             this.partialUpdate = pu;
+            if (gv != null)
+                gv.graphSetup.incrementalX = pu;
         }
 
         @Override
@@ -1087,9 +1132,13 @@ public class expView implements Serializable{
 
                 DataExport.ExportSet set = dataExport.new ExportSet(this.label);
                 for (int i = 0; i < inputs.size(); i+=2) {
-                    if (i+1 < inputs.size())
+                    if (i+1 < inputs.size() && inputs.get(i+1) != null)
                         set.addSource(this.labelX + (i > 1 ? " " + (i / 2 + 1) : "") + (unitX != null && !unitX.isEmpty() ? " (" + unitX +")" : ""), inputs.get(i+1));
-                    set.addSource(this.labelY + (i > 1 ? " " + (i / 2 + 1) : "") + (unitY != null && !unitY.isEmpty() ? " (" + unitY + ")" : ""), inputs.get(i));
+
+                    if (style.get(i/2) == GraphView.Style.mapZ)
+                        set.addSource((this.labelZ != null ? this.labelZ : "z") + (unitZ != null && !unitZ.isEmpty() ? " (" + unitZ + ")" : ""), inputs.get(i));
+                    else
+                        set.addSource(this.labelY + (i > 1 ? " " + (i / 2 + 1) : "") + (unitY != null && !unitY.isEmpty() ? " (" + unitY + ")" : ""), inputs.get(i));
                 }
                 dataExport.addSet(set);
 
@@ -1103,24 +1152,28 @@ public class expView implements Serializable{
                 gv.setCurves(nCurves);
             for (int i = 0; i < nCurves; i++) {
                 gv.setStyle(style.get(i), i);
+                gv.setMapWidth(mapWidth.get(i), i);
                 gv.setLineWidth(lineWidth.get(i), i);
                 gv.setColor(color.get(i), i);
             }
+            gv.graphSetup.incrementalX = partialUpdate;
             gv.setAspectRatio(aspectRatio);
+            gv.setColorScale(colorScale);
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
-            gv.setLabel(labelX, labelY, unitX, unitY);
-            gv.setLogScale(logX, logY);
+            gv.setScaleModeY(scaleMinZ, minZ, scaleMaxZ, maxZ);
+            gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);
+            gv.setLogScale(logX, logY, logZ);
             interactiveGV.allowLogX = logX;
             interactiveGV.allowLogY = logY;
-            gv.setPrecision(xPrecision, yPrecision);
+            gv.setPrecision(xPrecision, yPrecision, zPrecision);
 
             interactiveGV.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if (self.parent != null) {
                         if (isExclusive) {
-                            interactiveGV.leaveDialog(self.parent, partialUpdate, inputs.size() > 1 ? inputs.get(1) : null, inputs.size() > 0 ? inputs.get(0) : null, unitX, unitY);
+                            interactiveGV.leaveDialog(self.parent, inputs.size() > 1 ? inputs.get(1) : null, inputs.size() > 0 ? inputs.get(0) : null, unitX, unitY);
                         } else {
                             interactiveGV.requestFocus();
                             self.parent.requestExclusive(self);
@@ -1169,12 +1222,14 @@ public class expView implements Serializable{
                             dataX[i/2] = x.getFloatBufferBarAxis(lineWidth.get(i/2));
                         else
                             dataX[i/2] = x.getFloatBuffer();
-                        if (i == 0) {
-                            dataMinX = x.getMin();
-                            dataMaxX = x.getMax();
-                        } else {
-                            dataMinX = Math.min(dataMinX, x.getMin());
-                            dataMaxX = Math.max(dataMaxX, x.getMax());
+                        if (style.get(i/2) != GraphView.Style.mapZ) {
+                            if (i == 0) {
+                                dataMinX = x.getMin();
+                                dataMaxX = x.getMax();
+                            } else {
+                                dataMinX = Math.min(dataMinX, x.getMin());
+                                dataMaxX = Math.max(dataMaxX, x.getMax());
+                            }
                         }
                     } else {
                         dataX[i/2] = null;
@@ -1189,12 +1244,17 @@ public class expView implements Serializable{
                         dataY[i/2] = y.getFloatBufferBarValue();
                     else
                         dataY[i/2] = y.getFloatBuffer();
-                    if (i == 0) {
-                        dataMinY = y.getMin();
-                        dataMaxY = y.getMax();
+                    if (style.get(i/2) != GraphView.Style.mapZ) {
+                        if (i == 0) {
+                            dataMinY = y.getMin();
+                            dataMaxY = y.getMax();
+                        } else {
+                            dataMinY = Math.min(dataMinY, y.getMin());
+                            dataMaxY = Math.max(dataMaxY, y.getMax());
+                        }
                     } else {
-                        dataMinY = Math.min(dataMinY, y.getMin());
-                        dataMaxY = Math.max(dataMaxY, y.getMax());
+                        dataMinZ = y.getMin();
+                        dataMaxZ = y.getMax();
                     }
                 } else {
                     dataY[i/2] = null;
@@ -1227,7 +1287,7 @@ public class expView implements Serializable{
                 return;
             if (dataY[0] != null) {
                 if (dataX[0] != null) {
-                    gv.addGraphData(dataY, dataMinY, dataMaxY, dataX, dataMinX, dataMaxX);
+                    gv.addGraphData(dataY, dataMinY, dataMaxY, dataX, dataMinX, dataMaxX, dataMinZ, dataMaxZ);
                     dataX[0] = null;
                 } else
                     gv.addGraphData(dataY, dataMinY, dataMaxY);

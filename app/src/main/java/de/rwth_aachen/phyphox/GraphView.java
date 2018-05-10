@@ -16,6 +16,7 @@ import android.widget.RelativeLayout;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Vector;
 
 import static android.view.MotionEvent.INVALID_POINTER_ID;
 
@@ -23,7 +24,7 @@ import static android.view.MotionEvent.INVALID_POINTER_ID;
 
 public class GraphView extends View {
     public enum Style {
-        lines, dots, hbars, vbars, unknown;
+        lines, dots, hbars, vbars, mapXY, mapZ, unknown;
     }
 
     public static Style styleFromStr(String str) {
@@ -32,6 +33,8 @@ public class GraphView extends View {
             case "dots": return Style.dots;
             case "hbars": return Style.hbars;
             case "vbars": return Style.vbars;
+            case "map": return Style.mapXY;
+            case "mapZ": return Style.mapZ;
         }
         return Style.unknown;
     }
@@ -55,6 +58,7 @@ public class GraphView extends View {
     private double[] histMinX, histMaxX;
     private floatBufferRepresentation[] graphY; //The y data to be displayed
     private double[] histMinY, histMaxY;
+    private double histMinZ, histMaxZ;
 
     private double aspectRatio = 3.;
 
@@ -62,17 +66,24 @@ public class GraphView extends View {
     private int nCurves; //Tracks the number of entries in the history
 
     Style[] style; //Styles for each graph
+    int[] mapWidth; //MapWidth for each graph (if applicable)
+    Vector<Integer> colorScale = new Vector<>();
 
     private final static int maxXTics = 6; //Constant to set a target number of tics on the x axis
     private final static int maxYTics = 6; //Constant to set a target number of tics on the y axis
+    private final static int maxZTics = 6; //Constant to set a target number of tics on the y axis
     private String labelX = null; //Label for the x-axis
     private String labelY = null; //Label for the y-axis
+    private String labelZ = null; //Label for the y-axis
     private String unitX = null; //Label for the x-axis
     private String unitY = null; //Label for the y-axis
+    private String unitZ = null; //Label for the y-axis
     public boolean logX = false; //logarithmic scale for the x-axis?
     public boolean logY = false; //logarithmic scale for the y-axis?
+    public boolean logZ = false; //logarithmic scale for the y-axis?
     private int xPrecision = 3;
     private int yPrecision = 3;
+    private int zPrecision = 3;
 
     private double[] lineWidth;
     private int[] color;
@@ -85,11 +96,15 @@ public class GraphView extends View {
     scaleMode scaleMaxX = scaleMode.auto;
     scaleMode scaleMinY = scaleMode.auto;
     scaleMode scaleMaxY = scaleMode.auto;
+    scaleMode scaleMinZ = scaleMode.auto;
+    scaleMode scaleMaxZ = scaleMode.auto;
 
     double minX = 0.;
     double maxX = 0.;
     double minY = 0.;
     double maxY = 0.;
+    double minZ = 0.;
+    double maxZ = 0.;
 
     private TouchMode touchMode = TouchMode.off;
     double zoomMinX = Double.NaN;
@@ -246,25 +261,42 @@ public class GraphView extends View {
         double minVX = Double.NaN;
         double minVY = Double.NaN;
 
+        final int range = 200;
+
+        double searchRangeMaxX = Math.max(viewXToDataX(x+range), viewXToDataX(x-range));
+        double searchRangeMinX = Math.min(viewXToDataX(x+range), viewXToDataX(x-range));
+        double searchRangeMaxY = Math.max(viewYToDataY(y+range), viewYToDataY(y-range));
+        double searchRangeMinY = Math.min(viewYToDataY(y+range), viewYToDataY(y-range));
+
         for (CurveData cd : graphSetup.dataSets) {
+            if (cd.style == Style.mapZ)
+                continue;
+            double vxi, vyi, dx, dy, d;
+            int n = cd.n;
+            float[] xi = new float[n];
+            float[] yi = new float[n];
+            try {
+                cd.fbX.data.position(0);
+                cd.fbY.data.position(0);
+                cd.fbX.data.get(xi, cd.fbX.offset, n);
+                cd.fbY.data.get(yi, cd.fbY.offset, n);
+            } catch (Exception e) {
+                break;
+            }
             for (int i = 0; i < cd.n; i++) {
-                double xi, yi, vxi, vyi, dx, dy, d;
-                try {
-                    xi = cd.fbX.data.get(cd.fbX.offset + i);
-                    yi = cd.fbY.data.get(cd.fbY.offset + i);
-                } catch (Exception e) {
+                
+                if (xi[i] < searchRangeMinX || xi[i] > searchRangeMaxX || yi[i] < searchRangeMinY || yi[i] > searchRangeMaxY)
                     continue;
-                }
-                vxi = dataXToViewX(xi);
-                vyi = dataYToViewY(yi);
+                vxi = dataXToViewX(xi[i]);
+                vyi = dataYToViewY(yi[i]);
                 dx = vxi - x;
                 dy = vyi - y;
                 d = dx*dx+dy*dy;
-                if (d < minDist) {
+                if (d < range*range && d < minDist) {
                     minDist = d;
                     minIndex = i;
-                    minX = xi;
-                    minY = yi;
+                    minX = xi[i];
+                    minY = yi[i];
                     minVX = vxi;
                     minVY = vyi;
                 }
@@ -419,6 +451,12 @@ public class GraphView extends View {
         graphSetup.lineWidth.set(i, (float)lineWidth);
     }
 
+    public void setColorScale(Vector<Integer> scale) {
+        if (scale != null && scale.size() > 1) {
+            graphSetup.colorScale = scale;
+        }
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
@@ -451,6 +489,10 @@ public class GraphView extends View {
         graphSetup.style.set(i, style);
     }
 
+    public void setMapWidth(int width, int i) {
+        this.mapWidth[i] = width;
+    }
+
     //Interface to set the history length
     public void setHistoryLength(int length) {
         setCurves(length);
@@ -473,6 +515,9 @@ public class GraphView extends View {
         histMaxY = new double[n];
         color = new int[n];
         style = new Style[n];
+        mapWidth = new int[n];
+        for (int i = 0; i < n; i++)
+            mapWidth[i] = 0;
         lineWidth = new double[n];
         graphSetup.initSize(nCurves);
     }
@@ -509,12 +554,27 @@ public class GraphView extends View {
             maxY = Double.NEGATIVE_INFINITY;
     }
 
+    public void setScaleModeZ(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
+        scaleMinZ = minMode;
+        scaleMaxZ = maxMode;
+        if (minMode == scaleMode.fixed)
+            minZ = minV;
+        else
+            minZ = Double.POSITIVE_INFINITY;
+        if (maxMode == scaleMode.fixed)
+            maxZ = maxV;
+        else
+            maxZ = Double.NEGATIVE_INFINITY;
+    }
+
     //Rescale any non-fixed ranges
     public void rescale() {
         double dataMinX = Double.POSITIVE_INFINITY;
         double dataMaxX = Double.NEGATIVE_INFINITY;
         double dataMinY = Double.POSITIVE_INFINITY;
         double dataMaxY = Double.NEGATIVE_INFINITY;
+        double dataMinZ = Double.POSITIVE_INFINITY;
+        double dataMaxZ = Double.NEGATIVE_INFINITY;
 
         for (int i = 0; i < nCurves && i < historyLength; i++) {
             if (!Double.isInfinite(histMinX[i]) && histMinX[i] < dataMinX)
@@ -526,6 +586,10 @@ public class GraphView extends View {
             if (!Double.isInfinite(histMaxY[i]) && histMaxY[i] > dataMaxY)
                 dataMaxY = histMaxY[i];
         }
+        if (!Double.isInfinite(histMinZ))
+            dataMinZ = histMinZ;
+        if (!Double.isInfinite(histMaxZ))
+            dataMaxZ = histMaxZ;
 
         if (scaleMinX == scaleMode.auto || (scaleMinX == scaleMode.extend && minX > dataMinX))
             minX = dataMinX;
@@ -535,6 +599,10 @@ public class GraphView extends View {
             minY = dataMinY;
         if (scaleMaxY == scaleMode.auto || (scaleMaxY == scaleMode.extend && maxY < dataMaxY))
             maxY = dataMaxY;
+        if (scaleMinZ == scaleMode.auto || (scaleMinZ == scaleMode.extend && minZ > dataMinZ))
+            minZ = dataMinZ;
+        if (scaleMaxZ == scaleMode.auto || (scaleMaxZ == scaleMode.extend && maxZ < dataMaxZ))
+            maxZ = dataMaxZ;
 
         if (!Double.isNaN(zoomMinX) && !Double.isNaN(zoomMaxX)) {
             if (zoomFollows) {
@@ -546,7 +614,7 @@ public class GraphView extends View {
     }
 
     //Add a new graph and (if enabled) push the old graphs back into history
-    public void addGraphData(floatBufferRepresentation[] graphY, double minY, double maxY, floatBufferRepresentation[] graphX, double minX, double maxX) {
+    public void addGraphData(floatBufferRepresentation[] graphY, double minY, double maxY, floatBufferRepresentation[] graphX, double minX, double maxX, double minZ, double maxZ) {
         if (graphY == null || graphX == null || graphX[0] == null || graphY[0] == null)
             return;
 
@@ -578,8 +646,10 @@ public class GraphView extends View {
         this.histMaxX[0] = maxX;
         this.histMinY[0] = minY;
         this.histMaxY[0] = maxY;
+        this.histMinZ = minZ;
+        this.histMaxZ = maxZ;
 
-        graphSetup.setData(this.graphX, this.graphY, nCurves, plotRenderer);
+        graphSetup.setData(this.graphX, this.graphY, nCurves, style, mapWidth, plotRenderer);
 
         //Rescale and invalidate to update everything
         this.rescale();
@@ -592,7 +662,7 @@ public class GraphView extends View {
             return;
         //Create standard x data with indices
         if (graphY[0].size == 0) {
-            addGraphData(graphY, min, max, graphY, min, max);
+            addGraphData(graphY, min, max, graphY, min, max, min, max);
             return;
         }
         FloatBuffer data = ByteBuffer.allocateDirect(graphY[0].size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -606,7 +676,7 @@ public class GraphView extends View {
         graphX[0] = new floatBufferRepresentation(data, 0, graphY[0].size);
 
         //Call the full addGraphData with the artificial x data
-        addGraphData(graphY, min, max, graphX, 0, graphY[0].size-1);
+        addGraphData(graphY, min, max, graphX, 0, graphY[0].size-1, Double.NaN, Double.NaN);
     }
 
     public String getUnitX() {
@@ -615,6 +685,10 @@ public class GraphView extends View {
 
     public String getUnitY() {
         return unitY;
+    }
+
+    public String getUnitZ() {
+        return unitZ;
     }
 
     public String getLabelAndUnitX() {
@@ -631,25 +705,37 @@ public class GraphView extends View {
             return labelY;
     }
 
+    public String getLabelAndUnitZ() {
+        if (unitZ != null && !unitZ.isEmpty())
+            return labelZ +  " (" + unitZ + ")";
+        else
+            return labelZ;
+    }
+
     //Interface to set axis labels
-    public void setLabel(String labelX, String labelY, String unitX, String unitY) {
+    public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ) {
         this.labelX = labelX;
         this.labelY = labelY;
+        this.labelZ = labelZ;
         this.unitX = unitX;
         this.unitY = unitY;
+        this.unitZ = unitZ;
     }
 
     //Interface to configure logarithmic scales
-    public void setLogScale(boolean logX, boolean logY) {
+    public void setLogScale(boolean logX, boolean logY, boolean logZ) {
         this.logX = logX;
         this.logY = logY;
+        this.logZ = logZ;
         graphSetup.logX = logX;
         graphSetup.logY = logY;
+        graphSetup.logZ = logZ;
     }
 
-    public void setPrecision(int xPrecision, int yPrecision) {
+    public void setPrecision(int xPrecision, int yPrecision, int zPrecision) {
         this.xPrecision = xPrecision;
         this.yPrecision = yPrecision;
+        this.zPrecision = zPrecision;
     }
 
     //Helper function that figures out where to put tics on an axis
@@ -695,8 +781,8 @@ public class GraphView extends View {
                 while (digitRange > maxTics * magStep) //Do we have more than max tics? Increase step size then.
                     magStep++;
                 double magFactor = Math.pow(10, magStep);
-                tics = new double[digitRange/magStep];
-                for (int i = 0; i < digitRange / magStep; i++) { //Fill the array with powers of ten
+                tics = new double[digitRange/magStep+1];
+                for (int i = 0; i <= digitRange / magStep; i++) { //Fill the array with powers of ten
                     tics[i] = first;
                     first *= magFactor;
                 }
@@ -750,9 +836,16 @@ public class GraphView extends View {
 
     public double dataYToViewY(double dy) {
         if (logY)
-            return graphSetup.plotBoundH-(Math.log(dy/graphSetup.minY))/(Math.log(graphSetup.maxY/graphSetup.minY))*(graphSetup.plotBoundH-1);
+            return graphSetup.plotBoundH+graphSetup.plotBoundT-(Math.log(dy/graphSetup.minY))/(Math.log(graphSetup.maxY/graphSetup.minY))*(graphSetup.plotBoundH-1);
         else
-            return graphSetup.plotBoundH-(dy-graphSetup.minY)/(graphSetup.maxY-graphSetup.minY)*(graphSetup.plotBoundH-1);
+            return graphSetup.plotBoundH+graphSetup.plotBoundT-(dy-graphSetup.minY)/(graphSetup.maxY-graphSetup.minY)*(graphSetup.plotBoundH-1);
+    }
+
+    public double dataZToViewX(double dz) {
+        if (logZ)
+            return  (Math.log(dz/graphSetup.minZ))/(Math.log(graphSetup.maxZ/graphSetup.minZ))*(graphSetup.plotBoundW-1)+graphSetup.plotBoundL;
+        else
+            return (dz-graphSetup.minZ)/(graphSetup.maxZ-graphSetup.minZ)*(graphSetup.plotBoundW-1)+graphSetup.plotBoundL;
     }
 
     public double viewXToDataX(double vx) {
@@ -764,9 +857,9 @@ public class GraphView extends View {
 
     public double viewYToDataY(double vy) {
         if (logY)
-            return Math.pow((graphSetup.maxY/graphSetup.minY),(graphSetup.plotBoundH-vy)/(graphSetup.plotBoundH-1))*graphSetup.minY;
+            return Math.pow((graphSetup.maxY/graphSetup.minY),(graphSetup.plotBoundH+graphSetup.plotBoundT-vy)/(graphSetup.plotBoundH-1))*graphSetup.minY;
         else
-            return graphSetup.minY + (graphSetup.plotBoundH-vy)*(graphSetup.maxY-graphSetup.minY)/(graphSetup.plotBoundH-1);
+            return graphSetup.minY + (graphSetup.plotBoundH+graphSetup.plotBoundT-vy)*(graphSetup.maxY-graphSetup.minY)/(graphSetup.plotBoundH-1);
     }
 
     @Override
@@ -782,6 +875,8 @@ public class GraphView extends View {
         double workingMaxX = Double.isNaN(zoomMaxX) ? maxX : zoomMaxX;
         double workingMinY = Double.isNaN(zoomMinY) ? minY : zoomMinY;
         double workingMaxY = Double.isNaN(zoomMaxY) ? maxY : zoomMaxY;
+        double workingMinZ = minZ;
+        double workingMaxZ = maxZ;
 
         //Stretch x slightly to give a little headroom... Also force a range if it is zero
         if (!logX) {
@@ -807,20 +902,33 @@ public class GraphView extends View {
             workingMinX = 0.000001;
         if (logY && workingMinY < 0.000001)
             workingMinY = 0.000001;
+        if (logZ && workingMinZ < 0.000001)
+            workingMinZ = 0.000001;
+
+        //Do we need a zscale?
+        boolean zScale = false;
+        for (int i = 0; i < style.length; i++) {
+            if (style[i] == Style.mapXY)
+                zScale = true;
+        }
 
         //Generate the tics
         double[] xTics = getTics(workingMinX, workingMaxX, maxXTics, logX);
         double[] yTics = getTics(workingMinY, workingMaxY, maxYTics, logY);
+        double[] zTics = null;
+        if (zScale)
+            zTics = getTics(workingMinZ, workingMaxZ, maxZTics, logZ);
 
         //Calculate area...
         int w = this.getWidth();
         int h = this.getHeight();
 
         //Consider room for the labels and the tics
-        int graphB = (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2);
+        int graphB = (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.3);
         if (labelX != null)
-            graphB += (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2);
+            graphB += (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.3);
         int graphL = 0;
+        int graphT = 0;
         for (double tic : yTics) {
             double tw = paint.measureText(String.format("%."+yPrecision+"g", tic))+res.getDimension(R.dimen.graph_font)/2.;
             if (tw > graphL)
@@ -832,10 +940,21 @@ public class GraphView extends View {
         int graphW = w-graphL;
         int graphH = h-graphB;
 
+        //Calculate space for z scale if necessary
+        int zScaleH = 0;
+        if (zScale) {
+            zScaleH = (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2);
+            graphT += 3.5*zScaleH;
+            graphH -= graphT;
+        }
+
         //Report axis ranges to graph
-        graphSetup.setDataBounds((float)workingMinX, (float)workingMaxX, (float)workingMinY, (float)workingMaxY);
-        graphSetup.setPlotBounds(graphL, 0, graphW, graphH);
-        graphSetup.setTics(xTics, yTics, plotRenderer);
+        graphSetup.setDataBounds((float)workingMinX, (float)workingMaxX, (float)workingMinY, (float)workingMaxY, (float)workingMinZ, (float)workingMaxZ);
+        graphSetup.setPlotBounds(graphL, graphT, graphW, graphH);
+        graphSetup.setZAxisBounds(graphL, 0, graphW, zScaleH);
+        graphSetup.setTics(xTics, yTics, zTics, plotRenderer);
+        if (zTics != null)
+            for (int i = 0; i < zTics.length; i++)
 
         //Labels for the tics
         paint.setColor(res.getColor(R.color.mainExp));
@@ -857,16 +976,28 @@ public class GraphView extends View {
             double y = dataYToViewY(tic);
             canvas.drawText(String.format("%."+yPrecision+"g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
         }
+        if (zScale) {
+            paint.setTextAlign(Paint.Align.CENTER);
+            for (double tic : zTics) {
+                if (tic < workingMinZ || tic > workingMaxZ)
+                    continue;
+                double x = dataZToViewX(tic);
+                canvas.drawText(String.format("%."+zPrecision+"g", tic), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            }
+        }
 
         //Labels
         paint.setTextAlign(Paint.Align.CENTER);
         if (labelX != null)
-            canvas.drawText(getLabelAndUnitX(), graphL+graphW/2, h-(int)(res.getDimensionPixelSize(R.dimen.graph_font)*0.1), paint);
+            canvas.drawText(getLabelAndUnitX(), graphL+graphW/2, h-(int)(res.getDimensionPixelSize(R.dimen.graph_font)*0.3), paint);
         if (labelY != null) {
             canvas.save();
-            canvas.rotate(-90, res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2);
-            canvas.drawText(getLabelAndUnitY(), res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2, paint);
+            canvas.rotate(-90, res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2 + graphT);
+            canvas.drawText(getLabelAndUnitY(), res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2 + graphT, paint);
             canvas.restore();
+        }
+        if (zScale && labelZ != null) {
+            canvas.drawText(getLabelAndUnitZ(), graphL+graphW/2, zScaleH+(int)(res.getDimensionPixelSize(R.dimen.graph_font)*2.4), paint);
         }
 
         //Draw rect around graph
@@ -875,7 +1006,9 @@ public class GraphView extends View {
         paint.setAlpha(255);
         paint.setStrokeCap(Paint.Cap.SQUARE);
         paint.setStyle(Paint.Style.STROKE);
-        canvas.drawRect(graphL + 1, 1, w - 1, h - graphB - 1, paint);
+        canvas.drawRect(graphL + 1, graphT+1, w - 1, h - graphB - 1, paint);
+        if (zScale)
+            canvas.drawRect(graphL + 1, 1, w - 1, zScaleH - 1, paint);
 
         //Update the marker if a datapoint has been selected
         for (int i = 0; i < maxPicked; i++) {

@@ -117,12 +117,17 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         PopupMenu popup = new PopupMenu(getContext(), findViewById(R.id.graph_tools_more));
                         popup.getMenuInflater().inflate(R.menu.graph_tools_menu, popup.getMenu());
                         popup.getMenu().findItem(R.id.graph_tools_follow).setChecked(graphView.zoomFollows);
+                        popup.getMenu().findItem(R.id.graph_tools_follow).setVisible(graphView.graphSetup.incrementalX);
                         popup.getMenu().findItem(R.id.graph_tools_export).setVisible(dataExport != null);
                         popup.getMenu().findItem(R.id.graph_tools_log_x).setVisible(allowLogX);
                         popup.getMenu().findItem(R.id.graph_tools_log_y).setVisible(allowLogY);
                         popup.getMenu().findItem(R.id.graph_tools_log_x).setChecked(graphView.logX);
                         popup.getMenu().findItem(R.id.graph_tools_log_y).setChecked(graphView.logY);
-                        popup.getMenu().findItem(R.id.graph_tools_linear_fit).setVisible(!(allowLogX || allowLogY));
+                        boolean hasMap = false;
+                        for (GraphView.Style style : graphView.style)
+                            if (style == GraphView.Style.mapXY)
+                                hasMap = true;
+                        popup.getMenu().findItem(R.id.graph_tools_linear_fit).setVisible(!(allowLogX || allowLogY || hasMap));
 
                         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             @Override
@@ -163,11 +168,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                         dataExport.export(act, true);
                                         break;
                                     case R.id.graph_tools_log_x:
-                                        graphView.setLogScale(!graphView.logX, graphView.logY);
+                                        graphView.setLogScale(!graphView.logX, graphView.logY, graphView.logZ);
                                         graphView.invalidate();
                                         break;
                                     case R.id.graph_tools_log_y:
-                                        graphView.setLogScale(graphView.logX, !graphView.logY);
+                                        graphView.setLogScale(graphView.logX, !graphView.logY, graphView.logZ);
                                         graphView.invalidate();
                                         break;
                                 }
@@ -216,7 +221,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         super.onLayout(changed, left, top, right, bottom);
     }
 
-    public void leaveDialog(final expViewFragment parent, boolean canFollow, final String bufferX, final String bufferY, final String unitX, final String unitY) {
+    public void leaveDialog(final expViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
         if (Double.isNaN(graphView.zoomMinX) && Double.isNaN(graphView.zoomMinY) && Double.isNaN(graphView.zoomMaxX) && Double.isNaN(graphView.zoomMaxY)) {
             parent.leaveExclusive();
             return;
@@ -235,8 +240,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final Spinner sApplyY = (Spinner) dialogView.findViewById(R.id.applyZoomYApplyTo);
         tvLabelX.setText(graphView.getLabelAndUnitX());
         tvLabelY.setText(graphView.getLabelAndUnitY());
-        rbFollowX.setVisibility(canFollow ? VISIBLE : GONE);
-        if (graphView.zoomFollows && canFollow && !Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
+        rbFollowX.setVisibility(graphView.graphSetup.incrementalX ? VISIBLE : GONE);
+        if (graphView.zoomFollows && graphView.graphSetup.incrementalX && !Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
             rbFollowX.setChecked(true);
         } else if (!Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
             rbKeepX.setChecked(true);
