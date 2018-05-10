@@ -44,7 +44,8 @@ public class GraphView extends View {
     }
 
     interface PointInfo {
-        void showPointInfo(float viewX, float viewY, float pointX, float pointY, int index);
+        void showPointInfo(float viewX, float viewY, float pointX, float pointY, float pointZ, int index);
+        void hidePointInfo(int index);
     }
 
     private PointInfo pointInfoListener= null;
@@ -230,7 +231,7 @@ public class GraphView extends View {
     public void resetPicks() {
         for (int i = 0; i < maxPicked; i++) {
             pickedPointIndex[i] = -1;
-            pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, i);
+            pointInfoListener.hidePointInfo(i);
         }
     }
 
@@ -268,35 +269,52 @@ public class GraphView extends View {
         double searchRangeMaxY = Math.max(viewYToDataY(y+range), viewYToDataY(y-range));
         double searchRangeMinY = Math.min(viewYToDataY(y+range), viewYToDataY(y-range));
 
-        for (CurveData cd : graphSetup.dataSets) {
+        for (int i = 0; i < graphSetup.dataSets.size(); i++) {
+            CurveData cd = graphSetup.dataSets.get(i);
             if (cd.style == Style.mapZ)
                 continue;
             double vxi, vyi, dx, dy, d;
             int n = cd.n;
             float[] xi = new float[n];
             float[] yi = new float[n];
+            float[] zi = null;
+            if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ)
+                zi = new float[n];
             try {
                 cd.fbX.data.position(0);
                 cd.fbY.data.position(0);
                 cd.fbX.data.get(xi, cd.fbX.offset, n);
                 cd.fbY.data.get(yi, cd.fbY.offset, n);
+                if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ) {
+                    graphSetup.dataSets.get(i+1).fbY.data.position(0);
+                    graphSetup.dataSets.get(i+1).fbY.data.get(zi, graphSetup.dataSets.get(i+1).fbY.offset, n);
+                }
             } catch (Exception e) {
                 break;
             }
-            for (int i = 0; i < cd.n; i++) {
-                
-                if (xi[i] < searchRangeMinX || xi[i] > searchRangeMaxX || yi[i] < searchRangeMinY || yi[i] > searchRangeMaxY)
+            for (int j = 0; j < cd.n; j++) {
+
+                if (cd.style == Style.hbars || cd.style == Style.vbars) {
+                    if (j % 6 != 2 && j % 6 != 3)
+                        continue;
+                }
+
+                if (xi[j] < searchRangeMinX || xi[j] > searchRangeMaxX || yi[j] < searchRangeMinY || yi[j] > searchRangeMaxY)
                     continue;
-                vxi = dataXToViewX(xi[i]);
-                vyi = dataYToViewY(yi[i]);
+                vxi = dataXToViewX(xi[j]);
+                vyi = dataYToViewY(yi[j]);
                 dx = vxi - x;
                 dy = vyi - y;
                 d = dx*dx+dy*dy;
                 if (d < range*range && d < minDist) {
                     minDist = d;
-                    minIndex = i;
-                    minX = xi[i];
-                    minY = yi[i];
+                    minIndex = j;
+                    minX = xi[j];
+                    minY = yi[j];
+                    if (zi != null)
+                        minZ = zi[j];
+                    else
+                        minZ = Double.NaN;
                     minVX = vxi;
                     minVY = vyi;
                 }
@@ -304,7 +322,7 @@ public class GraphView extends View {
         }
 
 
-        pointInfoListener.showPointInfo((float)minVX, (float)minVY, (float)minX, (float)minY, index);
+        pointInfoListener.showPointInfo((float)minVX, (float)minVY, (float)minX, (float)minY, (float)minZ, index);
         pickedPointIndex[index] = minIndex;
     }
 
@@ -330,7 +348,7 @@ public class GraphView extends View {
                 pickYStart = y;
 
                 pickedPointIndex[1] = -1;
-                pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, 1);
+                pointInfoListener.hidePointInfo(1);
                 highlightNearestPoint(x, y, 0);
 
                 getParent().requestDisallowInterceptTouchEvent(true);
@@ -870,6 +888,10 @@ public class GraphView extends View {
         Resources res = getResources();
 
         paint.setTextSize(res.getDimension(R.dimen.graph_font));
+        paint.setColor(res.getColor(R.color.mainExp));
+        paint.setStrokeWidth(1);
+        paint.setAlpha(255);
+        paint.setStyle(Paint.Style.FILL);
 
         double workingMinX = Double.isNaN(zoomMinX) ? minX : zoomMinX;
         double workingMaxX = Double.isNaN(zoomMaxX) ? maxX : zoomMaxX;
@@ -957,11 +979,6 @@ public class GraphView extends View {
             for (int i = 0; i < zTics.length; i++)
 
         //Labels for the tics
-        paint.setColor(res.getColor(R.color.mainExp));
-        paint.setStrokeWidth(1);
-        paint.setAlpha(255);
-        paint.setStyle(Paint.Style.FILL);
-
         paint.setTextAlign(Paint.Align.CENTER);
         for (double tic : xTics) {
             if (tic < workingMinX || tic > workingMaxX)
@@ -1013,20 +1030,25 @@ public class GraphView extends View {
         //Update the marker if a datapoint has been selected
         for (int i = 0; i < maxPicked; i++) {
             if (pickedPointIndex[i] >= 0) {
-                double xi, yi, vxi, vyi, d;
+                double xi, yi, zi, vxi, vyi, d;
                 try {
                     xi = graphSetup.dataSets.get(0).fbX.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex[i]);
                     yi = graphSetup.dataSets.get(0).fbY.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex[i]);
 
+                    if (graphSetup.dataSets.size() > 1 && graphSetup.dataSets.get(1).style == Style.mapZ) {
+                        zi = graphSetup.dataSets.get(1).fbY.data.get(graphSetup.dataSets.get(1).fbX.offset + pickedPointIndex[i]);
+                    } else
+                        zi = Double.NaN;
+
                     vxi = dataXToViewX(xi);
                     vyi = dataYToViewY(yi);
 
-                    pointInfoListener.showPointInfo((float) vxi, (float) vyi, (float) xi, (float) yi, i);
+                    pointInfoListener.showPointInfo((float) vxi, (float) vyi, (float) xi, (float) yi, (float) zi, i);
                 } catch (Exception e) {
-                    pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, i);
+                    pointInfoListener.hidePointInfo(i);
                 }
             } else {
-                pointInfoListener.showPointInfo(Float.NaN, Float.NaN, Float.NaN, Float.NaN, i);
+                pointInfoListener.hidePointInfo(i);
             }
         }
 

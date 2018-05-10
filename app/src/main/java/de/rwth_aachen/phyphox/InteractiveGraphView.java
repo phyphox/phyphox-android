@@ -51,7 +51,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private class Marker {
         boolean active = false;
         float viewX, viewY;
-        float dataX, dataY;
+        float dataX, dataY, dataZ;
 
         Marker() {
         }
@@ -61,7 +61,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             updateInfo();
         }
 
-        public void set(float viewX, float viewY, float dataX, float dataY) {
+        public void set(float viewX, float viewY, float dataX, float dataY, float dataZ) {
             linearRegression = false;
 
             active = true;
@@ -69,6 +69,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             this.viewY = viewY;
             this.dataX = dataX;
             this.dataY = dataY;
+            this.dataZ = dataZ;
 
             updateInfo();
         }
@@ -446,6 +447,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             sb.append("\n    ");
             sb.append(Math.abs(marker[0].dataY - marker[1].dataY));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+            if (!Double.isNaN(marker[0].dataZ) && !Double.isNaN(marker[0].dataZ)) {
+                sb.append("\n    ");
+                sb.append(Math.abs(marker[0].dataZ - marker[1].dataZ));
+                sb.append(graphView.getUnitZ() != null && !graphView.getUnitZ().isEmpty() ? " " + graphView.getUnitZ() : "");
+            }
             sb.append("\n");
             sb.append(getResources().getString(R.string.graph_slope_label));
             sb.append("\n    ");
@@ -483,6 +489,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             sb.append("\n    ");
             sb.append(activeMarker.dataY);
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+            if (!Double.isNaN(activeMarker.dataZ)) {
+                sb.append("\n    ");
+                sb.append(activeMarker.dataZ);
+                sb.append(graphView.getUnitZ() != null && !graphView.getUnitZ().isEmpty() ? " " + graphView.getUnitZ() : "");
+            }
 
 
             setPopupInfo(infoX, infoY, sb.toString());
@@ -493,7 +504,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         }
     }
 
-    public void showPointInfo(float viewX, float viewY, float pointX, float pointY, int index) {
+    public void hidePointInfo(int index) {
+        marker[index].remove();
+    }
+
+    public void showPointInfo(float viewX, float viewY, float pointX, float pointY, float pointZ, int index) {
         if (index >= markerMax)
             return;
         if (Float.isInfinite(viewX) || Float.isNaN(viewX) || Float.isInfinite(viewY) || Float.isNaN(viewY)) {
@@ -501,7 +516,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             return;
         }
 
-        marker[index].set(viewX, viewY, pointX, pointY);
+        marker[index].set(viewX, viewY, pointX, pointY, pointZ);
     }
 
     public void stop() {
