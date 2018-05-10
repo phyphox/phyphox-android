@@ -1260,6 +1260,70 @@ public class Analysis {
         }
     }
 
+    //Reduce: Combine neighboring values to a smaller array by an integer factor, either skipping values inbetween or summing them
+    public static class reduceAM extends analysisModule implements Serializable {
+
+        boolean averageX = false;
+        boolean sumY = false;
+        boolean averageY = false;
+
+        protected reduceAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean averageX, boolean sumY, boolean averageY) {
+            super(experiment, inputs, outputs);
+            this.averageX = averageX;
+            this.sumY = sumY;
+            this.averageY = averageY;
+        }
+
+        @Override
+        protected void update() {
+            int factor = 1;
+            if (inputs.size() > 0 && inputs.get(0) != null)
+                factor = (int)Math.round(inputs.get(0).getValue());
+
+            Iterator itx = null;
+            Iterator ity = null;
+            if (inputs.size() > 1 && inputs.get(1) != null)
+                itx = inputs.get(1).getIterator();
+            else
+                return;
+
+            if (inputs.size() > 2 && inputs.get(2) != null)
+                ity = inputs.get(2).getIterator();
+
+            while (itx.hasNext()) {
+                double newx = 0.;
+                double newy = 0.;
+                for (int i = 0; i < factor; i++) {
+                    if (!itx.hasNext())
+                        break;
+                    double x = (double)itx.next();
+                    double y;
+                    if (ity.hasNext())
+                        y = (double)ity.next();
+                    else
+                        y = 0.;
+                    if (i == 0) {
+                        newx = x;
+                        newy = y;
+                    } else {
+                        if (sumY || averageY)
+                            newy += y;
+                        if (averageX)
+                            newx += x;
+                    }
+                }
+                if (averageX)
+                    newx /= (double)factor;
+                if (averageY)
+                    newy /= (double)factor;
+
+                outputs.get(0).append(newx);
+                outputs.get(1).append(newy);
+            }
+
+        }
+    }
+
     //Calculate FFT of single input
     //If the input length is not a power of two the input will be filled with zeros until it is a power of two
     public static class fftAM extends analysisModule implements Serializable {

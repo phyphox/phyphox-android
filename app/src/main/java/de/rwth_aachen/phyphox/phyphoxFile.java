@@ -1983,6 +1983,25 @@ public abstract class phyphoxFile {
 
                     experiment.analysis.add(new Analysis.appendAM(experiment, inputs, outputs));
                 } break;
+                case "reduce": { //Reduce number of entries in a buffer
+
+                    boolean averageX = getBooleanAttribute("averageX", false);
+                    boolean sumY= getBooleanAttribute("sumY", false);
+                    boolean averageY = getBooleanAttribute("averageY", false);
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "factor"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.reduceAM(experiment, inputs, outputs, averageX, sumY, averageY));
+                } break;
                 case "fft": { //Fourier transform
 
                     ioBlockParser.ioMapping[] inputMapping = {
