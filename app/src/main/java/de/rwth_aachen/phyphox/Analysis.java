@@ -2,7 +2,10 @@ package de.rwth_aachen.phyphox;
 
 import android.util.Log;
 
+import org.apache.poi.util.ArrayUtil;
+
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
@@ -12,113 +15,11 @@ import java.util.regex.Matcher;
 
 public class Analysis {
 
-    public static class FFT implements Serializable {
-        private int n, logn; //input size, power-of-two filled size, log2 of input size (integer)
-        private double [] cos, sin; //Lookup table
-
-        public int np2;
-
-        FFT() {
-            n = 0;
-        }
-
-        public void prepare(int n) {
-            this.n = n;
-            if (n < 2)
-                return;
-
-            logn = (int)(Math.log(n)/Math.log(2)); //log of input size
-            if (n != (1 << logn)) {
-                logn++;
-                np2 = (1 << logn); //power of two after zero filling
-            } else
-                np2 = n; //n is already power of two
-
-            //Create buffer of sine and cosine values
-            cos = new double[np2/2];
-            sin = new double[np2/2];
-            for (int i = 0; i < np2 / 2; i++) {
-                cos[i] = Math.cos(-2 * Math.PI * i / np2);
-                sin[i] = Math.sin(-2 * Math.PI * i / np2);
-            }
-        }
-
-        public void calculate(Double[] x, Double[] y) {
-            if (n < 2)
-                return;
-
-            /***************************************************************
-             * fft.c
-             * Douglas L. Jones
-             * University of Illinois at Urbana-Champaign
-             * January 19, 1992
-             * http://cnx.rice.edu/content/m12016/latest/
-             * <p/>
-             * fft: in-place radix-2 DIT DFT of a complex input
-             * <p/>
-             * input:
-             * n: length of FFT: must be a power of two
-             * m: n = 2**m
-             * input/output
-             * x: double array of length n with real part of data
-             * y: double array of length n with imag part of data
-             * <p/>
-             * Permission to copy and use this program is granted
-             * as long as this header is included.
-             ****************************************************************/
-
-            int j, k, n1, n2, a;
-            double c, s, t1, t2;
-
-            j = 0; /* bit-reverse */
-            n2 = np2 / 2;
-            for(int i = 1; i < np2 - 1; i++)
-
-            {
-                n1 = n2;
-                while (j >= n1) {
-                    j = j - n1;
-                    n1 = n1 / 2;
-                }
-                j = j + n1;
-
-                if (i < j) {
-                    t1 = x[i];
-                    x[i] = x[j];
-                    x[j] = t1;
-                    t1 = y[i];
-                    y[i] = y[j];
-                    y[j] = t1;
-                }
-            }
-
-            n2 = 1;
-
-            for(int i = 0; i < logn; i++)
-
-            {
-                n1 = n2;
-                n2 = n2 + n2;
-                a = 0;
-
-                for (j = 0; j < n1; j++) {
-                    c = cos[a];
-                    s = sin[a];
-                    a += 1 << (logn - i - 1);
-
-                    for (k = j; k < np2; k = k + n2) {
-                        t1 = c * x[k + n1] - s * y[k + n1];
-                        t2 = s * x[k + n1] + c * y[k + n1];
-                        x[k + n1] = x[k] - t1;
-                        y[k + n1] = y[k] - t2;
-                        x[k] = x[k] + t1;
-                        y[k] = y[k] + t2;
-                    }
-                }
-            }
-        }
-
+    static {
+        System.loadLibrary("fftw3wrapper");
     }
+
+    public static native void fftw3complex(float[] xy, int n);
 
     //analysisModule is is the prototype from which each analysis module inherits its interface
     public static class analysisModule implements Serializable {
@@ -1327,48 +1228,39 @@ public class Analysis {
     //Calculate FFT of single input
     //If the input length is not a power of two the input will be filled with zeros until it is a power of two
     public static class fftAM extends analysisModule implements Serializable {
-        private FFT fft;
 
         protected fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
-            fft = new FFT();
-
-            useArray = true;
         }
 
         @Override
         protected void update() {
-            int size = inputArrays.get(0).length;
+
+            int size = inputs.get(0).getFilledSize();
             if (size < 2)
                 return;
 
-            if (fft.n != size) {
-                fft.prepare(size);
+            final float xy[] = new float[2*size];
+
+            Iterator<Double> ix = inputs.get(0).getIterator();
+            Iterator<Double> iy = null;
+            if (inputs.size() > 1)
+                iy = inputs.get(1).getIterator();
+
+            int xyi = 0;
+            while (ix.hasNext()) {
+                xy[xyi++] = ix.next().floatValue();
+                xy[xyi++] = (iy != null && iy.hasNext() ? iy.next().floatValue() : 0.f);
             }
 
-            Double x[] = Arrays.copyOf(inputArrays.get(0), fft.np2);
-            Double y[];
-            if (inputArrays.size() > 1)
-                y = Arrays.copyOf(inputArrays.get(1), fft.np2);
-            else
-                y = new Double[fft.np2];
-
-            //Fill any unused inputs with zeros
-            for (int i = 0; i < fft.np2; i++) {
-                if (x[i] == null)
-                    x[i] = 0.;
-                if (y[i] == null)
-                    y[i] = 0.;
-            }
-
-            fft.calculate(x, y);
+            fftw3complex(xy, size);
 
             //Append the real part of the result to output1 and the imaginary part to output2 (if used)
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i+1 < size; i+=2) {
                 if (outputs.size() > 0 && outputs.get(0) != null)
-                outputs.get(0).append(x[i]);
+                outputs.get(0).append(xy[2*i]);
                 if (outputs.size() > 1 && outputs.get(1) != null)
-                    outputs.get(1).append(y[i]);
+                    outputs.get(1).append(xy[2*i+1]);
             }
         }
     }
