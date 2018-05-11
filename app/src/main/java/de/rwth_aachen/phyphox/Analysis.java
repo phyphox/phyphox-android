@@ -20,6 +20,8 @@ public class Analysis {
     }
 
     public static native void fftw3complex(float[] xy, int n);
+    public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
+    public static native void fftw3autocorrelation(float[] x, int n);
 
     //analysisModule is is the prototype from which each analysis module inherits its interface
     public static class analysisModule implements Serializable {
@@ -1231,34 +1233,33 @@ public class Analysis {
 
         protected fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
+
+            useArray = true;
         }
 
         @Override
         protected void update() {
 
-            int size = inputs.get(0).getFilledSize();
+            if (inputArrays.size() == 0)
+                return;
+
+            int size = inputArraySizes.get(0);
             if (size < 2)
                 return;
 
             final float xy[] = new float[2*size];
 
-            Iterator<Double> ix = inputs.get(0).getIterator();
-            Iterator<Double> iy = null;
-            if (inputs.size() > 1)
-                iy = inputs.get(1).getIterator();
-
-            int xyi = 0;
-            while (ix.hasNext()) {
-                xy[xyi++] = ix.next().floatValue();
-                xy[xyi++] = (iy != null && iy.hasNext() ? iy.next().floatValue() : 0.f);
+            for (int i = 0; i < size; i++) {
+                xy[2*i] = inputArrays.get(0)[i].floatValue();
+                xy[2*i+1] = (inputArrays.size() > 1 && inputArraySizes.get(1) > i ? inputArrays.get(1)[i].floatValue() : 0.f);
             }
 
             fftw3complex(xy, size);
 
             //Append the real part of the result to output1 and the imaginary part to output2 (if used)
-            for (int i = 0; i+1 < size; i+=2) {
+            for (int i = 0; i < size; i++) {
                 if (outputs.size() > 0 && outputs.get(0) != null)
-                outputs.get(0).append(xy[2*i]);
+                    outputs.get(0).append(xy[2*i]);
                 if (outputs.size() > 1 && outputs.get(1) != null)
                     outputs.get(1).append(xy[2*i+1]);
             }
@@ -1519,30 +1520,38 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double a[], b[];
-            int asize, bsize;
-            //Put the larger input in a and the smaller one in b
-            if (inputArraySizes.get(0) > inputArraySizes.get(1)) {
-                a = inputArrays.get(0);
-                asize = inputArraySizes.get(0);
-                b = inputArrays.get(1);
-                bsize = inputArraySizes.get(1);
+            int sizeA = inputArraySizes.get(0);
+            int sizeB = inputArraySizes.get(1);
+            int size = 2*(sizeA + sizeB);
+
+            Double[] a = inputArrays.get(0);
+            Double[] b = inputArrays.get(1);
+
+            final float af[] = new float[size];
+            final float bf[] = new float[size];
+
+            if (sizeA > sizeB) {
+                for (int i = 0; i < sizeA; i++) {
+                    af[i] = a[i].floatValue();
+                }
+                for (int i = 0; i < sizeB; i++) {
+                    bf[i] = b[i].floatValue();
+                }
             } else {
-                a = inputArrays.get(1);
-                asize = inputArraySizes.get(1);
-                b = inputArrays.get(0);
-                bsize = inputArraySizes.get(0);
+                for (int i = 0; i < sizeA; i++) {
+                    bf[i] = a[i].floatValue();
+                }
+                for (int i = 0; i < sizeB; i++) {
+                    af[i] = b[i].floatValue();
+                }
             }
 
-            //The actual calculation
-            int compRange = asize - bsize;
-            for (int i = 0; i < compRange; i++) {
-                double sum = 0.;
-                for (int j = 0; j < bsize; j++) {
-                    sum += a[j+i]*b[j];
-                }
-                sum /= (double)(compRange); //Normalize bynumber of values
-                outputs.get(0).append(sum);
+            fftw3crosscorrelation(af, bf, size);
+
+            //Append the real part of the result to output1 and the imaginary part to output2 (if used)
+            for (int i = 0; i < Math.abs(sizeA-sizeB); i++) {
+                if (outputs.size() > 0 && outputs.get(0) != null)
+                    outputs.get(0).append(af[i]);
             }
         }
     }

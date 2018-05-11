@@ -259,6 +259,7 @@ public class GraphView extends View {
         int minIndex = -1;
         double minX = Double.NaN;
         double minY = Double.NaN;
+        double minZ = Double.NaN;
         double minVX = Double.NaN;
         double minVY = Double.NaN;
 
@@ -275,19 +276,24 @@ public class GraphView extends View {
                 continue;
             double vxi, vyi, dx, dy, d;
             int n = cd.n;
-            float[] xi = new float[n];
-            float[] yi = new float[n];
+            int offX = cd.fbX.offset;
+            int offY = cd.fbY.offset;
+            int offZ = 0;
+            float[] xi = new float[cd.fbX.offset + n];
+            float[] yi = new float[cd.fbY.offset + n];
             float[] zi = null;
-            if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ)
-                zi = new float[n];
+            if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ) {
+                offZ = graphSetup.dataSets.get(i + 1).fbY.offset;
+                zi = new float[offZ + n];
+            }
             try {
                 cd.fbX.data.position(0);
                 cd.fbY.data.position(0);
-                cd.fbX.data.get(xi, cd.fbX.offset, n);
-                cd.fbY.data.get(yi, cd.fbY.offset, n);
+                cd.fbX.data.get(xi, 0, offX + n);
+                cd.fbY.data.get(yi, 0, offY + n);
                 if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ) {
                     graphSetup.dataSets.get(i+1).fbY.data.position(0);
-                    graphSetup.dataSets.get(i+1).fbY.data.get(zi, graphSetup.dataSets.get(i+1).fbY.offset, n);
+                    graphSetup.dataSets.get(i+1).fbY.data.get(zi, 0, offZ + n);
                 }
             } catch (Exception e) {
                 break;
@@ -299,20 +305,20 @@ public class GraphView extends View {
                         continue;
                 }
 
-                if (xi[j] < searchRangeMinX || xi[j] > searchRangeMaxX || yi[j] < searchRangeMinY || yi[j] > searchRangeMaxY)
+                if (xi[offX + j] < searchRangeMinX || xi[offX + j] > searchRangeMaxX || yi[offY + j] < searchRangeMinY || yi[offY + j] > searchRangeMaxY)
                     continue;
-                vxi = dataXToViewX(xi[j]);
-                vyi = dataYToViewY(yi[j]);
+                vxi = dataXToViewX(xi[offX + j]);
+                vyi = dataYToViewY(yi[offY + j]);
                 dx = vxi - x;
                 dy = vyi - y;
                 d = dx*dx+dy*dy;
                 if (d < range*range && d < minDist) {
                     minDist = d;
                     minIndex = j;
-                    minX = xi[j];
-                    minY = yi[j];
+                    minX = xi[offX + j];
+                    minY = yi[offY + j];
                     if (zi != null)
-                        minZ = zi[j];
+                        minZ = zi[offZ + j];
                     else
                         minZ = Double.NaN;
                     minVX = vxi;
@@ -1036,7 +1042,7 @@ public class GraphView extends View {
                     yi = graphSetup.dataSets.get(0).fbY.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex[i]);
 
                     if (graphSetup.dataSets.size() > 1 && graphSetup.dataSets.get(1).style == Style.mapZ) {
-                        zi = graphSetup.dataSets.get(1).fbY.data.get(graphSetup.dataSets.get(1).fbX.offset + pickedPointIndex[i]);
+                        zi = graphSetup.dataSets.get(1).fbY.data.get(graphSetup.dataSets.get(1).fbY.offset + pickedPointIndex[i]);
                     } else
                         zi = Double.NaN;
 

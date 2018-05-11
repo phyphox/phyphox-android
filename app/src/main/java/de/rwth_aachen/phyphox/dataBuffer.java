@@ -216,17 +216,20 @@ public class dataBuffer implements Serializable {
         value = Double.NaN;
         if (floatCopy != null) {
             synchronized (floatCopy.lock) {
-                floatCopy = null;
+                floatCopy.offset = 0;
+                floatCopy.size = 0;
             }
         }
         if (floatCopyBarValue != null) {
             synchronized (floatCopyBarValue.lock) {
-                floatCopyBarValue = null;
+                floatCopyBarValue.offset = 0;
+                floatCopyBarValue.size = 0;
             }
         }
         if (floatCopyBarAxis != null) {
             synchronized (floatCopyBarAxis.lock) {
-                floatCopyBarAxis = null;
+                floatCopyBarAxis.offset = 0;
+                floatCopyBarAxis.size = 0;
             }
         }
         min = Double.NaN;
