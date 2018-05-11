@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -293,18 +294,24 @@ public class phyphoxExperiment implements Serializable {
             return true;
         if (!(newData || force)) //New data to present? If not: Nothing to do, unless an update is forced
             return true;
-        if (dataLock.tryLock()) {
-            try {
-                for (expView experimentView : experimentViews) {
-                    for (expView.expViewElement eve : experimentView.elements) {
-                        eve.onMayReadFromBuffers(this); //Notify each view, that it should update from the buffers
+
+        try {
+            if (dataLock.tryLock(10, TimeUnit.MILLISECONDS)) {
+                try {
+                    for (expView experimentView : experimentViews) {
+                        for (expView.expViewElement eve : experimentView.elements) {
+                            eve.onMayReadFromBuffers(this); //Notify each view, that it should update from the buffers
+                        }
                     }
+                } finally {
+                    dataLock.unlock();
                 }
-            } finally {
-                dataLock.unlock();
-            }
-        } else
-            return false; //This is not urgent. Try another time instead of blocking the UI thread!
+            } else
+                return false; //This is not urgent. Try another time instead of blocking the UI thread!
+        } catch (Exception e) {
+            return false;
+        }
+
         newData = false;
         //Finally call dataComplete on every view to notify them that the data has been sent - heavy operation can now be done by the views while the buffers have been unlocked again
         for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {

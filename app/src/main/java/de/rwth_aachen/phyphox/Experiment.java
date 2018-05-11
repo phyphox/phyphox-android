@@ -1185,7 +1185,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     }
                     //Update all the views currently visible
                     if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
-
                         if (remoteInput) {
                             //If there has been remote input, we may reset it as updateViews will have taken care of this
                             //This also means, that there is new input from the user
