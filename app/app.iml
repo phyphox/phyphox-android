@@ -32,7 +32,7 @@
     <output-test url="file://$MODULE_DIR$/build/intermediates/classes/test/debug" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3wrapper" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/analysis" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/api" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/dft" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/dft/scalar" isTestSource="false" />

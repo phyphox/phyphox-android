@@ -4,4 +4,4 @@ SET (BUILD_TESTS OFF)
 SET (ENABLE_FLOAT ON)
 
 add_subdirectory(fftw3)
-add_subdirectory(fftw3wrapper)
+add_subdirectory(analysis)

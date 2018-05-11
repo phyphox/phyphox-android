@@ -16,9 +16,10 @@ import java.util.regex.Matcher;
 public class Analysis {
 
     static {
-        System.loadLibrary("fftw3wrapper");
+        System.loadLibrary("analysis");
     }
 
+    public static native void nativePower(double[] x, double[] y);
     public static native void fftw3complex(float[] xy, int n);
     public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
     public static native void fftw3autocorrelation(float[] x, int n);
@@ -420,35 +421,29 @@ public class Analysis {
 
         @Override
         protected void update() {
-            boolean anyInput = true; //Is there any buffer left with values?
-            int i = 0;
-            while (anyInput) { //For each value of output buffer
-                double result = 1.;
-                anyInput = false;
+            if (inputArraySizes.size() < 2)
+                return;
 
-                for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
-                    Double in[] = inputArrays.get(j);
-                    int size = inputArraySizes.get(j);
-                    if (in == null || size == 0)
-                        continue;
-                    if (i < size) { //New value from this iterator
-                        if (j == 0)
-                            result = in[i];
-                        else
-                            result = Math.pow(result, in[i]);
-                        anyInput = true;
-                    } else {
-                        if (j == 0)
-                            result = in[size-1];
-                        else
-                            result = Math.pow(result, in[size-1]);
-                    }
-                }
-                if (anyInput) //There was a new value. Append the result.
-                    outputs.get(0).append(result);
-                else //No values left. Let's stop here...
-                    break;
-                i++;
+            int sizeA = inputArraySizes.get(0);
+            int sizeB = inputArraySizes.get(1);
+
+            Double[] a = inputArrays.get(0);
+            Double[] b = inputArrays.get(1);
+
+            final double ad[] = new double[sizeA];
+            final double bd[] = new double[sizeB];
+
+            for (int i = 0; i < sizeA; i++) {
+                ad[i] = a[i];
+            }
+            for (int i = 0; i < sizeB; i++) {
+                bd[i] = b[i];
+            }
+
+            nativePower(ad, bd);
+
+            for (int i = 0; i < sizeA; i++) {
+                outputs.get(0).append(ad[i]);
             }
         }
     }

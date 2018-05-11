@@ -1,7 +1,21 @@
 #include <jni.h>
+#include <math.h>
 #include "../fftw3/api/fftw3.h"
 
 extern "C" {
+
+    JNIEXPORT void JNICALL Java_de_rwth_1aachen_phyphox_Analysis_nativePower(JNIEnv *env, jobject obj, jdoubleArray a, jdoubleArray b) {
+        int n = env->GetArrayLength(a);
+        int m = env->GetArrayLength(b);
+        jdouble *x = env->GetDoubleArrayElements(a, 0);
+        jdouble *y = env->GetDoubleArrayElements(b, 0);
+
+        for (int i = 0; i < n && i < m; i++)
+            x[i] = pow(x[i], y[i]);
+
+        env->ReleaseDoubleArrayElements(a, x, 0);
+        env->ReleaseDoubleArrayElements(b, y, 0);
+    }
 
     JNIEXPORT void JNICALL Java_de_rwth_1aachen_phyphox_Analysis_fftw3complex(JNIEnv *env, jobject obj, jfloatArray xy, jint n) {
         jfloat *a = env->GetFloatArrayElements(xy, 0);

@@ -906,8 +906,15 @@ public class GraphView extends View {
         double workingMinZ = minZ;
         double workingMaxZ = maxZ;
 
+        //Do we need a zscale?
+        boolean zScale = false;
+        for (int i = 0; i < style.length; i++) {
+            if (style[i] == Style.mapXY)
+                zScale = true;
+        }
+
         //Stretch x slightly to give a little headroom... Also force a range if it is zero
-        if (!logX) {
+        if (!logX && !zScale) {
             double extraX = (workingMaxX - workingMinX) * 0.05;
             if (extraX == 0)
                 extraX = workingMaxX * 0.05;
@@ -916,7 +923,7 @@ public class GraphView extends View {
         }
 
         //Stretch y slightly to give a little headroom... Also force a range if it is zero
-        if (!logY) {
+        if (!logY && !zScale) {
             double extraY = (workingMaxY - workingMinY) * 0.05;
             if (extraY == 0)
                 extraY = workingMaxY * 0.05;
@@ -932,13 +939,6 @@ public class GraphView extends View {
             workingMinY = 0.000001;
         if (logZ && workingMinZ < 0.000001)
             workingMinZ = 0.000001;
-
-        //Do we need a zscale?
-        boolean zScale = false;
-        for (int i = 0; i < style.length; i++) {
-            if (style[i] == Style.mapXY)
-                zScale = true;
-        }
 
         //Generate the tics
         double[] xTics = getTics(workingMinX, workingMaxX, maxXTics, logX);
