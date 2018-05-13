@@ -146,7 +146,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 
     <string name="noDrawableData">No drawable data.</string>
 
-    <string name="categoryNewExperiment">Απλά πειράματα χρήστη</string>
+    <string name="categoryNewExperiment">Simple custom experiments</string>
     <string name="categoryRawSensor">Raw Sensors</string>
 
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
