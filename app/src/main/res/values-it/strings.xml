@@ -4,7 +4,7 @@
     <string name="switchColumns1">Vista: 1 colonna</string>
     <string name="switchColumns3">Vista: 3 colonne</string>
     <string name="switchColumns2">Vista: 2 colonne</string>
-    <string name="help">Help ed info</string>
+    <string name="help">Help e info</string>
     <string name="newExperimentPhyphoxInfo">Vai su phyphox.org per creare esperimenti di livello avanzato, compresa l\'analisi dei dati, e per condividerli con colleghi, studenti ed amici.</string>
     <string name="loadingText">Caricamento esperimento…</string>
     <string name="remoteServer">Consenti accesso remoto</string>
@@ -32,7 +32,7 @@
     <string name="show_description">Info esperimento</string>
     <string name="creditsLibs">L’interfaccia web per l’accesso remoto usa le librerie JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) e \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), tutte disponibili sotto licenza MIT.</string>
     <string name="newExperiment">Aggiungi esperimento semplice</string>
-    <string name="donotshowagain">Non mostrare ancora</string>
+    <string name="donotshowagain">Non mostrare più</string>
     <string name="credits">Crediti</string>
     <string name="sensorPressure">Pressione</string>
     <string name="action_settings">Impostazioni</string>
@@ -88,10 +88,10 @@
     <string name="sensorNotAvailableWarningTitle">Sensore non disponibile.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Più info</string>
     <string name="export_subject">Dati_phyphox</string>
-    <string name="experimentinfo_hint">Per sapere come funziona questo esperimento, guarda le info relative.</string>
+    <string name="experimentinfo_hint">Per sapere come funziona quest\'esperimento, guarda le info relative.</string>
     <string name="timedRun">Partenza ritardata</string>
     <string name="loadingTitle">Caricamento</string>
-    <string name="experimentsPhyphoxOrg">Idee ed istruzioni per gli esperimenti</string>
+    <string name="experimentsPhyphoxOrg">Idee e istruzioni per gli esperimenti</string>
 <string name="translationInfo">Lingue</string>
     <string name="translationText">Phyphox utilizzerà la prima lingua disponibile tra quelle nella lista delle tue lingue preferite. Per cambiare le tue preferenze vai nella sezione \"Impostazioni\" per Android qui sotto. Per scoprire quali lingue sono disponibili e come puoi contribuire, seleziona \"Vai al sito\".</string>
     <string name="translationToSettings">Impostazioni</string>
@@ -111,7 +111,7 @@
 
     <string name="translationToWebsiteURL">http://phyphox.org/languages#it</string>
 
-    <string name="creditsRWTH">phyphox è stata creata dal secondo istituto di fisica RWTH Aachen.</string>
+    <string name="creditsRWTH">phyphox è un prodotto del secondo istituto di fisica RWTH Aachen.</string>
     <string name="location">Posizione</string>
 
     </resources>
