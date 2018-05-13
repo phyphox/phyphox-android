@@ -122,11 +122,11 @@
 
     <string name="noDrawableData">Μη απεικονίσημα δεδομένα.</string>
 
-    <string name="categoryRawSensor">Πρωτογενή δεδομένα</string>
+    <string name="categoryRawSensor">Αισθητήρες</string>
 
     <string name="experimentinfo_hint">Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.</string>
 
-<string name="calibrated_magnetometer"></string>
+<string name="calibrated_magnetometer"/>
 
-    <string name="categoryNewExperiment"></string>
+    <string name="categoryNewExperiment">Απλά πειράματα χρήστη</string>
     </resources>
