@@ -3,23 +3,23 @@
     <string name="app_name">Phyphox</string>
     <string name="switchColumns1">Vista: 1 colonna</string>
     <string name="switchColumns3">Vista: 3 colonne</string>
-    <string name="switchColumns2">Visualizzazione: 2 colonne</string>
+    <string name="switchColumns2">Vista: 2 colonne</string>
     <string name="help">Help ed info</string>
     <string name="newExperimentPhyphoxInfo">Vai su phyphox.org per creare esperimenti di livello avanzato, compresa l\'analisi dei dati, e per condividerli con colleghi, studenti ed amici.</string>
-    <string name="loadingText">Carico esperimento…</string>
-    <string name="remoteServer">Permetti accesso remoto</string>
+    <string name="loadingText">Caricamento esperimento…</string>
+    <string name="remoteServer">Consenti accesso remoto</string>
     <string name="faqPhyphoxOrg">Domande ricorrenti</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-    <string name="timedRunStartDelay">Ritardo partenza (s)</string>
+    <string name="timedRunStartDelay">Ritardo (s)</string>
     <string name="timed_start">Avvia partenza ritardata</string>
     <string name="stop">Stop</string>
     <string name="newExperimentInputSensors">Sensori attivi</string>
-    <string name="calibrated_magnetometer">Usa il magnetemetro calibrato</string>
+    <string name="calibrated_magnetometer">Usa il magnetometro calibrato</string>
     <string name="newExperimentInputBufferSize">Dimensione del buffer (numero di valori da memorizzare)</string>
-    <string name="sensorLinearAcceleration">Accelerazione lineare</string>
+    <string name="sensorLinearAcceleration">Accelerometro (no g)</string>
     <string name="categoryRawSensor">Sensori</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
-    <string name="save_locally_button">Salva nella mia collezione</string>
+    <string name="save_locally_button">Salva nella collezione</string>
     <string name="timedRunDialogTitle">Partenza ritardata</string>
     <string name="sensorTemperature">Temperatura</string>
     <string name="export">Esporta Dati</string>
@@ -28,7 +28,7 @@
     <string name="sensorAccelerometer">Accelerometro</string>
     <string name="noDrawableData">No dati da rappresentare.</string>
     <string name="remotePhyphoxOrg">Help controllo remoto</string>
-    <string name="save_locally_message">Questo esperimento è stato aperto da una fonte esterna. Vuoi aggiungerlo alla tua collezione di esperimenti?</string>
+    <string name="save_locally_message">Questo esperimento è stato aperto da un sistema remoto. Vuoi aggiungerlo alla tua collezione?</string>
     <string name="show_description">Info esperimento</string>
     <string name="creditsLibs">L’interfaccia web per l’accesso remoto usa le librerie JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) e \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), tutte disponibili sotto licenza MIT.</string>
     <string name="newExperiment">Aggiungi esperimento semplice</string>
@@ -36,53 +36,58 @@
     <string name="credits">Crediti</string>
     <string name="sensorPressure">Pressione</string>
     <string name="action_settings">Impostazioni</string>
-    <string name="sensorLight">Luce</string>
-    <string name="sensorNotAvailableWarningText2">non disponibile. Tipicamente questo vuol dire che il tuo dispositivo non ha questo tipo di sensore.</string>
+    <string name="sensorLight">Intensità luminosa</string>
+    <string name="sensorNotAvailableWarningText2">non è disponibile. Sul tuo telefono non c\'è questo tipo di sensore.</string>
     <string name="sensorNotAvailableWarningText1">Il sensore</string>
     <string name="ok">OK</string>
-    <string name="hotspotSettings">Hotspot Impostazioni</string>
-    <string name="timedRunStopDelay">Durata dell’esperimento (s)</string>
+    <string name="hotspotSettings">Impostazioni Hotspot</string>
+    <string name="timedRunStopDelay">Durata esperimento (s)</string>
     <string name="newExperimentInputTitle">Titolo</string>
     <string name="enableTimedRun">Abilita partenza ritardata</string>
     <string name="save_locally">Aggiungi esperimento alla collezione</string>
-    <string name="timed_stop">Termina partenza ritardata</string>
-    <string name="cancel">Cancellare</string>
+    <string name="timed_stop">Stop partenza ritardata</string>
+    <string name="cancel">Annulla</string>
     <string name="sensorGyroscope">Giroscopio</string>
     <string name="switchToPhoneLayout">Vista: compatta</string>
     <string name="sensorProximity">Prossimità</string>
     <string name="unknown">ignoto</string>
     <string name="next">Sucessivo</string>
-    <string name="start">Parti</string>
-    <string name="clear_data">Cancella dati</string>
-    <string name="remoteServerActive">Accesso remoto abilitato. Accedi all’ esperimento dalla seguente URL:\n%1$s</string>
+    <string name="start">Start</string>
+    <string name="clear_data">Elimina dati</string>
+    <string name="remoteServerActive">Accesso remoto abilitato. Accedi all’esperimento dalla seguente URL:
+\n%1$s</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="remoteServerWarningTitle">Allarme sicurezza!</string>
-    <string name="categoryNewExperiment">Semplici esperimenti personalizzati</string>
-    <string name="confirmDeleteTitle">Conferma cancella?</string>
+    <string name="categoryNewExperiment">Esperimenti personalizzati</string>
+    <string name="confirmDeleteTitle">Conferma eliminazione?</string>
     <string name="pick_exportFormat">Scegli il formato dei dati.</string>
     <string name="share_subject">Screenshot da phyphox</string>
     <string name="title_activity_experiment">phyphox</string>
     <string name="save_locally_done">L’esperimento è stato correttamente aggiunto alla collezione.</string>
-    <string name="delete">Cancella</string>
-    <string name="share_pick_share">Scegli come distribuire</string>
+    <string name="delete">Elimina</string>
+    <string name="share_pick_share">Scegli come condividere</string>
     <string name="newExperimentInputRate">Frequenza sensore (in Hz, 0 = il più veloce possibile)</string>
     <string name="share">Condividi screenshot</string>
     <string name="warning">Avvertenza</string>
     <string name="damageWarning">Fate attenzione a non danneggiare il telefono facendo gli esperimenti. Abbiate cura in particolare di non farlo cadere su superfici dure e di non esporlo a campi magnetici eccessivi. Gli autori di phyphox non sono responsabili di eventuali danni al vostro telefono.</string>
     <string name="sensorMagneticField">Campo magnetico</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="confirmDelete">Vuoi cancellare questo esperimento dalla tua collezione?</string>
+    <string name="confirmDelete">Vuoi eliminare questo esperimento dalla tua collezione?</string>
     <string name="creditsNames">
         <![CDATA[
         Sviluppatore e progettista:<br/><b>Dr. Sebastian Staacks</b><br/>Creatore:<br/><b>Prof. Christoph Stampfer</b><br/>Disegnatore:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmatori:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
         ]]>
     </string>
-    <string name="remoteServerWarning">Stai per abilitare l’accesso remoto ai dati acquisiti. Quest operazione deve essere effettuata solo su di una rete fidata! Nota inoltre che l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su varie reti aziendali ed universitarie.\n\nPer massimizzare la sicurezza e la performance occorre connettersi a questo dispositivo col tethering (hotspot mobile).\n\nDopo aver schiacciato oK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.</string>
+    <string name="remoteServerWarning">Stai per abilitare l’accesso remoto ai dati acquisiti. Fallo solo se sei su una rete affidabile! Nota: l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su alcune reti aziendali e universitarie.
+\n
+\nPer massimizzare la sicurezza e la performance è meglio connettersi a questo dispositivo col tethering (hotspot mobile).
+\n
+\nDopo aver premuto OK, potrai accedere alle tue misure da ogni web-browser sulla stessa rete.</string>
     <string name="sensorHumidity">Umidità</string>
     <string name="export_pick_share">Seleziona un metodo per esportare</string>
     <string name="sensorNotAvailableWarningTitle">Sensore non disponibile.</string>
-    <string name="sensorNotAvailableWarningMoreInfo">Più informazioni</string>
-    <string name="export_subject">Dati da phyphox</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Più info</string>
+    <string name="export_subject">Dati_phyphox</string>
     <string name="experimentinfo_hint">Per sapere come funziona questo esperimento, guarda le info relative.</string>
     <string name="timedRun">Partenza ritardata</string>
     <string name="loadingTitle">Caricamento</string>
@@ -92,15 +97,15 @@
     <string name="translationToSettings">Impostazioni</string>
     <string name="translationToWebsite">Vai al sito</string>
     <string name="info">Info</string>
-    <string name="clear_data_question">Cancellare i dati salvati?</string>
-    <string name="clear">Cancella</string>
+    <string name="clear_data_question">Eliminare i dati salvati?</string>
+    <string name="clear">Elimina</string>
     <string name="save_state">Salva stato dell\'esperimento</string>
-    <string name="save_state_category">Stati degli esperimenti salvati</string>
-    <string name="save_state_message">Puoi salvare lo stato di questo esperimento compresi i tuoi dati nella tua collezione o condividerlo tramite applicazioni di terze parti.</string>
+    <string name="save_state_category">Esperimenti salvati</string>
+    <string name="save_state_message">Puoi salvare lo stato di quest\'esperimento, dati compresi, nella tua collezione o condividerlo tramite applicazioni di terze parti.</string>
     <string name="save_state_title">Titolo</string>
     <string name="save_state_save">Vai alla collezione</string>
     <string name="save_state_share">Condividi</string>
-    <string name="save_state_subject">Stato dell\'esperimento per phyphox</string>
+    <string name="save_state_subject">Stato dell\'esperimento</string>
     <string name="save_state_default_title">Misura</string>
     <string name="save_state_success">Lo stato è stato salvato nella tua collezione.</string>
 
