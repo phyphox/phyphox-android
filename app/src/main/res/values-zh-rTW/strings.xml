@@ -114,4 +114,8 @@
     <string name="pick_exportSets">輸出挑選的數據組</string>
     <string name="noDrawableData">無繪製的數據</string>
 
+    <string name="timedRunDialogTitle">時程設定</string>
+    <string name="timedRunStartDelay">延遲啟動(秒)</string>
+    <string name="timedRun">時程設定</string>
+
     </resources>
