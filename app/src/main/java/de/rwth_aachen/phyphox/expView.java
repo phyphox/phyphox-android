@@ -53,11 +53,12 @@ public class expView implements Serializable{
     }
 
     //Abstract expViewElement class defining the interface for any element of an experiment view
-    public abstract class expViewElement implements Serializable {
+    public abstract class expViewElement implements Serializable, BufferNotification {
         protected String label; //Each element has a label. Usually naming the data shown
         protected float labelSize; //Size of the label
         protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
         protected Vector<String> inputs;
+        protected boolean needsUpdate = true;
 
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
@@ -80,6 +81,14 @@ public class expView implements Serializable{
             }
         }
 
+        //Called when one of the input buffers is updated
+        public void notifyUpdate(boolean clear, boolean reset) {
+            if (reset) {
+                clear();
+            }
+            needsUpdate = true;
+        }
+
         //Interface to change the label size
         protected void setLabelSize(float size) {
             this.labelSize = size;
@@ -87,10 +96,23 @@ public class expView implements Serializable{
 
         //Abstract function to force child classes to implement createView
         //This will take a linear layout, which should be filled by this function
-        protected abstract void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent);
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
+            if (inputs != null) {
+                for (String buffer : inputs) {
+                    if (buffer != null)
+                        experiment.getBuffer(buffer).register(this);
+                }
+            }
+            needsUpdate = true;
+        }
 
-        protected void cleanView() {
-
+        protected void cleanView(phyphoxExperiment experiment) {
+            if (inputs != null) {
+                for (String buffer : inputs) {
+                    if (buffer != null)
+                        experiment.getBuffer(buffer).unregister(this);
+                }
+            }
         }
 
         //Abstract function to force child classes to implement createViewHTML
@@ -306,7 +328,9 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android vews we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+            super.createView(ll, c, res, parent, experiment);
+
             //Create a row consisting of label and value
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -365,6 +389,10 @@ public class expView implements Serializable{
         @Override
         //We just have to send calculated value and the unit to the textView
         protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            if (!needsUpdate)
+                return;
+            needsUpdate = false;
+
             double x = experiment.getBuffer(inputs.get(0)).value;
             if (tv != null) {
                 String vStr = "";
@@ -451,7 +479,8 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+            super.createView(ll, c, res, parent, experiment);
 
             //Create the text as textView
             TextView textView = new TextView(c);
@@ -513,7 +542,8 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+            super.createView(ll, c, res, parent, experiment);
 
             //Create the text as textView
             rootView = new View(c);
@@ -602,7 +632,8 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, final Context c, Resources res, expViewFragment parent){
+        protected void createView(LinearLayout ll, final Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+            super.createView(ll, c, res, parent, experiment);
             //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -816,7 +847,8 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+            super.createView(ll, c, res, parent, experiment);
             //The button
             Button b = new Button(c);
 
@@ -1104,7 +1136,8 @@ public class expView implements Serializable{
 
         @Override
         //Create the actual view in Android
-        protected void createView(LinearLayout ll, Context c, Resources res, final expViewFragment parent){
+        protected void createView(LinearLayout ll, Context c, Resources res, final expViewFragment parent, phyphoxExperiment experiment){
+            super.createView(ll, c, res, parent, experiment);
 
             this.parent = parent;
 
@@ -1127,7 +1160,6 @@ public class expView implements Serializable{
             interactiveGV.setLabel(this.label);
 
             if (act != null && act instanceof Experiment) {
-                phyphoxExperiment experiment = ((Experiment)act).experiment;
                 DataExport dataExport = new DataExport(experiment);
 
                 DataExport.ExportSet set = dataExport.new ExportSet(this.label);
@@ -1190,7 +1222,9 @@ public class expView implements Serializable{
         }
 
         @Override
-        public void cleanView() {
+        public void cleanView(phyphoxExperiment experiment) {
+            super.cleanView(experiment);
+
             interactiveGV.stop();
             gv = null;
             interactiveGV = null;
@@ -1212,6 +1246,10 @@ public class expView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            if (!needsUpdate)
+                return;
+            needsUpdate = false;
+
             for (int i = 0; i < inputs.size(); i+=2) {
                 if (inputs.size() > i+1) {
                     dataBuffer x = experiment.getBuffer(inputs.get(i+1));
@@ -1283,6 +1321,8 @@ public class expView implements Serializable{
         //Also clear the data afterwards to avoid sending it multiple times if it is not updated for
         //some reason
         protected void dataComplete() {
+            super.dataComplete();
+
             if (gv == null)
                 return;
             if (dataY[0] != null) {

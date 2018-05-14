@@ -1139,6 +1139,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     Runnable updateViews = new Runnable() {
         @Override
         public void run() {
+            updateViewsHandler.removeCallbacksAndMessages(null);
+
             //Show progressbar if analysis is running (set by second thread)
             if (analysisInProgress) {
                 analysisProgressAlpha += 0.05;
@@ -1349,10 +1351,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         try {
             for (dataBuffer buffer : experiment.dataBuffers)
                 buffer.clear(true);
-            for (expView views : experiment.experimentViews)
-                for (expView.expViewElement view : views.elements)
-                    view.clear();
-
         } finally {
             experiment.dataLock.unlock();
         }

@@ -25,7 +25,7 @@ public class Analysis {
     public static native void fftw3autocorrelation(float[] x, int n);
 
     //analysisModule is is the prototype from which each analysis module inherits its interface
-    public static class analysisModule implements Serializable {
+    public static class analysisModule implements Serializable, BufferNotification {
         private Vector<dataInput> inputsOriginal; //The key of input dataBuffers, note that this is private, so derived classes cannot access this directly, but have to use the copy
         protected Vector<dataInput> inputs = new Vector<>(); //The local copy of the input data when the analysis module starts its update
         protected Vector<Double[]> inputArrays = new Vector<>(); //The local copy of the input data when the analysis module starts its update
@@ -33,7 +33,10 @@ public class Analysis {
         protected Vector<dataOutput> outputs; //The keys of outputBuffers
         protected phyphoxExperiment experiment; //experiment reference to access buffers
         protected boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
+        protected boolean deterministic = true;
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
+
+        protected boolean needsUpdate = true;
 
         protected boolean useArray = false;
         protected boolean clearInModule = false;
@@ -44,7 +47,7 @@ public class Analysis {
             this.inputsOriginal = inputs;
             this.outputs = outputs;
 
-            //If any output module is non-static, than this analysis module is not static
+            //If any output module is non-static, then this analysis module is not static
             this.isStatic = true;
             for (int i = 0; i < outputs.size(); i++) {
                 if (outputs.get(i) != null && !outputs.get(i).isStatic()) {
@@ -52,21 +55,32 @@ public class Analysis {
                     break;
                 }
             }
+
+            //Subscribe to updates from input and output buffers
+            for (int i = 0; i < inputs.size(); i++) {
+                if (inputs.get(i) != null && inputs.get(i).isBuffer) {
+                    inputs.get(i).buffer.register(this);
+                }
+            }
+            for (int i = 0; i < outputs.size(); i++) {
+                if (outputs.get(i) != null) {
+                    outputs.get(i).buffer.register(this);
+                }
+            }
+
+        }
+
+        //Called when one of the input buffers is updated
+        public void notifyUpdate(boolean clear, boolean reset) {
+            if (reset) {
+                executed = false;
+            }
+            needsUpdate = true;
         }
 
         //Wrapper to update the module only if it is not static or has never been executed and to clear the buffer if required
         protected boolean updateIfNotStatic() {
-            if (!(isStatic && executed)) {
-                boolean inputsReady = true;
-                for (int i = 0; i < inputsOriginal.size(); i++) {
-                    if (inputsOriginal.get(i) != null && inputsOriginal.get(i).isBuffer && inputsOriginal.get(i).buffer.untouched) {
-                        inputsReady = false;
-                        break;
-                    }
-                }
-                if (!inputsReady)
-                    return false;
-
+            if (needsUpdate && !(isStatic && executed)) {
                 experiment.dataLock.lock();
                 try {
                     if (useArray) {
@@ -104,6 +118,8 @@ public class Analysis {
 //                long updateStart = System.nanoTime();
 
                 update();
+                if (deterministic)
+                    needsUpdate = false;
 
 //                long time = System.nanoTime() - updateStart;
 //                if (time > 1e6)
@@ -112,17 +128,18 @@ public class Analysis {
 
 
     // Uncomment to print the last value of inputs and outputs for debugging...
-    /*
+/*
                 Log.d("AnalysisDebug", "[" + this.getClass().toString() + "]");
                 for (dataInput input : inputs)
                     if (input != null)
-                        Log.d("AnalysisDebug", "in: " + input.getValue());
+                        Log.d("AnalysisDebug", "in: " + input.getValue() + " (length " + input.getFilledSize() + ")");
                 for (dataOutput output : outputs)
                     if (output != null)
-                        Log.d("AnalysisDebug", output.buffer.name + " => " + output.getValue());
-    */
+                        Log.d("AnalysisDebug", output.buffer.name + " => " + output.getValue() + " (length " + output.getFilledSize() + ")");
+*/
 
                 executed = true;
+
             }
             return true;
         }
@@ -138,6 +155,7 @@ public class Analysis {
 
         protected timerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
+            deterministic = false;
         }
 
         @Override
@@ -379,7 +397,7 @@ public class Analysis {
             boolean anyInput = true; //Is there any buffer left with values?
             int i = 0;
             while (anyInput) { //For each value of output buffer
-                double result = 1.;
+                double result = 0.;
                 anyInput = false;
 
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
@@ -389,13 +407,13 @@ public class Analysis {
                         continue;
                     if (i < size) { //New value from this iterator
                         if (j == 0)
-                            result *= in[i];
+                            result = in[i];
                         else
                             result /= in[i];
                         anyInput = true;
                     } else {
                         if (j == 0)
-                            result *= in[size-1];
+                            result = in[size-1];
                         else
                             result /= in[size-1];
                     }
@@ -1178,6 +1196,9 @@ public class Analysis {
             if (inputs.size() > 0 && inputs.get(0) != null)
                 factor = (int)Math.round(inputs.get(0).getValue());
 
+            if (factor < 1)
+                return;
+
             Iterator itx = null;
             Iterator ity = null;
             if (inputs.size() > 1 && inputs.get(1) != null)
@@ -1300,7 +1321,8 @@ public class Analysis {
                 for (int i = 1; i < size; i++) {
                     x[i] -= x[0];
                 }
-                x[0] = 0.;
+                if (size > 0)
+                    x[0] = 0.;
             } else {
                 x = new Double[size]; //Relative x (the displacement in the autocorrelation). This has to be filled from input2 or manually with 1,2,3...
                 //There is no input2. Let's fill it with 0,1,2,3,4....

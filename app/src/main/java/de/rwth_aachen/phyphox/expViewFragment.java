@@ -115,7 +115,7 @@ public class expViewFragment extends Fragment {
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
             for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-                element.createView(ll, getContext(), getResources(), this);
+                element.createView(ll, getContext(), getResources(), this, ((Experiment) getActivity()).experiment);
             }
         }
 
@@ -169,7 +169,7 @@ public class expViewFragment extends Fragment {
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
             for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-                element.cleanView();
+                element.cleanView(((Experiment) getActivity()).experiment);
             }
         }
 

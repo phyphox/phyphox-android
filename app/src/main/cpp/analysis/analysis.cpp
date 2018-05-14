@@ -10,8 +10,15 @@ extern "C" {
         jdouble *x = env->GetDoubleArrayElements(a, 0);
         jdouble *y = env->GetDoubleArrayElements(b, 0);
 
-        for (int i = 0; i < n && i < m; i++)
-            x[i] = pow(x[i], y[i]);
+        double base = 0.;
+        double exponent = 1.;
+        for (int i = 0; i < n || i < m; i++) {
+            if (i < n)
+                base = x[i];
+            if (i < m)
+                exponent = y[i];
+            x[i] = pow(base, exponent);
+        }
 
         env->ReleaseDoubleArrayElements(a, x, 0);
         env->ReleaseDoubleArrayElements(b, y, 0);

@@ -899,7 +899,7 @@ public abstract class phyphoxFile {
                     (new inputBlockParser(xpp, experiment, parent)).process();
                     break;
                 case "analysis": //Holds a number of math modules which will be executed in the order they occur
-                    experiment.analysisSleep = getDoubleAttribute("sleep", 0.); //Time between executions
+                    experiment.analysisSleep = getDoubleAttribute("sleep", 0.02); //Time between executions
                     String dynamicSleep = getStringAttribute("dynamicSleep"); //Time between executions
                     if (dynamicSleep != null) {
                         if (experiment.getBuffer(dynamicSleep) != null)

@@ -8,9 +8,13 @@ import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -18,6 +22,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 //Databuffer class
 //Each databuffer can be identified by a name (mapped in phyphoxExperiment class)
 //The actual databuffer is implemented as a BlockingQueue, but we keep track of a maximum size ourselves.
+
+interface BufferNotification {
+    void notifyUpdate(boolean clear, boolean reset); //Notify that a buffer has changed. Also notify if the buffer has been cleared (for example during
+}
 
 public class dataBuffer implements Serializable {
     public String name; //The key name
@@ -27,6 +35,9 @@ public class dataBuffer implements Serializable {
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
     public boolean untouched = true;
     public Double [] init = new Double[0];
+
+    //Analysis modules and graphs can register to receive notifications if a buffer changes.
+    public Set<BufferNotification> updateListeners = new HashSet<>();
 
     //This is not logically connected to the data Buffer itself, but it is more efficient to calculate only changes to the buffer, where we can keep track of those changes
     transient private floatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
@@ -50,6 +61,21 @@ public class dataBuffer implements Serializable {
         else
             this.buffer = new LinkedBlockingQueue<>();
         this.value = Double.NaN;
+    }
+
+    //Analysis and view modules can register to learn about updates
+    public void register(BufferNotification listener) {
+        updateListeners.add(listener);
+    }
+
+    public void unregister(BufferNotification listener) {
+        updateListeners.remove(listener);
+    }
+
+    public void notifyListeners(boolean clear, boolean reset) {
+        for (BufferNotification listener : updateListeners) {
+            listener.notifyUpdate(clear, reset);
+        }
     }
 
     private void putBarAxisValue(FloatBuffer buffer, double last, double value, int offset) {
@@ -92,7 +118,7 @@ public class dataBuffer implements Serializable {
     }
 
     //Append a value to the buffer.
-    public void append(double value) {
+    public void append(double value, boolean notify) {
         untouched = false;
         double last = this.value;
         this.value = value; //Update last value
@@ -121,9 +147,9 @@ public class dataBuffer implements Serializable {
 
         }
         buffer.add(value);
-        if (!Double.isNaN(min))
+        if (!Double.isNaN(min) && !Double.isInfinite(min))
             min = Math.min(min, value);
-        if (!Double.isNaN(max))
+        if (!Double.isNaN(max) && !Double.isInfinite(max))
             max = Math.max(max, value);
 
         if (floatCopy != null) {
@@ -174,6 +200,14 @@ public class dataBuffer implements Serializable {
                 floatCopyBarAxis.size += 6;
             }
         }
+
+        if (notify) {
+            notifyListeners(false, false);
+        }
+    }
+
+    public void append(double value) {
+        append(value, true);
     }
 
     //Get the number of elements actually filled into the buffer
@@ -182,15 +216,22 @@ public class dataBuffer implements Serializable {
     }
 
     //Append a double-array with [count] entries.
-    public void append(Double value[], Integer count) {
+    public void append(Double value[], Integer count, boolean notify) {
         for (int i = 0; i < count; i++)
-            append(value[i]);
+            append(value[i], false);
+        if (notify)
+            notifyListeners(false, false);
+    }
+
+    public void append(Double value[], Integer count) {
+        append(value, count, true);
     }
 
     //Append a short-array with [count] entries. This will be scaled to [-1:+1] and is used for audio data
     public void append(short value[], int count) {
         for (int i = 0; i < count; i++)
             append((double)value[i]/(double)Short.MAX_VALUE); //Normalize to [-1:+1] and append
+        notifyListeners(false, false);
     }
 
     //Wrapper function to set this buffer's static-state
@@ -201,11 +242,11 @@ public class dataBuffer implements Serializable {
     //Wrapper function to set this buffer's static-state
     public void setInit(Double[] init) {
         this.init = init;
-        this.append(init, init.length);
+        this.append(init, init.length, false);
     }
 
     //Delete all data and set last item to NaN (if not static)
-    public void clear(boolean reset) {
+    public void clear(boolean reset, boolean notify) {
         if (isStatic)
             return;
         if (reset)
@@ -216,20 +257,25 @@ public class dataBuffer implements Serializable {
         value = Double.NaN;
         if (floatCopy != null) {
             synchronized (floatCopy.lock) {
-                floatCopy.offset = 0;
-                floatCopy.size = 0;
+                //Instead of just resetting the offset and length to zero, we abandon the buffer, so
+                //a new one will be created. The reason to do this is that the copy of the old
+                //buffer remains in tact if a graph has just received it as a data source. So the
+                //data is available until the graph gets a new reference and it is removed by the
+                //garbage collector. Otherwise the reference might be reset before the graph is
+                //redrawn which results in flickering.
+                floatCopy = null;
             }
         }
         if (floatCopyBarValue != null) {
+            //see above
             synchronized (floatCopyBarValue.lock) {
-                floatCopyBarValue.offset = 0;
-                floatCopyBarValue.size = 0;
+                floatCopyBarValue = null;
             }
         }
         if (floatCopyBarAxis != null) {
+            //see above
             synchronized (floatCopyBarAxis.lock) {
-                floatCopyBarAxis.offset = 0;
-                floatCopyBarAxis.size = 0;
+                floatCopyBarAxis = null;
             }
         }
         min = Double.NaN;
@@ -237,6 +283,13 @@ public class dataBuffer implements Serializable {
 
         if (reset)
             this.append(init, init.length);
+
+        if (notify)
+            notifyListeners(true, reset);
+    }
+
+    public void clear(boolean reset) {
+        clear(reset, true);
     }
 
     //Retrieve the iterator of the BlockingQueue
@@ -343,6 +396,9 @@ public class dataBuffer implements Serializable {
 
         min = Collections.min(buffer, new minComparator());
 
+        if (Double.isInfinite(min))
+            min = Double.NaN;
+
         return min;
     }
 
@@ -355,6 +411,9 @@ public class dataBuffer implements Serializable {
             return Double.NaN;
 
         max = Collections.max(buffer, new maxComparator());
+
+        if (Double.isInfinite(max))
+            max = Double.NaN;
 
         return max;
     }
