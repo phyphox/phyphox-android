@@ -21,7 +21,7 @@
     <string name="translationText">H εφαρμογή phyphox θα χρησιμοποιήσει την πρώτη διαθέσιμη γλώσσα από τη λίστα των προτιμώμενων γλωσσών σας. Για να αλλάξετε τις προτιμήσεις σας, επιλέξτε \"ρυθμίσεις\". Για να ενημερωθείτε για τις διαθέσιμες γλώσσες και πως μπορείτε να βοηθήσετε, επιλέξτε \"ιστοσελίδα\".</string>
     <string name="translationToSettings">Ρυθμίσεις</string>
     <string name="translationToWebsite">Ιστοσελίδα</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#el</string>
 
     <string name="warning">Προειδοποίηση</string>
     <string name="donotshowagain">Να μην προβληθεί ξανά</string>
@@ -30,7 +30,11 @@
     <string name="info">Πληροφορίες</string>
     <string name="credits">Μνεία</string>
     <string name="creditsRWTH">Η εφαρμογή phyphox δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.</string>
-    <string name="creditsNames">Ανάπτυξη και Ιδέα:<br/><b>Dr. Sebastian Staacks</b><br/>Ιδέα:<br/><b>Prof. Christoph Stampfer</b><br/>Σχεδιασμός:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Προγραμματισμός:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">
+        <![CDATA[
+            Ανάπτυξη και Ιδέα:<br/><b>Dr. Sebastian Staacks</b><br/>Ιδέα:<br/><b>Prof. Christoph Stampfer</b><br/>Σχεδιασμός:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Προγραμματισμός:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
     <string name="creditsLibs">"Το  web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τις βιβλιοθήκες JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) και \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), οι οποίες είναι όλες διαθέσιμες υπό την άδεια του MIT."</string>
     <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
     <string name="sensorLight">Φως</string>

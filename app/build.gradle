@@ -9,7 +9,7 @@ android {
         targetSdkVersion 27
         versionCode 37
         versionName "1.0.13"
-        resConfigs "cs", "de", "en", "it", "nl", "pl", "ru"
+        resConfigs "cs", "de", "el", "en", "it", "nl", "pl", "ru"
     }
     buildTypes {
         release {
