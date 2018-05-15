@@ -124,7 +124,7 @@
     <string name="pick_exportSets">Επιλέξτε τα σύνολα δεδομένων για εξαγωγή.</string>
     <string name="pick_exportFormat">Επλέξτε το format των δεδομένων.</string>
 
-    <string name="noDrawableData">Μη απεικονίσημα δεδομένα.</string>
+    <string name="noDrawableData">Μη απεικονίσιμα δεδομένα.</string>
 
     <string name="categoryRawSensor">Αισθητήρες</string>
 
