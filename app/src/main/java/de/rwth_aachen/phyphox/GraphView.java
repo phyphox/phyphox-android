@@ -153,8 +153,8 @@ public class GraphView extends View {
 
             zoomFollows = false;
 
-            scaleXStartSpan = scaleGestureDetector.getCurrentSpanX();
-            scaleYStartSpan = scaleGestureDetector.getCurrentSpanY();
+            scaleXStartSpan = Math.abs(scaleGestureDetector.getCurrentSpanX());
+            scaleYStartSpan = Math.abs(scaleGestureDetector.getCurrentSpanY());
 
             final double cminX = Double.isNaN(zoomMinX) ? minX : zoomMinX;
             final double cminY = Double.isNaN(zoomMinY) ? minY : zoomMinY;
@@ -174,8 +174,8 @@ public class GraphView extends View {
 
         @Override
         public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
-            final float spanX = scaleGestureDetector.getCurrentSpanX();
-            final float spanY = scaleGestureDetector.getCurrentSpanY();
+            final float spanX = Math.abs(scaleGestureDetector.getCurrentSpanX());
+            final float spanY = Math.abs(scaleGestureDetector.getCurrentSpanY());
             final float focusX = scaleGestureDetector.getFocusX();
             final float focusY = scaleGestureDetector.getFocusY();
 
@@ -391,12 +391,10 @@ public class GraphView extends View {
     }
 
     private boolean onTouchEventZoom(MotionEvent event) {
-
         scaleGestureDetector.onTouchEvent(event);
 
         if (event.getPointerCount() > 1)
             return true;
-
         final float x = event.getX();
         final float y = event.getY();
 

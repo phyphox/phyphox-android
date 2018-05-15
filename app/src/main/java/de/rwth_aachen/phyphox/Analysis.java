@@ -15,14 +15,131 @@ import java.util.regex.Matcher;
 
 public class Analysis {
 
+    private static boolean nativeLib = false;
+
     static {
-        System.loadLibrary("analysis");
+        try {
+            System.loadLibrary("fftw3f");
+            System.loadLibrary("analysis");
+            nativeLib = true;
+            Log.d("cpp library", "Using native analysis library.");
+        } catch (Error e) {
+            Log.w("cpp library", "Could not load native analysis library. Falling back to Java implementation.");
+        }
     }
 
     public static native void nativePower(double[] x, double[] y);
     public static native void fftw3complex(float[] xy, int n);
     public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
     public static native void fftw3autocorrelation(float[] x, int n);
+
+    public static class FFT implements Serializable {
+        private int n, logn; //input size, power-of-two filled size, log2 of input size (integer)
+        private double [] cos, sin; //Lookup table
+
+        public int np2;
+
+        FFT() {
+            n = 0;
+        }
+
+        public void prepare(int n) {
+            this.n = n;
+            if (n < 2)
+                return;
+
+            logn = (int)(Math.log(n)/Math.log(2)); //log of input size
+            if (n != (1 << logn)) {
+                logn++;
+                np2 = (1 << logn); //power of two after zero filling
+            } else
+                np2 = n; //n is already power of two
+
+            //Create buffer of sine and cosine values
+            cos = new double[np2/2];
+            sin = new double[np2/2];
+            for (int i = 0; i < np2 / 2; i++) {
+                cos[i] = Math.cos(-2 * Math.PI * i / np2);
+                sin[i] = Math.sin(-2 * Math.PI * i / np2);
+            }
+        }
+
+        public void calculate(Double[] x, Double[] y) {
+            if (n < 2)
+                return;
+
+            /***************************************************************
+             * fft.c
+             * Douglas L. Jones
+             * University of Illinois at Urbana-Champaign
+             * January 19, 1992
+             * http://cnx.rice.edu/content/m12016/latest/
+             * <p/>
+             * fft: in-place radix-2 DIT DFT of a complex input
+             * <p/>
+             * input:
+             * n: length of FFT: must be a power of two
+             * m: n = 2**m
+             * input/output
+             * x: double array of length n with real part of data
+             * y: double array of length n with imag part of data
+             * <p/>
+             * Permission to copy and use this program is granted
+             * as long as this header is included.
+             ****************************************************************/
+
+            int j, k, n1, n2, a;
+            double c, s, t1, t2;
+
+            j = 0; /* bit-reverse */
+            n2 = np2 / 2;
+            for(int i = 1; i < np2 - 1; i++)
+
+            {
+                n1 = n2;
+                while (j >= n1) {
+                    j = j - n1;
+                    n1 = n1 / 2;
+                }
+                j = j + n1;
+
+                if (i < j) {
+                    t1 = x[i];
+                    x[i] = x[j];
+                    x[j] = t1;
+                    t1 = y[i];
+                    y[i] = y[j];
+                    y[j] = t1;
+                }
+            }
+
+            n2 = 1;
+
+            for(int i = 0; i < logn; i++)
+
+            {
+                n1 = n2;
+                n2 = n2 + n2;
+                a = 0;
+
+                for (j = 0; j < n1; j++) {
+                    c = cos[a];
+                    s = sin[a];
+                    a += 1 << (logn - i - 1);
+
+                    for (k = j; k < np2; k = k + n2) {
+                        t1 = c * x[k + n1] - s * y[k + n1];
+                        t2 = s * x[k + n1] + c * y[k + n1];
+                        x[k + n1] = x[k] - t1;
+                        y[k + n1] = y[k] - t2;
+                        x[k] = x[k] + t1;
+                        y[k] = y[k] + t2;
+                    }
+                }
+            }
+        }
+
+    }
 
     //analysisModule is is the prototype from which each analysis module inherits its interface
     public static class analysisModule implements Serializable, BufferNotification {
@@ -439,29 +556,64 @@ public class Analysis {
 
         @Override
         protected void update() {
-            if (inputArraySizes.size() < 2)
-                return;
+            if (nativeLib) {
+                if (inputArraySizes.size() < 2)
+                    return;
 
-            int sizeA = inputArraySizes.get(0);
-            int sizeB = inputArraySizes.get(1);
+                int sizeA = inputArraySizes.get(0);
+                int sizeB = inputArraySizes.get(1);
 
-            Double[] a = inputArrays.get(0);
-            Double[] b = inputArrays.get(1);
+                Double[] a = inputArrays.get(0);
+                Double[] b = inputArrays.get(1);
 
-            final double ad[] = new double[sizeA];
-            final double bd[] = new double[sizeB];
+                final double ad[] = new double[sizeA];
+                final double bd[] = new double[sizeB];
 
-            for (int i = 0; i < sizeA; i++) {
-                ad[i] = a[i];
-            }
-            for (int i = 0; i < sizeB; i++) {
-                bd[i] = b[i];
-            }
+                for (int i = 0; i < sizeA; i++) {
+                    ad[i] = a[i];
+                }
+                for (int i = 0; i < sizeB; i++) {
+                    bd[i] = b[i];
+                }
 
-            nativePower(ad, bd);
+                nativePower(ad, bd);
 
-            for (int i = 0; i < sizeA; i++) {
-                outputs.get(0).append(ad[i]);
+                for (int i = 0; i < sizeA; i++) {
+                    outputs.get(0).append(ad[i]);
+                }
+            } else {
+
+                boolean anyInput = true; //Is there any buffer left with values?
+                int i = 0;
+                while (anyInput) { //For each value of output buffer
+                    double result = 1.;
+                    anyInput = false;
+
+                    for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
+                        Double in[] = inputArrays.get(j);
+                        int size = inputArraySizes.get(j);
+                        if (in == null || size == 0)
+                            continue;
+                        if (i < size) { //New value from this iterator
+                            if (j == 0)
+                                result = in[i];
+                            else
+                                result = Math.pow(result, in[i]);
+                            anyInput = true;
+                        } else {
+                            if (j == 0)
+                                result = in[size-1];
+                            else
+                                result = Math.pow(result, in[size-1]);
+                        }
+                    }
+                    if (anyInput) //There was a new value. Append the result.
+                        outputs.get(0).append(result);
+                    else //No values left. Let's stop here...
+                        break;
+                    i++;
+                }
+
             }
         }
     }
@@ -1246,38 +1398,79 @@ public class Analysis {
     //Calculate FFT of single input
     //If the input length is not a power of two the input will be filled with zeros until it is a power of two
     public static class fftAM extends analysisModule implements Serializable {
+        private FFT fft;
 
         protected fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
 
             useArray = true;
+            if (!nativeLib)
+                fft = new FFT();
         }
 
         @Override
         protected void update() {
 
-            if (inputArrays.size() == 0)
-                return;
+            if (nativeLib) {
 
-            int size = inputArraySizes.get(0);
-            if (size < 2)
-                return;
+                if (inputArrays.size() == 0)
+                    return;
 
-            final float xy[] = new float[2*size];
+                int size = inputArraySizes.get(0);
+                if (size < 2)
+                    return;
 
-            for (int i = 0; i < size; i++) {
-                xy[2*i] = inputArrays.get(0)[i].floatValue();
-                xy[2*i+1] = (inputArrays.size() > 1 && inputArraySizes.get(1) > i ? inputArrays.get(1)[i].floatValue() : 0.f);
-            }
+                final float xy[] = new float[2 * size];
 
-            fftw3complex(xy, size);
+                for (int i = 0; i < size; i++) {
+                    xy[2 * i] = inputArrays.get(0)[i].floatValue();
+                    xy[2 * i + 1] = (inputArrays.size() > 1 && inputArraySizes.get(1) > i ? inputArrays.get(1)[i].floatValue() : 0.f);
+                }
 
-            //Append the real part of the result to output1 and the imaginary part to output2 (if used)
-            for (int i = 0; i < size; i++) {
-                if (outputs.size() > 0 && outputs.get(0) != null)
-                    outputs.get(0).append(xy[2*i]);
-                if (outputs.size() > 1 && outputs.get(1) != null)
-                    outputs.get(1).append(xy[2*i+1]);
+                fftw3complex(xy, size);
+
+                //Append the real part of the result to output1 and the imaginary part to output2 (if used)
+                for (int i = 0; i < size; i++) {
+                    if (outputs.size() > 0 && outputs.get(0) != null)
+                        outputs.get(0).append(xy[2 * i]);
+                    if (outputs.size() > 1 && outputs.get(1) != null)
+                        outputs.get(1).append(xy[2 * i + 1]);
+                }
+            } else {
+
+                int size = inputArrays.get(0).length;
+                if (size < 2)
+                    return;
+
+                if (fft.n != size) {
+                    fft.prepare(size);
+                }
+
+                Double x[] = Arrays.copyOf(inputArrays.get(0), fft.np2);
+                Double y[];
+                if (inputArrays.size() > 1)
+                    y = Arrays.copyOf(inputArrays.get(1), fft.np2);
+                else
+                    y = new Double[fft.np2];
+
+                //Fill any unused inputs with zeros
+                for (int i = 0; i < fft.np2; i++) {
+                    if (x[i] == null)
+                        x[i] = 0.;
+                    if (y[i] == null)
+                        y[i] = 0.;
+                }
+
+                fft.calculate(x, y);
+
+                //Append the real part of the result to output1 and the imaginary part to output2 (if used)
+                for (int i = 0; i < size; i++) {
+                    if (outputs.size() > 0 && outputs.get(0) != null)
+                        outputs.get(0).append(x[i]);
+                    if (outputs.size() > 1 && outputs.get(1) != null)
+                        outputs.get(1).append(y[i]);
+                }
+
             }
         }
     }
@@ -1537,38 +1730,67 @@ public class Analysis {
 
         @Override
         protected void update() {
-            int sizeA = inputArraySizes.get(0);
-            int sizeB = inputArraySizes.get(1);
-            int size = 2*(sizeA + sizeB);
+            if (nativeLib) {
+                int sizeA = inputArraySizes.get(0);
+                int sizeB = inputArraySizes.get(1);
+                int size = 2 * (sizeA + sizeB);
 
-            Double[] a = inputArrays.get(0);
-            Double[] b = inputArrays.get(1);
+                Double[] a = inputArrays.get(0);
+                Double[] b = inputArrays.get(1);
 
-            final float af[] = new float[size];
-            final float bf[] = new float[size];
+                final float af[] = new float[size];
+                final float bf[] = new float[size];
 
-            if (sizeA > sizeB) {
-                for (int i = 0; i < sizeA; i++) {
-                    af[i] = a[i].floatValue();
+                if (sizeA > sizeB) {
+                    for (int i = 0; i < sizeA; i++) {
+                        af[i] = a[i].floatValue();
+                    }
+                    for (int i = 0; i < sizeB; i++) {
+                        bf[i] = b[i].floatValue();
+                    }
+                } else {
+                    for (int i = 0; i < sizeA; i++) {
+                        bf[i] = a[i].floatValue();
+                    }
+                    for (int i = 0; i < sizeB; i++) {
+                        af[i] = b[i].floatValue();
+                    }
                 }
-                for (int i = 0; i < sizeB; i++) {
-                    bf[i] = b[i].floatValue();
+
+                fftw3crosscorrelation(af, bf, size);
+
+                //Append the real part of the result to output1 and the imaginary part to output2 (if used)
+                for (int i = 0; i < Math.abs(sizeA - sizeB); i++) {
+                    if (outputs.size() > 0 && outputs.get(0) != null)
+                        outputs.get(0).append(af[i]);
                 }
             } else {
-                for (int i = 0; i < sizeA; i++) {
-                    bf[i] = a[i].floatValue();
-                }
-                for (int i = 0; i < sizeB; i++) {
-                    af[i] = b[i].floatValue();
-                }
-            }
 
-            fftw3crosscorrelation(af, bf, size);
+                Double a[], b[];
+                int asize, bsize;
+                //Put the larger input in a and the smaller one in b
+                if (inputArraySizes.get(0) > inputArraySizes.get(1)) {
+                    a = inputArrays.get(0);
+                    asize = inputArraySizes.get(0);
+                    b = inputArrays.get(1);
+                    bsize = inputArraySizes.get(1);
+                } else {
+                    a = inputArrays.get(1);
+                    asize = inputArraySizes.get(1);
+                    b = inputArrays.get(0);
+                    bsize = inputArraySizes.get(0);
+                }
 
-            //Append the real part of the result to output1 and the imaginary part to output2 (if used)
-            for (int i = 0; i < Math.abs(sizeA-sizeB); i++) {
-                if (outputs.size() > 0 && outputs.get(0) != null)
-                    outputs.get(0).append(af[i]);
+                //The actual calculation
+                int compRange = asize - bsize;
+                for (int i = 0; i < compRange; i++) {
+                    double sum = 0.;
+                    for (int j = 0; j < bsize; j++) {
+                        sum += a[j+i]*b[j];
+                    }
+                    sum /= (double)(compRange); //Normalize bynumber of values
+                    outputs.get(0).append(sum);
+                }
             }
         }
     }

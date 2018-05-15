@@ -12,12 +12,10 @@ extern "C" {
 
         double base = 0.;
         double exponent = 1.;
-        for (int i = 0; i < n || i < m; i++) {
-            if (i < n)
-                base = x[i];
+        for (int i = 0; i < n; i++) {
             if (i < m)
                 exponent = y[i];
-            x[i] = pow(base, exponent);
+            x[i] = pow(x[i], exponent);
         }
 
         env->ReleaseDoubleArrayElements(a, x, 0);
