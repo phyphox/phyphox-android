@@ -247,14 +247,20 @@ public class Analysis {
     // Uncomment to print the last value of inputs and outputs for debugging...
 /*
                 Log.d("AnalysisDebug", "[" + this.getClass().toString() + "]");
-                for (dataInput input : inputs)
-                    if (input != null)
-                        Log.d("AnalysisDebug", "in: " + input.getValue() + " (length " + input.getFilledSize() + ")");
+                if (!useArray) {
+                    for (dataInput input : inputs)
+                        if (input != null)
+                            Log.d("AnalysisDebug", "in: " + input.getValue() + " (length " + input.getFilledSize() + ")");
+                } else {
+                    for (int i = 0; i < inputArrays.size() && i < inputArraySizes.size(); i++)
+                        if (inputArrays.get(i) != null)
+                            Log.d("AnalysisDebug", "in: " + (inputArraySizes.get(i) > 0 ? inputArrays.get(i)[inputArraySizes.get(i)-1] : "[]") + " (length " + inputArraySizes.get(i) + ")");
+                }
                 for (dataOutput output : outputs)
                     if (output != null)
                         Log.d("AnalysisDebug", output.buffer.name + " => " + output.getValue() + " (length " + output.getFilledSize() + ")");
-*/
 
+*/
                 executed = true;
 
             }
@@ -1735,6 +1741,9 @@ public class Analysis {
                 int sizeB = inputArraySizes.get(1);
                 int size = 2 * (sizeA + sizeB);
 
+                if (sizeA == 0 || sizeB == 0)
+                    return;
+
                 Double[] a = inputArrays.get(0);
                 Double[] b = inputArrays.get(1);
 
@@ -1780,6 +1789,9 @@ public class Analysis {
                     b = inputArrays.get(0);
                     bsize = inputArraySizes.get(0);
                 }
+
+                if (asize == 0 || bsize == 0)
+                    return;
 
                 //The actual calculation
                 int compRange = asize - bsize;

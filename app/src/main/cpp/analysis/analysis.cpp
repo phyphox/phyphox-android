@@ -38,29 +38,27 @@ extern "C" {
         jfloat *a = env->GetFloatArrayElements(x, 0);
         jfloat *b = env->GetFloatArrayElements(y, 0);
 
+        float n2 = (float)n*(float)n;
+
         fftwf_plan pa, pb, pr;
         pa = fftwf_plan_r2r_1d(n, a, a, FFTW_R2HC, FFTW_ESTIMATE);
         pb = fftwf_plan_r2r_1d(n, b, b, FFTW_R2HC, FFTW_ESTIMATE);
         fftwf_execute(pa);
         fftwf_execute(pb);
         float c, d, e, f;
-        a[0] = a[0]*b[0];
-        a[n/2] = a[n/2]*b[n/2];
+        a[0] = a[0]*b[0]/n2;
+        a[n/2] = a[n/2]*b[n/2]/n2;
         for (int i = 0; i < n/2; i++) {
             c = a[i];
             d = b[i];
             e = a[n-i];
             f = b[n-i];
-            a[i] = c*d + e*f;
-            a[n-i] = d*e - c*f;
+            a[i] = (c*d + e*f)/n2;
+            a[n-i] = (d*e - c*f)/n2;
         }
 
         pr = fftwf_plan_r2r_1d(n, a, a, FFTW_HC2R, FFTW_ESTIMATE);
         fftwf_execute(pr);
-
-        for (int i = 0; i < n; i++) {
-            a[i] /= (float)n;
-        }
 
         fftwf_destroy_plan(pa);
         fftwf_destroy_plan(pb);

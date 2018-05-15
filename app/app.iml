@@ -6,11 +6,6 @@
         <option name="GRADLE_PROJECT_PATH" value=":app" />
       </configuration>
     </facet>
-    <facet type="native-android-gradle" name="Native-Android-Gradle">
-      <configuration>
-        <option name="SELECTED_BUILD_VARIANT" value="debug" />
-      </configuration>
-    </facet>
     <facet type="android" name="Android">
       <configuration>
         <option name="SELECTED_BUILD_VARIANT" value="debug" />
@@ -26,6 +21,11 @@
         <option name="ASSETS_FOLDER_RELATIVE_PATH" value="/src/main/assets" />
       </configuration>
     </facet>
+    <facet type="native-android-gradle" name="Native-Android-Gradle">
+      <configuration>
+        <option name="SELECTED_BUILD_VARIANT" value="debug" />
+      </configuration>
+    </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7">
     <output url="file://$MODULE_DIR$/build/intermediates/classes/debug" />
@@ -33,8 +33,6 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/analysis" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/libbench2" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/tests" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/api" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/dft" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/dft/scalar" isTestSource="false" />
@@ -138,7 +136,6 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/symbols" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/transforms" />
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
-      <excludeFolder url="file://$MODULE_DIR$/build/reports" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
     </content>
     <orderEntry type="jdk" jdkName="Android API 27 Platform" jdkType="Android SDK" />

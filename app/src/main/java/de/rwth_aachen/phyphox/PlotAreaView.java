@@ -44,7 +44,7 @@ public class PlotAreaView extends TextureView {
 class CurveData {
     int vboX, vboY;
     int ibo;
-    int ibCount;
+    int ibCount, ibUsedCount;
     transient IntBuffer ib;
 
     int mapWidth;
@@ -198,6 +198,7 @@ class GraphSetup {
                 newData.vboY = 0;
                 newData.ibo = 0;
                 newData.ibCount = 0;
+                newData.ibUsedCount = 0;
                 newData.ib = null;
                 newData.style = style[i];
                 newData.mapWidth = mapWidth[i];
@@ -759,11 +760,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glEnableVertexAttribArray(mapPositionZHandle);
         GLES20.glVertexAttribPointer(mapPositionZHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
-        if (dataSet.ibCount < 4)
+        if (dataSet.ibUsedCount < 4)
             return;
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, dataSet.ibo);
-        GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, dataSet.ibCount, GLES20.GL_UNSIGNED_INT, 0);
+        GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, dataSet.ibUsedCount, GLES20.GL_UNSIGNED_INT, 0);
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
 
         //Draw scale
@@ -884,9 +885,9 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                 data.n = 0;
 
             if (data.style == GraphView.Style.mapXY && (data.mapWidth > 0)) {
-                int count = ((data.n / data.mapWidth)-1) * (2* data.mapWidth + 2);
-                if (count > 4 && (data.ib == null || count > data.ibCount)) {
-                    IntBuffer newIB = ByteBuffer.allocateDirect(count * 4).order(ByteOrder.nativeOrder()).asIntBuffer();
+                data.ibUsedCount = ((data.n / data.mapWidth)-1) * (2* data.mapWidth + 2);
+                if (data.ibUsedCount > 4 && (data.ib == null || data.ibUsedCount > data.ibCount)) {
+                    IntBuffer newIB = ByteBuffer.allocateDirect(data.ibUsedCount * 4).order(ByteOrder.nativeOrder()).asIntBuffer();
                     if (data.ib != null) {
                         newIB.position(0);
                         data.ib.position(0);
@@ -896,7 +897,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     }
                     data.ib = newIB;
                     data.ib.position(data.ibCount);
-                    for (int i = data.ibCount / 2; i < count / 2; i++) {
+                    for (int i = data.ibCount / 2; i < data.ibUsedCount / 2; i++) {
                         int line = i / (data.mapWidth + 1);
                         int x = i % (data.mapWidth + 1);
                         if (x == data.mapWidth) {
@@ -907,12 +908,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                             data.ib.put((line + 1) * data.mapWidth + x);
                         }
                     }
-                    data.ibCount = count;
+                    data.ibCount = data.ibUsedCount;
                 }
-                if (data.ibCount > 4) {
+                if (data.ibUsedCount > 4) {
                     data.ib.position(0);
                     GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, data.ibo);
-                    GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, data.ibCount * 4, data.ib, GLES20.GL_DYNAMIC_DRAW);
+                    GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, data.ibUsedCount * 4, data.ib, GLES20.GL_DYNAMIC_DRAW);
                     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
                 }
             }
