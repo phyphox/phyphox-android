@@ -1,2 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">設定</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">シンプルな実験の追加</string>
+    <string name="newExperimentPhyphoxInfo">データ分析や同僚，学生，友人との共有等の高度の実験を行うには phyphox.org のリンクを参照ください．</string>
+    <string name="newExperimentInputTitle">タイトル</string>
+    <string name="newExperimentInputBufferSize">バッファーサイズ(格納する値の数)</string>
+    <string name="newExperimentInputRate">センサーレート (Hz，0は最速処理を意味する)</string>
+    <string name="newExperimentInputSensors">アクティブなセンサー</string>
+
+    <string name="help">ヘルプ＆インフォ</string>
+    </resources>
