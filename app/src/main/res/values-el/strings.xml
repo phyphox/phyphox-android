@@ -130,7 +130,7 @@
 
     <string name="experimentinfo_hint">Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.</string>
 
-<string name="calibrated_magnetometer"/>
+<string name="calibrated_magnetometer">Χρήση βαθμονομημένου μαγνητόμετρου</string>
 
     <string name="categoryNewExperiment">Απλά πειράματα χρήστη</string>
     </resources>
