@@ -132,6 +132,54 @@
 
         </GridLayout>
 
+        <GridLayout
+            android:id="@+id/applyZoomZ"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_padding"
+            android:columnCount="2">
+
+            <ImageView
+                android:src="@drawable/zoom_vert"
+                android:alpha="0.5"
+                android:layout_margin="@dimen/activity_vertical_padding"
+                android:layout_columnSpan="1"
+                android:layout_rowSpan="4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+
+            <TextView
+                android:id="@+id/applyZoomZLabel"
+                android:layout_marginTop="@dimen/activity_vertical_padding"
+                android:layout_marginBottom="@dimen/activity_vertical_padding"
+                android:layout_columnSpan="1"
+                android:layout_rowSpan="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/applyZoomZMode"
+                android:layout_columnSpan="1"
+                android:layout_rowSpan="1">
+                <RadioButton
+                    android:id="@+id/applyZoomZReset"
+                    android:text="@string/applyZoomReset"
+                    android:checked="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <RadioButton
+                    android:id="@+id/applyZoomZKeep"
+                    android:text="@string/applyZoomKeep"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </RadioGroup>
+
+        </GridLayout>
+
 
     </LinearLayout>
 </ScrollView>

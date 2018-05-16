@@ -170,6 +170,10 @@ class GraphSetup {
                 zmin = minZ;
                 zmax = maxZ;
             }
+            if (zmin == zmax) {
+                zmin -= 1.0;
+                zmax += 1.0;
+            }
             zminOnX = zmin - plotBoundL / (float) plotBoundW * (zmax - zmin);
             zmaxOnX = zmax + (w - plotBoundW - plotBoundL) / (float) plotBoundW * (zmax- zmin);
 
@@ -321,6 +325,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "attribute float positionZ;" +
 
             "float posX, posY, posZ;" +
+            "vec4 posRaw;" +
 
             "void main () {" +
             "   if (logXYZ == 1 || logXYZ == 3 || logXYZ == 5 || logXYZ == 7)" +
@@ -335,7 +340,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "       posZ = log(positionZ);" +
             "   else" +
             "       posZ = positionZ;" +
-            "   gl_Position = positionMatrix * vec4(posX, posY, posZ, 1.);" +
+            "   posRaw = positionMatrix * vec4(posX, posY, posZ, 1.);" +
+            "   gl_Position = vec4(posRaw.xy, clamp(posRaw.z, -1.0, 1.0), posRaw.w);" +
             "}";
 
     final String mapFragmentShader =
@@ -644,6 +650,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         GLES20.glDisable(GLES20.GL_CULL_FACE);
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
     }
 
     public void deinitScene() {
@@ -993,8 +1000,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             GLES20.glTexImage2D ( GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB, nSteps,1,0, GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, colorScaleTextureData);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, 0 );
         }
     }

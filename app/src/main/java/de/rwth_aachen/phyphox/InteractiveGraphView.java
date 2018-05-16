@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
@@ -145,6 +146,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                         graphView.zoomMaxX = Double.NaN;
                                         graphView.zoomMinY = Double.NaN;
                                         graphView.zoomMaxY = Double.NaN;
+                                        graphView.zoomMinZ = Double.NaN;
+                                        graphView.zoomMaxZ = Double.NaN;
                                         graphView.invalidate();
                                         break;
                                     case R.id.graph_tools_follow:
@@ -223,7 +226,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     }
 
     public void leaveDialog(final expViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
-        if (Double.isNaN(graphView.zoomMinX) && Double.isNaN(graphView.zoomMinY) && Double.isNaN(graphView.zoomMaxX) && Double.isNaN(graphView.zoomMaxY)) {
+        if (Double.isNaN(graphView.zoomMinX) && Double.isNaN(graphView.zoomMinY) && Double.isNaN(graphView.zoomMaxX) && Double.isNaN(graphView.zoomMaxY) && Double.isNaN(graphView.zoomMaxZ) && Double.isNaN(graphView.zoomMaxZ)) {
             parent.leaveExclusive();
             return;
         }
@@ -232,15 +235,19 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         builder.setView(dialogView);
         final TextView tvLabelX = (TextView) dialogView.findViewById(R.id.applyZoomXLabel);
         final TextView tvLabelY = (TextView) dialogView.findViewById(R.id.applyZoomYLabel);
+        final TextView tvLabelZ = (TextView) dialogView.findViewById(R.id.applyZoomZLabel);
         final RadioButton rbResetX = (RadioButton) dialogView.findViewById(R.id.applyZoomXReset);
         final RadioButton rbKeepX = (RadioButton) dialogView.findViewById(R.id.applyZoomXKeep);
         final RadioButton rbFollowX = (RadioButton) dialogView.findViewById(R.id.applyZoomXFollow);
         final RadioButton rbResetY = (RadioButton) dialogView.findViewById(R.id.applyZoomYReset);
         final RadioButton rbKeepY = (RadioButton) dialogView.findViewById(R.id.applyZoomYKeep);
+        final RadioButton rbResetZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZReset);
+        final RadioButton rbKeepZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZKeep);
         final Spinner sApplyX = (Spinner) dialogView.findViewById(R.id.applyZoomXApplyTo);
         final Spinner sApplyY = (Spinner) dialogView.findViewById(R.id.applyZoomYApplyTo);
         tvLabelX.setText(graphView.getLabelAndUnitX());
         tvLabelY.setText(graphView.getLabelAndUnitY());
+        tvLabelZ.setText(graphView.getLabelAndUnitZ());
         rbFollowX.setVisibility(graphView.graphSetup.incrementalX ? VISIBLE : GONE);
         if (graphView.zoomFollows && graphView.graphSetup.incrementalX && !Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
             rbFollowX.setChecked(true);
@@ -256,10 +263,27 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             rbResetY.setChecked(true);
         }
 
+        boolean hasZAxis = false;
+        for (int i = 0; i < graphView.style.length; i++) {
+            if (graphView.style[i] == GraphView.Style.mapZ)
+                hasZAxis = true;
+        }
+        final boolean zShown = hasZAxis;
+
+        if (zShown) {
+            if (!Double.isNaN(graphView.zoomMinZ) && !Double.isNaN(graphView.zoomMaxZ)) {
+                rbKeepZ.setChecked(true);
+            } else {
+                rbResetZ.setChecked(true);
+            }
+        } else {
+            ((GridLayout) dialogView.findViewById(R.id.applyZoomZ)).setVisibility(GONE);
+        }
+
         builder.setTitle(R.string.applyZoomTitle)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        double minX, maxX, minY, maxY;
+                        double minX, maxX, minY, maxY, minZ, maxZ;
                         if (rbResetX.isChecked()) {
                             minX = Double.NaN;
                             maxX = Double.NaN;
@@ -296,6 +320,18 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                 break;
                             case 3: parent.applyZoom(minY, maxY, false, null, null, true);
                                 break;
+                        }
+
+                        if (zShown) {
+                            if (rbResetZ.isChecked()) {
+                                minZ = Double.NaN;
+                                maxZ = Double.NaN;
+                            } else {
+                                minZ = graphView.zoomMinZ;
+                                maxZ = graphView.zoomMaxZ;
+                            }
+                            graphView.zoomMinZ = minZ;
+                            graphView.zoomMaxZ = maxZ;
                         }
 
                         parent.leaveExclusive();
