@@ -17,14 +17,17 @@ import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
@@ -236,6 +239,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final TextView tvLabelX = (TextView) dialogView.findViewById(R.id.applyZoomXLabel);
         final TextView tvLabelY = (TextView) dialogView.findViewById(R.id.applyZoomYLabel);
         final TextView tvLabelZ = (TextView) dialogView.findViewById(R.id.applyZoomZLabel);
+        final RadioButton rbReset = (RadioButton) dialogView.findViewById(R.id.applyZoomReset);
+        final RadioButton rbKeep = (RadioButton) dialogView.findViewById(R.id.applyZoomKeep);
         final RadioButton rbResetX = (RadioButton) dialogView.findViewById(R.id.applyZoomXReset);
         final RadioButton rbKeepX = (RadioButton) dialogView.findViewById(R.id.applyZoomXKeep);
         final RadioButton rbFollowX = (RadioButton) dialogView.findViewById(R.id.applyZoomXFollow);
@@ -245,6 +250,37 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final RadioButton rbKeepZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZKeep);
         final Spinner sApplyX = (Spinner) dialogView.findViewById(R.id.applyZoomXApplyTo);
         final Spinner sApplyY = (Spinner) dialogView.findViewById(R.id.applyZoomYApplyTo);
+        final Switch swAdvanced = (Switch) dialogView.findViewById(R.id.applyZoomAdvanced);
+
+        final RadioGroup rgGenericOptions = (RadioGroup) dialogView.findViewById(R.id.applyZoomMode);
+        final GridLayout glXOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomX);
+        final GridLayout glYOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomY);
+        final GridLayout glZOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomZ);
+
+        boolean hasZAxis = false;
+        for (int i = 0; i < graphView.style.length; i++) {
+            if (graphView.style[i] == GraphView.Style.mapZ)
+                hasZAxis = true;
+        }
+        final boolean zShown = hasZAxis;
+
+        swAdvanced.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    glXOptions.setVisibility(VISIBLE);
+                    glYOptions.setVisibility(VISIBLE);
+                    glZOptions.setVisibility(zShown ? VISIBLE : GONE);
+                    rgGenericOptions.setVisibility(GONE);
+                } else {
+                    glXOptions.setVisibility(GONE);
+                    glYOptions.setVisibility(GONE);
+                    glZOptions.setVisibility(GONE);
+                    rgGenericOptions.setVisibility(VISIBLE);
+                }
+            }
+        });
+
         tvLabelX.setText(graphView.getLabelAndUnitX());
         tvLabelY.setText(graphView.getLabelAndUnitY());
         tvLabelZ.setText(graphView.getLabelAndUnitZ());
@@ -263,35 +299,28 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             rbResetY.setChecked(true);
         }
 
-        boolean hasZAxis = false;
-        for (int i = 0; i < graphView.style.length; i++) {
-            if (graphView.style[i] == GraphView.Style.mapZ)
-                hasZAxis = true;
-        }
-        final boolean zShown = hasZAxis;
-
         if (zShown) {
             if (!Double.isNaN(graphView.zoomMinZ) && !Double.isNaN(graphView.zoomMaxZ)) {
                 rbKeepZ.setChecked(true);
             } else {
                 rbResetZ.setChecked(true);
             }
-        } else {
-            ((GridLayout) dialogView.findViewById(R.id.applyZoomZ)).setVisibility(GONE);
         }
 
         builder.setTitle(R.string.applyZoomTitle)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         double minX, maxX, minY, maxY, minZ, maxZ;
-                        if (rbResetX.isChecked()) {
+                        boolean simple = !swAdvanced.isChecked();
+
+                        if ((simple && rbReset.isChecked()) || (!simple && rbResetX.isChecked())) {
                             minX = Double.NaN;
                             maxX = Double.NaN;
                         } else {
                             minX = graphView.zoomMinX;
                             maxX = graphView.zoomMaxX;
                         }
-                        if (rbResetY.isChecked()) {
+                        if ((simple && rbReset.isChecked()) || (!simple && rbResetY.isChecked())) {
                             minY = Double.NaN;
                             maxY = Double.NaN;
                         } else {
@@ -302,28 +331,37 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         graphView.zoomMaxX = maxX;
                         graphView.zoomMinY = minY;
                         graphView.zoomMaxY = maxY;
-                        graphView.zoomFollows = rbFollowX.isChecked();
+                        graphView.zoomFollows = (simple && graphView.zoomFollows) || (!simple && rbFollowX.isChecked());
 
-                        switch (sApplyX.getSelectedItemPosition()) {
-                            case 1: parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false);
-                                break;
-                            case 2: parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false);
-                                break;
-                            case 3: parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false);
-                                break;
-                        }
+                        if (!simple) {
 
-                        switch (sApplyY.getSelectedItemPosition()) {
-                            case 1: parent.applyZoom(minY, maxY, false, null, bufferY, true);
-                                break;
-                            case 2: parent.applyZoom(minY, maxY, false, unitY, null, true);
-                                break;
-                            case 3: parent.applyZoom(minY, maxY, false, null, null, true);
-                                break;
+                            switch (sApplyX.getSelectedItemPosition()) {
+                                case 1:
+                                    parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false);
+                                    break;
+                                case 2:
+                                    parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false);
+                                    break;
+                                case 3:
+                                    parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false);
+                                    break;
+                            }
+
+                            switch (sApplyY.getSelectedItemPosition()) {
+                                case 1:
+                                    parent.applyZoom(minY, maxY, false, null, bufferY, true);
+                                    break;
+                                case 2:
+                                    parent.applyZoom(minY, maxY, false, unitY, null, true);
+                                    break;
+                                case 3:
+                                    parent.applyZoom(minY, maxY, false, null, null, true);
+                                    break;
+                            }
                         }
 
                         if (zShown) {
-                            if (rbResetZ.isChecked()) {
+                            if ((simple && rbReset.isChecked()) || (!simple && rbResetZ.isChecked())) {
                                 minZ = Double.NaN;
                                 maxZ = Double.NaN;
                             } else {

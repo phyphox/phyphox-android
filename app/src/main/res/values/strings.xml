@@ -20,7 +20,9 @@
     <string name="graph_fit_label">Linear fit: y = a x + b</string>
 
     <string name="applyZoomTitle">Apply zoom</string>
-    <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom position and if you want to apply it to other graphs on the same page as well.</string>
+    <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.</string>
+    <string name="applyZoomAdvanced">Advanced options</string>
+    <string name="applyZoomApply">Apply to...</string>
 
     <string name="applyZoomReset">Reset to default</string>
     <string name="applyZoomKeep">Keep as selected</string>
