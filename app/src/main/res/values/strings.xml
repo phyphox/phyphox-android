@@ -73,6 +73,10 @@
     <string name="translationToWebsite">Visit website</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
+    <string name="deviceInfo">Device info</string>
+    <string name="copyToClipboard">Copy to clipboard</string>
+    <string name="deviceInfoCopied">The device info has been copied to your clipboard.</string>
+
     <string name="warning">Warning</string>
     <string name="donotshowagain">Do not show again</string>
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>

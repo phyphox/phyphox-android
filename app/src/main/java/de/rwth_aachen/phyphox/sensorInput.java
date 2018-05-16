@@ -130,6 +130,32 @@ public class sensorInput implements SensorEventListener, Serializable {
         return sensorInput.getDescriptionRes(type);
     }
 
+    public static String getUnit(int type) {
+        switch (type) {
+            case Sensor.TYPE_LINEAR_ACCELERATION:
+                return "m/s²";
+            case Sensor.TYPE_LIGHT:
+                return "lx";
+            case Sensor.TYPE_GYROSCOPE:
+                return "rad/s";
+            case Sensor.TYPE_ACCELEROMETER:
+                return "m/s²";
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                return "µT";
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
+                return "µT";
+            case Sensor.TYPE_PRESSURE:
+                return "hPa";
+            case Sensor.TYPE_AMBIENT_TEMPERATURE:
+                return "°C";
+            case Sensor.TYPE_RELATIVE_HUMIDITY:
+                return "%";
+            case Sensor.TYPE_PROXIMITY:
+                return "cm";
+        }
+        return "";
+    }
+
     //Start the data aquisition by registering a listener for this sensor.
     public void start() {
         this.t0 = 0; //Reset t0. This will be set by the first sensor event

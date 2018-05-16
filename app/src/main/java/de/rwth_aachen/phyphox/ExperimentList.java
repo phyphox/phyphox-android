@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityOptions;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -20,7 +22,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -34,6 +38,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -49,6 +54,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.PopupMenu;
 import android.text.Html;
+import android.text.Spannable;
+import android.text.Spanned;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
@@ -104,8 +111,6 @@ import java.util.Vector;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import static de.rwth_aachen.phyphox.BluetoothInput.CONFIG_DESCRIPTOR;
 
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
@@ -1165,7 +1170,7 @@ public class ExperimentList extends AppCompatActivity {
                     showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (set char notification failed)", device);
                     return;
                 }
-                descriptor = experimentCharacteristic.getDescriptor(CONFIG_DESCRIPTOR);
+                descriptor = experimentCharacteristic.getDescriptor(BluetoothInput.CONFIG_DESCRIPTOR);
                 if (descriptor == null) {
                     gatt.disconnect();
                     showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (descriptor failed)", device);
@@ -1822,6 +1827,164 @@ public class ExperimentList extends AppCompatActivity {
                                 AlertDialog dialog = builder.create();
                                 dialog.show();
                             }
+                            return true;
+                            case R.id.action_deviceInfo: {
+                                StringBuilder sb = new StringBuilder();
+
+                                PackageInfo pInfo;
+                                try {
+                                    pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
+                                } catch (Exception e) {
+                                    pInfo = null;
+                                }
+
+                                sb.append("<b>phyphox</b><br />");
+                                if (pInfo != null) {
+                                    sb.append("Version: ");
+                                    sb.append(pInfo.versionName);
+                                    sb.append("<br />");
+                                    sb.append("Build: ");
+                                    sb.append(pInfo.versionCode);
+                                    sb.append("<br />");
+                                } else {
+                                    sb.append("Version: Unknown<br />");
+                                    sb.append("Build: Unknown<br />");
+                                }
+                                sb.append("File format: ");
+                                sb.append(phyphoxFile.phyphoxFileVersion);
+                                sb.append("<br /><br />");
+
+                                sb.append("<b>Permissions</b><br />");
+                                if (pInfo != null && pInfo.requestedPermissions != null) {
+                                    for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
+                                        sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
+                                        sb.append(": ");
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                                            sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
+                                        else
+                                            sb.append("API < 16");
+                                        sb.append("<br />");
+                                    }
+                                } else {
+                                    if (pInfo == null)
+                                        sb.append("Unknown<br />");
+                                    else
+                                        sb.append("None<br />");
+                                }
+                                sb.append("<br />");
+
+                                sb.append("<b>Device</b><br />");
+                                sb.append("Model: ");
+                                sb.append(Build.MODEL);
+                                sb.append("<br />");
+                                sb.append("Brand: ");
+                                sb.append(Build.BRAND);
+                                sb.append("<br />");
+                                sb.append("Board: ");
+                                sb.append(Build.DEVICE);
+                                sb.append("<br />");
+                                sb.append("Manufacturer: ");
+                                sb.append(Build.MANUFACTURER);
+                                sb.append("<br />");
+                                sb.append("ABIS: ");
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                    for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
+                                        if (i > 0)
+                                            sb.append(", ");
+                                        sb.append(Build.SUPPORTED_ABIS[i]);
+                                    }
+                                } else {
+                                    sb.append("API < 21");
+                                }
+                                sb.append("<br />");
+                                sb.append("Base OS: ");
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    sb.append(Build.VERSION.BASE_OS);
+                                } else {
+                                    sb.append("API < 23");
+                                }
+                                sb.append("<br />");
+                                sb.append("Codename: ");
+                                sb.append(Build.VERSION.CODENAME);
+                                sb.append("<br />");
+                                sb.append("Release: ");
+                                sb.append(Build.VERSION.RELEASE);
+                                sb.append("<br />");
+                                sb.append("Patch: ");
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    sb.append(Build.VERSION.SECURITY_PATCH);
+                                } else {
+                                    sb.append("API < 23");
+                                }
+                                sb.append("<br /><br />");
+
+                                sb.append("<b>Sensors</b><br />");
+                                SensorManager sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+                                if (sensorManager == null){
+                                    sb.append("Unkown<br />");
+                                } else {
+                                    for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+                                        sb.append(sensor.getName());
+                                        sb.append("<br />");
+                                        sb.append("- Range: ");
+                                        sb.append(sensor.getMaximumRange());
+                                        sb.append(" ");
+                                        sb.append(sensorInput.getUnit(sensor.getType()));
+                                        sb.append("<br />");
+                                        sb.append("- Resolution: ");
+                                        sb.append(sensor.getResolution());
+                                        sb.append(" ");
+                                        sb.append(sensorInput.getUnit(sensor.getType()));
+                                        sb.append("<br />");
+                                        sb.append("- Min delay: ");
+                                        sb.append(sensor.getMinDelay());
+                                        sb.append(" µs");
+                                        sb.append("<br />");
+                                        sb.append("- Max delay: ");
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                            sb.append(sensor.getMaxDelay());
+                                        } else {
+                                            sb.append("API < 21");
+                                        }
+                                        sb.append(" µs");
+                                        sb.append("<br />");
+                                        sb.append("- Power: ");
+                                        sb.append(sensor.getPower());
+                                        sb.append(" mA");
+                                        sb.append("<br />");
+                                        sb.append("- Vendor: ");
+                                        sb.append(sensor.getVendor());
+                                        sb.append("<br />");
+                                        sb.append("- Version: ");
+                                        sb.append(sensor.getVersion());
+                                        sb.append("<br />");
+                                    }
+                                }
+
+                                final Spanned text = Html.fromHtml(sb.toString());
+                                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                                builder.setMessage(text)
+                                        .setTitle(R.string.deviceInfo)
+                                        .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                //Copy the device info to the clipboard and notify the user
+
+                                                ClipboardManager cm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+                                                ClipData data = ClipData.newPlainText(res.getString(R.string.deviceInfo), text);
+                                                cm.setPrimaryClip(data);
+
+                                                Toast.makeText(ExperimentList.this, res.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
+                                            }
+                                        })
+                                        .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                //Closed by user. Nothing to do.
+                                            }
+                                        });
+                                AlertDialog dialog = builder.create();
+                                dialog.show();
+                            }
+                            return true;
                             default:
                                 return false;
                         }
