@@ -123,6 +123,9 @@ public class sensorInput implements SensorEventListener, Serializable {
             case Sensor.TYPE_PROXIMITY:
                 return R.string.sensorProximity;
         }
+        if (type >= Sensor.TYPE_DEVICE_PRIVATE_BASE) {
+            return R.string.sensorVendor;
+        }
         return R.string.unknown;
     }
 

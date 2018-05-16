@@ -1918,12 +1918,19 @@ public class ExperimentList extends AppCompatActivity {
                                 }
                                 sb.append("<br /><br />");
 
-                                sb.append("<b>Sensors</b><br />");
+                                sb.append("<b>Sensors</b><br /><br />");
                                 SensorManager sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
                                 if (sensorManager == null){
                                     sb.append("Unkown<br />");
                                 } else {
                                     for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+                                        sb.append("<b>");
+                                        sb.append(res.getString(sensorInput.getDescriptionRes(sensor.getType())));
+                                        sb.append("</b> (type ");
+                                        sb.append(sensor.getType());
+                                        sb.append(")");
+                                        sb.append("<br />");
+                                        sb.append("- Name: ");
                                         sb.append(sensor.getName());
                                         sb.append("<br />");
                                         sb.append("- Range: ");
@@ -1957,7 +1964,7 @@ public class ExperimentList extends AppCompatActivity {
                                         sb.append("<br />");
                                         sb.append("- Version: ");
                                         sb.append(sensor.getVersion());
-                                        sb.append("<br />");
+                                        sb.append("<br /><br />");
                                     }
                                 }
 
@@ -2110,14 +2117,14 @@ public class ExperimentList extends AppCompatActivity {
         //More references: Checkboxes for sensors
         final CheckBox neAccelerometer = (CheckBox) neLayout.findViewById(R.id.neAccelerometer);
         final CheckBox neGyroscope = (CheckBox) neLayout.findViewById(R.id.neGyroscope);
-//        final CheckBox neHumidity = (CheckBox) neLayout.findViewById(R.id.neHumidity);
+        final CheckBox neHumidity = (CheckBox) neLayout.findViewById(R.id.neHumidity);
         final CheckBox neLight = (CheckBox) neLayout.findViewById(R.id.neLight);
         final CheckBox neLinearAcceleration = (CheckBox) neLayout.findViewById(R.id.neLinearAcceleration);
         final CheckBox neLocation = (CheckBox) neLayout.findViewById(R.id.neLocation);
         final CheckBox neMagneticField = (CheckBox) neLayout.findViewById(R.id.neMagneticField);
         final CheckBox nePressure = (CheckBox) neLayout.findViewById(R.id.nePressure);
         final CheckBox neProximity = (CheckBox) neLayout.findViewById(R.id.neProximity);
-//        final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
+        final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
 
         //Setup the dialog builder...
         neDialog.setView(neLayout);
@@ -2143,15 +2150,15 @@ public class ExperimentList extends AppCompatActivity {
                 //Collect the enabled sensors
                 boolean acc = neAccelerometer.isChecked();
                 boolean gyr = neGyroscope.isChecked();
-//                boolean hum = neHumidity.isChecked();
+                boolean hum = neHumidity.isChecked();
                 boolean light = neLight.isChecked();
                 boolean lin = neLinearAcceleration.isChecked();
                 boolean loc = neLocation.isChecked();
                 boolean mag = neMagneticField.isChecked();
                 boolean pressure = nePressure.isChecked();
                 boolean prox = neProximity.isChecked();
-//                boolean temp = neTemperature.isChecked();
-                if (!(acc || gyr || light || lin || loc || mag || pressure || prox /*|| hum || temp*/)) {
+                boolean temp = neTemperature.isChecked();
+                if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp)) {
                     acc = true;
                     Toast.makeText(ExperimentList.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
                 }
@@ -2183,11 +2190,10 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<container size=\"0\">gyrY</container>").getBytes());
                         output.write(("<container size=\"0\">gyrZ</container>").getBytes());
                     }
-/*                    if (hum) {
+                    if (hum) {
                         output.write(("<container size=\"0\">hum_time</container>").getBytes());
                         output.write(("<container size=\"0\">hum</container>").getBytes());
                     }
-*/
                     if (light) {
                         output.write(("<container size=\"0\">light_time</container>").getBytes());
                         output.write(("<container size=\"0\">light</container>").getBytes());
@@ -2224,12 +2230,10 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<container size=\"0\">prox_time</container>").getBytes());
                         output.write(("<container size=\"0\">prox</container>").getBytes());
                     }
-/*
                     if (temp) {
                         output.write(("<container size=\"0\">temp_time</container>").getBytes());
                         output.write(("<container size=\"0\">temp</container>").getBytes());
                     }
-*/
                     output.write("</data-containers>".getBytes());
 
                     //Inputs for each sensor
@@ -2238,10 +2242,8 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<sensor type=\"accelerometer\" rate=\"" + rate + "\" ><output component=\"x\">accX</output><output component=\"y\">accY</output><output component=\"z\">accZ</output><output component=\"t\">acc_time</output></sensor>").getBytes());
                     if (gyr)
                         output.write(("<sensor type=\"gyroscope\" rate=\"" + rate + "\" ><output component=\"x\">gyrX</output><output component=\"y\">gyrY</output><output component=\"z\">gyrZ</output><output component=\"t\">gyr_time</output></sensor>").getBytes());
-/*
                     if (hum)
                         output.write(("<sensor type=\"humidity\" rate=\"" + rate + "\" ><output component=\"x\">hum</output><output component=\"t\">hum_time</output></sensor>").getBytes());
-*/
                     if (light)
                         output.write(("<sensor type=\"light\" rate=\"" + rate + "\" ><output component=\"x\">light</output><output component=\"t\">light_time</output></sensor>").getBytes());
                     if (lin)
@@ -2254,10 +2256,8 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<sensor type=\"pressure\" rate=\"" + rate + "\" ><output component=\"x\">pressure</output><output component=\"t\">pressure_time</output></sensor>").getBytes());
                     if (prox)
                         output.write(("<sensor type=\"proximity\" rate=\"" + rate + "\" ><output component=\"x\">prox</output><output component=\"t\">prox_time</output></sensor>").getBytes());
-/*
                     if (temp)
                         output.write(("<sensor type=\"temperature\" rate=\"" + rate + "\" ><output component=\"x\">temp</output><output component=\"t\">temp_time</output></sensor>").getBytes());
-*/
                     output.write("</input>".getBytes());
 
                     //Views for each sensor
@@ -2276,13 +2276,11 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<graph label=\"Gyroscope Z\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
-/*
                     if (hum) {
                         output.write("<view label=\"Humidity\">".getBytes());
                         output.write(("<graph label=\"Humidity\" labelX=\"t (s)\" labelY=\"Relative Humidity (%)\" partialUpdate=\"true\"><input axis=\"x\">hum_time</input><input axis=\"y\">hum</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
-*/
                     if (light) {
                         output.write("<view label=\"Light\">".getBytes());
                         output.write(("<graph label=\"Illuminance\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\"><input axis=\"x\">light_time</input><input axis=\"y\">light</input></graph>").getBytes());
@@ -2325,13 +2323,11 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<graph label=\"Proximity\" labelX=\"t (s)\" labelY=\"Distance (cm)\" partialUpdate=\"true\"><input axis=\"x\">prox_time</input><input axis=\"y\">prox</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
-/*
                     if (temp) {
                         output.write("<view label=\"Temperature\">".getBytes());
                         output.write(("<graph label=\"Temperature\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
-*/
                     output.write("</views>".getBytes());
 
                     //Export definitions for each sensor
@@ -2352,14 +2348,12 @@ public class ExperimentList extends AppCompatActivity {
                         output.write("<data name=\"Gyroscope z (rad/s)\">gyrZ</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
-/*
                     if (hum) {
                         output.write("<set name=\"Humidity\">".getBytes());
                         output.write("<data name=\"Time (s)\">hum_time</data>".getBytes());
                         output.write("<data name=\"Relative Humidity (%)\">hum</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
-*/
                     if (light) {
                         output.write("<set name=\"Light\">".getBytes());
                         output.write("<data name=\"Time (s)\">light_time</data>".getBytes());
@@ -2406,14 +2400,12 @@ public class ExperimentList extends AppCompatActivity {
                         output.write("<data name=\"Distance (cm)\">prox</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
-/*
                     if (temp) {
                         output.write("<set name=\"Temperature\">".getBytes());
                         output.write("<data name=\"Time (s)\">temp_time</data>".getBytes());
                         output.write("<data name=\"Temperature (°C)\">temp</data>".getBytes());
                         output.write("</set>".getBytes());
                     }
-*/
                     output.write("</export>".getBytes());
 
                     //And finally, the closing tag

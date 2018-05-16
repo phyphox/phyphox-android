@@ -141,6 +141,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="sensorTemperature">Temperature</string>
     <string name="sensorHumidity">Humidity</string>
     <string name="sensorProximity">Proximity</string>
+    <string name="sensorVendor">Vendor specific</string>
 
     <string name="location">Location</string>
 
