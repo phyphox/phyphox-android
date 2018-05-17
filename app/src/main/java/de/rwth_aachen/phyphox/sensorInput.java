@@ -33,6 +33,9 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     private Lock dataLock;
 
+    public boolean vendorSensor = false;
+    private Sensor sensor;
+
     public class SensorException extends Exception {
         public SensorException(String message) {
             super(message);
@@ -90,13 +93,48 @@ public class sensorInput implements SensorEventListener, Serializable {
             this.dataAccuracy = buffers.get(5).buffer;
     }
 
+    private Sensor findSensor() {
+        Sensor sensor = sensorManager.getDefaultSensor(type);
+
+        if (sensor != null) {
+            vendorSensor = false;
+            return sensor;
+        } else {
+            for (Sensor s : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+                if (s.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE)
+                    continue;
+                String name = s.getName().toLowerCase();
+                if (type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+                    if (name.contains("temperature") || name.contains("thermo")) {
+                        sensor = s;
+                        break;
+                    }
+                }
+                if (type == Sensor.TYPE_RELATIVE_HUMIDITY) {
+                    if (name.contains("humidity")) {
+                        sensor = s;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (sensor != null) {
+            vendorSensor = true;
+            return sensor;
+        }
+
+        return null;
+    }
+
     public void attachSensorManager(SensorManager sensorManager) {
         this.sensorManager = sensorManager;
+        sensor = findSensor();
     }
 
     //Check if the sensor is available without trying to use it.
     public boolean isAvailable() {
-        return (sensorManager.getDefaultSensor(type) != null);
+        return (sensor != null);
     }
 
     //Get the internationalization string for a sensor type
@@ -178,7 +216,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         this.avgAccuracy = 0.;
         this.aquisitions = 0;
 
-        this.sensorManager.registerListener(this, sensorManager.getDefaultSensor(type), SensorManager.SENSOR_DELAY_FASTEST);
+        this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     //Stop the data aquisition by unregistering the listener for this sensor
@@ -200,7 +238,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         }
 
         //From here only listen to "this" sensor
-        if (event.sensor.getType() == type) {
+        if (event.sensor.getType() == sensor.getType()) {
 
             Double accuracy = Double.NaN;
             if (type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {

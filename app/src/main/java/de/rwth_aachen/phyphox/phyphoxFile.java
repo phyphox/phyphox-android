@@ -907,6 +907,7 @@ public abstract class phyphoxFile {
                         else
                             throw new phyphoxFileException("Dynamic sleep buffer " + dynamicSleep + " has not been defined as a buffer.", xpp.getLineNumber());
                     }
+                    experiment.optimization = getBooleanAttribute("optimization", false); //Time between executions
                     experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false); //Only execute when the user changed something?
                     (new analysisBlockParser(xpp, experiment, parent)).process();
                     break;

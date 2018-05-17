@@ -235,7 +235,7 @@ public class Analysis {
 //                long updateStart = System.nanoTime();
 
                 update();
-                if (deterministic)
+                if (deterministic && experiment.optimization)
                     needsUpdate = false;
 
 //                long time = System.nanoTime() - updateStart;

@@ -388,6 +388,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
             }
         }
+        for (sensorInput sensor : experiment.inputSensors) {
+            if (sensor.vendorSensor) {
+                showSensorWarning(sensor);
+            }
+        }
         //If this experiment has been loaded from a external source, we offer to save it locally
         if (!experiment.isLocal && experiment.loaded) {
             hintDismissed = true; //Do not show menu hint for external experiments
@@ -430,6 +435,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (!hintDismissed)
             showMenuHint();
 
+    }
+
+    private void showSensorWarning(sensorInput sensor) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(res.getString(R.string.vendorSensorWarning1) + " " + res.getString(sensor.getDescriptionRes()) + " " + res.getString(R.string.vendorSensorWarning2))
+                .setTitle(R.string.vendorSensorTitle)
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     // connects to the bluetooth devices in an async task
