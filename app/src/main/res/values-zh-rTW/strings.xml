@@ -21,7 +21,7 @@
     <string name="translationText">Phyphox將使用您首選語言列表中的第一種語言。 要更改您的偏好設定，請用下方的Android“設定”。 要了解哪些語言可用以及如何提供協助，請選擇“拜訪網站”。</string>
     <string name="translationToSettings">設定</string>
     <string name="translationToWebsite">拜訪網站</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">網址：http://phyphox.org/languages#en</string>
 
     <string name="warning">警示</string>
     <string name="donotshowagain">不要再顯示</string>
@@ -44,7 +44,7 @@
 
     <string name="location">GPS偵測器</string>
 
-    <string name="sensorNotAvailableWarningTitle">感應裝置不可用</string>
+    <string name="sensorNotAvailableWarningTitle">本機的感應器不支援</string>
     <string name="sensorNotAvailableWarningText1">感應裝置</string>
     <string name="sensorNotAvailableWarningText2">不可用。 表示您的設備沒有這種類型的感應器。</string>
     <string name="sensorNotAvailableWarningMoreInfo">更多資訊</string>
@@ -69,7 +69,7 @@
     <string name="timed_start">開始定時計時</string>
 
     <string name="loadingTitle">載入</string>
-    <string name="loadingText">載入實驗</string>
+    <string name="loadingText">載入實驗中</string>
 
     <string name="experimentinfo_hint">查看與此手機實作相關資訊，以了解該如何使用。</string>
 
@@ -111,11 +111,17 @@
     <string name="save_state_default_title">測量</string>
     <string name="save_state_success">狀態已存入珍藏集</string>
 
-    <string name="pick_exportSets">輸出挑選的數據組</string>
+    <string name="pick_exportSets">匯出挑選的數據組</string>
     <string name="noDrawableData">無繪製的數據</string>
 
     <string name="timedRunDialogTitle">時程設定</string>
     <string name="timedRunStartDelay">延遲啟動(秒)</string>
     <string name="timedRun">時程設定</string>
+
+    <string name="remoteServerWarning">你即將啟用遠端存取到已取得的數據。你應該在信任的網路中做這個動作!另外，在許多公司或大學的網路中，裝置間的直接存取可能無法執行。
+\n為了安全性及最佳性能，你應該經由共享選項(移動熱點)連結到裝置。
+\n按下OK後，你可以從同個網域的任何瀏覽器存取你的實驗。</string>
+    <string name="categoryNewExperiment">自訂實驗</string>
+    <string name="categoryRawSensor">內建感應器</string>
 
     </resources>
