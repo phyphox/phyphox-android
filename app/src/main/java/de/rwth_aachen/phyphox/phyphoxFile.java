@@ -1365,6 +1365,40 @@ public abstract class phyphoxFile {
                     newView.elements.add(be);
                     break;
                 }
+                case "svg": //A (parametric) svg image
+                    //Allowed input/output configuration
+                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
+
+                    Vector<String> inStrings = new Vector<>();
+                    for (dataInput input : inputs)
+                        inStrings.add(input.buffer.name);
+
+                    expView.svgElement svge = newView.new svgElement(null, null, inStrings, parent.getResources()); //No inputs, just the label and resources
+
+                    String svgCode = null;
+                    for (ioBlockParser.AdditionalTag at : ats) {
+                        if (at.name.equals("input"))
+                            continue;
+                        if (!at.name.equals("source")) {
+                            throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
+                        }
+                        svgCode = at.content;
+                    }
+
+                    if (svgCode == null) {
+                        throw new phyphoxFileException("SVG source code missing.", xpp.getLineNumber());
+                    } else
+                        svge.setSvgParts(svgCode);
+
+                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
+                    svge.setBackgroundColor(color);
+
+                    newView.elements.add(svge);
+                    break;
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }

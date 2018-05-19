@@ -33,4 +33,5 @@ dependencies {
     implementation 'com.android.support:support-v4:27.1.1'
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
+    implementation 'com.caverock:androidsvg:1.2.1'
 }

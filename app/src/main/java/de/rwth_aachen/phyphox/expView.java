@@ -1578,6 +1578,80 @@ public class expView implements Serializable{
 
     }
 
+    //svgElement shows an svg image, optionally, parts of its source code can be replaced by measured values.
+    public class svgElement extends expViewElement implements Serializable {
+        transient ParametricSVGView svgView = null;
+        int backgroundColor = 0xffffff;
+        String source = null;
+
+        //Constructor takes the same arguments as the expViewElement constructor
+        svgElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+        public void setBackgroundColor(int c) {
+            this.backgroundColor = c;
+            if (svgView != null)
+                svgView.setBackgroundColor(c);
+        }
+
+        public void setSvgParts(String source) {
+            this.source = source;
+            if (svgView != null)
+                svgView.setSvgParts(source);
+        }
+
+        @Override
+        //This is a single value. So the updateMode is "single"
+        protected String getUpdateMode() {
+            return "single";
+        }
+
+        @Override
+        //Append the Android views we need to the linear layout
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+            super.createView(ll, c, res, parent, experiment);
+
+            svgView = new ParametricSVGView(c);
+            svgView.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            svgView.setBackgroundColor(backgroundColor);
+            if (source != null)
+                svgView.setSvgParts(source);
+
+            //Set the ParametricSVGView as root
+            rootView = svgView;
+            rootView.setFocusableInTouchMode(false);
+            ll.addView(rootView);
+        }
+
+        @Override
+        //Create the HTML version of this view:
+        protected String createViewHTML(){
+            return "";
+        }
+
+        @Override
+        //We just have to send calculated value and the unit to the textView
+        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+            if (!needsUpdate)
+                return;
+            needsUpdate = false;
+            double[] data = new double[inputs.size()];
+            for (int i = 0; i < inputs.size(); i++)
+                data[i] = experiment.getBuffer(inputs.get(i)).value;
+            svgView.update(data);
+        }
+
+        @Override
+        //In Javascript we just have to set the content of the value <span> to the value using jquery
+        protected String setDataHTML() {
+            return "";
+        }
+    }
+
     //Remember? We are in the expView class.
     //An experiment view has a name and holds a bunch of expViewElement instances
     public String name;
