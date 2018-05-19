@@ -1193,7 +1193,7 @@ public class expView implements Serializable{
             gv.setColorScale(colorScale);
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
-            gv.setScaleModeY(scaleMinZ, minZ, scaleMaxZ, maxZ);
+            gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
             gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);
             gv.setLogScale(logX, logY, logZ);
             interactiveGV.allowLogX = logX;

@@ -1972,6 +1972,41 @@ public abstract class phyphoxFile {
 
                     experiment.analysis.add(new Analysis.binningAM(experiment, inputs, outputs));
                 } break;
+                case "map": { //rearrange data from unsorted x, y, and z values suitable for map graphs
+                    String zModeStr = getStringAttribute("zMode"); //Positive or negative flank
+
+                    Analysis.mapAM.ZMode zMode = Analysis.mapAM.ZMode.average;
+
+                    switch (zModeStr) {
+                        case "count":   zMode = Analysis.mapAM.ZMode.count;
+                                        break;
+                        case "sum":     zMode = Analysis.mapAM.ZMode.sum;
+                                        break;
+                        case "average": zMode = Analysis.mapAM.ZMode.average;
+                                        break;
+                        default:        throw new phyphoxFileException("Unknown zMode " + zModeStr, xpp.getLineNumber());
+                    }
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "mapWidth"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "minX"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "maxX"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "mapHeight"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "minY"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "maxY"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }}
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.mapAM(experiment, inputs, outputs, zMode));
+                } break;
                 case "append": { //Append the inputs to each other
 
                     ioBlockParser.ioMapping[] inputMapping = {

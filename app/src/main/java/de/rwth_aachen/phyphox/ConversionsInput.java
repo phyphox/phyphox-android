@@ -241,8 +241,16 @@ public class ConversionsInput {
         }
     }
 
-    public static double singleByte (byte[] data) {
+    public static double int8(byte[] data) {
+        return data[0];
+    }
+
+    public static double uInt8 (byte[] data) {
         return data[0] & 0xff;
+    }
+
+    public static double singleByte (byte[] data) {
+        return uInt8(data);
     }
 
 }

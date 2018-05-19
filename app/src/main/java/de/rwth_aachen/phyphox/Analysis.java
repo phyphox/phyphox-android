@@ -1305,6 +1305,110 @@ public class Analysis {
         }
     }
 
+    //map: Combine unsorted and redundant x, y and z data into output suitable for map graphs
+    //All inputs are required except for z. But z can only be left out if zmode is set to "count".
+    //input1: mapWidth - Number of values for each line (along x axis). This must be the same as the mapWidth of the graph
+    //input2: xmin
+    //input3: xmax
+    //input4: mapHeight - Number of values for each column (along y axis).
+    //input5: ymin
+    //input6: ymax
+    //input7: x
+    //input8: y
+    //input9: z
+    //output1: x
+    //output2: y
+    //output3: z
+    //Parameters:
+    //zMode - can be "count", "sum" or "average". "count" counts the number of times x and y combinations fall into a bin (z is ignored here). "sum" sums up all z values that fall into the same bin. "average" averages the z values of a single bin.
+    public static class mapAM extends analysisModule implements Serializable {
+
+        public enum ZMode {
+            count, sum, average;
+        }
+
+        ZMode zMode = ZMode.count;
+
+        protected mapAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, ZMode zMode) {
+            super(experiment, inputs, outputs);
+            this.zMode = zMode;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            if ((inputArrays.size() < 9 && zMode != ZMode.count) || inputArrays.size() < 8)
+                return;
+
+            if (inputArraySizes.get(0) < 1 || inputArraySizes.get(1) < 1 || inputArraySizes.get(2) < 1
+                || inputArraySizes.get(3) < 1 || inputArraySizes.get(4) < 1 || inputArraySizes.get(5) < 1)
+                return;
+
+            int mapWidth = inputArrays.get(0)[0].intValue();
+            double minx = inputArrays.get(1)[0];
+            double maxx = inputArrays.get(2)[0];
+
+            int mapHeight = inputArrays.get(3)[0].intValue();
+            double miny = inputArrays.get(4)[0];
+            double maxy = inputArrays.get(5)[0];
+
+            int n = Math.min(inputArraySizes.get(6), inputArraySizes.get(7));
+            if (zMode != ZMode.count)
+                n = Math.min(n, inputArraySizes.get(8));
+
+            Double[] xin = inputArrays.get(6);
+            Double[] yin = inputArrays.get(7);
+            Double[] zin = inputArrays.get(8);
+
+            double[] zsumout = new double[mapHeight*mapWidth];
+            int[] nout = new int[mapHeight*mapWidth];
+
+            for (int i = 0; i < n; i++) {
+                int x = (int)Math.round((mapWidth-1)*(xin[i]-minx)/(maxx-minx));
+                int y = (int)Math.round((mapHeight-1)*(yin[i]-miny)/(maxy-miny));
+                if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
+                    continue;
+                int index = x + y*mapWidth;
+                if (zMode != ZMode.count) {
+                    zsumout[index] += zin[i];
+                }
+                nout[index]++;
+            }
+
+            dataOutput xout = null;
+            if (outputs.size() > 0)
+                xout = outputs.get(0);
+
+            dataOutput yout = null;
+            if (outputs.size() > 1)
+                yout = outputs.get(1);
+
+            dataOutput zout = null;
+            if (outputs.size() > 2)
+                zout = outputs.get(2);
+
+            for (int y = 0; y < mapHeight; y++) {
+                for (int x = 0; x < mapWidth; x++) {
+                    if (xout != null)
+                        xout.append(minx + x*(maxx-minx)/((double)(mapWidth-1)));
+                    if (yout != null)
+                        yout.append(miny + y*(maxy-miny)/((double)(mapWidth-1)));
+                    if (zout != null) {
+                        switch (zMode) {
+                            case count:   zout.append(nout[y*mapWidth + x]);
+                                          break;
+                            case sum:     zout.append(zsumout[y*mapWidth + x]);
+                                          break;
+                            case average: zout.append(zsumout[y*mapWidth + x] / (double)nout[y*mapWidth + x]);
+                                          break;
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+
     //Append all inputs to the output.
     public static class appendAM extends analysisModule implements Serializable {
 

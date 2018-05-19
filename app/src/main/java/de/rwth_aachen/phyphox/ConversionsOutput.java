@@ -165,7 +165,14 @@ public class ConversionsOutput {
     }
 
     public static byte[] singleByte (double data) {
-        return new byte[]{(byte)((int)data)};
+        return new byte[]{(byte)data};
+    }
+
+    public static byte[] uInt8 (double data) {
+        return singleByte(data);
+    }
+    public static byte[] int8 (double data) {
+        return singleByte(data);
     }
 
     public static byte[] byteArray (dataBuffer data) {

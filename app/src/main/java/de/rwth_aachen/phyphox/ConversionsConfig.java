@@ -105,6 +105,14 @@ public class ConversionsConfig {
         return new byte[]{Byte.parseByte(data)};
     }
 
+    public static byte[] int8 (String data) { //Just as intuitive alias. We do not need to care about the sign as the parseByte function correctly handles both, values above 127 and below 0
+        return singleByte(data);
+    }
+
+    public static byte[] uInt8 (String data) {
+        return singleByte(data);
+    }
+
     public static byte[] hexadecimal (String data) {
         byte[] result = new byte[data.length()/2];
         for (int i = 0; i < data.length(); i+=2) {
