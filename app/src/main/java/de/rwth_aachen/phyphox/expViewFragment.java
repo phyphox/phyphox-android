@@ -27,15 +27,6 @@ public class expViewFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public int getGraphCount() {
-        int n = 0;
-        for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-            if (element.getClass() == expView.graphElement.class)
-                n++;
-        }
-        return n;
-    }
-
     //Apply zoom to all graphs on the current page.
     public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
         for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
@@ -110,7 +101,6 @@ public class expViewFragment extends Fragment {
         if (root == null)
             return;
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
-        ll.setMinimumHeight(root.getHeight()-2*getResources().getDimensionPixelSize(R.dimen.activity_vertical_margin));
         ll.removeAllViews();
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
@@ -164,14 +154,15 @@ public class expViewFragment extends Fragment {
         if (root == null)
             return;
         root.setFillViewport(false);
-        LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
-        ll.removeAllViews();
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
             for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.cleanView(((Experiment) getActivity()).experiment);
             }
         }
+
+        LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
+        ll.removeAllViews();
 
         super.onStop();
     }

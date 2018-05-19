@@ -539,7 +539,6 @@ public class GraphView extends View {
             width = widthSize;
             height = heightSize;
         }
-
         setMeasuredDimension(width, height);
     }
 
