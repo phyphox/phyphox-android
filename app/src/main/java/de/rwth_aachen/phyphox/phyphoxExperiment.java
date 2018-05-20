@@ -14,6 +14,7 @@ import android.util.Log;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
@@ -448,9 +449,20 @@ public class phyphoxExperiment implements Serializable {
 
         root.normalize();
 
+        NodeList children = root.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++)
+            if (children.item(i).getNodeName().equals("state-title") || children.item(i).getNodeName().equals("color"))
+                root.removeChild(children.item(i));
+
+
         Element customTitleEl = doc.createElement("state-title");
         customTitleEl.setTextContent(customTitle);
         root.appendChild(customTitleEl);
+
+        Element colorEl = doc.createElement("color");
+        colorEl.setTextContent("blue");
+        root.appendChild(colorEl);
+
 
         NodeList containers = root.getElementsByTagName("data-containers");
         if (containers.getLength() != 1)

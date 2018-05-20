@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -62,6 +63,35 @@ public abstract class phyphoxFile {
             return translation.get(input.trim());
         else
             return input;
+    }
+
+    //Translate RGB values or pre-defined names into integer representations
+    public static int parseColor(String colorStr, int defaultValue, Resources res) {
+        if (colorStr == null)
+            return defaultValue;
+        //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
+        switch(colorStr.toLowerCase()) {
+            case "orange": return res.getColor(R.color.presetOrange);
+            case "red": return res.getColor(R.color.presetRed);
+            case "magenta": return res.getColor(R.color.presetMagenta);
+            case "blue": return res.getColor(R.color.presetBlue);
+            case "green": return res.getColor(R.color.presetGreen);
+            case "yellow": return res.getColor(R.color.presetYellow);
+            case "white": return res.getColor(R.color.presetWhite);
+
+            case "weakorange": return res.getColor(R.color.presetWeakOrange);
+            case "weakred": return res.getColor(R.color.presetWeakRed);
+            case "weakmagenta": return res.getColor(R.color.presetWeakMagenta);
+            case "weakblue": return res.getColor(R.color.presetWeakBlue);
+            case "weakgreen": return res.getColor(R.color.presetWeakGreen);
+            case "weakyellow": return res.getColor(R.color.presetWeakYellow);
+            case "weakwhite": return res.getColor(R.color.presetWeakWhite);
+        }
+
+        //Not a constant, so it hast to be hex...
+        if (colorStr.length() != 6)
+            return defaultValue;
+        return Integer.parseInt(colorStr, 16) | 0xff000000;
     }
 
     //Returns true if the string is a valid identifier for a dataBuffer (begins with a-zA-Z and only contains a-zA-Z0-9_)
@@ -282,39 +312,11 @@ public abstract class phyphoxFile {
             return Boolean.valueOf(att);
         }
 
-        protected int parseColor(String colorStr, int defaultValue) {
-            if (colorStr == null)
-                return defaultValue;
-            //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
-            switch(colorStr.toLowerCase()) {
-                case "orange": return parent.getResources().getColor(R.color.presetOrange);
-                case "red": return parent.getResources().getColor(R.color.presetRed);
-                case "magenta": return parent.getResources().getColor(R.color.presetMagenta);
-                case "blue": return parent.getResources().getColor(R.color.presetBlue);
-                case "green": return parent.getResources().getColor(R.color.presetGreen);
-                case "yellow": return parent.getResources().getColor(R.color.presetYellow);
-                case "white": return parent.getResources().getColor(R.color.presetWhite);
-
-                case "weakorange": return parent.getResources().getColor(R.color.presetWeakOrange);
-                case "weakred": return parent.getResources().getColor(R.color.presetWeakRed);
-                case "weakmagenta": return parent.getResources().getColor(R.color.presetWeakMagenta);
-                case "weakblue": return parent.getResources().getColor(R.color.presetWeakBlue);
-                case "weakgreen": return parent.getResources().getColor(R.color.presetWeakGreen);
-                case "weakyellow": return parent.getResources().getColor(R.color.presetWeakYellow);
-                case "weakwhite": return parent.getResources().getColor(R.color.presetWeakWhite);
-            }
-
-            //Not a constant, so it hast to be hex...
-            if (colorStr.length() != 6)
-                return defaultValue;
-            return Integer.parseInt(colorStr, 16) | 0xff000000;
-        }
-
         //Helper to receive a color attribute, if invalid or not present, return default
         protected int getColorAttribute(String identifier, int defaultValue) {
             final String att = xpp.getAttributeValue(null, identifier);
 
-            return parseColor(att, defaultValue);
+            return parseColor(att, defaultValue, parent.getResources());
         }
 
         //These functions should be overriden with block-specific code
@@ -872,6 +874,9 @@ public abstract class phyphoxFile {
                     // We currently do not show the icon while the experiment is open, so we do not need to read it.
                     //experiment.icon = getText();
                     break;
+                case "color": //The experiment's base color
+                    // We currently do not use this color in the experiment view.
+                    break;
                 case "description": //The experiment's description (might be replaced by a later translation block)
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
@@ -1289,7 +1294,7 @@ public abstract class phyphoxFile {
                             }
                         }
                         if (at.attributes.containsKey("color")) {
-                            int localColor = parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.presetOrange));
+                            int localColor = parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.presetOrange), parent.getResources());
                             ge.setColor(localColor | 0xff000000, i/3);
                         } else if (!globalColor) {
                             switch ((i/3) % 6) {

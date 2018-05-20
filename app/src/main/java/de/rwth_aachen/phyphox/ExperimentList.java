@@ -31,6 +31,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -105,6 +106,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
@@ -147,17 +149,31 @@ public class ExperimentList extends AppCompatActivity {
     private HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
     private HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>(); //This will collect uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
 
+    public abstract class BaseColorDrawable extends Drawable {
+        protected final Paint paintBG; //The paint for the background
+
+        BaseColorDrawable(Context c) {
+            //Background paint
+            this.paintBG = new Paint();
+            paintBG.setColor(ContextCompat.getColor(c, R.color.highlight));
+            paintBG.setStyle(Paint.Style.FILL);
+        }
+
+        public void setBaseColor(int color) {
+            paintBG.setColor(color);
+        }
+    }
+
     //The class TextIcon is a drawable that displays up to three characters in a rectangle as a
     //substitution icon, used if an experiment does not have its own icon
-    public class TextIcon extends Drawable {
+    public class TextIcon extends BaseColorDrawable {
 
         private final String text; //The characters too be displayed
         private final Paint paint; //The paint for the characters
-        private final Paint paintBG; //The paint for the background
 
         //The constructor takes a context and the characters to display. It also sets up the paints
         public TextIcon(String text, Context c) {
-
+            super(c);
             this.text = text; //Store the characters
 
             //Text-Paint
@@ -168,11 +184,17 @@ public class ExperimentList extends AppCompatActivity {
             paint.setFakeBoldText(true);
             paint.setStyle(Paint.Style.FILL);
             paint.setTextAlign(Paint.Align.CENTER);
+        }
 
-            //Background paint
-            this.paintBG = new Paint();
-            paintBG.setColor(ContextCompat.getColor(c, R.color.highlight));
-            paintBG.setStyle(Paint.Style.FILL);
+        @Override
+        public void setBaseColor(int color) {
+            super.setBaseColor(color);
+
+
+            if (luminance(color) > 0.7)
+                paint.setColor(0xff000000);
+            else
+                paint.setColor(0xffffffff);
         }
 
         @Override
@@ -205,24 +227,19 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //The class BitmapIcon is a drawable that displays a user-given PNG on top of an orange background
-    public class BitmapIcon extends Drawable {
+    public class BitmapIcon extends BaseColorDrawable {
 
         private final Paint paint; //The paint for the icon
-        private final Paint paintBG; //The paint for the background
         private final Bitmap icon;
 
         //The constructor takes a context and the characters to display. It also sets up the paints
         public BitmapIcon(Bitmap icon, Context c) {
+            super(c);
             this.icon = icon;
 
             //Icon-Paint
             this.paint = new Paint();
             paint.setAntiAlias(true);
-
-            //Background paint
-            this.paintBG = new Paint();
-            paintBG.setColor(ContextCompat.getColor(c, R.color.highlight));
-            paintBG.setStyle(Paint.Style.FILL);
         }
 
         @Override
@@ -257,6 +274,13 @@ public class ExperimentList extends AppCompatActivity {
         }
     }
 
+    private float luminance(int c) {
+        float r = ((c & 0xff0000) >> 16)/255f;
+        float g = ((c & 0xff00) >> 8)/255f;
+        float b = (c & 0xff)/255f;
+        return 0.2126f*(float)Math.pow((r+0.055f)/1.055f, 2.4f) + 0.7152f*(float)Math.pow((g+0.055f)/1.055f, 2.4f) + 0.0722f*(float)Math.pow((b+0.055f)/1.055f, 2.4f);
+    }
+
     //This adapter is used to fill the gridView of the categories in the experiment list.
     //So, this can be considered to be the experiment entries within an category
     private class ExperimentItemAdapter extends BaseAdapter {
@@ -265,6 +289,7 @@ public class ExperimentList extends AppCompatActivity {
         private String preselectedBluetoothAddress = null;
 
         //Experiment data
+        Vector<Integer> colors = new Vector<>(); //List of icons for each experiment
         Vector<Drawable> icons = new Vector<>(); //List of icons for each experiment
         Vector<String> titles = new Vector<>(); //List of titles for each experiment
         Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
@@ -323,7 +348,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(Drawable icon, String title, String info, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
+        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -333,6 +358,7 @@ public class ExperimentList extends AppCompatActivity {
             }
 
             //Now insert the experiment here
+            colors.insertElementAt(color, i);
             icons.insertElementAt(icon, i);
             titles.insertElementAt(title, i);
             infos.insertElementAt(info, i);
@@ -460,6 +486,7 @@ public class ExperimentList extends AppCompatActivity {
         private TextView categoryHeadline; //The TextView to display the headline
         private ExpandableHeightGridView experimentSubList; //The gridView holding experiment items. (See implementation below for the custom flavor "ExpandableHeightGridView")
         private ExperimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
+        private Map<Integer, Integer> colorCount = new HashMap<>();
 
         //ExpandableHeightGridView is derived from the original Android GridView.
         //The structure of our experiment list is such that we want to scroll the entire list, which
@@ -595,9 +622,27 @@ public class ExperimentList extends AppCompatActivity {
             parentLayout.addView(catLayout);
         }
 
-        //Wrapper to add an experiment to this category. This just hands it over to the adapter.
-        public void addExperiment(String exp, Drawable image, String description, final String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
-            experiments.addExperiment(image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor);
+        //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
+        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
+            experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor);
+            Integer n = colorCount.get(color);
+            if (n == null)
+                colorCount.put(color, 1);
+            else
+                colorCount.put(color, n+1);
+            int max = 0;
+            int catColor = 0;
+            for (Map.Entry<Integer,Integer> entry : colorCount.entrySet()) {
+                if (entry.getValue() > max) {
+                    catColor = entry.getKey();
+                    max = entry.getValue();
+                }
+            }
+            categoryHeadline.setBackgroundColor(catColor);
+            if (luminance(catColor) > 0.7)
+                categoryHeadline.setTextColor(0xff000000);
+            else
+                categoryHeadline.setTextColor(0xffffffff);
         }
 
         //Helper to check if the name of this category matches a given string
@@ -625,18 +670,18 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, Drawable image, String description, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor, Vector<ExperimentsInCategory> categories) {
+    private void addExperiment(String exp, String cat, int color, Drawable image, String description, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor, Vector<ExperimentsInCategory> categories) {
         //Check all categories for the category of the new experiment
         for (ExperimentsInCategory icat : categories) {
             if (icat.hasName(cat)) {
                 //Found it. Add the experiment and return
-                icat.addExperiment(exp, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
+                icat.addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
                 return;
             }
         }
         //Category does not yet exist. Create it and add the experiment
         categories.add(new ExperimentsInCategory(cat, this));
-        categories.lastElement().addExperiment(exp, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
+        categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
     }
 
     //Decode the experiment icon (base64) and return a bitmap
@@ -661,9 +706,10 @@ public class ExperimentList extends AppCompatActivity {
         String title = ""; //Experiment title
         String stateTitle = ""; //A title given by the user for a saved experiment state
         String category = ""; //Experiment category
+        int color = getResources().getColor(R.color.phyphox_color); //Icon base color
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
-        Drawable image = null; //This will hold the icon
+        BaseColorDrawable image = null; //This will hold the icon
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             int eventType = xpp.getEventType(); //should be START_DOCUMENT
@@ -743,6 +789,11 @@ public class ExperimentList extends AppCompatActivity {
                             case "category": //This should give us the experiment category
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     category = xpp.nextText().trim();
+                                break;
+                            case "color": //This is the base color for design decisions (icon background color and category color)
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
+                                    color = phyphoxFile.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_color), getResources());
+                                }
                                 break;
                             case "input": //We just have to check if there are any sensors, which are not supported on this device
                                 if (xpp.getDepth() == phyphoxDepth+1)
@@ -857,10 +908,12 @@ public class ExperimentList extends AppCompatActivity {
             //Let's check the icon
             if (image == null) //No icon given. Create a TextIcon from the first three characters of the title
                 image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
+            image.setBaseColor(color);
+
 
             //We have all the information. Add the experiment.
             if (categories != null)
-                addExperiment(title, category, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
+                addExperiment(title, category, color, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             Toast.makeText(this, "Error loading " + experimentXML + " (XML Exception)", Toast.LENGTH_LONG).show();
@@ -2174,6 +2227,7 @@ public class ExperimentList extends AppCompatActivity {
                     //Title, standard category and standard description
                     output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());
                     output.write(("<category>"+res.getString(R.string.categoryNewExperiment)+"</category>").getBytes());
+                    output.write(("<color>green</color>").getBytes());
                     output.write("<description>Get raw data from selected sensors.</description>".getBytes());
 
                     //Buffers for all sensors
