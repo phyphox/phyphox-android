@@ -1611,6 +1611,26 @@ public abstract class phyphoxFile {
 
                     experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs));
                 } break;
+                case "formula": {
+                    String formula = getStringAttribute("formula");
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    if (formula == null)
+                        throw new phyphoxFileException("Formula module needs a formula.", xpp.getLineNumber());
+                    try {
+                        experiment.analysis.add(new Analysis.formulaAM(experiment, inputs, outputs, formula));
+                    } catch (FormulaParser.FormulaException e) {
+                        throw new phyphoxFileException("Formula error: " + e.getMessage(), xpp.getLineNumber());
+                    }
+                } break;
                 case "count": { //Absolute value
 
                     //Allowed input/output configuration

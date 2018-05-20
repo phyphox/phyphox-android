@@ -198,6 +198,8 @@ public class Analysis {
         //Wrapper to update the module only if it is not static or has never been executed and to clear the buffer if required
         protected boolean updateIfNotStatic() {
             if (needsUpdate && !(isStatic && executed)) {
+//                long updateStart = System.nanoTime();
+
                 experiment.dataLock.lock();
                 try {
                     if (useArray) {
@@ -232,7 +234,6 @@ public class Analysis {
                             output.buffer.clear(false);
                 }
 
-//                long updateStart = System.nanoTime();
 
                 update();
                 if (deterministic && experiment.optimization)
@@ -240,7 +241,7 @@ public class Analysis {
 
 //                long time = System.nanoTime() - updateStart;
 //                if (time > 1e6)
-//                Log.d("AnalysisDebug", this.toString() + " update: " + (time*1e-6) + "ms");
+//                    Log.d("AnalysisDebug", this.toString() + " update: " + (time*1e-6) + "ms");
 
 
 
@@ -284,6 +285,23 @@ public class Analysis {
         @Override
         protected void update() {
             outputs.get(0).append((experiment.analysisTime - experiment.firstAnalysisTime)/1000.);
+        }
+    }
+
+    //Describe multiple analysis steps as a formula
+    public static class formulaAM extends analysisModule implements Serializable {
+        FormulaParser formula;
+
+        protected formulaAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, String formula) throws FormulaParser.FormulaException {
+            super(experiment, inputs, outputs);
+            useArray = true;
+            this.formula = new FormulaParser(formula);
+        }
+
+        @Override
+        protected void update() {
+            if (outputs.size() > 0)
+            formula.execute(inputArrays, outputs.get(0));
         }
     }
 

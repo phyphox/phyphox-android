@@ -155,14 +155,14 @@ public class expViewFragment extends Fragment {
             return;
         root.setFillViewport(false);
 
+        LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
+        ll.removeAllViews();
+
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
             for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.cleanView(((Experiment) getActivity()).experiment);
             }
         }
-
-        LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
-        ll.removeAllViews();
 
         super.onStop();
     }

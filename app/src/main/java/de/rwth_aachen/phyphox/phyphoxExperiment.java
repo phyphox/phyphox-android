@@ -184,6 +184,15 @@ public class phyphoxExperiment implements Serializable {
                 } finally {
                     dataLock.unlock();
                 }
+            } else {
+                //Even if we do not use the first recording, we write the audio rate so it is available early.
+                dataLock.lock();
+                try {
+                    if (sampleRateBuffer != null)
+                        sampleRateBuffer.append(audioRecord.getSampleRate());
+                } finally {
+                    dataLock.unlock();
+                }
             }
         }
 
