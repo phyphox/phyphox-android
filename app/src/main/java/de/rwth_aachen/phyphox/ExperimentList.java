@@ -83,6 +83,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.caverock.androidsvg.SVG;
+import com.caverock.androidsvg.SVGParseException;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -148,138 +150,6 @@ public class ExperimentList extends AppCompatActivity {
     private Vector<ExperimentsInCategory> categories = new Vector<>(); //The list of categories. The ExperimentsInCategory class (see below) holds a ExperimentsInCategory and all its experiment items
     private HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
     private HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>(); //This will collect uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
-
-    public abstract class BaseColorDrawable extends Drawable {
-        protected final Paint paintBG; //The paint for the background
-
-        BaseColorDrawable(Context c) {
-            //Background paint
-            this.paintBG = new Paint();
-            paintBG.setColor(ContextCompat.getColor(c, R.color.highlight));
-            paintBG.setStyle(Paint.Style.FILL);
-        }
-
-        public void setBaseColor(int color) {
-            paintBG.setColor(color);
-        }
-    }
-
-    //The class TextIcon is a drawable that displays up to three characters in a rectangle as a
-    //substitution icon, used if an experiment does not have its own icon
-    public class TextIcon extends BaseColorDrawable {
-
-        private final String text; //The characters too be displayed
-        private final Paint paint; //The paint for the characters
-
-        //The constructor takes a context and the characters to display. It also sets up the paints
-        public TextIcon(String text, Context c) {
-            super(c);
-            this.text = text; //Store the characters
-
-            //Text-Paint
-            this.paint = new Paint();
-            paint.setColor(ContextCompat.getColor(c, R.color.main));
-            paint.setTextSize(res.getDimension(R.dimen.expElementIconSize)*0.5f);
-            paint.setAntiAlias(true);
-            paint.setFakeBoldText(true);
-            paint.setStyle(Paint.Style.FILL);
-            paint.setTextAlign(Paint.Align.CENTER);
-        }
-
-        @Override
-        public void setBaseColor(int color) {
-            super.setBaseColor(color);
-
-
-            if (luminance(color) > 0.7)
-                paint.setColor(0xff000000);
-            else
-                paint.setColor(0xffffffff);
-        }
-
-        @Override
-        //Draw the icon
-        public void draw(Canvas canvas) {
-            //A rectangle and text on top. Quite simple.
-            canvas.drawRect(new Rect(0, 0, (int)res.getDimension(R.dimen.expElementIconSize), (int)res.getDimension(R.dimen.expElementIconSize)), paintBG);
-            canvas.drawText(text, (int)res.getDimension(R.dimen.expElementIconSize)/2, (int)res.getDimension(R.dimen.expElementIconSize)*2/3, paint);
-        }
-
-        @Override
-        //Needs to be implemented.
-        public void setAlpha(int alpha) {
-            paint.setAlpha(alpha);
-            paintBG.setAlpha(alpha);
-        }
-
-        @Override
-        //Needs to be implemented.
-        public void setColorFilter(ColorFilter cf) {
-            paint.setColorFilter(cf);
-            paintBG.setColorFilter(cf);
-        }
-
-        @Override
-        //Needs to be implemented.
-        public int getOpacity() {
-            return PixelFormat.OPAQUE;
-        }
-    }
-
-    //The class BitmapIcon is a drawable that displays a user-given PNG on top of an orange background
-    public class BitmapIcon extends BaseColorDrawable {
-
-        private final Paint paint; //The paint for the icon
-        private final Bitmap icon;
-
-        //The constructor takes a context and the characters to display. It also sets up the paints
-        public BitmapIcon(Bitmap icon, Context c) {
-            super(c);
-            this.icon = icon;
-
-            //Icon-Paint
-            this.paint = new Paint();
-            paint.setAntiAlias(true);
-        }
-
-        @Override
-        //Draw the icon
-        public void draw(Canvas canvas) {
-            //A rectangle and text on top. Quite simple.
-            int size = (int)res.getDimension(R.dimen.expElementIconSize);
-            int wSrc = icon.getWidth();
-            int hSrc = icon.getHeight();
-            canvas.drawRect(new Rect(0, 0, size, size), paintBG);
-            canvas.drawBitmap(icon, new Rect(0, 0, wSrc, hSrc), new Rect(0, 0, size, size), paint);
-        }
-
-        @Override
-        //Needs to be implemented.
-        public void setAlpha(int alpha) {
-            paint.setAlpha(alpha);
-            paintBG.setAlpha(alpha);
-        }
-
-        @Override
-        //Needs to be implemented.
-        public void setColorFilter(ColorFilter cf) {
-            paint.setColorFilter(cf);
-            paintBG.setColorFilter(cf);
-        }
-
-        @Override
-        //Needs to be implemented.
-        public int getOpacity() {
-            return PixelFormat.OPAQUE;
-        }
-    }
-
-    private float luminance(int c) {
-        float r = ((c & 0xff0000) >> 16)/255f;
-        float g = ((c & 0xff00) >> 8)/255f;
-        float b = (c & 0xff)/255f;
-        return 0.2126f*(float)Math.pow((r+0.055f)/1.055f, 2.4f) + 0.7152f*(float)Math.pow((g+0.055f)/1.055f, 2.4f) + 0.0722f*(float)Math.pow((b+0.055f)/1.055f, 2.4f);
-    }
 
     //This adapter is used to fill the gridView of the categories in the experiment list.
     //So, this can be considered to be the experiment entries within an category
@@ -639,7 +509,7 @@ public class ExperimentList extends AppCompatActivity {
                 }
             }
             categoryHeadline.setBackgroundColor(catColor);
-            if (luminance(catColor) > 0.7)
+            if (Helper.luminance(catColor) > 0.7)
                 categoryHeadline.setTextColor(0xff000000);
             else
                 categoryHeadline.setTextColor(0xffffffff);
@@ -772,6 +642,15 @@ public class ExperimentList extends AppCompatActivity {
                                         } catch (IllegalArgumentException e) {
                                             Log.e("loadExperimentInfo", "Invalid icon: " + e.getMessage());
                                         }
+                                    } else if (xpp.getAttributeValue(null, "format") != null && xpp.getAttributeValue(null, "format").equals("svg")) { //Check the icon type
+                                        //SVG image. Handle it with AndroidSVG
+                                        icon = xpp.nextText().trim();
+                                        try {
+                                            SVG svg = SVG.getFromString(icon);
+                                            image = new VectorIcon(svg, this);
+                                        } catch (SVGParseException e) {
+                                            Log.e("loadExperimentInfo", "Invalid icon: " + e.getMessage());
+                                        }
                                     } else {
                                         //Just a string. Create an icon from it. We allow a maximum of three characters.
                                         icon = xpp.nextText().trim();
@@ -792,7 +671,7 @@ public class ExperimentList extends AppCompatActivity {
                                 break;
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
-                                    color = phyphoxFile.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_color), getResources());
+                                    color = Helper.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_color), getResources());
                                 }
                                 break;
                             case "input": //We just have to check if there are any sensors, which are not supported on this device
