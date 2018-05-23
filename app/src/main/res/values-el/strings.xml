@@ -15,7 +15,7 @@
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="faqPhyphoxOrg">Συχνές ερωτήσεις</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
-    <string name="remotePhyphoxOrg">Βοήθεια για τον απομακρυσμένο έλεγχο</string>
+    <string name="remotePhyphoxOrg">Απομακρυσμένος Έλεγχος</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationInfo">Γλώσσες</string>
     <string name="translationText">H εφαρμογή phyphox θα χρησιμοποιήσει την πρώτη διαθέσιμη γλώσσα από τη λίστα των προτιμώμενων γλωσσών σας. Για να αλλάξετε τις προτιμήσεις σας, επιλέξτε \"ρυθμίσεις\". Για να ενημερωθείτε για τις διαθέσιμες γλώσσες και πως μπορείτε να βοηθήσετε, επιλέξτε \"ιστοσελίδα\".</string>
@@ -89,7 +89,7 @@
     <string name="share_pick_share">Επιλογή του τρόπου διαμοιρασμού</string>
 
     <string name="remoteServer">Απομακρυσμένη πρόσβαση</string>
-    <string name="remoteServerWarning">Είστε έτοιμοι να επιτρέψετε απομακρυσμένη πρόσβαση στην λήψη δεδομένων. Αυτό θα πρέπει να επιτρέπεται μόνο σε έμπιστο δίκτυο! Επίσης σημειώστε ότι η απευθείας πρόσβαση ανάμεσα σε συσκευές μπορεί να μην είναι δυνατή σε πολλά εταιρικά ή πανεπιστημιακά δίκτυα
+    <string name="remoteServerWarning">Πρόκειται να επιτρέψετε απομακρυσμένη πρόσβαση στην λήψη δεδομένων. Αυτό θα πρέπει να επιτρέπεται μόνο σε έμπιστο δίκτυο! Επίσης σημειώστε ότι η απευθείας πρόσβαση ανάμεσα σε συσκευές μπορεί να μην είναι δυνατή σε πολλά εταιρικά ή πανεπιστημιακά δίκτυα
 \n
 \nΓια μέγιστη ασφάλεια και επίδοση συνδεθείτε σε αυτή τη συσκευή με tethering (mobile hotspot).
 \n

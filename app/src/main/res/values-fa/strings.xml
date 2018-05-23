@@ -2,7 +2,7 @@
 <resources><string name="newExperimentInputTitle">عنوان</string>
     <string name="newExperimentInputSensors">حسگرهای فعال</string>
 
-    <string name="faqPhyphoxOrg">پرسشگان</string>
+    <string name="faqPhyphoxOrg">پرسش‌های متداول</string>
     <string name="translationInfo">زبان‌ها</string>
     <string name="translationToSettings">تنظیمات</string>
     <string name="sensorLight">نور</string>
@@ -12,9 +12,9 @@
     <string name="title_activity_experiment">فیفاکس</string>
 
     <string name="newExperiment">افزودن آزمایش ساده</string>
-    <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستان خود به اشتراک بگذارید.</string>
+    <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری را از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستان خود به اشتراک بگذارید.</string>
     <string name="help">راهنما و اطلاعات</string>
-    <string name="experimentsPhyphoxOrg">ایده‌ها و دستورالعمل‌های آزمایش</string>
+    <string name="experimentsPhyphoxOrg">ایده‌ها و دستورکارهای آزمایش</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">راهنمای کنترل از راه دور</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
