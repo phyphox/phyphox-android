@@ -184,13 +184,52 @@ public class ConversionsInput {
         return Double.longBitsToDouble(bits);
     }
 
-    public static double string (byte[] data) {
-        String s = new String(data);
-        try {
-            return Double.parseDouble(s);
-        } catch (Exception e) {
-            return Double.NaN;
+    public static class string extends InputConversion implements Serializable {
+        String decimalPoint;
+        int offset = 0;
+        int length = 0;
+
+        string(XmlPullParser xpp) {
+            super();
+            this.decimalPoint = xpp.getAttributeValue(null, "decimalPoint");
+            String offset= xpp.getAttributeValue(null, "offset");
+            String length = xpp.getAttributeValue(null, "length");
+            if (offset != null) {
+                try {
+                    this.offset = Integer.valueOf(offset);
+                } catch (Exception e) {
+
+                }
+            }
+            if (length != null) {
+                try {
+                    this.length = Integer.valueOf(length);
+                } catch (Exception e) {
+
+                }
+            }
+
         }
+
+        public double convert (byte[] data) {
+            int actualLength = data.length - offset;
+            if (length > 0 && length < actualLength)
+                actualLength = length;
+            byte[] subdata = Arrays.copyOfRange(data, offset, offset + actualLength);
+
+            String s;
+            if (decimalPoint == null)
+                s = new String(subdata);
+            else
+                s = (new String(subdata)).replace(this.decimalPoint, ".");
+            Log.d("TEST", "-------------" + s);
+            try {
+                return Double.parseDouble(s);
+            } catch (Exception e) {
+                return Double.NaN;
+            }
+        }
+
     }
 
     public static class formattedString extends InputConversion implements Serializable {
