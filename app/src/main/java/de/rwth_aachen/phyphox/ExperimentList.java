@@ -18,6 +18,7 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -155,6 +156,7 @@ public class ExperimentList extends AppCompatActivity {
     //So, this can be considered to be the experiment entries within an category
     private class ExperimentItemAdapter extends BaseAdapter {
         final private Activity parentActivity; //Reference to the main activity for the alertDialog when deleting files
+        final private boolean isSimpleExperiment, isSavedState;
 
         private String preselectedBluetoothAddress = null;
 
@@ -169,8 +171,10 @@ public class ExperimentList extends AppCompatActivity {
         Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
 
         //The constructor takes the activity reference. That's all.
-        public ExperimentItemAdapter(Activity parentActivity) {
+        public ExperimentItemAdapter(Activity parentActivity, String category) {
             this.parentActivity = parentActivity;
+            this.isSavedState = category.equals(res.getString(R.string.save_state_category));
+            this.isSimpleExperiment = category.equals(res.getString(R.string.categoryNewExperiment));
         }
 
         public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
@@ -246,7 +250,7 @@ public class ExperimentList extends AppCompatActivity {
             ImageView icon; //The icon
             TextView title; //The title text
             TextView info;  //The short description text
-            ImageButton deleteBtn; //A button to delete local experiments (if they are not an asset)
+            ImageButton menuBtn; //A button for a context menu for local experiments (if they are not an asset)
         }
 
         //Construct the view for an element.
@@ -290,7 +294,7 @@ public class ExperimentList extends AppCompatActivity {
                 holder.icon = (ImageView) convertView.findViewById(R.id.expIcon);
                 holder.title = (TextView) convertView.findViewById(R.id.expTitle);
                 holder.info = (TextView) convertView.findViewById(R.id.expInfo);
-                holder.deleteBtn = (ImageButton) convertView.findViewById(R.id.deleteButton);
+                holder.menuBtn = (ImageButton) convertView.findViewById(R.id.menuButton);
 
                 //Connect the convertView and the holder to retrieve it later
                 convertView.setTag(holder);
@@ -312,33 +316,78 @@ public class ExperimentList extends AppCompatActivity {
                 holder.info.setTextColor(res.getColor(R.color.main2));
             }
 
-            //Handle the delete button. Set it visible only for non-assets
+            //Handle the menubutton. Set it visible only for non-assets
             if (isTemp.get(position) || isAsset.get(position))
-                holder.deleteBtn.setVisibility(ImageView.GONE); //Asset - no delete button
+                holder.menuBtn.setVisibility(ImageView.GONE); //Asset - no menu button
             else {
-                //No asset. Delete button visible and it needs an onClickListener
-                holder.deleteBtn.setVisibility(ImageView.VISIBLE);
-                holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
+                //No asset. Menu button visible and it needs an onClickListener
+                holder.menuBtn.setVisibility(ImageView.VISIBLE);
+                holder.menuBtn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        //Create dialog to ask the user if he REALLY wants to delete...
-                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                        builder.setMessage(res.getString(R.string.confirmDelete))
-                                .setTitle(R.string.confirmDeleteTitle)
-                                .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        //Confirmed. Delete the item and reload the list
-                                        deleteFile(xmlFiles.get(position));
-                                        loadExperimentList();
+                        android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
+                        popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
+
+                        popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
+
+                        popup.setOnMenuItemClickListener(new android.widget.PopupMenu.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem menuItem) {
+                                switch (menuItem.getItemId()) {
+                                    case R.id.experiment_item_delete: {
+                                        //Create dialog to ask the user if he REALLY wants to delete...
+                                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                                        builder.setMessage(res.getString(R.string.confirmDelete))
+                                                .setTitle(R.string.confirmDeleteTitle)
+                                                .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        //Confirmed. Delete the item and reload the list
+                                                        deleteFile(xmlFiles.get(position));
+                                                        loadExperimentList();
+                                                    }
+                                                })
+                                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        //Aborted by user. Nothing to do.
+                                                    }
+                                                });
+                                        AlertDialog dialog = builder.create();
+                                        dialog.show();
+                                        return true;
                                     }
-                                })
-                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        //Aborted by user. Nothing to do.
+                                    case R.id.experiment_item_rename: {
+                                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                                        final EditText edit = new EditText(parentActivity);
+                                        edit.setText(titles.get(position));
+                                        builder.setView(edit)
+                                                .setTitle(R.string.rename)
+                                                .setPositiveButton(R.string.rename, new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        String newName = edit.getText().toString();
+                                                        if (newName.replaceAll("\\s+", "").isEmpty())
+                                                            return;
+                                                        //Confirmed. Rename the item and reload the list
+                                                        if (isSavedState)
+                                                            Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), "/phyphox/state-title", newName);
+                                                        loadExperimentList();
+                                                    }
+                                                })
+                                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        //Aborted by user. Nothing to do.
+                                                    }
+                                                });
+                                        AlertDialog dialog = builder.create();
+                                        dialog.show();
+                                        return true;
                                     }
-                                });
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+
+                                }
+                                return false;
+                            }
+                        });
+
+                        popup.show();
                     }
                 });
             }
@@ -467,7 +516,7 @@ public class ExperimentList extends AppCompatActivity {
             experimentSubList.setExpanded(true);
 
             //Create the adapter and give it to the gridView
-            experiments = new ExperimentItemAdapter(parentActivity);
+            experiments = new ExperimentItemAdapter(parentActivity, name);
             experimentSubList.setAdapter(experiments);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -2107,7 +2156,7 @@ public class ExperimentList extends AppCompatActivity {
                     //Title, standard category and standard description
                     output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());
                     output.write(("<category>"+res.getString(R.string.categoryNewExperiment)+"</category>").getBytes());
-                    output.write(("<color>green</color>").getBytes());
+                    output.write(("<color>red</color>").getBytes());
                     output.write("<description>Get raw data from selected sensors.</description>".getBytes());
 
                     //Buffers for all sensors

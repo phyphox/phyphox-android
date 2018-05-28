@@ -53,16 +53,17 @@
             android:layout_toStartOf="@+id/deleteButton" />
 
         <ImageButton
-            android:layout_width="@dimen/expElementIconSize"
+            android:layout_width="wrap_content"
             android:layout_height="@dimen/expElementIconSize"
-            android:id="@+id/deleteButton"
+            android:id="@+id/menuButton"
+            android:tint="@color/highlight"
+            android:background="@android:color/transparent"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            app:srcCompat="@drawable/delete"
+            app:srcCompat="@drawable/more"
             android:layout_alignTop="@+id/expTitle"
             android:layout_alignBottom="@+id/expInfo"
-            android:clickable="true"
-            android:elevation="4dp" />
+            android:clickable="true" />
 
     </RelativeLayout>
 </FrameLayout>

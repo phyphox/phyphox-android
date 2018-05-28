@@ -1,6 +1,28 @@
 package de.rwth_aachen.phyphox;
 
+import android.content.Context;
 import android.content.res.Resources;
+import android.util.Log;
+import android.widget.Toast;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 public abstract class Helper {
     public static float luminance(int c) {
@@ -37,5 +59,28 @@ public abstract class Helper {
         if (colorStr.length() != 6)
             return defaultValue;
         return Integer.parseInt(colorStr, 16) | 0xff000000;
+    }
+
+    public static void replaceTagInFile(String file, Context ctx, String tag, String newContent) {
+        try {
+            FileInputStream in = ctx.openFileInput(file);
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(in);
+            in.close();
+
+            XPath xpath = XPathFactory.newInstance().newXPath();
+            NodeList nodes = (NodeList) xpath.evaluate(tag, doc, XPathConstants.NODESET);
+
+            for (int i = 0; i < nodes.getLength(); i++) {
+                nodes.item(i).setTextContent(newContent);
+            }
+
+            Transformer t = TransformerFactory.newInstance().newTransformer();
+            FileOutputStream out = ctx.openFileOutput(file, 0);
+            t.transform(new DOMSource(doc), new StreamResult(out));
+            out.close();
+        } catch (Exception e) {
+            Log.e("replace tag", "Could not replace tag: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
