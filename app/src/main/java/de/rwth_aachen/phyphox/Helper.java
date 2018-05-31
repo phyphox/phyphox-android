@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.util.Log;
@@ -12,8 +13,10 @@ import org.xml.sax.InputSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.zip.CRC32;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -82,5 +85,66 @@ public abstract class Helper {
             Log.e("replace tag", "Could not replace tag: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public static boolean experimentInCollection(long refCRC32, Activity act) {
+        CRC32 crc32 = new CRC32();
+
+        File[] files = act.getFilesDir().listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.endsWith(".phyphox");
+            }
+        });
+
+        boolean found = false;
+
+        for (File file : files) {
+            crc32.reset();
+
+            try {
+                InputStream input = new FileInputStream(file);
+                byte[] buffer = new byte[1024];
+                int count;
+                while ((count = input.read(buffer)) != -1) {
+                    crc32.update(buffer, 0, count);
+                }
+            }catch (Exception e) {
+                continue;
+            }
+            if (refCRC32 == crc32.getValue()) {
+                found = true;
+                break;
+            }
+        }
+
+        return found;
+    }
+
+    public static boolean experimentInCollection(byte[] source, Activity act) {
+        CRC32 crc32 = new CRC32();
+        crc32.update(source);
+        long refCRC32 = crc32.getValue();
+
+        return experimentInCollection(refCRC32, act);
+    }
+
+    public static boolean experimentInCollection(File file, Activity act) {
+        CRC32 crc32 = new CRC32();
+        try {
+            InputStream input = new FileInputStream(file);
+            byte[] buffer = new byte[1024];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                crc32.update(buffer, 0, count);
+            }
+            input.close();
+        }catch (Exception e) {
+            return false;
+        }
+
+        long refCRC32 = crc32.getValue();
+
+        return experimentInCollection(refCRC32, act);
     }
 }

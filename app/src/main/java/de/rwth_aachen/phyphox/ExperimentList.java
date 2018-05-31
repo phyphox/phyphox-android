@@ -1013,12 +1013,14 @@ public class ExperimentList extends AppCompatActivity {
                 LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
                 View view = inflater.inflate(R.layout.open_multipe_dialog, null);
+                final Activity parent = this;
                 builder.setView(view)
                         .setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
                                 for (File file : files) {
-                                    file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
+                                    if (!Helper.experimentInCollection(file, parent))
+                                        file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
                                 }
                                 loadExperimentList();
                                 dialog.dismiss();
@@ -1325,6 +1327,7 @@ public class ExperimentList extends AppCompatActivity {
 
         View view = inflater.inflate(R.layout.open_multipe_dialog, null);
         builder.setView(view);
+        final Activity parent = this;
         if (!supportedExperiments.isEmpty()) {
             builder.setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
                 @Override

@@ -357,36 +357,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         //Check if experiment is already in list and if so, flag it as local.
-        if (experiment.source != null) {
-            CRC32 crc32 = new CRC32();
-            crc32.update(experiment.source);
-            long refCRC32 = crc32.getValue();
-
-                    File[] files = getFilesDir().listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String filename) {
-                    return filename.endsWith(".phyphox");
-                }
-            });
-
-            for (File file : files) {
-                crc32.reset();
-
-                try {
-                    InputStream input = openFileInput(file.getName());
-                    byte[] buffer = new byte[1024];
-                    int count;
-                    while ((count = input.read(buffer)) != -1) {
-                        crc32.update(buffer, 0, count);
-                    }
-                }catch (Exception e) {
-                    continue;
-                }
-                if (refCRC32 == crc32.getValue()) {
-                    experiment.isLocal = true;
-                    break;
-                }
-            }
+        if (experiment.source != null && Helper.experimentInCollection(experiment.source, this)) {
+            experiment.isLocal = true;
         }
         for (sensorInput sensor : experiment.inputSensors) {
             if (sensor.vendorSensor) {
