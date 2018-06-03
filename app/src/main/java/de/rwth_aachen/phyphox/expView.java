@@ -451,13 +451,16 @@ public class expView implements Serializable{
                 }
             }
 
+            sb.append("     var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];");
+            sb.append("     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];");
+            sb.append("     var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];");
             sb.append("     if (v == null) {");
             sb.append("         v = (x*"+factor+").to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
-            sb.append("         $(\"#element"+htmlID+" .value .valueUnit\").text(\""+ this.unit + "\");");
+            sb.append("         valueUnit.textContent = \""+ this.unit + "\";");
             sb.append("     } else {");
-            sb.append("         $(\"#element"+htmlID+" .value .valueUnit\").text(\"\");");
+            sb.append("         valueUnit.textContent = \"\";");
             sb.append("     }");
-            sb.append("     $(\"#element"+htmlID+" .value .valueNumber\").text(v);");
+            sb.append("     valueNumber.textContent = v;");
             sb.append("}");
             return sb.toString();
         }
@@ -764,7 +767,7 @@ public class expView implements Serializable{
 
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"editElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "<input onchange=\"$.getJSON('control?cmd=set&buffer="+valueOutput+"&value='+$(this).val()/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
+                    "<input onchange=\"json('control?cmd=set&buffer="+valueOutput+"&value='+this.value/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
                     "<span class=\"unit\">"+this.unit+"</span>" +
                     "</div>";
         }
@@ -814,11 +817,12 @@ public class expView implements Serializable{
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
             return "function (data) {" +
+                    "var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];" +
                     "if (!data.hasOwnProperty(\""+bufferName+"\"))" +
                     "    return;" +
                     "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];" +
-                    "if (!$(\"#element"+htmlID+" .value\").is(':focus'))" +
-                        "$(\"#element"+htmlID+" .value\").val((x*"+factor+"))" +
+                    "if (valueElement !== document.activeElement)" +
+                    "   valueElement.value = (x*"+factor+")" +
                     "}";
         }
     }
@@ -1435,7 +1439,7 @@ public class expView implements Serializable{
                             "}" +
                             "elementData["+htmlID+"][\"graph\"].update();" +
                         "} else {" +
-                            "var ctx = $(\"#element"+htmlID+" .graph canvas\");" +
+                            "var ctx = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"graph\")[0].getElementsByTagName(\"canvas\")[0];" +
                             "elementData["+htmlID+"][\"graph\"] = new Chart(ctx, {" +
                                 "type: \"scatter\"," +
                                 "data: {datasets: "+
