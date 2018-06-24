@@ -124,6 +124,6 @@
     <string name="categoryNewExperiment">自訂實驗</string>
     <string name="categoryRawSensor">內建感應器</string>
 
-    <string name="enableTimedRun"></string>
+    <string name="enableTimedRun">執行時域區間測量</string>
 
     </resources>
