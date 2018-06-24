@@ -31,7 +31,7 @@
     <string name="info">インフォ</string>
     <string name="credits">信頼</string>
     <string name="creditsRWTH">phyphoxはRWTH Aachen大学の2nd Institute of Physicsにて開発されました．</string>
-    <string name="creditsNames">開発とコンセプト:&lt;br/&gt;&lt;b&gt;Dr. Sebastian Staacks&lt;/b&gt;&lt;br/&gt; コンセプト:&lt;br/&gt;&lt;b&gt;Prof. Christoph Stampfer Design:&lt;br/&gt;&lt;b&gt;Frank Posthoff (A.NikoPol)&lt;/b&gt;&lt;br/&gt;プログラミング:&lt;br/&gt;&lt;b&gt;Camilla Lummerzheim&lt;/b&gt;&lt;br/&gt;&lt;b&gt;Jonas Gessner&lt;/b&gt;</string>
+    <string name="creditsNames">開発とコンセプト:<br/><b>Dr. Sebastian Staacks</b><br/> コンセプト:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>プログラミング:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="creditsLibs">遠隔操作のためのウェブのインターフェースにはJavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) と \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo) が使われます．すべてMITライセンスのもとで使用可能です．</string>
     <string name="sensorLinearAcceleration">線形加速</string>
     <string name="sensorLight">光</string>
@@ -119,7 +119,7 @@
 
     <string name="timedRun">タイムラン</string>
 
-    <string name="pick_exportSets">エクスポートするデータの選択</string>
+    <string name="pick_exportSets">エクスポートするデータの選択.</string>
     <string name="pick_exportFormat">データフォーマットを選択してください．</string>
 
     <string name="noDrawableData">描画可能なデータがありません．</string>
