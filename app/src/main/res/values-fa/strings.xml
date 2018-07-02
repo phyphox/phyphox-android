@@ -18,27 +18,27 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">راهنمای کنترل از راه دور</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست «تنظیمات برگزیده زبان» تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات برگزیده زبان، به بخش «تنظیمات» اندروید در زیر بروید. جهت اطلاع از زبان‌های موجود و اینکه چگونه می‌توانید کمک کنید، \"بازدید از وب‌سایت\" را انتخاب کنید.</string>
+    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست «تنظیمات برگزیده زبان» تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات، به بخش «تنظیمات» اندروید خود در زیر بروید. جهت آگاهی از زبان‌های موجود و اینکه چگونه می‌توانید کمک کنید، «بازدید از وب‌سایت» را انتخاب کنید.</string>
     <string name="translationToWebsite">بازدید از وب‌سایت</string>
     <string name="warning">هشدار</string>
-    <string name="donotshowagain">دوباره نشان نده</string>
+    <string name="donotshowagain">دوباره نمایش نده</string>
     <string name="info">اطلاعات</string>
-    <string name="creditsRWTH">فیفاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن (RWTH Aachen University) ایجاد شده است.</string>
+    <string name="creditsRWTH">فیفاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن (RWTH Aachen) ایجاد شده است.</string>
     <string name="sensorLinearAcceleration">شتاب خطی</string>
     <string name="sensorAccelerometer">شتاب‌سنج</string>
     <string name="sensorMagneticField">میدان مغناطیسی</string>
     <string name="sensorPressure">فشار</string>
     <string name="sensorTemperature">دما</string>
-    <string name="sensorHumidity">رطوبت (هوا)</string>
+    <string name="sensorHumidity">رطوبت</string>
     <string name="sensorProximity">مجاورت</string>
 
-    <string name="location">مکان</string>
+    <string name="location">موقعیت</string>
 
     <string name="sensorNotAvailableWarningTitle">حسگر در دسترس نیست.</string>
     <string name="sensorNotAvailableWarningText1">حسگر</string>
-    <string name="sensorNotAvailableWarningText2">در دسترس نیست. معمولا این به معنای آن است که دستگاه شما این نوع حسگر را ندارد.</string>
+    <string name="sensorNotAvailableWarningText2">در دسترس نیست. معمولا به معنای آن است که دستگاه شما این نوع حسگر را ندارد.</string>
     <string name="sensorNotAvailableWarningMoreInfo">اطلاعات بیشتر</string>
-    <string name="ok">تصویب</string>
+    <string name="ok">قبول</string>
     <string name="close">بستن</string>
     <string name="next">بعدی</string>
     <string name="cancel">لغو</string>
@@ -50,11 +50,11 @@
 
     <string name="stop">توقف</string>
     <string name="start">آغاز</string>
-    <string name="clear_data">پاک کردن داده‌ها</string>
-    <string name="clear_data_question">پاک کردن داده‌های ثبت شده؟</string>
-    <string name="clear">پاک کردن</string>
-    <string name="loadingTitle">بارگیری</string>
-    <string name="loadingText">در حال بارگیری آزمایش…</string>
+    <string name="clear_data">حذف داده‌ها</string>
+    <string name="clear_data_question">داده‌های ثبت شده حذف شوند؟</string>
+    <string name="clear">حذف</string>
+    <string name="loadingTitle">در حال لود شدن</string>
+    <string name="loadingText">در حال لود شدن آزمایش…</string>
 
     <string name="timedRunStopDelay">مدت زمان آزمایش (s)</string>
     <string name="share">به اشتراک‌گذاری اسکرین‌شات</string>
@@ -79,15 +79,15 @@
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
-    <string name="damageWarning">لطفا مراقب باشید در حین انجام آزمایش به تلفن همراه خود آسیبی نرسانید. لطفا مراقبت ویژه ای را برای جلوگیری از افتادن آن بر روی سطوح سخت انجام دهید و آن را در معرض میدان‌های مغناطیسی بیش از حد قرار ندهید. سازندگان فایفاکس مسئول هیچگونه آسیبی به دستگاه شما نخواهند بود.</string>
+    <string name="damageWarning">لطفا مراقب باشید در حین انجام آزمایش به تلفن همراه خود آسیبی نرسانید. لطفا مراقبت ویژه‌ای را برای جلوگیری از افتادن آن بر روی سطوح سخت انجام دهید و آن را در معرض میدان‌های مغناطیسی بیش از حد قرار ندهید. سازندگان فیفاکس در قبال هرگونه آسیب به تلفن همراه شما مسئولیتی نخواهند داشت.</string>
 
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
 
     <string name="timedRunStartDelay">تاخیر در آغاز (s)</string>
     <string name="export_subject">داده‌ها از فیفاکس</string>
     <string name="share_subject">اسکرین‌شات از فیفاکس</string>
-    <string name="remoteServer">اجازه‌ی دسترسی از راه دور</string>
-    <string name="hotspotSettings">تنظیمات هات‌اسپات</string>
+    <string name="remoteServer">اجازه‌ دسترسی از راه دور</string>
+    <string name="hotspotSettings">تنظیمات هات‌اسپات (نقطه اتصال)</string>
 
     <string name="switchToPhoneLayout">نما: باریک</string>
     <string name="switchColumns1">نما: ۱ ستون</string>
@@ -95,15 +95,15 @@
     <string name="switchColumns3">نما: ۳ ستون</string>
 
     <string name="save_state_save">افزودن به مجموعه</string>
-    <string name="newExperimentInputBufferSize">اندازه بافر (تعداد مقادیری که ذخیره شود)</string>
+    <string name="newExperimentInputBufferSize">اندازه حافظه بافر (تعداد مقادیری که ذخیره شود)</string>
     <string name="credits">دست‌اندرکاران</string>
-    <string name="timed_stop">متوقف‌ کردن آزمایش زمان‌بندی شده</string>
+    <string name="timed_stop">توقف آزمایش زمان‌بندی شده</string>
     <string name="timed_start">آغاز آزمایش زمان‌بندی شده</string>
 
     <string name="timedRunDialogTitle">آزمایش زمان‌بندی شده</string>
     <string name="enableTimedRun">انجام آزمایش زمان‌بندی شده</string>
 
-    <string name="export">خروجی گرفتن داده‌ها</string>
+    <string name="export">خروجی گرفتن از داده‌ها</string>
     <string name="export_pick_share">یک روش خروجی گرفتن را انتخاب کنید</string>
 
     <string name="save_state">ذخیره‌ وضعیت آزمایش</string>
@@ -119,4 +119,15 @@
 
     <string name="categoryRawSensor">حسگرهای خام</string>
 
+    <string name="creditsNames">توسعه و ایده:<br/><b>Dr. Sebastian Staacks</b><br/>ایده:<br/><b>Prof. Christoph Stampfer</b><br/>طرح:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>برنامه‌نویسی:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">رابط وب برای دسترسی از راه دور از کتابخانه‌های جاوااسکریپت زیر که همه آنها تحت مجوز MIT هستند، استفاده می‌کند:
+\n\"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo)</string>
+    <string name="remoteServerWarning">شما در آستانه‌ فعال کردن دسترسی از راه دور به داده‌های به‌دست آمده هستید. شما تنها باید آن را در یک شبکه مورد اعتماد انجام دهید! همچنین توجه داشته باشید که دسترسی مستقیم بین دستگاه‌ها ممکن است در بسیاری از شبکه‌های شرکت یا دانشگاه امکان‌پذیر نباشد.
+\n
+\nبرای رسیدن به بهترین امنیت و کارایی، شما باید از طریق یک گزینه تترینگ (هات‌اسپات یا نقطه اتصال تلفن همراه) به این دستگاه متصل شوید.
+\n
+\nپس از فشار دادن «قبول»، شما می‌توانید از هر مرورگر وب در همان شبکه به اندازه‌گیری خود دسترسی داشته باشید.</string>
+    <string name="remoteServerActive">دسترسی از راه دور فعال شده است. به این آزمایش از یوآرال زیر دسترسی پیدا کنید:
+\n%1$s</string>
+    <string name="categoryNewExperiment">آزمایش‌های ساده سفارشی</string>
     </resources>
