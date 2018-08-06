@@ -86,7 +86,7 @@
 \n
 \nAprès avoir appuyé sur OK, vous pourrez accéder à vos mesures de n\'importe quel navigateur Web sur le même réseau.</string>
     <string name="remoteServerWarningTitle">Avertissement !</string>
-    <string name="remoteServerActive">Accès à distance activé. Les mesures de l\'expérience sont disponibles sur le lien suivant : 
+    <string name="remoteServerActive">Contrôle à distance activé. Les mesures de l\'expérience sont disponibles sur le lien suivant : 
 \n%1$s</string>
     <string name="hotspotSettings">Paramètres de partage de connexion</string>
 
