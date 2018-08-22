@@ -129,6 +129,10 @@ public class remoteServer extends Thread {
 //                    line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
                 if (line.contains("###drawableMore###"))
                     line = line.replace("###drawableMore###", getBase64PNG(res.getDrawable(R.drawable.more)));
+                if (line.contains("###drawableLarger###"))
+                    line = line.replace("###drawableLarger###", getBase64PNG(res.getDrawable(R.drawable.zoom_in)));
+                if (line.contains("###drawableSmaller###"))
+                    line = line.replace("###drawableSmaller###", getBase64PNG(res.getDrawable(R.drawable.zoom_out)));
 
                 //Add the line and a linebreak
                 sb.append(line);

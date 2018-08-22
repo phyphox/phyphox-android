@@ -1243,8 +1243,8 @@ public class expView implements Serializable{
         //</div>
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
-                    "<span class=\"label\">"+this.label+"</span>" +
-                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"><canvas width=\"1000\" height=\""+(1000.0/this.aspectRatio)+"\"></canvas></div></div>" +
+                    "<span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span>" +
+                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"><canvas></canvas></div></div>" +
                     "</div>";
         }
 
@@ -1339,24 +1339,32 @@ public class expView implements Serializable{
             }
         }
 
-        //TODO
         @Override
         //This looks pretty ugly and indeed needs a clean-up...
         //This function returns a javascript function which updates the flot chart.
         //So we have to set-up some JSON objects to define the graph, put it into the JavaScript
         //function (which has to setup some JSON itself) and return the whole nightmare. There
         //certainly is a way to beautify this, but it's not too obvious...
-        protected String dataCompleteHTML() {//TODO: Create intelligent function to setup ticks on log scales
+        protected String dataCompleteHTML() {
+            String rescale = "";
             String scaleX = "";
             if (scaleMinX == GraphView.scaleMode.fixed && !Double.isNaN(minX))
                 scaleX += "\"min\":" + minX + ", ";
+            else
+                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.min = minX;";
             if (scaleMaxX == GraphView.scaleMode.fixed && !Double.isNaN(maxX))
                 scaleX += "\"max\":" + maxX + ", ";
+            else
+                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
             String scaleY = "";
             if (scaleMinY == GraphView.scaleMode.fixed && !Double.isNaN(minY))
                 scaleY += "\"min\":" + minY + ", ";
+            else
+                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.yAxes[0].ticks.min = minY;";
             if (scaleMaxY == GraphView.scaleMode.fixed && !Double.isNaN(maxY))
                 scaleY += "\"max\":" + maxY + ", ";
+            else
+                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.yAxes[0].ticks.max = maxY;";
 
             String styleDetection = "switch (i/2) {";
             String graphSetup = "[";
@@ -1366,22 +1374,22 @@ public class expView implements Serializable{
                                     "type: \"scatter\"," +
                                     "showLine: "+ (style.get(i/2) != GraphView.Style.dots ? "true" : "false") +"," +
                                     "fill: "+(style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? "\"origin\"" : "false")+"," +
-                                    "pointRadius: "+ (style.get(i/2) == GraphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"," +
-                                    "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
-                                    "pointHoverRadius: "+ (4.0*lineWidth.get(i/2)) +"," +
+                                    "pointRadius: "+ (style.get(i/2) == GraphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"*scaleFactor," +
+                                    "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"*scaleFactor," +
+                                    "pointHoverRadius: "+ (4.0*lineWidth.get(i/2)) +"*scaleFactor," +
                                     "lineTension: 0," +
                                     "borderCapStyle: \"butt\"," +
                                     "borderJoinStyle: \"round\"," +
                                     "spanGaps: false," +
                                     "borderColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
                                     "backgroundColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
-                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : 2.0*lineWidth.get(i/2)) + "," +
+                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) + "*scaleFactor," +
                                     "xAxisID: \"xaxis\"," +
                                     "yAxisID: \"yaxis\"," +
-                                    "data: d[" + i + "]," +
+                                    "data: d[" + i + "]" +
                                 "},";
 
-                styleDetection += "case " + (i/2) + ": type = \"" + style.get(i/2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "; break;";
+                styleDetection += "case " + (i/2) + ": type = \"" + style.get(i/2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "*scaleFactor; break;";
             }
             styleDetection += "}";
             graphSetup += "],";
@@ -1397,6 +1405,10 @@ public class expView implements Serializable{
                         "if (!changed)" +
                             "return;" +
                         "var d = [];" +
+                        "var minX = Number.POSITIVE_INFINITY; " +
+                        "var maxX = Number.NEGATIVE_INFINITY; " +
+                        "var minY = Number.POSITIVE_INFINITY; " +
+                        "var maxY = Number.NEGATIVE_INFINITY; " +
                         "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
                             "d[i/2] = [];" +
                             "var xIndexed = ((i+1 >= elementData["+htmlID+"][\"datasets\"].length) || elementData["+htmlID+"][\"datasets\"][i+1][\"data\"].length == 0);" +
@@ -1408,6 +1420,14 @@ public class expView implements Serializable{
                             "for (j = 0; j < elementData["+htmlID+"][\"datasets\"][i][\"data\"].length && (xIndexed || j < elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length); j++) {" +
                                 "var x = xIndexed ? j : elementData["+htmlID+"][\"datasets\"][i+1][\"data\"][j];"+
                                 "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
+                                "if (x < minX)" +
+                                "    minX = x;" +
+                                "if (x > maxX)" +
+                                "    maxX = x;" +
+                                "if (y < minY)" +
+                                "    minY = y;" +
+                                "if (y > maxY)" +
+                                "    maxY = y;" +
                                 "if (type == \""+ GraphView.Style.vbars+"\") {" +
                                     "if (lastX !== false && lastY !== false) {"+
                                         "var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
@@ -1430,6 +1450,14 @@ public class expView implements Serializable{
                             "}" +
 
                         "}" +
+                        "if (minX > maxX) {" +
+                            "minX = 0;" +
+                            "maxX = 1;" +
+                        "}" +
+                        "if (minY > maxY) {" +
+                            "minY = 0;" +
+                            "maxY = 1;" +
+                        "}" +
 
 
 
@@ -1437,7 +1465,6 @@ public class expView implements Serializable{
                             "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
                                 "elementData["+htmlID+"][\"graph\"].data.datasets[i/2].data = d[i/2];" +
                             "}" +
-                            "elementData["+htmlID+"][\"graph\"].update();" +
                         "} else {" +
                             "var ctx = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"graph\")[0].getElementsByTagName(\"canvas\")[0];" +
                             "elementData["+htmlID+"][\"graph\"] = new Chart(ctx, {" +
@@ -1446,9 +1473,14 @@ public class expView implements Serializable{
                                     graphSetup +
                                 "}," +
                                 "options: {" +
-                                    "responsive: false, " +
+                                    "responsive: true, " +
+                                    "maintainAspectRatio: false, " +
                                     "animation: false," +
                                     "legend: false," +
+                                    "tooltips: {" +
+                                    "    titleFontSize: 15*scaleFactor," +
+                                    "    bodyFontSize: 15*scaleFactor" +
+                                    "}," +
                                     "scales: {" +
                                         "xAxes: [{" +
                                             "id: \"xaxis\"," +
@@ -1463,17 +1495,19 @@ public class expView implements Serializable{
                                                 "display: true," +
                                                 "labelString: \""+this.labelX+(this.unitX != null && !this.unitX.isEmpty() ? " (" + this.unitX + ")" : "")+"\"," +
                                                 "fontColor: \"#"+mainRemoteColor+"\"," +
-                                                "fontSize: 30," +
+                                                "fontSize: 15*scaleFactor," +
                                                 "padding: 0, "+
                                             "}," +
                                             "ticks: {" +
                                                 "fontColor: \"#"+mainRemoteColor+"\"," +
-                                                "fontSize: 30," +
-                                                "padding: 6, "+
+                                                "fontSize: 15*scaleFactor," +
+                                                "padding: 3*scaleFactor, "+
                                                 "autoSkip: true," +
                                                 "maxTicksLimit: 10," +
+                                                "maxRotation: 0," +
                                                 scaleX+
-                                            "}" +
+                                            "}," +
+                                            "afterBuildTicks: filterEdgeTicks" +
                                         "}]," +
                                         "yAxes: [{" +
                                             "id: \"yaxis\"," +
@@ -1488,22 +1522,25 @@ public class expView implements Serializable{
                                                 "display: true," +
                                                 "labelString: \""+this.labelY+(this.unitY != null && !this.unitY.isEmpty() ? " (" + this.unitY + ")" : "")+"\"," +
                                                 "fontColor: \"#"+mainRemoteColor+"\"," +
-                                                "fontSize: 30," +
-                                                "padding: 6, "+
+                                                "fontSize: 15*scaleFactor," +
+                                                "padding: 3*scaleFactor, "+
                                             "}," +
                                             "ticks: {" +
                                                 "fontColor: \"#"+mainRemoteColor+"\"," +
-                                                "fontSize: 30," +
-                                                "padding: 6, "+
+                                                "fontSize: 15*scaleFactor," +
+                                                "padding: 3*scaleFactor, "+
                                                 "autoSkip: true," +
-                                                "maxTicksLimit: 5," +
+                                                "maxTicksLimit: 7," +
                                                 scaleY+
-                                            "}" +
-                                        "}]," +
+                                            "}," +
+                                            "afterBuildTicks: filterEdgeTicks" +
+                                    "   }]," +
                                     "}" +
                                 "}" +
                             "});" +
                         "}" +
+                        rescale +
+                        "elementData["+htmlID+"][\"graph\"].update();" +
                     "}";
         }
 
