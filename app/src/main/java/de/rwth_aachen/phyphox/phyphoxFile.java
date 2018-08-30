@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.6";
+    final static String phyphoxFileVersion = "1.7";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -65,19 +65,11 @@ public abstract class phyphoxFile {
             return input;
     }
 
-    //Returns true if the string is a valid identifier for a dataBuffer (begins with a-zA-Z and only contains a-zA-Z0-9_)
+    //Returns true if the string is a valid identifier for a dataBuffer, very early versions had some rules here, but we now allow anything as long as it is not empty.
     public static boolean isValidIdentifier(String s) {
         if (s.isEmpty()) {
             return false;
         }
-//        if (!Character.isJavaIdentifierStart(s.charAt(0))) {
-//            return false;
-//        }
-//        for (int i = 1; i < s.length(); i++) {
-//            if (!Character.isJavaIdentifierPart(s.charAt(i))) {
-//                return false;
-//            }
-//        }
         return true;
     }
 
