@@ -978,6 +978,8 @@ public class expView implements Serializable{
         double minZ = 0.;
         double maxZ = 0.;
 
+        final String warningText;
+
         //Quite usual constructor...
         graphElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
@@ -999,6 +1001,8 @@ public class expView implements Serializable{
                 dataX = new floatBufferRepresentation[nCurves];
                 dataY = new floatBufferRepresentation[nCurves];
             }
+
+            warningText = res.getString(R.string.remoteColorMapWarning).replace("'", "\\'");
         }
 
         //Interface to change the height of the graph
@@ -1132,9 +1136,12 @@ public class expView implements Serializable{
         //The update mode is "partial" or "full" as this element uses arrays. The experiment may
         //decide if partial updates are sufficient
         protected String getUpdateMode() {
-            if (partialUpdate)
-                return "partial";
-            else
+            if (partialUpdate) {
+                if (style.get(0) == GraphView.Style.mapXY)
+                    return "partialXYZ";
+                else
+                    return "partial";
+            } else
                 return "full";
         }
 
@@ -1186,6 +1193,7 @@ public class expView implements Serializable{
                 gv.setHistoryLength(historyLength);
             else
                 gv.setCurves(nCurves);
+
             for (int i = 0; i < nCurves; i++) {
                 gv.setStyle(style.get(i), i);
                 gv.setMapWidth(mapWidth.get(i), i);
@@ -1244,6 +1252,7 @@ public class expView implements Serializable{
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span>" +
+                    (this.style.get(0) == GraphView.Style.mapXY ? "<div class=\"warningIcon\" onclick=\"alert('"+warningText+"')\"></div>" : "")+
                     "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"><canvas></canvas></div></div>" +
                     "</div>";
         }
@@ -1304,7 +1313,6 @@ public class expView implements Serializable{
             }
         }
 
-        //TODO
         @Override
         //Return a javascript function which stores the x data array for later use
         protected String setDataHTML() {
@@ -1312,6 +1320,8 @@ public class expView implements Serializable{
             sb.append("function (data) {");
             sb.append("     elementData[" + htmlID + "][\"datasets\"] = [];");
             for (int i = 0; i < inputs.size(); i++) {
+                if (inputs.get(i) == null)
+                    continue;
                 sb.append("if (!data.hasOwnProperty(\""+inputs.get(i).replace("\"", "\\\"")+"\"))");
                 sb.append("    return;");
                 sb.append("elementData["+htmlID+"][\"datasets\"]["+i+"] = data[\""+inputs.get(i).replace("\"", "\\\"")+"\"];");
@@ -1366,13 +1376,37 @@ public class expView implements Serializable{
             else
                 rescale += "elementData["+htmlID+"][\"graph\"].options.scales.yAxes[0].ticks.max = maxY;";
 
+            String scaleZ = "";
+            String colorScale = "[";
+            if (this.style.get(0) == GraphView.Style.mapXY) {
+                if (scaleMinZ == GraphView.scaleMode.fixed && !Double.isNaN(minZ))
+                    scaleZ += "minZ = " + minZ + ";";
+                if (scaleMaxZ == GraphView.scaleMode.fixed && !Double.isNaN(maxZ))
+                    scaleZ += "maxZ = " + maxZ + ";";
+                scaleZ += "elementData["+htmlID+"][\"graph\"].logZ = " + (this.logZ ? "true" : "false") + ";";
+                scaleZ += "elementData["+htmlID+"][\"graph\"].minZ = minZ;";
+                scaleZ += "elementData["+htmlID+"][\"graph\"].maxZ = maxZ;";
+
+                boolean first = true;
+                for (Integer color : this.gv.graphSetup.colorScale) {
+                    if (first)
+                        first = false;
+                    else
+                        colorScale += ",";
+                    colorScale += (color & 0xffffffffL);
+                }
+            }
+            colorScale += "]";
+
+            final String type = this.style.get(0) == GraphView.Style.mapXY ? "colormap" : "scatter";
+
             String styleDetection = "switch (i/2) {";
             String graphSetup = "[";
             for (int i = 0; i < inputs.size(); i+=2) {
 
                 graphSetup +=   "{"+
-                                    "type: \"scatter\"," +
-                                    "showLine: "+ (style.get(i/2) != GraphView.Style.dots ? "true" : "false") +"," +
+                                    "type: \"" + type +"\"," +
+                                    "showLine: "+ (style.get(i/2) == GraphView.Style.dots || style.get(i/2) == GraphView.Style.mapXY ? "false" : "true") +"," +
                                     "fill: "+(style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? "\"origin\"" : "false")+"," +
                                     "pointRadius: "+ (style.get(i/2) == GraphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"*scaleFactor," +
                                     "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"*scaleFactor," +
@@ -1385,8 +1419,7 @@ public class expView implements Serializable{
                                     "backgroundColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
                                     "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) + "*scaleFactor," +
                                     "xAxisID: \"xaxis\"," +
-                                    "yAxisID: \"yaxis\"," +
-                                    "data: d[" + i + "]" +
+                                    "yAxisID: \"yaxis\"" +
                                 "},";
 
                 styleDetection += "case " + (i/2) + ": type = \"" + style.get(i/2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "*scaleFactor; break;";
@@ -1409,15 +1442,25 @@ public class expView implements Serializable{
                         "var maxX = Number.NEGATIVE_INFINITY; " +
                         "var minY = Number.POSITIVE_INFINITY; " +
                         "var maxY = Number.NEGATIVE_INFINITY; " +
+                        "var minZ = Number.POSITIVE_INFINITY; " +
+                        "var maxZ = Number.NEGATIVE_INFINITY; " +
                         "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
                             "d[i/2] = [];" +
                             "var xIndexed = ((i+1 >= elementData["+htmlID+"][\"datasets\"].length) || elementData["+htmlID+"][\"datasets\"][i+1][\"data\"].length == 0);" +
                             "var type;" +
                             "var lineWidth;" +
                             styleDetection +
+                            "if (type == \""+ GraphView.Style.mapZ+"\" || (type == \""+ GraphView.Style.mapXY+"\" && elementData["+htmlID+"][\"datasets\"].length < i+2)) {" +
+                                "continue;" +
+                            "}" +
                             "var lastX = false;" +
                             "var lastY = false;" +
-                            "for (j = 0; j < elementData["+htmlID+"][\"datasets\"][i][\"data\"].length && (xIndexed || j < elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length); j++) {" +
+                            "var nElements = elementData["+htmlID+"][\"datasets\"][i][\"data\"].length;" +
+                            "if (!xIndexed)" +
+                            "   nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length);" +
+                            "if (type == \""+ GraphView.Style.mapXY+"\")" +
+                                "nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"].length);" +
+                            "for (j = 0; j < nElements; j++) {" +
                                 "var x = xIndexed ? j : elementData["+htmlID+"][\"datasets\"][i+1][\"data\"][j];"+
                                 "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
                                 "if (x < minX)" +
@@ -1442,6 +1485,13 @@ public class expView implements Serializable{
                                         "d[i/2][j*3+1] = {x: lastX, y: y-offset};" +
                                         "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
                                     "}"+
+                                "} else if (type == \""+ GraphView.Style.mapXY+"\") {" +
+                                    "var z = elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"][j];" +
+                                    "if (z < minZ)" +
+                                    "    minZ = z;" +
+                                    "if (z > maxZ)" +
+                                    "    maxZ = z;" +
+                                    "d[i/2][j] = {x: x, y: y, z: z};" +
                                 "} else {" +
                                     "d[i/2][j] = {x: x, y: y};" +
                                 "}" +
@@ -1458,17 +1508,17 @@ public class expView implements Serializable{
                             "minY = 0;" +
                             "maxY = 1;" +
                         "}" +
+                        "if (minZ > maxZ) {" +
+                            "minZ = 0;" +
+                            "maxZ = 1;" +
+                        "}" +
 
-
-
-                        "if (elementData["+htmlID+"][\"graph\"]) {" +
-                            "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
-                                "elementData["+htmlID+"][\"graph\"].data.datasets[i/2].data = d[i/2];" +
-                            "}" +
-                        "} else {" +
+                        "if (!elementData["+htmlID+"][\"graph\"]) {" +
                             "var ctx = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"graph\")[0].getElementsByTagName(\"canvas\")[0];" +
                             "elementData["+htmlID+"][\"graph\"] = new Chart(ctx, {" +
-                                "type: \"scatter\"," +
+                                "type: \"" + type + "\"," +
+                                "mapwidth: "+this.mapWidth.get(0)+"," +
+                                "colorscale: " + colorScale + "," +
                                 "data: {datasets: "+
                                     graphSetup +
                                 "}," +
@@ -1479,12 +1529,28 @@ public class expView implements Serializable{
                                     "legend: false," +
                                     "tooltips: {" +
                                     "    titleFontSize: 15*scaleFactor," +
-                                    "    bodyFontSize: 15*scaleFactor" +
+                                    "    bodyFontSize: 15*scaleFactor," +
+                                    "    mode: \"nearest\"," +
+                                    "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
+                                        "callbacks: {" +
+                                        "   title: function() {}," +
+                                        "   label: function(tooltipItem, data) {" +
+                                        "       var lines = [];" +
+                                        "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].x + \""+this.unitX + "\");" +
+                                        "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y + \""+this.unitY + "\");" +
+                                        (this.style.get(0) == GraphView.Style.mapXY ? "lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].z + \""+this.unitZ + "\");" : "") +
+                                        "       return lines;" +
+                                        "   }" +
+                                        "}" +
                                     "}," +
+                                    "hover: {" +
+                                    "    mode: \"nearest\"," +
+                                    "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
+                                    "}, " +
                                     "scales: {" +
                                         "xAxes: [{" +
                                             "id: \"xaxis\"," +
-                                            "type: \""+(logX ? "logarithmic" : "linear")+"\"," +
+                                            "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
                                             "position: \"bottom\"," +
                                             "gridLines: {" +
                                                 "color: \"#"+gridColor+"\"," +
@@ -1511,7 +1577,7 @@ public class expView implements Serializable{
                                         "}]," +
                                         "yAxes: [{" +
                                             "id: \"yaxis\"," +
-                                            "type: \""+(logX ? "logarithmic" : "linear")+"\"," +
+                                            "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
                                             "position: \"bottom\"," +
                                             "gridLines: {" +
                                                 "color: \"#"+gridColor+"\"," +
@@ -1539,6 +1605,10 @@ public class expView implements Serializable{
                                 "}" +
                             "});" +
                         "}" +
+                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
+                            "elementData["+htmlID+"][\"graph\"].data.datasets[i/2].data = d[i/2];" +
+                        "}" +
+                        scaleZ +
                         rescale +
                         "elementData["+htmlID+"][\"graph\"].update();" +
                     "}";

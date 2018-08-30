@@ -129,10 +129,12 @@ public class remoteServer extends Thread {
 //                    line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
                 if (line.contains("###drawableMore###"))
                     line = line.replace("###drawableMore###", getBase64PNG(res.getDrawable(R.drawable.more)));
-                if (line.contains("###drawableLarger###"))
-                    line = line.replace("###drawableLarger###", getBase64PNG(res.getDrawable(R.drawable.zoom_in)));
-                if (line.contains("###drawableSmaller###"))
-                    line = line.replace("###drawableSmaller###", getBase64PNG(res.getDrawable(R.drawable.zoom_out)));
+                if (line.contains("###drawableMaximize###"))
+                    line = line.replace("###drawableMaximize###", getBase64PNG(res.getDrawable(R.drawable.unfold_more)));
+                if (line.contains("###drawableRestore###"))
+                    line = line.replace("###drawableRestore###", getBase64PNG(res.getDrawable(R.drawable.unfold_less)));
+                if (line.contains("###drawableWarning###"))
+                    line = line.replace("###drawableWarning###", getBase64PNG(res.getDrawable(R.drawable.warning)));
 
                 //Add the line and a linebreak
                 sb.append(line);
@@ -215,6 +217,9 @@ public class remoteServer extends Thread {
                 } else if (line.contains("<!-- [[switchColumns3Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns3Translation]] -->", res.getString(R.string.switchColumns3)));
                     sb.append("\n");
+                } else if (line.contains("<!-- [[fontSizeTranslation]] -->")) {
+                    sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", res.getString(R.string.fontSize)));
+                    sb.append("\n");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     //The viewLayout is a JSON object with our view setup. All the experiment views
                     //and their view elements and their JavaScript functions and so on...
@@ -282,9 +287,13 @@ public class remoteServer extends Thread {
                                         first = false;
                                     else
                                         sb.append(",");
-                                    sb.append("\"");
-                                    sb.append(input.replace("\"", "\\\""));
-                                    sb.append("\"");
+                                    if (input == null)
+                                        sb.append("null");
+                                    else {
+                                        sb.append("\"");
+                                        sb.append(input.replace("\"", "\\\""));
+                                        sb.append("\"");
+                                    }
                                 }
                                 sb.append("],\"dataInputFunction\":\n");
                                 sb.append(experiment.experimentViews.get(i).elements.get(j).setDataHTML());
@@ -390,7 +399,6 @@ public class remoteServer extends Thread {
                     try {
                         //Take the connection
                         httpServerConnection.bind(socket, new BasicHttpParams());
-
                         //Do what has been requested and answer (see handle registry below)
                         //while (httpServerConnection.isOpen() && RUNNING) {
                             httpService.handleRequest(httpServerConnection, basicHttpContext);

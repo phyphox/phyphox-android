@@ -7,15 +7,25 @@ extern "C" {
     JNIEXPORT void JNICALL Java_de_rwth_1aachen_phyphox_Analysis_nativePower(JNIEnv *env, jobject obj, jdoubleArray a, jdoubleArray b) {
         int n = env->GetArrayLength(a);
         int m = env->GetArrayLength(b);
+        int nm;
+        if (n > m)
+            nm = n;
+        else
+            nm = m;
         jdouble *x = env->GetDoubleArrayElements(a, 0);
         jdouble *y = env->GetDoubleArrayElements(b, 0);
 
         double base = 0.;
         double exponent = 1.;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < nm; i++) {
+            if (i < n)
+                base = x[i];
             if (i < m)
                 exponent = y[i];
-            x[i] = pow(x[i], exponent);
+            if (n > m)
+                x[i] = pow(base, exponent);
+            else
+                y[i] = pow(base, exponent);
         }
 
         env->ReleaseDoubleArrayElements(a, x, 0);

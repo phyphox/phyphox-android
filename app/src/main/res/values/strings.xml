@@ -202,12 +202,15 @@ Copyright 2010 Cedric Beust cedric@beust.com
 \n%1$s</string>
     <string name="hotspotSettings">Hotspot Settings</string>
 
+    <string name="remoteColorMapWarning">The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.</string>
+
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
 
     <string name="switchToPhoneLayout">View: Narrow</string>
     <string name="switchColumns1">View: 1 column</string>
     <string name="switchColumns2">View: 2 columns</string>
     <string name="switchColumns3">View: 3 columns</string>
+    <string name="fontSize">Font size</string>
 
     <string name="show_description">Experiment info</string>
     <string name="save_locally">Add experiment to collection</string>

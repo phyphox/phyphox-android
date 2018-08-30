@@ -602,8 +602,14 @@ public class Analysis {
 
                 nativePower(ad, bd);
 
-                for (int i = 0; i < sizeA; i++) {
-                    outputs.get(0).append(ad[i]);
+                if (sizeA > sizeB) {
+                    for (int i = 0; i < sizeA; i++) {
+                        outputs.get(0).append(ad[i]);
+                    }
+                } else {
+                    for (int i = 0; i < sizeB; i++) {
+                        outputs.get(0).append(bd[i]);
+                    }
                 }
             } else {
 
