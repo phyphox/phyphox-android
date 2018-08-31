@@ -38,6 +38,8 @@ public class gpsInput implements Serializable {
     private int lastStatus = 0;
     private double geoidCorrection = Double.NaN;
 
+    public boolean forceGNSS = false;
+
     //The constructor
     protected gpsInput(Vector<dataOutput> buffers, Lock lock) {
         this.dataLock = lock;
@@ -89,6 +91,8 @@ public class gpsInput implements Serializable {
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
             locationManager.addNmeaListener(nmeaListener);
+            if (!forceGNSS)
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         } catch (SecurityException e) {
             Log.e("gps start", "Security exception when requesting location updates: " + e.getMessage());
         }
@@ -173,6 +177,17 @@ public class gpsInput implements Serializable {
         //Append the data to available buffers
         dataLock.lock();
         try {
+            if (dataT != null) {
+                double newT;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+                    newT = (event.getElapsedRealtimeNanos() - t0) * 1e-9;
+                else
+                    newT = (event.getTime() - t0) * 1e-3;
+                if (newT < dataT.value)
+                    return;
+                dataT.append(newT);
+            }
+
             if (dataLat != null)
                 dataLat.append(event.getLatitude());
             if (dataLon != null)
@@ -188,17 +203,14 @@ public class gpsInput implements Serializable {
             if (dataDir != null)
                 dataDir.append(event.getBearing());
 
-            if (dataT != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
-                    dataT.append((event.getElapsedRealtimeNanos() - t0) * 1e-9);
-                else
-                    dataT.append((event.getTime() - t0) * 1e-3);
-            }
-
             if (dataAccuracy != null)
                 dataAccuracy.append(event.getAccuracy());
-            if (dataZAccuracy != null)
-                dataZAccuracy.append(0); //Android does not provide vertical accuracy
+            if (dataZAccuracy != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    dataZAccuracy.append(event.getVerticalAccuracyMeters());
+                } else
+                    dataZAccuracy.append(0); //Older Android does not provide vertical accuracy
+            }
             if (dataSatellites != null) {
                 if (event.getExtras() != null)  //Not sure why this might happen, but there seem to be rare cases in which this leads to a crash
                     dataSatellites.append(event.getExtras().getInt("satellites", 0));

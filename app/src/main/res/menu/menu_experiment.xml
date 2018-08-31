@@ -34,6 +34,8 @@
 
     <item android:id="@+id/action_calibrated_magnetometer" android:title="@string/calibrated_magnetometer"
         android:orderInCategory="150" app:showAsAction="never" android:checkable="true" />
+    <item android:id="@+id/action_force_gnss" android:title="@string/force_gnss"
+        android:orderInCategory="160" app:showAsAction="never" android:checkable="true" />
 
     <item android:id="@+id/action_saveLocally" android:title="@string/save_locally" android:icon="@drawable/save_locally"
         android:orderInCategory="300" app:showAsAction="never" />

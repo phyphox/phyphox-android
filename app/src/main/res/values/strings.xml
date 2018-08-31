@@ -205,6 +205,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="remoteColorMapWarning">The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.</string>
 
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
+    <string name="force_gnss">Satellite location only</string>
 
     <string name="switchToPhoneLayout">View: Narrow</string>
     <string name="switchColumns1">View: 1 column</string>

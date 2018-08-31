@@ -577,6 +577,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem remote = menu.findItem(R.id.action_remoteServer);
         MenuItem saveLocally = menu.findItem(R.id.action_saveLocally);
         MenuItem calibratedMagnetometer = menu.findItem(R.id.action_calibrated_magnetometer);
+        MenuItem forceGNSSItem = menu.findItem(R.id.action_force_gnss);
 
         Iterator it = experiment.highlightedLinks.entrySet().iterator();
         for (int i = 1; i <= 5; i++) {
@@ -648,6 +649,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         calibratedMagnetometer.setVisible(magnetometer);
         calibratedMagnetometer.setChecked(calibrated);
+
+        boolean gps = false;
+        boolean forceGNSS = false;
+        if (experiment.gpsIn != null) {
+            gps = true;
+            forceGNSS = experiment.gpsIn.forceGNSS;
+        }
+        forceGNSSItem.setVisible(gps);
+        forceGNSSItem.setChecked(forceGNSS);
 
         //If the timedRun is active, we have to set the value of the countdown
         if (timedRun) {
@@ -964,6 +974,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         sensor.calibrated = !item.isChecked();
                     }
                 }
+            }
+        }
+
+        if (id == R.id.action_force_gnss) {
+            stopMeasurement();
+            if (experiment.gpsIn != null) {
+                experiment.gpsIn.forceGNSS= !item.isChecked();
             }
         }
 
