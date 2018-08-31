@@ -564,11 +564,14 @@ public class remoteServer extends Thread {
                             //So we get a threshold. We just have to figure out the reference buffer
                             int subsplit = th.indexOf('|');
                             if (subsplit == -1)
-                                br.threshold = Double.valueOf(th)+1e-8; //No reference specified
+                                br.threshold = Double.valueOf(th); //No reference specified
                             else { //A reference is given
-                                br.threshold = Double.valueOf(th.substring(0, subsplit))+1e-8;
+                                br.threshold = Double.valueOf(th.substring(0, subsplit));
                                 br.reference = th.substring(subsplit+1);
                             }
+                            //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
+                            //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
+                            br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold/1e7)));
                         }
                     }
 
@@ -636,7 +639,7 @@ public class remoteServer extends Thread {
                             sb.append("partial");
                         sb.append("\", \"buffer\":[");
 
-                        if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our bufer class
+                        if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
                             if (Double.isNaN(db.value) || Double.isInfinite(db.value))
                                 sb.append("null");
                             else
@@ -644,13 +647,22 @@ public class remoteServer extends Thread {
                         else {
                             //Get all the values...
                             boolean firstValue = true; //Find first iteration, so the other ones can add a seperator
-                            Iterator i = db.getIterator();
-                            Iterator i_reference = db_reference.getIterator();
+                            Double data[] = db.getArray();
+                            int n = db.getFilledSize();
+                            Double dataRef[];
+                            if (db_reference == db)
+                                dataRef = data;
+                            else {
+                                dataRef = db_reference.getArray();
+                                n = Math.min(n, db_reference.getFilledSize());
+                            }
+
+
                             Double v;
-                            while (i.hasNext() && i_reference.hasNext()) {
+                            for (int i = 0; i < n; i++) {
                                 //Simultaneously get the values from both iterators
-                                v = (Double) i.next();
-                                Double v_dep = (Double) i_reference.next();
+                                v = data[i];
+                                Double v_dep = dataRef[i];
                                 if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
                                     continue;
 
