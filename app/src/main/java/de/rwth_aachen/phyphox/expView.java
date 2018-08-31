@@ -220,6 +220,7 @@ public class expView implements Serializable{
         private int precision; //The number of significant digits
         private String formatter; //This formatter is created when scientificNotation and precision are set
         private String unit; //A string to display as unit
+        private int color;
 
         protected class Mapping {
             Double min = Double.NEGATIVE_INFINITY;
@@ -280,6 +281,7 @@ public class expView implements Serializable{
             this.unit = "";
             this.factor = 1.;
             this.size = 1.;
+            this.color = res.getColor(R.color.mainExp);
         }
 
         //Create the formatter for the notation and precision: for example  %.2e or %.2f
@@ -304,6 +306,10 @@ public class expView implements Serializable{
 
         protected void setSize(double size) {
             this.size = size;
+        }
+
+        protected void setColor(int c) {
+            this.color = c;
         }
 
         //Interface to set conversion factor. The element will show inputValue times this factor
@@ -349,7 +355,7 @@ public class expView implements Serializable{
             labelView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL); //Align right to the center of the row
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
+            labelView.setTextColor(color);
 
             //Create the value (and unit) as textView
             tv = new TextView(c);
@@ -361,7 +367,7 @@ public class expView implements Serializable{
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize*(float)size); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
-            tv.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
+            tv.setTextColor(color);
 
 
             //Add label and value to the row
@@ -380,7 +386,8 @@ public class expView implements Serializable{
         //  <span>Label</span><span>Value</span>
         //</div>
         protected String createViewHTML(){
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"valueElement\" id=\"element"+htmlID+"\">" +
+            String c = String.format("%08x", color).substring(2);
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
                     "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ this.unit + "</span></span>" +
                     "</div>";
@@ -469,9 +476,16 @@ public class expView implements Serializable{
     //infoElement implements a simple static text display, which gives additional info to the user
     public class infoElement extends expViewElement implements Serializable {
 
+        private int color;
+
         //Constructor takes the same arguments as the expViewElement constructor
         infoElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
+            this.color = res.getColor(R.color.mainExp);
+        }
+
+        protected void setColor(int c) {
+            this.color = c;
         }
 
         @Override
@@ -497,7 +511,7 @@ public class expView implements Serializable{
             textView.setGravity(Gravity.LEFT);
             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.info_element_font));
 
-            textView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
+            textView.setTextColor(color);
 
             rootView = textView;
             rootView.setFocusableInTouchMode(true);
@@ -512,7 +526,8 @@ public class expView implements Serializable{
         //  <p>text</p>
         //</div>
         protected String createViewHTML(){
-            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
+            String c = String.format("%08x", color).substring(2);
+            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;color:#"+c+"\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
                     "<p>"+this.label+"</p>" +
                     "</div>";
         }

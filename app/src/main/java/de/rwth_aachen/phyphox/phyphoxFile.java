@@ -792,7 +792,12 @@ public abstract class phyphoxFile {
                     at.content = getText();
             }
             if (additionalTags != null) {
-                additionalTags.add(at);
+                if (targetIndex > -1) {
+                    if (targetIndex >= additionalTags.size())
+                        additionalTags.setSize(targetIndex + 1);
+                    additionalTags.set(targetIndex, at);
+                } else
+                    additionalTags.add(at);
             }
         }
 
@@ -1066,6 +1071,7 @@ public abstract class phyphoxFile {
                     int precision = getIntAttribute("precision", 2);
                     boolean scientific = getBooleanAttribute("scientific", false);
                     double size = getDoubleAttribute("size", 1.0);
+                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.mainExp));
 
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
@@ -1105,13 +1111,17 @@ public abstract class phyphoxFile {
                     ve.setUnit(unit); //We can have a unit after the value
                     ve.setFactor(factor); //A conversion factor. Usually for the unit
                     ve.setSize(size); //A conversion factor. Usually for the unit
+                    ve.setColor(color);
                     newView.elements.add(ve);
                     break;
                 }
-                case "info": //An info element just shows some text
+                case "info": { //An info element just shows some text
+                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.mainExp));
                     expView.infoElement infoe = newView.new infoElement(label, null, null, parent.getResources()); //No inputs, just the label and resources
+                    infoe.setColor(color);
                     newView.elements.add(infoe);
                     break;
+                }
                 case "separator": //An info element just shows some text
                     expView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
                     int c = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
@@ -1241,8 +1251,28 @@ public abstract class phyphoxFile {
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);  //x- and y- label and units
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
+                    if (!globalColor) {
+                        for (int i = 0; i < Math.ceil(ats.size() / 3); i++) {
+                            switch (i % 6) {
+                                case 0: ge.setColor(parent.getResources().getColor(R.color.presetOrange), i);
+                                    break;
+                                case 1: ge.setColor(parent.getResources().getColor(R.color.presetGreen), i);
+                                    break;
+                                case 2: ge.setColor(parent.getResources().getColor(R.color.presetBlue), i);
+                                    break;
+                                case 3: ge.setColor(parent.getResources().getColor(R.color.presetYellow), i);
+                                    break;
+                                case 4: ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i);
+                                    break;
+                                case 5: ge.setColor(parent.getResources().getColor(R.color.presetRed), i);
+                                    break;
+                            }
+                        }
+                    }
                     for (int i = 0; i < ats.size(); i++) {
                         ioBlockParser.AdditionalTag at = ats.get(i);
+                        if (at == null)
+                            continue;
                         if (!at.name.equals("input")) {
                             throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
                         }
@@ -1259,21 +1289,6 @@ public abstract class phyphoxFile {
                         if (at.attributes.containsKey("color")) {
                             int localColor = Helper.parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.presetOrange), parent.getResources());
                             ge.setColor(localColor | 0xff000000, i/3);
-                        } else if (!globalColor) {
-                            switch ((i/3) % 6) {
-                                case 0: ge.setColor(parent.getResources().getColor(R.color.presetOrange), i/3);
-                                    break;
-                                case 1: ge.setColor(parent.getResources().getColor(R.color.presetGreen), i/3);
-                                    break;
-                                case 2: ge.setColor(parent.getResources().getColor(R.color.presetBlue), i/3);
-                                    break;
-                                case 3: ge.setColor(parent.getResources().getColor(R.color.presetYellow), i/3);
-                                    break;
-                                case 4: ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i/3);
-                                    break;
-                                case 5: ge.setColor(parent.getResources().getColor(R.color.presetRed), i/3);
-                                    break;
-                            }
                         }
                         if (at.attributes.containsKey("linewidth")) {
                             try {
