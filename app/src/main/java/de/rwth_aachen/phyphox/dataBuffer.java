@@ -171,7 +171,7 @@ public class dataBuffer implements Serializable {
         if (floatCopyBarValue != null) {
             synchronized (floatCopyBarValue.lock) {
                 if (floatCopyBarValueCapacity < floatCopyBarValue.offset + floatCopyBarValue.size + 6) {
-                    if (floatCopyBarValueCapacity < buffer.size() * 2)
+                    if (floatCopyBarValueCapacity < buffer.size() * 2 * 6)
                         floatCopyBarValueCapacity *= 2;
                     FloatBuffer newData = ByteBuffer.allocateDirect(floatCopyBarValueCapacity * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
                     floatCopyBarValue.data.position(floatCopyBarValue.offset);
@@ -187,7 +187,7 @@ public class dataBuffer implements Serializable {
         if (floatCopyBarAxis != null) {
             synchronized (floatCopyBarAxis.lock) {
                 if (floatCopyBarAxisCapacity < floatCopyBarAxis.offset + floatCopyBarAxis.size + 6) {
-                    if (floatCopyBarAxisCapacity < buffer.size() * 2)
+                    if (floatCopyBarAxisCapacity < buffer.size() * 2 * 6)
                         floatCopyBarAxisCapacity *= 2;
                     FloatBuffer newData = ByteBuffer.allocateDirect(floatCopyBarAxisCapacity * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
                     floatCopyBarAxis.data.position(floatCopyBarAxis.offset);
