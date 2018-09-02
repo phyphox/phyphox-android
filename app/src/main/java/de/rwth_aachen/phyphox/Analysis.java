@@ -424,8 +424,10 @@ public class Analysis {
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
-                    if (in == null || size == 0)
-                        continue;
+                    if (in == null || size == 0) {
+                        anyInput = false;
+                        break;
+                    }
                     if (i < size) { //New value from this iterator
                         result += in[i];
                         anyInput = true;
@@ -462,8 +464,10 @@ public class Analysis {
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
-                    if (in == null || size == 0)
-                        continue;
+                    if (in == null || size == 0) {
+                        anyInput = false;
+                        break;
+                    }
                     if (i < size) { //New value from this iterator
                         if (j == 0)
                             result += in[i];
@@ -506,8 +510,10 @@ public class Analysis {
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
-                    if (in == null || size == 0)
-                        continue;
+                    if (in == null || size == 0) {
+                        anyInput = false;
+                        break;
+                    }
                     if (i < size) { //New value from this iterator
                         result *= in[i];
                         anyInput = true;
@@ -544,8 +550,10 @@ public class Analysis {
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
-                    if (in == null || size == 0)
-                        continue;
+                    if (in == null || size == 0) {
+                        anyInput = false;
+                        break;
+                    }
                     if (i < size) { //New value from this iterator
                         if (j == 0)
                             result = in[i];
@@ -622,8 +630,10 @@ public class Analysis {
                     for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
                         Double in[] = inputArrays.get(j);
                         int size = inputArraySizes.get(j);
-                        if (in == null || size == 0)
-                            continue;
+                        if (in == null || size == 0) {
+                            anyInput = false;
+                            break;
+                        }
                         if (i < size) { //New value from this iterator
                             if (j == 0)
                                 result = in[i];
@@ -671,8 +681,10 @@ public class Analysis {
                 for (int j = 0; j < inputArrays.size() && j < 2; j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
-                    if (in == null || size == 0)
-                        continue;
+                    if (in == null || size == 0) {
+                        anyInput = false;
+                        break;
+                    }
                     if (i < size) { //New value from this iterator
                         if (j == 0)
                             a = Math.round(in[i]);
@@ -724,8 +736,10 @@ public class Analysis {
                 for (int j = 0; j < inputArrays.size() && j < 2; j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
-                    if (in == null || size == 0)
-                        continue;
+                    if (in == null || size == 0) {
+                        anyInput = false;
+                        break;
+                    }
                     if (i < size) { //New value from this iterator
                         if (j == 0)
                             a = Math.round(in[i]);
