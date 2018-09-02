@@ -325,7 +325,8 @@ public class DataExport implements Serializable {
             exportSets.get(i).getData();
         }
 
-        showFormatDialog(exportSets, c, minimalistic);
+        final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+        showFormatDialog(exportSets, c, minimalistic, fileName.isEmpty() ? "phyphox" : fileName);
     }
 
     //Annoying class to make the integer mutable.
@@ -339,7 +340,7 @@ public class DataExport implements Serializable {
     //Let the user select a fiile format. This takes a list of chosen sets as it is supposed to be
     //  called after the user has already chosen the sets to export.
     //If successfull it will trigger the actual export as a share intent
-    protected void showFormatDialog(final Vector<ExportSet> chosenSets, final Activity c, final boolean minimalistic) {
+    protected void showFormatDialog(final Vector<ExportSet> chosenSets, final Activity c, final boolean minimalistic, final String fileName) {
         final mutableInteger selected = new mutableInteger(); //This will hold the result
 
         //Create the charsequences that should be presented to the user
@@ -364,7 +365,7 @@ public class DataExport implements Serializable {
                         //Lets do the actual export
 
                         //Set a file name including the current date
-                        exportFormats[selected.value].setFilenameBase("phyphox " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
+                        exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
 
                         //Call the export filter to write the data to a file
                         File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic);
@@ -407,12 +408,12 @@ public class DataExport implements Serializable {
     //This function is used when all the dialogs are not done in the app, but on the web interface.
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
-    protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic) {
+    protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName) {
         for (int i = 0; i < exportSets.size(); i++) {
             exportSets.get(i).getData();
         }
 
-        format.setFilenameBase("phyphox_" + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
+        format.setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
 
         return format.export(exportSets, cacheDir, minimalistic);
     }

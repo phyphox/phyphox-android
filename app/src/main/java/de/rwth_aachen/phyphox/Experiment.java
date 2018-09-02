@@ -863,7 +863,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     .setNeutralButton(R.string.save_state_share, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
 
-                            String filename = getString(R.string.save_state_default_title) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
+                            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+                            String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
                             File file = new File(getCacheDir(), "/"+filename);
                             try {
                                 FileOutputStream output = new FileOutputStream(file);
@@ -938,7 +939,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 canvas.drawBitmap(bmp, location[0], location[1], null);
             }
 
-            File file = new File(this.getCacheDir(), "/phyphox " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
+            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+            File file = new File(this.getCacheDir(), "/"+ (fileName.isEmpty() ? "phyphox" : fileName) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
             try {
                 FileOutputStream out = new FileOutputStream(file);
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);

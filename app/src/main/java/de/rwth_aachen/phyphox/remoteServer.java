@@ -857,7 +857,8 @@ public class remoteServer extends Thread {
                 String type = experiment.exporter.exportFormats[formatInt].getType(false);
 
                 //Use the experiment's exporter to create the file
-                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false);
+                final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName);
 
                 entity = new BasicHttpEntity();
                 InputStream inputStream = new FileInputStream(exportFile);
