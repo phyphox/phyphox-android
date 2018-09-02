@@ -140,6 +140,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PopupWindow popupWindow = null;
 
     @Override
+    public void onBackPressed() {
+        if (adapter != null && pager != null) {
+            expViewFragment f = (expViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
+            if (f != null && f.hasExclusive()) {
+                f.leaveExclusive();
+                return;
+            }
+        }
+        super.onBackPressed();
+    }
+
+    @Override
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

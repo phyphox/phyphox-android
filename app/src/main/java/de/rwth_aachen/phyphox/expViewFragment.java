@@ -22,6 +22,7 @@ public class expViewFragment extends Fragment {
 
     private int index;
     public ScrollView root;
+    boolean hasExclusive;
 
     public expViewFragment() {
         // Required empty public constructor
@@ -37,9 +38,14 @@ public class expViewFragment extends Fragment {
         }
     }
 
+    public boolean hasExclusive() {
+        return hasExclusive;
+    }
+
     public void requestExclusive(expView.expViewElement caller) {
         if (root == null)
             return;
+        hasExclusive = true;
         root.setFillViewport(true);
         LayoutTransition layoutTransition = new LayoutTransition();
         layoutTransition.setDuration(150);
@@ -62,6 +68,7 @@ public class expViewFragment extends Fragment {
     }
 
     public void leaveExclusive() {
+        hasExclusive = false;
         if (root == null)
             return;
         root.setFillViewport(false);
@@ -102,6 +109,9 @@ public class expViewFragment extends Fragment {
             return;
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.removeAllViews();
+
+        root.setFillViewport(false);
+        hasExclusive = false;
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
             for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
