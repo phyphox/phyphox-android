@@ -53,6 +53,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -1390,10 +1391,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         remote.start();
 
         //Announce this to the user as there are security concerns.
-        announcer.setText(res.getString(R.string.remoteServerActive, remoteServer.getAddresses().replaceAll("\\s+$", "")));
+        final String addressList = remoteServer.getAddresses().replaceAll("\\s+$", "");
+        if (addressList.isEmpty())
+            announcer.setText(res.getString(R.string.remoteServerNoNetwork));
+        else
+            announcer.setText(res.getString(R.string.remoteServerActive, addressList));
         announcer.setVisibility(View.VISIBLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            announcer.animate().translationY(0);
+            announcer.animate().translationY(0).alpha(1.0f);
+
+        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
+        lp.addRule(RelativeLayout.ABOVE, R.id.remoteInfo);
+        ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         //Also we want to keep the device active for remote access
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -1406,9 +1416,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Announce this to the user, so he knows why the webinterface stopped working.
         TextView announcer = (TextView)findViewById(R.id.remoteInfo);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            announcer.animate().translationY(announcer.getMeasuredHeight());
+            announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
         else
             announcer.setVisibility(View.INVISIBLE);
+
+        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
+        ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         if (remote == null) //no server there? never mind.
             return;
