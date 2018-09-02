@@ -1462,7 +1462,7 @@ public class Analysis {
         }
     }
 
-    //Reduce: Combine neighboring values to a smaller array by an integer factor, either skipping values inbetween or summing them
+    //Reduce: Combine neighboring values to a smaller array by an integer factor, either skipping values inbetween or summing them (also stretch values if there are too few)
     public static class reduceAM extends analysisModule implements Serializable {
 
         boolean averageX = false;
@@ -1478,14 +1478,14 @@ public class Analysis {
 
         @Override
         protected void update() {
-            int factor = 1;
+            double inFactor;
             if (inputs.size() > 0 && inputs.get(0) != null)
-                factor = (int)Math.round(inputs.get(0).getValue());
-
-            if (factor < 1)
+                inFactor = inputs.get(0).getValue();
+            else
                 return;
 
-            Iterator itx = null;
+
+            Iterator itx;
             Iterator ity = null;
             if (inputs.size() > 1 && inputs.get(1) != null)
                 itx = inputs.get(1).getIterator();
@@ -1495,37 +1495,53 @@ public class Analysis {
             if (inputs.size() > 2 && inputs.get(2) != null)
                 ity = inputs.get(2).getIterator();
 
-            while (itx.hasNext()) {
-                double newx = 0.;
-                double newy = 0.;
-                for (int i = 0; i < factor; i++) {
-                    if (!itx.hasNext())
-                        break;
-                    double x = (double)itx.next();
-                    double y;
-                    if (ity.hasNext())
-                        y = (double)ity.next();
-                    else
-                        y = 0.;
-                    if (i == 0) {
-                        newx = x;
-                        newy = y;
-                    } else {
-                        if (sumY || averageY)
-                            newy += y;
-                        if (averageX)
-                            newx += x;
+            if (inFactor > 1) {
+                int factor = (int)Math.round(inFactor);
+                while (itx.hasNext()) {
+                    double newx = 0.;
+                    double newy = 0.;
+                    for (int i = 0; i < factor; i++) {
+                        if (!itx.hasNext())
+                            break;
+                        double x = (double) itx.next();
+                        double y;
+                        if (ity != null && ity.hasNext())
+                            y = (double) ity.next();
+                        else
+                            y = 0.;
+                        if (i == 0) {
+                            newx = x;
+                            newy = y;
+                        } else {
+                            if (sumY || averageY)
+                                newy += y;
+                            if (averageX)
+                                newx += x;
+                        }
+                    }
+                    if (averageX)
+                        newx /= (double) factor;
+                    if (averageY)
+                        newy /= (double) factor;
+
+                    outputs.get(0).append(newx);
+                    if (outputs.size() > 1)
+                        outputs.get(1).append(newy);
+                }
+            } else {
+                int factor = (int) Math.round(1. / inFactor);
+                while (itx.hasNext()) {
+                    double newx = (double)itx.next();
+                    double newy = 0.;
+                    if (ity != null && ity.hasNext())
+                        newy = (double)ity.next();
+                    for (int i = 0; i < factor; i++) {
+                        outputs.get(0).append(newx);
+                        if (outputs.size() > 1)
+                            outputs.get(1).append(newy);
                     }
                 }
-                if (averageX)
-                    newx /= (double)factor;
-                if (averageY)
-                    newy /= (double)factor;
-
-                outputs.get(0).append(newx);
-                outputs.get(1).append(newy);
             }
-
         }
     }
 
