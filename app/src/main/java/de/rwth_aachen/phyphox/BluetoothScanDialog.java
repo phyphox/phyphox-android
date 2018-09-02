@@ -9,7 +9,9 @@ import android.bluetooth.BluetoothDevice;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
@@ -77,7 +79,18 @@ public class BluetoothScanDialog {
                                dialog.dismiss();
                            }
 
-                       });
+                       })
+                        .setPositiveButton(R.string.bt_more_info_link_button, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Uri uri = Uri.parse(context.getString(R.string.bt_more_info_link_url));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                                    activity.startActivity(intent);
+                                }
+                                dialog.dismiss();
+                            }
+                        });
                 dialog = builder.create();
 
                 title = (TextView) view.findViewById(R.id.bluetooth_scan_dialog_title);

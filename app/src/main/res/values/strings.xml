@@ -286,4 +286,8 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="bt_fail_reading">The reading operation was not successful.</string>
     <string name="bt_fail_writing">The writing operation was not successful.</string>
 
+    <string name="bt_more_info_link_text">If your device is not supported, pick \"more info\" to learn more about the flexible Bluetooth Low Energy support in phyphox on our website.</string>
+    <string name="bt_more_info_link_button">More info</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
 </resources>

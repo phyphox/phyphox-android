@@ -286,7 +286,7 @@ public class GraphView extends View {
         double minVX = Double.NaN;
         double minVY = Double.NaN;
 
-        final int range = 200;
+        final int range = 100;
 
         double searchRangeMaxX = Math.max(viewXToDataX(x+range), viewXToDataX(x-range));
         double searchRangeMinX = Math.min(viewXToDataX(x+range), viewXToDataX(x-range));
