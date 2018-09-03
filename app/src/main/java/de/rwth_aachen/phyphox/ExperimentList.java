@@ -447,7 +447,7 @@ public class ExperimentList extends AppCompatActivity {
             //The expansion is achieved by overwriting the measured height in the onMeasure event
             public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                 if (isExpanded()) {
-                    // Calculate entire height by providing a very large height hint.
+                    // Calculate entire height by providing a very large height startMenuItem.
                     // View.MEASURED_SIZE_MASK represents the largest height possible.
                     int expandSpec = MeasureSpec.makeMeasureSpec(MEASURED_SIZE_MASK, MeasureSpec.AT_MOST);
                     //Send our height to the super onMeasure event

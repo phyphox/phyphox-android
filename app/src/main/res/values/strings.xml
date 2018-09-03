@@ -247,6 +247,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="categoryRawSensor">Raw Sensors</string>
 
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
+    <string name="start_hint">Touch the triangle to start the experiment.</string>
 
     <string name="bluetooth">Bluetooth Low Energy</string>
     <string name="bt_android_version">Bluetooth Low Energy is not supported on Android Versions lower than 4.3.</string>

@@ -11,8 +11,8 @@
         android:id="@+id/hint_arrow"
         android:layout_width="12dp"
         android:layout_height="12dp"
-        android:layout_gravity="right"
-        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
         android:background="@drawable/arrow_top" />
 
     <TextView
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/rounded_dialog"
         android:gravity="center"
-        android:text="@string/experimentinfo_hint"
+        android:text=""
         android:padding="10dp"
         android:textColor="@color/mainDialog" />
 </LinearLayout>

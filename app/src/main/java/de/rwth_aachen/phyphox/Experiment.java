@@ -6,7 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
@@ -34,13 +34,11 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -61,8 +59,6 @@ import android.support.v7.widget.Toolbar;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -72,7 +68,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.zip.CRC32;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
@@ -86,7 +81,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private static final String STATE_TIMED_RUN = "timed_run"; //Are timed runs activated?
     private static final String STATE_TIMED_RUN_START_DELAY = "timed_run_start_delay"; //The start delay for a timed run
     private static final String STATE_TIMED_RUN_STOP_DELAY = "timed_run_stop_delay"; //The stop delay for a timed run
-    private static final String STATE_HINT_DISMISSED = "hint_dismissed";
+    private static final String STATE_MENU_HINT_DISMISSED = "menu_hint_dismissed";
+    private static final String STATE_START_HINT_DISMISSED = "start_hint_dismissed";
     private static final String STATE_SAVE_LOCALLY_DISMISSED = "save_locally_dismissed";
 
     //This handler creates the "main loop" as it is repeatedly called using postDelayed
@@ -98,7 +94,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean loadCompleted = false; //Set to true when an experiment has been loaded successfully
     boolean shutdown = false; //The activity should be stopped. Used to escape the measurement loop.
     boolean beforeStart = true; //Experiment has not yet been started even once
-    boolean hintDismissed = false; //Remember that the user has clicked away the hint to the menu
+    boolean menuHintDismissed = false; //Remember that the user has clicked away the hint to the menu
+    boolean startHintDismissed = false; //Remember that the user has clicked away the hint to the start button
     boolean saveLocallyDismissed = false; //Remember that the user did not want to save this experiment locally
 
     //Remote server
@@ -129,7 +126,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     Intent intent; //Another helper to easily access the data of the intent that triggered this activity
     ProgressDialog progress; //Holds a progress dialog when a file is being loaded
     Bundle savedInstanceState = null; //Holds the saved instance state, so it can be handled outside onCreate
-    MenuItem hint = null; //Reference to play-hint button
+    MenuItem startMenuItem = null; //Reference to play-hint button
     ImageView hintAnimation = null; //Reference to the animated part of the play-hint button
 
     //The analysis progress bar
@@ -316,7 +313,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 timedRun = savedInstanceState.getBoolean(STATE_TIMED_RUN, false); //timed run activated?
                 timedRunStartDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_START_DELAY); //start elay of timed run
                 timedRunStopDelay = savedInstanceState.getDouble(STATE_TIMED_RUN_STOP_DELAY); //stop delay of timed run
-                hintDismissed = savedInstanceState.getBoolean(STATE_HINT_DISMISSED);
+                menuHintDismissed = savedInstanceState.getBoolean(STATE_MENU_HINT_DISMISSED);
+                startHintDismissed = savedInstanceState.getBoolean(STATE_START_HINT_DISMISSED);
                 saveLocallyDismissed = savedInstanceState.getBoolean(STATE_SAVE_LOCALLY_DISMISSED);
 
                 //Which view was active when we were stopped?
@@ -380,7 +378,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         //If this experiment has been loaded from a external source, we offer to save it locally
         if (!experiment.isLocal && experiment.loaded) {
-            hintDismissed = true; //Do not show menu hint for external experiments
+            menuHintDismissed = true; //Do not show menu startMenuItem for external experiments
 
             if (!saveLocallyDismissed) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -415,11 +413,26 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //An explanation is not necessary for raw sensors and of course we don't want it if there is an error
         if (experiment.category.equals(res.getString(R.string.categoryRawSensor)) || !experiment.loaded)
-            hintDismissed = true;
+            menuHintDismissed = true;
 
-        if (!hintDismissed)
+        if (!experiment.loaded)
+            startHintDismissed = true;
+
+        //If the hint has been shown a few times, we do not show it again
+        SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+        int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
+        if (menuHintDismissCount >= 3)
+            menuHintDismissed = true;
+
+        //If the start button has been used a few times, we do not show its hint again
+        int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
+        if (startHintDismissCount >= 3)
+            startHintDismissed = true;
+
+        if (!menuHintDismissed)
             showMenuHint();
-
+        else if (!startHintDismissed)
+            showStartHint();
     }
 
     private void showSensorWarning(sensorInput sensor) {
@@ -486,9 +499,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
-    private void showMenuHint() {
+    private void showHint(int textRessource, PopupWindow.OnDismissListener dismissListener, final int gravity, final int fromRight) {
+        if (popupWindow != null)
+            return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
         View hintView = inflater.inflate(R.layout.menu_hint, null);
+        TextView text = (TextView)hintView.findViewById(R.id.hint_text);
+        text.setText(textRessource);
+        ImageView iv = ((ImageView) hintView.findViewById(R.id.hint_arrow));
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams)iv.getLayoutParams();
+        lp.gravity = gravity;
+        iv.setLayoutParams(lp);
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
@@ -510,31 +531,49 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
         });
 
-        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                hintDismissed = true;
-                popupWindow = null;
-            }
-        });
+        popupWindow.setOnDismissListener(dismissListener);
 
 
         findViewById(R.id.rootLayout).post(new Runnable() {
             public void run() {
-                Toolbar actionBar = (Toolbar) findViewById(R.id.customActionBar);
-                if (actionBar == null)
+                View viewItem = findViewById(R.id.customActionBar);
+                if (viewItem == null) {
                     return;
+                }
                 int pos[] = new int[2];
-                actionBar.getLocationOnScreen(pos);
+                viewItem.getLocationOnScreen(pos);
                 if(isFinishing())
                     return;
                 try {
-                    popupWindow.showAtLocation(actionBar, Gravity.TOP | Gravity.RIGHT, 0, pos[1] + (int) (actionBar.getHeight() * 0.8));
+                    popupWindow.showAtLocation(viewItem, Gravity.TOP | gravity, pos[0] + fromRight * viewItem.getHeight(), pos[1] + (int) (viewItem.getHeight() * 0.8));
                 } catch (WindowManager.BadTokenException e) {
-                    Log.e("showMenuHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
+                    Log.e("showHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
                 }
             }
         });
+    }
+
+    private void showMenuHint() {
+        showHint(R.string.experimentinfo_hint, new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                popupWindow = null;
+                menuHintDismissed = true;
+                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
+                settings.edit().putInt("menuHintDismissCount", menuHintDismissCount+1).apply();
+            }
+        }, Gravity.RIGHT, 0);
+    }
+
+    private void showStartHint() {
+        showHint(R.string.start_hint, new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                popupWindow = null;
+                startHintDismissed = true;
+            }
+        }, Gravity.RIGHT, 2 );
     }
 
     @Override
@@ -556,7 +595,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         hintAnimation.setContentDescription(res.getString(R.string.start));
 
-        hint.setActionView(hintAnimation);
+        startMenuItem.setActionView(hintAnimation);
     }
 
     //Hide the start button hint animation
@@ -565,8 +604,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             hintAnimation.clearAnimation();
             hintAnimation.setVisibility(View.GONE);
             hintAnimation = null;
-            hint.setActionView(null);
-            hint = null;
+            startMenuItem.setActionView(null);
+            startMenuItem = null;
         }
     }
 
@@ -627,15 +666,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //If the experiment has not yet been started, highlight the play button
         if (beforeStart) {
             //Create an animation to guide the inexperienced user.
-            if (hint != null) {
+            if (startMenuItem != null) {
                 //We have already created an animation, which we need to remove first.
                 hidePlayHintAnimation();
             }
-            hint = menu.findItem(R.id.action_play);
+            startMenuItem = menu.findItem(R.id.action_play);
             showPlayHintAnimation();
-            hint.getActionView().setOnClickListener(this);
+            startMenuItem.getActionView().setOnClickListener(this);
         } else { //Either we cannot show the anymation or we should not show it as the start button has already been used. Hide the animation
-            hint = menu.findItem(R.id.action_play);
+            startMenuItem = menu.findItem(R.id.action_play);
             hidePlayHintAnimation();
         }
 
@@ -743,6 +782,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Play button. Start a measurement
         if (id == R.id.action_play) {
+            SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+            int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
+            settings.edit().putInt("startHintDismissCount", startHintDismissCount+1).apply();
+
             if (timedRun) {
                 startTimedMeasurement();
             } else
@@ -1503,7 +1546,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putBoolean(STATE_TIMED_RUN, timedRun); //timed run status
             outState.putDouble(STATE_TIMED_RUN_START_DELAY, timedRunStartDelay); //timed run start delay
             outState.putDouble(STATE_TIMED_RUN_STOP_DELAY, timedRunStopDelay); //timed run stop delay
-            outState.putBoolean(STATE_HINT_DISMISSED, hintDismissed);
+            outState.putBoolean(STATE_MENU_HINT_DISMISSED, menuHintDismissed);
+            outState.putBoolean(STATE_START_HINT_DISMISSED, startHintDismissed);
             outState.putBoolean(STATE_SAVE_LOCALLY_DISMISSED, saveLocallyDismissed);
         } catch (Exception e) {
             //Something went wrong?
