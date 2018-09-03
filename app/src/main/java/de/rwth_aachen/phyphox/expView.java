@@ -782,7 +782,7 @@ public class expView implements Serializable{
 
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"editElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "<input onchange=\"json('control?cmd=set&buffer="+valueOutput+"&value='+this.value/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
+                    "<input onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
                     "<span class=\"unit\">"+this.unit+"</span>" +
                     "</div>";
         }
@@ -932,7 +932,7 @@ public class expView implements Serializable{
         //onchange-listener in the markup
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
-                    "<button onclick=\"$.getJSON('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
+                    "<button onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
                     "</div>";
         }
     }
