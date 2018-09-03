@@ -21,7 +21,7 @@
     <string name="translationText">Phyphox gebruikt de eerste taal die beschikbaar is in de lijst met voorkeurstalen. Ga naar je Android-instellingen hieronder om je voorkeuren te wijzigen. Om te weten welke talen beschikbaar zijn en hoe u kunt helpen, selecteert u \'website bezoeken\'.</string>
     <string name="translationToSettings">Instellingen</string>
     <string name="translationToWebsite">Bezoek website</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#nl</string>
 
     <string name="warning">Waarschuwing</string>
     <string name="donotshowagain">Niet opnieuw tonen</string>

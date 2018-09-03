@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Ρυθμίσεις</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Προσθήκη απλού πειράματος</string>
+    <string name="newExperimentPhyphoxInfo">Επισκεφθείτε την σελίδα phyphox.org για να δημιουργήσετε πιο σύνθετα πειράματα που περιλαμβάνουν ανάλυση δεδομένων και μοιραστείτε τα με συναδέλφους, μαθητές και φίλους.</string>
+    <string name="newExperimentInputTitle">Τίτλος</string>
+    <string name="newExperimentInputBufferSize">Μέγεθος buffer (πλήθος τιμών για αποθήκευση)</string>
+    <string name="newExperimentInputRate">Ρυθμός Αισθητήρα (σε Hz, 0= όσο γρηγορότερα γίνεται)</string>
+    <string name="newExperimentInputSensors">Ενεργοί αισθητήρες</string>
+
+    <string name="help">Βοήθεια και πληροφορίες</string>
+    <string name="experimentsPhyphoxOrg">Ιδέες για πειράματα και οδηγίες</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Συχνές ερωτήσεις</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Απομακρυσμένος Έλεγχος</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Γλώσσες</string>
+    <string name="translationText">H εφαρμογή phyphox θα χρησιμοποιήσει την πρώτη διαθέσιμη γλώσσα από τη λίστα των προτιμώμενων γλωσσών σας. Για να αλλάξετε τις προτιμήσεις σας, επιλέξτε \"ρυθμίσεις\". Για να ενημερωθείτε για τις διαθέσιμες γλώσσες και πως μπορείτε να βοηθήσετε, επιλέξτε \"ιστοσελίδα\".</string>
+    <string name="translationToSettings">Ρυθμίσεις</string>
+    <string name="translationToWebsite">Ιστοσελίδα</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#el</string>
+
+    <string name="warning">Προειδοποίηση</string>
+    <string name="donotshowagain">Να μην προβληθεί ξανά</string>
+    <string name="damageWarning">Προσέξτε να μην προκαλέσετε ζημιά στο κινητό σας κατά τη διάρκεια του πειράματος. Δώστε ιδιαίτερη προσοχή ώστε να μην χτυπήσει σε σκληρές επιφάνειες και αποφύγετε την έκθεσή του σε ισχυρά μαγνητικά πεδία. Οι δημιουργοί του phyphox δεν είναι υπεύθυνοι για τυχόν ζημιές στο κινητό σας.</string>
+
+    <string name="info">Πληροφορίες</string>
+    <string name="credits">Μνεία</string>
+    <string name="creditsRWTH">Η εφαρμογή phyphox δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.</string>
+    <string name="creditsNames">
+        <![CDATA[
+            Ανάπτυξη και Ιδέα:<br/><b>Dr. Sebastian Staacks</b><br/>Ιδέα:<br/><b>Prof. Christoph Stampfer</b><br/>Σχεδιασμός:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Προγραμματισμός:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
+    <string name="creditsLibs">"Το  web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τις βιβλιοθήκες JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) και \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), οι οποίες είναι όλες διαθέσιμες υπό την άδεια του MIT."</string>
+    <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
+    <string name="sensorLight">Φως</string>
+    <string name="sensorGyroscope">Γυροσκόπιο</string>
+    <string name="sensorAccelerometer">Επιταχυνσιόμετρο</string>
+    <string name="sensorMagneticField">Μαγνητικό Πεδίο</string>
+    <string name="sensorPressure">Πίεση</string>
+    <string name="sensorTemperature">Θερμοκρασία</string>
+    <string name="sensorHumidity">Υγρασία</string>
+    <string name="sensorProximity">Εγγύτητα</string>
+
+    <string name="location">Θέση</string>
+
+    <string name="sensorNotAvailableWarningTitle">Μη διαθέσιμος αισθητήρας.</string>
+    <string name="sensorNotAvailableWarningText1">Ο αισθητήρας</string>
+    <string name="sensorNotAvailableWarningText2">"δεν είναι διαθέσιμος. Συνήθως αυτό σημαίνει ότι η συσκευή σας  δε διαθέτει αισθητήρα αυτού του τύπου."</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Περισσότερες πληροφορίες</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Κλείσιμο</string>
+    <string name="next">Επόμενο</string>
+    <string name="cancel">Ακύρωση</string>
+    <string name="unknown">άγνωστο</string>
+
+    <string name="delete">Διαγραφή</string>
+    <string name="confirmDelete">Θέλετε να διαγράψετε αυτό το πείραμα από τη συλλογή σας;</string>
+    <string name="confirmDeleteTitle">Επιβεβαίωση διαγραφής;</string>
+
+    <string name="stop">Τερματισμός</string>
+    <string name="start">Εκκίνηση</string>
+    <string name="clear_data">Διαγραφή δεδομένων</string>
+    <string name="clear_data_question">Διαγραφή εγγεγραμμένων δεδομένων;</string>
+    <string name="clear">Διαγραφή</string>
+    <string name="timed_stop">Τερματισμός χρονομετρημένης εκτέλεσης</string>
+    <string name="timed_start">Εκκίνηση χρονομετρημένης εκτέλεσης</string>
+
+    <string name="loadingTitle">Φόρτωση</string>
+    <string name="loadingText">Φόρτωση πειράματος …</string>
+
+    <string name="timedRunDialogTitle">Χρονομετρημένη εκτέλεση</string>
+    <string name="timedRunStartDelay">Καθυστέρηση εκκίνησης (s)</string>
+    <string name="timedRunStopDelay">Διάρκεια πειράματος (s)</string>
+    <string name="enableTimedRun">Χρονομετρημένη εκτέλεση</string>
+
+    <string name="export">Εξαγωγή δεδομένων</string>
+    <string name="export_subject">Δεδομένα από phyphox</string>
+    <string name="export_pick_share">Επιλογή του τρόπου εξαγωγής</string>
+
+    <string name="share">Διαμοιρασμός εικόνας οθόνης</string>
+    <string name="share_subject">Screenshot του phyphox</string>
+    <string name="share_pick_share">Επιλογή του τρόπου διαμοιρασμού</string>
+
+    <string name="remoteServer">Απομακρυσμένη πρόσβαση</string>
+    <string name="remoteServerWarning">Πρόκειται να επιτρέψετε απομακρυσμένη πρόσβαση στην λήψη δεδομένων. Αυτό θα πρέπει να επιτρέπεται μόνο σε έμπιστο δίκτυο! Επίσης σημειώστε ότι η απευθείας πρόσβαση ανάμεσα σε συσκευές μπορεί να μην είναι δυνατή σε πολλά εταιρικά ή πανεπιστημιακά δίκτυα
+\n
+\nΓια μέγιστη ασφάλεια και επίδοση συνδεθείτε σε αυτή τη συσκευή με tethering (mobile hotspot).
+\n
+\nΜετά το πάτημα του ok, θα έχετε πρόσβαση στις μετρήσεις σας από κάθε φυλλομετρητή του ίδιου δικτύου.</string>
+    <string name="remoteServerWarningTitle">Προειδοποίηση ασφάλειας!</string>
+    <string name="remoteServerActive">Ενεργοποιήθηκε απομακρυσμένη πρόσβαση. Εκτελέστε το πείραμα από την παρακάτω διεύθυνση:
+\n%1$s</string>
+    <string name="hotspotSettings">Ρυθμίσεις Hotspot</string>
+
+    <string name="switchToPhoneLayout">Όψη: περιορισμένη</string>
+    <string name="switchColumns1">Όψη: 1 στήλη</string>
+    <string name="switchColumns2">Όψη: 2 στήλες</string>
+    <string name="switchColumns3">Όψη: 3 στήλες</string>
+
+    <string name="show_description">Πληροφορίες πειράματος</string>
+    <string name="save_locally">Προσθήκη πειράματος στη συλλογή</string>
+    <string name="save_locally_done">Το πειράμα προστέθηκε με επιτυχία στη συλλογή.</string>
+    <string name="save_locally_message">Αυτό το πείραμα έχει ανοίξει από μια απομακρυσμένη πηγή. Θέλετε να το προσθέσετε στη συλλογή πειραμάτων σας;</string>
+    <string name="save_locally_button">Αποθήκευση στη συλλογή</string>
+    <string name="save_state">Αποθήκευση κατάστασης πειράματος</string>
+    <string name="save_state_category">Αποθηκευμένες καταστάσεις πειράματος</string>
+    <string name="save_state_message">Μπορείτε να αποθηκεύσετε την κατάσταση του πειράματος συμπεριλαμβανομένων των δεδομένων στη συλλογή σας ή να την μοιραστείτε με μια τρίτη εφαρμογή.</string>
+    <string name="save_state_title">Τίτλος</string>
+    <string name="save_state_save">Σε συλλογή</string>
+    <string name="save_state_share">Διαμοιρασμός</string>
+    <string name="save_state_subject">Κατάσταση πειράματος για phyphox</string>
+    <string name="save_state_default_title">Μέτρηση</string>
+    <string name="save_state_success">Η κατάσταση αποθηκεύτηκε στη συλλογή σας.</string>
+
+    <string name="timedRun">Χρονομετρημένη εκτέλεση</string>
+
+    <string name="pick_exportSets">Επιλέξτε τα σύνολα δεδομένων για εξαγωγή.</string>
+    <string name="pick_exportFormat">Επλέξτε το format των δεδομένων.</string>
+
+    <string name="noDrawableData">Μη απεικονίσιμα δεδομένα.</string>
+
+    <string name="categoryRawSensor">Αισθητήρες</string>
+
+    <string name="experimentinfo_hint">Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.</string>
+
+<string name="calibrated_magnetometer">Χρήση βαθμονομημένου μαγνητόμετρου</string>
+
+    <string name="categoryNewExperiment">Απλά πειράματα χρήστη</string>
+    </resources>

@@ -1,2 +1,103 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Paramètres</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">Ajouter une expérience simple</string>
+    <string name="newExperimentPhyphoxInfo">Visitez le site phyphox.org si vous voulez créer des expériences plus avancées (avec de l\'analyse de données, du partage avec des collègues, des étudiants ou des amis).</string>
+    <string name="newExperimentInputTitle">Titre</string>
+    <string name="newExperimentInputBufferSize">Taille du buffer (nombre de valeurs à enregistrer)</string>
+    <string name="newExperimentInputRate">Fréquence de mesure (en hertz, 0 = aussi vite que possible)</string>
+    <string name="newExperimentInputSensors">Capteurs activés</string>
+
+    <string name="help">Aide et informations</string>
+    <string name="experimentsPhyphoxOrg">Suggestions d\'expériences et instructions</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Foire Aux Questions</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Aide pour le contrôle à distance</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Langues</string>
+    <string name="translationText">Phyphox utilisera la première langue disponible dans votre liste de langues préférées. Vous pouvez modifier vos préférences Android en cliquant sur \"Paramètres\" ci-dessous. Pour savoir dans quelles langues phyphox est disponible et comment vous pouvez aider, sélectionnez \"Visiter le site web\".</string>
+    <string name="translationToSettings">Paramètres</string>
+    <string name="translationToWebsite">Visiter le site web</string>
+    <string name="translationToWebsiteURL">https://phyphox.org/languages/#fr</string>
+
+    <string name="warning">Attention</string>
+    <string name="donotshowagain">Ne plus montrer</string>
+    <string name="damageWarning">Soyez prudents ! Faites attention à ne pas endommager votre téléphone pendant vos expériences. Veuillez faire particulièrement attention à ne pas le laisser tomber sur des surfaces dures, et ne pas l\'exposer à des champs magnétiques excessifs. Les auteurs de phyphox ne sont pas responsables des dommages éventuels de votre téléphone.</string>
+
+    <string name="info">Info</string>
+    <string name="credits">Crédits</string>
+    <string name="creditsRWTH">phyphox a été créé à l\'institut de physique II de l\'université technique de Rhénanie-Westphalie à Aix-la-Chapelle (RWTH Aachen University).</string>
+    <string name="creditsNames">Concept et développement:<br/><b>Dr. Sebastian Staacks</b><br/>Concept :<br/><b>Prof. Christoph Stampfer</b><br/>Design :<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmation :<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise les bibliothèques JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA et Ole Laursen) et \"Axis Labels Plugin pour flot \"((c) 2010 Xuan Luo), toutes disponibles sous la licence MIT.</string>
+    <string name="sensorLight">Luminosité</string>
+    <string name="sensorGyroscope">Gyroscope</string>
+    <string name="sensorAccelerometer">Accéléromètre</string>
+    <string name="sensorMagneticField">Champ magnétique</string>
+    <string name="sensorPressure">Pression</string>
+    <string name="sensorTemperature">Température</string>
+    <string name="sensorHumidity">Humidité</string>
+    <string name="sensorProximity">Proximité</string>
+
+    <string name="location">Localisation</string>
+
+    <string name="sensorNotAvailableWarningTitle">Capteur non disponible.</string>
+    <string name="sensorNotAvailableWarningText1">Le capteur</string>
+    <string name="sensorNotAvailableWarningText2">n\'est pas disponible. La raison la plus probable est que votre téléphone ne dispose pas de ce capteur.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Plus d\'informations</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Fermer</string>
+    <string name="next">Suite</string>
+    <string name="cancel">Annuler</string>
+    <string name="unknown">inconnu</string>
+
+    <string name="delete">Supprimer</string>
+    <string name="confirmDelete">Voulez-vous supprimer cette expérience de votre collection ?</string>
+    <string name="confirmDeleteTitle">Confirmation de suppression</string>
+
+    <string name="stop">Stop</string>
+    <string name="start">Début</string>
+    <string name="clear_data">Effacer les données</string>
+    <string name="clear_data_question">Voulez-vous effacer les données mesurées ?</string>
+    <string name="clear">Effacer</string>
+    <string name="loadingText">Chargement de l\'expérience…</string>
+
+    <string name="timedRunDialogTitle">Expérience pendant un temps donné</string>
+    <string name="timedRunStartDelay">Délai avant de commencer (s)</string>
+    <string name="timedRunStopDelay">Durée de l\'expérience (s)</string>
+    <string name="enableTimedRun">Faire des mesures pendant un temps donné</string>
+
+    <string name="export">Exporter les mesures</string>
+    <string name="export_subject">Mesures de phyphox</string>
+    <string name="export_pick_share">Choisissez votre moyen d\'exporter les mesures</string>
+
+    <string name="share">Partager une capture d\'écran</string>
+    <string name="share_subject">Capture d\'écran de phyphox</string>
+    <string name="share_pick_share">Choisissez votre moyen de partage</string>
+
+    <string name="remoteServer">Autoriser le contrôle à distance</string>
+    <string name="remoteServerWarning">Vous êtes sur le point d\'activer l\'accès à distance aux mesures. Vous ne devez le faire que sur un réseau de confiance ! Notez également que l\'accès direct entre appareils peut ne pas être possible sur de certains réseaux d\'entreprise ou universitaires.
+\n
+\nPour une sécurité et des performances optimales, il est préférable de se connecter à cet appareil via un partage de connexion internet (hotspot mobile).
+\n
+\nAprès avoir appuyé sur OK, vous pourrez accéder à vos mesures de n\'importe quel navigateur Web sur le même réseau.</string>
+    <string name="remoteServerWarningTitle">Avertissement !</string>
+    <string name="remoteServerActive">Contrôle à distance activé. Les mesures de l\'expérience sont disponibles sur le lien suivant : 
+\n%1$s</string>
+    <string name="hotspotSettings">Paramètres de partage de connexion</string>
+
+    <string name="calibrated_magnetometer">Utilisez un magnétomètre étalonné</string>
+
+    <string name="switchToPhoneLayout">Affichage : étroit</string>
+    <string name="switchColumns1">Affichage : 1 colonne</string>
+    <string name="switchColumns2">Affichage : 2 colonnes</string>
+    <string name="switchColumns3">Affichage : 3 colonnes</string>
+
+    <string name="show_description">Information sur l\'expérience</string>
+    <string name="save_locally">Ajouter l\'expérience à la collection</string>
+    <string name="save_locally_done">Ajout réussi de l\'expérience à la collection.</string>
+    </resources>

@@ -1,2 +1,132 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">設定</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="newExperiment">シンプルな実験の追加</string>
+    <string name="newExperimentPhyphoxInfo">データ分析や同僚，学生，友人との共有等の高度の実験を行うには phyphox.org のリンクを参照ください．</string>
+    <string name="newExperimentInputTitle">タイトル</string>
+    <string name="newExperimentInputBufferSize">バッファーサイズ(格納する値の数)</string>
+    <string name="newExperimentInputRate">センサーレート (Hz，0は最速処理を意味する)</string>
+    <string name="newExperimentInputSensors">アクティブなセンサー</string>
+
+    <string name="help">ヘルプ＆インフォ</string>
+    <string name="experimentsPhyphoxOrg">実験アイデアと説明</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">よくある質問</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">遠隔操作ヘルプ</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">言語</string>
+    <string name="translationText">phyphoxはあなたの優先言語リストのうち使用可能な第一言語を利用します．優先度は下記のAndroid \"設定\" から
+\n変更することができます．どの言語が利用可能か，またあなたがどのように役立つことができるかを知りたい方は\"ウェブサイトへ移動\"を選択してください．</string>
+    <string name="translationToSettings">設定</string>
+    <string name="translationToWebsite">ウェブサイトへ移行</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="warning">注意</string>
+    <string name="donotshowagain">今後表示しない</string>
+    <string name="damageWarning">実験中にお持ちのスマーフォンを損傷しないように気をつけてください．固い表面のものに落とすことのないように特に細心の注意を払い，過度に強度な磁場には晒さないようにしてください．開発者はお持ちのスマートフォンの損傷への責任は負えませんのでご了承ください．</string>
+
+    <string name="info">インフォ</string>
+    <string name="credits">信頼</string>
+    <string name="creditsRWTH">phyphoxはRWTH Aachen大学の2nd Institute of Physicsにて開発されました．</string>
+    <string name="creditsNames">開発とコンセプト:<br/><b>Dr. Sebastian Staacks</b><br/> コンセプト:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>プログラミング:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">遠隔操作のためのウェブのインターフェースにはJavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) と \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo) が使われます．すべてMITライセンスのもとで使用可能です．</string>
+    <string name="sensorLinearAcceleration">線形加速</string>
+    <string name="sensorLight">光</string>
+    <string name="sensorGyroscope">ジャイロスコープ</string>
+    <string name="sensorAccelerometer">加速度センサー</string>
+    <string name="sensorMagneticField">磁界</string>
+    <string name="sensorPressure">圧力</string>
+    <string name="sensorTemperature">温度</string>
+    <string name="sensorHumidity">湿度</string>
+    <string name="sensorProximity">接近度</string>
+
+    <string name="location">位置</string>
+
+    <string name="sensorNotAvailableWarningTitle">センサーは動作していません．</string>
+    <string name="sensorNotAvailableWarningText1">センサー</string>
+    <string name="sensorNotAvailableWarningText2">が利用できません．これは基本的にお持ちのデバイスがこの種類のセンサーを保持していないことを意味します．</string>
+    <string name="sensorNotAvailableWarningMoreInfo">詳細</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="close">閉じる</string>
+    <string name="next">次へ</string>
+    <string name="cancel">キャンセル</string>
+    <string name="unknown">不明</string>
+
+    <string name="delete">削除</string>
+    <string name="confirmDelete">コレクションから本実験を削除しますか？</string>
+    <string name="confirmDeleteTitle">削除してもよろしいですか？</string>
+
+    <string name="stop">停止</string>
+    <string name="start">開始</string>
+    <string name="clear_data">データクリア</string>
+    <string name="clear_data_question">記録したデータを消去しますか？</string>
+    <string name="clear">クリア</string>
+    <string name="timed_stop">タイムランを停止する</string>
+    <string name="timed_start">タイムランを開始する</string>
+
+    <string name="loadingTitle">ローディング</string>
+    <string name="loadingText">実験をローディング中…</string>
+
+    <string name="timedRunDialogTitle">タイムラン</string>
+    <string name="timedRunStartDelay">開始遅延 (s)</string>
+    <string name="timedRunStopDelay">実験時間 (s)</string>
+    <string name="enableTimedRun">タイムランを実行する</string>
+
+    <string name="export">データのエクスポート</string>
+    <string name="export_subject">phyphoxからのデータ</string>
+    <string name="export_pick_share">エクスポート方法を選択する</string>
+
+    <string name="share">スクリーンショットの共有</string>
+    <string name="share_subject">phyphoxからのスクリーンショット</string>
+    <string name="share_pick_share">共有方法の選択</string>
+
+    <string name="remoteServer">遠隔アクセスの許可</string>
+    <string name="remoteServerWarning">取得データへの遠隔アクセスをしようとしています．信頼されたネットワーク環境においてのみこれを実行してください！また，多くの企業と大学のネットワーク環境下ではデバイス間の直接アクセスができない場合が多いことに注意してください．
+\n
+\n最も安全なセキュリティーとパフォーマンスのためにデザリング回線 (モバイルホットスポット) を経由して接続してください．
+\n
+\nokを押した後，同ネットワーク環境下でどのようなウェブブラウザからでも実験にアクセスすることができます．</string>
+    <string name="remoteServerWarningTitle">セキュリティ警告!</string>
+    <string name="remoteServerActive">リモートアクセスが可能です．下記のURLから本実験にアクセスしてください．</string>
+    <string name="hotspotSettings">ホットスポット設定</string>
+
+    <string name="calibrated_magnetometer">補正された磁力計の利用</string>
+
+    <string name="switchToPhoneLayout">表示：狭い</string>
+    <string name="switchColumns1">表示：1列</string>
+    <string name="switchColumns2">表示：2列</string>
+    <string name="switchColumns3">表示：3列</string>
+
+    <string name="show_description">実験インフォ</string>
+    <string name="save_locally">実験をコレクションに追加</string>
+    <string name="save_locally_done">実験はコレクションに追加されました．</string>
+    <string name="save_locally_message">本実験はリモートソースから開かれました．あなたの実験コレクションに追加しますか？</string>
+    <string name="save_locally_button">コレクションに保存</string>
+    <string name="save_state">実験状態を保存</string>
+    <string name="save_state_category">保存された実験状態</string>
+    <string name="save_state_message">実験データを含む本実験の状態をあなたのコレクションに保存することや，第三者のアプリで共有することができます．</string>
+    <string name="save_state_title">タイトル</string>
+    <string name="save_state_save">コレクション</string>
+    <string name="save_state_share">共有</string>
+    <string name="save_state_subject">phyphoxの実験状態</string>
+    <string name="save_state_default_title">実験</string>
+    <string name="save_state_success">状態はあなたのコレクションに保存されました．</string>
+
+    <string name="timedRun">タイムラン</string>
+
+    <string name="pick_exportSets">エクスポートするデータの選択.</string>
+    <string name="pick_exportFormat">データフォーマットを選択してください．</string>
+
+    <string name="noDrawableData">描画可能なデータがありません．</string>
+
+    <string name="categoryNewExperiment">簡単なカスタム実験</string>
+    <string name="categoryRawSensor">時系列センサー</string>
+
+    <string name="experimentinfo_hint">本実験をどのように使用するか知るために実験インフォを確認してください．</string>
+
+</resources>

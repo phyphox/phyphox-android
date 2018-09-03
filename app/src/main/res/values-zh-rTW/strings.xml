@@ -8,7 +8,7 @@
     <string name="newExperimentPhyphoxInfo">參考phyphox.org網站資訊，創設更好的手機實作，並包括數據分析，可與同事，學生和朋友分享。</string>
     <string name="newExperimentInputTitle">標題</string>
     <string name="newExperimentInputBufferSize">緩衝區大小(以數字表示取樣數)</string>
-    <string name="newExperimentInputRate">感應器感應速率(用赫為單位，0代表最快)</string>
+    <string name="newExperimentInputRate">感應器感應速率(用赫茲為單位，0代表最快)</string>
     <string name="newExperimentInputSensors">選擇感應器</string>
 
     <string name="help">協助訊息</string>
@@ -21,7 +21,7 @@
     <string name="translationText">Phyphox將使用您首選語言列表中的第一種語言。 要更改您的偏好設定，請用下方的Android“設定”。 要了解哪些語言可用以及如何提供協助，請選擇“拜訪網站”。</string>
     <string name="translationToSettings">設定</string>
     <string name="translationToWebsite">拜訪網站</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">網址：http://phyphox.org/languages#en</string>
 
     <string name="warning">警示</string>
     <string name="donotshowagain">不要再顯示</string>
@@ -30,7 +30,7 @@
     <string name="info">訊息</string>
     <string name="credits">創立團隊</string>
     <string name="creditsRWTH">phyphox是由亞琛工業大學第二物理學院所開發。</string>
-    <string name="creditsNames">Development and Concept:<br/><b>Dr. Sebastian Staacks</b><br/>Concept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programming:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">發展與概念：<br/><b>Dr. Sebastian Staacks</b><br/>概念：<br/><b>Prof. Christoph Stampfer</b><br/>設計：<br/><b>Frank Posthoff (A.NikoPol)</b><br/>程式設計：<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
     <string name="sensorLinearAcceleration">線性加速度</string>
     <string name="sensorLight">光感應</string>
@@ -44,7 +44,7 @@
 
     <string name="location">GPS偵測器</string>
 
-    <string name="sensorNotAvailableWarningTitle">感應裝置不可用</string>
+    <string name="sensorNotAvailableWarningTitle">本機的感應器不支援</string>
     <string name="sensorNotAvailableWarningText1">感應裝置</string>
     <string name="sensorNotAvailableWarningText2">不可用。 表示您的設備沒有這種類型的感應器。</string>
     <string name="sensorNotAvailableWarningMoreInfo">更多資訊</string>
@@ -69,11 +69,61 @@
     <string name="timed_start">開始定時計時</string>
 
     <string name="loadingTitle">載入</string>
-    <string name="loadingText">載入實驗</string>
+    <string name="loadingText">載入實驗中</string>
 
     <string name="experimentinfo_hint">查看與此手機實作相關資訊，以了解該如何使用。</string>
 
 <string name="export">匯出數據</string>
     <string name="pick_exportFormat">選擇數據格式</string>
+
+    <string name="timedRunStopDelay">實驗長短(秒)</string>
+    <string name="export_subject">phyphox的數據</string>
+    <string name="export_pick_share">選擇輸出模式</string>
+
+    <string name="share">分享螢幕截圖</string>
+    <string name="share_subject">phyphox的螢幕截圖</string>
+    <string name="share_pick_share">選擇分享模式</string>
+
+    <string name="remoteServer">允許遠端存取</string>
+    <string name="remoteServerWarningTitle">安全性警告 !</string>
+    <string name="remoteServerActive">遠端存取已啟用。從下列網址存取實驗</string>
+    <string name="hotspotSettings">熱點設定</string>
+
+    <string name="calibrated_magnetometer">使用已校準的磁力計</string>
+
+    <string name="switchToPhoneLayout">觀看模式：窄</string>
+    <string name="switchColumns1">觀看模式：1 欄</string>
+    <string name="switchColumns2">觀看模式：2 欄</string>
+    <string name="switchColumns3">觀看模式：3 欄</string>
+
+    <string name="show_description">實驗資訊</string>
+    <string name="save_locally">增加實驗到珍藏集</string>
+    <string name="save_locally_done">實驗已成功加入珍藏集</string>
+    <string name="save_locally_message">這個實驗已由遠端開啟。你要把它加到珍藏集嗎?</string>
+    <string name="save_locally_button">儲存到珍藏集</string>
+    <string name="save_state">儲存實驗狀態</string>
+    <string name="save_state_category">已儲存的實驗狀態</string>
+    <string name="save_state_message">你可以儲存這個實驗狀態(含數據)到你的珍藏集，或經由第三方app分享出去。</string>
+    <string name="save_state_title">標題</string>
+    <string name="save_state_save">收藏</string>
+    <string name="save_state_share">分享</string>
+    <string name="save_state_subject">phyphox的實驗狀態</string>
+    <string name="save_state_default_title">測量</string>
+    <string name="save_state_success">狀態已存入珍藏集</string>
+
+    <string name="pick_exportSets">匯出挑選的數據組</string>
+    <string name="noDrawableData">無繪製的數據</string>
+
+    <string name="timedRunDialogTitle">時程設定</string>
+    <string name="timedRunStartDelay">延遲啟動(秒)</string>
+    <string name="timedRun">時程設定</string>
+
+    <string name="remoteServerWarning">你即將啟用遠端存取到已取得的數據。你應該在信任的網路中做這個動作!另外，在許多公司或大學的網路中，裝置間的直接存取可能無法執行。
+\n為了安全性及最佳性能，你應該經由共享選項(移動熱點)連結到裝置。
+\n按下OK後，你可以從同個網域的任何瀏覽器存取你的實驗。</string>
+    <string name="categoryNewExperiment">自訂實驗</string>
+    <string name="categoryRawSensor">內建感應器</string>
+
+    <string name="enableTimedRun">執行時域區間測量</string>
 
     </resources>

@@ -24,4 +24,31 @@
 
     <string name="warning">警告</string>
     <string name="donotshowagain">不再显示</string>
+    <string name="translationText">Phyphox将使用您首选语言列表中的第一种语言。如要更改您的首选项，请转到下面的Android“设置”。要了解哪些语言是可用的，以及如何帮助，请选择“访问网站”。</string>
+    <string name="info">消息</string>
+    <string name="credits">创建团队</string>
+    <string name="creditsRWTH">Phyphox是由亚琛工业大学第二物理研究所开发。</string>
+    <string name="damageWarning">使用Phyphox工坊时，请注意不要损坏手机。尤其特别注意避免手机掉落在坚硬的表面上，并且不要将手机暴露在过强的磁场中。Phyphox服务的提供者对于您手机的任何损坏概不负责。</string>
+
+    <string name="creditsNames">开发和概念:<br/> 1<b> 2Sebastian Staacks博士</b> 3<br/> 4概念:<br/> 5<b> 6Christoph Stampfer教授</b> 7<br/> 8设计:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>编程:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="sensorLinearAcceleration">线加速度</string>
+    <string name="sensorLight">光传感器</string>
+    <string name="sensorGyroscope">陀螺仪</string>
+    <string name="sensorAccelerometer">加速度计</string>
+    <string name="sensorMagneticField">磁力计</string>
+    <string name="sensorPressure">压力传感器</string>
+    <string name="sensorTemperature">温度计</string>
+    <string name="sensorHumidity">湿度计</string>
+    <string name="sensorProximity">距离传感器</string>
+
+    <string name="sensorNotAvailableWarningTitle">传感器不可用。</string>
+    <string name="sensorNotAvailableWarningText1">传感器</string>
+    <string name="sensorNotAvailableWarningText2">不可用。通常这表示您的设备没有这种类型的传感器。</string>
+    <string name="sensorNotAvailableWarningMoreInfo">更多信息</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">确认</string>
+    <string name="close">关闭</string>
+    <string name="next">下一步</string>
+    <string name="cancel">取消</string>
     </resources>

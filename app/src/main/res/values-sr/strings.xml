@@ -29,7 +29,7 @@
 
     <string name="info">Informacije</string>
     <string name="credits">Bodovi</string>
-    <string name="creditsRWTH">phyphox je nastao na drugom institutu za fiziku, Univerzitet u Aachan RWTH</string>
+    <string name="creditsRWTH">phyphox je nastao na drugom institutu za fiziku, Univerzitet u Aachan RWTH.</string>
     <string name="creditsNames">
         <![CDATA[
         Razvoj i koncept:<br/><b>Dr. Sebastian Staacks</b><br/>Koncept:<br/><b>Prof. Christoph Stampfer</b><br/>Dizajn:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programiranje:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
@@ -77,4 +77,58 @@
 
     <string name="timedRunStartDelay">Odloženi start (s)</string>
     <string name="timedRunStopDelay">Trajanje eksperimenta (s)</string>
-    </resources>
+    <string name="timedRunDialogTitle">Podešavanje vremena</string>
+    <string name="enableTimedRun">Podesi merač vremena</string>
+
+    <string name="export">Otpremi podatke</string>
+    <string name="export_subject">Podaci sa phyphox-a</string>
+    <string name="export_pick_share">Izaberi metod odpremanja</string>
+
+    <string name="share">Podeli sliku ekrana</string>
+    <string name="share_subject">Slika ekrana iz phyphox-a</string>
+    <string name="share_pick_share">Izaberi metod za deljenje</string>
+
+    <string name="remoteServer">Dozvoli upravljanje na daljinu</string>
+    <string name="remoteServerWarning">Omogućićete upravljanje na daljinu za izabrane podatke. Ovo bi trebalo da radite samo na poverljivoj mreži! Na mnogim univerzitetskim mrežama direktan pristup uređaju neće biti omogućen.
+\nZbog bezbednosti i performansi savetujemo vam da se sa uređajem povežete preko mobilnog hotspot-a.
+\nNakon odabira dugmeta ok, biće omogućen pristup merenju sa bilo kog pretraživača koji se nalazi na istoj mreži.</string>
+    <string name="remoteServerWarningTitle">Bezbednostno upozorenje!</string>
+    <string name="remoteServerActive">Daljinsko upravljanja je omogućeno. Pristupite ovom eksperimentu sa sledećeg URL-a: 
+\n%1$s</string>
+    <string name="hotspotSettings">Podešavanje hotspot-a</string>
+
+    <string name="calibrated_magnetometer">Koristi kalibrisani magnetometar</string>
+
+    <string name="switchToPhoneLayout">Pregled: Uzan</string>
+    <string name="switchColumns1">Pregled: 1 kolona</string>
+    <string name="switchColumns2">Pregled: 2 kolone</string>
+    <string name="switchColumns3">Pregled: 3 kolone</string>
+
+    <string name="show_description">Informacije o eksperimentu</string>
+    <string name="save_locally">Dodaj eksperiment u kolekciju</string>
+    <string name="save_locally_done">Eksperiment uspešno dodat u kolekciju.</string>
+    <string name="save_locally_message">Ovaj eksperiment je otvoren sa daljinskog izvora. Da li želite da ga dodate u vašu kolekciju eksperimenata?</string>
+    <string name="save_locally_button">Sačuvaj u kolekciju</string>
+    <string name="save_state">Sačuvaj stanje eksperimenta</string>
+    <string name="save_state_category">Sačuvana stanja eksperimenta</string>
+    <string name="save_state_message">Možete sačuvati stanje eksperimenta, uključujući vaše podatke u kolekciju ili podeliti sa trećim aplikacijama.</string>
+    <string name="save_state_title">Naslov</string>
+    <string name="save_state_save">U kolekciju</string>
+    <string name="save_state_share">Podeli</string>
+    <string name="save_state_subject">Stanje eksprimenta za phyhox</string>
+    <string name="save_state_default_title">Merenje</string>
+    <string name="save_state_success">Stanje je sačuvano u vašu kolekciju.</string>
+
+    <string name="timedRun">Merenje vremena</string>
+
+    <string name="pick_exportSets">Izaberi podatke za odpremanje.</string>
+    <string name="pick_exportFormat">Izaberi format podataka.</string>
+
+    <string name="noDrawableData">Nema slikovnih podataka.</string>
+
+    <string name="categoryNewExperiment">Jednostavni nasumični eksperimenti</string>
+    <string name="categoryRawSensor">Sirovi senzori</string>
+
+    <string name="experimentinfo_hint">Pogledaj uputstvo za eksperiment kako bi ga izvršio.</string>
+
+</resources>
