@@ -57,7 +57,10 @@ import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.PopupMenu;
 import android.text.Html;
 import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
@@ -113,6 +116,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -1740,7 +1745,21 @@ public class ExperimentList extends AppCompatActivity {
 
                                 //Set the credit texts, which require HTML markup
                                 TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
-                                tv.setText(Html.fromHtml(res.getString(R.string.creditsNames)));
+
+                                SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
+                                boolean first = true;
+                                for (String line : res.getString(R.string.creditsNames).split("\\n")) {
+                                    if (first)
+                                        first = false;
+                                    else
+                                        creditsNamesSpannable.append("\n");
+                                    creditsNamesSpannable.append(line.trim());
+                                }
+                                Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
+                                while (matcher.find()) {
+                                    creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                                }
+                                tv.setText(creditsNamesSpannable);
                                 TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
                                 tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
                                 TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);

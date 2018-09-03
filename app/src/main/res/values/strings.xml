@@ -22,7 +22,7 @@
     <string name="applyZoomTitle">Apply zoom</string>
     <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.</string>
     <string name="applyZoomAdvanced">Advanced options</string>
-    <string name="applyZoomApply">Apply to...</string>
+    <string name="applyZoomApply">Apply to…</string>
 
     <string name="applyZoomReset">Reset to default</string>
     <string name="applyZoomKeep">Keep as selected</string>
@@ -87,12 +87,20 @@
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
     <string name="creditsNames">
-        <![CDATA[
-            Development and Concept:<br/><b>Dr. Sebastian Staacks</b><br/>Concept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programming:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
-        ]]>
+Development and Concept:\n
+Dr. Sebastian Staacks\n
+Concept:\n
+Prof. Christoph Stampfer\n
+Programming:\n
+Dominik Dorsel\n
+Jonas Gessner\n
+Camilla Lummerzheim
+    </string>
+    <string name="gpl">
+        Phyphox is open source software released under the GNU General Public Licence. Please visit http://phyphox.org for further information and to get access to its source code. However, the name \"phyphox\" and \"RWTH Aachen\" are registered trademarks.
     </string>
     <string name="creditsLibs">
-        The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.) and \"Chart.js\" (http://chartjs.org), both available under the MIT licence.
+        The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later).
     </string>
     <string name="creditsApache" translatable="false">
         <![CDATA[
@@ -116,7 +124,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
     <string name="creditsZxing" translatable="false">
         <![CDATA[
         <b>Zxing</b><br />
-        The QR code scanner function uses ZXing (https://github.com/zxing/zxing), licenced under the Apache licence v2.0 (please see the webpage for details on the licence ans contributors. <br />
+        The QR code scanner function uses ZXing (https://github.com/zxing/zxing), licenced under the Apache licence v2.0 (please see the webpage for details on the licence and contributors). <br />
         <br />
 NOTICES FOR BARCODE4J<br />
 <br />
@@ -180,7 +188,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
 
     <string name="loadingTitle">Loading</string>
     <string name="loadingText">Loading experiment…</string>
-    <string name="loadingBluetoothConnectionText">Connecting to Bluetooth device...</string>
+    <string name="loadingBluetoothConnectionText">Connecting to Bluetooth device…</string>
 
     <string name="timedRunDialogTitle">Timed Run</string>
     <string name="timedRunStartDelay">Start delay (s)</string>
@@ -230,11 +238,11 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="save_state_success">State has been saved to your collection.</string>
 
     <string name="open_zip_title">Opening a set of experiments</string>
-    <string name="open_zip_dialog_instructions">This ressource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.</string>
+    <string name="open_zip_dialog_instructions">This resource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.</string>
     <string name="open_save_all">Save all</string>
 
     <string name="open_bluetooth_assets_title">Experiments for Bluetooth device</string>
-    <string name="open_bluetooth_assets">The following experiments for your device are available from phyphox. You can either just open and use them or add them all to your collection to easily acces them from the main menu.</string>
+    <string name="open_bluetooth_assets">The following experiments for your device are available from phyphox. You can either just open and use them or add them all to your collection to easily access them from the main menu.</string>
 
     <string name="timedRun">Timed run</string>
 
@@ -253,20 +261,20 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="bt_android_version">Bluetooth Low Energy is not supported on Android Versions lower than 4.3.</string>
 
     <string name="bt_pick_device">Please pick a device.</string>
-    <string name="bt_scanning_generic">Scanning for Bluetooth devices...</string>
+    <string name="bt_scanning_generic">Scanning for Bluetooth devices…</string>
     <string name="bt_scanning_specific1">Scanning for Bluetooth devices with</string>
-    <string name="bt_scanning_specific2">in their name...</string>
+    <string name="bt_scanning_specific2">in their name…</string>
     <string name="bt_device_not_supported">No experiment available.</string>
 
     <string name="bt_location_explanation">Android requires a location permission for Bluetooth scans as the result could be used to derive location information. We will now request these permissions. You need to grant them in order to do a Bluetooth scan.</string>
 
-    <string name="bt_exception_uuid">Characteristic with UUID "</string>
+    <string name="bt_exception_uuid">Characteristic with UUID</string>
     <string name="bt_exception_uuid2">not found.</string>
     <string name="bt_exception_disabled">Bluetooth is disabled. Please enable bluetooth and try again.</string>
     <string name="bt_exception_connection">Bluetooth connection could not be opened.</string>
     <string name="bt_exception_notfound">Bluetooth device not found.</string>
     <string name="bt_exception_services">Services could not be discovered.</string>
-    <string name="bt_exception_device">Concerning device with</string>
+    <string name="bt_exception_device">Error for the device with</string>
     <string name="bt_exception_device_address">address</string>
     <string name="bt_exception_device_name">name</string>
     <string name="bt_exception_rate">Invalid value for "rate".</string>
@@ -278,12 +286,12 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="bt_exception_config">The value for the characteristic</string>
     <string name="bt_exception_config2">could not be set.</string>
     <string name="bt_exception_no_connection">The Bluetooth device is not connected. Experiment can not be started.</string>
-    <string name="bt_exception_disconnected">The Bluetooth device disconnected.</string>
+    <string name="bt_exception_disconnected">The Bluetooth device has been disconnected.</string>
     <string name="bt_default_error_message">There is an error with the Bluetooth device.</string>
 
-    <string name="bt_error_writing">Error on writing characteristic with UUID</string>
-    <string name="bt_error_reading">Error on reading characteristic with UUID</string>
-    <string name="bt_error_discovering">Error on discovering the Services of the bluetooth device.</string>
+    <string name="bt_error_writing">Error while writing characteristic with UUID</string>
+    <string name="bt_error_reading">Error while reading characteristic with UUID</string>
+    <string name="bt_error_discovering">Error while discovering the services of the bluetooth device.</string>
     <string name="bt_fail_reading">The reading operation was not successful.</string>
     <string name="bt_fail_writing">The writing operation was not successful.</string>
 
