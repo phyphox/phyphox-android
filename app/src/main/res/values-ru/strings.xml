@@ -129,4 +129,34 @@
 
     <string name="experimentinfo_hint">Ознакомьтесь с информацией об экспериментах, чтобы узнать, как использовать этот эксперимент.</string>
 
-</resources>
+<string name="graph_tools_pan_and_zoom">панорама и масштаб</string>
+    <string name="graph_tools_pick">Выбор данных</string>
+    <string name="graph_tools_more">Другие инструменты</string>
+    <string name="graph_tools_reset">Сбросить масштаб</string>
+    <string name="graph_tools_follow">Следуйте новым данным</string>
+    <string name="graph_tools_linear_fit">Линейная регрессия</string>
+    <string name="graph_tools_export">Экспорт этого набора данных</string>
+    <string name="graph_tools_log_x">Логарифмическая ось x</string>
+    <string name="graph_tools_log_y">Логарифмическая ось y</string>
+
+    <string name="graph_point_label">Точка</string>
+    <string name="graph_slope_label">Наклон</string>
+    <string name="graph_difference_label">Разница</string>
+    <string name="graph_fit_label">Линейная функция: y = a x + b</string>
+
+    <string name="applyZoomTitle">Установить масштаб</string>
+    <string name="applyZoomExplanation">Когда вы закрываете интерактивный режим этого графика, вы можете выбрать сохранение масштаба.</string>
+    <string name="applyZoomAdvanced">Расширенные опции</string>
+    <string name="applyZoomApply">Применить к…</string>
+
+    <string name="applyZoomReset">Восстановление значений по умолчанию</string>
+    <string name="applyZoomKeep">Сохранить выбор</string>
+    <string name="applyZoomFollow">Сохранить и следовать новым данным</string>
+
+    <string name="applyZoomThis">Только этот график</string>
+    <string name="applyZoomSameVariable">Другие графики: одна и та же переменная</string>
+    <string name="applyZoomSameUnit">Другие графики: та же единица измерения</string>
+    <string name="applyZoomSameAxis">Другие графики: одна и та же ось</string>
+
+    <string name="newExperimentSimple">Добавить простой эксперимент</string>
+    </resources>
