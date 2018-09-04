@@ -2,9 +2,13 @@
 
 Phyphox is an app that uses the sensors in a smartphone for physics experiments. You can find additional details and examples on http://phyphox.org.
 
-This project has been created at the RWTH Aachen University and is released under the GNU General Public Licence (see licence file). 
+Copyright 2016 Dr. Sebastian Staacks, 2nd Institute of Physics, RWTH Aachen University.
 
-**However, the names "phyphox" and "RWTH Aachen University" as well as the RWTH Aachen logo are registered trademarks.**
+This project has been created at the RWTH Aachen University and is released under the GNU General Public Licence (see licence file) since version 1.1.0.
+
+**The names "phyphox" and "RWTH Aachen University" as well as the RWTH Aachen logo are registered trademarks.**
+
+## Coding style
 
 The app and all of its parts are developed by students and researchers who do not necessarily have a software development background. Therefore, you will find many passages in our code that is not best practice. Any help in improving our code is welcome.
 
