@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Einstellungen</string>
@@ -13,14 +13,15 @@
 
     <string name="info">Info</string>
     <string name="credits">Credits</string>
-    <string name="creditsNames">
-            <![CDATA[
-                Entwicklung und Konzept:<br/><b>Dr. Sebastian Staacks</b><br/>Konzept:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmierung:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
-            ]]>
-    </string>
-    <string name="creditsLibs">
-        Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliotheken \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) und \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), welche alle der MIT Lizenz unterliegen.
-    </string>
+    <string name="creditsNames">Entwicklung und Konzept:
+\nDr. Sebastian Staacks
+\nKonzept:
+\nProf. Christoph Stampfer
+\nProgrammierung:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
+    <string name="creditsLibs">Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliothek \"Chart.js\" (http://chartjs.org), welche der MIT Lizenz unterliegt. Für Fourier-Transformationen nutzen wir die Bibliothek FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, welche der GNU General Public Licence (version 2 oder später) unterliegt.</string>
     <string name="creditsRWTH">Phyphox wurde am 2. Physikalischen Institut der RWTH Aachen entwickelt.</string>
     <string name="damageWarning">Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.</string>
     <string name="delete">Löschen</string>
@@ -46,7 +47,7 @@
     <string name="loadingText">Experiment wird geladen…</string>
     <string name="loadingTitle">Laden</string>
     <string name="location">Standort</string>
-    <string name="newExperiment">Neues einfaches Experiment</string>
+    <string name="newExperiment">Neues Experiment</string>
     <string name="newExperimentInputBufferSize">Puffergröße (Anzahl zu speichernder Werte)</string>
     <string name="newExperimentInputRate">Sensorrate (in Hz, 0 = so schnell wie möglich)</string>
     <string name="newExperimentInputSensors">Aktive Sensoren</string>
@@ -142,4 +143,96 @@
     <string name="bt_error_discovering">Fehler beim Finden der Services des Bluetooth Geräts.</string>
     <string name="bt_fail_reading">Die Leseoperation war nicht erfolgreich.</string>
     <string name="bt_fail_writing">Die Schreiboperation war nicht erfolgreich.</string>
+<string name="graph_tools_pan_and_zoom">Ziehen/Zoom</string>
+    <string name="graph_tools_pick">Punkte wählen</string>
+    <string name="graph_tools_more">Mehr Werkzeuge</string>
+    <string name="graph_tools_reset">Zoom zurücksetzen</string>
+    <string name="graph_tools_follow">Neuen Daten folgen</string>
+    <string name="graph_tools_linear_fit">Ausgleichsgerade</string>
+    <string name="graph_tools_export">Diesen Datensatz exportieren</string>
+    <string name="graph_tools_log_x">Logarithmische x-Achse</string>
+    <string name="graph_tools_log_y">Logarithmische y-Achse</string>
+
+    <string name="graph_point_label">Punkt</string>
+    <string name="graph_slope_label">Steigung</string>
+    <string name="graph_difference_label">Differenz</string>
+    <string name="graph_fit_label">Ausgleichsgerade: y = a x + b</string>
+
+    <string name="applyZoomTitle">Zoom anwenden</string>
+    <string name="applyZoomExplanation">Beim Verlassen des interaktiven Modus kannst du auswählen, ob du den Zoom beibehalten möchtest.</string>
+    <string name="applyZoomAdvanced">Fortgeschrittene Optionen</string>
+    <string name="applyZoomApply">Anwenden auf…</string>
+
+    <string name="applyZoomReset">Auf Standard zurücksetzen</string>
+    <string name="applyZoomKeep">Auswahl behalten</string>
+    <string name="applyZoomFollow">Auswahl behalten und neuen Daten folgen</string>
+
+    <string name="applyZoomThis">Nur diesen Graph</string>
+    <string name="applyZoomSameVariable">Andere Graphen: Gleiche Variable</string>
+    <string name="applyZoomSameUnit">Andere Graphen: Gleiche Einheit</string>
+    <string name="applyZoomSameAxis">Andere Graphen: Gleiche Achse</string>
+
+    <string name="newExperimentSimple">Neues einfaches Experiment</string>
+    <string name="newExperimentBluetooth">Neues Experiment für Bluetooth-Gerät</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth Scan Fehler</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Vom Gerät laden</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Dieses Gerät bietet ein eigenes phyphox-Experiment. Wähle \"Von Gerät laden\" um es zu öffnen.</string>
+
+    <string name="newExperimentQR">Neues Experiment von einem QR-Code</string>
+
+    <string name="newExperimentQRscan">Scanne einen QR-Code, der ein phyphox-Experiment enthält.</string>
+    <string name="newExperimentQRErrorTitle">QR-Code Fehler.</string>
+    <string name="newExperimentQRNoExperiment">Konnte keinen QR-Code finden, der ein phyphox-Experiment enthält.</string>
+    <string name="newExperimentQRcrcMismatch">Der QR-Code, den du gerade gescannt hast, scheint nicht zu den vorherigen zu passen. Bitte stelle sicher, dass du nur Codes scanst, die zu dem gleichen Experiment gehören.</string>
+    <string name="newExperimentQRCodesMissing1">Der QR-Code, den du gerade gescannt hast, gehört zu einem Satz von</string>
+    <string name="newExperimentQRCodesMissing2">Codes. Bitte drücke auf \"weiter\" um die verbleibenden Codes zu scannen. Anzahl der noch fehlenden Codes:</string>
+    <string name="newExperimentQRBadCRC">Ungültige Prüfsumme. Dies bedeutet, dass entweder der QR-Code fehlerhaft ist oder das Scannen nicht geklappt hat.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Bluetooth Experiment Fehler.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Die übermittelten Experiment-Daten sind fehlerhaft.</string>
+
+    <string name="deviceInfo">Geräte-Info</string>
+    <string name="copyToClipboard">Kopieren</string>
+    <string name="deviceInfoCopied">Die Geräte-Info wurde in die Zwischenablage kopiert.</string>
+
+    <string name="gpl">Phyphox ist Open Source Software, welche unter der GNU General Public Licence steht. Weitere Informationen sowie den Quellcode findest du unter http://phyphox.org. Bei den Begriffen \"phyphox\" und \"RWTH Aachen\" handelt es sich hingegen um geschützte Marken.</string>
+    <string name="sensorVendor">Herstellerspezifisch</string>
+
+    <string name="vendorSensorTitle">Herstellerspezifischer Sensor</string>
+    <string name="vendorSensorWarning1">Für den Sensor</string>
+    <string name="vendorSensorWarning2">wird nicht der richtige Sensortyp angegeben. Es scheint sich um einen herstellerspezifischen Sensor zu handeln, dessen Funktion wir versuchen vom Namen herzuleiten. Dies funktioniert eventuell nicht wie erwartet.</string>
+
+    <string name="doContinue">Weiter</string>
+    <string name="rename">Umbenennen</string>
+    <string name="remoteServerNoNetwork">Du musst erst eine WLAN-Verbindung zum zweiten Gerät herstellen. Bitte aktiviere WLAN oder erstelle einen mobilen Hotspot.</string>
+    <string name="remoteColorMapWarning">Der Farb-Plot im Fernzugriff ist nur eine Näherung. Im Gegensatz zum Plot in der App kann dieser im Moment nicht-äquidistante Daten oder logarithmische Achsen nicht korrekt darstellen. Daten bei variierenden Intervallen erscheinen daher an einer falschen Position.</string>
+
+    <string name="force_gnss">Nur Satelliten-Position</string>
+
+    <string name="fontSize">Schriftgröße</string>
+
+    <string name="open_zip_title">Öffne eine Experiment-Sammlung</string>
+    <string name="open_zip_dialog_instructions">Diese Quelle enthält mehrere Experimente. Du kannst entweder eines auswählen, öffnen und wahlweise der Experiment-Sammlung hinzufügen oder du kannst den Button unten nutzen um alle Experimente gleichzeitig in die Sammlung zu übertragen.</string>
+    <string name="open_save_all">Alle speichern</string>
+
+    <string name="open_bluetooth_assets_title">Experimente für Bluetooth-Geräte</string>
+    <string name="open_bluetooth_assets">Die folgenden Experimente für dein Gerät werden von phyphox unterstützt. Du kannst sie entweder einfach öffnen und benutzen oder alle deiner Sammlung hinzufügen um sie bequem aus dem Hauptmenü aufrufen zu können.</string>
+
+    <string name="start_hint">Berühre das Dreieck um das Experiment zu starten.</string>
+
+    <string name="bluetooth">Bluetooth Low Energy</string>
+    <string name="bt_pick_device">Bitte wähle ein Gerät.</string>
+    <string name="bt_scanning_generic">Suche nach Bluetooth-Geräten…</string>
+    <string name="bt_scanning_specific1">Suche nach Bluetooth-Geräten mit</string>
+    <string name="bt_scanning_specific2">im Namen…</string>
+    <string name="bt_device_not_supported">Keine Experimente verfügbar.</string>
+
+    <string name="bt_location_explanation">Android benötigt Standort-Rechte für Bluetooth-Scans, da die Ergebnisse genutzt werden könnten um einen Standort abzuleiten. Wir werden diese Rechte nun anfragen. Du musst die Rechte bestätigen um nach Bluetooth-Geräten suchen zu können.</string>
+
+    <string name="bt_exception_config">Der Wert der Charakteristik</string>
+    <string name="bt_exception_config2">konnte nicht gesetzt werden.</string>
+    <string name="bt_more_info_link_text">Wenn dein Gerät nicht unterstützt wird, wähle \"Weitere Infos\" um mehr über die flexible Bluetooth Low Energy Unterstützung in phyphox auf unserer Webseite zu erfahren.</string>
+    <string name="bt_more_info_link_button">Mehr Infos</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble-de</string>
+
 </resources>
