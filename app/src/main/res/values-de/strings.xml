@@ -129,7 +129,7 @@
     <string name="bt_exception_device_address">Adresse</string>
     <string name="bt_exception_device_name">Name</string>
     <string name="bt_exception_rate">Ungültiger Wert für "rate".</string>
-    <string name="bt_exception_notification">Die Characteristic Notification für die Characteristic mit der UUID</string>
+    <string name="bt_exception_notification">Die Notification für die Characteristic mit der UUID</string>
     <string name="bt_exception_notification_enable">konnte nicht aktiviert werden.</string>
     <string name="bt_exception_notification_disable">konnte nicht wieder deaktiviert werden.</string>
     <string name="bt_exception_notification_fail_enable">Aktivieren der Notifications für die Characteristic mit der UUID</string>
