@@ -38,7 +38,7 @@
     <string name="remotePhyphoxOrgURL">http://phyphox.org/fernsteuerung</string>
 
     <string name="generalErrorDialog">Es ist ein Fehler aufgetreten.</string>
-    <string name="loadingBluetoothConnectionText">Mit Bluetooth Gerät verbinden...</string>
+    <string name="loadingBluetoothConnectionText">Mit Bluetooth Gerät verbinden…</string>
 
     <string name="export">Daten exportieren</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
