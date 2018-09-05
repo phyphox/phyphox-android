@@ -4,7 +4,7 @@
     <string name="switchColumns1">Vista: 1 colonna</string>
     <string name="switchColumns3">Vista: 3 colonne</string>
     <string name="switchColumns2">Vista: 2 colonne</string>
-    <string name="help">Help e info</string>
+    <string name="help">Aiuto e informazioni</string>
     <string name="newExperimentPhyphoxInfo">Vai su phyphox.org per creare esperimenti di livello avanzato, compresa l\'analisi dei dati, e per condividerli con colleghi, studenti ed amici.</string>
     <string name="loadingText">Caricamento esperimento…</string>
     <string name="remoteServer">Consenti accesso remoto</string>
@@ -30,8 +30,8 @@
     <string name="remotePhyphoxOrg">Help controllo remoto</string>
     <string name="save_locally_message">Questo esperimento è stato aperto da un sistema remoto. Vuoi aggiungerlo alla tua collezione?</string>
     <string name="show_description">Info esperimento</string>
-    <string name="creditsLibs">L’interfaccia web per l’accesso remoto usa le librerie JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) e \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), tutte disponibili sotto licenza MIT.</string>
-    <string name="newExperiment">Aggiungi esperimento semplice</string>
+    <string name="creditsLibs">L’interfaccia web per l’accesso remoto usa la libreria JavaScript \"Chart.js\" (http://chartjs.org), disponibile con licenza MIT. For la trasformata di Fourier, si usa la libreria FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponibile con licenza GNU General Public Licence (versione 2 o superiore).</string>
+    <string name="newExperiment">Aggiungi esperimento</string>
     <string name="donotshowagain">Non mostrare più</string>
     <string name="credits">Crediti</string>
     <string name="sensorPressure">Pressione</string>
@@ -73,11 +73,14 @@
     <string name="sensorMagneticField">Campo magnetico</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="confirmDelete">Vuoi eliminare questo esperimento dalla tua collezione?</string>
-    <string name="creditsNames">
-        <![CDATA[
-        Sviluppatore e progettista:<br/><b>Dr. Sebastian Staacks</b><br/>Creatore:<br/><b>Prof. Christoph Stampfer</b><br/>Disegnatore:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmatori:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
-        ]]>
-    </string>
+    <string name="creditsNames">Sviluppatore e progettista:
+\nDr. Sebastian Staacks
+\nCreatore:
+\nProf. Christoph Stampfer
+\nProgrammatori:
+\nDominik Dorse
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="remoteServerWarning">Stai per abilitare l’accesso remoto ai dati acquisiti. Fallo solo se sei su una rete affidabile! Nota: l’accesso diretto fra dispositivi diversi potrebbe non essere consentito su alcune reti aziendali e universitarie.
 \n
 \nPer massimizzare la sicurezza e la performance è meglio connettersi a questo dispositivo col tethering (hotspot mobile).
@@ -113,5 +116,38 @@
 
     <string name="creditsRWTH">phyphox è un prodotto del secondo istituto di fisica RWTH Aachen.</string>
     <string name="location">Posizione</string>
+
+    <string name="graph_tools_more">Altri strumenti</string>
+    <string name="graph_tools_linear_fit">Fit lineare</string>
+    <string name="graph_tools_log_x">Scala logaritmica asse x</string>
+    <string name="graph_tools_log_y">Scala logaritmica asse y</string>
+
+    <string name="graph_point_label">Punto</string>
+    <string name="graph_slope_label">Pendenza</string>
+    <string name="graph_difference_label">Differenza</string>
+    <string name="graph_fit_label">Fit lineare: y = a x + b</string>
+
+    <string name="applyZoomTitle">Applica zoom</string>
+    <string name="applyZoomExplanation">Nel chiudere la modalità interattiva del grafico, puoi scegliere se mantenere le impostazioni dello zoom.</string>
+    <string name="applyZoomAdvanced">Opzioni avanzate</string>
+    <string name="applyZoomReset">Torna alle impostazioni di default</string>
+    <string name="applyZoomKeep">Mantieni l\'attuale configurazione</string>
+    <string name="applyZoomThis">Solo questo grafico</string>
+    <string name="applyZoomSameVariable"></string>
+    <string name="applyZoomSameUnit"></string>
+    <string name="newExperimentSimple">Aggiungi esperimento semplice</string>
+    <string name="newExperimentBluetooth">Aggiungi esperimento per dispositivo Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Errore nella ricerca di dispositivi Bluetooth</string>
+    <string name="newExperimentQR">Aggiungi esperimento da QR code</string>
+
+    <string name="newExperimentQRscan">Scansiona il codice QR dell\'esperimento phyphox.</string>
+    <string name="newExperimentQRErrorTitle">Errore nel codice QR.</string>
+    <string name="newExperimentQRNoExperiment">Impossibile trovare il codice QR di un esperimento phyphox.</string>
+    <string name="newExperimentQRBadCRC">Controllo fallito. Il codice QR è sbagliato oppure qualcosa non ha funzionato nella sua lettura.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Errore nell\'esperimento Bluetooth.</string>
+    <string name="newExperimentBTReadErrorCorrupted">I dati trasmessi sono corrotti.</string>
+
+    <string name="generalErrorDialog">Si è verificato un errore.</string>
 
     </resources>
