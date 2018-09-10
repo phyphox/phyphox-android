@@ -130,4 +130,8 @@
     <string name="remoteServerActive">دسترسی از راه دور فعال شده است. به این آزمایش از یوآرال زیر دسترسی پیدا کنید:
 \n%1$s</string>
     <string name="categoryNewExperiment">آزمایش‌های ساده سفارشی</string>
+    <string name="graph_tools_pan_and_zoom">جابجایی و بزرگنمایی</string>
+    <string name="graph_tools_pick">گزینش داده‌ها</string>
+    <string name="graph_tools_more">ابزارهای بیشتر</string>
+    <string name="graph_tools_reset">بازنشانی برزگنمایی</string>
     </resources>
