@@ -239,7 +239,7 @@
     <string name="bt_exception_device_address">.</string>
     <string name="bt_exception_device_name">nome</string>
     <string name="bt_exception_rate">Valor inválido para a taxa.</string>
-    <string name="bt_exception_notification">A notificação de característica para a Característica com o UUID</string>
+    <string name="bt_exception_notification">A notificação para a Característica com o UUID</string>
     <string name="bt_exception_notification_enable">não pode ser habilitada.</string>
     <string name="bt_exception_notification_disable">não pode ser desabilitada novamente.</string>
     <string name="bt_exception_notification_fail_enable">Ligando as notificações para a Característica com UUID</string>
