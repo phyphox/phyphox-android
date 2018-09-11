@@ -18,7 +18,7 @@
     <string name="remotePhyphoxOrg">Дистанционная помощь</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationInfo">Языки</string>
-    <string name="translationText">Phyphox (фюфокс) использует первый язык, доступный в списке выбранных языков в ваших системных настройках. Чтобы изменить язык, перейдите в «Настройки» вашего мобильного устроиства (Android). Чтобы узнать, какие языки доступны и как вы можете помочь разработчикам, выберите «Посетить веб-сайт».</string>
+    <string name="translationText">Phyphox использует первый язык, доступный в списке выбранных языков в ваших системных настройках. Чтобы изменить язык, перейдите в «Настройки» вашего мобильного устроиства (Android). Чтобы узнать, какие языки доступны и как вы можете помочь разработчикам, выберите «Посетить веб-сайт».</string>
     <string name="translationToSettings">Настройки</string>
     <string name="translationToWebsite">Посетить веб-сайт</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#ru</string>
@@ -30,8 +30,16 @@
     <string name="info">Информация</string>
     <string name="credits">Авторы</string>
     <string name="creditsRWTH">phyphox был создан во 2-м институте физики Рейнско-Вестфальского Технического Университета Ахена.</string>
-    <string name="creditsNames">Разработка и концепт:<br/><b>Dr. Sebastian Staacks</b><br/>Концепт:<br/><b>Prof. Christoph Stampfer</b><br/>Дизайн:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
-    <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеки JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) и \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), доступные по лицензии MIT.</string>
+    <string name="creditsNames">Разработка и концепция:
+\nDr. Sebastian Staacks
+\nКонцепция:
+\nProf. Christoph Stampfer
+\nДизайн:
+\nFrank Posthoff (A.NikoPol)
+\nПрограммное обеспечение:
+\nCamilla Lummerzheim
+\nJonas Gessner<br/><b>Dr. Sebastian Staacks</b><br/>Концепт:<br/><b>Prof. Christoph Stampfer</b><br/>Дизайн:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеку JavaScript «Chart.js» (http://chartjs.org), доступную под лицензией MIT. Для преобразования Фурье мы используем библиотеку FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Массачусетский технологический институт, который доступен под общим названием GNU General Public Лицензия (версия 2 или новее).</string>
     <string name="sensorLinearAcceleration">Линейное ускорение</string>
     <string name="sensorLight">Свет</string>
     <string name="sensorGyroscope">Гироскоп</string>
@@ -102,7 +110,7 @@
     <string name="switchColumns2">Вид: 2 колонки</string>
     <string name="switchColumns3">Вид: 3 колонки</string>
 
-    <string name="show_description">Информация об эксрепименте</string>
+    <string name="show_description">Информация к эксрепименту</string>
     <string name="save_locally">Добавить эксперимент в коллекцию</string>
     <string name="save_locally_done">Эксперимент успешно добавлен в коллекцию.</string>
     <string name="save_locally_message">Этот эксперимент был загружен из удаленного источника. Вы хотите добавить его в свою коллекцию экспериментов?</string>
@@ -127,7 +135,7 @@
     <string name="categoryNewExperiment">Простые пользовательские эксперименты</string>
     <string name="categoryRawSensor">Исходные датчики</string>
 
-    <string name="experimentinfo_hint">Ознакомьтесь с информацией об экспериментах, чтобы узнать, как использовать этот эксперимент.</string>
+    <string name="experimentinfo_hint">Ознакомьтесь с информацией к экспериментам, чтобы узнать, как использовать этот эксперимент.</string>
 
 <string name="graph_tools_pan_and_zoom">панорама и масштаб</string>
     <string name="graph_tools_pick">Выбор данных</string>
@@ -159,4 +167,98 @@
     <string name="applyZoomSameAxis">Другие графики: одна и та же ось</string>
 
     <string name="newExperimentSimple">Добавить простой эксперимент</string>
-    </resources>
+    <string name="newExperimentBluetooth">Добавить эксперимент для устройства Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Ошибка сканирования Bluetooth</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Загрузка с устройства</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Это устройство предоставляет собственный эксперимент на приложении phyphox. Выберите загрузку с устройства, чтобы открыть его.</string>
+
+    <string name="newExperimentQR">Добавить эксперимент по QR-коду</string>
+
+    <string name="newExperimentQRscan">Сканирование QR-кода, который содержит эксперимент от phyphox.</string>
+    <string name="newExperimentQRErrorTitle">Ошибка QR-кода.</string>
+    <string name="newExperimentQRNoExperiment">Не удалось найти QR-код содержащий эксперимент от phyphox.</string>
+    <string name="newExperimentQRcrcMismatch">QR-код, который вы только что считали, похоже, не соответствует предыдущим кодам. Обязательно считывайте только коды принадлежащие одному эксперименту.</string>
+    <string name="newExperimentQRCodesMissing1">QR-код, который вы только что считали, является частью набора</string>
+    <string name="newExperimentQRCodesMissing2">коды. Продолжайте считывать оставшиеся коды. Коды все еще отсутствуют:</string>
+    <string name="newExperimentQRBadCRC">Неверная контрольная сумма. Это означает, что либо QR-код ошибочный, либо что-то пошло не так во время считывания.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Ошибка эксперимента Bluetooth.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Переданные данные эксперимента повреждены.</string>
+
+    <string name="generalErrorDialog">Произошла ошибка.</string>
+
+    <string name="deviceInfo">Информация об устройстве</string>
+    <string name="copyToClipboard">Скопировать в буфер обмена</string>
+    <string name="deviceInfoCopied">Информация об устройстве была скопирована в буфер обмена.</string>
+
+    <string name="gpl">Phyphox - это программное обеспечение с открытым исходным кодом, выпущенное под лицензией GNU General Public License. Посетите http://phyphox.org для получения дополнительной информации и получения доступа к исходному коду. Однако названия «phyphox» и «RWTH Aachen» являются зарегистрированными товарными знаками.</string>
+    <string name="sensorVendor">Специфический для производителя</string>
+
+    <string name="vendorSensorTitle">Специфический датчик от производителя</string>
+    <string name="vendorSensorWarning1">Датчик</string>
+    <string name="vendorSensorWarning2">не сообщает правильный тип датчика. Он, похоже, имеет специфичное обозначение прозводителя, и мы можем только догадываться о его типе по этому обознаению. В связи с этим он может работать не так, как ожидалось.</string>
+
+    <string name="tryagain">Попробовать еще раз</string>
+    <string name="doContinue">Продолжить</string>
+    <string name="rename">Переименовывать</string>
+    <string name="loadingBluetoothConnectionText">Подключение к устройству Bluetooth …</string>
+
+    <string name="remoteServerNoNetwork">Сначала вам нужно установить Wi-Fi-соединение на удаленное устройство. Пожалуйста, включите Wi-Fi или создайте мобильную точку доступа.</string>
+    <string name="remoteColorMapWarning">Цветовой график в удаленном интерфейсе является лишь приблизительным. В отличие от графика в приложении, в настоящий момент удаленный интерфейс не может обрабатывать неэквидистантные данные или логарифмическое масштабирование по оси x и y. Таким образом, данные с различными интервалами могут появляться в неправильном месте.</string>
+
+    <string name="force_gnss">Местоположение только по спутнику</string>
+
+    <string name="fontSize">Размер шрифта</string>
+
+    <string name="open_zip_title">Открыть список экспериментов</string>
+    <string name="open_zip_dialog_instructions">Этот ресурс содержит несколько экспериментов. Вы можете выбрать его, чтобы открыть его, и, при необходимости, сохранить его в своей коллекции или использовать кнопку ниже, чтобы сохранить их все в свою коллекцию.</string>
+    <string name="open_save_all">Сохранить все</string>
+
+    <string name="open_bluetooth_assets_title">Эксперименты для устройства Bluetooth</string>
+    <string name="open_bluetooth_assets">Следующие эксперименты от phyphox доступны для вашего устройства. Вы можете открыть их и использовать напрямую, либо добавить их в свою коллекцию, чтобы получить к ним доступ из главного меню.</string>
+
+    <string name="start_hint">Коснитесь треугольника, чтобы начать эксперимент.</string>
+
+    <string name="bluetooth">Bluetooth Low Energy</string>
+    <string name="bt_android_version">Bluetooth Low Energy не поддерживается в версиях Android ниже 4.3.</string>
+
+    <string name="bt_pick_device">Выберите устройство.</string>
+    <string name="bt_scanning_generic">Сканирование устройств Bluetooth …</string>
+    <string name="bt_scanning_specific1">Сканирование устройств Bluetooth по</string>
+    <string name="bt_scanning_specific2">в имени</string>
+    <string name="bt_device_not_supported">Нет доступного эксперимента.</string>
+
+    <string name="bt_location_explanation">Системе требуется разрешение на получение информации о местоположении для сканирования Bluetooth. Сейчас мы запрашиваем эти разрешения. Вы должны предоставить их, чтобы выполнить сканирование Bluetooth.</string>
+
+    <string name="bt_exception_uuid">Характеристика по UUID</string>
+    <string name="bt_exception_uuid2">не найдено.</string>
+    <string name="bt_exception_disabled">Bluetooth отключен. Включите Bluetooth и повторите попытку.</string>
+    <string name="bt_exception_connection">Не удалось открыть соединение Bluetooth.</string>
+    <string name="bt_exception_notfound">Устройство Bluetooth не найдено.</string>
+    <string name="bt_exception_services">Сервис не обнаружен.</string>
+    <string name="bt_exception_device">Ошибка для устройства с</string>
+    <string name="bt_exception_device_address">адресом</string>
+    <string name="bt_exception_device_name">именем</string>
+    <string name="bt_exception_rate">Недопустимое значение для скорости.</string>
+    <string name="bt_exception_notification">Характерное уведомление для характеристики с UUID</string>
+    <string name="bt_exception_notification_enable">не удалось включить.</string>
+    <string name="bt_exception_notification_disable">не может быть отключен снова.</string>
+    <string name="bt_exception_notification_fail_enable">Включение уведомлений для характеристики с помощью UUID</string>
+    <string name="bt_exception_notification_fail">не удалось.</string>
+    <string name="bt_exception_config">Значение характеристики</string>
+    <string name="bt_exception_config2">не удалось установить.</string>
+    <string name="bt_exception_no_connection">Устройство Bluetooth не подключено. Эксперимент не может быть запущен.</string>
+    <string name="bt_exception_disconnected">Устройство Bluetooth отключено.</string>
+    <string name="bt_default_error_message">Произошла ошибка с устройством Bluetooth.</string>
+
+    <string name="bt_error_writing">Ошибка при записи характеристик с помощью UUID</string>
+    <string name="bt_error_reading">Ошибка при чтении характеристики с помощью UUID</string>
+    <string name="bt_error_discovering">Ошибка при обнаружении услуг Bluetooth-устройства.</string>
+    <string name="bt_fail_reading">Операция чтения была безуспешной.</string>
+    <string name="bt_fail_writing">Операция записи была безуспешной.</string>
+
+    <string name="bt_more_info_link_text">Если ваше устройство не поддерживается, выберите «подробнее», чтобы узнать больше о поддержке Bluetooth Low Energy в phyphox на нашем веб-сайте.</string>
+    <string name="bt_more_info_link_button">Подробнее</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
