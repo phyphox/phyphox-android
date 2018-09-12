@@ -278,7 +278,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="bt_exception_device_address">address</string>
     <string name="bt_exception_device_name">name</string>
     <string name="bt_exception_rate">Invalid value for "rate".</string>
-    <string name="bt_exception_notification">The characteristic notification for the Characteristic with the UUID</string>
+    <string name="bt_exception_notification">The notification for the characteristic with the UUID</string>
     <string name="bt_exception_notification_enable">could not be enabled.</string>
     <string name="bt_exception_notification_disable">could not be disabled again.</string>
     <string name="bt_exception_notification_fail_enable">Turning on notifications for the Characteristic with the UUID</string>
