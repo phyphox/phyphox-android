@@ -239,7 +239,7 @@
     <string name="bt_exception_device_address">διεύθυνση</string>
     <string name="bt_exception_device_name">όνομα</string>
     <string name="bt_exception_rate">Άκυρη τιμή ρυθμού.</string>
-    <string name="bt_exception_notification">Η ειδοποίηση χαρακτηριστικού για το Χαρακτηριστικό με UUID</string>
+    <string name="bt_exception_notification">Eιδοποίηση για το Χαρακτηριστικό με UUID</string>
     <string name="bt_exception_notification_enable">δεν μπόρεσε να ενεργοποιηθεί.</string>
     <string name="bt_exception_notification_disable">δεν μπόρεσε να απενεργοποιηθεί ξανά.</string>
     <string name="bt_exception_notification_fail_enable">Ενεργοποίηση των ειδοποιήσεων για το Χαρακτηριστικό με UUID</string>
