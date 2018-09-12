@@ -6,9 +6,9 @@
     <string name="newExperiment">增加一个新的实验</string>
     <string name="newExperimentPhyphoxInfo">参考phyphox.org网站信息，创设更好的手机实验，并包括数据分析，可与同事，学生和朋友们分享。</string>
     <string name="newExperimentInputTitle">标题</string>
-    <string name="newExperimentInputBufferSize">缓冲区大小（需存储数值的数目）</string>
+    <string name="newExperimentInputBufferSize">缓存大小（存储数值的数目）</string>
     <string name="newExperimentInputRate">传感器速率（单位Hz，数值0表示最快）</string>
-    <string name="newExperimentInputSensors">可选传感器</string>
+    <string name="newExperimentInputSensors">选择传感器</string>
 
     <string name="help">帮助信息</string>
     <string name="experimentsPhyphoxOrg">实验设计与说明</string>
@@ -51,4 +51,54 @@
     <string name="close">关闭</string>
     <string name="next">下一步</string>
     <string name="cancel">取消</string>
+    <string name="location">GPS定位</string>
+
+    <string name="unknown">未知传感器</string>
+
+    <string name="delete">删除</string>
+    <string name="confirmDelete">你想从你的采集中删除这个实验吗？</string>
+    <string name="confirmDeleteTitle">确认删除？</string>
+
+    <string name="stop">停止</string>
+    <string name="start">开始</string>
+    <string name="clear_data">清除数据</string>
+    <string name="clear_data_question">清除已记录数据？</string>
+    <string name="clear">清除</string>
+    <string name="timed_stop">停止定时运行</string>
+    <string name="timed_start">开始定时运行</string>
+
+    <string name="loadingTitle">加载中</string>
+    <string name="loadingText">加载实验中…</string>
+    <string name="timedRunDialogTitle">定时运行</string>
+    <string name="timedRunStartDelay">启动延迟(秒)</string>
+    <string name="timedRunStopDelay">实验时长(秒)</string>
+    <string name="export">导出数据</string>
+    <string name="export_subject">来自Phyphox的数据</string>
+    <string name="export_pick_share">选择导出模式</string>
+
+    <string name="share">分享屏幕截图</string>
+    <string name="share_subject">来自Phyphox的屏幕截图</string>
+    <string name="share_pick_share">选择分享途径</string>
+
+    <string name="remoteServerWarning">你即将启动远程控制来获得已采集数据。你应该只在可信任的网络中这样操作。另外，在很多公司或高校的网络中，设备之间的直接存取可能无法执行。
+\n为了安全起见并实现最佳性能，你应该通过共享操作（移动热点）连接到装置。
+\n按下OK后，你可以在同个网络中的任意浏览器上存取测量值。</string>
+    <string name="remoteServerWarningTitle">安全性警告！</string>
+    <string name="hotspotSettings">热点设置</string>
+
+    <string name="switchToPhoneLayout">观看模式：窄</string>
+    <string name="switchColumns1">观看模式：1</string>
+    <string name="switchColumns2">观看模式：2栏</string>
+    <string name="switchColumns3">观看模式：3栏</string>
+    <string name="show_description">实验信息</string>
+    <string name="save_locally">添加实验到收藏中</string>
+    <string name="save_locally_done">实验已成功加入收藏</string>
+    <string name="save_locally_message">这个实验已经可从远端启动。你想把它添至你的实验收藏吗？</string>
+    <string name="save_locally_button">保存至收藏</string>
+    <string name="save_state">保存实验状态</string>
+    <string name="save_state_category">已保存的实验状态</string>
+    <string name="save_state_message">你可以保存这个实验状态（含数据）至你的收藏或通过第三方应用分享。</string>
+    <string name="save_state_title">标题</string>
+    <string name="save_state_save">至收藏</string>
+    <string name="save_state_share">分享</string>
     </resources>
