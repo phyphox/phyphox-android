@@ -35,8 +35,8 @@
             android:textSize="@dimen/experiment_title_font"
             android:singleLine="true"
             android:textColor="@color/main"
-            android:layout_toLeftOf="@+id/deleteButton"
-            android:layout_toStartOf="@+id/deleteButton" />
+            android:layout_toLeftOf="@+id/menuButton"
+            android:layout_toStartOf="@+id/menuButton" />
 
         <TextView
             android:textColor="@color/main2"
@@ -49,8 +49,8 @@
             android:layout_toRightOf="@+id/expIcon"
             android:textSize="@dimen/experiment_info_font"
             android:singleLine="true"
-            android:layout_toLeftOf="@+id/deleteButton"
-            android:layout_toStartOf="@+id/deleteButton" />
+            android:layout_toLeftOf="@+id/menuButton"
+            android:layout_toStartOf="@+id/menuButton" />
 
         <ImageButton
             android:layout_width="wrap_content"

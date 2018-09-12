@@ -133,13 +133,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                             if (style == GraphView.Style.mapXY)
                                 hasMap = true;
                         popup.getMenu().findItem(R.id.graph_tools_linear_fit).setVisible(!(allowLogX || allowLogY || hasMap));
+                        popup.getMenu().findItem(R.id.graph_tools_linear_fit).setChecked(linearRegression);
 
                         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             @Override
                             public boolean onMenuItemClick(MenuItem menuItem) {
                                 switch (menuItem.getItemId()) {
                                     case R.id.graph_tools_linear_fit:
-                                        linearRegression = true;
+                                        linearRegression = !linearRegression;
                                         graphView.resetPicks();
                                         updateInfo();
                                         break;
@@ -441,6 +442,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 return;
 
             int n;
+            int skipped = 0;
             double sumX = 0.;
             double sumX2 = 0.;
             double sumY = 0.;
@@ -455,6 +457,10 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     for (int i = 0; i < n; i++) {
                         float x = cd.fbX.data.get();
                         float y = cd.fbY.data.get();
+                        if (Float.isNaN(x) || Float.isNaN(y)) {
+                            skipped++;
+                            continue;
+                        }
                         sumX += x;
                         sumX2 += x*x;
                         sumY += y;
@@ -463,6 +469,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     }
                 }
             }
+
+            n -= skipped;
 
             double norm = n * sumX2 - sumX*sumX;
             if (norm == 0)

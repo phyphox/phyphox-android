@@ -9,6 +9,7 @@
         android:orderInCategory="2" />
     <item android:id="@+id/graph_tools_linear_fit"
         android:title="@string/graph_tools_linear_fit"
+        android:checkable="true"
         android:orderInCategory="3" />
     <item android:id="@+id/graph_tools_export"
         android:title="@string/graph_tools_export"

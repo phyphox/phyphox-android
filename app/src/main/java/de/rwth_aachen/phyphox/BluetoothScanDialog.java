@@ -212,12 +212,7 @@ public class BluetoothScanDialog {
             }
         };
 
-    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter, final Set<UUID> supportedUUIDFilter, final String idString) {
-        this.nameFilter = nameFilter;
-        this.uuidFilter = uuidFilter;
-        this.supportedNameFilter = supportedNameFilter;
-        this.supportedUUIDFilter = supportedUUIDFilter;
-
+    public boolean scanPermission() {
         if (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             //Android 6.0: No permission? Request it!
             final Activity parent = this.parentActivity;
@@ -241,8 +236,19 @@ public class BluetoothScanDialog {
                 }
             });
 
-            return null;
+            return false;
         }
+        return true;
+    }
+
+    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter, final Set<UUID> supportedUUIDFilter, final String idString) {
+        this.nameFilter = nameFilter;
+        this.uuidFilter = uuidFilter;
+        this.supportedNameFilter = supportedNameFilter;
+        this.supportedUUIDFilter = supportedUUIDFilter;
+
+        if (!scanPermission())
+            return null;
 
         bta.startLeScan(scanCallback);
 

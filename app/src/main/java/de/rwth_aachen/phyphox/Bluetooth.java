@@ -218,6 +218,8 @@ public class Bluetooth implements Serializable {
         if (btDevice == null) {
             findDevice(knownDevices);
         }
+        if (btDevice == null)
+            return;
         // check if a device was found and if it is already connected
         if (btGatt == null || !isConnected()) {
             openConnection();
@@ -269,6 +271,8 @@ public class Bluetooth implements Serializable {
             //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
+            if (!bsd.scanPermission())
+                return;
             BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null, idString);
             if (bdi != null)
                 btDevice = bdi.device;

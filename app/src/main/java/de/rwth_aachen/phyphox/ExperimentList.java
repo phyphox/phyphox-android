@@ -766,7 +766,12 @@ public class ExperimentList extends AppCompatActivity {
                                 }
                                 String name = xpp.getAttributeValue(null, "name");
                                 String uuidStr = xpp.getAttributeValue(null, "uuid");
-                                UUID uuid = (uuidStr == null ? null : UUID.fromString(uuidStr));
+                                UUID uuid = null;
+                                try {
+                                    uuid = UUID.fromString(uuidStr);
+                                } catch (Exception e) {
+
+                                }
                                 if (name != null && !name.isEmpty()) {
                                     if (bluetoothDeviceNameList != null) {
                                         if (!bluetoothDeviceNameList.containsKey(name))
