@@ -3,7 +3,7 @@
     <string name="action_settings">设置</string>
     <string name="title_activity_experiment">手机物理工坊</string>
 
-    <string name="newExperiment">增加一个新的实验</string>
+    <string name="newExperiment">增加新的实验</string>
     <string name="newExperimentPhyphoxInfo">参考phyphox.org网站信息，创设更好的手机实验，并包括数据分析，可与同事，学生和朋友们分享。</string>
     <string name="newExperimentInputTitle">标题</string>
     <string name="newExperimentInputBufferSize">缓存大小（存储数值的数目）</string>
@@ -30,7 +30,14 @@
     <string name="creditsRWTH">Phyphox是由亚琛工业大学第二物理研究所开发。</string>
     <string name="damageWarning">使用Phyphox工坊时，请注意不要损坏手机。尤其特别注意避免手机掉落在坚硬的表面上，并且不要将手机暴露在过强的磁场中。Phyphox服务的提供者对于您手机的任何损坏概不负责。</string>
 
-    <string name="creditsNames">开发和概念:<br/> 1<b> 2Sebastian Staacks博士</b> 3<br/> 4概念:<br/> 5<b> 6Christoph Stampfer教授</b> 7<br/> 8设计:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>编程:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">开发和概念:
+\nSebastian Staacks博士
+\n概念:
+\nChristoph Stampfer教授
+\n编程:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim<br/> 1<b> 2Sebastian Staacks博士</b> 3<br/> 4概念:<br/> 5<b> 6Christoph Stampfer教授</b> 7<br/> 8设计:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>编程:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="sensorLinearAcceleration">线加速度</string>
     <string name="sensorLight">光传感器</string>
     <string name="sensorGyroscope">陀螺仪</string>
@@ -101,4 +108,121 @@
     <string name="save_state_title">标题</string>
     <string name="save_state_save">至收藏</string>
     <string name="save_state_share">分享</string>
-    </resources>
+    <string name="graph_tools_pan_and_zoom">平移和缩放</string>
+    <string name="graph_tools_pick">选取数据</string>
+    <string name="graph_tools_more">更多工具</string>
+    <string name="graph_tools_reset">重置缩放</string>
+    <string name="graph_tools_follow">跟踪新数据</string>
+    <string name="graph_tools_linear_fit">线性拟合</string>
+    <string name="graph_tools_export">导出这个数据集</string>
+    <string name="graph_tools_log_x">对数X轴</string>
+    <string name="graph_tools_log_y">对数Y轴</string>
+
+    <string name="graph_point_label">点</string>
+    <string name="graph_slope_label">斜率</string>
+    <string name="graph_difference_label">差值</string>
+    <string name="graph_fit_label">线性拟合：y = a x + b</string>
+
+    <string name="applyZoomTitle">采用缩放</string>
+    <string name="applyZoomExplanation">当关闭该图形的交互模式时，你可以选择是否保持你的缩放。</string>
+    <string name="applyZoomAdvanced">高级选项</string>
+    <string name="applyZoomApply">应用至…</string>
+
+    <string name="applyZoomReset">重置为默认值</string>
+    <string name="applyZoomKeep">保持选择</string>
+    <string name="applyZoomFollow">保持并跟踪新数据</string>
+
+    <string name="applyZoomThis">仅此图</string>
+    <string name="applyZoomSameVariable">其他图：同个变量</string>
+    <string name="applyZoomSameUnit">其他图：同个单位</string>
+    <string name="applyZoomSameAxis">其他图：同个坐标轴</string>
+
+    <string name="newExperimentSimple">增加简易实验</string>
+    <string name="newExperimentBluetooth">为蓝牙设备增加实验</string>
+    <string name="newExperimentBluetoothErrorTitle">蓝牙扫描错误</string>
+    <string name="newExperimentBluetoothLoadFromDevice">从设备加载</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">此设备提供自己的Phyphox实验。选择从设备加载即可打开。</string>
+
+    <string name="newExperimentQR">从二维码增加实验</string>
+
+    <string name="newExperimentQRscan">扫描一个包含Phyphox实验的二维码。</string>
+    <string name="newExperimentQRErrorTitle">二维码错误。</string>
+    <string name="newExperimentQRNoExperiment">未发现包含Phyphox实验的二维码。</string>
+    <string name="newExperimentQRcrcMismatch">你刚扫描的二维码似乎与之前的二维码不匹配。请确保仅扫描属于同一实验的二维码。</string>
+    <string name="newExperimentQRCodesMissing1">你刚扫描的二维码是一组二维码的一部分</string>
+    <string name="newExperimentQRCodesMissing2">。请按继续来扫描剩下的二维码。还缺失的码数：</string>
+    <string name="newExperimentQRBadCRC">无效校验码。这意味二维码失效或者扫描时出现了问题。</string>
+
+    <string name="newExperimentBTReadErrorTitle">蓝牙实验错误</string>
+    <string name="newExperimentBTReadErrorCorrupted">传输的实验数据被损坏。</string>
+
+    <string name="generalErrorDialog">发生错误。</string>
+
+    <string name="deviceInfo">设备信息</string>
+    <string name="copyToClipboard">复制到剪贴板</string>
+    <string name="deviceInfoCopied">该设备信息已复制到你的剪贴板。</string>
+
+    <string name="gpl">Phyphox是在GNU通用公共许可证下发布的开源软件。请访问http://phyphox.org获取更多信息和访问源代码。但，“phyphox”和“RWTH Aachen”是已注册商标。</string>
+    <string name="sensorVendor">供应商特定</string>
+
+    <string name="vendorSensorTitle">供应商特定传感器</string>
+    <string name="save_state_subject">Phyphox的实验状态</string>
+    <string name="save_state_default_title">测量</string>
+    <string name="save_state_success">状态已存至你的收藏。</string>
+
+    <string name="timedRun">定时运行</string>
+
+    <string name="pick_exportSets">选择数据组来导出。</string>
+    <string name="pick_exportFormat">选择数据格式。</string>
+
+    <string name="noDrawableData">无可使用的数据。</string>
+
+    <string name="categoryNewExperiment">简易定制实验</string>
+    <string name="categoryRawSensor">原始传感器</string>
+
+    <string name="experimentinfo_hint">查看实验信息，了解如何使用该实验。</string>
+    <string name="start_hint">触摸三角图标来开始实验。</string>
+
+    <string name="bluetooth">低功耗蓝牙</string>
+    <string name="bt_android_version">低于安卓4.3的系统不支持低功耗蓝牙。</string>
+
+    <string name="bt_pick_device">请选择一个设备。</string>
+    <string name="bt_scanning_generic">正在扫描蓝牙设备…</string>
+    <string name="bt_scanning_specific1">正在扫描以下蓝牙装置</string>
+    <string name="bt_scanning_specific2">名为…</string>
+    <string name="bt_device_not_supported">无可用实验。</string>
+
+    <string name="bt_location_explanation">Android需要一个蓝牙扫描的定位许可来获取位置信息。现在我们将请求这些权限。你需要授权来实现蓝牙扫描。</string>
+
+    <string name="bt_exception_uuid">具有UUID的特征</string>
+    <string name="bt_exception_uuid2">未被发现。</string>
+    <string name="bt_exception_disabled">蓝牙已失效。请启动蓝牙并再试一次。</string>
+    <string name="bt_exception_connection">蓝牙连接未能启动。</string>
+    <string name="bt_exception_notfound">未发现蓝牙设备。</string>
+    <string name="bt_exception_services">服务列表未能读取。</string>
+    <string name="bt_exception_device">设备出现错误:</string>
+    <string name="bt_exception_device_address">地址</string>
+    <string name="bt_exception_device_name">名称</string>
+    <string name="bt_exception_rate">无效速率值。</string>
+    <string name="bt_exception_notification">具有UUID特征的通知</string>
+    <string name="bt_exception_notification_enable">不能被启用。</string>
+    <string name="bt_exception_notification_disable">不能被再次禁用。</string>
+    <string name="bt_exception_notification_fail_enable">打开关于UUID特征的通知</string>
+    <string name="bt_exception_notification_fail">失败。</string>
+    <string name="bt_exception_config">特征值</string>
+    <string name="bt_exception_config2">不可设置。</string>
+    <string name="bt_exception_no_connection">蓝牙设备未连接。实验不能被启动。</string>
+    <string name="bt_exception_disconnected">蓝牙设备已断开。</string>
+    <string name="bt_default_error_message">蓝牙设备出现一个错误。</string>
+
+    <string name="bt_error_writing">写入UUID特征时出错</string>
+    <string name="bt_error_reading">读取UUID特征时出错</string>
+    <string name="bt_error_discovering">发现蓝牙设备时出错。</string>
+    <string name="bt_fail_reading">读取操作不成功。</string>
+    <string name="bt_fail_writing">写入操作不成功。</string>
+
+    <string name="bt_more_info_link_text">若你的设备不被支持，选择“更多信息”，以便在我们的网站上了解更多关于灵活的低功耗蓝牙技术支持。</string>
+    <string name="bt_more_info_link_button">更多信息</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
