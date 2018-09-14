@@ -240,7 +240,7 @@
     <string name="bt_exception_device_address">адресом</string>
     <string name="bt_exception_device_name">именем</string>
     <string name="bt_exception_rate">Недопустимое значение для скорости.</string>
-    <string name="bt_exception_notification">Характерное уведомление для характеристики с UUID</string>
+    <string name="bt_exception_notification">Уведомление для характеристики с UUID</string>
     <string name="bt_exception_notification_enable">не удалось включить.</string>
     <string name="bt_exception_notification_disable">не может быть отключен снова.</string>
     <string name="bt_exception_notification_fail_enable">Включение уведомлений для характеристики с помощью UUID</string>
