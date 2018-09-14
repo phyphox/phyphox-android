@@ -137,7 +137,7 @@
 
     <string name="experimentinfo_hint">Ознакомьтесь с информацией к экспериментам, чтобы узнать, как использовать этот эксперимент.</string>
 
-<string name="graph_tools_pan_and_zoom">панорама и масштаб</string>
+<string name="graph_tools_pan_and_zoom">Панорама и масштаб</string>
     <string name="graph_tools_pick">Выбор данных</string>
     <string name="graph_tools_more">Другие инструменты</string>
     <string name="graph_tools_reset">Сбросить масштаб</string>
@@ -219,13 +219,13 @@
 
     <string name="start_hint">Коснитесь треугольника, чтобы начать эксперимент.</string>
 
-    <string name="bluetooth">Bluetooth Low Energy</string>
+    <string name="bluetooth">Энергосберегающий модус Bluetooth</string>
     <string name="bt_android_version">Bluetooth Low Energy не поддерживается в версиях Android ниже 4.3.</string>
 
     <string name="bt_pick_device">Выберите устройство.</string>
     <string name="bt_scanning_generic">Сканирование устройств Bluetooth …</string>
     <string name="bt_scanning_specific1">Сканирование устройств Bluetooth по</string>
-    <string name="bt_scanning_specific2">в имени</string>
+    <string name="bt_scanning_specific2">в имени…</string>
     <string name="bt_device_not_supported">Нет доступного эксперимента.</string>
 
     <string name="bt_location_explanation">Системе требуется разрешение на получение информации о местоположении для сканирования Bluetooth. Сейчас мы запрашиваем эти разрешения. Вы должны предоставить их, чтобы выполнить сканирование Bluetooth.</string>
