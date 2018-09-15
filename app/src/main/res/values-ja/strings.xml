@@ -87,9 +87,9 @@
 
     <string name="remoteServer">遠隔アクセスの許可</string>
     <string name="remoteServerWarning">取得データへの遠隔アクセスをしようとしています．信頼されたネットワーク環境においてのみこれを実行してください！また，多くの企業と大学のネットワーク環境下ではデバイス間の直接アクセスができない場合が多いことに注意してください．
-\n
+\n 
 \n最も安全なセキュリティーとパフォーマンスのためにデザリング回線 (モバイルホットスポット) を経由して接続してください．
-\n
+\n 
 \nokを押した後，同ネットワーク環境下でどのようなウェブブラウザからでも実験にアクセスすることができます．</string>
     <string name="remoteServerWarningTitle">セキュリティ警告!</string>
     <string name="remoteServerActive">リモートアクセスが可能です．下記のURLから本実験にアクセスしてください．</string>
@@ -147,7 +147,7 @@
     <string name="applyZoomTitle">ズームの設定</string>
     <string name="applyZoomExplanation">このインタラクティブモードでは，グラフのズーム状態維持に関する設定が行えます。</string>
     <string name="applyZoomAdvanced">詳細設定</string>
-    <string name="applyZoomApply">適用範囲</string>
+    <string name="applyZoomApply">適用範囲設定…</string>
 
     <string name="applyZoomReset">デフォルト設定</string>
     <string name="applyZoomKeep">現在の表示範囲を維持</string>
@@ -193,7 +193,7 @@
     <string name="tryagain">もう一回試みる</string>
     <string name="doContinue">続けてスキャン</string>
     <string name="rename">名前の変更</string>
-    <string name="loadingBluetoothConnectionText">Bluetoothデバイスに接続中・・・</string>
+    <string name="loadingBluetoothConnectionText">Bluetoothデバイスに接続中…</string>
 
     <string name="remoteServerNoNetwork">リモートデバイスに接続するためにWifi接続を行う必要があります。Wifiを有効にして、モバイルホットスポットを構成してください。</string>
     <string name="remoteColorMapWarning">リモートインターフェイスでのカラープロットは近似表示です。アプリ上の表示と異なり、非等間隔データや縦軸横軸における対数スケールデータをリモートインターフェイスではハンドルできないためです。このような場合、表示が正常に行えない場合があります。</string>
