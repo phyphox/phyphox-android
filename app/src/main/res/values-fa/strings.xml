@@ -11,7 +11,7 @@
     <string name="action_settings">تنظیمات</string>
     <string name="title_activity_experiment">فیفاکس</string>
 
-    <string name="newExperiment">افزودن آزمایش ساده</string>
+    <string name="newExperiment">افزودن آزمایش‌ها</string>
     <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری را از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستان خود به اشتراک بگذارید.</string>
     <string name="help">راهنما و اطلاعات</string>
     <string name="experimentsPhyphoxOrg">ایده‌ها و دستورکارهای آزمایش</string>
@@ -75,7 +75,7 @@
 
     <string name="experimentinfo_hint">اطلاعات آزمایش را بررسی کنید تا بیاموزید چگونه از این آزمایش استفاده کنید.</string>
 
-<string name="newExperimentInputRate">نرخ نمونه‌برداری سنسور (به هرتز، ۰=سریع‌ترین حالت ممکن)</string>
+<string name="newExperimentInputRate">نرخ نمونه‌برداری حسگر (به یکای هرتز، ۰ = سریع‌ترین حالت ممکن)</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
@@ -131,7 +131,49 @@
 \n%1$s</string>
     <string name="categoryNewExperiment">آزمایش‌های ساده سفارشی</string>
     <string name="graph_tools_pan_and_zoom">جابجایی و بزرگنمایی</string>
-    <string name="graph_tools_pick">گزینش داده‌ها</string>
+    <string name="graph_tools_pick">انتخاب داده‌ها</string>
     <string name="graph_tools_more">ابزارهای بیشتر</string>
-    <string name="graph_tools_reset">بازنشانی برزگنمایی</string>
-    </resources>
+    <string name="graph_tools_reset">بازنشانی بزرگنمایی</string>
+    <string name="graph_tools_follow">دنبال کردن داده‌های تازه</string>
+    <string name="graph_tools_linear_fit">رگرسیون خطی</string>
+    <string name="graph_tools_log_x">محور لگاریتمی x</string>
+    <string name="graph_tools_log_y">محور لگاریتمی y</string>
+
+    <string name="graph_point_label">نقطه</string>
+    <string name="graph_slope_label">شیب</string>
+    <string name="graph_difference_label">اختلاف</string>
+    <string name="graph_fit_label">رگرسیون خطی: y = a x + b</string>
+
+    <string name="applyZoomAdvanced">گزینه‌های پیشرفته</string>
+    <string name="applyZoomReset">بازنشانی به پیش‌فرض</string>
+    <string name="newExperimentSimple">افزودن آزمایش ساده</string>
+    <string name="newExperimentBluetooth">افزودن آزمایش برای دستگاه بلوتوث دار</string>
+    <string name="newExperimentBluetoothErrorTitle">خطای پویش بلوتوث</string>
+    <string name="newExperimentBluetoothLoadFromDevice">بارگیری از دستگاه</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">این دستگاه دارای آزمایش فیفاکس خودش است. بارگیری از دستگاه را انتخاب کنید تا باز شود.</string>
+
+    <string name="newExperimentQR">افزودن آزمایش از کد QR</string>
+
+    <string name="newExperimentQRscan">یک کد QR که دربرگیرنده‌ی یک آزمایش فیفاکس است را پویش کنید.</string>
+    <string name="newExperimentQRErrorTitle">خطای کد QR.</string>
+    <string name="newExperimentQRNoExperiment">کد QR‌ که دربرگیرنده‌ی یک آزمایش فیفاکس باشد یافت نشد.</string>
+    <string name="newExperimentQRcrcMismatch">به نظر می‌رسد QR کدی که پویش کردید با کدهای قبلی همسانی ندارد. لطفا اطمینان حاصل فرمایید که تنها کدهای متعلق به یک آزمایش را پویش کنید.</string>
+    <string name="newExperimentBTReadErrorTitle">خطای آزمایش بلوتوث.</string>
+    <string name="newExperimentBTReadErrorCorrupted">داده‌های انتقال یافته خراب است.</string>
+
+    <string name="generalErrorDialog">خطایی رخ داده است.</string>
+
+    <string name="start_hint">مثلث را لمس کنید تا آزمایش آغاز شود.</string>
+
+    <string name="bt_pick_device">لطفا یک دستگاه را انتخاب کنید.</string>
+    <string name="bt_device_not_supported">هیچ آزمایشی در دسترس نیست.</string>
+
+    <string name="bt_exception_uuid2">یافت نشد.</string>
+    <string name="bt_exception_disabled">بلوتوث غیرفعال است. لطفا بلوتوث را فعال و دوباره تلاش کنید.</string>
+    <string name="bt_exception_device_address">آدرس</string>
+    <string name="bt_exception_device_name">نام</string>
+    <string name="bt_exception_notification_fail">موفقیت‌آمیز نبود.</string>
+    <string name="bt_more_info_link_button">اطلاعات بیشتر</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
