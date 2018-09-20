@@ -3,7 +3,7 @@
     <string name="action_settings">設定</string>
     <string name="title_activity_experiment">phyphox</string>
 
-    <string name="newExperiment">シンプルな実験の追加</string>
+    <string name="newExperiment">新しい実験の追加</string>
     <string name="newExperimentPhyphoxInfo">データ分析や同僚，学生，友人との共有等の高度の実験を行うには phyphox.org のリンクを参照ください．</string>
     <string name="newExperimentInputTitle">タイトル</string>
     <string name="newExperimentInputBufferSize">バッファーサイズ(格納する値の数)</string>
@@ -22,16 +22,20 @@
 \n変更することができます．どの言語が利用可能か，またあなたがどのように役立つことができるかを知りたい方は\"ウェブサイトへ移動\"を選択してください．</string>
     <string name="translationToSettings">設定</string>
     <string name="translationToWebsite">ウェブサイトへ移行</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#ja</string>
 
     <string name="warning">注意</string>
     <string name="donotshowagain">今後表示しない</string>
     <string name="damageWarning">実験中にお持ちのスマーフォンを損傷しないように気をつけてください．固い表面のものに落とすことのないように特に細心の注意を払い，過度に強度な磁場には晒さないようにしてください．開発者はお持ちのスマートフォンの損傷への責任は負えませんのでご了承ください．</string>
 
-    <string name="info">インフォ</string>
-    <string name="credits">信頼</string>
+    <string name="info">Phyphoxについて</string>
+    <string name="credits">クレジット</string>
     <string name="creditsRWTH">phyphoxはRWTH Aachen大学の2nd Institute of Physicsにて開発されました．</string>
-    <string name="creditsNames">開発とコンセプト:<br/><b>Dr. Sebastian Staacks</b><br/> コンセプト:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>プログラミング:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">
+        <![CDATA[
+            開発とコンセプト:<br/><b>Dr. Sebastian Staacks</b><br/> コンセプト:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>プログラミング:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
+        ]]>
+    </string>
     <string name="creditsLibs">遠隔操作のためのウェブのインターフェースにはJavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) と \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo) が使われます．すべてMITライセンスのもとで使用可能です．</string>
     <string name="sensorLinearAcceleration">線形加速</string>
     <string name="sensorLight">光</string>
@@ -66,16 +70,16 @@
     <string name="clear_data">データクリア</string>
     <string name="clear_data_question">記録したデータを消去しますか？</string>
     <string name="clear">クリア</string>
-    <string name="timed_stop">タイムランを停止する</string>
-    <string name="timed_start">タイムランを開始する</string>
+    <string name="timed_stop">プログラム計測を停止する</string>
+    <string name="timed_start">プログラム計測を開始する</string>
 
     <string name="loadingTitle">ローディング</string>
     <string name="loadingText">実験をローディング中…</string>
 
-    <string name="timedRunDialogTitle">タイムラン</string>
+    <string name="timedRunDialogTitle">プログラム計測の時間設定</string>
     <string name="timedRunStartDelay">開始遅延 (s)</string>
     <string name="timedRunStopDelay">実験時間 (s)</string>
-    <string name="enableTimedRun">タイムランを実行する</string>
+    <string name="enableTimedRun">プログラム計測を実行する</string>
 
     <string name="export">データのエクスポート</string>
     <string name="export_subject">phyphoxからのデータ</string>
@@ -87,9 +91,9 @@
 
     <string name="remoteServer">遠隔アクセスの許可</string>
     <string name="remoteServerWarning">取得データへの遠隔アクセスをしようとしています．信頼されたネットワーク環境においてのみこれを実行してください！また，多くの企業と大学のネットワーク環境下ではデバイス間の直接アクセスができない場合が多いことに注意してください．
-\n
+\n 
 \n最も安全なセキュリティーとパフォーマンスのためにデザリング回線 (モバイルホットスポット) を経由して接続してください．
-\n
+\n 
 \nokを押した後，同ネットワーク環境下でどのようなウェブブラウザからでも実験にアクセスすることができます．</string>
     <string name="remoteServerWarningTitle">セキュリティ警告!</string>
     <string name="remoteServerActive">リモートアクセスが可能です．下記のURLから本実験にアクセスしてください．</string>
@@ -117,7 +121,7 @@
     <string name="save_state_default_title">実験</string>
     <string name="save_state_success">状態はあなたのコレクションに保存されました．</string>
 
-    <string name="timedRun">タイムラン</string>
+    <string name="timedRun">プログラム計測</string>
 
     <string name="pick_exportSets">エクスポートするデータの選択.</string>
     <string name="pick_exportFormat">データフォーマットを選択してください．</string>
@@ -128,5 +132,129 @@
     <string name="categoryRawSensor">時系列センサー</string>
 
     <string name="experimentinfo_hint">本実験をどのように使用するか知るために実験インフォを確認してください．</string>
+
+<string name="graph_tools_pan_and_zoom">移動と拡大</string>
+    <string name="graph_tools_pick">データ選択</string>
+    <string name="graph_tools_more">ツール</string>
+    <string name="graph_tools_reset">ズームリセット</string>
+    <string name="graph_tools_follow">グラフ表示を新しいデータに合わせる</string>
+    <string name="graph_tools_linear_fit">直線近似</string>
+    <string name="graph_tools_export">データの書き出し（エクスポート）</string>
+    <string name="graph_tools_log_x">x軸の対数表示</string>
+    <string name="graph_tools_log_y">y軸の対数表示</string>
+
+    <string name="graph_point_label">カーソル</string>
+    <string name="graph_slope_label">傾き</string>
+    <string name="graph_difference_label">差分</string>
+    <string name="graph_fit_label">直線近似式：y = ax + b</string>
+
+    <string name="applyZoomTitle">ズームの設定</string>
+    <string name="applyZoomExplanation">このインタラクティブモードでは，グラフのズーム状態維持に関する設定が行えます。</string>
+    <string name="applyZoomAdvanced">詳細設定</string>
+    <string name="applyZoomApply">適用範囲設定…</string>
+
+    <string name="applyZoomReset">デフォルト設定</string>
+    <string name="applyZoomKeep">現在の表示範囲を維持</string>
+    <string name="applyZoomFollow">新しいデータの範囲に従う</string>
+
+    <string name="applyZoomThis">このグラフのみ</string>
+    <string name="applyZoomSameVariable">同じ変数のグラフ</string>
+    <string name="applyZoomSameUnit">同じ単位のグラフ</string>
+    <string name="applyZoomSameAxis">同じ軸のグラフ</string>
+
+    <string name="newExperimentSimple">新しい実験の追加</string>
+    <string name="newExperimentBluetooth">Bluetooth接続されたデバイスから新しい実験の追加</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth デバイスが見つかりません</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Bluetoothデバイスからロードする</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">このBluetoothデバイスはphyphoxの実験設定を持っています。ロードするを選択すると読み込めます。</string>
+
+    <string name="newExperimentQR">QRコードから新しい実験を追加</string>
+
+    <string name="newExperimentQRscan">phyphox実験のQRコードをスキャン。</string>
+    <string name="newExperimentQRErrorTitle">QRコードエラー。</string>
+    <string name="newExperimentQRNoExperiment">QRコードからPhyphoxの実験が見つかりません。</string>
+    <string name="newExperimentQRcrcMismatch">スキャンしたQRコードは前回のQRコードと一致しません。このQRコードが同じ実験の物か確認してください。</string>
+    <string name="newExperimentQRCodesMissing1">スキャンされたQRコードは</string>
+    <string name="newExperimentQRCodesMissing2">つに分割されたQRコードの一部です。続けてスキャンを選択して残りのQRコードを読み取ってください。残りのQRコードの数：</string>
+    <string name="newExperimentQRBadCRC">QRコード異常。QRコードが傷ついているか、スキャン失敗です。</string>
+
+    <string name="newExperimentBTReadErrorTitle">Bluetooth実験エラー。</string>
+    <string name="newExperimentBTReadErrorCorrupted">転送された実験データが壊れています。</string>
+
+    <string name="generalErrorDialog">エラーが発生しました。</string>
+
+    <string name="deviceInfo">デバイス情報</string>
+    <string name="copyToClipboard">クリップボードにコピー</string>
+    <string name="deviceInfoCopied">デバイス情報はクリップボードにコピーされました。</string>
+
+    <string name="gpl">PhyphoxはGNU一般公衆利用許諾書に基づくオープンソースのフリーソフトウェアです。webページ　http://phyphox.org に詳細情報とソースコードがあります。ただし、\"phyphox\" と\"RWTH Aachen\"は商標登録されています。</string>
+    <string name="sensorVendor">ベンダー独自</string>
+
+    <string name="vendorSensorTitle">ベンダー独自のセンサー</string>
+    <string name="vendorSensorWarning1">センサー</string>
+    <string name="vendorSensorWarning2">の正しいセンサーの種類が特定できません。このセンサーはベンダー独自の仕様に基づいていると思われ，名前から推定した機能を仮定して接続します。従って、このセンサーは機能しない可能性があります。</string>
+
+    <string name="tryagain">もう一回試みる</string>
+    <string name="doContinue">続けてスキャン</string>
+    <string name="rename">名前の変更</string>
+    <string name="loadingBluetoothConnectionText">Bluetoothデバイスに接続中…</string>
+
+    <string name="remoteServerNoNetwork">リモートデバイスに接続するためにWifi接続を行う必要があります。Wifiを有効にして、モバイルホットスポットを構成してください。</string>
+    <string name="remoteColorMapWarning">リモートインターフェイスでのカラープロットは近似表示です。アプリ上の表示と異なり、非等間隔データや縦軸横軸における対数スケールデータをリモートインターフェイスではハンドルできないためです。このような場合、表示が正常に行えない場合があります。</string>
+
+    <string name="force_gnss">人工衛星の位置のみ利用</string>
+
+    <string name="fontSize">フォントサイズ</string>
+
+    <string name="open_zip_title">実験の同時実行</string>
+    <string name="open_zip_dialog_instructions">このリソースは複数の実験を使用します。それぞれの実験を選択して、一つづつコレクションに保存することができます。または”すべてを保存”を選択することでコレクションに一度にすべて保存できます。</string>
+    <string name="open_save_all">すべてを保存</string>
+
+    <string name="open_bluetooth_assets_title">Bluetoothデバイス用いた実験</string>
+    <string name="open_bluetooth_assets">このデバイスでは以下の実験をphyphoxで行うことができます。それぞれの実験を選択して開始するか、すべてをコレクションに追加してメニューからアクセスできるようにします。</string>
+
+    <string name="start_hint">矢印にタッチして実験を開始.</string>
+
+    <string name="bluetooth">Bluetooth低消費電力モード</string>
+    <string name="bt_android_version">Bluetooth低消費電力モードはAndroid Versions 4.3以前ではサポートされていません。</string>
+
+    <string name="bt_pick_device">デバイスを選択してください。</string>
+    <string name="bt_scanning_generic">Bluetoothデバイス検索しています…</string>
+    <string name="bt_scanning_specific1">Bluetoothデバイスの検索には</string>
+    <string name="bt_scanning_specific2">を用いています…</string>
+    <string name="bt_device_not_supported">実験データがありません。</string>
+
+    <string name="bt_location_explanation">Bluetoothデバイス検索においてデバイスの位置情報が割り出される可能性があることから、Androidは位置情報の使用許可を求めています。我々はこれら情報の利用許可を要求しません。Bluetoothデバイス検索のためには、利用者がAndroidに許可する必要があります。</string>
+
+    <string name="bt_exception_uuid">BluetoothデバイスUUID</string>
+    <string name="bt_exception_uuid2">のCharacteristicが見つかりません。</string>
+    <string name="bt_exception_disabled">Bluetoothが無効です。有効にしてから再度デバイス検索を行ってください。</string>
+    <string name="bt_exception_connection">Bluetooth接続が開けませんでした。</string>
+    <string name="bt_exception_notfound">Bluetoothデバイスが見つかりません。</string>
+    <string name="bt_exception_services">Bluetoothサービスが見つかりません。</string>
+    <string name="bt_exception_device">Bluetoothデバイス</string>
+    <string name="bt_exception_device_address">アドレス</string>
+    <string name="bt_exception_device_name">名</string>
+    <string name="bt_exception_rate">無効な値。</string>
+    <string name="bt_exception_notification">BluetoothデバイスUUID</string>
+    <string name="bt_exception_notification_enable">のCharacteristicのNotificationを有効にできませんでした。</string>
+    <string name="bt_exception_notification_disable">のCharacteristicのNotificationを無効にできませんでした。</string>
+    <string name="bt_exception_notification_fail_enable">BluetoothデバイスUUID</string>
+    <string name="bt_exception_notification_fail">のCharacteristicのNotificationの有効化に失敗しました。</string>
+    <string name="bt_exception_config">Characteristic値</string>
+    <string name="bt_exception_config2">は設定できませんでした。</string>
+    <string name="bt_exception_no_connection">Bluetoothデバイスは接続されていません。実験が開始できません。</string>
+    <string name="bt_exception_disconnected">Bluetoothデバイスの接続は切断されました。</string>
+    <string name="bt_default_error_message">Bluetoothデバイスでエラーがあります。</string>
+
+    <string name="bt_error_writing">Characteristicの書き込みエラー。UUID：</string>
+    <string name="bt_error_reading">Characteristicの読み込みエラー。UUID：</string>
+    <string name="bt_error_discovering">Bluetoothデバイスのservices検索エラー。</string>
+    <string name="bt_fail_reading">読み込み失敗。</string>
+    <string name="bt_fail_writing">書き込み失敗。</string>
+
+    <string name="bt_more_info_link_text">もしあなたのデバイスがサポートされていない場合、以下の”さらに詳しく”からBluetooth低消費電力機能のサポート状況についてphyphoxのホームページで知ることができます。</string>
+    <string name="bt_more_info_link_button">さらに詳しく</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
 </resources>
