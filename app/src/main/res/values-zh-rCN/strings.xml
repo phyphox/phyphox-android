@@ -225,4 +225,32 @@
     <string name="bt_more_info_link_button">更多信息</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-</resources>
+<string name="creditsLibs">用于远程传输的web界面使用了MIT授权有效的Javascript库\"Chart.js\" (http://chartjs.org)。对于傅里叶变换，我们使用了快速傅立叶转换库(http://fftw.org)，Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology，都是GNU通用授权（第二版或以后）有效的。</string>
+    <string name="vendorSensorWarning1">传感器</string>
+    <string name="vendorSensorWarning2">未汇报正确的传感器类型。它可能是特定于供应商的，于是我们只能从名字猜测其类型。因此，它可能不会如预期那样工作。</string>
+
+    <string name="tryagain">再试一次</string>
+    <string name="doContinue">继续</string>
+    <string name="rename">重命名</string>
+    <string name="loadingBluetoothConnectionText">连接蓝牙设备中…</string>
+
+    <string name="enableTimedRun">执行定时运行</string>
+
+    <string name="remoteServer">允许远程控制</string>
+    <string name="remoteServerNoNetwork">你首先需要建立一个wifi连接至远程设备。请启动wifi或创建一个移动热点。</string>
+    <string name="remoteServerActive">远程控制已启动。从下列网址访问该实验：</string>
+    <string name="remoteColorMapWarning">远程端口中的颜色图只是一个近似值。与app内置图不同，目前它无法处理非等距数据或x、y轴上的对数缩放。因此，不同时间间隔的数据可能会出现在错误位置上。</string>
+
+    <string name="calibrated_magnetometer">使用已校准的磁力计</string>
+    <string name="force_gnss">仅使用卫星定位</string>
+
+    <string name="fontSize">字体大小</string>
+
+    <string name="open_zip_title">打开一组实验</string>
+    <string name="open_zip_dialog_instructions">这个资源包含多个实验。你可以选择一个打开它并可选择将其存入你的收藏中，或者使用下面的按钮将它们全部保存至你的收藏中。</string>
+    <string name="open_save_all">保存所有</string>
+
+    <string name="open_bluetooth_assets_title">针对蓝牙设备的实验</string>
+    <string name="open_bluetooth_assets">针对你的设备，下列实验可从phyphox获得。你可以打开并使用它们，或者将它们全部添加到你的收藏中，以便从主菜单中轻松地访问。</string>
+
+    </resources>
