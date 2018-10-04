@@ -120,7 +120,7 @@
     <string name="categoryRawSensor">حسگرهای خام</string>
 
     <string name="creditsNames">توسعه و ایده:<br/><b>Dr. Sebastian Staacks</b><br/>ایده:<br/><b>Prof. Christoph Stampfer</b><br/>طرح:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>برنامه‌نویسی:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
-    <string name="creditsLibs">رابط وب برای دسترسی از راه دور از کتابخانه‌های جاوااسکریپت زیر که همه آنها تحت مجوز MIT هستند، استفاده می‌کند:
+    <string name="creditsLibs">رابط وب برای دسترسی از راه دور، از کتابخانه‌های جاوااسکریپت زیر که همگی تحت مجوز MIT در دسترس‌اند، استفاده می‌کند: 
 \n\"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo)</string>
     <string name="remoteServerWarning">شما در آستانه‌ فعال کردن دسترسی از راه دور به داده‌های به‌دست آمده هستید. شما تنها باید آن را در یک شبکه مورد اعتماد انجام دهید! همچنین توجه داشته باشید که دسترسی مستقیم بین دستگاه‌ها ممکن است در بسیاری از شبکه‌های شرکت یا دانشگاه امکان‌پذیر نباشد.
 \n
@@ -176,4 +176,45 @@
     <string name="bt_more_info_link_button">اطلاعات بیشتر</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-</resources>
+<string name="applyZoomThis">تنها این نمودار</string>
+    <string name="applyZoomSameVariable">نمودارهای دیگر: متغیر یکسان</string>
+    <string name="applyZoomSameUnit">نمودارهای دیگر: یکای یکسان</string>
+    <string name="applyZoomSameAxis">نمودارهای دیگر: محور یکسان</string>
+
+    <string name="deviceInfo">اطلاعات دستگاه</string>
+    <string name="vendorSensorWarning1">حسگر</string>
+    <string name="vendorSensorWarning2">نوع درست حسگر را گزارش نمی‌کند. به نظر می‌رسد که منحصر به فروشنده باشد و ما تنها می‌توانیم نوع آن را از روی نام آن حدس بزنیم. بنابراین، ممکن است طبق آنچه انتظار می‌رود کار نکند.</string>
+
+    <string name="tryagain">تلاش دوباره</string>
+    <string name="doContinue">ادامه</string>
+    <string name="rename">تغییر نام</string>
+    <string name="loadingBluetoothConnectionText">درحال اتصال به دستگاه بلوتوث‌دار…</string>
+
+    <string name="force_gnss">تنها موقعیت ماهواره‌ای</string>
+
+    <string name="open_save_all">ذخیره همه</string>
+
+    <string name="open_bluetooth_assets_title">آزمایش‌ها برای دستگاه بلوتوث‌دار</string>
+    <string name="open_bluetooth_assets">آزمایش‌های زیر برای دستگاه شما توسط فیفاکس پشتیبانی می‌شود. می‌توانید آنها را باز کرده و استفاده کنید یا همگی را به مجموعه خود افزوده تا به‌آسانی از منو اصلی به آنها دسترسی داشته باشید.</string>
+
+    <string name="bluetooth">بلوتوث کم انرژی</string>
+    <string name="bt_android_version">بلوتوث کم انرژی در نسخه‌های پایین‌تر از ۴.۳ اندروید پشتیبانی نمی‌شود.</string>
+
+    <string name="bt_scanning_specific2">در نام خود…</string>
+    <string name="bt_exception_uuid">Characteristic با UUID</string>
+    <string name="bt_exception_notfound">دستگاه بلوتوث‌دار یافت نشد.</string>
+    <string name="bt_exception_services">سرویس‌ها یافت نمی‌شوند.</string>
+    <string name="bt_exception_device">خطا برای دستگاه با</string>
+    <string name="bt_exception_rate">مقدار نامعتبر برای نرخ.</string>
+    <string name="bt_exception_no_connection">دستگاه بلوتوث‌دار متصل نیست. آزمایش نمی‌تواند آغاز شود.</string>
+    <string name="bt_exception_disconnected">اتصال دستگاه مجهز به بلوتوث قطع شده است.</string>
+    <string name="bt_default_error_message">خطایی در دستگاه بلوتوث‌دار وجود دارد.</string>
+
+    <string name="bt_error_writing">خطا در هنگام نوشتن Characteristic با UUID</string>
+    <string name="bt_error_reading">خطا در هنگام خواندن Characteristic با UUID</string>
+    <string name="bt_error_discovering">خطا در هنگام یافتن سرویس‌های دستگاه بلوتوث‌دار.</string>
+    <string name="bt_fail_reading">فرایند خواندن ناموفق بود.</string>
+    <string name="bt_fail_writing">فرایند نوشتن ناموفق بود.</string>
+
+    <string name="bt_more_info_link_text">اگر دستگاه شما پشتیبانی نشده است، «اطلاعات بیشتر» را برگزینید تا درباره پشتیبانی فیفاکس از بلوتوث کم انرژی و تنظیم‌پذیر بیشتر بیاموزید.</string>
+    </resources>
