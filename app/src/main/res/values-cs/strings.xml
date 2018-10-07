@@ -202,4 +202,29 @@
     <string name="bt_exception_connection">Nebylo možné navázat spojení přes Bluetooth.</string>
     <string name="bt_exception_notfound">Zařízení Bluetooth nebylo nalezeno.</string>
     <string name="bt_exception_services">Nebylo možné načíst \"services\" ze zařízení.</string>
-    </resources>
+    <string name="bt_android_version">Technologie Bluetooth Low Energy je podporována Androidem až od verze 4.3. dál.</string>
+
+    <string name="bt_exception_device_address">adresa</string>
+    <string name="bt_exception_device_name">jméno</string>
+    <string name="bt_exception_notification">Notifikace charakteristik UUID</string>
+    <string name="bt_exception_notification_enable">nemohli být povoleny.</string>
+    <string name="bt_exception_notification_disable">nemohli být znovu vypnuty.</string>
+    <string name="bt_exception_notification_fail_enable">Zapnutí notifikací Charakteristik UUID</string>
+    <string name="bt_exception_notification_fail">nebylo úspěšné.</string>
+    <string name="bt_exception_config">Hodnota charakteristiky</string>
+    <string name="bt_exception_config2">nemohla být nastavena.</string>
+    <string name="bt_exception_no_connection">Bluetooth zařízení není připojené. Experiment nemohl být začat.</string>
+    <string name="bt_exception_disconnected">Bluetooth zařízení bylo odpojeno.</string>
+    <string name="bt_default_error_message">Zařízení Bluetooth vykazuje poruchu.</string>
+
+    <string name="bt_error_writing">Chyba při zapisování charakteristik UUID</string>
+    <string name="bt_error_reading">Chyba při čtení charakteristik UUID</string>
+    <string name="bt_error_discovering">Chyba při prozokoumávání \"services\" zařízení Bluetooth.</string>
+    <string name="bt_fail_reading">Operace načítání nebyla úspěšná.</string>
+    <string name="bt_fail_writing">Operace zápis nebyla úspěšná.</string>
+
+    <string name="bt_more_info_link_text">Pokud vaše zařízení není podporováno, pak zvolte možnost \"více informací\" abyste se na našich stránkách dozvěděli, jak phyphox podporuje flexibilní Bluetooth Low Energy.</string>
+    <string name="bt_more_info_link_button">Více informací</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
