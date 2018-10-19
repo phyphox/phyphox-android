@@ -11,7 +11,7 @@
     <string name="action_settings">تنظیمات</string>
     <string name="title_activity_experiment">فیفاکس</string>
 
-    <string name="newExperiment">افزودن آزمایش ساده</string>
+    <string name="newExperiment">افزودن آزمایش‌ها</string>
     <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری را از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستان خود به اشتراک بگذارید.</string>
     <string name="help">راهنما و اطلاعات</string>
     <string name="experimentsPhyphoxOrg">ایده‌ها و دستورکارهای آزمایش</string>
@@ -75,7 +75,7 @@
 
     <string name="experimentinfo_hint">اطلاعات آزمایش را بررسی کنید تا بیاموزید چگونه از این آزمایش استفاده کنید.</string>
 
-<string name="newExperimentInputRate">نرخ نمونه‌برداری سنسور (به هرتز، ۰=سریع‌ترین حالت ممکن)</string>
+<string name="newExperimentInputRate">نرخ نمونه‌برداری حسگر (به یکای هرتز، ۰ = سریع‌ترین حالت ممکن)</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
@@ -120,7 +120,7 @@
     <string name="categoryRawSensor">حسگرهای خام</string>
 
     <string name="creditsNames">توسعه و ایده:<br/><b>Dr. Sebastian Staacks</b><br/>ایده:<br/><b>Prof. Christoph Stampfer</b><br/>طرح:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>برنامه‌نویسی:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
-    <string name="creditsLibs">رابط وب برای دسترسی از راه دور از کتابخانه‌های جاوااسکریپت زیر که همه آنها تحت مجوز MIT هستند، استفاده می‌کند:
+    <string name="creditsLibs">رابط وب برای دسترسی از راه دور، از کتابخانه‌های جاوااسکریپت زیر که همگی تحت مجوز MIT در دسترس‌اند، استفاده می‌کند: 
 \n\"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo)</string>
     <string name="remoteServerWarning">شما در آستانه‌ فعال کردن دسترسی از راه دور به داده‌های به‌دست آمده هستید. شما تنها باید آن را در یک شبکه مورد اعتماد انجام دهید! همچنین توجه داشته باشید که دسترسی مستقیم بین دستگاه‌ها ممکن است در بسیاری از شبکه‌های شرکت یا دانشگاه امکان‌پذیر نباشد.
 \n
@@ -130,4 +130,91 @@
     <string name="remoteServerActive">دسترسی از راه دور فعال شده است. به این آزمایش از یوآرال زیر دسترسی پیدا کنید:
 \n%1$s</string>
     <string name="categoryNewExperiment">آزمایش‌های ساده سفارشی</string>
+    <string name="graph_tools_pan_and_zoom">جابجایی و بزرگنمایی</string>
+    <string name="graph_tools_pick">انتخاب داده‌ها</string>
+    <string name="graph_tools_more">ابزارهای بیشتر</string>
+    <string name="graph_tools_reset">بازنشانی بزرگنمایی</string>
+    <string name="graph_tools_follow">دنبال کردن داده‌های تازه</string>
+    <string name="graph_tools_linear_fit">رگرسیون خطی</string>
+    <string name="graph_tools_log_x">محور لگاریتمی x</string>
+    <string name="graph_tools_log_y">محور لگاریتمی y</string>
+
+    <string name="graph_point_label">نقطه</string>
+    <string name="graph_slope_label">شیب</string>
+    <string name="graph_difference_label">اختلاف</string>
+    <string name="graph_fit_label">رگرسیون خطی: y = a x + b</string>
+
+    <string name="applyZoomAdvanced">گزینه‌های پیشرفته</string>
+    <string name="applyZoomReset">بازنشانی به پیش‌فرض</string>
+    <string name="newExperimentSimple">افزودن آزمایش ساده</string>
+    <string name="newExperimentBluetooth">افزودن آزمایش برای دستگاه بلوتوث دار</string>
+    <string name="newExperimentBluetoothErrorTitle">خطای پویش بلوتوث</string>
+    <string name="newExperimentBluetoothLoadFromDevice">بارگیری از دستگاه</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">این دستگاه دارای آزمایش فیفاکس خودش است. بارگیری از دستگاه را انتخاب کنید تا باز شود.</string>
+
+    <string name="newExperimentQR">افزودن آزمایش از کد QR</string>
+
+    <string name="newExperimentQRscan">یک کد QR که دربرگیرنده‌ی یک آزمایش فیفاکس است را پویش کنید.</string>
+    <string name="newExperimentQRErrorTitle">خطای کد QR.</string>
+    <string name="newExperimentQRNoExperiment">کد QR‌ که دربرگیرنده‌ی یک آزمایش فیفاکس باشد یافت نشد.</string>
+    <string name="newExperimentQRcrcMismatch">به نظر می‌رسد QR کدی که پویش کردید با کدهای قبلی همسانی ندارد. لطفا اطمینان حاصل فرمایید که تنها کدهای متعلق به یک آزمایش را پویش کنید.</string>
+    <string name="newExperimentBTReadErrorTitle">خطای آزمایش بلوتوث.</string>
+    <string name="newExperimentBTReadErrorCorrupted">داده‌های انتقال یافته خراب است.</string>
+
+    <string name="generalErrorDialog">خطایی رخ داده است.</string>
+
+    <string name="start_hint">مثلث را لمس کنید تا آزمایش آغاز شود.</string>
+
+    <string name="bt_pick_device">لطفا یک دستگاه را انتخاب کنید.</string>
+    <string name="bt_device_not_supported">هیچ آزمایشی در دسترس نیست.</string>
+
+    <string name="bt_exception_uuid2">یافت نشد.</string>
+    <string name="bt_exception_disabled">بلوتوث غیرفعال است. لطفا بلوتوث را فعال و دوباره تلاش کنید.</string>
+    <string name="bt_exception_device_address">آدرس</string>
+    <string name="bt_exception_device_name">نام</string>
+    <string name="bt_exception_notification_fail">موفقیت‌آمیز نبود.</string>
+    <string name="bt_more_info_link_button">اطلاعات بیشتر</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+<string name="applyZoomThis">تنها این نمودار</string>
+    <string name="applyZoomSameVariable">نمودارهای دیگر: متغیر یکسان</string>
+    <string name="applyZoomSameUnit">نمودارهای دیگر: یکای یکسان</string>
+    <string name="applyZoomSameAxis">نمودارهای دیگر: محور یکسان</string>
+
+    <string name="deviceInfo">اطلاعات دستگاه</string>
+    <string name="vendorSensorWarning1">حسگر</string>
+    <string name="vendorSensorWarning2">نوع درست حسگر را گزارش نمی‌کند. به نظر می‌رسد که منحصر به فروشنده باشد و ما تنها می‌توانیم نوع آن را از روی نام آن حدس بزنیم. بنابراین، ممکن است طبق آنچه انتظار می‌رود کار نکند.</string>
+
+    <string name="tryagain">تلاش دوباره</string>
+    <string name="doContinue">ادامه</string>
+    <string name="rename">تغییر نام</string>
+    <string name="loadingBluetoothConnectionText">درحال اتصال به دستگاه بلوتوث‌دار…</string>
+
+    <string name="force_gnss">تنها موقعیت ماهواره‌ای</string>
+
+    <string name="open_save_all">ذخیره همه</string>
+
+    <string name="open_bluetooth_assets_title">آزمایش‌ها برای دستگاه بلوتوث‌دار</string>
+    <string name="open_bluetooth_assets">آزمایش‌های زیر برای دستگاه شما توسط فیفاکس پشتیبانی می‌شود. می‌توانید آنها را باز کرده و استفاده کنید یا همگی را به مجموعه خود افزوده تا به‌آسانی از منو اصلی به آنها دسترسی داشته باشید.</string>
+
+    <string name="bluetooth">بلوتوث کم انرژی</string>
+    <string name="bt_android_version">بلوتوث کم انرژی در نسخه‌های پایین‌تر از ۴.۳ اندروید پشتیبانی نمی‌شود.</string>
+
+    <string name="bt_scanning_specific2">در نام خود…</string>
+    <string name="bt_exception_uuid">Characteristic با UUID</string>
+    <string name="bt_exception_notfound">دستگاه بلوتوث‌دار یافت نشد.</string>
+    <string name="bt_exception_services">سرویس‌ها یافت نمی‌شوند.</string>
+    <string name="bt_exception_device">خطا برای دستگاه با</string>
+    <string name="bt_exception_rate">مقدار نامعتبر برای نرخ.</string>
+    <string name="bt_exception_no_connection">دستگاه بلوتوث‌دار متصل نیست. آزمایش نمی‌تواند آغاز شود.</string>
+    <string name="bt_exception_disconnected">اتصال دستگاه مجهز به بلوتوث قطع شده است.</string>
+    <string name="bt_default_error_message">خطایی در دستگاه بلوتوث‌دار وجود دارد.</string>
+
+    <string name="bt_error_writing">خطا در هنگام نوشتن Characteristic با UUID</string>
+    <string name="bt_error_reading">خطا در هنگام خواندن Characteristic با UUID</string>
+    <string name="bt_error_discovering">خطا در هنگام یافتن سرویس‌های دستگاه بلوتوث‌دار.</string>
+    <string name="bt_fail_reading">فرایند خواندن ناموفق بود.</string>
+    <string name="bt_fail_writing">فرایند نوشتن ناموفق بود.</string>
+
+    <string name="bt_more_info_link_text">اگر دستگاه شما پشتیبانی نشده است، «اطلاعات بیشتر» را برگزینید تا درباره پشتیبانی فیفاکس از بلوتوث کم انرژی و تنظیم‌پذیر بیشتر بیاموزید.</string>
     </resources>

@@ -3,7 +3,7 @@
     <string name="action_settings">Ρυθμίσεις</string>
     <string name="title_activity_experiment">phyphox</string>
 
-    <string name="newExperiment">Προσθήκη απλού πειράματος</string>
+    <string name="newExperiment">Προσθήκη πειράματος</string>
     <string name="newExperimentPhyphoxInfo">Επισκεφθείτε την σελίδα phyphox.org για να δημιουργήσετε πιο σύνθετα πειράματα που περιλαμβάνουν ανάλυση δεδομένων και μοιραστείτε τα με συναδέλφους, μαθητές και φίλους.</string>
     <string name="newExperimentInputTitle">Τίτλος</string>
     <string name="newExperimentInputBufferSize">Μέγεθος buffer (πλήθος τιμών για αποθήκευση)</string>
@@ -30,12 +30,15 @@
     <string name="info">Πληροφορίες</string>
     <string name="credits">Μνεία</string>
     <string name="creditsRWTH">Η εφαρμογή phyphox δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.</string>
-    <string name="creditsNames">
-        <![CDATA[
-            Ανάπτυξη και Ιδέα:<br/><b>Dr. Sebastian Staacks</b><br/>Ιδέα:<br/><b>Prof. Christoph Stampfer</b><br/>Σχεδιασμός:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Προγραμματισμός:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
-        ]]>
-    </string>
-    <string name="creditsLibs">"Το  web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τις βιβλιοθήκες JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) και \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), οι οποίες είναι όλες διαθέσιμες υπό την άδεια του MIT."</string>
+    <string name="creditsNames">Ανάπτυξη και Ιδέα:
+\n Dr. Sebastian Staacks
+\n Ιδέα:
+\n Prof. Christoph Stampfer
+\n Προγραμματισμός:
+\n Dominik Dorsel
+\n Jonas Gessner
+\n Camilla Lummerzheim</string>
+    <string name="creditsLibs">"Το  web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later)."</string>
     <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
     <string name="sensorLight">Φως</string>
     <string name="sensorGyroscope">Γυροσκόπιο</string>
@@ -106,7 +109,7 @@
 
     <string name="show_description">Πληροφορίες πειράματος</string>
     <string name="save_locally">Προσθήκη πειράματος στη συλλογή</string>
-    <string name="save_locally_done">Το πειράμα προστέθηκε με επιτυχία στη συλλογή.</string>
+    <string name="save_locally_done">Το πείραμα προστέθηκε με επιτυχία στη συλλογή.</string>
     <string name="save_locally_message">Αυτό το πείραμα έχει ανοίξει από μια απομακρυσμένη πηγή. Θέλετε να το προσθέσετε στη συλλογή πειραμάτων σας;</string>
     <string name="save_locally_button">Αποθήκευση στη συλλογή</string>
     <string name="save_state">Αποθήκευση κατάστασης πειράματος</string>
@@ -133,4 +136,128 @@
 <string name="calibrated_magnetometer">Χρήση βαθμονομημένου μαγνητόμετρου</string>
 
     <string name="categoryNewExperiment">Απλά πειράματα χρήστη</string>
-    </resources>
+    <string name="graph_tools_pan_and_zoom">Μετακίνηση και μεγέθυνση</string>
+    <string name="graph_tools_pick">Επιλογή δεδομένων</string>
+    <string name="graph_tools_more">Περισσότερα εργαλεία</string>
+    <string name="graph_tools_reset">Επαναφορά μεγέθυνσης</string>
+    <string name="graph_tools_follow">Παρακολούθηση νέων δεδομένων</string>
+    <string name="graph_tools_linear_fit">Γραμμική παλινδρόμηση</string>
+    <string name="graph_tools_export">Εξαγωγή δεδομένων</string>
+    <string name="graph_tools_log_x">Λογαριθμικός x άξονας</string>
+    <string name="graph_tools_log_y">Λογαριθμικός άξονας y</string>
+
+    <string name="graph_point_label">Σημείο</string>
+    <string name="graph_slope_label">Κλίση</string>
+    <string name="graph_difference_label">Διαφορά</string>
+    <string name="graph_fit_label">Γραμμική παλινδρόμηση: y = a x + b</string>
+
+    <string name="applyZoomTitle">Εφαρμογή μεγέθυνσης</string>
+    <string name="applyZoomExplanation">Κλείνοντας τη διαδραστική λειτoυργία του γραφήματος μπορείτε να επιλέξετε αν θέλετε να διατηρήσετε το zoom.</string>
+    <string name="applyZoomAdvanced">Επιλογές για προχωρημένους</string>
+    <string name="applyZoomApply">Εφαρμογή σε…</string>
+
+    <string name="applyZoomReset">Επαναφορά</string>
+    <string name="applyZoomKeep">Διατήρηση επιλογής</string>
+    <string name="applyZoomFollow">Διατήρηση και παρακολούθηση νέων δεδομένων</string>
+
+    <string name="applyZoomThis">Μόνο αυτό το γράφημα</string>
+    <string name="applyZoomSameVariable">Άλλα γραφήματα: ίδια μεταβλητή</string>
+    <string name="applyZoomSameUnit">Άλλα γραφήματα: ίδια μονάδα</string>
+    <string name="applyZoomSameAxis">Άλλα γραφήματα: ίδιος άξονας</string>
+
+    <string name="newExperimentSimple">Προσθήκη απλού πειράματος</string>
+    <string name="newExperimentBluetooth">Προσθήκη πειράματος για συσκευή Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Σφάλμα ανίχνευσης Bluetooth</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Φόρτωση από συσκευή</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Η συσκευή παρέχει το δικό της πείραμα phyphox. Επιλέξτε φόρτωση από συσκευή για να το ανοίξετε.</string>
+
+    <string name="newExperimentQR">Προσθήκη πειράματος μέσω κωδικού QR</string>
+
+    <string name="newExperimentQRscan">Σκανάρετε τον κωδικό QR που περιέχει πείραμα phyphox.</string>
+    <string name="newExperimentQRErrorTitle">Σφάλμα στον κωδικό QR.</string>
+    <string name="newExperimentQRNoExperiment">Δεν μπορεί να βρεθεί κωδικός QR που περιέχει κάποιο πείραμα phyphox.</string>
+    <string name="newExperimentQRcrcMismatch">Ο κωδικός που μόλις σκανάρατε δεν φαίνεται να ταιριάζει με τους προηγούμενους κωδικούς. Παρακαλώ βεβαιωθειτε ότι σκανάρετε μόνο κωδικούς που ανήκουν στο ίδιο πείραμα.</string>
+    <string name="newExperimentQRCodesMissing1">Ο κωδικός QR που σκανάρατε είναι μέρος μιας ομάδας</string>
+    <string name="newExperimentQRCodesMissing2">κωδικών. Πατήστε συνέχεια για να σκανάρετε τους υπόλοιπους κωδικούς. Κωδικοί που απομένουν ακόμη:</string>
+    <string name="newExperimentQRBadCRC">Άκυρο άθροισμα ελέγχου. Αυτό σημαίνει είτε εσφαλμένος κωδικός QR είτε ότι συνέβη κάποιο σφάλμα κατά το σκανάρισμα.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Λανθασμένο πείραμα Bluetooth.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Tα πειραματικά δεδομένα που παραλήφθηκαν ήταν κατεστραμμένα.</string>
+
+    <string name="generalErrorDialog">Συνέβη κάποιο λάθος.</string>
+
+    <string name="deviceInfo">Πληροφορίες συσκευής</string>
+    <string name="copyToClipboard">Αντιγραφή στο πρόχειρο</string>
+    <string name="deviceInfoCopied">Οι πληροφορίες της συσκευής αντιστράφηκαν στο πρόχειρο.</string>
+
+    <string name="gpl">Το phyphox είναι λογισμικό ανοιχτού κώδικα που δημοσιεύτηκε κάτω από την άδεια GNU General Public Licence. Παρακαλώ επισκεφτείτε τη σελίδα http://phyphοx.org για παραπάνω πληροφορίες καθώς και για να αποκτήσετε πρόσβαση στον κώδικά του. Όμως τα ονόματα \"phyphox\" και \"RWTH Aachen\" είναι καταχωρημένα εμπορικά σήματα.</string>
+    <string name="sensorVendor">Καθοριζόμενος από τον προμηθευτή</string>
+
+    <string name="vendorSensorTitle">Αισθητήρας καθοριζόμενος από τον προμηθευτή</string>
+    <string name="vendorSensorWarning1">Ο αισθητήρας</string>
+    <string name="vendorSensorWarning2">δεν αναφέρει το σωστό τύπο. Φαίνεται ότι είναι καθορισμένος από τον προμηθευτή και μπορούμε μόνο να εικάσουμε τον τύπο του από το όνομά του. Συνεπώς, είναι πιθανό να μην λειτουργήσει κατά το αναμενόμενο.</string>
+
+    <string name="tryagain">Δοκιμάστε ξανά</string>
+    <string name="doContinue">Συνέχεια</string>
+    <string name="rename">Μετονομασία</string>
+    <string name="loadingBluetoothConnectionText">Σύνδεση με συσκευή Bluetooth…</string>
+
+    <string name="remoteServerNoNetwork">Αρχικά θα πρέπει να δημιουργήσετε μια σύνδεση Wifi με την κινητή συσκευή. Παρακαλώ ενεργοποιήστε το Wifi ή δημιουργήστε ένα hotspot.</string>
+    <string name="remoteColorMapWarning">To χρωματικό γράφημα στην απομακρυσμένη διεπαφή είναι μόνο μια προσέγγιση. Σε αντίθεση με το ενσωματωμένο στην εφαρμογή γράφημα, για την ώρα, δεν μπορεί να διαχειριστεί μη ισαπέχουσες τιμές ή λογαριθμικές κλίμακες στους άξονες x και y. Συνεπώς τα δεδομένα σε μεταβαλλόμενα διαστήματα μπορεί να εμφανίζονται σε λάθος θέση.</string>
+
+    <string name="force_gnss">Θέση μόνο από δορυφόρο</string>
+
+    <string name="fontSize">Μέγεθος γραμματοσειράς</string>
+
+    <string name="open_zip_title">Άνοιγμα ομάδας πειραμάτων</string>
+    <string name="open_zip_dialog_instructions">"Αυτή η πηγή περιέχει πολλά πειράματα. Μπορείτε  να επιλέξετε είτε να ανοίξετε ένα και αν θέλετε να το αποθηκεύσετε στη συλλογή σας είτε χρησιμοποιώντας το επόμενο κουμπί να τα αποθηκεύσετε όλα στη συλλογή σας απευθείας."</string>
+    <string name="open_save_all">Αποθήκευση όλων</string>
+
+    <string name="open_bluetooth_assets_title">Πειράματα για συσκευή Bluetooth</string>
+    <string name="open_bluetooth_assets">Τα επόμενα πειράματα για τη συσκευή σας είναι διαθέσιμα από το phyphox. Μπορείτε είτε απλά να τα ανοίξετε και να τα χρησιμοποιήσετε είτε να τα προσθέσετε όλα στη συλλογή σας ώστε να έχετε εύκολη πρόσβαση σ\' αυτά από το κυρίως μενού.</string>
+
+    <string name="start_hint">Πατήστε το τρίγωνο για να ξεκινήσετε το πείραμα.</string>
+
+    <string name="bluetooth">Bluetooth χαμηλής ενέργειας</string>
+    <string name="bt_android_version">Το Bluetooth χαμηλής ενέργειας δεν υποστηρίζεται στις εκδόσεις του Android που είναι προγενέστερες από την 4.3.</string>
+
+    <string name="bt_pick_device">Παρακαλώ επιλέξτε συσκευή.</string>
+    <string name="bt_scanning_generic">Ανίχνευση για συσκευές Bluetooth…</string>
+    <string name="bt_scanning_specific1">Ανίχνευση για συσκευές Βluetooth με</string>
+    <string name="bt_scanning_specific2">στο όνομά τους…</string>
+    <string name="bt_device_not_supported">Κανένα διαθέσιμο πείραμα.</string>
+
+    <string name="bt_location_explanation">Το Android απαιτεί άδεια της τοποθεσίας για την ανίχνευση Bluetooth καθώς το αποτέλεσμα μπορεί να χρησιμοποιηθεί για να εξαχθούν πληροφορίες για την τοποθεσία. Ζητούμε τώρα αυτές τις άδειες. Πρέπει να τις εκχωρήσετε ώστε να εκτελέσετε μια ανίχνευση Bluetooth.</string>
+
+    <string name="bt_exception_uuid">Χαρακτηριστικό με UUID</string>
+    <string name="bt_exception_uuid2">δεν βρέθηκε.</string>
+    <string name="bt_exception_disabled">Το Bluetooth είναι απενεργοποιημένο. Παρακαλώ ενεργοποιήστε το Bluetooth και δοκιμάστε ξανά.</string>
+    <string name="bt_exception_connection">Η σύνδεση bluettooth δεν μπορεί να ανοίξει.</string>
+    <string name="bt_exception_notfound">Δεν βρέθηκε συσκευή Bluetooth.</string>
+    <string name="bt_exception_services">Δεν βρέθηκαν υπηρεσίες.</string>
+    <string name="bt_exception_device">Σφάλμα για τη συσκευή με</string>
+    <string name="bt_exception_device_address">διεύθυνση</string>
+    <string name="bt_exception_device_name">όνομα</string>
+    <string name="bt_exception_rate">Άκυρη τιμή ρυθμού.</string>
+    <string name="bt_exception_notification">Eιδοποίηση για το Χαρακτηριστικό με UUID</string>
+    <string name="bt_exception_notification_enable">δεν μπόρεσε να ενεργοποιηθεί.</string>
+    <string name="bt_exception_notification_disable">δεν μπόρεσε να απενεργοποιηθεί ξανά.</string>
+    <string name="bt_exception_notification_fail_enable">Ενεργοποίηση των ειδοποιήσεων για το Χαρακτηριστικό με UUID</string>
+    <string name="bt_exception_notification_fail">δεν ήταν επιτυχής.</string>
+    <string name="bt_exception_config">Η τιμή για το χαρακτηριστικό</string>
+    <string name="bt_exception_config2">δεν μπόρεσε να ρυθμιστεί.</string>
+    <string name="bt_exception_no_connection">Η συσκευή Bluetooth δεν συνδέθηκε. Το πείραμα δεν μπορεί να ξεκινήσει.</string>
+    <string name="bt_exception_disconnected">Η συσκευή Bluetooth έχει αποσυνδεθεί.</string>
+    <string name="bt_default_error_message">Υπάρχει σφάλμα με τη συσκευή Bluetooth.</string>
+
+    <string name="bt_error_writing">Σφάλμα κατά την εγγραφή χαρακτηριστικού με UUID</string>
+    <string name="bt_error_reading">Σφάλμα κατά την ανάγνωση χαρακτηριστικού με UUID</string>
+    <string name="bt_error_discovering">Σφάλμα κατά την αναγνώριση των υπηρεσιών της συσκευής bluetooth.</string>
+    <string name="bt_fail_reading">Η διαδικασία ανάγνωσης δεν ήταν επιτυχής.</string>
+    <string name="bt_fail_writing">Η διαδικασία εγγραφής δεν ήταν επιτυχής.</string>
+
+    <string name="bt_more_info_link_text">Αν η συσκευή σας δεν υποστηρίζεται, επιλέξτε \"περισσότερες πληροφορίες\" για να μάθετε περισσότερα σχετικά με την ευέλικτη υποστήριξη του phyphox στο Bluetooth Low Energy.</string>
+    <string name="bt_more_info_link_button">Περισσότερες πληροφορίες</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>

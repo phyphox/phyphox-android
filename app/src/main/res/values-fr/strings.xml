@@ -100,4 +100,18 @@
     <string name="show_description">Information sur l\'expérience</string>
     <string name="save_locally">Ajouter l\'expérience à la collection</string>
     <string name="save_locally_done">Ajout réussi de l\'expérience à la collection.</string>
+    <string name="graph_tools_pan_and_zoom">Déplacement et zoom</string>
+    <string name="graph_tools_pick">Détail d\'une mesure</string>
+    <string name="graph_tools_more">Autres outils</string>
+    <string name="graph_tools_reset">Annulation du zoom</string>
+    <string name="graph_tools_linear_fit">Fit linéaire</string>
+    <string name="graph_tools_export">Exporter ces données</string>
+    <string name="graph_tools_log_x">Échelle logarithmique pour l\'axe x</string>
+    <string name="graph_tools_log_y">Échelle logarithmique pour l\'axe y</string>
+
+    <string name="graph_point_label">Point</string>
+    <string name="graph_slope_label">Pente</string>
+    <string name="graph_difference_label">Différence</string>
+    <string name="graph_fit_label">Fit linéaire : y = a x + b</string>
+
     </resources>
