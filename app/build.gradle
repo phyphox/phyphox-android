@@ -7,9 +7,9 @@ android {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 27
-        versionCode 41
-        versionName "1.0.14"
-        resConfigs "cs", "de", "el", "en", "it", "ja", "nl", "pl", "pt", "ru", "zh-rTW"
+        versionCode 42
+        versionName "1.0.14-beta2"
+        resConfigs "cs", "de", "el", "en", "it", "ja", "nl", "pl", "pt", "ru", "tr", "zh-rTW"
     }
     buildTypes {
         release {
