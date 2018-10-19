@@ -9,7 +9,7 @@ android {
         targetSdkVersion 28
         versionCode 43
         versionName "1.1.0-beta2"
-        resConfigs "cs", "de", "el", "en", "it", "ja", "nl", "pl", "pt", "ru", "tr", "zh_Hant"
+        resConfigs "cs", "de", "el", "en", "it", "ja", "nl", "pl", "pt", "ru", "tr", "zh-rTW"
     }
     buildTypes {
         release {
