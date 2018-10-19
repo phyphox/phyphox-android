@@ -45,6 +45,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/rdft/scalar/r2r" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/reodft" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/simd-support" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/libbench2" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/cpp/fftw3/tests" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/build/generated/source/apt/debug" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/build/generated/source/r/debug" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/build/generated/source/aidl/debug" isTestSource="false" generated="true" />

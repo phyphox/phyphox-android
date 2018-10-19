@@ -2011,6 +2011,8 @@ public abstract class phyphoxFile {
                 } break;
                 case "map": { //rearrange data from unsorted x, y, and z values suitable for map graphs
                     String zModeStr = getStringAttribute("zMode"); //Positive or negative flank
+                    if (zModeStr == null)
+                        zModeStr = "average";
 
                     Analysis.mapAM.ZMode zMode = Analysis.mapAM.ZMode.average;
 
