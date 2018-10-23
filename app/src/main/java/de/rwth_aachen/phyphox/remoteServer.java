@@ -867,7 +867,7 @@ public class remoteServer extends Thread {
 
                 //Set the content type and set "Content-Disposition" to force the browser to handle this as a download with a default file name
                 response.setHeader("Content-Type", type);
-                response.setHeader("Content-Disposition", "attachment; filename="+experiment.exporter.exportFormats[formatInt].getFilename(false));
+                response.setHeader("Content-Disposition", "attachment; filename=\""+experiment.exporter.exportFormats[formatInt].getFilename(false) + "\"");
             }
 
             //Send error or file
