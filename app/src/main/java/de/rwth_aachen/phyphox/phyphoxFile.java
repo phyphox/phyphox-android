@@ -178,17 +178,16 @@ public abstract class phyphoxFile {
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
                 try {
-                    URL url = new URL("https", uri.getHost(), uri.getPath() + "?" + uri.getQuery());
+                    URL url = new URL("https", uri.getHost(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                     phyphoxStream.inputStream = url.openStream();
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
-                        URL url = new URL("http", uri.getHost(), uri.getPath() + "?" + uri.getQuery());
+                        URL url = new URL("http", uri.getHost(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                         phyphoxStream.inputStream = url.openStream();
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e2) {
-
                         phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
                     }
                 }
