@@ -78,6 +78,7 @@
         android:background="@color/background"/>
 
     <android.support.design.widget.FloatingActionButton
+        app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperimentQR"
@@ -88,8 +89,8 @@
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
+        android:layout_marginRight="9dp"
+        android:layout_marginBottom="-18dp"
         android:layout_above="@id/newExperimentBluetooth"
         android:layout_alignRight="@id/newExperiment"
         android:elevation="12dp"
@@ -101,12 +102,12 @@
         android:layout_toLeftOf="@id/newExperimentQR"
         android:layout_alignTop="@id/newExperimentQR"
         android:layout_width="wrap_content"
-        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
         android:gravity="center"
         android:visibility="invisible"
-        android:layout_height="40dp" />
+        android:layout_height="72dp" />
 
     <android.support.design.widget.FloatingActionButton
+        app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperimentBluetooth"
@@ -117,8 +118,8 @@
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
+        android:layout_marginRight="9dp"
+        android:layout_marginBottom="-18dp"
         android:layout_above="@id/newExperimentSimple"
         android:layout_alignRight="@id/newExperiment"
         android:elevation="12dp"
@@ -130,12 +131,12 @@
         android:layout_toLeftOf="@id/newExperimentBluetooth"
         android:layout_alignTop="@id/newExperimentBluetooth"
         android:layout_width="wrap_content"
-        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
         android:gravity="center"
         android:visibility="invisible"
-        android:layout_height="40dp" />
+        android:layout_height="72dp" />
 
     <android.support.design.widget.FloatingActionButton
+        app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperimentSimple"
@@ -146,8 +147,8 @@
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
+        android:layout_marginRight="9dp"
+        android:layout_marginBottom="-18dp"
         android:layout_above="@id/newExperiment"
         android:layout_alignRight="@id/newExperiment"
         android:elevation="12dp"
@@ -159,12 +160,12 @@
         android:layout_toLeftOf="@id/newExperimentSimple"
         android:layout_alignTop="@id/newExperimentSimple"
         android:layout_width="wrap_content"
-        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
         android:gravity="center"
         android:visibility="invisible"
-        android:layout_height="40dp" />
+        android:layout_height="72dp" />
 
     <android.support.design.widget.FloatingActionButton
+        app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperiment"
@@ -172,8 +173,6 @@
         android:id="@+id/newExperiment"
         app:srcCompat="@drawable/new_experiment"
         app:fabSize="normal"
-        android:layout_marginRight="@dimen/activity_horizontal_button_margin"
-        android:layout_marginBottom="@dimen/activity_horizontal_button_margin"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:elevation="12dp"
