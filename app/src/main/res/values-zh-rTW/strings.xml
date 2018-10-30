@@ -86,7 +86,8 @@
 
     <string name="remoteServer">允許遠端存取</string>
     <string name="remoteServerWarningTitle">安全性警告 !</string>
-    <string name="remoteServerActive">遠端存取已啟用。從下列網址存取實驗</string>
+    <string name="remoteServerActive">遠端存取已啟用。從下列網址存取實驗
+\n%1$s</string>
     <string name="hotspotSettings">熱點設定</string>
 
     <string name="calibrated_magnetometer">使用已校準的磁力計</string>
