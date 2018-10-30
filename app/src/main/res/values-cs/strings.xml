@@ -227,4 +227,13 @@
     <string name="bt_more_info_link_button">Více informací</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-</resources>
+<string name="graph_tools_follow">Sledovat nová data</string>
+    <string name="applyZoomKeep">Ponechat nastavení</string>
+    <string name="applyZoomFollow">Ponechat nastavení a sledovat nová data</string>
+
+    <string name="newExperimentBluetoothErrorTitle">Chyba Bluetooth skenu</string>
+    <string name="open_bluetooth_assets_title">Experimenty pro vybrané Bluetooth zařízení</string>
+    <string name="bluetooth">Bluetooth Low Energy</string>
+    <string name="bt_exception_device">Chyba zařízení se</string>
+    <string name="bt_exception_rate">Neplatná hodnota \"rate\".</string>
+    </resources>
