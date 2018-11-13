@@ -7,12 +7,15 @@ android {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 27
-        versionCode 40
-        versionName "1.0.13"
-        resConfigs "cs", "de", "el", "en", "it", "nl", "pl", "ru"
+        versionCode 44
+        versionName "1.0.14"
+        resConfigs "cs", "de", "el", "en", "it", "nl", "pl", "pt", "ru"
     }
     buildTypes {
         release {
+            lintOptions {
+                disable 'MissingTranslation', 'ExtraTranslation'
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

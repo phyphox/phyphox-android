@@ -3,7 +3,7 @@
     <string name="action_settings">Ayarlar</string>
     <string name="title_activity_experiment">phyphox</string>
 
-    <string name="newExperiment">Basit deney ekle</string>
+    <string name="newExperiment">Deney ekle</string>
     <string name="newExperimentInputTitle">Başlık</string>
     <string name="newExperimentInputSensors">Aktif sensörler</string>
 
@@ -129,4 +129,128 @@
 \n
 \nTamam düğmesine bastıktan sonra, aynı ağdaki herhangi bir web tarayıcısından ölçümlerinize erişebilirsiniz.</string>
     <string name="pick_exportSets">Dışa aktarmak istediğiniz veri gruplarını seçin.</string>
-    </resources>
+    <string name="graph_tools_pan_and_zoom">Kaydır ve yakınlaştır</string>
+    <string name="graph_tools_pick">Veri seç</string>
+    <string name="graph_tools_more">Daha fazla araç</string>
+    <string name="graph_tools_reset">Yakınlaştırmayı sıfırla</string>
+    <string name="graph_tools_follow">Yeni veri takip et</string>
+    <string name="graph_tools_linear_fit">Doğrusal uyum</string>
+    <string name="graph_tools_export">Verileri dışa aktar</string>
+    <string name="graph_tools_log_x">Logaritmik x ekseni</string>
+    <string name="graph_tools_log_y">Logaritmik y ekseni</string>
+
+    <string name="graph_point_label">Nokta</string>
+    <string name="graph_slope_label">Eğim</string>
+    <string name="graph_difference_label">Fark</string>
+    <string name="graph_fit_label">Lineer uyum: y = a x + b</string>
+
+    <string name="applyZoomTitle">Yakınlaştırma uygula</string>
+    <string name="applyZoomExplanation">Bu grafiğin etkileşimli modunu kapatırken, yakınlaştırmanızı korumak isteyip istemediğinizi seçebilirsiniz.</string>
+    <string name="applyZoomAdvanced">Gelişmiş seçenekler</string>
+    <string name="applyZoomApply">Şuna uygula…</string>
+
+    <string name="applyZoomReset">Varsayılana sıfırla</string>
+    <string name="applyZoomKeep">Seçileni koru</string>
+    <string name="applyZoomFollow">Koru ve yeni verileri takip et</string>
+
+    <string name="applyZoomThis">Sadece bu grafik</string>
+    <string name="applyZoomSameVariable">Diğer grafikler: Aynı değişken</string>
+    <string name="applyZoomSameUnit">Diğer grafikler: Aynı birim</string>
+    <string name="applyZoomSameAxis">Diğer grafikler: Aynı eksen</string>
+
+    <string name="newExperimentSimple">Basit deney ekle</string>
+    <string name="newExperimentBluetooth">Bluetooth cihazı için deney ekle</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth tarama hatası</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Cihazdan yükle</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Bu cihaz kendi phyphox deneyini sunuyor. Açmak için cihazdan yüklemeyi seçin.</string>
+
+    <string name="newExperimentQR">QR kodundan deney ekle</string>
+
+    <string name="newExperimentQRscan">Phyphox deneyi içeren bir QR kodu taratın.</string>
+    <string name="newExperimentQRErrorTitle">QR kodu hatası.</string>
+    <string name="newExperimentQRNoExperiment">Phyphox deneyi içeren bir QR kodu bulunamadı.</string>
+    <string name="newExperimentQRcrcMismatch">Az önce taranan QR kodu önceki kodlarla eşleşmiyor gibi görünüyor. Lütfen sadece aynı deneye ait kodları taradığınızdan emin olun.</string>
+    <string name="newExperimentQRCodesMissing1">Az önce taranan QR kodu bir dizi</string>
+    <string name="newExperimentQRCodesMissing2">kodlar. Kalan kodları taramak için lütfen devama basın. Kodlar hala eksik:</string>
+    <string name="newExperimentQRBadCRC">Geçersiz sağlama. Bu, QR kodunun kötü olduğu veya tararken bir şeylerin ters gittiği anlamına gelir.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Bluetooth deney hatası.</string>
+    <string name="newExperimentBTReadErrorCorrupted">İletilen deney verileri bozuk.</string>
+
+    <string name="generalErrorDialog">Bir hata meydana geldi.</string>
+
+    <string name="deviceInfo">Cihaz bilgisi</string>
+    <string name="copyToClipboard">Panoya kopyala</string>
+    <string name="deviceInfoCopied">Cihaz bilgisi panoya kopyalandı.</string>
+
+    <string name="gpl">Phyphox, GNU Genel Kamu Lisansı kapsamında yayınlanan açık kaynaklı bir yazılımdır. Daha fazla bilgi ve kaynak koduna erişmek için lütfen http://phyphox.org adresini ziyaret edin. Ayrıca, \"phyphox\" ve \"RWTH Aachen\" adları tescilli ticari markalardır.</string>
+    <string name="sensorVendor">Satıcıya özel</string>
+
+    <string name="vendorSensorTitle">Satıcıya özgü sensör</string>
+    <string name="vendorSensorWarning1">Sensör</string>
+    <string name="vendorSensorWarning2">doğru sensör tipini rapor etmez. Satıcıya özgü gibi görünüyor ve türünü yalnızca adından tahmin edebiliyoruz. Bu nedenle beklendiği gibi çalışmayabilir.</string>
+
+    <string name="tryagain">Yeniden dene</string>
+    <string name="doContinue">Devam</string>
+    <string name="rename">Yeniden adlandır</string>
+    <string name="loadingBluetoothConnectionText">Bluetooth cihazına bağlanıyor…</string>
+
+    <string name="remoteServerNoNetwork">Önce uzak cihaza bir Wifi bağlantısı kurmanız gerekiyor. Lütfen Wifi\'yi etkinleştirin veya bir mobil hotspot oluşturun.</string>
+    <string name="remoteColorMapWarning">Uzak arayüzdeki renk grafiği sadece bir yaklaşımdır. Uygulama içi çizimin aksine, şu anda eşit olmayan veri veya x ve y ekseninde logaritmik ölçekleme işleyemez. Bu nedenle, farklı aralıklarda veriler yanlış yerde görünebilir.</string>
+
+    <string name="force_gnss">Sadece uydu konumu</string>
+
+    <string name="fontSize">Yazı boyutu</string>
+
+    <string name="open_zip_title">Bir dizi deney açın</string>
+    <string name="open_zip_dialog_instructions">Bu kaynak birden fazla deney içerir. Açmak için bir tane seçebilir, isterseniz koleksiyonunuza kaydedebilir ya da hepsini bir kerede koleksiyonunuza kaydetmek için aşağıdaki düğmeyi kullanabilirsiniz.</string>
+    <string name="open_save_all">Hepsini kaydet</string>
+
+    <string name="open_bluetooth_assets_title">Bluetooth cihazı için deneyler</string>
+    <string name="open_bluetooth_assets">Cihazınız için aşağıdaki deneyler phyphox\'tan edinilebilir. Ana menüye kolayca erişebilmek için bunları açıp kullanabilir veya hepsini koleksiyonunuza ekleyebilirsiniz.</string>
+
+    <string name="start_hint">Deneyi başlatmak için üçgene dokunun.</string>
+
+    <string name="bluetooth">Bluetooth Düşük Enerji</string>
+    <string name="bt_android_version">Bluetooth Düşük Enerji, Android 4.3\'ten düşük sürümlerde desteklenmez.</string>
+
+    <string name="bt_pick_device">Lütfen bir cihaz seçin.</string>
+    <string name="bt_scanning_generic">Bluetooth cihazları taranıyor…</string>
+    <string name="bt_scanning_specific1">Bluetooth cihazları ile tarama</string>
+    <string name="bt_scanning_specific2">onların adına…</string>
+    <string name="bt_device_not_supported">Mevcut deney yok.</string>
+
+    <string name="bt_location_explanation">Android, konum bilgisini türetmek için kullanılabilecek şekilde Bluetooth taramaları için konum izni gerektiriyor. Şimdi bu izinleri talep edeceğiz. Bluetooth taraması yapmak için bu izinleri vermeniz gerekir.</string>
+
+    <string name="bt_exception_uuid">UUID ile karakteristik</string>
+    <string name="bt_exception_uuid2">bulunamadı.</string>
+    <string name="bt_exception_disabled">Bluetooth devre dışı. Lütfen bluetooth özelliğini etkinleştirin ve tekrar deneyin.</string>
+    <string name="bt_exception_connection">Bluetooth bağlantısı açılamadı.</string>
+    <string name="bt_exception_notfound">Bluetooth cihazı bulunamadı.</string>
+    <string name="bt_exception_services">Hizmetler bulunamadı.</string>
+    <string name="bt_exception_device">Cihaz için hata</string>
+    <string name="bt_exception_device_address">adres</string>
+    <string name="bt_exception_device_name">isim</string>
+    <string name="bt_exception_rate">Oran için geçersiz değer.</string>
+    <string name="bt_exception_notification">UUID ile karakteristik için bildirim</string>
+    <string name="bt_exception_notification_enable">etkinleştirilemedi.</string>
+    <string name="bt_exception_notification_disable">tekrar devre dışı bırakılamadı.</string>
+    <string name="bt_exception_notification_fail_enable">UUID ile Karakteristik için bildirimleri açma</string>
+    <string name="bt_exception_notification_fail">başarılı değildi.</string>
+    <string name="bt_exception_config">Karakteristik değeri</string>
+    <string name="bt_exception_config2">ayarlanamadı.</string>
+    <string name="bt_exception_no_connection">Bluetooth cihazı bağlı değil. Deneme başlatılamıyor.</string>
+    <string name="bt_exception_disconnected">Bluetooth cihazı bağlantısı kesildi.</string>
+    <string name="bt_default_error_message">Bluetooth cihazında bir hata var.</string>
+
+    <string name="bt_error_writing">UUID ile karakteristik yazılırken hata oluştu</string>
+    <string name="bt_error_reading">UUID ile karakteristik okunurken hata oluştu</string>
+    <string name="bt_error_discovering">Bluetooth servisleri keşfedilirken hata.</string>
+    <string name="bt_fail_reading">Okuma işlemi başarılı değildi.</string>
+    <string name="bt_fail_writing">Yazma işlemi başarılı değildi.</string>
+
+    <string name="bt_more_info_link_text">Cihazınız desteklenmiyorsa, web sitemizde phyphox\'taki esnek Bluetooth Düşük Enerji desteği hakkında daha fazla bilgi edinmek için \"daha fazla bilgi\" seçeneğini seçin.</string>
+    <string name="bt_more_info_link_button">Daha fazla bilgi</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
