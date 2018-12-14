@@ -118,12 +118,16 @@
     <string name="translationToWebsiteURL">http://phyphox.org/languages#pl</string>
 
     <string name="info">Info</string>
-    <string name="creditsNames">
-        <![CDATA[
-        Koncepcja i rozwój: <br/><b>Dr. Sebastian Staacks</b><br/>Koncepcja: <br/><b>Prof. Christoph Stampfer</b><br/>Projekt graficzny: <br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programowanie: <br/><b>Camilla Lummerzheim </b><br/><b>Jonas Gessner</b>
-        ]]>
-    </string>
-    <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA i Ole Laursen) oraz \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), dostępnych w licencji MIT.</string>
+    <string name="creditsNames">Koncepcja i rozwój:
+\n Dr. Sebastian Staacks
+\nKoncepcja:
+\n Prof. Christoph Stampfer
+\nProgramowanie:
+\n Dominik Dorsel
+\n Jonas Gessner
+\n Camilla Lummerzheim</string>
+    <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"Chart.js\" (http://chartjs.org), dostępnych w licencji MIT.
+\nSzybka tranformata Fouriera realizowana jest w oparciu o FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, która dostępna jest w licencji GNU General Public Licence (version 2 or later).</string>
     <string name="sensorTemperature">Temperatury</string>
     <string name="sensorHumidity">Wilgotności</string>
     <string name="enableTimedRun">Określ czas trwania sesji pomiarowej</string>
@@ -133,4 +137,128 @@
 \n%1$s</string>
     <string name="calibrated_magnetometer">Użyj kalibrowanego magnetometru</string>
 
-    </resources>
+    <string name="graph_tools_pan_and_zoom">Przesuwanie i powiększanie</string>
+    <string name="graph_tools_pick">Wybór danych</string>
+    <string name="graph_tools_more">Więcej narzędzi</string>
+    <string name="graph_tools_reset">Zresetuj powiększenie</string>
+    <string name="graph_tools_follow">Śledź nowe dane</string>
+    <string name="graph_tools_linear_fit">Dopasowanie prostej</string>
+    <string name="graph_tools_export">Eksportuj te dane</string>
+    <string name="graph_tools_log_x">Logarytmiczna skala x</string>
+    <string name="graph_tools_log_y">Logarytmiczna skala y</string>
+
+    <string name="graph_point_label">Punkt</string>
+    <string name="graph_slope_label">Nachylenie</string>
+    <string name="graph_difference_label">Różnica</string>
+    <string name="graph_fit_label">Dopasowanie prostej: y = a x + b</string>
+
+    <string name="applyZoomTitle">Powiększ</string>
+    <string name="applyZoomExplanation">Gdy zamykasz tryb interaktywny dla tego wykresu, wówczas możesz wybrać, czy chcesz zachować powiększenie.</string>
+    <string name="applyZoomAdvanced">Opcje zaawansowane</string>
+    <string name="applyZoomApply">Zastosuj do…</string>
+
+    <string name="applyZoomReset">Przywróć standardowe</string>
+    <string name="applyZoomKeep">Utrzymaj wybrane</string>
+    <string name="applyZoomFollow">Utrzymaj i śledź nowe dane</string>
+
+    <string name="applyZoomThis">Tylko ten wykres</string>
+    <string name="applyZoomSameVariable">Inne wykresy: Te same zmienne</string>
+    <string name="applyZoomSameUnit">Inne wykresy: Te same jednostki</string>
+    <string name="applyZoomSameAxis">Inne wykresy: Te same osie</string>
+
+    <string name="newExperimentSimple">Dodaj prosty eksperyment</string>
+    <string name="newExperimentBluetooth">Dodaj eksperyment dla urządzenia Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Błąd skanowania Bluetooth</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Załaduj z urządzenia</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">To urządzenie zawiera dedykowany eksperyment phyphox. Wybierz załaduj z urządzenia, aby je otworzyć.</string>
+
+    <string name="newExperimentQR">Dodaj eksperyment z kodu QR</string>
+
+    <string name="newExperimentQRscan">Skanuj kod QR zawierający eksperyment.</string>
+    <string name="newExperimentQRErrorTitle">Błąd kodu QR.</string>
+    <string name="newExperimentQRNoExperiment">Nie można odnaleźć kodu QR, który zawiera eksperyment phyphox.</string>
+    <string name="newExperimentQRcrcMismatch">Zeskanowany kod QR wydaje się nie pasować do poprzednich kodów. Upewnij się, że skanujesz tylko kody należące do tego samego eksperymentu.</string>
+    <string name="newExperimentQRCodesMissing1">Zeskanowany kod QR jest częścią zestawu</string>
+    <string name="newExperimentQRCodesMissing2">kodów. Wybierz Kontynuuj by zeskanować pozostałe kody. Kody brakujące:</string>
+    <string name="newExperimentQRBadCRC">Niepoprawna suma kontrolna. Oznacza to, że kod QR jest niepoprawny lub nastąpił błąd podczas jego skanowania.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Błąd eksperymentu Bluetooth.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Przesłane dane eksperymentu są uszkodzone.</string>
+
+    <string name="generalErrorDialog">Doszło do błędu.</string>
+
+    <string name="deviceInfo">Informacje o urządzeniu</string>
+    <string name="copyToClipboard">Skopiuj do schowka</string>
+    <string name="deviceInfoCopied">Informacje o urządzeniu zostały skopiowane do schowka.</string>
+
+    <string name="gpl">Phyphox to oprogramowanie open source wydane na licencji GNU General Public Licence. Odwiedź stronę http://phyphox.org w celu uzyskania dalszych informacji w tym dostępu do kodu źródłowego. Jednak nazwa \"phyphox\" i \"RWTH Aachen\" są zastrzeżonymi znakami towarowymi.</string>
+    <string name="sensorVendor">Specyficzne dla dostawcy</string>
+
+    <string name="vendorSensorTitle">Czujniki specyficzne dla dostawcy</string>
+    <string name="vendorSensorWarning1">Czujnik</string>
+    <string name="vendorSensorWarning2">nie zgłasza prawidłowego typu czujnika. Wygląda na to, że jest specyficzne dla dostawcy i możemy określić jego typ wyłącznie po nazwie. Dlatego może nie działać zgodnie z oczekiwaniami.</string>
+
+    <string name="tryagain">Spróbuj ponownie</string>
+    <string name="doContinue">Kontynuuj</string>
+    <string name="rename">Zmień nazwę</string>
+    <string name="loadingBluetoothConnectionText">Łączenie z urządzeniem Bluetooth…</string>
+
+    <string name="remoteServerNoNetwork">Najpierw musisz skonfigurować połączenie Wi-Fi z urządzeniem zdalnym. Włącz Wi-Fi lub utwórz mobilny punkt dostępowy.</string>
+    <string name="remoteColorMapWarning">Kolorowy wykres w zdalnym interfejsie jest tylko przybliżeniem. W przeciwieństwie do wykresu w aplikacji, w tej chwili nie jest w stanie obsłużyć danych nierównoległych lub skalowania logarytmicznego na osi X i Y. Dane w różnych odstępach czasu mogą pojawić się w niewłaściwym miejscu.</string>
+
+    <string name="force_gnss">Tylko lokalizacja satelitarna</string>
+
+    <string name="fontSize">Wielkość czcionki</string>
+
+    <string name="open_zip_title">Otwieranie zbioru doświadczeń</string>
+    <string name="open_zip_dialog_instructions">Ten zbiór zawiera wiele doświadczeń. Możesz wybrać jedno, aby je otworzyć i opcjonalnie zapisz je w swoim zbiorze lub użyj przycisku poniżej, aby zapisać je w zbiorze wszystkie jednocześnie.</string>
+    <string name="open_save_all">Zapisz wszystkie</string>
+
+    <string name="open_bluetooth_assets_title">Doświadczenia z urządzeniem Bluetooth</string>
+    <string name="open_bluetooth_assets">Następujące eksperymenty dla twojego urządzenia są dostępne w aplikacji phyphox. Możesz po prostu je otworzyć i wykonać lub dodać je do swojego zbioru, aby uzyskać do nich łatwy dostęp z głównego menu.</string>
+
+    <string name="start_hint">Naciśnij trójkąt by rozpocząć pomiar.</string>
+
+    <string name="bluetooth">Bluetooth Low Energy</string>
+    <string name="bt_android_version">Bluetooth Low Energy nie jest obsługiwane w systemie Android niższym niż 4.3.</string>
+
+    <string name="bt_pick_device">Proszę wybierz urządzenie.</string>
+    <string name="bt_scanning_generic">Wyszukiwanie urządzeń Bluetooth…</string>
+    <string name="bt_scanning_specific1">Wyszukiwanie urządzeń Bluetooth z</string>
+    <string name="bt_scanning_specific2">w ich imieniu…</string>
+    <string name="bt_device_not_supported">Brak dostępnych doświadczeń.</string>
+
+    <string name="bt_location_explanation">Android wymaga włączenia opcji lokalizacji by wykonać skanowanie Bluetooth, ponieważ informacje to mogą być niezbędne do prawidłowego przebiegu tego procesu. Będziemy teraz żądać tych uprawnień. Musisz je przyznać, aby wykonać skanowanie Bluetooth.</string>
+
+    <string name="bt_exception_uuid">Charakterystyki UUID</string>
+    <string name="bt_exception_uuid2">nie znalezione.</string>
+    <string name="bt_exception_disabled">Urządzenie Bluetooth niedostępne. Włącz Bluetooth i spróbuj ponownie.</string>
+    <string name="bt_exception_connection">Połączenie Bluetooth nie mogło być zrealizowane.</string>
+    <string name="bt_exception_notfound">Urządzenie Bluetooth nieznalezione.</string>
+    <string name="bt_exception_services">Usługi nie zostały wykryte.</string>
+    <string name="bt_exception_device">Błąd dla urządzenia z</string>
+    <string name="bt_exception_device_address">adres</string>
+    <string name="bt_exception_device_name">nazwa</string>
+    <string name="bt_exception_rate">Niepoprawna wartość dla szybkości.</string>
+    <string name="bt_exception_notification">Powiadomienie o charakterystyce UUID</string>
+    <string name="bt_exception_notification_enable">nie mogło być włączone.</string>
+    <string name="bt_exception_notification_disable">nie mogło być wyłączone ponownie.</string>
+    <string name="bt_exception_notification_fail_enable">Włączanie powiadomień dla charakterystyk UUID</string>
+    <string name="bt_exception_notification_fail">nie zakończyło się powodzeniem.</string>
+    <string name="bt_exception_config">Wartość dla charakterystyki</string>
+    <string name="bt_exception_config2">nie mogło być ustawione.</string>
+    <string name="bt_exception_no_connection">Urządzenie Bluetooth nie jest podłączone. Eksperyment nie może zostać rozpoczęty.</string>
+    <string name="bt_exception_disconnected">Urządzenie Bluetooth zostało rozłączone.</string>
+    <string name="bt_default_error_message">Wystąpił błąd urządzenia Bluetooth.</string>
+
+    <string name="bt_error_writing">Błąd podczas zapisu charakterystyk UUID</string>
+    <string name="bt_error_reading">Błąd podczas odczytu charakterystyk UUID</string>
+    <string name="bt_error_discovering">Błąd podczas wykrywania usług urządzenia Bluetooth.</string>
+    <string name="bt_fail_reading">Operacja odczytu zakończona niepowodzeniem.</string>
+    <string name="bt_fail_writing">Operacja zapisu zakończona niepowodzeniem.</string>
+
+    <string name="bt_more_info_link_text">Jeśli twoje urządzenie nie jest obsługiwane, wybierz \"więcej informacji\", aby dowiedzieć się więcej o obsłudze technologii Bluetooth Low Energy w aplikacji phyphox na naszej stronie.</string>
+    <string name="bt_more_info_link_button">Więcej informacji</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble-pl</string>
+
+</resources>

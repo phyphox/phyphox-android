@@ -8,7 +8,7 @@
     <string name="newExperimentInputTitle">タイトル</string>
     <string name="newExperimentInputBufferSize">バッファーサイズ(格納する値の数)</string>
     <string name="newExperimentInputRate">センサーレート (Hz，0は最速処理を意味する)</string>
-    <string name="newExperimentInputSensors">アクティブなセンサー</string>
+    <string name="newExperimentInputSensors">有効なセンサー</string>
 
     <string name="help">ヘルプ＆インフォ</string>
     <string name="experimentsPhyphoxOrg">実験アイデアと説明</string>
@@ -92,7 +92,8 @@
 \n 
 \nokを押した後，同ネットワーク環境下でどのようなウェブブラウザからでも実験にアクセスすることができます．</string>
     <string name="remoteServerWarningTitle">セキュリティ警告!</string>
-    <string name="remoteServerActive">リモートアクセスが可能です．下記のURLから本実験にアクセスしてください．</string>
+    <string name="remoteServerActive">リモートアクセスが可能です．下記のURLから本実験にアクセスしてください．
+\n%1$s</string>
     <string name="hotspotSettings">ホットスポット設定</string>
 
     <string name="calibrated_magnetometer">補正された磁力計の利用</string>

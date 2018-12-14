@@ -238,7 +238,8 @@
 
     <string name="remoteServer">允许远程控制</string>
     <string name="remoteServerNoNetwork">你首先需要建立一个wifi连接至远程设备。请启动wifi或创建一个移动热点。</string>
-    <string name="remoteServerActive">远程控制已启动。从下列网址访问该实验：</string>
+    <string name="remoteServerActive">远程控制已启动。从下列网址访问该实验：
+\n%1$s</string>
     <string name="remoteColorMapWarning">远程端口中的颜色图只是一个近似值。与app内置图不同，目前它无法处理非等距数据或x、y轴上的对数缩放。因此，不同时间间隔的数据可能会出现在错误位置上。</string>
 
     <string name="calibrated_magnetometer">使用已校准的磁力计</string>

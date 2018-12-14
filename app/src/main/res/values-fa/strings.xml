@@ -134,7 +134,7 @@
     <string name="graph_tools_pick">انتخاب داده‌ها</string>
     <string name="graph_tools_more">ابزارهای بیشتر</string>
     <string name="graph_tools_reset">بازنشانی بزرگنمایی</string>
-    <string name="graph_tools_follow">دنبال کردن داده‌های تازه</string>
+    <string name="graph_tools_follow">دنبال کردن داده‌های جدید</string>
     <string name="graph_tools_linear_fit">رگرسیون خطی</string>
     <string name="graph_tools_log_x">محور لگاریتمی x</string>
     <string name="graph_tools_log_y">محور لگاریتمی y</string>
@@ -147,7 +147,7 @@
     <string name="applyZoomAdvanced">گزینه‌های پیشرفته</string>
     <string name="applyZoomReset">بازنشانی به پیش‌فرض</string>
     <string name="newExperimentSimple">افزودن آزمایش ساده</string>
-    <string name="newExperimentBluetooth">افزودن آزمایش برای دستگاه بلوتوث دار</string>
+    <string name="newExperimentBluetooth">افزودن آزمایش برای دستگاه دارای بلوتوث</string>
     <string name="newExperimentBluetoothErrorTitle">خطای پویش بلوتوث</string>
     <string name="newExperimentBluetoothLoadFromDevice">بارگیری از دستگاه</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">این دستگاه دارای آزمایش فیفاکس خودش است. بارگیری از دستگاه را انتخاب کنید تا باز شود.</string>
@@ -172,7 +172,7 @@
     <string name="bt_exception_disabled">بلوتوث غیرفعال است. لطفا بلوتوث را فعال و دوباره تلاش کنید.</string>
     <string name="bt_exception_device_address">آدرس</string>
     <string name="bt_exception_device_name">نام</string>
-    <string name="bt_exception_notification_fail">موفقیت‌آمیز نبود.</string>
+    <string name="bt_exception_notification_fail">ناموفق بود.</string>
     <string name="bt_more_info_link_button">اطلاعات بیشتر</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
@@ -183,18 +183,18 @@
 
     <string name="deviceInfo">اطلاعات دستگاه</string>
     <string name="vendorSensorWarning1">حسگر</string>
-    <string name="vendorSensorWarning2">نوع درست حسگر را گزارش نمی‌کند. به نظر می‌رسد که منحصر به فروشنده باشد و ما تنها می‌توانیم نوع آن را از روی نام آن حدس بزنیم. بنابراین، ممکن است طبق آنچه انتظار می‌رود کار نکند.</string>
+    <string name="vendorSensorWarning2">نوع درست حسگر را گزارش نمی‌کند. به نظر می‌رسد که منحصر به فروشنده باشد و ما تنها می‌توانیم نوع آن را از روی نامش حدس بزنیم. بنابراین، ممکن است طبق آنچه که انتظار می‌رود کار نکند.</string>
 
     <string name="tryagain">تلاش دوباره</string>
     <string name="doContinue">ادامه</string>
     <string name="rename">تغییر نام</string>
-    <string name="loadingBluetoothConnectionText">درحال اتصال به دستگاه بلوتوث‌دار…</string>
+    <string name="loadingBluetoothConnectionText">درحال اتصال به دستگاه دارای بلوتوث…</string>
 
     <string name="force_gnss">تنها موقعیت ماهواره‌ای</string>
 
     <string name="open_save_all">ذخیره همه</string>
 
-    <string name="open_bluetooth_assets_title">آزمایش‌ها برای دستگاه بلوتوث‌دار</string>
+    <string name="open_bluetooth_assets_title">آزمایش‌ها برای دستگاه دارای بلوتوث</string>
     <string name="open_bluetooth_assets">آزمایش‌های زیر برای دستگاه شما توسط فیفاکس پشتیبانی می‌شود. می‌توانید آنها را باز کرده و استفاده کنید یا همگی را به مجموعه خود افزوده تا به‌آسانی از منو اصلی به آنها دسترسی داشته باشید.</string>
 
     <string name="bluetooth">بلوتوث کم انرژی</string>
@@ -202,19 +202,43 @@
 
     <string name="bt_scanning_specific2">در نام خود…</string>
     <string name="bt_exception_uuid">Characteristic با UUID</string>
-    <string name="bt_exception_notfound">دستگاه بلوتوث‌دار یافت نشد.</string>
+    <string name="bt_exception_notfound">دستگاه دارای بلوتوث یافت نشد.</string>
     <string name="bt_exception_services">سرویس‌ها یافت نمی‌شوند.</string>
     <string name="bt_exception_device">خطا برای دستگاه با</string>
     <string name="bt_exception_rate">مقدار نامعتبر برای نرخ.</string>
-    <string name="bt_exception_no_connection">دستگاه بلوتوث‌دار متصل نیست. آزمایش نمی‌تواند آغاز شود.</string>
-    <string name="bt_exception_disconnected">اتصال دستگاه مجهز به بلوتوث قطع شده است.</string>
-    <string name="bt_default_error_message">خطایی در دستگاه بلوتوث‌دار وجود دارد.</string>
+    <string name="bt_exception_no_connection">دستگاه دارای بلوتوث متصل نیست. آزمایش نمی‌تواند آغاز شود.</string>
+    <string name="bt_exception_disconnected">اتصال به دستگاه دارای بلوتوث قطع شده است.</string>
+    <string name="bt_default_error_message">خطایی در ارتباط با دستگاه دارای بلوتوث وجود دارد.</string>
 
     <string name="bt_error_writing">خطا در هنگام نوشتن Characteristic با UUID</string>
     <string name="bt_error_reading">خطا در هنگام خواندن Characteristic با UUID</string>
-    <string name="bt_error_discovering">خطا در هنگام یافتن سرویس‌های دستگاه بلوتوث‌دار.</string>
+    <string name="bt_error_discovering">خطا در هنگام یافتن سرویس‌های دستگاه دارای بلوتوث.</string>
     <string name="bt_fail_reading">فرایند خواندن ناموفق بود.</string>
     <string name="bt_fail_writing">فرایند نوشتن ناموفق بود.</string>
 
     <string name="bt_more_info_link_text">اگر دستگاه شما پشتیبانی نشده است، «اطلاعات بیشتر» را برگزینید تا درباره پشتیبانی فیفاکس از بلوتوث کم انرژی و تنظیم‌پذیر بیشتر بیاموزید.</string>
+    <string name="graph_tools_export">خروجی گرفتن از این مجموعه‌ی داده‌ها</string>
+    <string name="applyZoomTitle">اجرای بزرگنمایی</string>
+    <string name="applyZoomExplanation">هنگامی که حالت تعاملی این نمودار را می‌بندید، می‌توانید انتخاب کنید آیا می‌خواهید بزرگنمایی را نگهداری کنید.</string>
+    <string name="applyZoomApply">اجرا روی…</string>
+
+    <string name="applyZoomKeep">نگهداری آن‌چه انتخاب شده</string>
+    <string name="applyZoomFollow">نگهداری و دنبال کردن داده‌های جدید</string>
+
+    <string name="sensorVendor">منحصر به فروشنده</string>
+
+    <string name="vendorSensorTitle">حسگر منحصر به فروشنده</string>
+    <string name="remoteServerNoNetwork">ابتدا باید اتصال وای-فای به دستگاه از راه دور را ایجاد کنید. لطفا وای-فای را فعال کنید یا یک هات‌اسپات موبایل ایجاد کنید.</string>
+    <string name="open_zip_title">بازکردن مجموعه‌ای از آزمایش‌ها</string>
+    <string name="bt_scanning_generic">پویش برای یافتن دستگاه‌های دارای بلوتوث…</string>
+    <string name="bt_scanning_specific1">پویش برای یافتن دستگاه‌های دارای بلوتوث با</string>
+    <string name="bt_location_explanation">اندروید برای پویش‌های بلوتوث نیاز به مجوز موقعیت مکانی دارد زیرا نتایج آن‌ها می‌تواند برای به‌دست آوردن اطلاعات موقعیت مکانی به‌کار برده شود. اکنون ما این مجوزها را درخواست خواهیم کرد. برای انجام پویش بلوتوث باید این مجوزها را تصویب کنید.</string>
+
+    <string name="bt_exception_connection">اتصال از راه بلوتوث ناموفق بود.</string>
+    <string name="bt_exception_notification">notification برای characteristic با UUID</string>
+    <string name="bt_exception_notification_enable">نمی‌تواند فعال شود.</string>
+    <string name="bt_exception_notification_disable">نمی‌تواند دوباره غیرفعال شود.</string>
+    <string name="bt_exception_notification_fail_enable">فعال‌سازی notifications برای Characteristic با UUID</string>
+    <string name="bt_exception_config">مقدار characteristic</string>
+    <string name="bt_exception_config2">نمی‌تواند قرار داده شود.</string>
     </resources>
