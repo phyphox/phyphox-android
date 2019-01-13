@@ -18,7 +18,7 @@ public abstract class Helper {
 
     public static int getLanguageRating(Resources res, String language) {
         if (language == null || language.isEmpty())
-            return 2; //This can only happen to the base translation. Its language is not specified, but it's probably better for the target audience than a non-matching language
+            return 1; //This can only happen to the base translation. Its language is not specified, but it's probably better for the target audience than a non-matching language - with one exception: If the base language is not specified and an English block is declared as a translation, then the base language is probably just a place-holder, so English is preferred in this case.
 
         int score = 0;
 
@@ -49,11 +49,11 @@ public abstract class Helper {
         String resLanguage = resLocale.getLanguage().toLowerCase();
         String resRegion = resLocale.getCountry().toLowerCase();
 
-        //Rule 2: Same base language? That is a pretty good match...
+        //Rule: Same base language? That is a pretty good match...
         if (baseLanguage.equals(resLanguage))
             score+=100;
 
-        //Rule 2: Same country/region? Even better...
+        //Rule: Same country/region? Even better...
         if (region.equals(resRegion))
             score+=20;
 
@@ -69,9 +69,9 @@ public abstract class Helper {
             }
         }
 
-        //Rule 1: We slightly prefer English as an international fallback
+        //Rule: We slightly prefer English as an international fallback
         if (baseLanguage.equals("en"))
-            score+=1;
+            score+=2;
 
         return score;
     }
