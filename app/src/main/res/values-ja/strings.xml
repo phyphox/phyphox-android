@@ -22,7 +22,7 @@
 \n変更することができます．どの言語が利用可能か，またあなたがどのように役立つことができるかを知りたい方は\"ウェブサイトへ移動\"を選択してください．</string>
     <string name="translationToSettings">設定</string>
     <string name="translationToWebsite">ウェブサイトへ移行</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#ja</string>
 
     <string name="warning">注意</string>
     <string name="donotshowagain">今後表示しない</string>
@@ -126,7 +126,7 @@
     <string name="noDrawableData">描画可能なデータがありません．</string>
 
     <string name="categoryNewExperiment">簡単なカスタム実験</string>
-    <string name="categoryRawSensor">時系列センサー</string>
+    <string name="categoryRawSensor">センサー出力</string>
 
     <string name="experimentinfo_hint">本実験をどのように使用するか知るために実験インフォを確認してください．</string>
 
