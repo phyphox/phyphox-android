@@ -25,4 +25,12 @@
         <item name="colorAccent">@color/rwth</item>
     </style>
 
+    <style name="BottomNavigationView" parent="@style/TextAppearance.AppCompat.Caption">
+        <item name="android:textSize">@dimen/graph_tools_font</item>
+    </style>
+
+    <style name="BottomNavigationView.Active" parent="@style/TextAppearance.AppCompat.Caption">
+        <item name="android:textSize">@dimen/graph_tools_font</item>
+    </style>
+
 </resources>
