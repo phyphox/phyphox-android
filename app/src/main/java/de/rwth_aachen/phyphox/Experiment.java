@@ -729,8 +729,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (v == hintAnimation) {
             if (timedRun) {
                 startTimedMeasurement();
-            } else
+            } else {
+                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                int startHintDismissCount = settings.getInt("startHintDismissCount", 0);
+                settings.edit().putInt("startHintDismissCount", startHintDismissCount + 1).apply();
                 startMeasurement();
+            }
         }
     }
 
