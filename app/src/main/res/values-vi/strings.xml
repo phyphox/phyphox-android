@@ -21,7 +21,7 @@
     <string name="applyZoomTitle">Áp dụng thu phóng</string>
     <string name="applyZoomExplanation">Bạn đang đóng chế độ tương tác của đồ thị này, bạn có thể chọn giữ độ thu phóng nếu muốn.</string>
     <string name="applyZoomAdvanced">Lựa chọn nâng cao</string>
-    <string name="applyZoomApply">Áp dụng cho</string>
+    <string name="applyZoomApply">Áp dụng cho…</string>
 
     <string name="applyZoomReset">Cài đặt lại</string>
     <string name="applyZoomKeep">Giữ nguyên lựa chọn</string>
