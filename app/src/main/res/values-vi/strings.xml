@@ -72,7 +72,7 @@
     <string name="translationText">Phyphox sẽ sử dụng ngôn ngữ đầu tiên có trong danh sách ngôn ngữ yêu thích. Để thay đổi lựa chọn, vào \"cài đặt\" Android bên dưới. Để biết ngôn ngữ sẵn có và nếu bạn muốn trọ gúp, chọn \"vào trang web\".</string>
     <string name="translationToSettings">Cài đặt</string>
     <string name="translationToWebsite">Vào trang web</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#vi</string>
 
     <string name="deviceInfo">Thông tin thiết bị</string>
     <string name="copyToClipboard">Lưu vào bộ nhớ</string>
