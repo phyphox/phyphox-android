@@ -20,7 +20,7 @@
     <string name="translationInfo">语言</string>
     <string name="translationToSettings">设置</string>
     <string name="translationToWebsite">访问网站</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#zh_Hans</string>
 
     <string name="warning">警告</string>
     <string name="donotshowagain">不再显示</string>
