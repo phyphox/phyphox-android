@@ -86,7 +86,7 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationText">Phyphox, tercih ettiğiniz diller listesinden ulaşabileceği ilk dili kullanacaktır. Tercihlerinizi değiştirmek için aşağıdan Android \"ayarlarına\" gidin. Hangi dillerin uygun olduğunu ve nasıl yardımcı olabileceğinizi öğrenmek için \"web sitesini ziyaret et\" seçeneğini seçin.</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#tr</string>
 
     <string name="damageWarning">Deney yaparken telefonunuza zarar vermemeye lütfen dikkat edin. Sert yüzeyler üzerine düşürmemek için özel dikkat gösterin ve aşırı manyetik alanlara maruz bırakmayın. Telefonunuzdaki herhangi bir hasardan Phyphox\'un yazarları sorumlu değildir.</string>
 

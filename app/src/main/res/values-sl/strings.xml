@@ -1,0 +1,184 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Nastavitve</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="graph_tools_more">Več</string>
+    <string name="graph_tools_reset">Ponastavi</string>
+    <string name="graph_tools_export">Izvozi podatke</string>
+    <string name="graph_tools_log_x">Logaritemska x os</string>
+    <string name="graph_tools_log_y">Logaritemska y os</string>
+
+    <string name="graph_point_label">Točka</string>
+    <string name="graph_slope_label">Naklon</string>
+    <string name="graph_difference_label">Razlika</string>
+    <string name="graph_fit_label">Linearno prileganje: y = a x + b</string>
+
+    <string name="applyZoomTitle">Uporabi povečavo</string>
+    <string name="applyZoomAdvanced">Napredne možnosti</string>
+    <string name="applyZoomApply">Velja za …</string>
+
+    <string name="applyZoomReset">Ponastavi na privzeto</string>
+    <string name="applyZoomFollow">Ohrani in nadaljuj z novimi podatki</string>
+
+    <string name="applyZoomThis">Samo za ta graf</string>
+    <string name="applyZoomSameVariable">Drugi grafi: Ista spremenljivka</string>
+    <string name="applyZoomSameUnit">Drugi grafi: ista enota</string>
+    <string name="applyZoomSameAxis">Drugi grafi: ista os</string>
+
+    <string name="newExperiment">Dodaj eksperimete</string>
+
+    <string name="newExperimentSimple">Dodaj preprost eksperimet</string>
+    <string name="newExperimentInputTitle">Naslov</string>
+    <string name="newExperimentInputBufferSize">Velikost medpomnilnika (število vrednosti, ki jih želite shraniti)</string>
+    <string name="newExperimentInputRate">Odzivnost senzorja (v Hz, 0 = najhitrejši)</string>
+    <string name="newExperimentInputSensors">Aktivni senzorji</string>
+
+    <string name="newExperimentBluetooth">Dodajte eksperiment za napravo Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Napaka pri branju preko Bluetooth</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Naloži iz naprave</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Ta naprava ima lastne phyphox eksperimente. Izberite naloži iz naprave.</string>
+
+    <string name="newExperimentQR">Dodaj eksperiment s pomočjo QR kode</string>
+
+    <string name="newExperimentQRscan">Preberi QR kodo, ki vsebuje phyphox eksperiment.</string>
+    <string name="newExperimentQRErrorTitle">Napaka v QR kodi</string>
+    <string name="generalErrorDialog">Prišlo je do napake.</string>
+
+    <string name="help">Pomoč in info</string>
+    <string name="experimentsPhyphoxOrg">Predlogi za eksperimente in navodila</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Pogosto zastavljena vprašanja</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="translationInfo">Jeziki</string>
+    <string name="translationToSettings">Nastavitve</string>
+    <string name="translationToWebsite">Obiščite spletno mesto</string>
+    <string name="deviceInfo">Informacije o napravi</string>
+    <string name="copyToClipboard">Kopiraj v odložišče</string>
+    <string name="deviceInfoCopied">Informacije o napravi so kopirane v odložišče.</string>
+
+    <string name="warning">Opozorilo</string>
+    <string name="donotshowagain">Ne prikaži več</string>
+    <string name="info">Info</string>
+    <string name="creditsNames">Razvoj in koncept:
+\n Dr. Sebastian Staacks
+\n Concept:
+\n Prof. Christoph Stampfer
+\n Programming:
+\n Dominik Dorsel
+\n Jonas Gessner
+\n Camilla Lummerzheim</string>
+    <string name="sensorGyroscope">Žiroskop</string>
+    <string name="sensorAccelerometer">Merilnik pospeška</string>
+    <string name="sensorMagneticField">Magnetno polje</string>
+    <string name="sensorPressure">Tlak</string>
+    <string name="sensorTemperature">Temperatura</string>
+    <string name="sensorHumidity">Vlaga</string>
+    <string name="sensorProximity">Bližina</string>
+    <string name="vendorSensorTitle">Senzor, specifičen za proizvajalca</string>
+    <string name="vendorSensorWarning1">Senzor</string>
+    <string name="location">Lokacija</string>
+
+    <string name="sensorNotAvailableWarningTitle">Senzor ni na voljo.</string>
+    <string name="sensorNotAvailableWarningText1">Senzor</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Podrobnosti</string>
+    <string name="ok">V redu</string>
+    <string name="tryagain">Poskusi ponovno</string>
+    <string name="doContinue">Nadaljuj</string>
+    <string name="close">Zapri</string>
+    <string name="next">Naprej</string>
+    <string name="cancel">Prekliči</string>
+    <string name="unknown">neznano</string>
+
+    <string name="rename">Preimenuj</string>
+    <string name="delete">Izbriši</string>
+    <string name="confirmDelete">Ali želite izbrisati eksperimet iz vaše zbirke?</string>
+    <string name="confirmDeleteTitle">Potrdi brisanje?</string>
+
+    <string name="stop">Stop</string>
+    <string name="clear_data">Počisti podatke</string>
+    <string name="clear_data_question">Počistimo posnete podatke?</string>
+    <string name="clear">Počisti</string>
+    <string name="timed_stop">Ustavi štoparico</string>
+    <string name="loadingTitle">Nalaganje</string>
+    <string name="loadingText">Nalagam…</string>
+    <string name="loadingBluetoothConnectionText">Povezovanje z napravo Bluetooth…</string>
+
+    <string name="timedRunDialogTitle">Čas eksperimentiranja</string>
+    <string name="timedRunStartDelay">Zamik starta (s)</string>
+    <string name="timedRunStopDelay">Trajanje eksperimenta (s)</string>
+    <string name="enableTimedRun">Uporabi časovni potek</string>
+
+    <string name="export">Izvozi podatke</string>
+    <string name="export_subject">Podatki iz phyphox</string>
+    <string name="export_pick_share">Izberite način izvoza</string>
+
+    <string name="share">Delite posnetek zaslona</string>
+    <string name="share_subject">Posnetek zaslona iz phyphoxa</string>
+    <string name="share_pick_share">Izberite način skupne rabe</string>
+
+    <string name="remoteServer">Dovoli oddaljeni dostop</string>
+    <string name="remoteServerWarningTitle">Varnostno opozorilo!</string>
+    <string name="remoteServerNoNetwork">Najprej morate vzpostaviti WIFI povezavo z oddaljeno napravo. Omogočite WIFI ali ustvarite mobilno dostopno točko.</string>
+    <string name="remoteServerActive">Povezava je vzpostavljana. Do tega eksperimenta lahko dostopate z naslednjim URL-jem: 
+\n%1$s</string>
+    <string name="hotspotSettings">Nastavitve dostopne točke</string>
+
+    <string name="calibrated_magnetometer">Uporabite umerjeni magnetometer</string>
+    <string name="force_gnss">Samo satelitska lokacija</string>
+
+    <string name="switchToPhoneLayout">Pogled: Ozek</string>
+    <string name="switchColumns1">Pogled: 1 stolpec</string>
+    <string name="switchColumns2">Pogled: 2 stolpca</string>
+    <string name="switchColumns3">Pogled: 3 stolpce</string>
+    <string name="fontSize">Velikost pisave</string>
+
+    <string name="show_description">Info o eksperimentu</string>
+    <string name="save_locally">Dodaj eksperiment v zbirko</string>
+    <string name="save_locally_done">Eksperiment uspešno dodan v zbirko.</string>
+    <string name="save_locally_message">Eksperiment je bil odprt iz oddaljenega vira. Ali ga želite dodati v zbirko eksperimentov?</string>
+    <string name="save_locally_button">Shrani v zbirko</string>
+    <string name="save_state">Shrani stanje eksperimenta</string>
+    <string name="save_state_category">Stanje eksperimenta shranjeno</string>
+    <string name="save_state_message">Stanje eksperimenta, vključno z vašimi podatki, lahko shranite v svojo zbirko ali ga delite preko drugih aplikacij.</string>
+    <string name="save_state_title">Naslov</string>
+    <string name="save_state_save">V zbirko</string>
+    <string name="save_state_share">Deli</string>
+    <string name="save_state_subject">Stanje phyphox eksperimenta</string>
+    <string name="save_state_default_title">Meritev</string>
+    <string name="save_state_success">Stanje je bilo shranjeno v vašo zbirko.</string>
+
+    <string name="open_zip_title">Odpiranje niza eksperimentov</string>
+    <string name="open_save_all">Shrani vse</string>
+
+    <string name="open_bluetooth_assets_title">Eksperimenti preko naprave Bluetooth</string>
+    <string name="timedRun">Merjenje časa</string>
+
+    <string name="pick_exportSets">Izberite zbirke podatkov za izvoz.</string>
+    <string name="pick_exportFormat">Izberite obliko podatkov.</string>
+
+    <string name="noDrawableData">Ni podatkov za izris.</string>
+
+    <string name="categoryNewExperiment">Preprosti eksprimenti po meri</string>
+    <string name="categoryRawSensor">Senzorji RAW</string>
+
+    <string name="experimentinfo_hint">Preverite navodila o izvedbi taga eksperimenta.</string>
+    <string name="start_hint">S klikom na trikotnik zaženete eksperimet.</string>
+
+    <string name="bt_android_version">Bluetooth Low Energy ni podprt v Android različicah, ki so nižje od 4.3.</string>
+
+    <string name="bt_pick_device">Izberite napravo.</string>
+    <string name="bt_scanning_generic">Iskanje naprav Bluetooth …</string>
+    <string name="bt_device_not_supported">Eksperimenti niso na voljo</string>
+
+    <string name="bt_exception_disabled">Bluetooth je onemogočen. Omogočite bluetooth in poskusite znova.</string>
+    <string name="bt_exception_connection">Povezave Bluetooth ni bilo mogoče odpreti.</string>
+    <string name="bt_exception_notfound">Naprave Bluetooth ni mogoče najti.</string>
+    <string name="bt_exception_device">Napaka za napravo z</string>
+    <string name="bt_exception_device_address">naslovom</string>
+    <string name="bt_exception_device_name">poimenovano</string>
+    <string name="bt_exception_no_connection">Naprava Bluetooth ni povezana. Eksperimenta ni mogoče zagnati.</string>
+    <string name="bt_exception_disconnected">Povezava z napravo Bluetooth je prekinjena.</string>
+    <string name="bt_default_error_message">Napaka v napravi Bluetooth.</string>
+
+    </resources>

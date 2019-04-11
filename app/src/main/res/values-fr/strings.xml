@@ -3,7 +3,7 @@
     <string name="action_settings">Paramètres</string>
     <string name="title_activity_experiment">phyphox</string>
 
-    <string name="newExperiment">Ajouter une expérience simple</string>
+    <string name="newExperiment">Ajouter des expériences</string>
     <string name="newExperimentPhyphoxInfo">Visitez le site phyphox.org si vous voulez créer des expériences plus avancées (avec de l\'analyse de données, du partage avec des collègues, des étudiants ou des amis).</string>
     <string name="newExperimentInputTitle">Titre</string>
     <string name="newExperimentInputBufferSize">Taille du buffer (nombre de valeurs à enregistrer)</string>
@@ -21,7 +21,7 @@
     <string name="translationText">Phyphox utilisera la première langue disponible dans votre liste de langues préférées. Vous pouvez modifier vos préférences Android en cliquant sur \"Paramètres\" ci-dessous. Pour savoir dans quelles langues phyphox est disponible et comment vous pouvez aider, sélectionnez \"Visiter le site web\".</string>
     <string name="translationToSettings">Paramètres</string>
     <string name="translationToWebsite">Visiter le site web</string>
-    <string name="translationToWebsiteURL">https://phyphox.org/languages/#fr</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#fr</string>
 
     <string name="warning">Attention</string>
     <string name="donotshowagain">Ne plus montrer</string>
@@ -30,8 +30,15 @@
     <string name="info">Info</string>
     <string name="credits">Crédits</string>
     <string name="creditsRWTH">phyphox a été créé à l\'institut de physique II de l\'université technique de Rhénanie-Westphalie à Aix-la-Chapelle (RWTH Aachen University).</string>
-    <string name="creditsNames">Concept et développement:<br/><b>Dr. Sebastian Staacks</b><br/>Concept :<br/><b>Prof. Christoph Stampfer</b><br/>Design :<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmation :<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
-    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise les bibliothèques JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA et Ole Laursen) et \"Axis Labels Plugin pour flot \"((c) 2010 Xuan Luo), toutes disponibles sous la licence MIT.</string>
+    <string name="creditsNames">Concept et développement : 
+\nDr. Sebastian Staacks
+\nConcept : 
+\nProf. Christoph Stampfer
+\nProgrammation : 
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>Concept :<br/><b>Prof. Christoph Stampfer</b><br/>Design :<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmation :<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus).</string>
     <string name="sensorLight">Luminosité</string>
     <string name="sensorGyroscope">Gyroscope</string>
     <string name="sensorAccelerometer">Accéléromètre</string>
@@ -66,7 +73,7 @@
     <string name="clear">Effacer</string>
     <string name="loadingText">Chargement de l\'expérience…</string>
 
-    <string name="timedRunDialogTitle">Expérience pendant un temps donné</string>
+    <string name="timedRunDialogTitle">Expérience chronométrée</string>
     <string name="timedRunStartDelay">Délai avant de commencer (s)</string>
     <string name="timedRunStopDelay">Durée de l\'expérience (s)</string>
     <string name="enableTimedRun">Faire des mesures pendant un temps donné</string>
@@ -90,7 +97,7 @@
 \n%1$s</string>
     <string name="hotspotSettings">Paramètres de partage de connexion</string>
 
-    <string name="calibrated_magnetometer">Utilisez un magnétomètre étalonné</string>
+    <string name="calibrated_magnetometer">Utilise la calibration du magnétomètre</string>
 
     <string name="switchToPhoneLayout">Affichage : étroit</string>
     <string name="switchColumns1">Affichage : 1 colonne</string>
@@ -114,4 +121,142 @@
     <string name="graph_difference_label">Différence</string>
     <string name="graph_fit_label">Fit linéaire : y = a x + b</string>
 
-    </resources>
+    <string name="graph_tools_follow">Suivre nouvelles données</string>
+    <string name="applyZoomTitle">Conserver le zoom</string>
+    <string name="applyZoomExplanation">Vous quittez le mode interactif de ce graphe, vous pouvez choisir de conserver le zoom ou non.</string>
+    <string name="applyZoomAdvanced">Options avancées</string>
+    <string name="applyZoomApply">Appliquer à…</string>
+
+    <string name="applyZoomReset">Revenir aux valeurs par défaut</string>
+    <string name="applyZoomKeep">Conserver le zoom actuel</string>
+    <string name="applyZoomFollow">Conserver, et s\'adapter aux nouvelles mesures</string>
+
+    <string name="applyZoomThis">Ce graphe uniquement</string>
+    <string name="applyZoomSameVariable">Les graphes avec le même paramètre</string>
+    <string name="applyZoomSameUnit">Les graphes avec la même unité</string>
+    <string name="applyZoomSameAxis">Les graphes avec le même axes</string>
+
+    <string name="newExperimentSimple">Ajouter une expérience simple</string>
+    <string name="newExperimentBluetooth">Ajouter une expérience avec un appareil Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Recherche Bluetooth : erreur</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Charger l\'expérience</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Cet appareil vous propose une expérience phyphox adaptée. Sélectionnez \"charger l\'expérience\" pour la récupérer.</string>
+
+    <string name="newExperimentQR">Ajouter une expérience à partir d\'un QR code</string>
+
+    <string name="newExperimentQRscan">Scanner le QR code contenant l\'expérience phyphox.</string>
+    <string name="newExperimentQRErrorTitle">Erreur de QR code.</string>
+    <string name="newExperimentQRNoExperiment">Impossible de reconnaitre un QR code contenant une expérience phyphox.</string>
+    <string name="newExperimentQRcrcMismatch">Le QR code que vous venez de scanner ne semble pas correspondre aux précédents. Attention à bien scanner les codes appartenant à la même expérience.</string>
+    <string name="newExperimentQRCodesMissing1">Le QR code que vous venez de scanner fait partie d\'une série de</string>
+    <string name="newExperimentQRCodesMissing2">codes. Appuyez sur \"continuer\" pour scanner les suivants. QR codes restant :</string>
+    <string name="newExperimentQRBadCRC">Checksum invalide. Soit le QR code est mauvais, soit il y a eu un problème lors du scan.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Erreur Bluetooth pendant l\'expérience.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Les données transmises sont corrompues.</string>
+
+    <string name="generalErrorDialog">Une erreur est survenue.</string>
+
+    <string name="deviceInfo">Information sur l\'appareil</string>
+    <string name="copyToClipboard">Copier dans le presse-papiers</string>
+    <string name="deviceInfoCopied">Les informations de votre appareil ont été copiées dans le presse-papiers.</string>
+
+    <string name="gpl">Phyphox est un logiciel open source distribué sous licence GNU General Public License. Veuillez visiter http://phyphox.org pour plus d\'informations et pour accéder à son code source. Cependant, les noms \"phyphox\" et \"RWTH Aachen\" sont des marques déposées.</string>
+    <string name="sensorLinearAcceleration">Accélération linéaire</string>
+    <string name="sensorVendor">Spécifique au fabricant</string>
+
+    <string name="vendorSensorTitle">Capteur spécifique au fabricant</string>
+    <string name="vendorSensorWarning1">Le capteur</string>
+    <string name="vendorSensorWarning2">n\'indique pas clairement sa fonction. Il est spécifique au fabricant, et nous ne pouvons que deviner son type à partir de son nom. En conséquence, il est possible que cela ne marche pas comme attendu...</string>
+
+    <string name="tryagain">Nouvel essai</string>
+    <string name="doContinue">Continuer</string>
+    <string name="rename">Renommer</string>
+    <string name="timed_stop">Arrêt de la mesure</string>
+    <string name="timed_start">Début de la mesure</string>
+
+    <string name="loadingTitle">Chargement</string>
+    <string name="loadingBluetoothConnectionText">Connexion à l\'appareil Bluetooth…</string>
+
+    <string name="remoteServerNoNetwork">Vous devez d\'abord établir une connexion Wifi avec le périphérique distant. Veuillez activer le Wifi ou créer un point d\'accès mobile.</string>
+    <string name="remoteColorMapWarning">Le graphique couleur/3D dans l\'interface à distance n\'est qu\'une approximation. Contrairement au graphique dans l\'application, il ne gère pas les points non-équidistants ou les échelles logarithmiques sur les axes x et y. Ainsi les données acquises avec des intervalles irréguliers apparaitront au mauvais endroit.</string>
+
+    <string name="force_gnss">Localisation par satellite uniquement</string>
+
+    <string name="fontSize">taille de la police</string>
+
+    <string name="save_locally_message">Cette expérience a été ouverte depuis une source à distance. Voulez-vous l\'ajouter à votre propre collection d\'expériences ?</string>
+    <string name="save_locally_button">Enregistrer l\'expérience</string>
+    <string name="save_state">Enregistrer l\'état de cette expérience</string>
+    <string name="save_state_category">Expériences enregistrées</string>
+    <string name="save_state_message">Vous pouvez enregistrer l\'état de cette expérience, y compris vos données, dans votre collection ou le partager avec une application tierce.</string>
+    <string name="save_state_title">Titre</string>
+    <string name="save_state_save">Dans ma collection</string>
+    <string name="save_state_share">Partager</string>
+    <string name="save_state_subject">État de l\'expérience phyphox</string>
+    <string name="save_state_default_title">Mesures</string>
+    <string name="save_state_success">Cette expérience à été enregistrée dans votre collection en l\'état.</string>
+
+    <string name="open_zip_title">Ouverture d\'une série d\'expériences</string>
+    <string name="open_zip_dialog_instructions">Cette ressource contient plusieurs expériences. Vous pouvez en choisir une pour l\'ouvrir et éventuellement l\'enregistrer dans votre collection, ou utiliser le bouton ci-dessous pour les enregistrer toutes en même temps dans votre collection.</string>
+    <string name="open_save_all">Enregistrer tout</string>
+
+    <string name="open_bluetooth_assets_title">Expériences propres aux appareils Bluetooth</string>
+    <string name="open_bluetooth_assets">Les expériences suivantes sont propres à cet appareil Bluetooth sont disponibles auprès de Phyphox. Vous pouvez les ouvrir et les utiliser, ou bien les ajouter à votre collection pour y accéder facilement à partir du menu principal.</string>
+
+    <string name="timedRun">Définir le temps de mesure</string>
+
+    <string name="pick_exportSets">Choisir le jeu de données à exporter.</string>
+    <string name="pick_exportFormat">Choisir le format des données.</string>
+
+    <string name="noDrawableData">N.A.</string>
+
+    <string name="categoryNewExperiment">Expériences simples personnalisées</string>
+    <string name="categoryRawSensor">Capteurs</string>
+
+    <string name="experimentinfo_hint">Regardez les informations sur l\'expérience pour apprendre comment l\'utiliser.</string>
+    <string name="start_hint">Appuyez sur le triangle pour commencer l\'expérience.</string>
+
+    <string name="bluetooth">Bluetooth à basse consommation</string>
+    <string name="bt_android_version">La technologie Bluetooth à basse consommation n\'est pas compatible avec les versions Android antérieures à 4.3.</string>
+
+    <string name="bt_pick_device">Choisissez un appareil.</string>
+    <string name="bt_scanning_generic">Recherche d\'appareils Bluetooth…</string>
+    <string name="bt_scanning_specific1">Recherche d\'appareils Bluetooth avec</string>
+    <string name="bt_scanning_specific2">dans leur nom…</string>
+    <string name="bt_device_not_supported">Pas d\'expérience disponible.</string>
+
+    <string name="bt_location_explanation">Android requiert une autorisation de localisation pour les recherche d\'appareils Bluetooth car le résultat pourrait être utilisé pour déterminer des informations sur votre localisation. Nous allons maintenant demander ces autorisations. Vous devez les accepter pour pouvoir lancer la recherche d\'appareils Bluetooth.</string>
+
+    <string name="bt_exception_uuid">Characteristic with UUID</string>
+    <string name="bt_exception_uuid2">not found.</string>
+    <string name="bt_exception_disabled">Le Bluetooth n\'est pas activé. Merci de l\'activer avant de recommencer.</string>
+    <string name="bt_exception_connection">La connexion Bluetooth a échoué.</string>
+    <string name="bt_exception_notfound">L’appareil Bluetooth n\'a pas pu être trouvé.</string>
+    <string name="bt_exception_services">Services could not be discovered.</string>
+    <string name="bt_exception_device">Erreur avec l\'appareil</string>
+    <string name="bt_exception_device_address">d\'adresse</string>
+    <string name="bt_exception_device_name">de nom</string>
+    <string name="bt_exception_rate">Valeur incorrecte pour le paramètre \"rate\".</string>
+    <string name="bt_exception_notification">The notification for the characteristic with the UUID</string>
+    <string name="bt_exception_notification_enable">could not be enabled.</string>
+    <string name="bt_exception_notification_disable">could not be disabled again.</string>
+    <string name="bt_exception_notification_fail_enable">Turning on notifications for the Characteristic with the UUID</string>
+    <string name="bt_exception_notification_fail">was not successful.</string>
+    <string name="bt_exception_config">The value for the characteristic</string>
+    <string name="bt_exception_config2">could not be set.</string>
+    <string name="bt_exception_no_connection">L\'appareil Bluetooth n\'est pas connecté. Impossible de commencer l\'expérience.</string>
+    <string name="bt_exception_disconnected">L\'appareil Bluetooth a été déconnecté.</string>
+    <string name="bt_default_error_message">Il y a une erreur avec l\'appareil Bluetooth.</string>
+
+    <string name="bt_error_writing">Error while writing characteristic with UUID</string>
+    <string name="bt_error_reading">Error while reading characteristic with UUID</string>
+    <string name="bt_error_discovering">Error while discovering the services of the bluetooth device.</string>
+    <string name="bt_fail_reading">The reading operation was not successful.</string>
+    <string name="bt_fail_writing">The writing operation was not successful.</string>
+
+    <string name="bt_more_info_link_text">Si votre appareil n\'est pas pris en charge, cliquez sur \"plus d\'infos\" pour en savoir plus sur la prise en charge par phyphox du Bluetooth à basse consommation (Bluetooth Low Energy, BLE) sur notre site Web.</string>
+    <string name="bt_more_info_link_button">Plus d\'info</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>

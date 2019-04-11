@@ -6,24 +6,24 @@
     <string name="translationInfo">زبان‌ها</string>
     <string name="translationToSettings">تنظیمات</string>
     <string name="sensorLight">نور</string>
-    <string name="sensorGyroscope">ژیروسکوپ</string>
+    <string name="sensorGyroscope">چرخش‌نما</string>
     <string name="app_name">فیفاکس</string>
     <string name="action_settings">تنظیمات</string>
     <string name="title_activity_experiment">فیفاکس</string>
 
     <string name="newExperiment">افزودن آزمایش‌ها</string>
-    <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری را از جمله تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، دانشجویان، و دوستان خود به اشتراک بگذارید.</string>
+    <string name="newExperimentPhyphoxInfo">از phyphox.org دیدن کرده تا آزمایش‌های پیشرفته‌تری را شامل تجزیه و تحلیل داده‌ها ایجاد کنید و آن‌ها را با همکاران، شاگردان و دوستان خود به اشتراک بگذارید.</string>
     <string name="help">راهنما و اطلاعات</string>
     <string name="experimentsPhyphoxOrg">ایده‌ها و دستورکارهای آزمایش</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">راهنمای کنترل از راه دور</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست «تنظیمات برگزیده زبان» تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات، به بخش «تنظیمات» اندروید خود در زیر بروید. جهت آگاهی از زبان‌های موجود و اینکه چگونه می‌توانید کمک کنید، «بازدید از وب‌سایت» را انتخاب کنید.</string>
-    <string name="translationToWebsite">بازدید از وب‌سایت</string>
+    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست «تنظیمات برگزیده زبان» تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات، به بخش «تنظیمات» اندروید خود در زیر بروید. جهت آگاهی از زبان‌های موجود و اینکه چگونه می‌توانید کمک کنید، «بازدید از وبگاه» را انتخاب کنید.</string>
+    <string name="translationToWebsite">بازدید از وبگاه</string>
     <string name="warning">هشدار</string>
     <string name="donotshowagain">دوباره نمایش نده</string>
     <string name="info">اطلاعات</string>
-    <string name="creditsRWTH">فیفاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن (RWTH Aachen) ایجاد شده است.</string>
+    <string name="creditsRWTH">فیفاکس در انستیتوی دوم فیزیک در دانشگاه فنی آخن (RWTH Aachen University) ایجاد شده است.</string>
     <string name="sensorLinearAcceleration">شتاب خطی</string>
     <string name="sensorAccelerometer">شتاب‌سنج</string>
     <string name="sensorMagneticField">میدان مغناطیسی</string>
@@ -38,14 +38,14 @@
     <string name="sensorNotAvailableWarningText1">حسگر</string>
     <string name="sensorNotAvailableWarningText2">در دسترس نیست. معمولا به معنای آن است که دستگاه شما این نوع حسگر را ندارد.</string>
     <string name="sensorNotAvailableWarningMoreInfo">اطلاعات بیشتر</string>
-    <string name="ok">قبول</string>
+    <string name="ok">پذیرفتن</string>
     <string name="close">بستن</string>
     <string name="next">بعدی</string>
     <string name="cancel">لغو</string>
     <string name="unknown">ناشناخته</string>
 
     <string name="delete">حذف</string>
-    <string name="confirmDelete">آیا می‌خواهید این آزمایش را از مجموعه خود حذف کنید؟</string>
+    <string name="confirmDelete">آیا می‌خواهید این آزمایش را از مجموعه‌ی خود حذف کنید؟</string>
     <string name="confirmDeleteTitle">تایید حذف؟</string>
 
     <string name="stop">توقف</string>
@@ -53,8 +53,8 @@
     <string name="clear_data">حذف داده‌ها</string>
     <string name="clear_data_question">داده‌های ثبت شده حذف شوند؟</string>
     <string name="clear">حذف</string>
-    <string name="loadingTitle">در حال لود شدن</string>
-    <string name="loadingText">در حال لود شدن آزمایش…</string>
+    <string name="loadingTitle">در حال بارگیری</string>
+    <string name="loadingText">در حال بارگیری آزمایش…</string>
 
     <string name="timedRunStopDelay">مدت زمان آزمایش (s)</string>
     <string name="share">به اشتراک‌گذاری اسکرین‌شات</string>
@@ -75,19 +75,19 @@
 
     <string name="experimentinfo_hint">اطلاعات آزمایش را بررسی کنید تا بیاموزید چگونه از این آزمایش استفاده کنید.</string>
 
-<string name="newExperimentInputRate">نرخ نمونه‌برداری حسگر (به یکای هرتز، ۰ = سریع‌ترین حالت ممکن)</string>
+<string name="newExperimentInputRate">نرخ نمونه‌برداری حسگر (به Hz، ۰ = سریع‌ترین حالت ممکن)</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
-    <string name="damageWarning">لطفا مراقب باشید در حین انجام آزمایش به تلفن همراه خود آسیبی نرسانید. لطفا مراقبت ویژه‌ای را برای جلوگیری از افتادن آن بر روی سطوح سخت انجام دهید و آن را در معرض میدان‌های مغناطیسی بیش از حد قرار ندهید. سازندگان فیفاکس در قبال هرگونه آسیب به تلفن همراه شما مسئولیتی نخواهند داشت.</string>
+    <string name="damageWarning">لطفا مراقب باشید در حین انجام آزمایش به تلفن همراه خود آسیبی نرسانید. لطفا مراقبت ویژه‌ای را برای جلوگیری از افتادن آن بر روی سطوح سخت انجام دهید و آن را در معرض میدان‌های مغناطیسی شدید قرار ندهید. سازندگان فیفاکس در قبال هرگونه آسیب به تلفن همراه شما مسئولیتی ندارند.</string>
 
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
 
     <string name="timedRunStartDelay">تاخیر در آغاز (s)</string>
     <string name="export_subject">داده‌ها از فیفاکس</string>
     <string name="share_subject">اسکرین‌شات از فیفاکس</string>
-    <string name="remoteServer">اجازه‌ دسترسی از راه دور</string>
-    <string name="hotspotSettings">تنظیمات هات‌اسپات (نقطه اتصال)</string>
+    <string name="remoteServer">اجازه به دسترسی از راه دور</string>
+    <string name="hotspotSettings">تنظیمات هات‌اسپات</string>
 
     <string name="switchToPhoneLayout">نما: باریک</string>
     <string name="switchColumns1">نما: ۱ ستون</string>
@@ -95,7 +95,7 @@
     <string name="switchColumns3">نما: ۳ ستون</string>
 
     <string name="save_state_save">افزودن به مجموعه</string>
-    <string name="newExperimentInputBufferSize">اندازه حافظه بافر (تعداد مقادیری که ذخیره شود)</string>
+    <string name="newExperimentInputBufferSize">اندازه‌‌ی حافظه‌ی بافر (تعداد مقادیری که ذخیره شود)</string>
     <string name="credits">دست‌اندرکاران</string>
     <string name="timed_stop">توقف آزمایش زمان‌بندی شده</string>
     <string name="timed_start">آغاز آزمایش زمان‌بندی شده</string>
@@ -120,14 +120,13 @@
     <string name="categoryRawSensor">حسگرهای خام</string>
 
     <string name="creditsNames">توسعه و ایده:<br/><b>Dr. Sebastian Staacks</b><br/>ایده:<br/><b>Prof. Christoph Stampfer</b><br/>طرح:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>برنامه‌نویسی:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
-    <string name="creditsLibs">رابط وب برای دسترسی از راه دور، از کتابخانه‌های جاوااسکریپت زیر که همگی تحت مجوز MIT در دسترس‌اند، استفاده می‌کند: 
-\n\"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo)</string>
+    <string name="creditsLibs">رابط وب برای دسترسی از راه دور، از کتابخانه‌‌ی جاوااسکریپت «Chart.js» که تحت مجوز MIT در دسترس‌ است، استفاده می‌کند. برای تبدیل فوریه، از کتابخانه‌ی FFTW استفاده می‌کند.</string>
     <string name="remoteServerWarning">شما در آستانه‌ فعال کردن دسترسی از راه دور به داده‌های به‌دست آمده هستید. شما تنها باید آن را در یک شبکه مورد اعتماد انجام دهید! همچنین توجه داشته باشید که دسترسی مستقیم بین دستگاه‌ها ممکن است در بسیاری از شبکه‌های شرکت یا دانشگاه امکان‌پذیر نباشد.
 \n
 \nبرای رسیدن به بهترین امنیت و کارایی، شما باید از طریق یک گزینه تترینگ (هات‌اسپات یا نقطه اتصال تلفن همراه) به این دستگاه متصل شوید.
 \n
 \nپس از فشار دادن «قبول»، شما می‌توانید از هر مرورگر وب در همان شبکه به اندازه‌گیری خود دسترسی داشته باشید.</string>
-    <string name="remoteServerActive">دسترسی از راه دور فعال شده است. به این آزمایش از یوآرال زیر دسترسی پیدا کنید:
+    <string name="remoteServerActive">دسترسی از راه دور فعال شده است. به این آزمایش از URL زیر دسترسی پیدا کنید: 
 \n%1$s</string>
     <string name="categoryNewExperiment">آزمایش‌های ساده سفارشی</string>
     <string name="graph_tools_pan_and_zoom">جابجایی و بزرگنمایی</string>
@@ -135,14 +134,14 @@
     <string name="graph_tools_more">ابزارهای بیشتر</string>
     <string name="graph_tools_reset">بازنشانی بزرگنمایی</string>
     <string name="graph_tools_follow">دنبال کردن داده‌های جدید</string>
-    <string name="graph_tools_linear_fit">رگرسیون خطی</string>
+    <string name="graph_tools_linear_fit"></string>
     <string name="graph_tools_log_x">محور لگاریتمی x</string>
     <string name="graph_tools_log_y">محور لگاریتمی y</string>
 
     <string name="graph_point_label">نقطه</string>
     <string name="graph_slope_label">شیب</string>
     <string name="graph_difference_label">اختلاف</string>
-    <string name="graph_fit_label">رگرسیون خطی: y = a x + b</string>
+    <string name="graph_fit_label"></string>
 
     <string name="applyZoomAdvanced">گزینه‌های پیشرفته</string>
     <string name="applyZoomReset">بازنشانی به پیش‌فرض</string>
@@ -150,14 +149,14 @@
     <string name="newExperimentBluetooth">افزودن آزمایش برای دستگاه دارای بلوتوث</string>
     <string name="newExperimentBluetoothErrorTitle">خطای پویش بلوتوث</string>
     <string name="newExperimentBluetoothLoadFromDevice">بارگیری از دستگاه</string>
-    <string name="newExperimentBluetoothLoadFromDeviceInfo">این دستگاه دارای آزمایش فیفاکس خودش است. بارگیری از دستگاه را انتخاب کنید تا باز شود.</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">این دستگاه دارای آزمایش فیفاکس منحصربه‌فرد است. بارگیری از دستگاه را انتخاب کرده تا آن را باز کنید.</string>
 
     <string name="newExperimentQR">افزودن آزمایش از کد QR</string>
 
     <string name="newExperimentQRscan">یک کد QR که دربرگیرنده‌ی یک آزمایش فیفاکس است را پویش کنید.</string>
     <string name="newExperimentQRErrorTitle">خطای کد QR.</string>
-    <string name="newExperimentQRNoExperiment">کد QR‌ که دربرگیرنده‌ی یک آزمایش فیفاکس باشد یافت نشد.</string>
-    <string name="newExperimentQRcrcMismatch">به نظر می‌رسد QR کدی که پویش کردید با کدهای قبلی همسانی ندارد. لطفا اطمینان حاصل فرمایید که تنها کدهای متعلق به یک آزمایش را پویش کنید.</string>
+    <string name="newExperimentQRNoExperiment">یک کد QR‌ که دربرگیرنده‌ی یک آزمایش فیفاکس باشد یافت نشد.</string>
+    <string name="newExperimentQRcrcMismatch">به نظر می‌رسد کد QR\'ی که پویش کردید با کدهای قبلی همسانی ندارد. لطفا اطمینان حاصل فرمایید که تنها کدهای متعلق به یک آزمایش همسان را پویش کنید.</string>
     <string name="newExperimentBTReadErrorTitle">خطای آزمایش بلوتوث.</string>
     <string name="newExperimentBTReadErrorCorrupted">داده‌های انتقال یافته خراب است.</string>
 
@@ -181,9 +180,9 @@
     <string name="applyZoomSameUnit">نمودارهای دیگر: یکای یکسان</string>
     <string name="applyZoomSameAxis">نمودارهای دیگر: محور یکسان</string>
 
-    <string name="deviceInfo">اطلاعات دستگاه</string>
+    <string name="deviceInfo">مشخصات دستگاه</string>
     <string name="vendorSensorWarning1">حسگر</string>
-    <string name="vendorSensorWarning2">نوع درست حسگر را گزارش نمی‌کند. به نظر می‌رسد که منحصر به فروشنده باشد و ما تنها می‌توانیم نوع آن را از روی نامش حدس بزنیم. بنابراین، ممکن است طبق آنچه که انتظار می‌رود کار نکند.</string>
+    <string name="vendorSensorWarning2">نوع درست حسگر را گزارش نمی‌کند. به نظر می‌رسد که منحصر به سازنده باشد و ما تنها می‌توانیم نوع آن را از روی نامش حدس بزنیم. بنابراین، ممکن است طبق آنچه که انتظار می‌رود کار نکند.</string>
 
     <string name="tryagain">تلاش دوباره</string>
     <string name="doContinue">ادامه</string>
@@ -216,7 +215,7 @@
     <string name="bt_fail_reading">فرایند خواندن ناموفق بود.</string>
     <string name="bt_fail_writing">فرایند نوشتن ناموفق بود.</string>
 
-    <string name="bt_more_info_link_text">اگر دستگاه شما پشتیبانی نشده است، «اطلاعات بیشتر» را برگزینید تا درباره پشتیبانی فیفاکس از بلوتوث کم انرژی و تنظیم‌پذیر بیشتر بیاموزید.</string>
+    <string name="bt_more_info_link_text">اگر دستگاه شما پشتیبانی نشده است، «اطلاعات بیشتر» را انتخاب کنید تا درباره پشتیبانی فیفاکس از بلوتوث کم‌انرژی و تنظیم‌پذیر بیشتر بیاموزید.</string>
     <string name="graph_tools_export">خروجی گرفتن از این مجموعه‌ی داده‌ها</string>
     <string name="applyZoomTitle">اجرای بزرگنمایی</string>
     <string name="applyZoomExplanation">هنگامی که حالت تعاملی این نمودار را می‌بندید، می‌توانید انتخاب کنید آیا می‌خواهید بزرگنمایی را نگهداری کنید.</string>
@@ -225,9 +224,9 @@
     <string name="applyZoomKeep">نگهداری آن‌چه انتخاب شده</string>
     <string name="applyZoomFollow">نگهداری و دنبال کردن داده‌های جدید</string>
 
-    <string name="sensorVendor">منحصر به فروشنده</string>
+    <string name="sensorVendor">منحصر به سازنده</string>
 
-    <string name="vendorSensorTitle">حسگر منحصر به فروشنده</string>
+    <string name="vendorSensorTitle">حسگر منحصر به سازنده</string>
     <string name="remoteServerNoNetwork">ابتدا باید اتصال وای-فای به دستگاه از راه دور را ایجاد کنید. لطفا وای-فای را فعال کنید یا یک هات‌اسپات موبایل ایجاد کنید.</string>
     <string name="open_zip_title">بازکردن مجموعه‌ای از آزمایش‌ها</string>
     <string name="bt_scanning_generic">پویش برای یافتن دستگاه‌های دارای بلوتوث…</string>
@@ -241,4 +240,15 @@
     <string name="bt_exception_notification_fail_enable">فعال‌سازی notifications برای Characteristic با UUID</string>
     <string name="bt_exception_config">مقدار characteristic</string>
     <string name="bt_exception_config2">نمی‌تواند قرار داده شود.</string>
+    <string name="newExperimentQRCodesMissing1">کد QR\'ی که پویش کردید بخشی از یک مجموعه از</string>
+    <string name="newExperimentQRCodesMissing2">کد است. لطفا ادامه را انتخاب کنید تا کدهای باقی‌مانده پویش شود. تعداد کدهایی که همچنان مفقودند:</string>
+    <string name="newExperimentQRBadCRC">چک‌سام نامعتبر است. این بدان معنی است که یا کد QR خراب است یا اشکالی هنگام پویش آن رخ داده است.</string>
+
+    <string name="copyToClipboard">رونوشت‌برداری به کلیپ‌بورد</string>
+    <string name="deviceInfoCopied">اطلاعات دستگاه در کلیپ‌بورد رونوشت‌برداری شده است.</string>
+
+    <string name="gpl">فیفاکس «Phyphox» یک نرم‌افزار متن‌باز است که تحت پروانه عمومی همگانی گنو (GNU General Public License) منتشر شده است. لطفا برای اطلاعات بیشتر و دسترسی به کد منبع، از http://phyphox.org دیدن کنید. با این وجود، نام‌های «phyphox» و «RWTH Aachen» نشان‌های تجاری ثبت‌شده‌اند.</string>
+    <string name="fontSize">اندازه‌ی فونت</string>
+
+    <string name="open_zip_dialog_instructions">این منبع دربرگیرنده‌ی چند آزمایش است. شما می‌توانید یکی را انتخاب و باز و بصورت اختیاری آن را در مجموعه‌ی خود ذخیره کنید یا اینکه دکمه زیر را فشار دهید تا همه‌ی آن‌ها را بصورت یک‌باره در مجموعه‌ی خود ذخیره کنید.</string>
     </resources>

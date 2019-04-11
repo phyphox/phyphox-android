@@ -30,11 +30,14 @@
     <string name="info">Informacije</string>
     <string name="credits">Bodovi</string>
     <string name="creditsRWTH">phyphox je nastao na drugom institutu za fiziku, Univerzitet u Aachan RWTH.</string>
-    <string name="creditsNames">
-        <![CDATA[
-        Razvoj i koncept:<br/><b>Dr. Sebastian Staacks</b><br/>Koncept:<br/><b>Prof. Christoph Stampfer</b><br/>Dizajn:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programiranje:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
-        ]]>
-    </string>
+    <string name="creditsNames">Razvoj i koncept:
+\nDr. Sebastian Staacks
+\nKoncept:
+\nProf. Christoph Stampfer
+\nProgramiranje:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"jQuery\"((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), svi su dostupni pod MIT licencom.</string>
     <string name="sensorLinearAcceleration">Linearno ubrzanje</string>
     <string name="sensorLight">Svetlost</string>

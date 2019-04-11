@@ -10,24 +10,27 @@
     <string name="help">Ayuda e información</string>
     <string name="experimentsPhyphoxOrg">Ideas para experimentos e instrucciones</string>
     <string name="faqPhyphoxOrg">Preguntas más frecuentes</string>
-    <string name="remotePhyphoxOrgURL">http://phyphox.org/controlador-remoto</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/control-remoto</string>
     <string name="translationInfo">Idiomas</string>
-    <string name="translationText">Phyphox usará el primer idioma disponible de su lista de idiomas preferidos en la configuración de su dispositivo. Para cambiar sus preferencias, vaya a \"Ajustes\" de Android seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"visitar sitio web\".</string>
+    <string name="translationText">Phyphox usará el primer idioma disponible de su lista de idiomas preferidos. Para cambiar sus preferencias en Android, vaya a \"Ajustes\" seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"Visitar sitio web\".</string>
     <string name="translationToSettings">Ajustes</string>
     <string name="translationToWebsite">Visitar sitio web</string>
     <string name="warning">Advertencia</string>
     <string name="donotshowagain">No mostrar de nuevo</string>
-    <string name="damageWarning">Por favor, tenga cuidado de no dañar su dispositivo durante los experimentos. Por favor, tome las precauciones necesarias para evitar dejarlo caer sobre superficies duras y no lo exponga a campos magnéticos de alta intensidad. Los autores de phyphox no se hacen responsables de cualquier posible daño a su dispositivo.</string>
+    <string name="damageWarning">Por favor, tenga cuidado de no dañar su dispositivo durante los experimentos. Por favor tenga especial cuidado en evitar dejarlo caer sobre superficies duras y no lo exponga a campos magnéticos de alta intensidad. Los autores de phyphox no se hacen responsables de cualquier posible daño a su dispositivo.</string>
 
     <string name="info">Información</string>
-    <string name="credits">Reconocimientos</string>
-    <string name="creditsRWTH">phyphox fue creado en el Segundo Instituto de Física de la Universidad RWTH de Aachen.</string>
-    <string name="creditsNames">
-        <![CDATA[
-            Desarrollo y Concepto:<br/><b>Dr. Sebastian Staacks</b><br/>Concepto:<br/><b>Prof. Christoph Stampfer</b><br/>Diseño:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programación:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
-        ]]>
-    </string>
-    <string name="creditsLibs">La interfaz web para el acceso remoto utiliza las bibliotecas de JavaScript \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA y Ole Laursen) y \"Axis Labels Plugin for flot\" \"((c) 2010 Xuan Luo), todas disponibles bajo la licencia MIT.</string>
+    <string name="credits">Créditos</string>
+    <string name="creditsRWTH">Phyphox fue desarrollado en el Segundo Instituto de Física de la Universidad Técnica de Aquisgrán, Alemania.</string>
+    <string name="creditsNames">Desarrollo y Concepto:
+\nDr. Sebastian Staacks
+\nConcepto:
+\nProf. Christoph Stampfer
+\nProgramación:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
+    <string name="creditsLibs">La interfaz web para el acceso remoto utiliza la librería de JavaScript \"Chart.js\" (http://chartjs.org), disponible bajo licencia del MIT. Para la transformada de Fourier, utilizamos la librería FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Instituto Tecnológico de Massachusetts, la cual se encuentra disponible bajo Licencia Pública General de GNU (versión 2 o posterior).</string>
     <string name="sensorLinearAcceleration">Aceleración Lineal</string>
     <string name="sensorLight">Luz</string>
     <string name="sensorGyroscope">Giroscopio</string>
@@ -45,7 +48,7 @@
 
     <string name="sensorNotAvailableWarningTitle">Sensor no disponible.</string>
     <string name="sensorNotAvailableWarningText1">El sensor</string>
-    <string name="sensorNotAvailableWarningText2">no está disponible. Normalmente esto significa que tu dispositivo no dispone este tipo de sensor.</string>
+    <string name="sensorNotAvailableWarningText2">no está disponible. Normalmente esto significa que tu dispositivo no dispone de este tipo de sensor.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Más información</string>
     <string name="close">Cerrar</string>
     <string name="next">Siguiente</string>
@@ -59,8 +62,8 @@
     <string name="ok">De acuerdo</string>
     <string name="confirmDeleteTitle">¿Confirmas borrarlo?</string>
 
-    <string name="stop">Parar</string>
-    <string name="start">Empezar</string>
+    <string name="stop">Detener</string>
+    <string name="start">Iniciar</string>
     <string name="clear_data">Borrar datos</string>
     <string name="clear_data_question">¿Borrar datos grabados?</string>
     <string name="clear">Limpiar</string>
@@ -69,10 +72,69 @@
 
     <string name="export">Exportar Datos</string>
     <string name="export_subject">Datos de phyphox</string>
-    <string name="export_pick_share">Escoge un método de exportar</string>
+    <string name="export_pick_share">Elige un método para exportar</string>
 
-    <string name="share">Comparte un pantallazo</string>
-    <string name="share_subject">Pantallazo de phyphox</string>
-    <string name="share_pick_share">Escoge un método de compartir</string>
+    <string name="share">Compartir captura</string>
+    <string name="share_subject">Captura de pantalla de phyphox</string>
+    <string name="share_pick_share">Elige un medio para compartir</string>
 
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experimentos</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Ayuda con el control remoto</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="deviceInfo">Información del dispositivo</string>
+    <string name="copyToClipboard">Copiar al portapapeles</string>
+    <string name="deviceInfoCopied">La información del dispositivo ha sido copiada al portapapeles.</string>
+
+    <string name="gpl">Phyphox es software de código abierto publicado bajo Licencia Pública General de GNU. Para mayor información así como acceso a su código fuente, por favor visite http://phyphox.org. Sin embargo, los nombres \"phyphox\" y \"RWTH Aachen\" son marcas registradas.</string>
+    <string name="vendorSensorWarning2">No se reporta el tipo correcto de sensor. Parece ser específico del fabricante y sólo podemos aventurar su tipo a partir de su nombre. Por lo tanto, podría no funcionar como se espera.</string>
+
+    <string name="tryagain">Intentar de nuevo</string>
+    <string name="doContinue">Continuar</string>
+    <string name="rename">Cambiar nombre</string>
+    <string name="timed_stop">Detener tarea</string>
+    <string name="timed_start">Iniciar tarea</string>
+
+    <string name="loadingBluetoothConnectionText">Conectando a dispositivo Bluetooth…</string>
+
+    <string name="timedRunDialogTitle">Tarea cronometrada</string>
+    <string name="timedRunStartDelay">Retraso de ejecución</string>
+    <string name="timedRunStopDelay">Duración del experimento</string>
+    <string name="enableTimedRun">Ejecutar tarea con tiempo</string>
+
+    <string name="remoteServer">Permitir acceso remoto</string>
+    <string name="remoteServerWarning">"Estás por permitir acceso remoto a la información recolectada. ¡Sólo deberías hacer esto en conexiones en las que confías!. Ten en cuenta además, que el acceso directo entre dispositivos podría no estar permitido en redes corporativas o universitarias.
+\n
+\nPara un mejor desempeño y una mayor seguridad, deberías realizar la conexión a este dispositivo mediante la opción de anclaje a red (punto de acceso móvil).
+\n
+\nDespués de presionar \"Aceptar\",  podrás acceder a tu información desde cualquier navegador conectado en la misma red."</string>
+    <string name="remoteServerWarningTitle">¡Advertencia de seguridad!</string>
+    <string name="remoteServerNoNetwork">Debes establecer primero una conexión WiFi con el dispositivo remoto. Por favor habilita el WiFi o crea un punto de acceso móvil.</string>
+    <string name="remoteServerActive">Acceso remoto habilitado. Accede a este experimento desde el siguiente enlace:
+\n%1$s</string>
+    <string name="hotspotSettings">Ajustes de Punto de Acceso</string>
+
+    <string name="graph_tools_pan_and_zoom">Panorámica y zoom</string>
+    <string name="graph_tools_pick">Recoger datos</string>
+    <string name="graph_tools_more">Más herramientas</string>
+    <string name="graph_tools_reset">Restablecer zoom</string>
+    <string name="graph_tools_follow">Seguir nuevos datos</string>
+    <string name="graph_tools_linear_fit">Ajuste lineal</string>
+    <string name="graph_tools_export">Exportar datos</string>
+    <string name="graph_tools_log_x">Logaritmo al eje x</string>
+    <string name="graph_tools_log_y">Logaritmo al eje y</string>
+
+    <string name="graph_point_label">Punto</string>
+    <string name="graph_slope_label">Pendiente</string>
+    <string name="graph_difference_label">Diferencia</string>
+    <string name="graph_fit_label">Ajuste lineal: y = a x + b</string>
+
+    <string name="applyZoomTitle">Aplicar zoom</string>
+    <string name="applyZoomExplanation">A medida que cierra el modo interactivo de este gráfico, puede seleccionar si desea mantener su zoom.</string>
+    <string name="applyZoomAdvanced">Opciones avanzadas</string>
+    <string name="applyZoomApply">Aplicar a ..</string>
+
+    <string name="applyZoomReset">Restablecer por defecto</string>
+    <string name="applyZoomKeep">Mantener como seleccionado</string>
     </resources>

@@ -1,0 +1,259 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Cài đặt</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="graph_tools_pan_and_zoom">Thu phóng</string>
+    <string name="graph_tools_pick">Lấy dữ liệu</string>
+    <string name="graph_tools_more">Thêm công cụ</string>
+    <string name="graph_tools_reset">Đặt lại thu phóng</string>
+    <string name="graph_tools_follow">Sử dụng dữ liệu mới</string>
+    <string name="graph_tools_linear_fit">Hồi quy tuyến tính</string>
+    <string name="graph_tools_export">Xuất dữ liệu</string>
+    <string name="graph_tools_log_x">Logarit trục x</string>
+    <string name="graph_tools_log_y">Logarit trục y</string>
+
+    <string name="graph_point_label">Điểm</string>
+    <string name="graph_slope_label">Hệ số góc</string>
+    <string name="graph_difference_label">Hiệu</string>
+    <string name="graph_fit_label">Hồi quy y = a x + b</string>
+
+    <string name="applyZoomTitle">Áp dụng thu phóng</string>
+    <string name="applyZoomExplanation">Bạn đang đóng chế độ tương tác của đồ thị này, bạn có thể chọn giữ độ thu phóng nếu muốn.</string>
+    <string name="applyZoomAdvanced">Lựa chọn nâng cao</string>
+    <string name="applyZoomApply">Áp dụng cho…</string>
+
+    <string name="applyZoomReset">Cài đặt lại</string>
+    <string name="applyZoomKeep">Giữ nguyên lựa chọn</string>
+    <string name="applyZoomFollow">Giữ và theo dữ liệu mới</string>
+
+    <string name="applyZoomThis">Chỉ đồ thị này</string>
+    <string name="applyZoomSameVariable">Đồ thị khác: Cùng biến số</string>
+    <string name="applyZoomSameUnit">Đồ thị khác: Cùng đơn vị</string>
+    <string name="applyZoomSameAxis">Đồ thị khác: Cùng trục</string>
+
+    <string name="newExperiment">Thêm thí nghiệm</string>
+
+    <string name="newExperimentSimple">Thêm thí nghiệm đơn giản</string>
+    <string name="newExperimentPhyphoxInfo">Vào phyphox.com để tạo thêm nhiều thí nghiệm nâng cao bao gồm phân tích dữ liệu và chia sẻ với đồng nghiệp, học sinh và bạn bè.</string>
+    <string name="newExperimentInputTitle">Tiêu đề</string>
+    <string name="newExperimentInputBufferSize">Kích thước bộ đệm (số lượng giá trị sẽ được lưu trữ)</string>
+    <string name="newExperimentInputRate">Tốc độ cảm biến (đơn vị Hz, 0 = cao nhất)</string>
+    <string name="newExperimentInputSensors">Kích hoạt cảm biến</string>
+
+    <string name="newExperimentBluetooth">Thêm thí nghiệm cho thiết bị Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth bị lỗi</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Tải từ thiết bị</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Thiết bị này tự cung cấp thí nghiệm phyphox. Chọn tải từ thiết bị để mở nó.</string>
+
+    <string name="newExperimentQR">Thêm thí nghiệm từ mã QR</string>
+
+    <string name="newExperimentQRscan">Quét mã QR chứa thí nghiệm phyphox.</string>
+    <string name="newExperimentQRErrorTitle">Lỗi mã QR</string>
+    <string name="newExperimentQRNoExperiment">Không thể tìm thấy mã QR chứa thí nghiệm phyphox.</string>
+    <string name="newExperimentQRcrcMismatch">Mã QR bạn mới quét không đúng với mã trước đó. Vui lòng đảm bảo bạn chỉ quét mã nằm trong cùng một thí nghiệm.</string>
+    <string name="newExperimentQRCodesMissing1">Mã QR mới quét là một phần của</string>
+    <string name="newExperimentQRCodesMissing2">mã. Vui lòng nhấn tiếp tục để quét mã còn lại. Mã còn thiếu:</string>
+    <string name="newExperimentQRBadCRC">Tổng kiểm tra không hợp lệ. Điều này có nghĩa là mã QR bị lỗi hoặc có lỗi xảy ra trong khi quét mã.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Thí nghiệm Bluetooth bị lỗi.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Chuyển tải dữ liệu thí nghiệm bị lỗi.</string>
+
+    <string name="generalErrorDialog">Một lỗi đã xảy ra.</string>
+
+    <string name="help">Trợ giúp và thông tin</string>
+    <string name="experimentsPhyphoxOrg">Ý tưởng thí nghiệm và hướng dẫn</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Các câu hỏi thường gặp</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Trợ gúp điều khiển từ xa</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Ngôn ngữ</string>
+    <string name="translationText">Phyphox sẽ sử dụng ngôn ngữ đầu tiên có trong danh sách ngôn ngữ yêu thích. Để thay đổi lựa chọn, vào \"cài đặt\" Android bên dưới. Để biết ngôn ngữ sẵn có và nếu bạn muốn trọ gúp, chọn \"vào trang web\".</string>
+    <string name="translationToSettings">Cài đặt</string>
+    <string name="translationToWebsite">Vào trang web</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#vi</string>
+
+    <string name="deviceInfo">Thông tin thiết bị</string>
+    <string name="copyToClipboard">Lưu vào bộ nhớ</string>
+    <string name="deviceInfoCopied">Thông tin thiết bị đã được lưu trong bộ nhớ.</string>
+
+    <string name="warning">Cảnh báo</string>
+    <string name="donotshowagain">Không hiển thị lại</string>
+    <string name="damageWarning">Vui lòng không làm hỏng điện thoại trong khi làm thí nghiệm. Vui lòng cẩn thận để tránh làm rơi điện thoại trên bề mặt cứng và không để gần từ trường mạnh. Tác giả phyphox không có trách nhiệm đối với việc hỏng điện thoại của bạn.</string>
+
+    <string name="info">Thông tin</string>
+    <string name="credits">Thông tin tác giả</string>
+    <string name="creditsRWTH">phyphox đã được tạo ra ở Viện Vật Lý thứ 2 ở Đại Học RWTH Aachen.</string>
+    <string name="creditsNames">Phát triển và ý tưởng:
+\nTiến sĩ Sebastian Staacks
+\nÝ tưởng:
+\nGiáo sư Christoph Stampfer
+\nLập trình:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
+    <string name="gpl">Phyphox là phần mềm mã nguồn mở được mở nguồn bởi the GNU General Public License. Vui lòng vào trang phyphox.org để có thêm thông tin và lấy mã nguồn mở. Tuy nhiên, tên \"phyphox\" và \"RWTH Aachen\" đã được đăng ký thương hiệu.</string>
+    <string name="creditsLibs">"Giao diện trang web truy cập từ xa dùng thư viện JavaScript \"Chart.js\" (http://chartjs.org), có sẵn với bản quyền của MIT. Đối với biến đổi fourier, chúng tôi dùng thư viện FFTW (http://fftw.org), Bản quyền © 2003, 2007-11 Matteo Frigo,  Bản quyền © 2003, 2007-11 Viện Công nghệ Massachusetts, sẵn có dưới bản quyền của the GNU General Public Science (phiên bản 2 hoặc hơn)."</string>
+    <string name="sensorLinearAcceleration">Gia tốc tuyến tính</string>
+    <string name="sensorLight">Ánh sáng</string>
+    <string name="sensorGyroscope">Con quay hồi chuyển</string>
+    <string name="sensorAccelerometer">Gia tốc</string>
+    <string name="sensorMagneticField">Từ trường</string>
+    <string name="sensorPressure">Áp suất</string>
+    <string name="sensorTemperature">Nhiệt độ</string>
+    <string name="sensorHumidity">Độ ẩm</string>
+    <string name="sensorProximity">Tiệm cận</string>
+    <string name="sensorVendor">Nhà cung cấp cụ thể.</string>
+
+    <string name="vendorSensorTitle">Cảm biến của nhà cung cấp</string>
+    <string name="vendorSensorWarning1">Cảm biến</string>
+    <string name="vendorSensorWarning2">không báo cáo loại cảm biến đúng. Nó phụ thuộc vào nhà cung cấp cụ thể - và chúng tôi chỉ có thể đoán loại cảm biến từ tên của chúng. Do vậy, cảm biến có thê không hoạt động như mong đợi.</string>
+
+    <string name="location">Vị trí</string>
+
+    <string name="sensorNotAvailableWarningTitle">Cảm biến không khả dụng</string>
+    <string name="sensorNotAvailableWarningText1">Cảm biến</string>
+    <string name="sensorNotAvailableWarningText2">không khả dụng. Điều này có nghĩa thiết bị của bạn không có cảm biến này.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Thông tin thêm</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="tryagain">Thử lại</string>
+    <string name="doContinue">Tiếp tục</string>
+    <string name="close">Đóng</string>
+    <string name="next">Tiếp</string>
+    <string name="cancel">Huỷ</string>
+    <string name="unknown">không biết</string>
+
+    <string name="rename">Đổi tên</string>
+    <string name="delete">Xoá</string>
+    <string name="confirmDelete">Bạn có muốn xoá thí nghiệm này khỏi danh sách?</string>
+    <string name="confirmDeleteTitle">Xác nhận xoá</string>
+
+    <string name="stop">Dừng</string>
+    <string name="start">Bắt đầu</string>
+    <string name="clear_data">Xoá dữ liệu</string>
+    <string name="clear_data_question">Xoá dữ liệu đã ghi?</string>
+    <string name="clear">Xoá</string>
+    <string name="timed_stop">Dừng chạy t. gian</string>
+    <string name="timed_start">Bắt đầu chạy t.gian</string>
+
+    <string name="loadingTitle">Đang tải</string>
+    <string name="loadingText">Đang tải thí nghiệm…</string>
+    <string name="loadingBluetoothConnectionText">Kết nối thiết bị Bluetooth…</string>
+
+    <string name="timedRunDialogTitle">Chạy thời gian</string>
+    <string name="timedRunStartDelay">Độ trễ</string>
+    <string name="timedRunStopDelay">Khoảng thời gian thí nghiệm (s)</string>
+    <string name="enableTimedRun">Chạy thời gian</string>
+
+    <string name="export">Xuất dữ liệu</string>
+    <string name="export_subject">Dữ liệu từ phyphox</string>
+    <string name="export_pick_share">Chọn phương pháp xuất</string>
+
+    <string name="share">Chia sẻ ảnh chụp màn hình</string>
+    <string name="share_subject">Ảnh chụp màn hình từ phyphox</string>
+    <string name="share_pick_share">Chọn phương pháp chia sẻ</string>
+
+    <string name="remoteServer">Cho phép truy cập từ xa</string>
+    <string name="remoteServerWarning">Bạn sắp cho phép truy cập dữ liệu từ xa thu được. Bạn chỉ nên làm như vậy trên một mạng đáng tin cậy! Bạn cũng cần lưu ý rằng truy cập trực tiếp giữa các thiết bị có thể không khả dụng trên nhiều mạng công ty hoặc trường đại học.
+\n
+\nĐể bảo mật và có hiệu suất tốt nhất, bạn nên kết nối với thiết bị này thông qua tùy chọn kết nối (điểm truy cập di động).
+\n
+\nSau khi nhấn ok, bạn có thể truy cập phép đo của mình từ bất kỳ trình duyệt web nào trên cùng một mạng.</string>
+    <string name="remoteServerWarningTitle">Cảnh báo bảo mật!</string>
+    <string name="remoteServerNoNetwork">Bạn cần cài đặt kết nối không dây với thiết bị khác trước. Vui lòng bật Wifi hoặc bật Điểm phát sóng di động.</string>
+    <string name="remoteServerActive">Truy cập từ xa đã bật. Truy cập thí nghiệm này theo địa chỉ URL:
+\n%1$s</string>
+    <string name="hotspotSettings">Cài đặt Điểm phát di động</string>
+
+    <string name="remoteColorMapWarning">Biểu đồ màu trong giao diện từ xa chỉ gần đúng. Trái ngược với đồ thị trong ứng dụng, tại thời điểm nó không thể xử lý dữ liệu không tương đương hoặc tỷ lệ logarit trên trục x và y. Vì vậy, dữ liệu tại các khoảng thời gian khác nhau có thể xuất hiện ở vị trí sai.</string>
+
+    <string name="calibrated_magnetometer">Dùng từ kế đã hiệu chuẩn</string>
+    <string name="force_gnss">Chỉ vị trí vệ tinh</string>
+
+    <string name="switchToPhoneLayout">Xem: hẹp</string>
+    <string name="switchColumns1">Xem: 1 cột</string>
+    <string name="switchColumns2">Xem: 2 cột</string>
+    <string name="switchColumns3">Xem: 3 cột</string>
+    <string name="fontSize">Cỡ chữ</string>
+
+    <string name="show_description">Thông tin thí nghiệm</string>
+    <string name="save_locally">Lưu thí nghiệm vào bộ sưu tập</string>
+    <string name="save_locally_done">Lưu thí nghiệm vào bộ sưu tập thành công.</string>
+    <string name="save_locally_message">Thí nghiệm này đã được mở từ một nguồn từ xa. Bạn có muốn thêm nó vào bộ sưu tập thí nghiệm của bạn?</string>
+    <string name="save_locally_button">Lưu vào bộ sưu tập</string>
+    <string name="save_state">Lưu trạng thái thí nghiệm</string>
+    <string name="save_state_category">Thí nghiệm đã lưu</string>
+    <string name="save_state_message">Bạn có thể lưu trạng thái của thí nghiệm này bao gồm dùng dữ liệu vào tập tin hoặc chia sẻ nó với một phần mềm khác.</string>
+    <string name="save_state_title">Tiêu đề</string>
+    <string name="save_state_save">Vào b.sưu tập</string>
+    <string name="save_state_share">Chia sẻ</string>
+    <string name="save_state_subject">Trạng thái thí nghiệm cho phyphox</string>
+    <string name="save_state_default_title">Phép đo</string>
+    <string name="save_state_success">Trạng thái đã được lưu và tập tin.</string>
+
+    <string name="open_zip_title">Mở nhiều thí nghiệm</string>
+    <string name="open_zip_dialog_instructions">Tài nguyên này chứa nhiều thí nghiệm. Bạn có thể chọn một thí nghiệm để mở và tùy ý lưu nó vào bộ sưu tập của bạn hoặc sử dụng nút bên dưới để lưu tất cả chúng vào bộ sưu tập của bạn cùng một lúc.</string>
+    <string name="open_save_all">Lưu tất cả</string>
+
+    <string name="open_bluetooth_assets_title">Thí nghiệm cho Bluetooth</string>
+    <string name="open_bluetooth_assets">Các thí nghiệm sau đây cho thiết bị của bạn có sẵn từ phyphox. Bạn có thể chỉ cần mở và sử dụng chúng hoặc thêm tất cả chúng vào bộ sưu tập của bạn để dễ dàng truy cập chúng từ menu chính.</string>
+
+    <string name="timedRun">Thời gian chạy</string>
+
+    <string name="pick_exportSets">Chọn bộ dữ liệu để xuất.</string>
+    <string name="pick_exportFormat">Chọn định dạng dữ liệu.</string>
+
+    <string name="noDrawableData">Không xuất được dữ liệu.</string>
+
+    <string name="categoryNewExperiment">Thí nghiệm tùy chỉnh đơn giản</string>
+    <string name="categoryRawSensor">Cảm biến thô</string>
+
+    <string name="experimentinfo_hint">Kiểm tra thông tin thí nghiệm để tìm hiểu cách sử dụng thí nghiệm này.</string>
+    <string name="start_hint">Chạm vào hình tam giác để bắt đầu thí nghiệm.</string>
+
+    <string name="bluetooth">Bluetooth năng lượng thấp</string>
+    <string name="bt_android_version">Bluetooth năng lượng thấp không được hỗ trợ trên các Phiên bản Android thấp hơn 4.3.</string>
+
+    <string name="bt_pick_device">Vui lòng chọn một thiết bị.</string>
+    <string name="bt_scanning_generic">Quét tìm thiết bị Bluetooth</string>
+    <string name="bt_scanning_specific1">Quét các thiết bị Bluetooth với</string>
+    <string name="bt_scanning_specific2">tên của thiết bị…</string>
+    <string name="bt_device_not_supported">Không có thí nghiệm.</string>
+
+    <string name="bt_location_explanation">Android yêu cầu quyền truy cập vị trí để quét Bluetooth vì kết quả có thể được sử dụng để lấy thông tin vị trí. Bây giờ chúng tôi sẽ yêu cầu các quyền này. Bạn cần cấp quyền để thực hiện quét Bluetooth.</string>
+
+    <string name="bt_exception_uuid">Đặc trưng với UUID</string>
+    <string name="bt_exception_uuid2">không tìm thấy.</string>
+    <string name="bt_exception_disabled">Bluetooth bị vô hiệu hóa. Vui lòng bật bluetooth và thử lại.</string>
+    <string name="bt_exception_connection">Không thể mở kết nối Bluetooth.</string>
+    <string name="bt_exception_notfound">Không tìm thấy thiết bị Bluetooth.</string>
+    <string name="bt_exception_services">Không thể phát hiện được dịch vụ.</string>
+    <string name="bt_exception_device">Lỗi thiết bị với</string>
+    <string name="bt_exception_device_address">địa chỉ</string>
+    <string name="bt_exception_device_name">tên</string>
+    <string name="bt_exception_rate">Giá trị không hợp lệ cho tỷ lệ.</string>
+    <string name="bt_exception_notification">Thông báo cho đặc tính với UUID</string>
+    <string name="bt_exception_notification_enable">không thể kích hoạt.</string>
+    <string name="bt_exception_notification_disable">không thể vô hiệu hóa lần nữa.</string>
+    <string name="bt_exception_notification_fail_enable">Bật thông báo cho Đặc tính với UUID</string>
+    <string name="bt_exception_notification_fail">không thành công.</string>
+    <string name="bt_exception_config">Giá trị cho đặc tính</string>
+    <string name="bt_exception_config2">không thể thiết lập.</string>
+    <string name="bt_exception_no_connection">Thiết bị Bluetooth không được kết nối. Thí nghiệm không thể bắt đầu được.</string>
+    <string name="bt_exception_disconnected">Thiết bị Bluetooth đã bị ngắt kết nối.</string>
+    <string name="bt_default_error_message">Có lỗi với thiết bị Bluetooth.</string>
+
+    <string name="bt_error_writing">Lỗi trong khi viết đặc tính với UUID</string>
+    <string name="bt_error_reading">Lỗi trong khi đọc đặc tính với UUID</string>
+    <string name="bt_error_discovering">Lỗi khi tìm thiết bị bluetooth.</string>
+    <string name="bt_fail_reading">Đọc dữ liệu không thành công.</string>
+    <string name="bt_fail_writing">Viết dữ liệu không thành công.</string>
+
+    <string name="bt_more_info_link_text">Nếu thiết bị của bạn không hỗ trợ, chọn \"thông tin thêm\" để tìm hiểu thêm hỗ trợ về Bluetooth Năng Lượng Thấp trong phyphox trên trang web của chúng tôi.</string>
+    <string name="bt_more_info_link_button">Thông tin thêm</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>

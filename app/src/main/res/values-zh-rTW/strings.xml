@@ -21,7 +21,7 @@
     <string name="translationText">Phyphox將使用您首選語言列表中的第一種語言。 要更改您的偏好設定，請用下方的Android“設定”。 要了解哪些語言可用以及如何提供協助，請選擇“拜訪網站”。</string>
     <string name="translationToSettings">設定</string>
     <string name="translationToWebsite">拜訪網站</string>
-    <string name="translationToWebsiteURL">網址：http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#zh_Hant</string>
 
     <string name="warning">警示</string>
     <string name="donotshowagain">不要再顯示</string>
@@ -30,8 +30,15 @@
     <string name="info">訊息</string>
     <string name="credits">創立團隊</string>
     <string name="creditsRWTH">phyphox是由亞琛工業大學第二物理學院所開發。</string>
-    <string name="creditsNames">發展與概念：<br/><b>Dr. Sebastian Staacks</b><br/>概念：<br/><b>Prof. Christoph Stampfer</b><br/>設計：<br/><b>Frank Posthoff (A.NikoPol)</b><br/>程式設計：<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
-    <string name="creditsLibs">The web-interface for remote access uses the JavaScript libraries \"jQuery\" ((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), all available under the MIT licence.</string>
+    <string name="creditsNames">發展與概念：
+\nDr. Sebastian Staacks
+\n概念：
+\nProf. Christoph Stampfer
+\n程式設計：
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>概念：<br/><b>Prof. Christoph Stampfer</b><br/>設計：<br/><b>Frank Posthoff (A.NikoPol)</b><br/>程式設計：<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsLibs">The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later).</string>
     <string name="sensorLinearAcceleration">線性加速度</string>
     <string name="sensorLight">光感應</string>
     <string name="sensorGyroscope">陀螺儀</string>
@@ -123,7 +130,7 @@
 \n為了安全性及最佳性能，你應該經由共享選項(移動熱點)連結到裝置。
 \n按下OK後，你可以從同個網域的任何瀏覽器存取你的實驗。</string>
     <string name="categoryNewExperiment">自訂實驗</string>
-    <string name="categoryRawSensor">內建感應器</string>
+    <string name="categoryRawSensor">原始感測器</string>
 
     <string name="enableTimedRun">執行時域區間測量</string>
 
