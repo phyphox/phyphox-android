@@ -836,6 +836,7 @@ public abstract class phyphoxFile {
                     experiment.title = getText();
                     break;
                 case "state-title":
+                    experiment.stateTitle = getText();
                     break;
                 case "icon": //The experiment's icon
                     // We currently do not show the icon while the experiment is open, so we do not need to read it.
