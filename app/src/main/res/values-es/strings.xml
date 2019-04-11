@@ -137,4 +137,20 @@
 
     <string name="applyZoomReset">Restablecer por defecto</string>
     <string name="applyZoomKeep">Mantener como seleccionado</string>
+    <string name="remoteColorMapWarning">El espectro de color en la interfaz remota es sólo una aproximación. Al contrario del espectro en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x y y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.</string>
+
+    <string name="calibrated_magnetometer">Utiliza un magnetómetro calibrado</string>
+    <string name="force_gnss">Sólo ubicación satelital</string>
+
+    <string name="switchToPhoneLayout">Vista: Estrecha</string>
+    <string name="switchColumns1">Vista: 1 columna</string>
+    <string name="switchColumns2">Vista: 2 columnas</string>
+    <string name="switchColumns3">Vista: 3 columnas</string>
+    <string name="fontSize">Tamaño de la fuente</string>
+
+    <string name="show_description">Información del experimento</string>
+    <string name="save_locally">Agregar el experimento a la colección</string>
+    <string name="save_locally_done">Experimento exitosamente agregado a la colección</string>
+    <string name="save_locally_message">Este experimento ha sido abierto desde una fuente remota. ¿Deseas agregarlo a tu colección?</string>
+    <string name="save_locally_button">Guardar en la colección</string>
     </resources>
