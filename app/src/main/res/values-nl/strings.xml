@@ -30,14 +30,14 @@
     <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox werd ontwikkeld aan het Instituut voor Fysica aan de RWTH Aachen University.</string>
-    <string name="creditsNames">&lt;b&gt;Concept en uitwerking:&lt;br&gt;
-\n Dr. Sebastian Staacks
-\n&lt;b&gt; Concept:&lt;br&gt;
-\n Prof. Christoph Stampfer
-\n&lt;b&gt; Programmering:&lt;br&gt;
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+    <string name="creditsNames">Concept en uitwerking:
+\nDr. Sebastian Staacks
+\nConcept:
+\nProf. Christoph Stampfer
+\nProgrammering:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">De webinterface voor afstandsbediening gebruikt de JavaScript-bibliotheek \"Chart\" (http://chartjs.org) beschikbaar onder MIT-licentie. Voor de fourier transformaties, gebruiken we de FFTW libbibliotheek ary (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, die ook beschikbaar is onder GNU General Public Licence (versie 2 of later).</string>
     <string name="sensorLinearAcceleration">Lineaire Versnelling</string>
     <string name="sensorLight">Licht</string>
