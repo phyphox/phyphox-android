@@ -112,4 +112,26 @@
 \n%1$s</string>
     <string name="hotspotSettings">Ajustes de Punto de Acceso</string>
 
+    <string name="graph_tools_pan_and_zoom">Panorámica y zoom</string>
+    <string name="graph_tools_pick">Recoger datos</string>
+    <string name="graph_tools_more">Más herramientas</string>
+    <string name="graph_tools_reset">Restablecer zoom</string>
+    <string name="graph_tools_follow">Seguir nuevos datos</string>
+    <string name="graph_tools_linear_fit">Ajuste lineal</string>
+    <string name="graph_tools_export">Exportar datos</string>
+    <string name="graph_tools_log_x">Logaritmo al eje x</string>
+    <string name="graph_tools_log_y">Logaritmo al eje y</string>
+
+    <string name="graph_point_label">Punto</string>
+    <string name="graph_slope_label">Pendiente</string>
+    <string name="graph_difference_label">Diferencia</string>
+    <string name="graph_fit_label">Ajuste lineal: y = a x + b</string>
+
+    <string name="applyZoomTitle">Aplicar zoom</string>
+    <string name="applyZoomExplanation">A medida que cierra el modo interactivo de este gráfico, puede seleccionar si desea mantener su zoom.</string>
+    <string name="applyZoomAdvanced">Opciones avanzadas</string>
+    <string name="applyZoomApply">Aplicar a ..</string>
+
+    <string name="applyZoomReset">Restablecer por defecto</string>
+    <string name="applyZoomKeep">Mantener como seleccionado</string>
     </resources>
