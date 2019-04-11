@@ -260,4 +260,5 @@
     <string name="bt_more_info_link_button">Подробнее</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-</resources>
+<string name="export_empty">Эта экспериментальная конфигурация не находит какие-либо данные для экспорта. В случае ошибки обратитесь к источнику QR-кода или файла конфигурации.</string>
+    </resources>
