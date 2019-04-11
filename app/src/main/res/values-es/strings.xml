@@ -22,11 +22,14 @@
     <string name="info">Información</string>
     <string name="credits">Créditos</string>
     <string name="creditsRWTH">Phyphox fue desarrollado en el Segundo Instituto de Física de la Universidad Técnica de Aquisgrán, Alemania.</string>
-    <string name="creditsNames">
-        <![CDATA[
-            Desarrollo y Concepto:<br/><b>Dr. Sebastian Staacks</b><br/>Concepto:<br/><b>Prof. Christoph Stampfer</b><br/>Diseño:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programación:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b>
-        ]]>
-    </string>
+    <string name="creditsNames">Desarrollo y Concepto:
+\nDr. Sebastian Staacks
+\nConcepto:
+\nProf. Christoph Stampfer
+\nProgramación:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">La interfaz web para el acceso remoto utiliza la librería de JavaScript \"Chart.js\" (http://chartjs.org), disponible bajo licencia del MIT. Para la transformada de Fourier, utilizamos la librería FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Instituto Tecnológico de Massachusetts, la cual se encuentra disponible bajo Licencia Pública General de GNU (versión 2 o posterior).</string>
     <string name="sensorLinearAcceleration">Aceleración Lineal</string>
     <string name="sensorLight">Luz</string>
