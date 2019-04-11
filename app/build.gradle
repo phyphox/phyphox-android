@@ -9,7 +9,7 @@ android {
         targetSdkVersion 28
         versionCode 1010004 //1.01.00-04
         versionName "1.1.0-beta4"
-        resConfigs "cs", "de", "el", "en", "it", "ja", "nl", "pl", "pt", "ru", "tr", "zh-rTW"
+        resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "tr", "vi", "zh-rCN", "zh-rTW"
     }
     buildTypes {
         release {

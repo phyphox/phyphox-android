@@ -1430,7 +1430,7 @@ public class Analysis {
                     if (xout != null)
                         xout.append(minx + x*(maxx-minx)/((double)(mapWidth-1)));
                     if (yout != null)
-                        yout.append(miny + y*(maxy-miny)/((double)(mapWidth-1)));
+                        yout.append(miny + y*(maxy-miny)/((double)(mapHeight-1)));
                     if (zout != null) {
                         switch (zMode) {
                             case count:   zout.append(nout[y*mapWidth + x]);
