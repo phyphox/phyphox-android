@@ -31,7 +31,14 @@
     <string name="info">Phyphoxについて</string>
     <string name="credits">クレジット</string>
     <string name="creditsRWTH">phyphoxはRWTH Aachen大学の2nd Institute of Physicsにて開発されました．</string>
-    <string name="creditsNames">開発とコンセプト:<br/><b>Dr. Sebastian Staacks</b><br/> コンセプト:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>プログラミング:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">開発とコンセプト:
+\nDr. Sebastian Staacks
+\nコンセプト:
+\nProf. Christoph Stampfer
+\nプログラミング:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/> コンセプト:<br/><b>Prof. Christoph Stampfer</b><br/>Design:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>プログラミング:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="creditsLibs">遠隔操作のためのウェブのインターフェースには \"MIT licence\"のもとで利用可能な \"JavaScript library \"Chart.js\" (http://chartjs.org)\" が使われています．フーリエ変換には, GNU General Public Licence (version 2 or later)の下で利用可能な，\"FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology\"を使用しています。</string>
     <string name="sensorLinearAcceleration">線形加速</string>
     <string name="sensorLight">光</string>
