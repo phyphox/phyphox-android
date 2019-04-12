@@ -3,7 +3,7 @@
     <string name="action_settings">Podešavanja</string>
     <string name="title_activity_experiment">phyphox</string>
 
-    <string name="newExperiment">Dodaj jednostavan eksperiment</string>
+    <string name="newExperiment">Dodaj eksperiment</string>
     <string name="newExperimentPhyphoxInfo">Posetite phyphox.org kako biste sproveli naprednije eksperimente, uključujući analizu podataka i deljenje istih sa kolegama, studentima i prijateljima.</string>
     <string name="newExperimentInputTitle">Naslov</string>
     <string name="newExperimentInputBufferSize">Veličina bafera</string>
@@ -134,4 +134,61 @@
 
     <string name="experimentinfo_hint">Pogledaj uputstvo za eksperiment kako bi ga izvršio.</string>
 
-</resources>
+<string name="graph_tools_pan_and_zoom">Pomeranje i zumiranje</string>
+    <string name="graph_tools_pick">Izaberite podatke</string>
+    <string name="graph_tools_more">Više alata</string>
+    <string name="graph_tools_reset">Resetuj zumiranje</string>
+    <string name="graph_tools_follow">Prati nove podatke</string>
+    <string name="graph_tools_linear_fit">Linearan fit</string>
+    <string name="graph_tools_export">Otpremi ove podatke</string>
+    <string name="graph_tools_log_x">Logaritamska x osa</string>
+    <string name="graph_tools_log_y">Logaritamska y osa</string>
+
+    <string name="graph_point_label">Tačka</string>
+    <string name="graph_slope_label">Nagib</string>
+    <string name="graph_difference_label">Razlika</string>
+    <string name="graph_fit_label">Linearan fit: y = a x + b</string>
+
+    <string name="applyZoomTitle">Primeni zumiranje</string>
+    <string name="applyZoomExplanation">Kako zatvarate interaktivni mod ovog grafika, ako želite možete izabrati da zadržite vaše zumiranje.</string>
+    <string name="applyZoomAdvanced">Napredne opcije</string>
+    <string name="applyZoomApply">Primeni na…</string>
+
+    <string name="applyZoomReset">Resetuj na početna podešavanja</string>
+    <string name="applyZoomKeep">Zadrži kao što je selektovano</string>
+    <string name="applyZoomFollow">Zadrži prati nove podatke</string>
+
+    <string name="applyZoomThis">Samo ovaj grafik</string>
+    <string name="applyZoomSameVariable">Ostali grafici: Iste promenljive</string>
+    <string name="applyZoomSameUnit">Ostali grafici: Iste jedinice</string>
+    <string name="applyZoomSameAxis">Ostali grafici: Iste ose</string>
+
+    <string name="newExperimentSimple">Dodaj jednostavan eksperiment</string>
+    <string name="newExperimentBluetooth">Dodaj eksperiment za blutut uređaj</string>
+    <string name="newExperimentBluetoothErrorTitle">Blutut skener greška</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Skini sa uređaja</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Ovaj uređaj sprovodi sopstveni phyphox eksperiment. Odaberite \"skini sa uređaja\" kako biste ga otvorili.</string>
+
+    <string name="newExperimentQR">Dodaj eksperiment sa QR koda</string>
+
+    <string name="newExperimentQRscan">Skeniraj QR kod koji sadrži phyphox eksperiment.</string>
+    <string name="newExperimentQRErrorTitle">QR kod greška.</string>
+    <string name="newExperimentQRNoExperiment">Nije pronađen QR kod koji sadrži phyphox eksperiment.</string>
+    <string name="newExperimentQRcrcMismatch">QR kod koji je upravo skeniran ne odgovara prethodnim kodovima. Molimo vas da skenirate kodove koji pripadaju istom eksperimentu.</string>
+    <string name="newExperimentQRCodesMissing1">QR kod koji ste skenirali je deo seta od</string>
+    <string name="newExperimentQRCodesMissing2">kodova. Molimo vas pritisnite nastavak za skeniranje ostalih kodova. Kodovi i dalje nedostaju:</string>
+    <string name="newExperimentQRBadCRC">Pogrešna suma. Ovo znači da ili su QR kodovi loši ili je nešto pošlo naopako tokom skeniranja.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Blutut eksperiment greška.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Prenosni podaci eksperimenta su poremećeni.</string>
+
+    <string name="generalErrorDialog">Desila se greška.</string>
+
+    <string name="deviceInfo">Informacije o uređaju</string>
+    <string name="copyToClipboard">Kopiraj u klipbord</string>
+    <string name="deviceInfoCopied">Informacije o uređaju su kopirane u vaš klipbord.</string>
+
+    <string name="vendorSensorWarning1">Senzor</string>
+    <string name="vendorSensorWarning2">"Nije izabran tačan tip senzora. Čini se da je to  ------------ i njegov tip se može samo naslutiti iz naslova."</string>
+
+    </resources>
