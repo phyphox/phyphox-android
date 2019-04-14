@@ -153,4 +153,25 @@
     <string name="save_locally_done">Experimento exitosamente agregado a la colección</string>
     <string name="save_locally_message">Este experimento ha sido abierto desde una fuente remota. ¿Deseas agregarlo a tu colección?</string>
     <string name="save_locally_button">Guardar en la colección</string>
+    <string name="save_state">Guardar experimento</string>
+    <string name="save_state_category">Experimentos guardados</string>
+    <string name="save_state_message">Puedes guardar el estado actual de este experimento, incluyendo tus datos, en tu colección o bien compartirlo con aplicaciones de terceros.</string>
+    <string name="save_state_title">Título</string>
+    <string name="save_state_save">En colección</string>
+    <string name="save_state_share">Compartir</string>
+    <string name="save_state_subject">Estado del experimento para phyphox</string>
+    <string name="save_state_default_title">Medición</string>
+    <string name="save_state_success">El estado actual ha sido guardado en tu colección</string>
+
+    <string name="open_zip_title">Abriendo un conjunto de experimentos</string>
+    <string name="open_zip_dialog_instructions">Este recurso contiene múltiples experimentos. Puedes elegir uno para abrirlo y opcionalmente agregarlo a tu colección, o utilizar el botón de abajo para agregarlos todos a la vez.</string>
+    <string name="open_save_all">Agregarlos todos</string>
+
+    <string name="open_bluetooth_assets_title">Experimentos para dispositivo Bluetooth</string>
+    <string name="open_bluetooth_assets">Los siguientes experimentos para tu dispositivo están disponibles desde phyphox. Puedes simplemente abrir uno y utilizarlo o agregarlos todos a tu colección para acceder fácilmente a ellos desde el menú principal.</string>
+
+    <string name="timedRun">Ejecución cronometrada</string>
+
+    <string name="pick_exportFormat">Elige el formato de la información.</string>
+
     </resources>
