@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources><string name="action_settings">Ajustes</string>
-    <string name="newExperiment">Añadir un experimento sencillo</string>
+    <string name="newExperiment">Añadir experimentos</string>
     <string name="newExperimentPhyphoxInfo">Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y compártelos con colegas, estudiantes y amigos.</string>
     <string name="newExperimentInputTitle">Título</string>
     <string name="newExperimentInputBufferSize">Tamaño del búfer (cantidad de valores almacenados)</string>
@@ -173,5 +173,40 @@
     <string name="timedRun">Ejecución cronometrada</string>
 
     <string name="pick_exportFormat">Elige el formato de la información.</string>
+
+    <string name="applyZoomFollow">Mantener y seguir nuevos datos.</string>
+
+    <string name="applyZoomThis">Solo esta gráfica</string>
+    <string name="applyZoomSameVariable">Otros gráficos: misma variable</string>
+    <string name="applyZoomSameUnit">Otros gráficos: Misma unidad</string>
+    <string name="applyZoomSameAxis">Otros gráficos: mismo eje</string>
+
+    <string name="newExperimentSimple">Añadir experimento simple</string>
+    <string name="newExperimentBluetooth">Añadir experimento para dispositivo Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Error al escanear el bluetooth</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Cargar desde dispositivo</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Este dispositivo proporciona su propio experimento phyphox. Seleccione cargar desde dispositivo para abrirlo.</string>
+
+    <string name="newExperimentQR">Añadir experimento desde el código QR</string>
+
+    <string name="newExperimentQRscan">Escanea un código QR que contiene un experimento de phyphox.</string>
+    <string name="newExperimentQRErrorTitle">Error de código QR.</string>
+    <string name="newExperimentQRNoExperiment">No se pudo encontrar un código QR que contenga un experimento de phyphox.</string>
+    <string name="newExperimentQRcrcMismatch">El código QR que acaba de escanear no parece coincidir con los códigos anteriores. Asegúrese de escanear únicamente los códigos que pertenecen al mismo experimento.</string>
+    <string name="newExperimentQRCodesMissing1">El código QR que acaba de escanear es parte de un conjunto</string>
+    <string name="newExperimentQRCodesMissing2">Por favor presione continuar para escanear los códigos restantes. Todavía faltan los códigos:</string>
+    <string name="newExperimentQRBadCRC">"Comprobación  no válida. Esto significa que el código QR es dañado o que algo salió mal al escanearlo."</string>
+
+    <string name="newExperimentBTReadErrorTitle">"Error de  experimento de Bluetooth ."</string>
+    <string name="newExperimentBTReadErrorCorrupted">Los datos del experimento transmitido están dañados.</string>
+
+    <string name="generalErrorDialog">Se produjo un error.</string>
+
+    <string name="sensorVendor">Proveedor específico</string>
+
+    <string name="vendorSensorTitle">Sensor específico del vendedor</string>
+    <string name="vendorSensorWarning1">El sensor</string>
+    <string name="pick_exportSets">Elija los conjuntos de datos para exportar.</string>
+    <string name="noDrawableData">No hay datos por graficar</string>
 
     </resources>
