@@ -5,12 +5,12 @@
     <string name="newExperimentInputTitle">Título</string>
     <string name="newExperimentInputBufferSize">Tamaño del búfer (cantidad de valores almacenados)</string>
     <string name="newExperimentInputRate">Tasa de muestreo del sensor (en Hz, 0 = lo más rápido posible)</string>
-    <string name="newExperimentInputSensors">Sensores Activos</string>
+    <string name="newExperimentInputSensors">Sensores activos</string>
 
     <string name="help">Ayuda e información</string>
     <string name="experimentsPhyphoxOrg">Ideas para experimentos e instrucciones</string>
     <string name="faqPhyphoxOrg">Preguntas más frecuentes</string>
-    <string name="remotePhyphoxOrgURL">http://phyphox.org/control-remoto</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationInfo">Idiomas</string>
     <string name="translationText">Phyphox usará el primer idioma disponible de su lista de idiomas preferidos. Para cambiar sus preferencias en Android, vaya a \"Ajustes\" seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"Visitar sitio web\".</string>
     <string name="translationToSettings">Ajustes</string>
@@ -59,7 +59,7 @@
     <string name="confirmDelete">¿Deseas borrar este experimento de tu colección?</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
 
-    <string name="ok">De acuerdo</string>
+    <string name="ok">Correcto</string>
     <string name="confirmDeleteTitle">¿Confirmas borrarlo?</string>
 
     <string name="stop">Detener</string>
@@ -78,10 +78,10 @@
     <string name="share_subject">Captura de pantalla de phyphox</string>
     <string name="share_pick_share">Elige un medio para compartir</string>
 
-    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experimentos</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
-    <string name="remotePhyphoxOrg">Ayuda con el control remoto</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="remotePhyphoxOrg">Ayuda con control remoto</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#es</string>
 
     <string name="deviceInfo">Información del dispositivo</string>
     <string name="copyToClipboard">Copiar al portapapeles</string>
@@ -101,7 +101,7 @@
     <string name="timedRunDialogTitle">Tarea cronometrada</string>
     <string name="timedRunStartDelay">Retraso de ejecución</string>
     <string name="timedRunStopDelay">Duración del experimento</string>
-    <string name="enableTimedRun">Ejecutar tarea con tiempo</string>
+    <string name="enableTimedRun">Ejecutar tarea cronometrada</string>
 
     <string name="remoteServer">Permitir acceso remoto</string>
     <string name="remoteServerWarning">"Estás por permitir acceso remoto a la información recolectada. ¡Sólo deberías hacer esto en conexiones en las que confías!. Ten en cuenta además, que el acceso directo entre dispositivos podría no estar permitido en redes corporativas o universitarias.
@@ -122,8 +122,8 @@
     <string name="graph_tools_follow">Seguir nuevos datos</string>
     <string name="graph_tools_linear_fit">Ajuste lineal</string>
     <string name="graph_tools_export">Exportar datos</string>
-    <string name="graph_tools_log_x">Logaritmo al eje x</string>
-    <string name="graph_tools_log_y">Logaritmo al eje y</string>
+    <string name="graph_tools_log_x">Eje x logaritmico</string>
+    <string name="graph_tools_log_y">Eje y logaritmico</string>
 
     <string name="graph_point_label">Punto</string>
     <string name="graph_slope_label">Pendiente</string>
@@ -131,12 +131,12 @@
     <string name="graph_fit_label">Ajuste lineal: y = a x + b</string>
 
     <string name="applyZoomTitle">Aplicar zoom</string>
-    <string name="applyZoomExplanation">A medida que cierra el modo interactivo de este gráfico, puede seleccionar si desea mantener su zoom.</string>
+    <string name="applyZoomExplanation">A medida que cierra el modo interactivo de este gráfico, puedes seleccionar si deseas mantener su zoom.</string>
     <string name="applyZoomAdvanced">Opciones avanzadas</string>
     <string name="applyZoomApply">Aplicar a ..</string>
 
     <string name="applyZoomReset">Restablecer por defecto</string>
-    <string name="applyZoomKeep">Mantener como seleccionado</string>
+    <string name="applyZoomKeep">Mantener modo seleccionado</string>
     <string name="remoteColorMapWarning">El espectro de color en la interfaz remota es sólo una aproximación. Al contrario del espectro en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x y y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.</string>
 
     <string name="calibrated_magnetometer">Utiliza un magnetómetro calibrado</string>
@@ -177,13 +177,13 @@
     <string name="applyZoomFollow">Mantener y seguir nuevos datos.</string>
 
     <string name="applyZoomThis">Solo esta gráfica</string>
-    <string name="applyZoomSameVariable">Otros gráficos: misma variable</string>
+    <string name="applyZoomSameVariable">Otros gráficos: Misma variable</string>
     <string name="applyZoomSameUnit">Otros gráficos: Misma unidad</string>
-    <string name="applyZoomSameAxis">Otros gráficos: mismo eje</string>
+    <string name="applyZoomSameAxis">Otros gráficos: Mismo eje</string>
 
     <string name="newExperimentSimple">Añadir experimento simple</string>
     <string name="newExperimentBluetooth">Añadir experimento para dispositivo Bluetooth</string>
-    <string name="newExperimentBluetoothErrorTitle">Error al escanear el bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Error al escanear el Bluetooth</string>
     <string name="newExperimentBluetoothLoadFromDevice">Cargar desde dispositivo</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Este dispositivo proporciona su propio experimento phyphox. Seleccione cargar desde dispositivo para abrirlo.</string>
 
@@ -198,7 +198,7 @@
     <string name="newExperimentQRBadCRC">"Comprobación  no válida. Esto significa que el código QR esta dañado o que algo salió mal al escanearlo."</string>
 
     <string name="newExperimentBTReadErrorTitle">"Error de  experimento de Bluetooth ."</string>
-    <string name="newExperimentBTReadErrorCorrupted">Los datos del experimento transmitido están dañados.</string>
+    <string name="newExperimentBTReadErrorCorrupted">La información transmitida por el experimento está dañada.</string>
 
     <string name="generalErrorDialog">Se produjo un error.</string>
 
