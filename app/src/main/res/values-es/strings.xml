@@ -193,20 +193,68 @@
     <string name="newExperimentQRErrorTitle">Error de código QR.</string>
     <string name="newExperimentQRNoExperiment">No se pudo encontrar un código QR que contenga un experimento de phyphox.</string>
     <string name="newExperimentQRcrcMismatch">El código QR que acaba de escanear no parece coincidir con los códigos anteriores. Asegúrese de escanear únicamente los códigos que pertenecen al mismo experimento.</string>
-    <string name="newExperimentQRCodesMissing1">El código QR que acaba de escanear es parte de un conjunto</string>
-    <string name="newExperimentQRCodesMissing2">Por favor presione continuar para escanear los códigos restantes. Todavía faltan los códigos:</string>
-    <string name="newExperimentQRBadCRC">"Comprobación  no válida. Esto significa que el código QR es dañado o que algo salió mal al escanearlo."</string>
+    <string name="newExperimentQRCodesMissing1">El código QR que acabas de escanear es parte de un conjunto</string>
+    <string name="newExperimentQRCodesMissing2">códigos. Por favor presiona continuar para escanear los códigos restantes. Códigos que aún faltan:</string>
+    <string name="newExperimentQRBadCRC">"Comprobación  no válida. Esto significa que el código QR esta dañado o que algo salió mal al escanearlo."</string>
 
     <string name="newExperimentBTReadErrorTitle">"Error de  experimento de Bluetooth ."</string>
     <string name="newExperimentBTReadErrorCorrupted">Los datos del experimento transmitido están dañados.</string>
 
     <string name="generalErrorDialog">Se produjo un error.</string>
 
-    <string name="sensorVendor">Proveedor específico</string>
+    <string name="sensorVendor">Específico del fabricante</string>
 
-    <string name="vendorSensorTitle">Sensor específico del vendedor</string>
+    <string name="vendorSensorTitle">Sensor específico del fabricante</string>
     <string name="vendorSensorWarning1">El sensor</string>
-    <string name="pick_exportSets">Elija los conjuntos de datos para exportar.</string>
-    <string name="noDrawableData">No hay datos por graficar</string>
+    <string name="pick_exportSets">Elige los conjuntos de datos para exportar.</string>
+    <string name="noDrawableData">No hay datos por graficar.</string>
 
-    </resources>
+    <string name="categoryNewExperiment">Experimentos personales simples</string>
+    <string name="categoryRawSensor">Sensores primarios</string>
+
+    <string name="experimentinfo_hint">Revisa la información del experimento para aprender como utilizarlo.</string>
+    <string name="start_hint">Toca el triángulo para comenzar el experimento.</string>
+
+    <string name="bluetooth">Bluetooth LE</string>
+    <string name="bt_android_version">Bluetooth LE no está soportado en versiones de Android anteriores a la 4.3.</string>
+
+    <string name="bt_pick_device">Por favor selecciona un dispositivo.</string>
+    <string name="bt_scanning_generic">Buscando dispositivos Bluetooth…</string>
+    <string name="bt_scanning_specific1">Buscando dispositivos Bluetooth con</string>
+    <string name="bt_scanning_specific2">en su nombre…</string>
+    <string name="bt_device_not_supported">No hay experimento disponible.</string>
+
+    <string name="bt_location_explanation">Androide necesita permisos de ubicación para buscar dispositivos Bluetooth, puesto que el resultado podría utilizarse para derivar información de ubicación. Vamos a solicitar ahora estos permisos. Debes autorizarlos para poder buscar dispositivos Bluetooth.</string>
+
+    <string name="bt_exception_uuid">La characteristic con UUID</string>
+    <string name="bt_exception_uuid2">no se ha encontrado.</string>
+    <string name="bt_exception_disabled">Bluetooth esta deshabilitado. Activa por favor el Bluetooth e intenta nuevamente.</string>
+    <string name="bt_exception_connection">La conexión Bluetooth no pudo realizarse.</string>
+    <string name="bt_exception_notfound">Dispositivo Bluetooth no localizado.</string>
+    <string name="bt_exception_services">No se han encontrado services.</string>
+    <string name="bt_exception_device">Error de conexión con el dispositivo</string>
+    <string name="bt_exception_device_address">la dirección</string>
+    <string name="bt_exception_device_name">llamado</string>
+    <string name="bt_exception_rate">Valor inválido para el rate.</string>
+    <string name="bt_exception_notification">La notificación para la characteristic con el UUID</string>
+    <string name="bt_exception_notification_enable">no pudo habilitarse.</string>
+    <string name="bt_exception_notification_disable">no pudo deshabilitarse nuevamente.</string>
+    <string name="bt_exception_notification_fail_enable">La habilitación de las notificaciones para la characteristic con el UUID</string>
+    <string name="bt_exception_notification_fail">no fue exitosa.</string>
+    <string name="bt_exception_config">El valor para la characteristic</string>
+    <string name="bt_exception_config2">no pudo establecerse.</string>
+    <string name="bt_exception_no_connection">El dispositivo Bluetooth no está conectado. El experimento no puede ser iniciado.</string>
+    <string name="bt_exception_disconnected">El dispositivo Bluetooth ha sido desconectado.</string>
+    <string name="bt_default_error_message">Ha ocurrido un error con el dispositivo Bluetooth.</string>
+
+    <string name="bt_error_writing">Error al intentar escribir la Characteristic con UUID</string>
+    <string name="bt_error_reading">Error al intentar leer la characteristic con UUID</string>
+    <string name="bt_error_discovering">Error al intentar encontrar los services del dispositivo Bluetooth.</string>
+    <string name="bt_fail_reading">La operación de lectura no fue exitosa.</string>
+    <string name="bt_fail_writing">La operación de escritura no fue exitosa.</string>
+
+    <string name="bt_more_info_link_text">Si tu dispositivo no está soportado, haz click en \"Más información\" para aprender más sobre el soporte flexible para Bluetooth LE en phyphox en nuestro sitio web.</string>
+    <string name="bt_more_info_link_button">Más información</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
