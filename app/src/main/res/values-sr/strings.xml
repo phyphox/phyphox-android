@@ -38,7 +38,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"jQuery\"((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), svi su dostupni pod MIT licencom.</string>
+    <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"Chart.js\"(http://chartjs.org), dostupnu pod MIT licencom. Za Furijeove transformacije, koristimo FFTW biblioteku (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, koja je dostupna pod GNU generalna javna licenca (verzija 2 ili kasnije).</string>
     <string name="sensorLinearAcceleration">Linearno ubrzanje</string>
     <string name="sensorLight">Svetlost</string>
     <string name="sensorGyroscope">Žiroskop</string>
@@ -189,6 +189,73 @@
     <string name="deviceInfoCopied">Informacije o uređaju su kopirane u vaš klipbord.</string>
 
     <string name="vendorSensorWarning1">Senzor</string>
-    <string name="vendorSensorWarning2">"Nije izabran tačan tip senzora. Čini se da je to  ------------ i njegov tip se može samo naslutiti iz naslova."</string>
+    <string name="vendorSensorWarning2">nije predstavljen tačan tip senzora. Izgleeda da je specifičan za proizvođača i njegov tip se može samo naslutiti iz naslova. Stoga, moguće je da neće raditi, kao što se očekuje.</string>
 
-    </resources>
+    <string name="gpl">Phyphox je softver otvorenog koda realizovan pod GNU General Public Licence. Molimo posetite http://phyphox.org za više informacija i pristup izvornom kodu. Ipak, naziv \"phyphox\" i \"RWTH Aachen\" su registrovane robne marke.</string>
+    <string name="sensorVendor">Karakteristike dobavljača</string>
+
+    <string name="vendorSensorTitle">Senzor karakterističan za dobavljača</string>
+    <string name="tryagain">Pokušajte ponovo</string>
+    <string name="doContinue">Nastavi</string>
+    <string name="rename">Preimenuj</string>
+    <string name="loadingBluetoothConnectionText">Povezivanje na Bluetooth uređaj…</string>
+
+    <string name="remoteServerNoNetwork">Najpre uspostavite WiFi konekciju na udaljenom uređaju. Molimo omogućite WiFi vezu ili mobilni hotspot.</string>
+    <string name="remoteColorMapWarning">Nijansa na udaljenom interfejsu je samo približna vrednost. Nasuprot nijansi u aplikaciji, trenutno ne mogu biti podržani neekvidistantni podaci ili logaritamska skala na x i y osama. Tako da se podaci mogu u različitim intervalima pojaviti na pogrešnoj lokaciji.</string>
+
+    <string name="force_gnss">Samo satelitska lokacija</string>
+
+    <string name="fontSize">Veličina slova</string>
+
+    <string name="open_zip_title">Otvaranje grupe eksperimenata</string>
+    <string name="open_zip_dialog_instructions">Ovaj izvor sadrži više eksperimenata. Možete izabrati jedan da otvorite i ukoliko želite, sačuvate u Vašu kolekciju ili ih sve sačuvati odjednom-pritiskom na dugme ispod.</string>
+    <string name="open_save_all">Sačuvaj sve</string>
+
+    <string name="open_bluetooth_assets_title">Eksperimenti za Bluetooth uređaje</string>
+    <string name="open_bluetooth_assets">Sledeći eksperimenti za Vaš uređaj su dostupni na phyphox-u. Možete ih otvoriti i koristiti ili dodati sve u Vašu kolekciju za lako pristupanje sa glavnog menija.</string>
+
+    <string name="start_hint">Dodirnite trougao da biste pokrenuli eksperiment.</string>
+
+    <string name="bluetooth">Blutut niske energije</string>
+    <string name="bt_android_version">Bluetooth Low Energy nije podržan na Android verzijama nižim od 4.3.</string>
+
+    <string name="bt_pick_device">Molimo izaberite uređaj.</string>
+    <string name="bt_scanning_generic">Traženje Bluetooth uređaja…</string>
+    <string name="bt_scanning_specific1">Traženje Bluetooth uređaja sa</string>
+    <string name="bt_scanning_specific2">u svom imenu…</string>
+    <string name="bt_device_not_supported">Nema dostupnih eksperimenata.</string>
+
+    <string name="bt_location_explanation">Android zahteva dozvolu lociranja za Bluetooth skeniranja, kako bi rezultat mogao da se koristi za izvođenje informacija o lokaciji. Sada ćemo zatražiti ove dozvole. Potrebno ja da odobrite da biste obavili Bluetooth skeniranje.</string>
+
+    <string name="bt_exception_uuid">Karakteristike UUID</string>
+    <string name="bt_exception_uuid2">nije pronadjena.</string>
+    <string name="bt_exception_disabled">Bluethoot je onemogućen. Molimo omogućite bluetooth i pokušajte ponovo.</string>
+    <string name="bt_exception_connection">Bluetooth veza se ne može ostvariti.</string>
+    <string name="bt_exception_notfound">Bluetooth uređaj nije pronađen.</string>
+    <string name="bt_exception_services">Usluge nije moguće pronaći.</string>
+    <string name="bt_exception_device">Greška sa uređajem pod imenom</string>
+    <string name="bt_exception_device_address">adresa</string>
+    <string name="bt_exception_device_name">ime</string>
+    <string name="bt_exception_rate">Netačna vrednost parametra.</string>
+    <string name="bt_exception_notification">Obaveštenje za karakteristiku UUID</string>
+    <string name="bt_exception_notification_enable">se ne može omogućiti.</string>
+    <string name="bt_exception_notification_disable">se ne može ponovo onemogućiti.</string>
+    <string name="bt_exception_notification_fail_enable">Uključujem obaveštenje za karakteristiku UUID</string>
+    <string name="bt_exception_notification_fail">nije uspela.</string>
+    <string name="bt_exception_config">Vrednost za karakteristiku</string>
+    <string name="bt_exception_config2">se ne može postaviti.</string>
+    <string name="bt_exception_no_connection">Bluetooth uređaj nije povezan. Eksperiment se ne može započeti.</string>
+    <string name="bt_exception_disconnected">Bluetooth uređaj više nije povezan.</string>
+    <string name="bt_default_error_message">Greška sa Bluetooth uređajem.</string>
+
+    <string name="bt_error_writing">Greška pri unosu karakteristike za UUID</string>
+    <string name="bt_error_reading">Greška pri iščitavanju karakakteristike UUID</string>
+    <string name="bt_error_discovering">Greška pri pronalaženju usluga Bluetooth uređaja.</string>
+    <string name="bt_fail_reading">Čitanje neuspešno.</string>
+    <string name="bt_fail_writing">Upisivanje neuspešno.</string>
+
+    <string name="bt_more_info_link_text">Ukoliko Vaš uređaj nije podržan, izaberite opciju \"more info\" da biste saznali viže o prilagodljivoj Bluetooth Low Energy podršci u phyphox na našem veb sajtu.</string>
+    <string name="bt_more_info_link_button">Više informacija</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
