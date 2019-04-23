@@ -27,7 +27,7 @@
     <string name="donotshowagain">Ne pokazuj ponovo</string>
     <string name="damageWarning">Molimo vas da budete oprezni prilikom izvođenja eksperimenata, kako ne biste oštetili vaš telefon. Molimo vas da posebno povedete računa o ispuštanju telefona na čvrste površine i da ga ne izlažete jakom magnetnom polju. Autori Phyphox-a nisu odgovorni za bilo kakva oštećenja vašeg telefona.</string>
 
-    <string name="info">Informacije</string>
+    <string name="info">Info</string>
     <string name="credits">Bodovi</string>
     <string name="creditsRWTH">phyphox je nastao na drugom institutu za fiziku, Univerzitet u Aachan RWTH.</string>
     <string name="creditsNames">Razvoj i koncept:
@@ -129,7 +129,7 @@
 
     <string name="noDrawableData">Nema slikovnih podataka.</string>
 
-    <string name="categoryNewExperiment">Jednostavni nasumični eksperimenti</string>
+    <string name="categoryNewExperiment">Laki nasumični eksperimenti</string>
     <string name="categoryRawSensor">Sirovi senzori</string>
 
     <string name="experimentinfo_hint">Pogledaj uputstvo za eksperiment kako bi ga izvršio.</string>
@@ -208,13 +208,13 @@
     <string name="fontSize">Veličina slova</string>
 
     <string name="open_zip_title">Otvaranje grupe eksperimenata</string>
-    <string name="open_zip_dialog_instructions">Ovaj izvor sadrži više eksperimenata. Možete izabrati jedan da otvorite i ukoliko želite, sačuvate u Vašu kolekciju ili ih sve sačuvati odjednom-pritiskom na dugme ispod.</string>
+    <string name="open_zip_dialog_instructions">Ovaj izvor sadrži više eksperimenata. Možete izabrati otvaranje jednog i ukoliko želite, sačuvate u Vašu kolekciju ili ih sve sačuvati odjednom-pritiskom na dugme ispod.</string>
     <string name="open_save_all">Sačuvaj sve</string>
 
     <string name="open_bluetooth_assets_title">Eksperimenti za Bluetooth uređaje</string>
     <string name="open_bluetooth_assets">Sledeći eksperimenti za Vaš uređaj su dostupni na phyphox-u. Možete ih otvoriti i koristiti ili dodati sve u Vašu kolekciju za lako pristupanje sa glavnog menija.</string>
 
-    <string name="start_hint">Dodirnite trougao da biste pokrenuli eksperiment.</string>
+    <string name="start_hint">Dodirnite trougao za početak eksperimenta.</string>
 
     <string name="bluetooth">Blutut niske energije</string>
     <string name="bt_android_version">Bluetooth Low Energy nije podržan na Android verzijama nižim od 4.3.</string>
