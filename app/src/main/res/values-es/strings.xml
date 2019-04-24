@@ -17,7 +17,7 @@
     <string name="translationToWebsite">Visitar sitio web</string>
     <string name="warning">Advertencia</string>
     <string name="donotshowagain">No mostrar de nuevo</string>
-    <string name="damageWarning">Por favor, tenga cuidado de no dañar su dispositivo durante los experimentos. Por favor tenga especial cuidado en evitar dejarlo caer sobre superficies duras y no lo exponga a campos magnéticos de alta intensidad. Los autores de phyphox no se hacen responsables de cualquier posible daño a su dispositivo.</string>
+    <string name="damageWarning">Por favor, ten cuidado de no dañar tu dispositivo durante los experimentos. Por favor ten especial cuidado en evitar dejarlo caer sobre superficies duras y no lo expongas a campos magnéticos de alta intensidad. Los autores de phyphox no se hacen responsables de cualquier posible daño a tu dispositivo.</string>
 
     <string name="info">Información</string>
     <string name="credits">Créditos</string>
@@ -99,8 +99,8 @@
     <string name="loadingBluetoothConnectionText">Conectando a dispositivo Bluetooth…</string>
 
     <string name="timedRunDialogTitle">Tarea cronometrada</string>
-    <string name="timedRunStartDelay">Retraso de ejecución</string>
-    <string name="timedRunStopDelay">Duración del experimento</string>
+    <string name="timedRunStartDelay">Retraso de ejecución (s)</string>
+    <string name="timedRunStopDelay">Duración del experimento (s)</string>
     <string name="enableTimedRun">Ejecutar tarea cronometrada</string>
 
     <string name="remoteServer">Permitir acceso remoto</string>
@@ -133,7 +133,7 @@
     <string name="applyZoomTitle">Aplicar zoom</string>
     <string name="applyZoomExplanation">A medida que cierra el modo interactivo de este gráfico, puedes seleccionar si deseas mantener su zoom.</string>
     <string name="applyZoomAdvanced">Opciones avanzadas</string>
-    <string name="applyZoomApply">Aplicar a ..</string>
+    <string name="applyZoomApply">Aplicar a…</string>
 
     <string name="applyZoomReset">Restablecer por defecto</string>
     <string name="applyZoomKeep">Mantener modo seleccionado</string>
@@ -150,7 +150,7 @@
 
     <string name="show_description">Información del experimento</string>
     <string name="save_locally">Agregar el experimento a la colección</string>
-    <string name="save_locally_done">Experimento exitosamente agregado a la colección</string>
+    <string name="save_locally_done">Experimento exitosamente agregado a la colección.</string>
     <string name="save_locally_message">Este experimento ha sido abierto desde una fuente remota. ¿Deseas agregarlo a tu colección?</string>
     <string name="save_locally_button">Guardar en la colección</string>
     <string name="save_state">Guardar experimento</string>
@@ -161,7 +161,7 @@
     <string name="save_state_share">Compartir</string>
     <string name="save_state_subject">Estado del experimento para phyphox</string>
     <string name="save_state_default_title">Medición</string>
-    <string name="save_state_success">El estado actual ha sido guardado en tu colección</string>
+    <string name="save_state_success">El estado actual ha sido guardado en tu colección.</string>
 
     <string name="open_zip_title">Abriendo un conjunto de experimentos</string>
     <string name="open_zip_dialog_instructions">Este recurso contiene múltiples experimentos. Puedes elegir uno para abrirlo y opcionalmente agregarlo a tu colección, o utilizar el botón de abajo para agregarlos todos a la vez.</string>
@@ -174,7 +174,7 @@
 
     <string name="pick_exportFormat">Elige el formato de la información.</string>
 
-    <string name="applyZoomFollow">Mantener y seguir nuevos datos.</string>
+    <string name="applyZoomFollow">Mantener y seguir nuevos datos</string>
 
     <string name="applyZoomThis">Solo esta gráfica</string>
     <string name="applyZoomSameVariable">Otros gráficos: Misma variable</string>
@@ -183,24 +183,24 @@
 
     <string name="newExperimentSimple">Añadir experimento simple</string>
     <string name="newExperimentBluetooth">Añadir experimento para dispositivo Bluetooth</string>
-    <string name="newExperimentBluetoothErrorTitle">Error al escanear el Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Error de escaneo de Bluetooth</string>
     <string name="newExperimentBluetoothLoadFromDevice">Cargar desde dispositivo</string>
-    <string name="newExperimentBluetoothLoadFromDeviceInfo">Este dispositivo proporciona su propio experimento phyphox. Seleccione cargar desde dispositivo para abrirlo.</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Este dispositivo proporciona su propio experimento phyphox. Selecciona cargar desde dispositivo para abrirlo.</string>
 
     <string name="newExperimentQR">Añadir experimento desde el código QR</string>
 
-    <string name="newExperimentQRscan">Escanea un código QR que contiene un experimento de phyphox.</string>
+    <string name="newExperimentQRscan">Escanea un código QR que contenga un experimento de phyphox.</string>
     <string name="newExperimentQRErrorTitle">Error de código QR.</string>
     <string name="newExperimentQRNoExperiment">No se pudo encontrar un código QR que contenga un experimento de phyphox.</string>
-    <string name="newExperimentQRcrcMismatch">El código QR que acaba de escanear no parece coincidir con los códigos anteriores. Asegúrese de escanear únicamente los códigos que pertenecen al mismo experimento.</string>
+    <string name="newExperimentQRcrcMismatch">El código QR que acabas de escanear no parece coincidir con los códigos anteriores. Asegúrate de escanear únicamente los códigos que pertenecen al mismo experimento.</string>
     <string name="newExperimentQRCodesMissing1">El código QR que acabas de escanear es parte de un conjunto</string>
     <string name="newExperimentQRCodesMissing2">códigos. Por favor presiona continuar para escanear los códigos restantes. Códigos que aún faltan:</string>
     <string name="newExperimentQRBadCRC">"Comprobación  no válida. Esto significa que el código QR esta dañado o que algo salió mal al escanearlo."</string>
 
-    <string name="newExperimentBTReadErrorTitle">"Error de  experimento de Bluetooth ."</string>
+    <string name="newExperimentBTReadErrorTitle">Error de Bluetooth en el experimento.</string>
     <string name="newExperimentBTReadErrorCorrupted">La información transmitida por el experimento está dañada.</string>
 
-    <string name="generalErrorDialog">Se produjo un error.</string>
+    <string name="generalErrorDialog">Se ha producido un error.</string>
 
     <string name="sensorVendor">Específico del fabricante</string>
 
@@ -212,7 +212,7 @@
     <string name="categoryNewExperiment">Experimentos personales simples</string>
     <string name="categoryRawSensor">Sensores primarios</string>
 
-    <string name="experimentinfo_hint">Revisa la información del experimento para aprender como utilizarlo.</string>
+    <string name="experimentinfo_hint">Revisa la información del experimento para aprender cómo utilizarlo.</string>
     <string name="start_hint">Toca el triángulo para comenzar el experimento.</string>
 
     <string name="bluetooth">Bluetooth LE</string>
