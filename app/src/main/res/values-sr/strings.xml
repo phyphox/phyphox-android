@@ -16,7 +16,7 @@
     <string name="faqPhyphoxOrg">Često postavljana pitanja</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Pomoć za daljinsko upravljanje</string>
-    <string name="remotePhyphoxOrgURL">http://phyphox.org/daljinsko-upravljanje</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationInfo">Jezik</string>
     <string name="translationText">Phyphox će koristiti prvi mogući jezik sa vaše liste omiljenih. Kako biste promenili vaše opcije, idite na \"podešavanje\" ispod. Da vidite koji su mogući jezici i kako vi mođete da pomognete, izaberite \"poseti vebsajt\".</string>
     <string name="translationToSettings">Podešavanja</string>
