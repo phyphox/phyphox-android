@@ -383,10 +383,16 @@ public class Analysis {
 
             double avg = sum/count;
 
-            outputs.get(0).append(avg);
+            Log.d("TEST", "?");
+            if (outputs.size() > 0 && outputs.get(0) != null) {
+                Log.d("TEST", "OK");
+                outputs.get(0).append(avg);
+            }
 
             //We only calculate the standard deviation if it is actually written to a buffer
-            if (outputs.size() > 1) {
+            Log.d("TEST", "??");
+            if (outputs.size() > 1 && outputs.get(1) != null) {
+                Log.d("TEST", "OKOK");
                 if (count < 2) {
                     outputs.get(1).append(Double.NaN);
                 }
