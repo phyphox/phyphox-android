@@ -3,7 +3,7 @@
     <string name="action_settings">Podešavanja</string>
     <string name="title_activity_experiment">phyphox</string>
 
-    <string name="newExperiment">Dodaj jednostavan eksperiment</string>
+    <string name="newExperiment">Dodaj eksperiment</string>
     <string name="newExperimentPhyphoxInfo">Posetite phyphox.org kako biste sproveli naprednije eksperimente, uključujući analizu podataka i deljenje istih sa kolegama, studentima i prijateljima.</string>
     <string name="newExperimentInputTitle">Naslov</string>
     <string name="newExperimentInputBufferSize">Veličina bafera</string>
@@ -27,7 +27,7 @@
     <string name="donotshowagain">Ne pokazuj ponovo</string>
     <string name="damageWarning">Molimo vas da budete oprezni prilikom izvođenja eksperimenata, kako ne biste oštetili vaš telefon. Molimo vas da posebno povedete računa o ispuštanju telefona na čvrste površine i da ga ne izlažete jakom magnetnom polju. Autori Phyphox-a nisu odgovorni za bilo kakva oštećenja vašeg telefona.</string>
 
-    <string name="info">Informacije</string>
+    <string name="info">Info</string>
     <string name="credits">Bodovi</string>
     <string name="creditsRWTH">phyphox je nastao na drugom institutu za fiziku, Univerzitet u Aachan RWTH.</string>
     <string name="creditsNames">Razvoj i koncept:
@@ -38,7 +38,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"jQuery\"((c) 2005, 2014 jQuery Foundation, Inc.), \"flot\" ((c) 2007-2014 IOLA and Ole Laursen) and \"Axis Labels Plugin for flot\" ((c) 2010 Xuan Luo), svi su dostupni pod MIT licencom.</string>
+    <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"Chart.js\"(http://chartjs.org), dostupnu pod MIT licencom. Za Furijeove transformacije, koristimo FFTW biblioteku (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, koja je dostupna pod GNU generalna javna licenca (verzija 2 ili kasnije).</string>
     <string name="sensorLinearAcceleration">Linearno ubrzanje</string>
     <string name="sensorLight">Svetlost</string>
     <string name="sensorGyroscope">Žiroskop</string>
@@ -129,9 +129,133 @@
 
     <string name="noDrawableData">Nema slikovnih podataka.</string>
 
-    <string name="categoryNewExperiment">Jednostavni nasumični eksperimenti</string>
+    <string name="categoryNewExperiment">Laki nasumični eksperimenti</string>
     <string name="categoryRawSensor">Sirovi senzori</string>
 
     <string name="experimentinfo_hint">Pogledaj uputstvo za eksperiment kako bi ga izvršio.</string>
+
+<string name="graph_tools_pan_and_zoom">Pomeranje i zumiranje</string>
+    <string name="graph_tools_pick">Izaberite podatke</string>
+    <string name="graph_tools_more">Više alata</string>
+    <string name="graph_tools_reset">Resetuj zumiranje</string>
+    <string name="graph_tools_follow">Prati nove podatke</string>
+    <string name="graph_tools_linear_fit">Linearan fit</string>
+    <string name="graph_tools_export">Otpremi ove podatke</string>
+    <string name="graph_tools_log_x">Logaritamska x osa</string>
+    <string name="graph_tools_log_y">Logaritamska y osa</string>
+
+    <string name="graph_point_label">Tačka</string>
+    <string name="graph_slope_label">Nagib</string>
+    <string name="graph_difference_label">Razlika</string>
+    <string name="graph_fit_label">Linearan fit: y = a x + b</string>
+
+    <string name="applyZoomTitle">Primeni zumiranje</string>
+    <string name="applyZoomExplanation">Kako zatvarate interaktivni mod ovog grafika, ako želite možete izabrati da zadržite vaše zumiranje.</string>
+    <string name="applyZoomAdvanced">Napredne opcije</string>
+    <string name="applyZoomApply">Primeni na…</string>
+
+    <string name="applyZoomReset">Resetuj na početna podešavanja</string>
+    <string name="applyZoomKeep">Zadrži kao što je selektovano</string>
+    <string name="applyZoomFollow">Zadrži prati nove podatke</string>
+
+    <string name="applyZoomThis">Samo ovaj grafik</string>
+    <string name="applyZoomSameVariable">Ostali grafici: Iste promenljive</string>
+    <string name="applyZoomSameUnit">Ostali grafici: Iste jedinice</string>
+    <string name="applyZoomSameAxis">Ostali grafici: Iste ose</string>
+
+    <string name="newExperimentSimple">Dodaj jednostavan eksperiment</string>
+    <string name="newExperimentBluetooth">Dodaj eksperiment za blutut uređaj</string>
+    <string name="newExperimentBluetoothErrorTitle">Blutut skener greška</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Skini sa uređaja</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Ovaj uređaj sprovodi sopstveni phyphox eksperiment. Odaberite \"skini sa uređaja\" kako biste ga otvorili.</string>
+
+    <string name="newExperimentQR">Dodaj eksperiment sa QR koda</string>
+
+    <string name="newExperimentQRscan">Skeniraj QR kod koji sadrži phyphox eksperiment.</string>
+    <string name="newExperimentQRErrorTitle">QR kod greška.</string>
+    <string name="newExperimentQRNoExperiment">Nije pronađen QR kod koji sadrži phyphox eksperiment.</string>
+    <string name="newExperimentQRcrcMismatch">QR kod koji je upravo skeniran ne odgovara prethodnim kodovima. Molimo vas da skenirate kodove koji pripadaju istom eksperimentu.</string>
+    <string name="newExperimentQRCodesMissing1">QR kod koji ste skenirali je deo seta od</string>
+    <string name="newExperimentQRCodesMissing2">kodova. Molimo vas pritisnite nastavak za skeniranje ostalih kodova. Kodovi i dalje nedostaju:</string>
+    <string name="newExperimentQRBadCRC">Pogrešna suma. Ovo znači da ili su QR kodovi loši ili je nešto pošlo naopako tokom skeniranja.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Blutut eksperiment greška.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Prenosni podaci eksperimenta su poremećeni.</string>
+
+    <string name="generalErrorDialog">Desila se greška.</string>
+
+    <string name="deviceInfo">Informacije o uređaju</string>
+    <string name="copyToClipboard">Kopiraj u klipbord</string>
+    <string name="deviceInfoCopied">Informacije o uređaju su kopirane u vaš klipbord.</string>
+
+    <string name="vendorSensorWarning1">Senzor</string>
+    <string name="vendorSensorWarning2">nije predstavljen tačan tip senzora. Izgleeda da je specifičan za proizvođača i njegov tip se može samo naslutiti iz naslova. Stoga, moguće je da neće raditi, kao što se očekuje.</string>
+
+    <string name="gpl">Phyphox je softver otvorenog koda realizovan pod GNU General Public Licence. Molimo posetite http://phyphox.org za više informacija i pristup izvornom kodu. Ipak, naziv \"phyphox\" i \"RWTH Aachen\" su registrovane robne marke.</string>
+    <string name="sensorVendor">Karakteristike dobavljača</string>
+
+    <string name="vendorSensorTitle">Senzor karakterističan za dobavljača</string>
+    <string name="tryagain">Pokušajte ponovo</string>
+    <string name="doContinue">Nastavi</string>
+    <string name="rename">Preimenuj</string>
+    <string name="loadingBluetoothConnectionText">Povezivanje na Bluetooth uređaj…</string>
+
+    <string name="remoteServerNoNetwork">Najpre uspostavite WiFi konekciju na udaljenom uređaju. Molimo omogućite WiFi vezu ili mobilni hotspot.</string>
+    <string name="remoteColorMapWarning">Nijansa na udaljenom interfejsu je samo približna vrednost. Nasuprot nijansi u aplikaciji, trenutno ne mogu biti podržani neekvidistantni podaci ili logaritamska skala na x i y osama. Tako da se podaci mogu u različitim intervalima pojaviti na pogrešnoj lokaciji.</string>
+
+    <string name="force_gnss">Samo satelitska lokacija</string>
+
+    <string name="fontSize">Veličina slova</string>
+
+    <string name="open_zip_title">Otvaranje grupe eksperimenata</string>
+    <string name="open_zip_dialog_instructions">Ovaj izvor sadrži više eksperimenata. Možete izabrati otvaranje jednog i ukoliko želite, sačuvate u Vašu kolekciju ili ih sve sačuvati odjednom-pritiskom na dugme ispod.</string>
+    <string name="open_save_all">Sačuvaj sve</string>
+
+    <string name="open_bluetooth_assets_title">Eksperimenti za Bluetooth uređaje</string>
+    <string name="open_bluetooth_assets">Sledeći eksperimenti za Vaš uređaj su dostupni na phyphox-u. Možete ih otvoriti i koristiti ili dodati sve u Vašu kolekciju za lako pristupanje sa glavnog menija.</string>
+
+    <string name="start_hint">Dodirnite trougao za početak eksperimenta.</string>
+
+    <string name="bluetooth">Blutut niske energije</string>
+    <string name="bt_android_version">Bluetooth Low Energy nije podržan na Android verzijama nižim od 4.3.</string>
+
+    <string name="bt_pick_device">Molimo izaberite uređaj.</string>
+    <string name="bt_scanning_generic">Traženje Bluetooth uređaja…</string>
+    <string name="bt_scanning_specific1">Traženje Bluetooth uređaja sa</string>
+    <string name="bt_scanning_specific2">u svom imenu…</string>
+    <string name="bt_device_not_supported">Nema dostupnih eksperimenata.</string>
+
+    <string name="bt_location_explanation">Android zahteva dozvolu lociranja za Bluetooth skeniranja, kako bi rezultat mogao da se koristi za izvođenje informacija o lokaciji. Sada ćemo zatražiti ove dozvole. Potrebno ja da odobrite da biste obavili Bluetooth skeniranje.</string>
+
+    <string name="bt_exception_uuid">Karakteristike UUID</string>
+    <string name="bt_exception_uuid2">nije pronadjena.</string>
+    <string name="bt_exception_disabled">Bluethoot je onemogućen. Molimo omogućite bluetooth i pokušajte ponovo.</string>
+    <string name="bt_exception_connection">Bluetooth veza se ne može ostvariti.</string>
+    <string name="bt_exception_notfound">Bluetooth uređaj nije pronađen.</string>
+    <string name="bt_exception_services">Usluge nije moguće pronaći.</string>
+    <string name="bt_exception_device">Greška sa uređajem pod imenom</string>
+    <string name="bt_exception_device_address">adresa</string>
+    <string name="bt_exception_device_name">ime</string>
+    <string name="bt_exception_rate">Netačna vrednost parametra.</string>
+    <string name="bt_exception_notification">Obaveštenje za karakteristiku UUID</string>
+    <string name="bt_exception_notification_enable">se ne može omogućiti.</string>
+    <string name="bt_exception_notification_disable">se ne može ponovo onemogućiti.</string>
+    <string name="bt_exception_notification_fail_enable">Uključujem obaveštenje za karakteristiku UUID</string>
+    <string name="bt_exception_notification_fail">nije uspela.</string>
+    <string name="bt_exception_config">Vrednost za karakteristiku</string>
+    <string name="bt_exception_config2">se ne može postaviti.</string>
+    <string name="bt_exception_no_connection">Bluetooth uređaj nije povezan. Eksperiment se ne može započeti.</string>
+    <string name="bt_exception_disconnected">Bluetooth uređaj više nije povezan.</string>
+    <string name="bt_default_error_message">Greška sa Bluetooth uređajem.</string>
+
+    <string name="bt_error_writing">Greška pri unosu karakteristike za UUID</string>
+    <string name="bt_error_reading">Greška pri iščitavanju karakakteristike UUID</string>
+    <string name="bt_error_discovering">Greška pri pronalaženju usluga Bluetooth uređaja.</string>
+    <string name="bt_fail_reading">Čitanje neuspešno.</string>
+    <string name="bt_fail_writing">Upisivanje neuspešno.</string>
+
+    <string name="bt_more_info_link_text">Ukoliko Vaš uređaj nije podržan, izaberite opciju \"more info\" da biste saznali viže o prilagodljivoj Bluetooth Low Energy podršci u phyphox na našem veb sajtu.</string>
+    <string name="bt_more_info_link_button">Više informacija</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
 </resources>
