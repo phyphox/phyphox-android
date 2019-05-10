@@ -130,7 +130,7 @@
     <string name="noDrawableData">Nema slikovnih podataka.</string>
 
     <string name="categoryNewExperiment">Laki nasumični eksperimenti</string>
-    <string name="categoryRawSensor">Sirovi senzori</string>
+    <string name="categoryRawSensor">Senzori</string>
 
     <string name="experimentinfo_hint">Pogledaj uputstvo za eksperiment kako bi ga izvršio.</string>
 
