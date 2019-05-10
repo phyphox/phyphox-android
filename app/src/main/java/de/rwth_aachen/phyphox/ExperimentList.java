@@ -27,6 +27,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.res.AssetManager;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -95,6 +96,7 @@ import com.google.zxing.integration.android.IntentResult;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -327,6 +329,8 @@ public class ExperimentList extends AppCompatActivity {
             else {
                 //No asset. Menu button visible and it needs an onClickListener
                 holder.menuBtn.setVisibility(ImageView.VISIBLE);
+                if (Helper.luminance(colors.get(position)) > 0.1)
+                    holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.menuBtn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -631,6 +635,7 @@ public class ExperimentList extends AppCompatActivity {
         String stateTitle = ""; //A title given by the user for a saved experiment state
         String category = ""; //Experiment category
         int color = getResources().getColor(R.color.phyphox_color); //Icon base color
+        boolean customColor = false;
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
         BaseColorDrawable image = null; //This will hold the icon
@@ -727,6 +732,7 @@ public class ExperimentList extends AppCompatActivity {
                                 break;
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
+                                    customColor = true;
                                     color = Helper.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_color), getResources());
                                 }
                                 break;
@@ -792,6 +798,8 @@ public class ExperimentList extends AppCompatActivity {
                                 } else if (!Bluetooth.isSupported(this)) {
                                     unavailableSensor = R.string.bluetooth;
                                 }
+                                if (!customColor)
+                                    color = getResources().getColor(R.color.bluetooth);
                                 break;
                         }
                         break;
