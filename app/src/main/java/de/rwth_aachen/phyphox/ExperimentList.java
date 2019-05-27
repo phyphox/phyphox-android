@@ -982,7 +982,12 @@ public class ExperimentList extends AppCompatActivity {
                 ZipEntry entry;
                 byte[] buffer = new byte[2048];
                 while((entry = zis.getNextEntry()) != null) {
-                    FileOutputStream out = new FileOutputStream(new File(tempPath, entry.getName()));
+                    File f = new File(tempPath, entry.getName());
+                    String canonicalPath = f.getCanonicalPath();
+                    if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
+                        return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
+                    }
+                    FileOutputStream out = new FileOutputStream(f);
                     int size = 0;
                     while ((size = zis.read(buffer)) > 0)
                     {
