@@ -18,6 +18,7 @@
     <dimen name="small_font">13sp</dimen>
     <dimen name="experiment_title_font">18sp</dimen>
     <dimen name="experiment_info_font">13sp</dimen>
+    <dimen name="graph_tools_font">10sp</dimen>
     <dimen name="headline_font">16sp</dimen>
     <dimen name="graph_font">14sp</dimen>
     <dimen name="credit_font">12sp</dimen>

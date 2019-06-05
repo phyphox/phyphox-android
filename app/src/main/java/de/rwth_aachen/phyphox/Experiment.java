@@ -729,8 +729,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (v == hintAnimation) {
             if (timedRun) {
                 startTimedMeasurement();
-            } else
+            } else {
+                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                int startHintDismissCount = settings.getInt("startHintDismissCount", 0);
+                settings.edit().putInt("startHintDismissCount", startHintDismissCount + 1).apply();
                 startMeasurement();
+            }
         }
     }
 
@@ -881,7 +885,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Export button. Call the export function of the DataExport class
         if (id == R.id.action_export) {
-            experiment.export(this);
+            if (experiment.exporter.exportSets.size() == 0) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(res.getString(R.string.export_empty))
+                        .setTitle(R.string.export)
+                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+
+                            }
+                        });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                experiment.export(this);
+            }
             return true;
         }
 
@@ -1085,13 +1102,23 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Desciption-button. Show the experiment description
         if (id == R.id.action_description) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.show_description);
+            builder.setTitle(experiment.title);
 
             LinearLayout ll = new LinearLayout(builder.getContext());
             ll.setOrientation(LinearLayout.VERTICAL);
             int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
             int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
             ll.setPadding(marginX, marginY, marginX, marginY);
+
+            if (!experiment.stateTitle.isEmpty()) {
+                TextView stateLabel = new TextView(builder.getContext());
+                stateLabel.setText(experiment.stateTitle);
+                stateLabel.setTextColor(res.getColor(R.color.main));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
+                stateLabel.setLayoutParams(lp);
+                ll.addView(stateLabel);
+            }
 
             TextView description = new TextView(builder.getContext());
             description.setText(experiment.description);

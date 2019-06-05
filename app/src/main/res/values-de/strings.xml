@@ -41,6 +41,7 @@
     <string name="loadingBluetoothConnectionText">Mit Bluetooth Gerät verbinden…</string>
 
     <string name="export">Daten exportieren</string>
+    <string name="export_empty">Diese Experiment-Konfiguration definiert keine Daten für den Export. Wenn dies ein Fehler ist, wende dich bitte an die Quelle des QR-Codes oder der Konfigurationsdatei.</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
     <string name="export_subject">Daten aus phyphox</string>
     <string name="hotspotSettings">Hotspot Einstellungen</string>
@@ -143,7 +144,7 @@
     <string name="bt_error_discovering">Fehler beim Finden der Services des Bluetooth Geräts.</string>
     <string name="bt_fail_reading">Die Leseoperation war nicht erfolgreich.</string>
     <string name="bt_fail_writing">Die Schreiboperation war nicht erfolgreich.</string>
-<string name="graph_tools_pan_and_zoom">Ziehen/Zoom</string>
+    <string name="graph_tools_pan_and_zoom">Ziehen/Zoom</string>
     <string name="graph_tools_pick">Punkte wählen</string>
     <string name="graph_tools_more">Mehr Werkzeuge</string>
     <string name="graph_tools_reset">Zoom zurücksetzen</string>

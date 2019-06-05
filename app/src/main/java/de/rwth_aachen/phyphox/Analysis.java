@@ -383,10 +383,12 @@ public class Analysis {
 
             double avg = sum/count;
 
-            outputs.get(0).append(avg);
+            if (outputs.size() > 0 && outputs.get(0) != null) {
+                outputs.get(0).append(avg);
+            }
 
             //We only calculate the standard deviation if it is actually written to a buffer
-            if (outputs.size() > 1) {
+            if (outputs.size() > 1 && outputs.get(1) != null) {
                 if (count < 2) {
                     outputs.get(1).append(Double.NaN);
                 }
@@ -1430,7 +1432,7 @@ public class Analysis {
                     if (xout != null)
                         xout.append(minx + x*(maxx-minx)/((double)(mapWidth-1)));
                     if (yout != null)
-                        yout.append(miny + y*(maxy-miny)/((double)(mapWidth-1)));
+                        yout.append(miny + y*(maxy-miny)/((double)(mapHeight-1)));
                     if (zout != null) {
                         switch (zMode) {
                             case count:   zout.append(nout[y*mapWidth + x]);

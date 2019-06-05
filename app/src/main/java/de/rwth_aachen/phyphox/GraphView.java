@@ -54,6 +54,7 @@ public class GraphView extends View {
     }
     final int maxPicked = 2;
     private int pickedPointIndex[] = new int[maxPicked];
+    private int pickedPointGraphIndex[] = new int[maxPicked];
 
     private floatBufferRepresentation[] graphX; //The x data to be displayed
     private double[] histMinX, histMaxX;
@@ -280,6 +281,7 @@ public class GraphView extends View {
 
         double minDist = Double.POSITIVE_INFINITY;
         int minIndex = -1;
+        int minGraphIndex = -1;
         double minX = Double.NaN;
         double minY = Double.NaN;
         double minZ = Double.NaN;
@@ -338,6 +340,7 @@ public class GraphView extends View {
                 if (d < range*range && d < minDist) {
                     minDist = d;
                     minIndex = j;
+                    minGraphIndex = i;
                     minX = xi[offX + j];
                     minY = yi[offY + j];
                     if (zi != null)
@@ -353,6 +356,7 @@ public class GraphView extends View {
 
         pointInfoListener.showPointInfo((float)minVX, (float)minVY, (float)minX, (float)minY, (float)minZ, index);
         pickedPointIndex[index] = minIndex;
+        pickedPointGraphIndex[index] = minGraphIndex;
     }
 
     private boolean onTouchEventPick(MotionEvent event) {
@@ -1080,11 +1084,11 @@ public class GraphView extends View {
             if (pickedPointIndex[i] >= 0) {
                 double xi, yi, zi, vxi, vyi, d;
                 try {
-                    xi = graphSetup.dataSets.get(0).fbX.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex[i]);
-                    yi = graphSetup.dataSets.get(0).fbY.data.get(graphSetup.dataSets.get(0).fbX.offset + pickedPointIndex[i]);
+                    xi = graphSetup.dataSets.get(pickedPointGraphIndex[i]).fbX.data.get(graphSetup.dataSets.get(pickedPointGraphIndex[i]).fbX.offset + pickedPointIndex[i]);
+                    yi = graphSetup.dataSets.get(pickedPointGraphIndex[i]).fbY.data.get(graphSetup.dataSets.get(pickedPointGraphIndex[i]).fbX.offset + pickedPointIndex[i]);
 
-                    if (graphSetup.dataSets.size() > 1 && graphSetup.dataSets.get(1).style == Style.mapZ) {
-                        zi = graphSetup.dataSets.get(1).fbY.data.get(graphSetup.dataSets.get(1).fbY.offset + pickedPointIndex[i]);
+                    if (graphSetup.dataSets.size() > pickedPointGraphIndex[i]+1 && graphSetup.dataSets.get(pickedPointGraphIndex[i]+1).style == Style.mapZ) {
+                        zi = graphSetup.dataSets.get(pickedPointGraphIndex[i]+1).fbY.data.get(graphSetup.dataSets.get(pickedPointGraphIndex[i]+1).fbY.offset + pickedPointIndex[i]);
                     } else
                         zi = Double.NaN;
 

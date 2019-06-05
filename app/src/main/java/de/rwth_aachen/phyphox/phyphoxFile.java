@@ -53,7 +53,7 @@ public abstract class phyphoxFile {
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
-    private static boolean perfectLocaleFound = false;
+    private static int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
     private static String translate(String input) {
@@ -98,7 +98,7 @@ public abstract class phyphoxFile {
 
     //Helper function to open an inputStream from various intents
     public static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
-        perfectLocaleFound = false;
+        languageRating = 0;//If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
         translation = new HashMap<>();
 
         PhyphoxStream phyphoxStream = new PhyphoxStream();
@@ -178,17 +178,16 @@ public abstract class phyphoxFile {
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
                 try {
-                    URL url = new URL("https", uri.getHost(), uri.getPath() + "?" + uri.getQuery());
+                    URL url = new URL("https", uri.getHost(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                     phyphoxStream.inputStream = url.openStream();
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
-                        URL url = new URL("http", uri.getHost(), uri.getPath() + "?" + uri.getQuery());
+                        URL url = new URL("http", uri.getHost(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                         phyphoxStream.inputStream = url.openStream();
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e2) {
-
                         phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
                     }
                 }
@@ -837,6 +836,7 @@ public abstract class phyphoxFile {
                     experiment.title = getText();
                     break;
                 case "state-title":
+                    experiment.stateTitle = getText();
                     break;
                 case "icon": //The experiment's icon
                     // We currently do not show the icon while the experiment is open, so we do not need to read it.
@@ -908,9 +908,9 @@ public abstract class phyphoxFile {
             switch (tag.toLowerCase()) {
                 case "translation": //A translation block holds all translation information for a single language
                     String thisLocale = getStringAttribute("locale");
-                    if (thisLocale.equals(Locale.getDefault().getLanguage()) || (!perfectLocaleFound && thisLocale.equals("en"))) { //Check if the language matches...
-                        if (thisLocale.equals(Locale.getDefault().getLanguage()))
-                            perfectLocaleFound = true;
+                    int thisLaguageRating = Helper.getLanguageRating(parent.getResources(), thisLocale);
+                    if (thisLaguageRating > languageRating) { //Check if the language matches better than previous ones...
+                        languageRating = thisLaguageRating;
                         (new translationBlockParser(xpp, experiment, parent)).process(); //Jepp, use it!
                     } else
                         (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
@@ -1654,8 +1654,8 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "buffer"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "average"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "stddev"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "average"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "stddev"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
@@ -2011,6 +2011,8 @@ public abstract class phyphoxFile {
                 } break;
                 case "map": { //rearrange data from unsorted x, y, and z values suitable for map graphs
                     String zModeStr = getStringAttribute("zMode"); //Positive or negative flank
+                    if (zModeStr == null)
+                        zModeStr = "average";
 
                     Analysis.mapAM.ZMode zMode = Analysis.mapAM.ZMode.average;
 
@@ -2444,8 +2446,7 @@ public abstract class phyphoxFile {
                             }
 
                             String globalLocale = xpp.getAttributeValue(null, "locale");
-                            if (globalLocale != null && globalLocale.equals(Locale.getDefault().getLanguage()))
-                                perfectLocaleFound = true;
+                            languageRating = Helper.getLanguageRating(parent.get().getResources(), globalLocale);
                         }
                         (new phyphoxBlockParser(xpp, experiment, parent.get())).process();
                     }

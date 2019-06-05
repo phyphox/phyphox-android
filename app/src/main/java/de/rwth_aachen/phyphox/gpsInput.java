@@ -126,7 +126,7 @@ public class gpsInput implements Serializable {
     GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
         @Override
         public void onNmeaReceived(long timestamp, String nmea) {
-            if (nmea.startsWith("$GPGGA")) {
+            if (nmea.length() > 19 && nmea.substring(3, 6).equals("GGA")) {
                 String[] parts = nmea.split(",");
                 if (parts.length < 10)
                     return;
@@ -193,10 +193,11 @@ public class gpsInput implements Serializable {
             if (dataLon != null)
                 dataLon.append(event.getLongitude());
             if (dataZ != null) {
-                if (Double.isNaN(geoidCorrection))
+                if (Double.isNaN(geoidCorrection)) {
                     dataZ.append(event.getAltitude());
-                else
+                } else {
                     dataZ.append(event.getAltitude() - geoidCorrection);
+                }
             }
             if (dataV != null)
                 dataV.append(event.getSpeed());

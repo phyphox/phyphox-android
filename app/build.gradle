@@ -7,9 +7,12 @@ android {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 41
-        versionName "1.1.0-beta1"
-        resConfigs "cs", "de", "el", "en", "it", "nl", "pl", "ru"
+        versionCode 1010006 //1.01.00-06
+        versionName "1.1.0-beta6"
+        resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "tr", "vi", "zh-rCN", "zh-rTW"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
     buildTypes {
         release {
@@ -20,7 +23,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
     useLibrary 'org.apache.http.legacy'
     externalNativeBuild {
         cmake {
@@ -31,10 +33,10 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:28.0.0-rc01'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'org.apache.poi:poi:3.13'
-    implementation 'com.android.support:support-v4:28.0.0-rc01'
-    implementation 'com.android.support:design:28.0.0-rc01'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
     implementation 'com.caverock:androidsvg:1.2.1'
 }

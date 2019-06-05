@@ -48,6 +48,7 @@ public class phyphoxExperiment implements Serializable {
     byte[] source = null; //This holds the original source file
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment
+    String stateTitle = ""; //The title of this experiment
     String category = ""; //The category of this experiment
     String icon = ""; //The icon. This is either a base64-encoded drawable (typically png) or (if its length is 3 or less characters) it is a short form which should be used in a simple generated logo (like "gyr" for gyroscope). (The experiment list will use the first three characters of the title if this is completely empty)
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment

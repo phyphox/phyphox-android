@@ -70,6 +70,7 @@
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="unspecified"
             tools:replace="screenOrientation" />
+        <uses-library android:name="org.apache.http.legacy" android:required="false" />
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="de.rwth_aachen.phyphox.exportProvider"
