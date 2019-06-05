@@ -25,6 +25,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import org.apache.poi.hssf.util.HSSFColor;
@@ -341,7 +342,6 @@ public class BluetoothScanDialog {
             if (view == null) {
                 view = inflator.inflate(R.layout.bluetooth_scan_dialog_entry, null);
                 subViews = new SubViews();
-                subViews.deviceAddress = (TextView) view.findViewById(R.id.device_address);
                 subViews.deviceName = (TextView) view.findViewById(R.id.device_name);
                 subViews.notSupported = (TextView) view.findViewById(R.id.device_not_supported);
                 subViews.signalStrength = (ImageView) view.findViewById(R.id.signal_strength);
@@ -355,12 +355,15 @@ public class BluetoothScanDialog {
                 subViews.deviceName.setText(deviceName);
             else
                 subViews.deviceName.setText(R.string.unknown);
-            subViews.deviceAddress.setText(deviceInfo.device.getAddress());
-            subViews.notSupported.setVisibility(deviceInfo.supported || deviceInfo.phyphoxService ? View.INVISIBLE : View.VISIBLE);
+            if (deviceInfo.supported || deviceInfo.phyphoxService) {
+                subViews.notSupported.setVisibility(View.GONE);
+                ((RelativeLayout.LayoutParams)subViews.deviceName.getLayoutParams()).addRule(RelativeLayout.CENTER_VERTICAL);
+            } else {
+                subViews.notSupported.setVisibility(View.VISIBLE);
+            }
 
             int color = deviceInfo.supported || deviceInfo.phyphoxService ? ctx.getResources().getColor(R.color.main) : ctx.getResources().getColor(R.color.mainDisabled);
             subViews.deviceName.setTextColor(color);
-            subViews.deviceAddress.setTextColor(color);
 
             if (deviceInfo.lastRSSI > -30)
                 subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_4);
@@ -379,7 +382,6 @@ public class BluetoothScanDialog {
 
     static class SubViews {
         TextView deviceName;
-        TextView deviceAddress;
         TextView notSupported;
         ImageView signalStrength;
     }

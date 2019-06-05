@@ -10,6 +10,9 @@ android {
         versionCode 1010006 //1.01.00-06
         versionName "1.1.0-beta6"
         resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "tr", "vi", "zh-rCN", "zh-rTW"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
     buildTypes {
         release {
@@ -20,7 +23,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
     useLibrary 'org.apache.http.legacy'
     externalNativeBuild {
         cmake {

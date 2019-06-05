@@ -11,20 +11,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="24sp"/>
-    <TextView android:id="@+id/device_address"
-        android:text="ad:dr:es:sP:ac:eh:ol:de:r0"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/device_name"
-        android:layout_alignParentLeft="true"
-        android:textSize="12sp"/>
     <TextView android:id="@+id/device_not_supported"
         android:text="@string/bt_device_not_supported"
         android:textColor="@color/highlight"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/device_name"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:textSize="12sp"/>
 
     <ImageView
@@ -33,7 +26,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
+        android:layout_centerVertical="true"
         android:layout_margin="@dimen/activity_horizontal_padding"
         app:srcCompat="@drawable/bluetooth_signal_na" />
 </RelativeLayout>
