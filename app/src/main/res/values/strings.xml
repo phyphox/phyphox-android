@@ -196,6 +196,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="enableTimedRun">Do a timed run</string>
 
     <string name="export">Export Data</string>
+    <string name="export_empty">This experiment configuration does not define any data to be exported. If this is an error, please contact the source of the QR code or configuration file.</string>
     <string name="export_subject">Data from phyphox</string>
     <string name="export_pick_share">Pick an export method</string>
 
