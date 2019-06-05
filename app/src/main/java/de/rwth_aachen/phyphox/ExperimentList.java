@@ -1263,10 +1263,22 @@ public class ExperimentList extends AppCompatActivity {
                         }
                         gatt.disconnect();
 
+                        /*
+                        StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
+                        for(byte b: currentBluetoothData)
+                            sb.append(String.format("%02x ", b));
+                        final String hex = sb.toString();
+
+                        for (int i = 0; i < hex.length(); i+= 48) {
+                            Log.d("TEST", hex.substring(i, Math.min(i+48, hex.length())));
+                        }
+                        */
+
                         CRC32 crc32 = new CRC32();
                         crc32.update(currentBluetoothData);
                         if (crc32.getValue() != currentBluetoothDataCRC32) {
                             showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (CRC32)", device);
+                         //   Log.d("TEST", "CRC32: Expected " + currentBluetoothDataCRC32 + " but calculated " + crc32.getValue());
                             return;
                         }
 

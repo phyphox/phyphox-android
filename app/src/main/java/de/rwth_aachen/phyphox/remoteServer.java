@@ -744,15 +744,15 @@ public class remoteServer extends Thread {
                 switch (cmd) {
                     case "start": //Start the measurement
                         callActivity.remoteStartMeasurement();
-                        result = "{\"result\" = true}";
+                        result = "{\"result\": true}";
                         break;
                     case "stop": //Stop the measurement
                         callActivity.remoteStopMeasurement();
-                        result = "{\"result\" = true}";
+                        result = "{\"result\": true}";
                         break;
                     case "clear": //Clear measurement data
                         callActivity.clearData();
-                        result = "{\"result\" = true}";
+                        result = "{\"result\": true}";
                         break;
                     case "set": //Set the value of a buffer
                         String buffer = uri.getQueryParameter("buffer"); //Which buffer?
@@ -763,12 +763,12 @@ public class remoteServer extends Thread {
                                 v = Double.valueOf(value);
                             } catch (Exception e) {
                                 //Invalid input
-                                result = "{\"result\" = true}";
+                                result = "{\"result\": true}";
                                 break;
                             }
                             if (Double.isNaN(v)) {
                                 //We do not allow to explicitly set NaN. The buffer initially contains NaN and this is probably a mistake
-                                result = "{\"result\" = false}";
+                                result = "{\"result\": false}";
                             } else {
                                 callActivity.remoteInput = true;
                                 experiment.newData = true;
@@ -783,10 +783,10 @@ public class remoteServer extends Thread {
                                 } finally {
                                     experiment.dataLock.unlock();
                                 }
-                                result = "{\"result\" = true}";
+                                result = "{\"result\": true}";
                             }
                         } else
-                            result = "{\"result\" = false}";
+                            result = "{\"result\": false}";
                         break;
                     case "trigger":
                         String elementStr = uri.getQueryParameter("element"); //Which element?
@@ -796,21 +796,21 @@ public class remoteServer extends Thread {
                                 htmlID = Integer.valueOf(elementStr);
                             } catch (Exception e) {
                                 //Invalid input
-                                result = "{\"result\" = false}";
+                                result = "{\"result\": false}";
                                 break;
                             }
                             experiment.experimentViews.get(htmlID2View.get(htmlID)).elements.get(htmlID2Element.get(htmlID)).trigger();
-                            result = "{\"result\" = true}";
+                            result = "{\"result\": true}";
                         } else {
-                            result = "{\"result\" = false}";
+                            result = "{\"result\": false}";
                         }
                         break;
                     default:
-                        result = "{\"result\" = false}";
+                        result = "{\"result\": false}";
                         break;
                 }
             } else
-                result = "{\"result\" = false}";
+                result = "{\"result\": false}";
 
             BasicHttpEntity entity = new BasicHttpEntity();
             InputStream inputStream = new ByteArrayInputStream(result.getBytes());
