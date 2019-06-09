@@ -30,13 +30,13 @@
     <string name="creditsRWTH">Phyphox是由亚琛工业大学第二物理研究所开发。</string>
     <string name="damageWarning">进行实验时，请注意不要损坏手机。尤其需要注意避免手机掉落在坚硬的表面上，并且不要将手机暴露在过强的磁场中。Phyphox的作者对于您手机的任何损坏概不负责。</string>
 
-    <string name="creditsNames">开发和概念:
-\nSebastian Staacks博士
-\n概念:
-\nChristoph Stampfer教授
-\n编程:
-\nDominik Dorsel
-\nJonas Gessner
+    <string name="creditsNames">开发和概念: 
+\nSebastian Staacks博士 
+\n概念: 
+\nChristoph Stampfer教授 
+\n编程: 
+\nDominik Dorsel 
+\nJonas Gessner 
 \nCamilla Lummerzheim<br/> 1<b> 2Sebastian Staacks博士</b> 3<br/> 4概念:<br/> 5<b> 6Christoph Stampfer教授</b> 7<br/> 8设计:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>编程:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="sensorLinearAcceleration">线加速度</string>
     <string name="sensorLight">光传感器</string>
