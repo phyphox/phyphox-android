@@ -37,7 +37,7 @@
 \nПрограммное обеспечение: 
 \nDominik Dorsel 
 \nJonas Gessner
-\nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>Концепт:<br/><b>Prof. Christoph Stampfer</b><br/>Дизайн:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Программное обеспечение:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеку JavaScript «Chart.js» (http://chartjs.org), доступную под лицензией MIT. Для преобразования Фурье мы используем библиотеку FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Массачусетский технологический институт, который доступен под общим названием GNU General Public Лицензия (версия 2 или новее).</string>
     <string name="sensorLinearAcceleration">Линейное ускорение</string>
     <string name="sensorLight">Свет</string>
