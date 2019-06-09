@@ -30,13 +30,13 @@
     <string name="info">訊息</string>
     <string name="credits">創立團隊</string>
     <string name="creditsRWTH">phyphox是由亞琛工業大學第二物理學院所開發。</string>
-    <string name="creditsNames">發展與概念：
-\nDr. Sebastian Staacks
-\n概念：
-\nProf. Christoph Stampfer
-\n程式設計：
-\nDominik Dorsel
-\nJonas Gessner
+    <string name="creditsNames">發展與概念： 
+\nDr. Sebastian Staacks 
+\n概念： 
+\nProf. Christoph Stampfer 
+\n程式設計： 
+\nDominik Dorsel 
+\nJonas Gessner 
 \nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>概念：<br/><b>Prof. Christoph Stampfer</b><br/>設計：<br/><b>Frank Posthoff (A.NikoPol)</b><br/>程式設計：<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="creditsLibs">The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later).</string>
     <string name="sensorLinearAcceleration">線性加速度</string>
