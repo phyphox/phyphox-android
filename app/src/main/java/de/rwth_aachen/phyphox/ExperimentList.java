@@ -1093,7 +1093,8 @@ public class ExperimentList extends AppCompatActivity {
                 Collections.sort(zipExperiments, new categoryComparator());
 
                 for (ExperimentsInCategory cat : zipExperiments) {
-                    cat.setPreselectedBluetoothAddress(preselectedDevice.getAddress());
+                    if (preselectedDevice != null)
+                        cat.setPreselectedBluetoothAddress(preselectedDevice.getAddress());
                     cat.addToParent(catList);
                 }
 
