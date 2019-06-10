@@ -9,7 +9,7 @@ android {
         targetSdkVersion 28
         versionCode 1010007 //1.01.00-07
         versionName "1.1.0"
-        resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "vi", "zh-rCN", "zh-rTW"
+        resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
             useSupportLibrary = true
         }
