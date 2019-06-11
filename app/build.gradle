@@ -29,9 +29,6 @@ android {
             path 'src/main/cpp/CMakeLists.txt'
         }
     }
-    lintOptions {
-        disable 'InvalidPackage' //Otherwise we get trouble with org.apache.poi
-    }
 }
 
 dependencies {
