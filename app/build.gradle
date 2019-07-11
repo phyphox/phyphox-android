@@ -7,8 +7,8 @@ android {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 1010007 //1.01.00-07
-        versionName "1.1.0"
+        versionCode 1010100 //1.01.01-00
+        versionName "1.1.1"
         resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
             useSupportLibrary = true
