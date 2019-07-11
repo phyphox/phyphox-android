@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -379,16 +380,41 @@ public class DataExport implements Serializable {
                                 .setSubject(c.getString(R.string.export_subject))
                                 .setStream(uri)
                                 .getIntent()
-                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                         List<ResolveInfo> resInfoList = c.getPackageManager().queryIntentActivities(intent, 0);
                         for (ResolveInfo ri : resInfoList) {
                             c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         }
 
+                        //Create intents for apps that support viewing or editing the file
+                        final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+                        viewIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
+                        viewIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                        resInfoList = c.getPackageManager().queryIntentActivities(viewIntent, 0);
+                        Vector<Intent> extraIntents = new Vector<>();
+                        for (ResolveInfo ri : resInfoList) {
+                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                            ))
+                                continue;
+                            Intent appIntent = new Intent();
+                            appIntent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
+                            appIntent.setAction(Intent.ACTION_VIEW);
+                            appIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
+                            appIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            extraIntents.add(appIntent);
+                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+
+                        final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[extraIntents.size()]);
+
+                        //Create chooser
+                        Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
+                        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntentsArray);
+
                         //Execute this intent
-                        c.startActivity(Intent.createChooser(intent, c.getString(R.string.share_pick_share)));
+                        c.startActivity(chooser);
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

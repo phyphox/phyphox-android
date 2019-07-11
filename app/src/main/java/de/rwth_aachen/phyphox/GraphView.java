@@ -297,7 +297,7 @@ public class GraphView extends View {
 
         for (int i = 0; i < graphSetup.dataSets.size(); i++) {
             CurveData cd = graphSetup.dataSets.get(i);
-            if (cd.style == Style.mapZ)
+            if (cd.style == Style.mapZ || cd.fbX == null || cd.fbY == null)
                 continue;
             double vxi, vyi, dx, dy, d;
             int n = cd.n;
