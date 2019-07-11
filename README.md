@@ -8,6 +8,13 @@ This project has been created at the RWTH Aachen University and is released unde
 
 **The names "phyphox" and "RWTH Aachen University" as well as the RWTH Aachen logo are registered trademarks.**
 
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/de.rwth_aachen.phyphox/)
+[<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
+     alt="Get it on Google Play"
+     height="80">](https://play.google.com/store/apps/details?id=de.rwth_aachen.phyphox)
+
 ## Coding style
 
 The app and all of its parts are developed by students and researchers who do not necessarily have a software development background. Therefore, you will find many passages in our code that is not best practice. Any help in improving our code is welcome.
