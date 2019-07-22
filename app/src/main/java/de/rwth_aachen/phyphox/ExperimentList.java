@@ -85,6 +85,7 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -875,6 +876,10 @@ public class ExperimentList extends AppCompatActivity {
     //Load all experiments from assets and from local files
     private void loadExperimentList() {
 
+        //Save scroll position to restore this later
+        ScrollView sv = ((ScrollView)findViewById(R.id.experimentScroller));
+        int scrollY = sv.getScrollY();
+
         //Clear the old list first
         categories.clear();
         bluetoothDeviceNameList.clear();
@@ -934,6 +939,8 @@ public class ExperimentList extends AppCompatActivity {
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
         }
+
+        sv.scrollTo(0, scrollY);
     }
 
     @Override
