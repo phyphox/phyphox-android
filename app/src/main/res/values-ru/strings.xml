@@ -109,7 +109,7 @@
     <string name="switchColumns2">Вид: 2 колонки</string>
     <string name="switchColumns3">Вид: 3 колонки</string>
 
-    <string name="show_description">Информация к эксрепименту</string>
+    <string name="show_description">Информация к эксперименту</string>
     <string name="save_locally">Добавить эксперимент в коллекцию</string>
     <string name="save_locally_done">Эксперимент успешно добавлен в коллекцию.</string>
     <string name="save_locally_message">Этот эксперимент был загружен из удаленного источника. Вы хотите добавить его в свою коллекцию экспериментов?</string>
@@ -260,5 +260,5 @@
     <string name="bt_more_info_link_button">Подробнее</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-<string name="export_empty">Эта экспериментальная конфигурация не находит какие-либо данные для экспорта. В случае ошибки обратитесь к источнику QR-кода или файла конфигурации.</string>
+<string name="export_empty">Эта экспериментальная конфигурация не определяет какие-либо данные для экспорта. В случае ошибки обратитесь к источнику QR-кода или файла конфигурации.</string>
     </resources>
