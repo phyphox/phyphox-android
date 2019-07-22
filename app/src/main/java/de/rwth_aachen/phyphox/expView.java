@@ -1700,6 +1700,7 @@ public class expView implements Serializable{
                     gv.zoomMaxY = max;
                 }
             }
+            gv.invalidate();
         }
 
     }

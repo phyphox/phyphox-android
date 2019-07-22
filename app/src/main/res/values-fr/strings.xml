@@ -37,7 +37,7 @@
 \nProgrammation : 
 \nDominik Dorsel 
 \nJonas Gessner 
-\nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>Concept :<br/><b>Prof. Christoph Stampfer</b><br/>Design :<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Programmation :<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus).</string>
     <string name="sensorLight">Luminosité</string>
     <string name="sensorGyroscope">Gyroscope</string>

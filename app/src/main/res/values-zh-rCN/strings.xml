@@ -37,7 +37,7 @@
 \n编程: 
 \nDominik Dorsel 
 \nJonas Gessner 
-\nCamilla Lummerzheim<br/> 1<b> 2Sebastian Staacks博士</b> 3<br/> 4概念:<br/> 5<b> 6Christoph Stampfer教授</b> 7<br/> 8设计:<br/> 9<b> 0Frank Posthoff (A.NikoPol)</b><br/>编程:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+\nCamilla Lummerzheim</string>
     <string name="sensorLinearAcceleration">线加速度</string>
     <string name="sensorLight">光传感器</string>
     <string name="sensorGyroscope">陀螺仪</string>

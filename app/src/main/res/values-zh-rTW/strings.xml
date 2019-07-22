@@ -37,7 +37,7 @@
 \n程式設計： 
 \nDominik Dorsel 
 \nJonas Gessner 
-\nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>概念：<br/><b>Prof. Christoph Stampfer</b><br/>設計：<br/><b>Frank Posthoff (A.NikoPol)</b><br/>程式設計：<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later).</string>
     <string name="sensorLinearAcceleration">線性加速度</string>
     <string name="sensorLight">光感應</string>

@@ -949,11 +949,18 @@ public class ExperimentList extends AppCompatActivity {
     protected static class handleZipIntent extends AsyncTask<String, Void, String> {
         private Intent intent; //The intent to read from
         private WeakReference<ExperimentList> parent;
+        BluetoothDevice preselectedDevice = null;
 
         //The constructor takes the intent to copy from and the parent activity to call back when finished.
         handleZipIntent(Intent intent, ExperimentList parent) {
             this.intent = intent;
             this.parent = new WeakReference<ExperimentList>(parent);
+        }
+
+        handleZipIntent(Intent intent, ExperimentList parent, BluetoothDevice preselectedDevice) {
+            this.intent = intent;
+            this.parent = new WeakReference<ExperimentList>(parent);
+            this.preselectedDevice = preselectedDevice;
         }
 
         //Copying is done on a second thread...
@@ -1006,11 +1013,11 @@ public class ExperimentList extends AppCompatActivity {
         @Override
         //Call the parent callback when we are done.
         protected void onPostExecute(String result) {
-            parent.get().zipReady(result);
+            parent.get().zipReady(result, preselectedDevice);
         }
     }
 
-    public void zipReady(String result) {
+    public void zipReady(String result, BluetoothDevice preselectedDevice) {
         if (progress != null)
             progress.dismiss();
         if (result.isEmpty()) {
@@ -1027,6 +1034,8 @@ public class ExperimentList extends AppCompatActivity {
                 //Create an intent for this file
                 Intent intent = new Intent(this, Experiment.class);
                 intent.setData(Uri.fromFile(files[0]));
+                if (preselectedDevice != null)
+                    intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, preselectedDevice.getAddress());
                 intent.setAction(Intent.ACTION_VIEW);
 
                 //Open the file
@@ -1084,6 +1093,8 @@ public class ExperimentList extends AppCompatActivity {
                 Collections.sort(zipExperiments, new categoryComparator());
 
                 for (ExperimentsInCategory cat : zipExperiments) {
+                    if (preselectedDevice != null)
+                        cat.setPreselectedBluetoothAddress(preselectedDevice.getAddress());
                     cat.addToParent(catList);
                 }
 
@@ -1297,11 +1308,13 @@ public class ExperimentList extends AppCompatActivity {
                             }
                         }
 
+                        byte [] finalBluetoothData = inflatePartialZip(currentBluetoothData);
+
                         File zipFile;
                         try {
                             zipFile = new File(tempPath, "bt.zip");
                             FileOutputStream out = new FileOutputStream(zipFile);
-                            out.write(currentBluetoothData);
+                            out.write(finalBluetoothData);
                             out.close();
                         } catch (Exception e) {
                             showBluetoothExperimentReadError("Could not write Bluetooth experiment content to zip file.", device);
@@ -1311,7 +1324,7 @@ public class ExperimentList extends AppCompatActivity {
                         Intent zipIntent = new Intent(parent, Experiment.class);
                         zipIntent.setData(Uri.fromFile(zipFile));
                         zipIntent.setAction(Intent.ACTION_VIEW);
-                        new handleZipIntent(zipIntent, parent).execute();
+                        new handleZipIntent(zipIntent, parent, device).execute();
                     }
                 }
             }
@@ -1642,6 +1655,111 @@ public class ExperimentList extends AppCompatActivity {
         });
     }
 
+    private byte [] inflatePartialZip(byte [] dataReceived) {
+        byte [] zipData;
+        int totalSize = dataReceived.length;
+        if (dataReceived[totalSize-16] == 0x50 && dataReceived[totalSize-15] == 0x4b && dataReceived[totalSize-14] == 0x07 && dataReceived[totalSize-13] == 0x08) {
+            //This is a data descriptor we found at the end of the QR code data.
+            //Therefore, we did not receive a complete zip file, but a partial one that
+            // only contains a single entry and omits the local file header as well as
+            // the central directory
+            //We have to add those ourselves.
+
+            zipData = new byte[39 + totalSize - 16 + 55 + 22];
+
+            //Local file header
+            zipData[0] = 0x50; //Local file header signature
+            zipData[1] = 0x4b;
+            zipData[2] = 0x03;
+            zipData[3] = 0x04;
+            zipData[4] = 0x0a; //Version
+            zipData[5] = 0x00;
+            zipData[6] = 0x00; //General purpose flag
+            zipData[7] = 0x00;
+            zipData[8] = 0x00; //Compression method
+            zipData[9] = 0x00;
+            zipData[10] = 0x00; //modification time
+            zipData[11] = 0x00;
+            zipData[12] = 0x00; //modification date
+            zipData[13] = 0x00;
+            System.arraycopy(dataReceived, totalSize - 12, zipData, 14, 12); //CRC32, compressed size and uncompressed size
+            zipData[26] = 0x09; //File name length
+            zipData[27] = 0x00;
+            zipData[28] = 0x00; //Extra field length
+            zipData[29] = 0x00;
+            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 30, 9);
+
+            //Data (without data descriptor)
+            System.arraycopy(dataReceived, 0, zipData, 39, totalSize-16);
+
+            //Central directory
+            zipData[39 + totalSize - 16] = 0x50; //signature
+            zipData[39 + totalSize - 16 +  1] = 0x4b;
+            zipData[39 + totalSize - 16 +  2] = 0x01;
+            zipData[39 + totalSize - 16 +  3] = 0x02;
+            zipData[39 + totalSize - 16 +  4] = 0x0a; //Version made by
+            zipData[39 + totalSize - 16 +  5] = 0x00;
+            zipData[39 + totalSize - 16 +  6] = 0x0a; //Version needed
+            zipData[39 + totalSize - 16 +  7] = 0x00;
+            zipData[39 + totalSize - 16 +  8] = 0x00; //General purpose flag
+            zipData[39 + totalSize - 16 +  9] = 0x00;
+            zipData[39 + totalSize - 16 + 10] = 0x00; //Compression method
+            zipData[39 + totalSize - 16 + 11] = 0x00;
+            zipData[39 + totalSize - 16 + 12] = 0x00; //modification time
+            zipData[39 + totalSize - 16 + 13] = 0x00;
+            zipData[39 + totalSize - 16 + 14] = 0x00; //modification date
+            zipData[39 + totalSize - 16 + 15] = 0x00;
+            System.arraycopy(dataReceived, totalSize - 12, zipData, 39 + totalSize - 16 + 16, 12); //CRC32, compressed size and uncompressed size
+            zipData[39 + totalSize - 16 + 28] = 0x09; //File name length
+            zipData[39 + totalSize - 16 + 29] = 0x00;
+            zipData[39 + totalSize - 16 + 30] = 0x00; //Extra field length
+            zipData[39 + totalSize - 16 + 31] = 0x00;
+            zipData[39 + totalSize - 16 + 32] = 0x00; //File comment length
+            zipData[39 + totalSize - 16 + 33] = 0x00;
+            zipData[39 + totalSize - 16 + 34] = 0x00; //Disk number
+            zipData[39 + totalSize - 16 + 35] = 0x00;
+            zipData[39 + totalSize - 16 + 36] = 0x00; //Internal file attributes
+            zipData[39 + totalSize - 16 + 37] = 0x00;
+            zipData[39 + totalSize - 16 + 38] = 0x00; //External file attributes
+            zipData[39 + totalSize - 16 + 39] = 0x00;
+            zipData[39 + totalSize - 16 + 40] = 0x00;
+            zipData[39 + totalSize - 16 + 41] = 0x00;
+            zipData[39 + totalSize - 16 + 42] = 0x00; //Relative offset of local header
+            zipData[39 + totalSize - 16 + 43] = 0x00;
+            zipData[39 + totalSize - 16 + 44] = 0x00;
+            zipData[39 + totalSize - 16 + 45] = 0x00;
+            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 39 + totalSize - 16 + 46, 9);
+
+            //End of central directory
+            zipData[39 + totalSize - 16 + 55] = 0x50; //signature
+            zipData[39 + totalSize - 16 + 55 +  1] = 0x4b;
+            zipData[39 + totalSize - 16 + 55 +  2] = 0x05;
+            zipData[39 + totalSize - 16 + 55 +  3] = 0x06;
+            zipData[39 + totalSize - 16 + 55 +  4] = 0x00; //Disk number
+            zipData[39 + totalSize - 16 + 55 +  5] = 0x00;
+            zipData[39 + totalSize - 16 + 55 +  6] = 0x00; //Start disk number
+            zipData[39 + totalSize - 16 + 55 +  7] = 0x00;
+            zipData[39 + totalSize - 16 + 55 +  8] = 0x01; //Number of central directories on disk
+            zipData[39 + totalSize - 16 + 55 +  9] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 10] = 0x01; //Number of central directories in total
+            zipData[39 + totalSize - 16 + 55 + 11] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 12] = 0x37; //Size of central directory
+            zipData[39 + totalSize - 16 + 55 + 13] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 14] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 15] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 16] = (byte) ((long) (39 + totalSize)); //Start of central directory
+            zipData[39 + totalSize - 16 + 55 + 17] = (byte) ((long) (39 + totalSize) >> 8);
+            zipData[39 + totalSize - 16 + 55 + 18] = (byte) ((long) (39 + totalSize) >> 16);
+            zipData[39 + totalSize - 16 + 55 + 19] = (byte) ((long) (39 + totalSize) >> 24);
+            zipData[39 + totalSize - 16 + 55 + 20] = 0x00; //Comment length
+            zipData[39 + totalSize - 16 + 55 + 21] = 0x00;
+
+        } else {
+            zipData = dataReceived;
+        }
+        return zipData;
+    }
+
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
         String textResult;
@@ -1723,106 +1841,7 @@ public class ExperimentList extends AppCompatActivity {
                         return;
                     }
 
-                    byte [] zipData;
-                    if (dataReceived[totalSize-16] == 0x50 && dataReceived[totalSize-15] == 0x4b && dataReceived[totalSize-14] == 0x07 && dataReceived[totalSize-13] == 0x08) {
-                        //This is a data descriptor we found at the end of the QR code data.
-                        //Therefore, we did not receive a complete zip file, but a partial one that
-                        // only contains a single entry and omits the local file header as well as
-                        // the central directory
-                        //We have to add those ourselves.
-
-                        zipData = new byte[39 + totalSize - 16 + 55 + 22];
-
-                        //Local file header
-                        zipData[0] = 0x50; //Local file header signature
-                        zipData[1] = 0x4b;
-                        zipData[2] = 0x03;
-                        zipData[3] = 0x04;
-                        zipData[4] = 0x0a; //Version
-                        zipData[5] = 0x00;
-                        zipData[6] = 0x00; //General purpose flag
-                        zipData[7] = 0x00;
-                        zipData[8] = 0x00; //Compression method
-                        zipData[9] = 0x00;
-                        zipData[10] = 0x00; //modification time
-                        zipData[11] = 0x00;
-                        zipData[12] = 0x00; //modification date
-                        zipData[13] = 0x00;
-                        System.arraycopy(dataReceived, totalSize - 12, zipData, 14, 12); //CRC32, compressed size and uncompressed size
-                        zipData[26] = 0x09; //File name length
-                        zipData[27] = 0x00;
-                        zipData[28] = 0x00; //Extra field length
-                        zipData[29] = 0x00;
-                        System.arraycopy("a.phyphox".getBytes(), 0, zipData, 30, 9);
-
-                        //Data (without data descriptor)
-                        System.arraycopy(dataReceived, 0, zipData, 39, totalSize-16);
-
-                        //Central directory
-                        zipData[39 + totalSize - 16] = 0x50; //signature
-                        zipData[39 + totalSize - 16 +  1] = 0x4b;
-                        zipData[39 + totalSize - 16 +  2] = 0x01;
-                        zipData[39 + totalSize - 16 +  3] = 0x02;
-                        zipData[39 + totalSize - 16 +  4] = 0x0a; //Version made by
-                        zipData[39 + totalSize - 16 +  5] = 0x00;
-                        zipData[39 + totalSize - 16 +  6] = 0x0a; //Version needed
-                        zipData[39 + totalSize - 16 +  7] = 0x00;
-                        zipData[39 + totalSize - 16 +  8] = 0x00; //General purpose flag
-                        zipData[39 + totalSize - 16 +  9] = 0x00;
-                        zipData[39 + totalSize - 16 + 10] = 0x00; //Compression method
-                        zipData[39 + totalSize - 16 + 11] = 0x00;
-                        zipData[39 + totalSize - 16 + 12] = 0x00; //modification time
-                        zipData[39 + totalSize - 16 + 13] = 0x00;
-                        zipData[39 + totalSize - 16 + 14] = 0x00; //modification date
-                        zipData[39 + totalSize - 16 + 15] = 0x00;
-                        System.arraycopy(dataReceived, totalSize - 12, zipData, 39 + totalSize - 16 + 16, 12); //CRC32, compressed size and uncompressed size
-                        zipData[39 + totalSize - 16 + 28] = 0x09; //File name length
-                        zipData[39 + totalSize - 16 + 29] = 0x00;
-                        zipData[39 + totalSize - 16 + 30] = 0x00; //Extra field length
-                        zipData[39 + totalSize - 16 + 31] = 0x00;
-                        zipData[39 + totalSize - 16 + 32] = 0x00; //File comment length
-                        zipData[39 + totalSize - 16 + 33] = 0x00;
-                        zipData[39 + totalSize - 16 + 34] = 0x00; //Disk number
-                        zipData[39 + totalSize - 16 + 35] = 0x00;
-                        zipData[39 + totalSize - 16 + 36] = 0x00; //Internal file attributes
-                        zipData[39 + totalSize - 16 + 37] = 0x00;
-                        zipData[39 + totalSize - 16 + 38] = 0x00; //External file attributes
-                        zipData[39 + totalSize - 16 + 39] = 0x00;
-                        zipData[39 + totalSize - 16 + 40] = 0x00;
-                        zipData[39 + totalSize - 16 + 41] = 0x00;
-                        zipData[39 + totalSize - 16 + 42] = 0x00; //Relative offset of local header
-                        zipData[39 + totalSize - 16 + 43] = 0x00;
-                        zipData[39 + totalSize - 16 + 44] = 0x00;
-                        zipData[39 + totalSize - 16 + 45] = 0x00;
-                        System.arraycopy("a.phyphox".getBytes(), 0, zipData, 39 + totalSize - 16 + 46, 9);
-
-                        //End of central directory
-                        zipData[39 + totalSize - 16 + 55] = 0x50; //signature
-                        zipData[39 + totalSize - 16 + 55 +  1] = 0x4b;
-                        zipData[39 + totalSize - 16 + 55 +  2] = 0x05;
-                        zipData[39 + totalSize - 16 + 55 +  3] = 0x06;
-                        zipData[39 + totalSize - 16 + 55 +  4] = 0x00; //Disk number
-                        zipData[39 + totalSize - 16 + 55 +  5] = 0x00;
-                        zipData[39 + totalSize - 16 + 55 +  6] = 0x00; //Start disk number
-                        zipData[39 + totalSize - 16 + 55 +  7] = 0x00;
-                        zipData[39 + totalSize - 16 + 55 +  8] = 0x01; //Number of central directories on disk
-                        zipData[39 + totalSize - 16 + 55 +  9] = 0x00;
-                        zipData[39 + totalSize - 16 + 55 + 10] = 0x01; //Number of central directories in total
-                        zipData[39 + totalSize - 16 + 55 + 11] = 0x00;
-                        zipData[39 + totalSize - 16 + 55 + 12] = 0x37; //Size of central directory
-                        zipData[39 + totalSize - 16 + 55 + 13] = 0x00;
-                        zipData[39 + totalSize - 16 + 55 + 14] = 0x00;
-                        zipData[39 + totalSize - 16 + 55 + 15] = 0x00;
-                        zipData[39 + totalSize - 16 + 55 + 16] = (byte) ((long) (39 + totalSize)); //Start of central directory
-                        zipData[39 + totalSize - 16 + 55 + 17] = (byte) ((long) (39 + totalSize) >> 8);
-                        zipData[39 + totalSize - 16 + 55 + 18] = (byte) ((long) (39 + totalSize) >> 16);
-                        zipData[39 + totalSize - 16 + 55 + 19] = (byte) ((long) (39 + totalSize) >> 24);
-                        zipData[39 + totalSize - 16 + 55 + 20] = 0x00; //Comment length
-                        zipData[39 + totalSize - 16 + 55 + 21] = 0x00;
-
-                    } else {
-                        zipData = dataReceived;
-                    }
+                    byte [] zipData = inflatePartialZip(dataReceived);
 
 
                     File zipFile;
