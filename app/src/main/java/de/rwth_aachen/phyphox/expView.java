@@ -387,7 +387,7 @@ public class expView implements Serializable{
         //</div>
         protected String createViewHTML(){
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement adjustableColor\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
                     "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ this.unit + "</span></span>" +
                     "</div>";
@@ -527,7 +527,7 @@ public class expView implements Serializable{
         //</div>
         protected String createViewHTML(){
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;color:#"+c+"\" class=\"infoElement\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;color:#"+c+"\" class=\"infoElement adjustableColor\" id=\"element"+htmlID+"\">" +
                     "<p>"+this.label+"</p>" +
                     "</div>";
         }
@@ -582,7 +582,7 @@ public class expView implements Serializable{
         //</div>
         protected String createViewHTML(){
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;background: #"+c+";height: "+height+"em\" class=\"separatorElement\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;background: #"+c+";height: "+height+"em\" class=\"separatorElement adjustableColor\" id=\"element"+htmlID+"\">" +
                     "</div>";
         }
 
@@ -974,10 +974,7 @@ public class expView implements Serializable{
         private Vector<Double> lineWidth = new Vector<>();
         private Vector<Integer> color = new Vector<>();
 
-        private String backgroundGridRemoteColor;
         private String gridColor;
-        private String mainRemoteColor;
-        private String lineColor;
 
         GraphView.scaleMode scaleMinX = GraphView.scaleMode.auto;
         GraphView.scaleMode scaleMaxX = GraphView.scaleMode.auto;
@@ -1003,8 +1000,6 @@ public class expView implements Serializable{
             margin = res.getDimensionPixelSize(R.dimen.activity_vertical_margin);
 
             aspectRatio = 2.5;
-            backgroundGridRemoteColor = String.format("%08x", res.getColor(R.color.backgroundGridRemote)).substring(2);
-            mainRemoteColor = String.format("%08x", res.getColor(R.color.mainRemote)).substring(2);
             gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
             nCurves = (inputs.size()+1)/2;
 
@@ -1045,7 +1040,6 @@ public class expView implements Serializable{
         protected void setColor(int color) {
             for (int i = 0; i < nCurves || i < historyLength; i++)
                 setColor(color, i);
-            lineColor = String.format("%08x", color).substring(2);
         }
 
         protected void setStyle(GraphView.Style style, int i) {
@@ -1430,8 +1424,8 @@ public class expView implements Serializable{
                                     "borderCapStyle: \"butt\"," +
                                     "borderJoinStyle: \"round\"," +
                                     "spanGaps: false," +
-                                    "borderColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
-                                    "backgroundColor: \"#" + String.format("%08x", color.get(i/2)).substring(2) + "\"," +
+                                    "borderColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
+                                    "backgroundColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
                                     "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) + "*scaleFactor," +
                                     "xAxisID: \"xaxis\"," +
                                     "yAxisID: \"yaxis\"" +
@@ -1568,19 +1562,19 @@ public class expView implements Serializable{
                                             "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
                                             "position: \"bottom\"," +
                                             "gridLines: {" +
-                                                "color: \"#"+gridColor+"\"," +
-                                                "zeroLineColor: \"#"+gridColor+"\"," +
+                                                "color: adjustableColor(\"#"+gridColor+"\")," +
+                                                "zeroLineColor: adjustableColor(\"#"+gridColor+"\")," +
                                                 "tickMarkLength: 0," +
                                             "}," +
                                             "scaleLabel: {" +
                                                 "display: true," +
                                                 "labelString: \""+this.labelX+(this.unitX != null && !this.unitX.isEmpty() ? " (" + this.unitX + ")" : "")+"\"," +
-                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontColor: adjustableColor(\"#ffffff\")," +
                                                 "fontSize: 15*scaleFactor," +
                                                 "padding: 0, "+
                                             "}," +
                                             "ticks: {" +
-                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontColor: adjustableColor(\"#ffffff\")," +
                                                 "fontSize: 15*scaleFactor," +
                                                 "padding: 3*scaleFactor, "+
                                                 "autoSkip: true," +
@@ -1595,19 +1589,19 @@ public class expView implements Serializable{
                                             "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
                                             "position: \"bottom\"," +
                                             "gridLines: {" +
-                                                "color: \"#"+gridColor+"\"," +
-                                                "zeroLineColor: \"#"+gridColor+"\"," +
+                                                "color: adjustableColor(\"#"+gridColor+"\")," +
+                                                "zeroLineColor: adjustableColor(\"#"+gridColor+"\")," +
                                                 "tickMarkLength: 0," +
                                             "}," +
                                             "scaleLabel: {" +
                                                 "display: true," +
                                                 "labelString: \""+this.labelY+(this.unitY != null && !this.unitY.isEmpty() ? " (" + this.unitY + ")" : "")+"\"," +
-                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontColor: adjustableColor(\"#ffffff\")," +
                                                 "fontSize: 15*scaleFactor," +
                                                 "padding: 3*scaleFactor, "+
                                             "}," +
                                             "ticks: {" +
-                                                "fontColor: \"#"+mainRemoteColor+"\"," +
+                                                "fontColor: adjustableColor(\"#ffffff\")," +
                                                 "fontSize: 15*scaleFactor," +
                                                 "padding: 3*scaleFactor, "+
                                                 "autoSkip: true," +

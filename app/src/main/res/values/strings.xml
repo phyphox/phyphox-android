@@ -221,6 +221,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="switchColumns1">View: 1 column</string>
     <string name="switchColumns2">View: 2 columns</string>
     <string name="switchColumns3">View: 3 columns</string>
+    <string name="toggleBrightMode">Bright mode</string>
     <string name="fontSize">Font size</string>
 
     <string name="show_description">Experiment info</string>

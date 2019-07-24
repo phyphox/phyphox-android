@@ -107,13 +107,6 @@ public class remoteServer extends Thread {
         try {
             //While ẃe get lines from the resource file, replace placeholders and hand the line to the stringbuilder
             while ((line = br.readLine()) != null) {
-                //Set color placeholders...
-                line = line.replace("###background-color###", "#"+String.format("%08x", res.getColor(R.color.backgroundRemote)).substring(2));
-                line = line.replace("###background2-color###", "#"+String.format("%08x", res.getColor(R.color.background2Remote)).substring(2));
-                line = line.replace("###background2hover-color###", "#"+String.format("%08x", res.getColor(R.color.background2HoverRemote)).substring(2));
-                line = line.replace("###main-color###", "#"+String.format("%08x", res.getColor(R.color.mainRemote)).substring(2));
-                line = line.replace("###highlight-color###", "#"+String.format("%06x", res.getColor(R.color.highlight)).substring(2));
-
                 //Set some drawables directly in the css as base64-encoded PNGs
                 if (line.contains("###drawablePlay###"))
                     line = line.replace("###drawablePlay###", getBase64PNG(res.getDrawable(R.drawable.play)));
@@ -216,6 +209,9 @@ public class remoteServer extends Thread {
                     sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns3Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns3Translation]] -->", res.getString(R.string.switchColumns3)));
+                    sb.append("\n");
+                } else if (line.contains("<!-- [[toggleBrightModeTranslation]] -->")) {
+                    sb.append(line.replace("<!-- [[toggleBrightModeTranslation]] -->", res.getString(R.string.toggleBrightMode)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[fontSizeTranslation]] -->")) {
                     sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", res.getString(R.string.fontSize)));
