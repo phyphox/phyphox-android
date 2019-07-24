@@ -7,7 +7,7 @@ android {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 1010200 //1.01.02-00
+        versionCode 1010201 //1.01.02-01
         versionName "1.1.2"
         resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
