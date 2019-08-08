@@ -2,19 +2,24 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 28
+    buildToolsVersion "29.0.2"
 
     defaultConfig {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 1010201 //1.01.02-01
+
         versionName "1.1.2"
+        //  format WWXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
+        versionCode 1010201 //1.01.02-01
+
         resConfigs "cs", "de", "el", "en", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
             useSupportLibrary = true
         }
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
+
     buildTypes {
         release {
             lintOptions {
@@ -24,13 +29,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    useLibrary 'org.apache.http.legacy'
+
     externalNativeBuild {
         cmake {
             path 'src/main/cpp/CMakeLists.txt'
         }
     }
-    flavorDimensions("permissions")
+
+    flavorDimensions "permissions"
     productFlavors {
         screenshot {
             dimension "permissions"
@@ -39,16 +45,32 @@ android {
             dimension "permissions"
         }
     }
+
+    compileOptions {
+        encoding = 'UTF-8'
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    useLibrary 'org.apache.http.legacy'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'org.apache.poi:poi:3.13'
-    implementation 'com.android.support:support-v4:28.0.0'
+
     implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+
+    //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
+
+    //https://poi.apache.org/changes.html
+    implementation 'org.apache.poi:poi:3.13'
+
+    //https://bigbadaboom.github.io/androidsvg/release_notes.html
     implementation 'com.caverock:androidsvg:1.4'
+
 
     //Automated screenshot generation
     androidTestImplementation 'junit:junit:4.12'
