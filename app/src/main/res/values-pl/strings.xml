@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Ustawienia</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -111,7 +112,7 @@
     <string name="categoryRawSensor">Surowe dane</string>
 
     <string name="experimentinfo_hint">Sprawdź informacje nt. eksperymentu by dowiedzieć się więcej.</string>
-<string name="translationInfo">Języki</string>
+    <string name="translationInfo">Języki</string>
     <string name="translationText">Phyphox używa pierwszego z języków z listy języków preferowanych. Zmiany języka można dokonać w systemie Android po wybraniu opcji \"ustawienia\" znajdującej się poniżej. Lista dostępnych języków oraz dodatkowe informacje znajdują się na stronie projektu, na którą przekierowuje opcja \"odwiedź stronę\".</string>
     <string name="translationToSettings">Ustawienia</string>
     <string name="translationToWebsite">Odwiedź stronę</string>

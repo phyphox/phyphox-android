@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Nastavitve</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -181,4 +182,4 @@
     <string name="bt_exception_disconnected">Povezava z napravo Bluetooth je prekinjena.</string>
     <string name="bt_default_error_message">Napaka v napravi Bluetooth.</string>
 
-    </resources>
+</resources>

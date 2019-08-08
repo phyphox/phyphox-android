@@ -6,12 +6,13 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="5dp">
+
     <ImageView
         android:id="@+id/hint_arrow"
         android:layout_width="12dp"
         android:layout_height="12dp"
-        android:layout_marginEnd="10dp"
         android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         app:srcCompat="@drawable/arrow_top" />
 
     <TextView
@@ -20,7 +21,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/rounded_dialog"
         android:gravity="center"
-        android:text=""
         android:padding="10dp"
+        android:text=""
         android:textColor="@color/mainDialog" />
 </LinearLayout>

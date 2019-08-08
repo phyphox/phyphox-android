@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -38,7 +37,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
@@ -71,14 +69,6 @@ public abstract class phyphoxFile {
             return false;
         }
         return true;
-    }
-
-    //PhyphoxStream bundles the result of an opened stream
-    public static class PhyphoxStream {
-        boolean isLocal;                //is the stream a local resource? (asset or private file)
-        InputStream inputStream = null; //the input stream or null on error
-        byte source[] = null;           //A copy of the input for non-local sources
-        String errorMessage = "";       //Error message that can be displayed to the user
     }
 
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
@@ -127,19 +117,19 @@ public abstract class phyphoxFile {
                         phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
-                        phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
+                        phyphoxStream.errorMessage = "Error loading this experiment from local storage: " + e.getMessage();
                     }
                 } else { //The local file is in the private directory
                     try {
                         phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
-                        phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
+                        phyphoxStream.errorMessage = "Error loading this experiment from local storage: " + e.getMessage();
                     }
                 }
                 return phyphoxStream;
 
-            } else if (scheme.equals(ContentResolver.SCHEME_FILE )) {//The intent refers to a file
+            } else if (scheme.equals(ContentResolver.SCHEME_FILE)) {//The intent refers to a file
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
                 if (uri == null) {
@@ -201,6 +191,14 @@ public abstract class phyphoxFile {
         }
     }
 
+    //PhyphoxStream bundles the result of an opened stream
+    public static class PhyphoxStream {
+        boolean isLocal;                //is the stream a local resource? (asset or private file)
+        InputStream inputStream = null; //the input stream or null on error
+        byte source[] = null;           //A copy of the input for non-local sources
+        String errorMessage = "";       //Error message that can be displayed to the user
+    }
+
     //Exceptions caused by a bad phyphox file
     public static class phyphoxFileException extends Exception {
         public phyphoxFileException(String message) {
@@ -217,10 +215,10 @@ public abstract class phyphoxFile {
     // processEndTag
     protected static class xmlBlockParser {
         protected Experiment parent; //For some elements we need access to the parent activity
-        private String tag; //The tag of the block that should be handled by this parser
-        private int rootDepth; //The depth of the base of the block handled by this parser
         protected XmlPullParser xpp; //The pull parser used handed to this parser
         protected phyphoxExperiment experiment; //The experiment to be loaded
+        private String tag; //The tag of the block that should be handled by this parser
+        private int rootDepth; //The depth of the base of the block handled by this parser
 
         //The constructor takes the tag, and the experiment to fill
         xmlBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
@@ -285,9 +283,11 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
 
         }
+
         protected void processEndTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
 
         }
+
         protected void done() throws IOException, XmlPullParserException, phyphoxFileException {
 
         }
@@ -335,7 +335,7 @@ public abstract class phyphoxFile {
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
         HashSet<UUID> characteristicsWithExtraTime; // uuids of all characteristics that have extra=time to make sure they can't have it twice
 
-        bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
+        bluetoothIoBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
             super(xpp, experiment, parent);
             this.outputList = outputList;
             this.inputList = inputList;
@@ -402,7 +402,7 @@ public abstract class phyphoxFile {
                     inputList.add(new dataInput(buffer, false));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
+                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size() - 1, outputConversionFunction));
 
                     break;
                 }
@@ -431,14 +431,14 @@ public abstract class phyphoxFile {
 
                     // check conversion attribute
                     if (!extraTime) {
-                       if (conversionFunctionName == null) {
-                           throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
-                       }
+                        if (conversionFunctionName == null) {
+                            throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
+                        }
                         try {
                             try {
                                 Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsInput$" + conversionFunctionName);
                                 Constructor constructor = conversionClass.getDeclaredConstructor(new Class[]{XmlPullParser.class});
-                                inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
+                                inputConversionFunction = (ConversionsInput.InputConversion) constructor.newInstance(xpp);
                             } catch (Exception e) {
                                 Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
                                 inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod, xpp);
@@ -458,7 +458,7 @@ public abstract class phyphoxFile {
                     outputList.add(new dataOutput(buffer, false));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.InputData(uuid, extraTime, outputList.size()-1, inputConversionFunction));
+                    characteristics.add(new Bluetooth.InputData(uuid, extraTime, outputList.size() - 1, inputConversionFunction));
                     break;
                 }
 
@@ -471,7 +471,7 @@ public abstract class phyphoxFile {
                         try {
                             Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsConfig$" + conversionFunctionName);
                             Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
-                            configConversionFunction = (ConversionsConfig.ConfigConversion)constructor.newInstance(xpp);
+                            configConversionFunction = (ConversionsConfig.ConfigConversion) constructor.newInstance(xpp);
                         } catch (Exception e) {
                             Method conversionMethod = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
                             configConversionFunction = new ConversionsConfig.SimpleConfigConversion(conversionMethod);
@@ -491,7 +491,7 @@ public abstract class phyphoxFile {
                     break;
                 }
                 default: {
-                    throw new phyphoxFileException("Unknown tag \""+tag+"\"", xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag \"" + tag + "\"", xpp.getLineNumber());
                 }
             }
         }
@@ -501,34 +501,15 @@ public abstract class phyphoxFile {
     //Blockparser for any input and output assignments
     private static class ioBlockParser extends xmlBlockParser {
 
-        public static class ioMapping {
-            String name;
-            boolean asRequired = true;
-            int repeatableOffset = -1;
-            boolean valueAllowed = true;
-            boolean emptyAllowed = false;
-            int minCount = 0;
-            int maxCount = 0;
-            int count = 0;
-        }
-
-        public static class AdditionalTag {
-            String name;
-            String content;
-            Map<String, String> attributes = new HashMap<>();
-        }
         Vector<AdditionalTag> additionalTags;
-
         Vector<dataInput> inputList;
         Vector<dataOutput> outputList;
         ioMapping[] inputMapping;
         ioMapping[] outputMapping;
         String mappingAttribute;
-
         ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
             this(xpp, experiment, parent, inputList, outputList, inputMapping, outputMapping, mappingAttribute, null);
         }
-
         ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute, Vector<AdditionalTag> additionalTags) {
             super(xpp, experiment, parent);
             this.inputList = inputList;
@@ -582,32 +563,32 @@ public abstract class phyphoxFile {
                         }
 
                         if (targetIndex < 0) //No mapping found at all
-                            throw new phyphoxFileException("Could not find mapping for input \""+mapping+"\".", xpp.getLineNumber());
+                            throw new phyphoxFileException("Could not find mapping for input \"" + mapping + "\".", xpp.getLineNumber());
 
                         //Increase the inputList if necessary
                         if (targetIndex >= inputList.size())
-                            inputList.setSize(targetIndex+1);
+                            inputList.setSize(targetIndex + 1);
 
                         //If the targetIndex is not yet mapped, we are done here. If not, we have to check if this entry is repeatable, so we can map it again
                         if (inputList.get(targetIndex) != null || inputMapping[targetIndex].repeatableOffset >= 0) {
                             if (inputMapping[targetIndex].repeatableOffset >= 0) {
                                 //It is repeatable. Let's calculate a new index according to the repeatable offset
-                                int repeatPeriod = inputMapping[inputMapping.length-1].repeatableOffset+1;
+                                int repeatPeriod = inputMapping[inputMapping.length - 1].repeatableOffset + 1;
                                 //If the value is repeatable, we want to add it to the last current repeatable group
-                                while (targetIndex-inputMapping[mappingIndex].repeatableOffset+repeatPeriod < inputList.size())
+                                while (targetIndex - inputMapping[mappingIndex].repeatableOffset + repeatPeriod < inputList.size())
                                     targetIndex += repeatPeriod;
                                 //Increase the inputList if necessary
                                 if (targetIndex >= inputList.size())
-                                    inputList.setSize(targetIndex+1);
+                                    inputList.setSize(targetIndex + 1);
                                 //Recalculate the index while the input entry is still in use
                                 while (inputList.get(targetIndex) != null) {
                                     targetIndex += repeatPeriod;
                                     if (targetIndex >= inputList.size())
-                                        inputList.setSize(targetIndex+1);
+                                        inputList.setSize(targetIndex + 1);
                                 }
                             } else {
                                 //Already set and not repeatable.
-                                throw new phyphoxFileException("The input \""+mapping+"\" has already been defined.", xpp.getLineNumber());
+                                throw new phyphoxFileException("The input \"" + mapping + "\" has already been defined.", xpp.getLineNumber());
                             }
                         }
                     } else {
@@ -624,7 +605,7 @@ public abstract class phyphoxFile {
                                 }
                                 //Resize inputList if necessary
                                 if (i >= inputList.size())
-                                    inputList.setSize(i+1);
+                                    inputList.setSize(i + 1);
 
                                 //Is this entry empty? Great, we have found our target
                                 if (inputList.get(i) == null) {
@@ -638,16 +619,16 @@ public abstract class phyphoxFile {
                         if (targetIndex < 0) {
                             if (firstRepeatable >= 0) {
                                 //We have repeatables. So let's just dump our inputs at the end of the list
-                                int repeatPeriod = inputMapping[inputMapping.length-1].repeatableOffset+1;
+                                int repeatPeriod = inputMapping[inputMapping.length - 1].repeatableOffset + 1;
                                 targetIndex = inputMapping.length;
                                 int repeatIndex = 0; //We have to keep track of where we place it, so we know which mapping we just used
                                 if (targetIndex >= inputList.size())
-                                    inputList.setSize(targetIndex+1);
-                                while (inputList.get(targetIndex) != null || inputMapping[firstRepeatable+repeatIndex].asRequired) {
+                                    inputList.setSize(targetIndex + 1);
+                                while (inputList.get(targetIndex) != null || inputMapping[firstRepeatable + repeatIndex].asRequired) {
                                     targetIndex++; //Still not empty. Next one.
-                                    repeatIndex = (repeatIndex+1)%repeatPeriod; //Next also means, that we have the next mapping. At the end of all repeatables we start over again.
+                                    repeatIndex = (repeatIndex + 1) % repeatPeriod; //Next also means, that we have the next mapping. At the end of all repeatables we start over again.
                                     if (targetIndex >= inputList.size())
-                                        inputList.setSize(targetIndex+1);
+                                        inputList.setSize(targetIndex + 1);
                                 }
                                 mappingIndex = firstRepeatable + repeatIndex;
                             } else //Not found and no repeatables. Let's complain.
@@ -671,7 +652,7 @@ public abstract class phyphoxFile {
                             }
                             inputList.set(targetIndex, new dataInput(value));
                         } else {
-                            throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
+                            throw new phyphoxFileException("Value-type not allowed for input \"" + inputMapping[mappingIndex].name + "\".", xpp.getLineNumber());
                         }
                     } else if (type.equals("buffer")) {
 
@@ -684,7 +665,7 @@ public abstract class phyphoxFile {
                             at.content = bufferName;
                         dataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
-                            throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
+                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                         else {
                             inputList.set(targetIndex, new dataInput(buffer, clearAfterRead));
                         }
@@ -693,10 +674,10 @@ public abstract class phyphoxFile {
                         if (inputMapping[mappingIndex].emptyAllowed) {
                             inputList.set(targetIndex, new dataInput());
                         } else {
-                            throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
+                            throw new phyphoxFileException("Value-type not allowed for input \"" + inputMapping[mappingIndex].name + "\".", xpp.getLineNumber());
                         }
                     } else {
-                        throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
+                        throw new phyphoxFileException("Unknown input type \"" + type + "\".", xpp.getLineNumber());
                     }
 
                     break;
@@ -716,21 +697,21 @@ public abstract class phyphoxFile {
                             }
                         }
                         if (targetIndex < 0)
-                            throw new phyphoxFileException("Could not find mapping for output \""+mapping+"\".", xpp.getLineNumber());
+                            throw new phyphoxFileException("Could not find mapping for output \"" + mapping + "\".", xpp.getLineNumber());
                         if (targetIndex >= outputList.size())
-                            outputList.setSize(targetIndex+1);
+                            outputList.setSize(targetIndex + 1);
                         if (outputList.get(targetIndex) != null) {
                             if (outputMapping[targetIndex].repeatableOffset >= 0) {
                                 targetIndex = outputMapping.length + outputMapping[targetIndex].repeatableOffset;
                                 if (targetIndex >= outputList.size())
-                                    outputList.setSize(targetIndex+1);
+                                    outputList.setSize(targetIndex + 1);
                                 while (outputList.get(targetIndex) != null) {
-                                    targetIndex += outputMapping[outputMapping.length-1].repeatableOffset+1;
+                                    targetIndex += outputMapping[outputMapping.length - 1].repeatableOffset + 1;
                                     if (targetIndex >= outputList.size())
-                                        outputList.setSize(targetIndex+1);
+                                        outputList.setSize(targetIndex + 1);
                                 }
                             } else {
-                                throw new phyphoxFileException("The output \""+mapping+"\" has already been defined.", xpp.getLineNumber());
+                                throw new phyphoxFileException("The output \"" + mapping + "\" has already been defined.", xpp.getLineNumber());
                             }
                         }
                     } else {
@@ -741,10 +722,10 @@ public abstract class phyphoxFile {
                                 if (outputMapping[i].repeatableOffset >= 0) {
                                     if (firstRepeatable < 0)
                                         firstRepeatable = i;
-                                    repeatPeriod = outputMapping[i].repeatableOffset+1;
+                                    repeatPeriod = outputMapping[i].repeatableOffset + 1;
                                 }
                                 if (i >= outputList.size())
-                                    outputList.setSize(i+1);
+                                    outputList.setSize(i + 1);
                                 if (outputList.get(i) == null) {
                                     targetIndex = i;
                                     mappingIndex = i;
@@ -757,12 +738,12 @@ public abstract class phyphoxFile {
                                 targetIndex = outputMapping.length;
                                 int repeatIndex = 0;
                                 if (targetIndex >= outputList.size())
-                                    outputList.setSize(targetIndex+1);
+                                    outputList.setSize(targetIndex + 1);
                                 while (outputList.get(targetIndex) != null) {
                                     targetIndex++;
-                                    repeatIndex = (repeatIndex+1)%repeatPeriod;
+                                    repeatIndex = (repeatIndex + 1) % repeatPeriod;
                                     if (targetIndex >= outputList.size())
-                                        outputList.setSize(targetIndex+1);
+                                        outputList.setSize(targetIndex + 1);
                                 }
                                 mappingIndex = firstRepeatable + repeatIndex;
                             } else
@@ -780,14 +761,14 @@ public abstract class phyphoxFile {
                         at.content = bufferName;
                     dataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null)
-                        throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
+                        throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                     else {
                         outputList.set(targetIndex, new dataOutput(buffer, clearBeforeWrite));
                     }
                     break;
                 default: //Unknown tag...
                     if (additionalTags == null)
-                        throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                        throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
                     at.content = getText();
             }
             if (additionalTags != null) {
@@ -819,6 +800,23 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("A minimum of " + outputMapping[i].minCount + " outputs was expected for " + outputMapping[i].name + " but " + outputMapping[i].count + " were found.", xpp.getLineNumber());
                 }
             }
+        }
+
+        public static class ioMapping {
+            String name;
+            boolean asRequired = true;
+            int repeatableOffset = -1;
+            boolean valueAllowed = true;
+            boolean emptyAllowed = false;
+            int minCount = 0;
+            int maxCount = 0;
+            int count = 0;
+        }
+
+        public static class AdditionalTag {
+            String name;
+            String content;
+            Map<String, String> attributes = new HashMap<>();
         }
     }
 
@@ -891,7 +889,7 @@ public abstract class phyphoxFile {
                     (new exportBlockParser(xpp, experiment, parent)).process();
                     break;
                 default: //Unknown tag,,,
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
     }
@@ -904,7 +902,7 @@ public abstract class phyphoxFile {
         }
 
         @Override
-        protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "translation": //A translation block holds all translation information for a single language
                     String thisLocale = getStringAttribute("locale");
@@ -916,7 +914,7 @@ public abstract class phyphoxFile {
                         (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
                     break;
                 default: //Unknown tag...
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -953,7 +951,7 @@ public abstract class phyphoxFile {
                     translation.put(getStringAttribute("original"), getText()); //Store it in our translation mapping
                     break;
                 default: //Unknown tag
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -967,14 +965,14 @@ public abstract class phyphoxFile {
         }
 
         @Override
-        protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "container": //A view defines an arangement of elements displayed to the user
                     String type = getStringAttribute("type");
                     if (type != null && !type.equals("buffer")) //There currently is only one buffer type. This tag is for future additions.
                         throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
 
-                    int size = getIntAttribute("size",1);
+                    int size = getIntAttribute("size", 1);
                     String strInit = getStringAttribute("init");
                     boolean isStatic = getBooleanAttribute("static", false);
 
@@ -999,7 +997,7 @@ public abstract class phyphoxFile {
                     }
                     break;
                 default: //Unknown tag
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -1013,7 +1011,7 @@ public abstract class phyphoxFile {
         }
 
         @Override
-        protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "view": //A view defines an arangement of elements displayed to the user
                     expView newView = new expView(); //Create a new view
@@ -1027,7 +1025,7 @@ public abstract class phyphoxFile {
                     }
                     break;
                 default: //Unknown tag
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -1037,26 +1035,29 @@ public abstract class phyphoxFile {
     private static class viewBlockParser extends xmlBlockParser {
         private expView newView;
 
+        //The viewBlockParser takes an additional argument, which is the expView instance it should fill
+        viewBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, expView newView) {
+            super(xpp, experiment, parent);
+            this.newView = newView;
+        }
+
         GraphView.scaleMode parseScaleMode(String attribute) {
             String scaleStr = getStringAttribute(attribute);
             GraphView.scaleMode scale = GraphView.scaleMode.auto;
             if (scaleStr != null) {
                 switch (scaleStr) {
-                    case "auto": scale = GraphView.scaleMode.auto;
+                    case "auto":
+                        scale = GraphView.scaleMode.auto;
                         break;
-                    case "extend": scale = GraphView.scaleMode.extend;
+                    case "extend":
+                        scale = GraphView.scaleMode.extend;
                         break;
-                    case "fixed": scale = GraphView.scaleMode.fixed;
+                    case "fixed":
+                        scale = GraphView.scaleMode.fixed;
                         break;
                 }
             }
             return scale;
-        }
-
-        //The viewBlockParser takes an additional argument, which is the expView instance it should fill
-        viewBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, expView newView) {
-            super(xpp, experiment, parent);
-            this.newView = newView;
         }
 
         @Override
@@ -1076,7 +1077,13 @@ public abstract class phyphoxFile {
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
 
@@ -1087,7 +1094,7 @@ public abstract class phyphoxFile {
                         if (at.name.equals("input"))
                             continue;
                         if (!at.name.equals("map")) {
-                            throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
+                            throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
                         }
                         expView.valueElement.Mapping map = ve.new Mapping(translate(at.content));
                         if (at.attributes.containsKey("min")) {
@@ -1125,7 +1132,7 @@ public abstract class phyphoxFile {
                 case "separator": //An info element just shows some text
                     expView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
                     int c = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
-                    float height = (float)getDoubleAttribute("height", 0.1);
+                    float height = (float) getDoubleAttribute("height", 0.1);
                     separatore.setColor(c);
                     separatore.setHeight(height);
                     newView.elements.add(separatore);
@@ -1133,7 +1140,7 @@ public abstract class phyphoxFile {
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
-                    int mapWidth= getIntAttribute("mapWidth", 0);
+                    int mapWidth = getIntAttribute("mapWidth", 0);
                     boolean partialUpdate = getBooleanAttribute("partialUpdate", false);
                     int history = getIntAttribute("history", 1);
                     String labelX = getTranslatedAttribute("labelX");
@@ -1145,8 +1152,8 @@ public abstract class phyphoxFile {
 
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
-                    while (xpp.getAttributeValue(null,"mapColor"+colorStepIndex) != null) {
-                        int color = getColorAttribute("mapColor"+colorStepIndex, parent.getResources().getColor(R.color.highlight));
+                    while (xpp.getAttributeValue(null, "mapColor" + colorStepIndex) != null) {
+                        int color = getColorAttribute("mapColor" + colorStepIndex, parent.getResources().getColor(R.color.highlight));
                         colorScale.add(color);
                         colorStepIndex++;
                     }
@@ -1156,14 +1163,14 @@ public abstract class phyphoxFile {
 
                         Matcher matcherX = pattern.matcher(labelX);
                         if (matcherX.find()) {
-                            labelX =  matcherX.group(1);
-                            unitX =  matcherX.group(2);
+                            labelX = matcherX.group(1);
+                            unitX = matcherX.group(2);
                         }
 
                         Matcher matcherY = pattern.matcher(labelY);
                         if (matcherY.find()) {
-                            labelY =  matcherY.group(1);
-                            unitY =  matcherY.group(2);
+                            labelY = matcherY.group(1);
+                            unitY = matcherY.group(2);
                         }
 
                         if (labelZ != null) {
@@ -1206,9 +1213,30 @@ public abstract class phyphoxFile {
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 2;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "z";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 2;
+                            }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, "axis", ats)).process(); //Load inputs and outputs
 
@@ -1222,7 +1250,7 @@ public abstract class phyphoxFile {
                                 ioBlockParser.AdditionalTag at = new ioBlockParser.AdditionalTag();
                                 at.name = ats.get(i).name;
                                 at.attributes.put("style", "mapZ");
-                                ats.add(i+1, at);
+                                ats.add(i + 1, at);
                             }
                         } else {
                             if (inputs.get(i) != null)
@@ -1254,17 +1282,23 @@ public abstract class phyphoxFile {
                     if (!globalColor) {
                         for (int i = 0; i < Math.ceil(ats.size() / 3); i++) {
                             switch (i % 6) {
-                                case 0: ge.setColor(parent.getResources().getColor(R.color.presetOrange), i);
+                                case 0:
+                                    ge.setColor(parent.getResources().getColor(R.color.presetOrange), i);
                                     break;
-                                case 1: ge.setColor(parent.getResources().getColor(R.color.presetGreen), i);
+                                case 1:
+                                    ge.setColor(parent.getResources().getColor(R.color.presetGreen), i);
                                     break;
-                                case 2: ge.setColor(parent.getResources().getColor(R.color.presetBlue), i);
+                                case 2:
+                                    ge.setColor(parent.getResources().getColor(R.color.presetBlue), i);
                                     break;
-                                case 3: ge.setColor(parent.getResources().getColor(R.color.presetYellow), i);
+                                case 3:
+                                    ge.setColor(parent.getResources().getColor(R.color.presetYellow), i);
                                     break;
-                                case 4: ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i);
+                                case 4:
+                                    ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i);
                                     break;
-                                case 5: ge.setColor(parent.getResources().getColor(R.color.presetRed), i);
+                                case 5:
+                                    ge.setColor(parent.getResources().getColor(R.color.presetRed), i);
                                     break;
                             }
                         }
@@ -1274,32 +1308,32 @@ public abstract class phyphoxFile {
                         if (at == null)
                             continue;
                         if (!at.name.equals("input")) {
-                            throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
+                            throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
                         }
                         if (at.attributes.containsKey("style")) {
                             try {
                                 GraphView.Style style = GraphView.styleFromStr(at.attributes.get("style"));
                                 if (style == GraphView.Style.unknown)
                                     throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
-                                ge.setStyle(style, i/3);
+                                ge.setStyle(style, i / 3);
                             } catch (Exception e) {
                                 throw new phyphoxFileException("Could not parse style of input tag.", xpp.getLineNumber());
                             }
                         }
                         if (at.attributes.containsKey("color")) {
                             int localColor = Helper.parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.presetOrange), parent.getResources());
-                            ge.setColor(localColor | 0xff000000, i/3);
+                            ge.setColor(localColor | 0xff000000, i / 3);
                         }
                         if (at.attributes.containsKey("linewidth")) {
                             try {
-                                ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i/3);
+                                ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i / 3);
                             } catch (Exception e) {
                                 throw new phyphoxFileException("Could not parse linewidth of input tag.", xpp.getLineNumber());
                             }
                         }
                         if (at.attributes.containsKey("mapwidth")) {
                             try {
-                                ge.setMapWidth(Integer.valueOf(at.attributes.get("mapwidth")), i/3);
+                                ge.setMapWidth(Integer.valueOf(at.attributes.get("mapwidth")), i / 3);
                             } catch (Exception e) {
                                 throw new phyphoxFileException("Could not parse mapWidth of input tag.", xpp.getLineNumber());
                             }
@@ -1319,7 +1353,12 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                            }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
@@ -1336,10 +1375,24 @@ public abstract class phyphoxFile {
                 case "button": { //The edit element can take input from the user
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; emptyAllowed = true; repeatableOffset = 0;}},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                emptyAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                repeatableOffset = 0;
+                            }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, null)).process(); //Load inputs and outputs
 
@@ -1352,7 +1405,14 @@ public abstract class phyphoxFile {
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 0;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
 
@@ -1383,7 +1443,7 @@ public abstract class phyphoxFile {
                     newView.elements.add(svge);
                     break;
                 default: //Unknown tag...
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -1407,12 +1467,48 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "abs"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "accuracy"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "z";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "t";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "abs";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "accuracy";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }}
                     };
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
@@ -1442,22 +1538,82 @@ public abstract class phyphoxFile {
                     //Allowed input/output configuration
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "lat"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "lon"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "v"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "dir"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "accuracy"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "zAccuracy"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "status"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "satellites"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "lat";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "lon";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "z";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "v";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "dir";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "t";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "accuracy";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "zAccuracy";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "status";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "satellites";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }}
                     };
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     experiment.gpsIn = new gpsInput(outputs, experiment.dataLock);
-                    experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
+                    experiment.gpsIn.attachLocationManager((LocationManager) parent.getSystemService(Context.LOCATION_SERVICE));
 
                     if (!gpsInput.isAvailable(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(R.string.location) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
@@ -1476,21 +1632,33 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "rate"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "rate";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                            }}
                     };
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     experiment.micOutput = outputs.get(0).buffer.name;
-                    experiment.micBufferSize = outputs.get(0).size()*2; //Output-buffer size
+                    experiment.micBufferSize = outputs.get(0).size() * 2; //Output-buffer size
                     if (outputs.size() > 1)
                         experiment.micRateOutput = outputs.get(1).buffer.name;
                     else
                         experiment.micRateOutput = "";
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
-                    experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
+                    experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT) / 2;
                     if (experiment.minBufferSize < 0) {
                         throw new phyphoxFileException("Could not initialize recording. (" + experiment.minBufferSize + ")", xpp.getLineNumber());
                     }
@@ -1502,66 +1670,66 @@ public abstract class phyphoxFile {
                     break;
                 }
                 case "bluetooth": { //A bluetooth input
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
-                            throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
-                        } else {
-                            double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                        throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
+                    } else {
+                        double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
 
-                            String idString = getTranslatedAttribute("id");
+                        String idString = getTranslatedAttribute("id");
 
-                            String nameFilter = getStringAttribute("name");
-                            String addressFilter = getStringAttribute("address");
-                            String uuidFilterStr = getStringAttribute("uuid");
-                            UUID uuidFilter = null;
-                            if (uuidFilterStr != null && !uuidFilterStr.isEmpty()) {
-                                try {
-                                    uuidFilter = UUID.fromString(uuidFilterStr);
-                                } catch (Exception e) {
-                                    throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
-                                }
-                            }
-
-                            String modeStr = getStringAttribute("mode");
-                            if (modeStr == null)
-                                modeStr = "notification";
-                            else
-                                modeStr = modeStr.toLowerCase();
-
-                            String modeFilter;
-                            switch (modeStr) {
-                                case "poll": {
-                                    modeFilter = "poll";
-                                    break;
-                                }
-                                case "notification": {
-                                    modeFilter = "notification";
-                                    break;
-                                }
-                                case "indication": {
-                                    modeFilter = "indication";
-                                    break;
-                                }
-                                default: {
-                                    throw new phyphoxFileException("Unknown bluetooth mode: " + modeStr, xpp.getLineNumber());
-                                }
-                            }
-
-                            boolean subscribeOnStart = getBooleanAttribute("subscribeOnStart", false);
-
-                            Vector<dataOutput> outputs = new Vector<>();
-                            Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
-                            (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
+                        String nameFilter = getStringAttribute("name");
+                        String addressFilter = getStringAttribute("address");
+                        String uuidFilterStr = getStringAttribute("uuid");
+                        UUID uuidFilter = null;
+                        if (uuidFilterStr != null && !uuidFilterStr.isEmpty()) {
                             try {
-                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
-                                experiment.bluetoothInputs.add(b);
-                            } catch (phyphoxFileException e) {
-                                throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
+                                uuidFilter = UUID.fromString(uuidFilterStr);
+                            } catch (Exception e) {
+                                throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
                             }
                         }
-                        break;
+
+                        String modeStr = getStringAttribute("mode");
+                        if (modeStr == null)
+                            modeStr = "notification";
+                        else
+                            modeStr = modeStr.toLowerCase();
+
+                        String modeFilter;
+                        switch (modeStr) {
+                            case "poll": {
+                                modeFilter = "poll";
+                                break;
+                            }
+                            case "notification": {
+                                modeFilter = "notification";
+                                break;
+                            }
+                            case "indication": {
+                                modeFilter = "indication";
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown bluetooth mode: " + modeStr, xpp.getLineNumber());
+                            }
+                        }
+
+                        boolean subscribeOnStart = getBooleanAttribute("subscribeOnStart", false);
+
+                        Vector<dataOutput> outputs = new Vector<>();
+                        Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
+                        (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
+                        try {
+                            BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
+                            experiment.bluetoothInputs.add(b);
+                        } catch (phyphoxFileException e) {
+                            throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
+                        }
+                    }
+                    break;
                 }
                 default: //Unknown tag
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -1585,24 +1753,45 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {},
+                            new ioBlockParser.ioMapping() {
+                            },
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "formula": {
                     String formula = getStringAttribute("formula");
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 0;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
@@ -1613,20 +1802,35 @@ public abstract class phyphoxFile {
                     } catch (FormulaParser.FormulaException e) {
                         throw new phyphoxFileException("Formula error: " + e.getMessage(), xpp.getLineNumber());
                     }
-                } break;
+                }
+                break;
                 case "count": { //Absolute value
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "buffer"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "buffer";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "count"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "count";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.countAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "if": { //Absolute value
 
                     boolean less = getBooleanAttribute("less", false);
@@ -1635,380 +1839,889 @@ public abstract class phyphoxFile {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "a"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "b"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "true"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = true; emptyAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "false"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = true; emptyAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "a";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "b";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "true";
+                                asRequired = false;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                emptyAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "false";
+                                asRequired = false;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                emptyAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "result"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "result";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.ifAM(experiment, inputs, outputs, less, equal, greater));
-                } break;
+                }
+                break;
                 case "average": { //Absolute value
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "buffer"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "buffer";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "average"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "stddev"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "average";
+                                asRequired = false;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "stddev";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.averageAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "add": { //input1+input2+input3...
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "summand"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "summand";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "sum"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "sum";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.addAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "subtract": { //input1-input2-input3...
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "minuend"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "subtrahend"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "minuend";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "subtrahend";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "difference"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "difference";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.subtractAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "multiply": { //input1*input2*input3...
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "factor"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "factor";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "product"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "product";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.multiplyAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "divide": { //input1/input2/input3...
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "dividend"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "divisor"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "dividend";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "divisor";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "quotient"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "quotient";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.divideAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "power": {//(input1^input2)
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "base"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "exponent"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "base";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "exponent";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "power"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "power";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.powerAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "gcd": { //Greatest common divisor
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 2; maxCount = 2; valueAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 2;
+                                maxCount = 2;
+                                valueAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "gcd"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "gcd";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.gcdAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "lcm": { //Least common multiple
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 2; maxCount = 2; valueAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 2;
+                                maxCount = 2;
+                                valueAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "lcm"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "lcm";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.lcmAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "abs": { //Absolute value
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "abs"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "abs";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.absAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "round": { //Round
                     boolean floor = getBooleanAttribute("floor", false);
                     boolean ceil = getBooleanAttribute("ceil", false);
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "round"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "round";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.roundAM(experiment, inputs, outputs, floor, ceil));
-                } break;
+                }
+                break;
                 case "log": { //nat. logarithm
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "log"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "log";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.logAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "sin": { //Sine
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "sin"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "sin";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.sinAM(experiment, inputs, outputs, deg));
-                } break;
+                }
+                break;
                 case "cos": { //Cosine
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "cos"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "cos";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.cosAM(experiment, inputs, outputs, deg));
-                } break;
+                }
+                break;
                 case "tan": { //Tangens
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "tan"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "tan";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.tanAM(experiment, inputs, outputs, deg));
-                } break;
+                }
+                break;
                 case "sinh": { //Sine
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "sinh"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "sinh";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.sinhAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "cosh": { //Cosine
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "cosh"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "cosh";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.coshAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "tanh": { //Tangens
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "tanh"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "tanh";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.tanhAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "asin": { //Sine
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "asin"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "asin";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.asinAM(experiment, inputs, outputs, deg));
-                } break;
+                }
+                break;
                 case "acos": { //Cosine
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "acos"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "acos";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.acosAM(experiment, inputs, outputs, deg));
-                } break;
+                }
+                break;
                 case "atan": { //Tangens
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "atan"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "atan";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.atanAM(experiment, inputs, outputs, deg));
-                } break;
+                }
+                break;
                 case "atan2": { //Tangens
                     boolean deg = getBooleanAttribute("deg", false); //Use degree instead of radians
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "atan2"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "atan2";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.atan2AM(experiment, inputs, outputs, deg));
-                } break;
+                }
+                break;
                 case "first": { //First value of each buffer
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "first"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "first";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                repeatableOffset = 0;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.firstAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "max": { //Maximum (takes y as first input and may take x as an optional second, same for outputs)
                     boolean multiple = getBooleanAttribute("multiple", false); //Positive or negative flank
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "threshold";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "max"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "position"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "max";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "position";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.maxAM(experiment, inputs, outputs, multiple));
-                } break;
+                }
+                break;
                 case "min": { //Minimum (takes y as first input and may take x as an optional second, same for outputs)
                     boolean multiple = getBooleanAttribute("multiple", false); //Positive or negative flank
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "threshold";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "min"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "position"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "min";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "position";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.minAM(experiment, inputs, outputs, multiple));
-                } break;
+                }
+                break;
                 case "threshold": { //Find the index at which the input crosses a threshold
                     boolean falling = getBooleanAttribute("falling", false); //Positive or negative flank
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "threshold";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "position"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "position";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.thresholdAM(experiment, inputs, outputs, falling));
-                } break;
+                }
+                break;
                 case "binning": { //count number of values falling into binning ranges
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "x0"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "dx"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "x0";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "dx";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "binStarts"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "binCounts"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "binStarts";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "binCounts";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.binningAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "map": { //rearrange data from unsorted x, y, and z values suitable for map graphs
                     String zModeStr = getStringAttribute("zMode"); //Positive or negative flank
                     if (zModeStr == null)
@@ -2017,160 +2730,473 @@ public abstract class phyphoxFile {
                     Analysis.mapAM.ZMode zMode = Analysis.mapAM.ZMode.average;
 
                     switch (zModeStr) {
-                        case "count":   zMode = Analysis.mapAM.ZMode.count;
-                                        break;
-                        case "sum":     zMode = Analysis.mapAM.ZMode.sum;
-                                        break;
-                        case "average": zMode = Analysis.mapAM.ZMode.average;
-                                        break;
-                        default:        throw new phyphoxFileException("Unknown zMode " + zModeStr, xpp.getLineNumber());
+                        case "count":
+                            zMode = Analysis.mapAM.ZMode.count;
+                            break;
+                        case "sum":
+                            zMode = Analysis.mapAM.ZMode.sum;
+                            break;
+                        case "average":
+                            zMode = Analysis.mapAM.ZMode.average;
+                            break;
+                        default:
+                            throw new phyphoxFileException("Unknown zMode " + zModeStr, xpp.getLineNumber());
                     }
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "mapWidth"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "minX"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "maxX"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "mapHeight"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "minY"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "maxY"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "mapWidth";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "minX";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "maxX";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "mapHeight";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "minY";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "maxY";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "z";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "z";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.mapAM(experiment, inputs, outputs, zMode));
-                } break;
+                }
+                break;
                 case "append": { //Append the inputs to each other
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; emptyAllowed = true; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                emptyAllowed = true;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.appendAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "reduce": { //Reduce number of entries in a buffer
 
                     boolean averageX = getBooleanAttribute("averageX", false);
-                    boolean sumY= getBooleanAttribute("sumY", false);
+                    boolean sumY = getBooleanAttribute("sumY", false);
                     boolean averageY = getBooleanAttribute("averageY", false);
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "factor"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "factor";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.reduceAM(experiment, inputs, outputs, averageX, sumY, averageY));
-                } break;
+                }
+                break;
                 case "fft": { //Fourier transform
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "re"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "im"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "re";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "im";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "re"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "im"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "re";
+                                asRequired = false;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "im";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.fftAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "autocorrelation": { //Autocorrelation. First in/out is y, second in/out may be x
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "minX"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "maxX"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "minX";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "maxX";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     Analysis.autocorrelationAM acAM = new Analysis.autocorrelationAM(experiment, inputs, outputs);
                     experiment.analysis.add(acAM);
-                } break;
+                }
+                break;
                 case "periodicity": { //Periodicity
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "dx"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "overlap"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "min"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "max"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "x";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "y";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "dx";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "overlap";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "min";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "max";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "time"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "period"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "time";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "period";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }}
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     Analysis.periodicityAM pAM = new Analysis.periodicityAM(experiment, inputs, outputs);
                     experiment.analysis.add(pAM);
-                } break;
+                }
+                break;
                 case "differentiate": { //Differentiate by subtracting neighboring values
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.differentiateAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "integrate": { //Integration from first value of buffer to each point in buffer
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.integrateAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "crosscorrelation": { //Crosscorrelation requires two inputs and a single output. y only.
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 2; maxCount = 2; valueAllowed = false; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 2;
+                                maxCount = 2;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.crosscorrelationAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "gausssmooth": { //Smooth the data with a Gauss profile
                     double sigma = getDoubleAttribute("sigma", 0.);
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = false;
+                                repeatableOffset = -1;
+                            }},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
@@ -2178,79 +3204,206 @@ public abstract class phyphoxFile {
                     if (sigma > 0)
                         gsAM.setSigma(sigma);
                     experiment.analysis.add(gsAM);
-                } break;
+                }
+                break;
                 case "match": { //Arbitrary inputs and outputs, for each input[n] a min[n] and max[n] can be defined. The module filters the inputs in parallel and returns only those sets that match the filters
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                repeatableOffset = 0;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.matchAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "rangefilter": { //Arbitrary inputs and outputs, for each input[n] a min[n] and max[n] can be defined. The module filters the inputs in parallel and returns only those sets that match the filters
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }},
-                            new ioBlockParser.ioMapping() {{name = "min"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = true; repeatableOffset = 1; }},
-                            new ioBlockParser.ioMapping() {{name = "max"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = true; repeatableOffset = 2; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "min";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                repeatableOffset = 1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "max";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 0;
+                                valueAllowed = true;
+                                repeatableOffset = 2;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                repeatableOffset = 0;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.rangefilterAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "subrange": { //from, to or length may be defined, arbitrary number of additional inputs and outputs
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "from"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "to"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "length"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "from";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "to";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "length";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "in";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                valueAllowed = false;
+                                repeatableOffset = 0;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 0;
+                                repeatableOffset = 0;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     experiment.analysis.add(new Analysis.subrangeAM(experiment, inputs, outputs));
-                } break;
+                }
+                break;
                 case "ramp": { //Create a linear ramp (great for creating time-bases)
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "start"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "stop"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "length"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "start";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "stop";
+                                asRequired = true;
+                                minCount = 1;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "length";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     Analysis.rampGeneratorAM rampAM = new Analysis.rampGeneratorAM(experiment, inputs, outputs);
                     experiment.analysis.add(rampAM);
-                } break;
+                }
+                break;
                 case "const": { //Initialize a buffer with constant values
 
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "value"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "length"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{
+                                name = "value";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "length";
+                                asRequired = true;
+                                minCount = 0;
+                                maxCount = 1;
+                                valueAllowed = true;
+                                repeatableOffset = -1;
+                            }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{
+                                name = "out";
+                                asRequired = false;
+                                minCount = 1;
+                                maxCount = 1;
+                                repeatableOffset = -1;
+                            }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(experiment, inputs, outputs);
                     experiment.analysis.add(constAM);
-                } break;
+                }
+                break;
                 default: //Unknown tag...
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -2320,7 +3473,7 @@ public abstract class phyphoxFile {
                     break;
                 }
                 default: //Unknown tag...
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -2340,9 +3493,9 @@ public abstract class phyphoxFile {
                     DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
                     (new setBlockParser(xpp, experiment, parent, set)).process(); //Parse the information within
                     experiment.exporter.addSet(set); //Add the set
-                break;
+                    break;
                 default:
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -2374,7 +3527,7 @@ public abstract class phyphoxFile {
                         throw new phyphoxFileException("Export buffer " + src + " has not been defined as a buffer.", xpp.getLineNumber());
                     break;
                 default:
-                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -2453,7 +3606,7 @@ public abstract class phyphoxFile {
                     eventType = xpp.next();
                 }
             } catch (XmlPullParserException e) { //Catch pullparser errors
-                experiment.message = "XML Error in line "+ e.getLineNumber() +": " + e.getMessage();
+                experiment.message = "XML Error in line " + e.getLineNumber() + ": " + e.getMessage();
                 return experiment;
             } catch (phyphoxFileException e) { //Catch our own errors
                 experiment.message = e.getMessage();

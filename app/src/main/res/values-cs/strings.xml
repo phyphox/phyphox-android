@@ -106,7 +106,7 @@
     <string name="loadingTitle">Načítám</string>
     <string name="experimentsPhyphoxOrg">Nápady a návody k experimentům</string>
     <string name="save_state_share">Sdílet</string>
-<string name="translationInfo">Volba jazyka</string>
+    <string name="translationInfo">Volba jazyka</string>
     <string name="translationText">Phyphox se zobrazuje v tom jazyce, který je první na seznamu preferovaných jazyků v nastavení systému android vašeho zařízení. Přímý odkaz k příslušnému nastavení najdete pod tímto textem (tlačítko \"nastavení\"). Ne všechny jazyky jsou ovšem aplikací phyphox podporovány. Chcete-li zjistit, které jazyky jsou k dispozici, nebo byste chtěli pomoci s překladem, zmáčkěte tlačítko \"Navštivte internetovou stránku\".</string>
     <string name="translationToSettings">Nastavení</string>
     <string name="translationToWebsite">Navštivte internetovou stránku</string>
@@ -227,7 +227,7 @@
     <string name="bt_more_info_link_button">Více informací</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-<string name="graph_tools_follow">Sledovat nová data</string>
+    <string name="graph_tools_follow">Sledovat nová data</string>
     <string name="applyZoomKeep">Ponechat nastavení</string>
     <string name="applyZoomFollow">Ponechat nastavení a sledovat nová data</string>
 
@@ -236,4 +236,4 @@
     <string name="bluetooth">Bluetooth Low Energy</string>
     <string name="bt_exception_device">Chyba zařízení se</string>
     <string name="bt_exception_rate">Neplatná hodnota \"rate\".</string>
-    </resources>
+</resources>

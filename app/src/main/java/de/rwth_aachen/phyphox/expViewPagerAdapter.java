@@ -3,7 +3,6 @@ package de.rwth_aachen.phyphox;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentStatePagerAdapter;
 
 public class expViewPagerAdapter extends FragmentPagerAdapter {
 

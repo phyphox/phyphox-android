@@ -7,150 +7,150 @@
     android:padding="10dp">
 
     <ScrollView
+        android:id="@+id/scrollView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/scrollView2"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" >
+        android:layout_alignParentBottom="true">
 
         <LinearLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
             <TextView
+                android:id="@+id/newExperimentPhyphoxInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/newExperimentPhyphoxInfo"
-                android:id="@+id/newExperimentPhyphoxInfo"
-                android:layout_marginBottom="@dimen/activity_vertical_margin" />
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:text="@string/newExperimentPhyphoxInfo" />
 
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="@dimen/activity_vertical_margin">
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/textView3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/newExperimentInputTitle"
-                    android:id="@+id/textView3"
-                    android:labelFor="@+id/neTitle" />
+                    android:labelFor="@+id/neTitle"
+                    android:text="@string/newExperimentInputTitle" />
 
                 <EditText
+                    android:id="@id/neTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@id/neTitle"
                     android:layout_alignTop="@+id/scrollView2"
-                    android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_alignParentRight="true"
+                    android:layout_alignParentLeft="true"
                     android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
                     android:hint="@string/newExperimentInputTitle"
-                    android:text="My Experiment"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:text="My Experiment" />
             </LinearLayout>
 
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="@dimen/activity_vertical_margin">
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/textView5"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/newExperimentInputRate"
-                    android:id="@+id/textView5"
-                    android:labelFor="@+id/neRate" />
+                    android:labelFor="@+id/neRate"
+                    android:text="@string/newExperimentInputRate" />
 
                 <EditText
+                    android:id="@+id/neRate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="number|numberDecimal"
                     android:ems="10"
-                    android:id="@+id/neRate"
                     android:hint="@string/newExperimentInputRate"
+                    android:inputType="number|numberDecimal"
                     android:text="0" />
 
             </LinearLayout>
 
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="@dimen/activity_vertical_margin">
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/textView6"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/newExperimentInputSensors"
-                    android:id="@+id/textView6" />
+                    android:text="@string/newExperimentInputSensors" />
 
                 <CheckBox
+                    android:id="@+id/neAccelerometer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorAccelerometer"
-                    android:id="@+id/neAccelerometer" />
+                    android:text="@string/sensorAccelerometer" />
 
                 <CheckBox
+                    android:id="@+id/neGyroscope"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorGyroscope"
-                    android:id="@+id/neGyroscope" />
+                    android:text="@string/sensorGyroscope" />
 
                 <CheckBox
+                    android:id="@+id/neHumidity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorHumidity"
-                    android:id="@+id/neHumidity" />
+                    android:text="@string/sensorHumidity" />
 
                 <CheckBox
+                    android:id="@+id/neLight"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorLight"
-                    android:id="@+id/neLight" />
+                    android:text="@string/sensorLight" />
 
                 <CheckBox
+                    android:id="@+id/neLinearAcceleration"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorLinearAcceleration"
-                    android:id="@+id/neLinearAcceleration" />
+                    android:text="@string/sensorLinearAcceleration" />
 
                 <CheckBox
+                    android:id="@+id/neLocation"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/location"
-                    android:id="@+id/neLocation" />
+                    android:text="@string/location" />
 
                 <CheckBox
+                    android:id="@+id/neMagneticField"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorMagneticField"
-                    android:id="@+id/neMagneticField" />
+                    android:text="@string/sensorMagneticField" />
 
                 <CheckBox
+                    android:id="@+id/nePressure"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorPressure"
-                    android:id="@+id/nePressure" />
+                    android:text="@string/sensorPressure" />
 
                 <CheckBox
+                    android:id="@+id/neProximity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorProximity"
-                    android:id="@+id/neProximity" />
+                    android:text="@string/sensorProximity" />
 
                 <CheckBox
+                    android:id="@+id/neTemperature"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sensorTemperature"
-                    android:id="@+id/neTemperature" />
+                    android:text="@string/sensorTemperature" />
 
             </LinearLayout>
 

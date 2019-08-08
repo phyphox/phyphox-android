@@ -1,6 +1,5 @@
 package de.rwth_aachen.phyphox;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.GpsStatus;
@@ -8,10 +7,8 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
-import android.location.OnNmeaMessageListener;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import java.io.Serializable;
@@ -30,15 +27,46 @@ public class gpsInput implements Serializable {
     public dataBuffer dataZAccuracy; //Data-buffer for height accuracy
     public dataBuffer dataStatus; //Data-buffer for status codes (note filled parallel to the other buffers)
     public dataBuffer dataSatellites; //Data-buffer for status codes (note filled parallel to the other buffers)
-    transient private LocationManager locationManager; //Hold the sensor manager
-
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
-
+    public boolean forceGNSS = false;
+    transient private LocationManager locationManager; //Hold the sensor manager
     private Lock dataLock;
     private int lastStatus = 0;
     private double geoidCorrection = Double.NaN;
+    LocationListener locationListener = new LocationListener() {
+        //Mandatory for LocationListener
+        public void onProviderDisabled(String provider) {
+            onStatusUpdate(0);
+        }
 
-    public boolean forceGNSS = false;
+        public void onProviderEnabled(String provider) {
+            onStatusUpdate(0);
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            onStatusUpdate(status);
+        }
+
+        public void onLocationChanged(Location location) {
+            // Called when a new location is found by the network location provider.
+            onSensorChanged(location);
+        }
+    };
+    GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
+        @Override
+        public void onNmeaReceived(long timestamp, String nmea) {
+            if (nmea.length() > 19 && nmea.substring(3, 6).equals("GGA")) {
+                String[] parts = nmea.split(",");
+                if (parts.length < 10)
+                    return;
+                try {
+                    geoidCorrection = Double.parseDouble(parts[11]);
+                } catch (Exception e) {
+                    return;
+                }
+            }
+        }
+    };
 
     //The constructor
     protected gpsInput(Vector<dataOutput> buffers, Lock lock) {
@@ -71,13 +99,13 @@ public class gpsInput implements Serializable {
             this.dataSatellites = buffers.get(9).buffer;
     }
 
-    public void attachLocationManager(LocationManager locationManager) {
-        this.locationManager = locationManager;
-    }
-
     //Check if GPS hardware is available
     public static boolean isAvailable(Context context) {
         return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS));
+    }
+
+    public void attachLocationManager(LocationManager locationManager) {
+        this.locationManager = locationManager;
     }
 
     //Start the data aquisition by registering a listener for this location manager.
@@ -104,40 +132,6 @@ public class gpsInput implements Serializable {
         locationManager.removeUpdates(locationListener);
         locationManager.removeNmeaListener(nmeaListener);
     }
-
-    LocationListener locationListener = new LocationListener() {
-        //Mandatory for LocationListener
-        public void onProviderDisabled(String provider) {
-            onStatusUpdate(0);
-        }
-        public void onProviderEnabled(String provider) {
-            onStatusUpdate(0);
-        }
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            onStatusUpdate(status);
-        }
-
-        public void onLocationChanged(Location location) {
-            // Called when a new location is found by the network location provider.
-            onSensorChanged(location);
-        }
-    };
-
-    GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
-        @Override
-        public void onNmeaReceived(long timestamp, String nmea) {
-            if (nmea.length() > 19 && nmea.substring(3, 6).equals("GGA")) {
-                String[] parts = nmea.split(",");
-                if (parts.length < 10)
-                    return;
-                try {
-                    geoidCorrection = Double.parseDouble(parts[11]);
-                } catch (Exception e) {
-                    return;
-                }
-            }
-        }
-    };
 
     public void onStatusUpdate(int status) {
         if (dataStatus == null)

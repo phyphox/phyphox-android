@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Instellingen</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -136,7 +137,7 @@
 
     <string name="experimentinfo_hint">Bekijk de experimenteninfo om te weten hoe u dit experiment moet gebruiken.</string>
 
-<string name="graph_tools_pan_and_zoom">Pannen en zoomen</string>
+    <string name="graph_tools_pan_and_zoom">Pannen en zoomen</string>
     <string name="graph_tools_pick">Haal gegevens op</string>
     <string name="graph_tools_more">Meer tools</string>
     <string name="graph_tools_reset">Reset de zoom</string>

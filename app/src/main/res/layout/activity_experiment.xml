@@ -1,94 +1,95 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="0dp"
-    tools:context="de.rwth_aachen.phyphox.Experiment"
     android:clickable="false"
-    android:id="@+id/rootLayout">
+    android:paddingBottom="0dp"
+    tools:context="de.rwth_aachen.phyphox.Experiment">
 
     <android.support.v7.widget.Toolbar
-        android:layout_alignParentTop="true"
+        android:id="@+id/customActionBar"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
-        android:id="@+id/customActionBar"
-        android:theme="@style/ActionBarPhyphox"
-        app:popupTheme="@style/PopupMenuPhyphox"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
         android:background="?attr/colorPrimary"
         android:elevation="8dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true">
+        android:theme="@style/ActionBarPhyphox"
+        app:popupTheme="@style/PopupMenuPhyphox">
+
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:id="@+id/titleText"
             style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
-            android:id="@+id/titleText" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </android.support.v7.widget.Toolbar>
 
     <android.support.design.widget.TabLayout
-        android:elevation="4dp"
-        android:background="@color/backgroundExp2"
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="36dp"
         android:layout_below="@+id/customActionBar"
-        app:tabMode="scrollable"
-    />
+        android:background="@color/backgroundExp2"
+        android:elevation="4dp"
+        app:tabMode="scrollable" />
 
     <ProgressBar
+        android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
-        android:progressTint="@color/main"
-        android:indeterminateOnly="true"
-        android:indeterminate="true"
-        android:indeterminateBehavior="repeat"
-        android:background="@android:color/transparent"
+        android:layout_below="@+id/tab_layout"
+        android:layout_alignParentStart="false"
         android:layout_alignParentLeft="false"
         android:layout_alignParentEnd="false"
         android:layout_alignParentRight="false"
-        android:layout_alignParentStart="false"
+        android:background="@android:color/transparent"
+        android:indeterminate="true"
+        android:indeterminateBehavior="repeat"
+        android:indeterminateOnly="true"
         android:progressBackgroundTint="@android:color/transparent"
-        android:layout_below="@+id/tab_layout" />
+        android:progressTint="@color/main" />
 
     <android.support.v4.view.ViewPager
-        android:layout_below="@id/tab_layout"
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        />
+        android:layout_below="@id/tab_layout" />
 
     <TextView
+        android:id="@+id/errorMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/tab_layout"
-        android:id="@+id/errorMessage"
         android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:textColor="@color/mainExp"
-        android:text=""
         android:layout_alignParentLeft="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:paddingLeft="@dimen/activity_horizontal_padding"
         android:paddingRight="@dimen/activity_horizontal_padding"
-        android:visibility="invisible"/>
+        android:text=""
+        android:textColor="@color/mainExp"
+        android:visibility="invisible" />
 
     <TextView
+        android:id="@+id/remoteInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/remoteInfo"
+        android:layout_alignWithParentIfMissing="false"
         android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:background="@color/backgroundExp2"
-        android:textColor="@color/mainExp"
-        android:text="@string/remoteServerActive"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignWithParentIfMissing="false"
         android:elevation="4dp"
         android:paddingLeft="@dimen/activity_horizontal_padding"
         android:paddingRight="@dimen/activity_horizontal_padding"
-        android:visibility="invisible"/>
+        android:text="@string/remoteServerActive"
+        android:textColor="@color/mainExp"
+        android:visibility="invisible" />
 
 </RelativeLayout>

@@ -2,17 +2,11 @@ package de.rwth_aachen.phyphox;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.RectF;
-import android.util.Log;
 import android.view.View;
 
-import com.caverock.androidsvg.PreserveAspectRatio;
 import com.caverock.androidsvg.SVG;
 
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,13 +34,13 @@ public class ParametricSVGView extends View {
 
         if (widthMode == MeasureSpec.UNSPECIFIED && heightMode == MeasureSpec.UNSPECIFIED) {
             width = 600;
-            height = (int)Math.round(600/aspectRatio);
+            height = (int) Math.round(600 / aspectRatio);
         } else if (widthMode == MeasureSpec.UNSPECIFIED) {
             height = heightSize;
-            width = (int)Math.round(height * aspectRatio);
+            width = (int) Math.round(height * aspectRatio);
         } else if (heightMode == MeasureSpec.UNSPECIFIED) {
             width = widthSize;
-            height = (int)Math.round(width / aspectRatio);
+            height = (int) Math.round(width / aspectRatio);
         } else {
             width = widthSize;
             height = heightSize;
@@ -75,7 +69,7 @@ public class ParametricSVGView extends View {
         update(null);
     }
 
-    public void update(double [] values) {
+    public void update(double[] values) {
         if ((values == null || values.length == 0) && mapping.size() > 0) {
             svg = null;
             return;
@@ -86,12 +80,12 @@ public class ParametricSVGView extends View {
         Iterator it = svgParts.iterator();
 
         for (Integer i : mapping) {
-            if (i < 1 || i > values.length || Double.isNaN(values[i-1]) || Double.isInfinite(values[i-1])) {
+            if (i < 1 || i > values.length || Double.isNaN(values[i - 1]) || Double.isInfinite(values[i - 1])) {
                 svg = null;
                 return;
             }
             sb.append(it.next());
-            sb.append(values[i-1]);
+            sb.append(values[i - 1]);
         }
         sb.append(it.next());
 

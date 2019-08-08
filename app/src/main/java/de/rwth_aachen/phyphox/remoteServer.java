@@ -8,32 +8,17 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
-import android.util.SparseIntArray;
 
-import org.apache.http.ConnectionReuseStrategy;
-import org.apache.http.Header;
-import org.apache.http.HeaderIterator;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.HttpVersion;
-import org.apache.http.ParseException;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.TokenIterator;
 import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.entity.ContentProducer;
-import org.apache.http.entity.EntityTemplate;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.DefaultHttpServerConnection;
-import org.apache.http.message.BasicTokenIterator;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.BasicHttpProcessor;
-import org.apache.http.protocol.ExecutionContext;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.protocol.HttpRequestHandlerRegistry;
@@ -51,8 +36,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -62,13 +45,9 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
@@ -76,29 +55,71 @@ import java.util.Vector;
 //Unfortunately, Google decided to depricate org.apache.http in Android 6, so until we move to
 //something else, we need to suppress deprication warnings if we do not want to get flooded.
 
-@SuppressWarnings( "deprecation" )
+@SuppressWarnings("deprecation")
 public class remoteServer extends Thread {
 
+    static final int HttpServerPORT = 8080; //We have to pick a high port number. We may not use 80...
+    static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
     private final phyphoxExperiment experiment; //Reference to the experiment we want to control
-
+    public String sessionID = "";
+    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
     HttpService httpService; //Holds our http service
     BasicHttpContext basicHttpContext; //A simple http context...
-    static final int HttpServerPORT = 8080; //We have to pick a high port number. We may not use 80...
     boolean RUNNING = false; //Keeps the main loop alive...
     Resources res; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
-
-    public String sessionID = "";
-
-    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
-
-    static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
-
     private Vector<Integer> htmlID2View = new Vector<>(); //This maps htmlIDs to the view of the element
     private Vector<Integer> htmlID2Element = new Vector<>(); //This maps htmlIDs to the view of the element
 
+    //The constructor takes the experiment to control and the activity of which we need to show/control the status
+    remoteServer(phyphoxExperiment experiment, Experiment callActivity, String sessionID) {
+        this.experiment = experiment;
+        this.callActivity = callActivity;
+        this.res = callActivity.getResources();
+
+        //Create the css and html files
+        buildStyleCSS();
+        buildIndexHTML();
+
+        this.sessionID = sessionID;
+
+        //Start the service...
+        RUNNING = true;
+        startHttpService();
+    }
+
+    remoteServer(phyphoxExperiment experiment, Experiment callActivity) {
+        this(experiment, callActivity, String.format("%06x", (System.nanoTime() & 0xffffff)));
+    }
+
+    //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
+    public static String getAddresses() {
+        String ret = "";
+        try {
+            Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (enumNetworkInterfaces.hasMoreElements()) { //For each network interface
+                NetworkInterface networkInterface = enumNetworkInterfaces.nextElement();
+                Enumeration<InetAddress> enumInetAddress = networkInterface.getInetAddresses();
+                while (enumInetAddress.hasMoreElements()) { //For each adress of this interface
+                    InetAddress inetAddress = enumInetAddress.nextElement();
+
+                    //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
+                    if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                        ret += "http://" + inetAddress.getHostAddress() + ":" + HttpServerPORT + "\n";
+                    }
+
+                }
+
+            }
+
+        } catch (SocketException e) {
+            Log.e("getAdresses", "Error getting the IP.", e);
+        }
+        return ret;
+    }
+
     //buildStyleCSS loads the css file from the resources and replaces some placeholders
-    protected void buildStyleCSS () {
+    protected void buildStyleCSS() {
         //We use a stringbuilder to collect our strings
         StringBuilder sb = new StringBuilder();
         //...and we need to read from the resource file
@@ -134,7 +155,7 @@ public class remoteServer extends Thread {
                 sb.append("\n");
             }
         } catch (Exception e) {
-            Log.e("remoteServer","Error loading style.css", e);
+            Log.e("remoteServer", "Error loading style.css", e);
         } finally {
             //Create a simple string
             styleCSS = sb.toString();
@@ -175,7 +196,7 @@ public class remoteServer extends Thread {
 
     //Constructs the HTML file and replaces some placeholder.
     //This is where the experiment views place their HTML code.
-    protected void buildIndexHTML () {
+    protected void buildIndexHTML() {
         //A string builder is great for collecting strings...
         StringBuilder sb = new StringBuilder();
 
@@ -190,8 +211,8 @@ public class remoteServer extends Thread {
                     sb.append(line.replace("<!-- [[title]] -->", experiment.title));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[clearDataTranslation]] -->")) { //The localized string for "clear data"
-                        sb.append(line.replace("<!-- [[clearDataTranslation]] -->", res.getString(R.string.clear_data)));
-                        sb.append("\n");
+                    sb.append(line.replace("<!-- [[clearDataTranslation]] -->", res.getString(R.string.clear_data)));
+                    sb.append("\n");
                 } else if (line.contains("<!-- [[clearConfirmTranslation]] -->")) { //The localized string for "Clear data?"
                     sb.append(line.replace("<!-- [[clearConfirmTranslation]] -->", res.getString(R.string.clear_data_question)));
                     sb.append("\n");
@@ -224,7 +245,7 @@ public class remoteServer extends Thread {
                     sb.append("var views = [");
 
                     int id = 0; //We will give each view a unique id to address them in JavaScript
-                                //via a HTML id
+                    //via a HTML id
                     htmlID2View.clear();
                     htmlID2Element.clear();
 
@@ -236,7 +257,7 @@ public class remoteServer extends Thread {
 
                         //The name of this view
                         sb.append("{\"name\": \"");
-                        sb.append(experiment.experimentViews.get(i).name.replace("\"","\\\""));
+                        sb.append(experiment.experimentViews.get(i).name.replace("\"", "\\\""));
 
                         //Now for its elements
                         sb.append("\", \"elements\":[\n");
@@ -252,7 +273,7 @@ public class remoteServer extends Thread {
 
                             //The element's label
                             sb.append("{\"label\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).label.replace("\"","\\\""));
+                            sb.append(experiment.experimentViews.get(i).elements.get(j).label.replace("\"", "\\\""));
 
                             //The id, we just created
                             sb.append("\",\"index\":\"");
@@ -268,7 +289,7 @@ public class remoteServer extends Thread {
 
                             //The HTML markup for this element - on this occasion we notify the element about its id
                             sb.append("\",\"html\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).getViewHTML(id).replace("\"","\\\""));
+                            sb.append(experiment.experimentViews.get(i).elements.get(j).getViewHTML(id).replace("\"", "\\\""));
 
                             //The Javascript function that handles data completion
                             sb.append("\",\"dataCompleteFunction\":");
@@ -322,57 +343,10 @@ public class remoteServer extends Thread {
                 }
             }
         } catch (Exception e) {
-            Log.e("remoteServer","Error loading index.html", e);
+            Log.e("remoteServer", "Error loading index.html", e);
         } finally {
             indexHTML = sb.toString();
         }
-    }
-
-    //The constructor takes the experiment to control and the activity of which we need to show/control the status
-    remoteServer(phyphoxExperiment experiment, Experiment callActivity, String sessionID) {
-        this.experiment = experiment;
-        this.callActivity = callActivity;
-        this.res = callActivity.getResources();
-
-        //Create the css and html files
-        buildStyleCSS();
-        buildIndexHTML();
-
-        this.sessionID = sessionID;
-
-        //Start the service...
-        RUNNING = true;
-        startHttpService();
-    }
-
-    remoteServer(phyphoxExperiment experiment, Experiment callActivity) {
-        this(experiment, callActivity, String.format("%06x", (System.nanoTime() & 0xffffff)));
-    }
-
-    //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
-    public static String getAddresses() {
-        String ret = "";
-        try {
-            Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
-            while (enumNetworkInterfaces.hasMoreElements()) { //For each network interface
-                NetworkInterface networkInterface = enumNetworkInterfaces.nextElement();
-                Enumeration<InetAddress> enumInetAddress = networkInterface.getInetAddresses();
-                while (enumInetAddress.hasMoreElements()) { //For each adress of this interface
-                    InetAddress inetAddress = enumInetAddress.nextElement();
-
-                    //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
-                    if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
-                        ret += "http://" + inetAddress.getHostAddress() + ":" + HttpServerPORT + "\n";
-                    }
-
-                }
-
-            }
-
-        } catch (SocketException e) {
-            Log.e("getAdresses", "Error getting the IP.", e);
-        }
-        return ret;
     }
 
     @Override
@@ -397,7 +371,7 @@ public class remoteServer extends Thread {
                         httpServerConnection.bind(socket, new BasicHttpParams());
                         //Do what has been requested and answer (see handle registry below)
                         //while (httpServerConnection.isOpen() && RUNNING) {
-                            httpService.handleRequest(httpServerConnection, basicHttpContext);
+                        httpService.handleRequest(httpServerConnection, basicHttpContext);
                         //}
                         //Note about the commented while-loop:
                         //In theory, this loop should improve performance by allowing persistent connections, but for some reason many requests
@@ -518,18 +492,11 @@ public class remoteServer extends Thread {
     // 20 seconds, you would request t=20 and y=20|t to receive any data beyond 20 seconds
     class getCommandHandler implements HttpRequestHandler {
 
-        //This structure (ok, class) holds one element of the request corresponding to a buffer
-        protected class bufferRequest {
-            public String name;         //Name of the requested buffer
-            public Double threshold;    //Threshold from which to read data
-            public String reference;    //The buffer to which the threshold should be applied
-        }
-
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
 
-            Uri uri=Uri.parse(request.getRequestLine().getUri());
+            Uri uri = Uri.parse(request.getRequestLine().getUri());
 
             //Based on code from getQueryParameterNames, see http://stackoverflow.com/questions/11642494/android-net-uri-getqueryparameternames-alternative
             String query = uri.getEncodedQuery();
@@ -553,7 +520,7 @@ public class remoteServer extends Thread {
                     if (separator == end)
                         br.threshold = Double.NaN; //No special request - the last value should be ok
                     else {
-                        String th = query.substring(separator+1, end); //The part after "="
+                        String th = query.substring(separator + 1, end); //The part after "="
                         if (th.equals("full") || forceFullUpdate) {
                             br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
                         } else {
@@ -563,11 +530,11 @@ public class remoteServer extends Thread {
                                 br.threshold = Double.valueOf(th); //No reference specified
                             else { //A reference is given
                                 br.threshold = Double.valueOf(th.substring(0, subsplit));
-                                br.reference = th.substring(subsplit+1);
+                                br.reference = th.substring(subsplit + 1);
                             }
                             //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
                             //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-                            br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold/1e7)));
+                            br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold / 1e7)));
                         }
                     }
 
@@ -720,6 +687,13 @@ public class remoteServer extends Thread {
             response.setEntity(entity);
         }
 
+        //This structure (ok, class) holds one element of the request corresponding to a buffer
+        protected class bufferRequest {
+            public String name;         //Name of the requested buffer
+            public Double threshold;    //Threshold from which to read data
+            public String reference;    //The buffer to which the threshold should be applied
+        }
+
     }
 
     //This query has the simple form control?cmd=start or control?cmd=set&buffer=name&value=42
@@ -854,7 +828,7 @@ public class remoteServer extends Thread {
 
                 //Use the experiment's exporter to create the file
                 final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName);
+                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" : fileName);
 
                 entity = new BasicHttpEntity();
                 InputStream inputStream = new FileInputStream(exportFile);
@@ -863,7 +837,7 @@ public class remoteServer extends Thread {
 
                 //Set the content type and set "Content-Disposition" to force the browser to handle this as a download with a default file name
                 response.setHeader("Content-Type", type);
-                response.setHeader("Content-Disposition", "attachment; filename=\""+experiment.exporter.exportFormats[formatInt].getFilename(false) + "\"");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + experiment.exporter.exportFormats[formatInt].getFilename(false) + "\"");
             }
 
             //Send error or file

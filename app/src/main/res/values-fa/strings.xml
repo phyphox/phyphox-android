@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="newExperimentInputTitle">عنوان</string>
+<resources>
+    <string name="newExperimentInputTitle">عنوان</string>
     <string name="newExperimentInputSensors">حسگرهای فعال</string>
 
     <string name="faqPhyphoxOrg">پرسش‌های متداول</string>
@@ -75,7 +76,7 @@
 
     <string name="experimentinfo_hint">اطلاعات آزمایش را بررسی کنید تا بیاموزید چگونه از این آزمایش استفاده کنید.</string>
 
-<string name="newExperimentInputRate">نرخ نمونه‌برداری حسگر (به Hz، ۰ = سریع‌ترین حالت ممکن)</string>
+    <string name="newExperimentInputRate">نرخ نمونه‌برداری حسگر (به Hz، ۰ = سریع‌ترین حالت ممکن)</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
 
@@ -119,7 +120,7 @@
 
     <string name="categoryRawSensor">حسگرهای خام</string>
 
-    <string name="creditsNames">توسعه و ایده:<br/><b>Dr. Sebastian Staacks</b><br/>ایده:<br/><b>Prof. Christoph Stampfer</b><br/>طرح:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>برنامه‌نویسی:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">توسعه و ایده:<br /><b>Dr. Sebastian Staacks</b><br />ایده:<br /><b>Prof. Christoph Stampfer</b><br />طرح:<br /><b>Frank Posthoff (A.NikoPol)</b><br />برنامه‌نویسی:<br /><b>Camilla Lummerzheim</b><br /><b>Jonas Gessner</b></string>
     <string name="creditsLibs">رابط وب برای دسترسی از راه دور، از کتابخانه‌‌ی جاوااسکریپت «Chart.js» که تحت مجوز MIT در دسترس‌ است، استفاده می‌کند. برای تبدیل فوریه، از کتابخانه‌ی FFTW استفاده می‌کند.</string>
     <string name="remoteServerWarning">شما در آستانه‌ فعال کردن دسترسی از راه دور به داده‌های به‌دست آمده هستید. شما تنها باید آن را در یک شبکه مورد اعتماد انجام دهید! همچنین توجه داشته باشید که دسترسی مستقیم بین دستگاه‌ها ممکن است در بسیاری از شبکه‌های شرکت یا دانشگاه امکان‌پذیر نباشد.
 \n
@@ -175,7 +176,7 @@
     <string name="bt_more_info_link_button">اطلاعات بیشتر</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-<string name="applyZoomThis">تنها این نمودار</string>
+    <string name="applyZoomThis">تنها این نمودار</string>
     <string name="applyZoomSameVariable">نمودارهای دیگر: متغیر یکسان</string>
     <string name="applyZoomSameUnit">نمودارهای دیگر: یکای یکسان</string>
     <string name="applyZoomSameAxis">نمودارهای دیگر: محور یکسان</string>
@@ -251,4 +252,4 @@
     <string name="fontSize">اندازه‌ی فونت</string>
 
     <string name="open_zip_dialog_instructions">این منبع دربرگیرنده‌ی چند آزمایش است. شما می‌توانید یکی را انتخاب و باز و بصورت اختیاری آن را در مجموعه‌ی خود ذخیره کنید یا اینکه دکمه زیر را فشار دهید تا همه‌ی آن‌ها را بصورت یک‌باره در مجموعه‌ی خود ذخیره کنید.</string>
-    </resources>
+</resources>

@@ -2,14 +2,10 @@ package de.rwth_aachen.phyphox;
 
 import android.util.Log;
 
-import org.apache.poi.util.ArrayUtil;
-
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.regex.Matcher;
 
 // The analysis class is used to to do math operations on dataBuffers
 
@@ -29,15 +25,17 @@ public class Analysis {
     }
 
     public static native void nativePower(double[] x, double[] y);
+
     public static native void fftw3complex(float[] xy, int n);
+
     public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
+
     public static native void fftw3autocorrelation(float[] x, int n);
 
     public static class FFT implements Serializable {
-        private int n, logn; //input size, power-of-two filled size, log2 of input size (integer)
-        private double [] cos, sin; //Lookup table
-
         public int np2;
+        private int n, logn; //input size, power-of-two filled size, log2 of input size (integer)
+        private double[] cos, sin; //Lookup table
 
         FFT() {
             n = 0;
@@ -48,7 +46,7 @@ public class Analysis {
             if (n < 2)
                 return;
 
-            logn = (int)(Math.log(n)/Math.log(2)); //log of input size
+            logn = (int) (Math.log(n) / Math.log(2)); //log of input size
             if (n != (1 << logn)) {
                 logn++;
                 np2 = (1 << logn); //power of two after zero filling
@@ -56,8 +54,8 @@ public class Analysis {
                 np2 = n; //n is already power of two
 
             //Create buffer of sine and cosine values
-            cos = new double[np2/2];
-            sin = new double[np2/2];
+            cos = new double[np2 / 2];
+            sin = new double[np2 / 2];
             for (int i = 0; i < np2 / 2; i++) {
                 cos[i] = Math.cos(-2 * Math.PI * i / np2);
                 sin[i] = Math.sin(-2 * Math.PI * i / np2);
@@ -93,9 +91,7 @@ public class Analysis {
 
             j = 0; /* bit-reverse */
             n2 = np2 / 2;
-            for(int i = 1; i < np2 - 1; i++)
-
-            {
+            for (int i = 1; i < np2 - 1; i++) {
                 n1 = n2;
                 while (j >= n1) {
                     j = j - n1;
@@ -115,9 +111,7 @@ public class Analysis {
 
             n2 = 1;
 
-            for(int i = 0; i < logn; i++)
-
-            {
+            for (int i = 0; i < logn; i++) {
                 n1 = n2;
                 n2 = n2 + n2;
                 a = 0;
@@ -143,7 +137,6 @@ public class Analysis {
 
     //analysisModule is is the prototype from which each analysis module inherits its interface
     public static class analysisModule implements Serializable, BufferNotification {
-        private Vector<dataInput> inputsOriginal; //The key of input dataBuffers, note that this is private, so derived classes cannot access this directly, but have to use the copy
         protected Vector<dataInput> inputs = new Vector<>(); //The local copy of the input data when the analysis module starts its update
         protected Vector<Double[]> inputArrays = new Vector<>(); //The local copy of the input data when the analysis module starts its update
         protected Vector<Integer> inputArraySizes = new Vector<>(); //The local copy of the input data when the analysis module starts its update
@@ -152,11 +145,10 @@ public class Analysis {
         protected boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
         protected boolean deterministic = true;
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
-
         protected boolean needsUpdate = true;
-
         protected boolean useArray = false;
         protected boolean clearInModule = false;
+        private Vector<dataInput> inputsOriginal; //The key of input dataBuffers, note that this is private, so derived classes cannot access this directly, but have to use the copy
 
         //Main contructor
         protected analysisModule(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
@@ -244,8 +236,7 @@ public class Analysis {
 //                    Log.d("AnalysisDebug", this.toString() + " update: " + (time*1e-6) + "ms");
 
 
-
-    // Uncomment to print the last value of inputs and outputs for debugging...
+                // Uncomment to print the last value of inputs and outputs for debugging...
 /*
                 Log.d("AnalysisDebug", "[" + this.getClass().toString() + "]");
                 if (!useArray) {
@@ -284,7 +275,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            outputs.get(0).append((experiment.analysisTime - experiment.firstAnalysisTime)/1000.);
+            outputs.get(0).append((experiment.analysisTime - experiment.firstAnalysisTime) / 1000.);
         }
     }
 
@@ -301,7 +292,7 @@ public class Analysis {
         @Override
         protected void update() {
             if (outputs.size() > 0)
-            formula.execute(inputArrays, outputs.get(0));
+                formula.execute(inputArrays, outputs.get(0));
         }
     }
 
@@ -346,7 +337,7 @@ public class Analysis {
                     outputs.get(0).append(inputArrays.get(2), inputArraySizes.get(2));
                 }
             } else {
-                if (inputArrays.size() >= 4  && inputArrays.get(3) != null) {
+                if (inputArrays.size() >= 4 && inputArrays.get(3) != null) {
                     if (outputs.get(0).clearBeforeWrite)
                         outputs.get(0).clear(false);
                     outputs.get(0).append(inputArrays.get(3), inputArraySizes.get(3));
@@ -374,14 +365,15 @@ public class Analysis {
             int count = 0;
             for (int i = 0; i < size; i++) {
                 if (in[i].isNaN() || in[i].isInfinite())
-                    continue;;
+                    continue;
+                ;
                 sum += in[i];
                 count++;
             }
             if (count == 0)
                 return;
 
-            double avg = sum/count;
+            double avg = sum / count;
 
             if (outputs.size() > 0 && outputs.get(0) != null) {
                 outputs.get(0).append(avg);
@@ -396,11 +388,12 @@ public class Analysis {
                 count = 0;
                 for (int i = 0; i < size; i++) {
                     if (in[i].isNaN() || in[i].isInfinite())
-                        continue;;
-                    sum += (in[i]-avg)*(in[i]-avg);
+                        continue;
+                    ;
+                    sum += (in[i] - avg) * (in[i] - avg);
                     count++;
                 }
-                double std = Math.sqrt(sum/(count-1));
+                double std = Math.sqrt(sum / (count - 1));
                 outputs.get(1).append(std);
             }
         }
@@ -434,7 +427,7 @@ public class Analysis {
                         result += in[i];
                         anyInput = true;
                     } else {
-                        result += in[size-1];
+                        result += in[size - 1];
                     }
                 }
                 if (anyInput) //There was a new value. Append the result.
@@ -478,9 +471,9 @@ public class Analysis {
                         anyInput = true;
                     } else {
                         if (j == 0)
-                            result += in[size-1];
+                            result += in[size - 1];
                         else
-                            result -= in[size-1];
+                            result -= in[size - 1];
                     }
                 }
                 if (anyInput) //There was a new value. Append the result.
@@ -520,7 +513,7 @@ public class Analysis {
                         result *= in[i];
                         anyInput = true;
                     } else {
-                        result *= in[size-1];
+                        result *= in[size - 1];
                     }
                 }
                 if (anyInput) //There was a new value. Append the result.
@@ -564,9 +557,9 @@ public class Analysis {
                         anyInput = true;
                     } else {
                         if (j == 0)
-                            result = in[size-1];
+                            result = in[size - 1];
                         else
-                            result /= in[size-1];
+                            result /= in[size - 1];
                     }
                 }
                 if (anyInput) //There was a new value. Append the result.
@@ -644,9 +637,9 @@ public class Analysis {
                             anyInput = true;
                         } else {
                             if (j == 0)
-                                result = in[size-1];
+                                result = in[size - 1];
                             else
-                                result = Math.pow(result, in[size-1]);
+                                result = Math.pow(result, in[size - 1]);
                         }
                     }
                     if (anyInput) //There was a new value. Append the result.
@@ -695,9 +688,9 @@ public class Analysis {
                         anyInput = true;
                     } else {
                         if (j == 0)
-                            a = Math.round(in[size-1]);
+                            a = Math.round(in[size - 1]);
                         else
-                            b = Math.round(in[size-1]);
+                            b = Math.round(in[size - 1]);
                     }
                 }
                 if (anyInput) { //There was a new value. Append the result.
@@ -750,9 +743,9 @@ public class Analysis {
                         anyInput = true;
                     } else {
                         if (j == 0)
-                            a = Math.round(in[size-1]);
+                            a = Math.round(in[size - 1]);
                         else
-                            b = Math.round(in[size-1]);
+                            b = Math.round(in[size - 1]);
                     }
                 }
                 if (anyInput) { //There was a new value. Append the result.
@@ -763,7 +756,7 @@ public class Analysis {
                         b = a % b;
                         a = tmp;
                     }
-                    outputs.get(0).append(a0*(b0/a));
+                    outputs.get(0).append(a0 * (b0 / a));
                 } else //No values left. Let's stop here...
                     break;
                 i++;
@@ -1111,11 +1104,11 @@ public class Analysis {
             double currentX = -1; //Current x during iteration
 
             while (its.get(1).hasNext()) { //For each value of input1
-                double v = (double)its.get(1).next();
+                double v = (double) its.get(1).next();
 
                 //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
                 if (its.get(0) != null && its.get(0).hasNext())
-                    currentX = (double)its.get(0).next();
+                    currentX = (double) its.get(0).next();
                 else
                     currentX += 1;
 
@@ -1187,11 +1180,11 @@ public class Analysis {
             double currentX = -1; //Current x during iteration
 
             while (its.get(1).hasNext()) { //For each value of input1
-                double v = (double)its.get(1).next();
+                double v = (double) its.get(1).next();
 
                 //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
                 if (its.get(0) != null && its.get(0).hasNext())
-                    currentX = (double)its.get(0).next();
+                    currentX = (double) its.get(0).next();
                 else
                     currentX += 1;
 
@@ -1262,11 +1255,11 @@ public class Analysis {
             double last = Double.NaN; //Last value that did not trigger. Start with a NaN as result
             double currentX = -1; //Position of last no-trigger value.
             while (its.get(1).hasNext()) { //For each value of input1
-                double v = (double)its.get(1).next();
+                double v = (double) its.get(1).next();
 
                 //if input2 exists, use this as x value, otherwise generate x by incrementing by 1
                 if (its.get(0) != null && its.get(0).hasNext())
-                    currentX = (double)its.get(0).next();
+                    currentX = (double) its.get(0).next();
                 else
                     currentX += 1;
 
@@ -1317,25 +1310,25 @@ public class Analysis {
             Vector<Double> binCounts = new Vector<>();
 
             while (it.hasNext()) {
-                double v = (double)it.next();
+                double v = (double) it.next();
                 if (Double.isNaN(v) || Double.isInfinite(v))
                     continue;
-                int binIndex = (int)((v-x0)/dx);
+                int binIndex = (int) ((v - x0) / dx);
                 if (binStarts.size() == 0) {
-                    binStarts.add(x0+binIndex*dx);
+                    binStarts.add(x0 + binIndex * dx);
                     binCounts.add(1.);
                 } else {
-                    int firstBinIndex = (int)Math.round((binStarts.get(0)-x0)/dx);
+                    int firstBinIndex = (int) Math.round((binStarts.get(0) - x0) / dx);
                     while (binIndex > firstBinIndex + binStarts.size() - 1) {
-                        binStarts.add(x0+(firstBinIndex+binStarts.size())*dx);
+                        binStarts.add(x0 + (firstBinIndex + binStarts.size()) * dx);
                         binCounts.add(0.);
                     }
                     while (binIndex < firstBinIndex) {
-                        binStarts.insertElementAt(x0+(firstBinIndex-1)*dx,0);
-                        binCounts.insertElementAt(0.,0);
-                        firstBinIndex = (int)Math.round((binStarts.get(0)-x0)/dx);
+                        binStarts.insertElementAt(x0 + (firstBinIndex - 1) * dx, 0);
+                        binCounts.insertElementAt(0., 0);
+                        firstBinIndex = (int) Math.round((binStarts.get(0) - x0) / dx);
                     }
-                    binCounts.set(binIndex-firstBinIndex,binCounts.get(binIndex-firstBinIndex)+1);
+                    binCounts.set(binIndex - firstBinIndex, binCounts.get(binIndex - firstBinIndex) + 1);
                 }
             }
 
@@ -1363,10 +1356,6 @@ public class Analysis {
     //zMode - can be "count", "sum" or "average". "count" counts the number of times x and y combinations fall into a bin (z is ignored here). "sum" sums up all z values that fall into the same bin. "average" averages the z values of a single bin.
     public static class mapAM extends analysisModule implements Serializable {
 
-        public enum ZMode {
-            count, sum, average;
-        }
-
         ZMode zMode = ZMode.count;
 
         protected mapAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, ZMode zMode) {
@@ -1381,7 +1370,7 @@ public class Analysis {
                 return;
 
             if (inputArraySizes.get(0) < 1 || inputArraySizes.get(1) < 1 || inputArraySizes.get(2) < 1
-                || inputArraySizes.get(3) < 1 || inputArraySizes.get(4) < 1 || inputArraySizes.get(5) < 1)
+                    || inputArraySizes.get(3) < 1 || inputArraySizes.get(4) < 1 || inputArraySizes.get(5) < 1)
                 return;
 
             int mapWidth = inputArrays.get(0)[0].intValue();
@@ -1400,15 +1389,15 @@ public class Analysis {
             Double[] yin = inputArrays.get(7);
             Double[] zin = inputArrays.get(8);
 
-            double[] zsumout = new double[mapHeight*mapWidth];
-            int[] nout = new int[mapHeight*mapWidth];
+            double[] zsumout = new double[mapHeight * mapWidth];
+            int[] nout = new int[mapHeight * mapWidth];
 
             for (int i = 0; i < n; i++) {
-                int x = (int)Math.round((mapWidth-1)*(xin[i]-minx)/(maxx-minx));
-                int y = (int)Math.round((mapHeight-1)*(yin[i]-miny)/(maxy-miny));
+                int x = (int) Math.round((mapWidth - 1) * (xin[i] - minx) / (maxx - minx));
+                int y = (int) Math.round((mapHeight - 1) * (yin[i] - miny) / (maxy - miny));
                 if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
                     continue;
-                int index = x + y*mapWidth;
+                int index = x + y * mapWidth;
                 if (zMode != ZMode.count) {
                     zsumout[index] += zin[i];
                 }
@@ -1430,22 +1419,29 @@ public class Analysis {
             for (int y = 0; y < mapHeight; y++) {
                 for (int x = 0; x < mapWidth; x++) {
                     if (xout != null)
-                        xout.append(minx + x*(maxx-minx)/((double)(mapWidth-1)));
+                        xout.append(minx + x * (maxx - minx) / ((double) (mapWidth - 1)));
                     if (yout != null)
-                        yout.append(miny + y*(maxy-miny)/((double)(mapHeight-1)));
+                        yout.append(miny + y * (maxy - miny) / ((double) (mapHeight - 1)));
                     if (zout != null) {
                         switch (zMode) {
-                            case count:   zout.append(nout[y*mapWidth + x]);
-                                          break;
-                            case sum:     zout.append(zsumout[y*mapWidth + x]);
-                                          break;
-                            case average: zout.append(zsumout[y*mapWidth + x] / (double)nout[y*mapWidth + x]);
-                                          break;
+                            case count:
+                                zout.append(nout[y * mapWidth + x]);
+                                break;
+                            case sum:
+                                zout.append(zsumout[y * mapWidth + x]);
+                                break;
+                            case average:
+                                zout.append(zsumout[y * mapWidth + x] / (double) nout[y * mapWidth + x]);
+                                break;
                         }
                     }
                 }
             }
 
+        }
+
+        public enum ZMode {
+            count, sum, average;
         }
     }
 
@@ -1471,7 +1467,7 @@ public class Analysis {
                 }
                 //Append all data from input to the output buffer
                 while (it.hasNext()) {
-                    outputs.get(0).append((double)it.next());
+                    outputs.get(0).append((double) it.next());
                 }
             }
 
@@ -1512,7 +1508,7 @@ public class Analysis {
                 ity = inputs.get(2).getIterator();
 
             if (inFactor > 1) {
-                int factor = (int)Math.round(inFactor);
+                int factor = (int) Math.round(inFactor);
                 while (itx.hasNext()) {
                     double newx = 0.;
                     double newy = 0.;
@@ -1547,10 +1543,10 @@ public class Analysis {
             } else {
                 int factor = (int) Math.round(1. / inFactor);
                 while (itx.hasNext()) {
-                    double newx = (double)itx.next();
+                    double newx = (double) itx.next();
                     double newy = 0.;
                     if (ity != null && ity.hasNext())
-                        newy = (double)ity.next();
+                        newy = (double) ity.next();
                     for (int i = 0; i < factor; i++) {
                         outputs.get(0).append(newx);
                         if (outputs.size() > 1)
@@ -1662,12 +1658,12 @@ public class Analysis {
             if (inputArrays.size() < 3 || inputArrays.get(2) == null || inputArraySizes.get(2) == 0)
                 mint = Double.NEGATIVE_INFINITY; //not set by user, set to -inf so it has no effect
             else
-                mint = inputArrays.get(2)[inputArraySizes.get(2)-1];
+                mint = inputArrays.get(2)[inputArraySizes.get(2) - 1];
 
             if (inputArrays.size() < 4 || inputArrays.get(3) == null || inputArraySizes.get(3) == 0)
                 maxt = Double.POSITIVE_INFINITY; //not set by user, set to +inf so it has no effect
             else
-                maxt = inputArrays.get(3)[inputArraySizes.get(3)-1];
+                maxt = inputArrays.get(3)[inputArraySizes.get(3) - 1];
 
             Double y[] = inputArrays.get(1);
 
@@ -1686,7 +1682,7 @@ public class Analysis {
                 x = new Double[size]; //Relative x (the displacement in the autocorrelation). This has to be filled from input2 or manually with 1,2,3...
                 //There is no input2. Let's fill it with 0,1,2,3,4....
                 for (int i = 0; i < size; i++) {
-                    x[i] = (double)i;
+                    x[i] = (double) i;
                 }
             }
 
@@ -1696,10 +1692,10 @@ public class Analysis {
                     continue;
 
                 double sum = 0.;
-                for (int j = 0; j < size-i; j++) { //For each value of input1 minus the current displacement
-                    sum += y[j]*y[j+i]; //Product of normal and displaced data
+                for (int j = 0; j < size - i; j++) { //For each value of input1 minus the current displacement
+                    sum += y[j] * y[j + i]; //Product of normal and displaced data
                 }
-                sum /= (double)(size-i); //Normalize to the number of values at this displacement
+                sum /= (double) (size - i); //Normalize to the number of values at this displacement
 
                 //Append y output to output1 and x to output2 (if used)
                 if (outputs.size() > 0 && outputs.get(0) != null)
@@ -1734,12 +1730,12 @@ public class Analysis {
             int n = inputs.get(1).buffer.getFilledSize();
 
             //Get dx and overlap
-            int dx = (int)inputs.get(2).getValue();
+            int dx = (int) inputs.get(2).getValue();
 
             //Overlap is optional...
             int overlap = 0;
             if (inputs.size() >= 4 && inputs.get(3) != null)
-                overlap = (int)inputs.get(3).getValue();
+                overlap = (int) inputs.get(3).getValue();
 
             boolean userSelectedRange = false;
 
@@ -1768,8 +1764,8 @@ public class Analysis {
                 if (x2 > n)
                     x2 = n;
 
-                if (maxPeriod > x2-x1)
-                    maxPeriod = x2-x1;
+                if (maxPeriod > x2 - x1)
+                    maxPeriod = x2 - x1;
 
                 int firstNegative = -1;
                 int maxPosition = -1;
@@ -1787,12 +1783,12 @@ public class Analysis {
                     for (int j = x1; j < x2 - i; j++) { //For each value of input1 minus the current displacement
                         sum += y[j] * y[j + i]; //Product of normal and displaced data
                     }
-                    sum /= (double) (x2-x1-i); //Normalize to the number of values at this displacement
+                    sum /= (double) (x2 - x1 - i); //Normalize to the number of values at this displacement
 
                     if (!userSelectedRange && firstNegative < 0) {
                         if (sum < 0) { //So, this is the first negative one... We can now skip ahead to 3 times this position and work more precisely from there.
                             firstNegative = i;
-                            i = 3*firstNegative+1;
+                            i = 3 * firstNegative + 1;
                             step = 1;
                         }
                     } else if (!userSelectedRange && i > 5 * firstNegative) { //We have passed the first period. Further maxima can only be found on the next period and we are not interested in this...
@@ -1813,9 +1809,9 @@ public class Analysis {
                 double xMax = Double.NaN;
                 if (maxPosition > 0 && maxValue > 0 && maxValueLeft > 0 && maxValueRight > 0) {
                     double dy = 0.5 * (maxValueRight - maxValueLeft);
-                    double d2y = 2*maxValue - maxValueLeft - maxValueRight;
+                    double d2y = 2 * maxValue - maxValueLeft - maxValueRight;
                     double m = dy / d2y;
-                    xMax = x[x1+maxPosition] + 0.5*m*(x[x1+maxPosition+1] - x[x1+maxPosition-1]) - x[x1];
+                    xMax = x[x1 + maxPosition] + 0.5 * m * (x[x1 + maxPosition + 1] - x[x1 + maxPosition - 1]) - x[x1];
                 }
 //Log.d("test", "min: " + minPeriod + ", max: " + maxPeriod + ", x1: " + x1 + ", pos: " + maxPosition + ", period: " + xMax);
                 if (outputs.size() > 0 && outputs.get(0) != null)
@@ -1846,12 +1842,12 @@ public class Analysis {
             //Calculate difference of neighbors
             while (it.hasNext()) {
                 if (first) { //The first value is just stored
-                    last = (double)it.next();
+                    last = (double) it.next();
                     first = false;
                     continue;
                 }
-                v = (double)it.next();
-                outputs.get(0).append(v-last);
+                v = (double) it.next();
+                outputs.get(0).append(v - last);
                 last = v;
             }
         }
@@ -1876,7 +1872,7 @@ public class Analysis {
                 return;
             //Calculate the sum
             while (it.hasNext()) {
-                sum += (double)it.next();
+                sum += (double) it.next();
                 outputs.get(0).append(sum);
             }
         }
@@ -1958,9 +1954,9 @@ public class Analysis {
                 for (int i = 0; i < compRange; i++) {
                     double sum = 0.;
                     for (int j = 0; j < bsize; j++) {
-                        sum += a[j+i]*b[j];
+                        sum += a[j + i] * b[j];
                     }
-                    sum /= (double)(compRange); //Normalize bynumber of values
+                    sum /= (double) (compRange); //Normalize bynumber of values
                     outputs.get(0).append(sum);
                 }
             }
@@ -1981,16 +1977,16 @@ public class Analysis {
 
         //Change sigma
         protected void setSigma(double sigma) {
-            this.calcWidth = (int)Math.round(sigma*3); //Adapt calculation range: 3x sigma should be plenty
+            this.calcWidth = (int) Math.round(sigma * 3); //Adapt calculation range: 3x sigma should be plenty
 
-            gauss = new double[calcWidth*2+1];
+            gauss = new double[calcWidth * 2 + 1];
             double sum = 0.;
             for (int i = -calcWidth; i <= calcWidth; i++) {
-                gauss[i+calcWidth] = Math.exp(-(i/sigma*i/sigma)/2.); //Gauß! We normalize numerically to make up for imprecisions due to discretization.
-                sum += gauss[i+calcWidth];
+                gauss[i + calcWidth] = Math.exp(-(i / sigma * i / sigma) / 2.); //Gauß! We normalize numerically to make up for imprecisions due to discretization.
+                sum += gauss[i + calcWidth];
             }
             for (int i = -calcWidth; i <= calcWidth; i++) {
-                gauss[i+calcWidth] /= sum;
+                gauss[i + calcWidth] /= sum;
             }
         }
 
@@ -2003,14 +1999,14 @@ public class Analysis {
                 double sum = 0;
                 double norm = 0;
                 for (int j = -calcWidth; j <= calcWidth; j++) { //For each step in the look-up-table
-                    int k = i+j; //index in input that corresponds to the step in the look-up-table
+                    int k = i + j; //index in input that corresponds to the step in the look-up-table
                     if (k >= 0 && k < y.length) {
                         sum += gauss[j + calcWidth] * y[k]; //Add weighted contribution
                         if (i < calcWidth || i > y.length - calcWidth - 1)
                             norm += gauss[j + calcWidth];
                     }
                 }
-                if (i < calcWidth || i > y.length-calcWidth)
+                if (i < calcWidth || i > y.length - calcWidth)
                     sum /= norm;
                 outputs.get(0).append(sum); //Append the result to the output buffer
             }
@@ -2034,7 +2030,7 @@ public class Analysis {
                 its.add(inputs.get(i).getIterator());
             }
 
-            double []data = new double[inputs.size()]; //Will hold values of all inputs at same index
+            double[] data = new double[inputs.size()]; //Will hold values of all inputs at same index
             boolean hasNext = true; //Will be set to false if ANY of the iterators has no next item
             while (hasNext) {
                 //Check if any input has a value left
@@ -2082,21 +2078,21 @@ public class Analysis {
             double[] min; //Double-valued min and max. Filled from String value / dataBuffer
             double[] max;
 
-            int n = (inputArrays.size()-1)/3+1;
+            int n = (inputArrays.size() - 1) / 3 + 1;
             min = new double[n];
             max = new double[n];
             inputArrays.setSize(n * 3);
 
-            for(int i = 0; i < n; i++) {
-                if (inputArrays.get(3*i+1) == null || inputArraySizes.get(3*i+1) == 0)
+            for (int i = 0; i < n; i++) {
+                if (inputArrays.get(3 * i + 1) == null || inputArraySizes.get(3 * i + 1) == 0)
                     min[i] = Double.NEGATIVE_INFINITY; //Not set by user, set to -inf so it has no influence
                 else {
-                    min[i] = inputArrays.get(3*i+1)[inputArraySizes.get(3*i+1)-1]; //Get value from string: numeric or buffer
+                    min[i] = inputArrays.get(3 * i + 1)[inputArraySizes.get(3 * i + 1) - 1]; //Get value from string: numeric or buffer
                 }
-                if (inputArrays.get(3*i+2) == null || inputArraySizes.get(3*i+2) == 0)
+                if (inputArrays.get(3 * i + 2) == null || inputArraySizes.get(3 * i + 2) == 0)
                     max[i] = Double.POSITIVE_INFINITY; //Not set by user, set to +inf so it has no influence
                 else {
-                    max[i] = inputArrays.get(3*i+2)[inputArraySizes.get(3*i+2)-1]; //Get value from string: numeric or buffer
+                    max[i] = inputArrays.get(3 * i + 2)[inputArraySizes.get(3 * i + 2) - 1]; //Get value from string: numeric or buffer
                 }
             }
 
@@ -2104,11 +2100,11 @@ public class Analysis {
             Double[][] ins = new Double[n][];
             int[] sizes = new int[n];
             for (int i = 0; i < n; i++) {
-                ins[i] = inputArrays.get(3*i);
-                sizes[i] = inputArraySizes.get(3*i);
+                ins[i] = inputArrays.get(3 * i);
+                sizes[i] = inputArraySizes.get(3 * i);
             }
 
-            double []data = new double[n]; //Will hold values of all inputs at same index
+            double[] data = new double[n]; //Will hold values of all inputs at same index
             boolean hasNext = true; //Will be set to true if ANY of the iterators has a next item (not neccessarily all of them)
             int index = 0;
             while (hasNext) {
@@ -2166,7 +2162,7 @@ public class Analysis {
             if (inputs.size() > 1 && inputs.get(1) != null)
                 vstop = inputs.get(1).getValue();
             if (inputs.size() > 2 && inputs.get(2) != null)
-                vlength = (int)inputs.get(2).getValue();
+                vlength = (int) inputs.get(2).getValue();
 
             //If length is not set, use the size of the output buffer
             if (vlength < 0)
@@ -2174,7 +2170,7 @@ public class Analysis {
 
             //Write ramp to output buffer
             for (int i = 0; i < vlength; i++) {
-                outputs.get(0).append(vstart+(vstop-vstart)/(vlength-1)*i);
+                outputs.get(0).append(vstart + (vstop - vstart) / (vlength - 1) * i);
             }
         }
     }
@@ -2198,7 +2194,7 @@ public class Analysis {
             if (inputs.size() > 0 && inputs.get(0) != null)
                 vvalue = inputs.get(0).getValue();
             if (inputs.size() > 1 && inputs.get(1) != null)
-                vlength = (int)inputs.get(1).getValue();
+                vlength = (int) inputs.get(1).getValue();
 
             //If length is not set, use the size of the output buffer
             if (vlength < 0)
@@ -2225,11 +2221,11 @@ public class Analysis {
             int start = 0;
             int end = -1;
             if (inputs.size() > 0 && inputs.get(0) != null)
-                start = (int)inputs.get(0).getValue();
+                start = (int) inputs.get(0).getValue();
             if (inputs.size() > 1 && inputs.get(1) != null)
-                end = (int)inputs.get(1).getValue();
+                end = (int) inputs.get(1).getValue();
             if (inputs.size() > 2 && inputs.get(2) != null)
-                end = start + (int)inputs.get(2).getValue();
+                end = start + (int) inputs.get(2).getValue();
 
             if (start < 0) {
                 start = 0;
@@ -2242,10 +2238,10 @@ public class Analysis {
             }
 
             for (int i = 3; i < inputs.size(); i++) {
-                if (outputs.size() > i-3 && outputs.get(i-3) != null && inputs.get(i) != null) {
-                    int thisEnd = Math.min(end,inputs.get(i).getFilledSize());
+                if (outputs.size() > i - 3 && outputs.get(i - 3) != null && inputs.get(i) != null) {
+                    int thisEnd = Math.min(end, inputs.get(i).getFilledSize());
                     if (start < thisEnd)
-                        outputs.get(i-3).append(Arrays.copyOfRange(inputs.get(i).getArray(), start, thisEnd), thisEnd-start);
+                        outputs.get(i - 3).append(Arrays.copyOfRange(inputs.get(i).getArray(), start, thisEnd), thisEnd - start);
                 }
             }
         }

@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Ayarlar</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -79,7 +80,7 @@
 
     <string name="experimentinfo_hint">Deneyin nasıl kullanılacağını öğrenmek için deney bilgisi kısmını kontrol edin.</string>
 
-<string name="newExperimentPhyphoxInfo">Veri analizi de dahil olmak üzere daha ileri düzey deneyler oluşturmak için phyphox.org adresini ziyaret edin. Meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşın.</string>
+    <string name="newExperimentPhyphoxInfo">Veri analizi de dahil olmak üzere daha ileri düzey deneyler oluşturmak için phyphox.org adresini ziyaret edin. Meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşın.</string>
     <string name="newExperimentInputBufferSize">Ara bellek boyutu (depolanacak değerlerin sayısı)</string>
     <string name="newExperimentInputRate">Sensör oranı (Hertz, 0 = mümkün olduğunca hızlı)</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -98,7 +99,7 @@
 \n…Programlama:
 \n…Dominik Dorsel
 \n…Jonas Gessner
-\n…Camilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>Fikir:<br/><b>Prof. Christoph Stampfer</b><br/>Tasarım:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Yazılım:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+\n…Camilla Lummerzheim<br /><b>Dr. Sebastian Staacks</b><br />Fikir:<br /><b>Prof. Christoph Stampfer</b><br />Tasarım:<br /><b>Frank Posthoff (A.NikoPol)</b><br />Yazılım:<br /><b>Camilla Lummerzheim</b><br /><b>Jonas Gessner</b></string>
     <string name="creditsLibs">Uzaktan erişim için web arayüzü, MIT lisansı altında bulunan “Chart.js” (http://chartjs.org) JavaScript kütüphanesini kullanmaktadır. Fourier dönüşümü için, FFTW kütüphanesini kullanıyoruz (http://fftw.org), Telif Hakkı © 2003, 2007-11 Matteo Frigo, Telif Hakkı © 2003, 2007-11 Massachusetts Teknoloji Enstitüsü, GNU Genel Kamuoyu Lisansı altındadır. (sürüm 2 veya üstü).</string>
     <string name="sensorNotAvailableWarningText2">mevcut değil. Genellikle cihazınızın bu tip bir sensöre sahip olmadığı anlamına gelir.</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>

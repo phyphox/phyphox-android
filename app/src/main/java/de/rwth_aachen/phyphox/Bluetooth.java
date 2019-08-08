@@ -17,10 +17,15 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,13 +37,6 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import android.os.Handler;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * The Bluetooth class encapsulates a generic Bluetooth connection and deals with the following tasks:
@@ -56,18 +54,14 @@ public class Bluetooth implements Serializable {
     public final static UUID baseUUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");
     public final static UUID phyphoxServiceUUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a");
     public final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
-
-
-    transient private static BluetoothAdapter btAdapter;
     public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
-
-    protected transient BluetoothDevice btDevice;
-    protected transient BluetoothGatt btGatt;
+    transient private static BluetoothAdapter btAdapter;
     public String idString;
     public String deviceName;
     public String deviceAddress;
     public UUID uuidFilter;
-
+    protected transient BluetoothDevice btDevice;
+    protected transient BluetoothGatt btGatt;
     /**
      * holds data to all characteristics to add or configure once the device is connected
      */
@@ -96,15 +90,6 @@ public class Bluetooth implements Serializable {
      * true if the experiment is running but the device disconnected
      */
     protected boolean forcedBreak;
-    /**
-     * queue for the BluetoothCommands
-     */
-    private LinkedList<BluetoothCommand> commandQueue;
-    /**
-     * indicates whether a command is being executed at the moment
-     */
-    private Boolean isExecuting;
-
     protected Activity activity;
     protected Context context;
     /**
@@ -115,7 +100,163 @@ public class Bluetooth implements Serializable {
      * is able to change UI and is used for example to display errors
      */
     protected Handler mainHandler;
+    /**
+     * queue for the BluetoothCommands
+     */
+    private LinkedList<BluetoothCommand> commandQueue;
+    /**
+     * indicates whether a command is being executed at the moment
+     */
+    private Boolean isExecuting;
+    /**
+     * Callback for Gatt operations.
+     * The methods allow the queue to execute the next command, display errors and make sure the read data is retrieved.
+     * The CancellableLatch is also counted down here.
+     */
+    private final BluetoothGattCallback btLeGattCallback = new BluetoothGattCallback() {
 
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            executeNext();
+            // retrieve data directly when the characteristic has changed
+            byte[] data = characteristic.getValue();
+            retrieveData(data, characteristic);
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                displayErrorMessage(context.getResources().getString(R.string.bt_fail_reading) + BluetoothException.getMessage(Bluetooth.this));
+            }
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            executeNext();
+            byte[] data = null;
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                data = characteristic.getValue();
+            }
+            saveData(data, characteristic);
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                cdl.countDown();
+            } else {
+                if (isRunning) {
+                    displayErrorMessage(context.getResources().getString(R.string.bt_fail_writing) + BluetoothException.getMessage(Bluetooth.this));
+                } else {
+                    cdl.cancel();
+                }
+            }
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            executeNext();
+        }
+
+        @Override
+        public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                cdl.countDown();
+            } else {
+                cdl.cancel();
+            }
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            executeNext();
+            switch (newState) {
+                case BluetoothProfile.STATE_CONNECTED:
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        if (isRunning) {
+                            try {
+                                start(); // start collecting / sending data again if the experiment is running
+                            } catch (BluetoothException e) {
+                                // means that the device disconnected so error handling will come anyway
+                            }
+                        }
+                    }
+                    break;
+                case BluetoothProfile.STATE_DISCONNECTED:
+                    // fall through to default
+                default:
+                    if (isRunning) {
+                        stop(); // stop collecting data
+                        forcedBreak = true;
+                        isRunning = true; // the experiment is still running, only bluetooth has stopped
+                        displayErrorMessage(context.getResources().getString(R.string.bt_exception_disconnected) + BluetoothException.getMessage(Bluetooth.this));
+                        (new ReconnectBluetoothTask()).execute(); // try to reconnect the device
+                    }
+                    return;
+            }
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                cdl.countDown();
+            } else {
+                cdl.cancel();
+            }
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            executeNext();
+        }
+
+        @Override
+        public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                cdl.countDown();
+            } else {
+                cdl.cancel();
+            }
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            executeNext();
+        }
+    }; // end of BluetoothGattCallback
+
+    /**
+     * Create a new Bluetooth object.
+     *
+     * @param idString        An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
+     * @param deviceName      name of the device (can be null if deviceAddress is not null)
+     * @param deviceAddress   address of the device (can be null if deviceName is not null)
+     * @param uuidFilter      Optional filter to identify a device by an advertised service or characteristic
+     * @param context         context
+     * @param characteristics list of all characteristics the object should be able to operate on
+     */
+    public Bluetooth(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
+        this.idString = idString;
+        this.deviceName = (deviceName == null ? "" : deviceName);
+        this.deviceAddress = deviceAddress;
+        this.uuidFilter = uuidFilter;
+
+        this.activity = activity;
+        this.context = context;
+        this.mainHandler = new Handler(this.context.getMainLooper());
+        // create toast to show error messages while the experiment is running
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                toast = Toast.makeText(Bluetooth.this.context, Bluetooth.this.context.getResources().getString(R.string.bt_default_error_message), Toast.LENGTH_LONG);
+            }
+        });
+
+        this.characteristics = characteristics;
+        isRunning = false;
+        forcedBreak = false;
+        valuesSize = 0;
+        commandQueue = new LinkedList<>();
+        isExecuting = false;
+    }
 
     /**
      * Return true if Bluetooth Low Energy is supported on the device.
@@ -161,39 +302,15 @@ public class Bluetooth implements Serializable {
         return result;
     }
 
-    /**
-     * Create a new Bluetooth object.
-     *
-     * @param idString        An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
-     * @param deviceName      name of the device (can be null if deviceAddress is not null)
-     * @param deviceAddress   address of the device (can be null if deviceName is not null)
-     * @param uuidFilter      Optional filter to identify a device by an advertised service or characteristic
-     * @param context         context
-     * @param characteristics list of all characteristics the object should be able to operate on
-     */
-    public Bluetooth(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
-        this.idString = idString;
-        this.deviceName = (deviceName == null ? "" : deviceName);
-        this.deviceAddress = deviceAddress;
-        this.uuidFilter = uuidFilter;
-
-        this.activity = activity;
-        this.context = context;
-        this.mainHandler = new Handler(this.context.getMainLooper());
-        // create toast to show error messages while the experiment is running
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                toast = Toast.makeText(Bluetooth.this.context, Bluetooth.this.context.getResources().getString(R.string.bt_default_error_message), Toast.LENGTH_LONG);
+    public static Map<String, BluetoothDevice> knownDevicesFromIO(final Vector<? extends Bluetooth>... list) {
+        Map<String, BluetoothDevice> knownDevices = new HashMap<>();
+        for (Vector<? extends Bluetooth> v : list) {
+            for (Bluetooth b : v) {
+                if (b.btDevice != null && b.idString != null && !b.idString.isEmpty())
+                    knownDevices.put(b.idString, b.btDevice);
             }
-        });
-
-        this.characteristics = characteristics;
-        isRunning = false;
-        forcedBreak = false;
-        valuesSize = 0;
-        commandQueue = new LinkedList<>();
-        isExecuting = false;
+        }
+        return knownDevices;
     }
 
     /**
@@ -239,7 +356,7 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is disabled or if the device could not be found
      */
-    public void findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
+    public void findDevice(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
@@ -405,7 +522,7 @@ public class Bluetooth implements Serializable {
     }
 
     /**
-     *Display the error message (as Toast if the experiment is running, as AlertDialog if not).
+     * Display the error message (as Toast if the experiment is running, as AlertDialog if not).
      *
      * @param message will be displayed
      */
@@ -487,123 +604,6 @@ public class Bluetooth implements Serializable {
         commandQueue.clear();
     }
 
-
-    /**
-     * Callback for Gatt operations.
-     * The methods allow the queue to execute the next command, display errors and make sure the read data is retrieved.
-     * The CancellableLatch is also counted down here.
-     */
-    private final BluetoothGattCallback btLeGattCallback = new BluetoothGattCallback() {
-
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            synchronized (isExecuting) {
-                isExecuting = false;
-            }
-            executeNext();
-            // retrieve data directly when the characteristic has changed
-            byte[] data = characteristic.getValue();
-            retrieveData(data, characteristic);
-        }
-
-        @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                displayErrorMessage(context.getResources().getString(R.string.bt_fail_reading) + BluetoothException.getMessage(Bluetooth.this));
-            }
-            synchronized (isExecuting) {
-                isExecuting = false;
-            }
-            executeNext();
-            byte[] data = null;
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                data = characteristic.getValue();
-            }
-            saveData(data, characteristic);
-        }
-
-        @Override
-        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                cdl.countDown();
-            } else {
-                if (isRunning) {
-                    displayErrorMessage(context.getResources().getString(R.string.bt_fail_writing) + BluetoothException.getMessage(Bluetooth.this));
-                } else {
-                    cdl.cancel();
-                }
-            }
-            synchronized (isExecuting) {
-                isExecuting = false;
-            }
-            executeNext();
-        }
-
-        @Override
-        public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                cdl.countDown();
-            } else {
-                cdl.cancel();
-            }
-            synchronized (isExecuting) {
-                isExecuting = false;
-            }
-            executeNext();
-            switch (newState) {
-                case BluetoothProfile.STATE_CONNECTED:
-                    if (status == BluetoothGatt.GATT_SUCCESS) {
-                        if (isRunning) {
-                            try {
-                                start(); // start collecting / sending data again if the experiment is running
-                            } catch (BluetoothException e) {
-                                // means that the device disconnected so error handling will come anyway
-                            }
-                        }
-                    }
-                    break;
-                case BluetoothProfile.STATE_DISCONNECTED:
-                    // fall through to default
-                default:
-                    if (isRunning) {
-                        stop(); // stop collecting data
-                        forcedBreak = true;
-                        isRunning = true; // the experiment is still running, only bluetooth has stopped
-                        displayErrorMessage(context.getResources().getString(R.string.bt_exception_disconnected) + BluetoothException.getMessage(Bluetooth.this));
-                        (new ReconnectBluetoothTask()).execute(); // try to reconnect the device
-                    }
-                    return;
-            }
-        }
-
-        @Override
-        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                cdl.countDown();
-            } else {
-                cdl.cancel();
-            }
-            synchronized (isExecuting) {
-                isExecuting = false;
-            }
-            executeNext();
-        }
-
-        @Override
-        public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                cdl.countDown();
-            } else {
-                cdl.cancel();
-            }
-            synchronized (isExecuting) {
-                isExecuting = false;
-            }
-            executeNext();
-        }
-    }; // end of BluetoothGattCallback
-
-
     /**
      * CountDownLatch that can be cancelled.
      * Used for important gatt-commands where it should not be possible to continue before the command succeeds.
@@ -649,7 +649,6 @@ public class Bluetooth implements Serializable {
         }
     } // end of class CancellableLatch
 
-
     /**
      * Represents the attributes of a Characteristic as they are defined in the phyphox-File.
      */
@@ -687,211 +686,6 @@ public class Bluetooth implements Serializable {
         }
     } // end of class Characteristic
 
-
-    /**
-     * Skeletal implementation of BluetoothCommands that can be queued.
-     */
-    protected abstract class BluetoothCommand {
-        /**
-         * BluetoothGatt the command should be executed on.
-         */
-        BluetoothGatt gatt;
-        /**
-         * BluetoothGattCharacteristic the command should be executed on.
-         */
-        BluetoothGattCharacteristic characteristic;
-
-        /**
-         * Create a new BluetoothCommand.
-         *
-         * @param gatt           BluetoothGatt the command should be executed on
-         * @param characteristic BluetoothGattCharacteristic the command should be executed on
-         */
-        public BluetoothCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            this.gatt = gatt;
-            this.characteristic = characteristic;
-        }
-
-        /**
-         * Create a new BluetoothCommand that does not refer to a BluetoothGattCharacteristic.
-         *
-         * @param gatt BluetoothGatt the command should be executed on
-         */
-        public BluetoothCommand(BluetoothGatt gatt) {
-            this.gatt = gatt;
-            this.characteristic = null;
-        }
-
-        /**
-         * Execute the BluetoothCommand.
-         *
-         * @return true if the operation was initiated successfully
-         */
-        public abstract boolean execute();
-
-        /**
-         * Return the error message that should be displayed if execute() returns false
-         *
-         * @return an error message
-         */
-        public abstract String getErrorMessage();
-    } // end of class BluetoothCommand
-
-
-    /**
-     * Command to write a BluetoothGattCharacteristic that can be queued.
-     */
-    protected class WriteCommand extends BluetoothCommand {
-
-        /**
-         * Create a new WriteCommand.
-         *
-         * @param gatt           BluetoothGatt the command should be executed on
-         * @param characteristic BluetoothGattCharacteristic that should be written
-         */
-        public WriteCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            super(gatt, characteristic);
-        }
-
-        /**
-         * Write the BluetoothGattCharacteristic with WRITE_TYPE_NO_RESPONSE.
-         *
-         * @return true if the operation was initiated successfully.
-         */
-        @Override
-        public boolean execute() {
-            //No response does not work with the BBC Micro Bit. Need to investigate further...
-            //characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-            return gatt.writeCharacteristic(characteristic);
-        }
-
-        /**
-         * Return the error message that should be displayed if execute() returns false
-         *
-         * @return the error message
-         */
-        @Override
-        public String getErrorMessage() {
-            return context.getResources().getString(R.string.bt_error_writing) + " " + characteristic.getUuid().toString() + ".";
-        }
-    } // end of class WriteCommand
-
-
-    /**
-     * Command to write a BluetoothGattDescriptor that can be queued.
-     */
-    protected class WriteDescriptorCommand extends BluetoothCommand {
-        /**
-         * BluetoothGattDescriptor that should be written.
-         */
-        private BluetoothGattDescriptor descriptor;
-
-        /**
-         * Create a new WriteDescriptorCommand.
-         *
-         * @param gatt       BluetoothGatt the command should be executed on
-         * @param descriptor BluetoothGattDescriptor that should be written
-         */
-        public WriteDescriptorCommand(BluetoothGatt gatt, BluetoothGattDescriptor descriptor) {
-            super(gatt);
-            this.descriptor = descriptor;
-        }
-
-        /**
-         * Write the BluetoothGattDescriptor.
-         *
-         * @return true if the operation was initiated successfully.
-         */
-        @Override
-        public boolean execute() {
-            return gatt.writeDescriptor(descriptor);
-        }
-
-        /**
-         * Return the error message that should be displayed if execute() returns false
-         *
-         * @return the error message
-         */
-        @Override
-        public String getErrorMessage() {
-            return ""; // error message will not be displayed
-        }
-    } // end of class WriteDescriptorCommand
-
-
-    /**
-     * Command to read a BluetoothGattCharacteristic that can be queued.
-     */
-    protected class ReadCommand extends BluetoothCommand {
-
-        /**
-         * Create a new WriteCommand.
-         *
-         * @param gatt           BluetoothGatt the command should be executed on
-         * @param characteristic BluetoothGattCharacteristic that should be read
-         */
-        public ReadCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            super(gatt, characteristic);
-        }
-
-        /**
-         * Read the BluetoothGattCharacteristic.
-         *
-         * @return true if the operation was initiated successfully.
-         */
-        @Override
-        public boolean execute() {
-            return gatt.readCharacteristic(characteristic);
-        }
-
-        /**
-         * Return the error message that should be displayed if execute() returns false
-         *
-         * @return the error message
-         */
-        @Override
-        public String getErrorMessage() {
-            return context.getResources().getString(R.string.bt_error_reading) + " " + characteristic.getUuid().toString() + ".";
-        }
-    } // end of class ReadCommand
-
-
-    /**
-     * Command to discover services of a BluetoothGatt that can be queued.
-     */
-    protected class DiscoverCommand extends BluetoothCommand {
-
-        /**
-         * Create a new DiscoverCommand.
-         *
-         * @param gatt BluetoothGatt whose services should be discovered
-         */
-        public DiscoverCommand(BluetoothGatt gatt) {
-            super(gatt);
-        }
-
-        /**
-         * Discover services.
-         *
-         * @return true if the operation was initiated successfully.
-         */
-        @Override
-        public boolean execute() {
-            return gatt.discoverServices();
-        }
-
-        /**
-         * Return the error message that should be displayed if execute() returns false
-         *
-         * @return the error message
-         */
-        @Override
-        public String getErrorMessage() {
-            return context.getResources().getString(R.string.bt_error_discovering);
-        }
-    } // end of class DiscoverCommand
-
-
     /**
      * Holds data to a Characteristic that was collected from phyphoxFile.
      */
@@ -909,7 +703,6 @@ public class Bluetooth implements Serializable {
          */
         public abstract void process(Bluetooth b) throws BluetoothException;
     } // end of class CharacteristicData
-
 
     /**
      * Holds data to a Characteristic for BluetoothInput that was collected from phyphoxFile.
@@ -968,7 +761,6 @@ public class Bluetooth implements Serializable {
         }
     } // end of class InputData
 
-
     /**
      * Holds data to a Characteristic for BluetoothOutput that was collected from phyphoxFile.
      */
@@ -1013,7 +805,6 @@ public class Bluetooth implements Serializable {
             b.mapping.get(c).add(toAdd);
         }
     } // end of class OutputData
-
 
     /**
      * Holds data to a Characteristic that should be configured that was collected from phyphoxFile.
@@ -1075,7 +866,6 @@ public class Bluetooth implements Serializable {
         }
     } // end of class ConfigData
 
-
     /**
      * Thrown to indicate that there was an error concerning Bluetooth.
      */
@@ -1109,7 +899,6 @@ public class Bluetooth implements Serializable {
             return message;
         }
     } // end of class BluetoothException
-
 
     /**
      * Runnable that displays an AlertDialog with an error message and has the option to try again.
@@ -1168,17 +957,6 @@ public class Bluetooth implements Serializable {
             }
         }
     } // end of class OnExceptionRunnable
-
-    public static Map<String, BluetoothDevice> knownDevicesFromIO(final Vector<? extends Bluetooth>... list) {
-        Map<String, BluetoothDevice> knownDevices = new HashMap<>();
-        for (Vector<? extends Bluetooth> v : list) {
-            for (Bluetooth b : v) {
-                if (b.btDevice != null && b.idString != null && !b.idString.isEmpty())
-                    knownDevices.put(b.idString, b.btDevice);
-            }
-        }
-        return knownDevices;
-    }
 
     /**
      * AsyncTask to connect all Bluetooth devices.
@@ -1249,6 +1027,204 @@ public class Bluetooth implements Serializable {
         }
     } // end of class ConnectBluetoothTask
 
+    /**
+     * Skeletal implementation of BluetoothCommands that can be queued.
+     */
+    protected abstract class BluetoothCommand {
+        /**
+         * BluetoothGatt the command should be executed on.
+         */
+        BluetoothGatt gatt;
+        /**
+         * BluetoothGattCharacteristic the command should be executed on.
+         */
+        BluetoothGattCharacteristic characteristic;
+
+        /**
+         * Create a new BluetoothCommand.
+         *
+         * @param gatt           BluetoothGatt the command should be executed on
+         * @param characteristic BluetoothGattCharacteristic the command should be executed on
+         */
+        public BluetoothCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            this.gatt = gatt;
+            this.characteristic = characteristic;
+        }
+
+        /**
+         * Create a new BluetoothCommand that does not refer to a BluetoothGattCharacteristic.
+         *
+         * @param gatt BluetoothGatt the command should be executed on
+         */
+        public BluetoothCommand(BluetoothGatt gatt) {
+            this.gatt = gatt;
+            this.characteristic = null;
+        }
+
+        /**
+         * Execute the BluetoothCommand.
+         *
+         * @return true if the operation was initiated successfully
+         */
+        public abstract boolean execute();
+
+        /**
+         * Return the error message that should be displayed if execute() returns false
+         *
+         * @return an error message
+         */
+        public abstract String getErrorMessage();
+    } // end of class BluetoothCommand
+
+    /**
+     * Command to write a BluetoothGattCharacteristic that can be queued.
+     */
+    protected class WriteCommand extends BluetoothCommand {
+
+        /**
+         * Create a new WriteCommand.
+         *
+         * @param gatt           BluetoothGatt the command should be executed on
+         * @param characteristic BluetoothGattCharacteristic that should be written
+         */
+        public WriteCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super(gatt, characteristic);
+        }
+
+        /**
+         * Write the BluetoothGattCharacteristic with WRITE_TYPE_NO_RESPONSE.
+         *
+         * @return true if the operation was initiated successfully.
+         */
+        @Override
+        public boolean execute() {
+            //No response does not work with the BBC Micro Bit. Need to investigate further...
+            //characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+            return gatt.writeCharacteristic(characteristic);
+        }
+
+        /**
+         * Return the error message that should be displayed if execute() returns false
+         *
+         * @return the error message
+         */
+        @Override
+        public String getErrorMessage() {
+            return context.getResources().getString(R.string.bt_error_writing) + " " + characteristic.getUuid().toString() + ".";
+        }
+    } // end of class WriteCommand
+
+    /**
+     * Command to write a BluetoothGattDescriptor that can be queued.
+     */
+    protected class WriteDescriptorCommand extends BluetoothCommand {
+        /**
+         * BluetoothGattDescriptor that should be written.
+         */
+        private BluetoothGattDescriptor descriptor;
+
+        /**
+         * Create a new WriteDescriptorCommand.
+         *
+         * @param gatt       BluetoothGatt the command should be executed on
+         * @param descriptor BluetoothGattDescriptor that should be written
+         */
+        public WriteDescriptorCommand(BluetoothGatt gatt, BluetoothGattDescriptor descriptor) {
+            super(gatt);
+            this.descriptor = descriptor;
+        }
+
+        /**
+         * Write the BluetoothGattDescriptor.
+         *
+         * @return true if the operation was initiated successfully.
+         */
+        @Override
+        public boolean execute() {
+            return gatt.writeDescriptor(descriptor);
+        }
+
+        /**
+         * Return the error message that should be displayed if execute() returns false
+         *
+         * @return the error message
+         */
+        @Override
+        public String getErrorMessage() {
+            return ""; // error message will not be displayed
+        }
+    } // end of class WriteDescriptorCommand
+
+    /**
+     * Command to read a BluetoothGattCharacteristic that can be queued.
+     */
+    protected class ReadCommand extends BluetoothCommand {
+
+        /**
+         * Create a new WriteCommand.
+         *
+         * @param gatt           BluetoothGatt the command should be executed on
+         * @param characteristic BluetoothGattCharacteristic that should be read
+         */
+        public ReadCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super(gatt, characteristic);
+        }
+
+        /**
+         * Read the BluetoothGattCharacteristic.
+         *
+         * @return true if the operation was initiated successfully.
+         */
+        @Override
+        public boolean execute() {
+            return gatt.readCharacteristic(characteristic);
+        }
+
+        /**
+         * Return the error message that should be displayed if execute() returns false
+         *
+         * @return the error message
+         */
+        @Override
+        public String getErrorMessage() {
+            return context.getResources().getString(R.string.bt_error_reading) + " " + characteristic.getUuid().toString() + ".";
+        }
+    } // end of class ReadCommand
+
+    /**
+     * Command to discover services of a BluetoothGatt that can be queued.
+     */
+    protected class DiscoverCommand extends BluetoothCommand {
+
+        /**
+         * Create a new DiscoverCommand.
+         *
+         * @param gatt BluetoothGatt whose services should be discovered
+         */
+        public DiscoverCommand(BluetoothGatt gatt) {
+            super(gatt);
+        }
+
+        /**
+         * Discover services.
+         *
+         * @return true if the operation was initiated successfully.
+         */
+        @Override
+        public boolean execute() {
+            return gatt.discoverServices();
+        }
+
+        /**
+         * Return the error message that should be displayed if execute() returns false
+         *
+         * @return the error message
+         */
+        @Override
+        public String getErrorMessage() {
+            return context.getResources().getString(R.string.bt_error_discovering);
+        }
+    } // end of class DiscoverCommand
 
     /**
      * AsyncTask to reconnect the Bluetooth device.

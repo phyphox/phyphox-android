@@ -12,7 +12,6 @@ import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -20,9 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
@@ -46,7 +43,12 @@ import java.util.Vector;
 //finally only consist of two values showing the results of the analysis: A frequency and a period.
 
 
-public class expView implements Serializable{
+public class expView implements Serializable {
+
+    //Remember? We are in the expView class.
+    //An experiment view has a name and holds a bunch of expViewElement instances
+    public String name;
+    public Vector<expViewElement> elements = new Vector<>();
 
     public static enum State {
         hidden, normal, maximized;
@@ -54,17 +56,14 @@ public class expView implements Serializable{
 
     //Abstract expViewElement class defining the interface for any element of an experiment view
     public abstract class expViewElement implements Serializable, BufferNotification {
+        public State state = State.normal;
         protected String label; //Each element has a label. Usually naming the data shown
         protected float labelSize; //Size of the label
         protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
         protected Vector<String> inputs;
         protected boolean needsUpdate = true;
-
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
-
         transient protected View rootView; //Holds the root view of the element
-
-        public State state = State.normal;
 
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -213,6 +212,7 @@ public class expView implements Serializable{
     //valueElement implements a simple text display for a single value with an unit and a given
     //format.
     public class valueElement extends expViewElement implements Serializable {
+        protected Vector<Mapping> mappings = new Vector<>();
         transient private TextView tv = null;
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private double size;
@@ -221,55 +221,6 @@ public class expView implements Serializable{
         private String formatter; //This formatter is created when scientificNotation and precision are set
         private String unit; //A string to display as unit
         private int color;
-
-        protected class Mapping {
-            Double min = Double.NEGATIVE_INFINITY;
-            Double max = Double.POSITIVE_INFINITY;
-            String str;
-
-            protected Mapping(String str) {
-                this.str = str;
-            }
-        }
-
-        protected Vector<Mapping> mappings = new Vector<>();
-
-        protected void addMapping(Mapping mapping) {
-            this.mappings.add(mapping);
-        }
-
-        //Used to change size within TextView
-        private class MiddleRelativeSizeSpan extends MetricAffectingSpan {
-            private final float mProportion;
-
-            public MiddleRelativeSizeSpan(float proportion) {
-                mProportion = proportion;
-            }
-
-            public float getSizeChange() {
-                return mProportion;
-            }
-
-            @Override
-            public void updateDrawState(TextPaint ds) {
-                updateAnyState(ds);
-            }
-
-            @Override
-            public void updateMeasureState(TextPaint ds) {
-                updateAnyState(ds);
-            }
-
-            private void updateAnyState(TextPaint ds) {
-                Rect bounds = new Rect();
-                ds.getTextBounds("1A", 0, 2, bounds);
-                int shift = bounds.top - bounds.bottom;
-                ds.setTextSize(ds.getTextSize() * mProportion);
-                ds.getTextBounds("1A", 0, 2, bounds);
-                shift += bounds.bottom - bounds.top;
-                ds.baselineShift += Math.round(shift/2.);
-            }
-        }
 
         //Constructor takes the same arguments as the expViewElement constructor
         //It sets a precision of 2 with fixed point notation as default and creates the formatter
@@ -284,12 +235,16 @@ public class expView implements Serializable{
             this.color = res.getColor(R.color.mainExp);
         }
 
+        protected void addMapping(Mapping mapping) {
+            this.mappings.add(mapping);
+        }
+
         //Create the formatter for the notation and precision: for example  %.2e or %.2f
         protected void updateFormatter() {
             if (scientificNotation)
-                formatter = "%."+precision+"e";
+                formatter = "%." + precision + "e";
             else
-                formatter = "%."+precision+"f";
+                formatter = "%." + precision + "f";
         }
 
         //Interface to set scientific notation
@@ -323,7 +278,7 @@ public class expView implements Serializable{
             if (unit == null || unit.equals(""))
                 this.unit = "";
             else
-                this.unit = " "+unit;
+                this.unit = " " + unit;
         }
 
         @Override
@@ -334,7 +289,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android vews we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
 
             //Create a row consisting of label and value
@@ -364,7 +319,7 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //right half should be value+unit
             tv.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize*(float)size); //Align left to the center of the row
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize * (float) size); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
             tv.setTextColor(color);
@@ -385,11 +340,11 @@ public class expView implements Serializable{
         //<div>
         //  <span>Label</span><span>Value</span>
         //</div>
-        protected String createViewHTML(){
+        protected String createViewHTML() {
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement adjustableColor\" id=\"element"+htmlID+"\">" +
-                    "<span class=\"label\">"+this.label+"</span>" +
-                    "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ this.unit + "</span></span>" +
+            return "<div style=\"font-size:" + this.labelSize / .4 + "%;color:#" + c + "\" class=\"valueElement adjustableColor\" id=\"element" + htmlID + "\">" +
+                    "<span class=\"label\">" + this.label + "</span>" +
+                    "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size * 100.) + "%\"></span> <span class=\"valueUnit\">" + this.unit + "</span></span>" +
                     "</div>";
         }
 
@@ -408,7 +363,7 @@ public class expView implements Serializable{
                     vStr = "-";
                     uStr = "";
                 } else {
-                    for (Mapping map : mappings)  {
+                    for (Mapping map : mappings) {
                         if (x >= map.min && x <= map.max) {
                             vStr = map.str;
                             break;
@@ -419,11 +374,11 @@ public class expView implements Serializable{
                         uStr = this.unit;
                     }
                 }
-                String out = vStr+uStr;
+                String out = vStr + uStr;
 
                 if (size != 1.0) {
                     SpannableString sStr = new SpannableString(out);
-                    sStr.setSpan(new MiddleRelativeSizeSpan(1.f/(float)size), vStr.length(), out.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    sStr.setSpan(new MiddleRelativeSizeSpan(1.f / (float) size), vStr.length(), out.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
                     tv.setText(sStr);
                 } else {
                     tv.setText(out);
@@ -439,14 +394,14 @@ public class expView implements Serializable{
             String bufferName = inputs.get(0).replace("\"", "\\\"");
 
             sb.append("function (data) {");
-            sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
+            sb.append("     if (!data.hasOwnProperty(\"" + bufferName + "\"))");
             sb.append("         return;");
-            sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
-            sb.append(      "var v = null;");
+            sb.append("var x = data[\"" + bufferName + "\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
+            sb.append("var v = null;");
 
-            sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
+            sb.append("if (isNaN(x) || x == null) { v = \"-\" }");
             for (Mapping map : mappings) {
-                String str = map.str.replace("<","&lt;").replace(">","&gt;");
+                String str = map.str.replace("<", "&lt;").replace(">", "&gt;");
                 if (!map.max.isInfinite() && !map.min.isInfinite()) {
                     sb.append("else if (x >= " + map.min + " && x <= " + map.max + ") {v = \"" + str + "\";}");
                 } else if (!map.max.isInfinite()) {
@@ -458,18 +413,61 @@ public class expView implements Serializable{
                 }
             }
 
-            sb.append("     var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];");
+            sb.append("     var valueElement = document.getElementById(\"element" + htmlID + "\").getElementsByClassName(\"value\")[0];");
             sb.append("     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];");
             sb.append("     var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];");
             sb.append("     if (v == null) {");
-            sb.append("         v = (x*"+factor+").to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
-            sb.append("         valueUnit.textContent = \""+ this.unit + "\";");
+            sb.append("         v = (x*" + factor + ").to" + (scientificNotation ? "Exponential" : "Fixed") + "(" + precision + ");");
+            sb.append("         valueUnit.textContent = \"" + this.unit + "\";");
             sb.append("     } else {");
             sb.append("         valueUnit.textContent = \"\";");
             sb.append("     }");
             sb.append("     valueNumber.textContent = v;");
             sb.append("}");
             return sb.toString();
+        }
+
+        protected class Mapping {
+            Double min = Double.NEGATIVE_INFINITY;
+            Double max = Double.POSITIVE_INFINITY;
+            String str;
+
+            protected Mapping(String str) {
+                this.str = str;
+            }
+        }
+
+        //Used to change size within TextView
+        private class MiddleRelativeSizeSpan extends MetricAffectingSpan {
+            private final float mProportion;
+
+            public MiddleRelativeSizeSpan(float proportion) {
+                mProportion = proportion;
+            }
+
+            public float getSizeChange() {
+                return mProportion;
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                updateAnyState(ds);
+            }
+
+            @Override
+            public void updateMeasureState(TextPaint ds) {
+                updateAnyState(ds);
+            }
+
+            private void updateAnyState(TextPaint ds) {
+                Rect bounds = new Rect();
+                ds.getTextBounds("1A", 0, 2, bounds);
+                int shift = bounds.top - bounds.bottom;
+                ds.setTextSize(ds.getTextSize() * mProportion);
+                ds.getTextBounds("1A", 0, 2, bounds);
+                shift += bounds.bottom - bounds.top;
+                ds.baselineShift += Math.round(shift / 2.);
+            }
         }
     }
 
@@ -496,7 +494,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
 
             //Create the text as textView
@@ -525,10 +523,10 @@ public class expView implements Serializable{
         //<div>
         //  <p>text</p>
         //</div>
-        protected String createViewHTML(){
+        protected String createViewHTML() {
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;color:#"+c+"\" class=\"infoElement adjustableColor\" id=\"element"+htmlID+"\">" +
-                    "<p>"+this.label+"</p>" +
+            return "<div style=\"font-size:" + this.labelSize / .4 * 0.85 + "%;color:#" + c + "\" class=\"infoElement adjustableColor\" id=\"element" + htmlID + "\">" +
+                    "<p>" + this.label + "</p>" +
                     "</div>";
         }
 
@@ -560,14 +558,14 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
 
             //Create the text as textView
             rootView = new View(c);
             LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int)(res.getDimension(R.dimen.info_element_font)*height));
+                    (int) (res.getDimension(R.dimen.info_element_font) * height));
             rootView.setLayoutParams(lllp);
             rootView.setBackgroundColor(color);
 
@@ -580,9 +578,9 @@ public class expView implements Serializable{
         //<div>
         //  <p>text</p>
         //</div>
-        protected String createViewHTML(){
+        protected String createViewHTML() {
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;background: #"+c+";height: "+height+"em\" class=\"separatorElement adjustableColor\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"font-size:" + this.labelSize / .4 + "%;background: #" + c + ";height: " + height + "em\" class=\"separatorElement adjustableColor\" id=\"element" + htmlID + "\">" +
                     "</div>";
         }
 
@@ -650,7 +648,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, final Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, final Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
             //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
@@ -699,7 +697,7 @@ public class expView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.7f)); //Most of the right half
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-         //   et.setPadding((int) labelSize / 2, 0, 0, 0);
+            //   et.setPadding((int) labelSize / 2, 0, 0, 0);
             et.setTypeface(null, Typeface.BOLD);
             et.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
@@ -768,22 +766,22 @@ public class expView implements Serializable{
         //</div>
         //Note that the input is send from here as well as the AJAX-request is placed in the
         //onchange-listener in the markup
-        protected String createViewHTML(){
+        protected String createViewHTML() {
             //Construct value restrictions in HTML5
             String restrictions = "";
             if (!signed && min < 0)
                 restrictions += "min=\"0\" ";
             else if (!min.isInfinite())
-                restrictions += "min=\""+(min*factor)+"\" ";
+                restrictions += "min=\"" + (min * factor) + "\" ";
             if (!max.isInfinite())
-                restrictions += "max=\""+(max*factor)+"\" ";
+                restrictions += "max=\"" + (max * factor) + "\" ";
             if (!decimal)
                 restrictions += "step=\"1\" ";
 
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"editElement\" id=\"element"+htmlID+"\">" +
-                    "<span class=\"label\">"+this.label+"</span>" +
-                    "<input onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
-                    "<span class=\"unit\">"+this.unit+"</span>" +
+            return "<div style=\"font-size:" + this.labelSize / .4 + "%;\" class=\"editElement\" id=\"element" + htmlID + "\">" +
+                    "<span class=\"label\">" + this.label + "</span>" +
+                    "<input onchange=\"ajax('control?cmd=set&buffer=" + valueOutput + "&value='+this.value/" + factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
+                    "<span class=\"unit\">" + this.unit + "</span>" +
                     "</div>";
         }
 
@@ -794,7 +792,7 @@ public class expView implements Serializable{
             if (et == null || focused)
                 return currentValue;
             try {
-                currentValue = Double.valueOf(et.getText().toString())/factor;
+                currentValue = Double.valueOf(et.getText().toString()) / factor;
                 if (currentValue < min) {
                     currentValue = min;
                 }
@@ -814,7 +812,7 @@ public class expView implements Serializable{
                 else
                     currentValue = v;
                 if (et != null)
-                    et.setText(String.valueOf(currentValue*factor));
+                    et.setText(String.valueOf(currentValue * factor));
             }
         }
 
@@ -832,12 +830,12 @@ public class expView implements Serializable{
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
             return "function (data) {" +
-                    "var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];" +
-                    "if (!data.hasOwnProperty(\""+bufferName+"\"))" +
+                    "var valueElement = document.getElementById(\"element" + htmlID + "\").getElementsByClassName(\"value\")[0];" +
+                    "if (!data.hasOwnProperty(\"" + bufferName + "\"))" +
                     "    return;" +
-                    "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];" +
+                    "var x = data[\"" + bufferName + "\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];" +
                     "if (valueElement !== document.activeElement)" +
-                    "   valueElement.value = (x*"+factor+")" +
+                    "   valueElement.value = (x*" + factor + ")" +
                     "}";
         }
     }
@@ -866,7 +864,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
             //The button
             Button b = new Button(c);
@@ -887,10 +885,10 @@ public class expView implements Serializable{
 
             //Add a listener to the button to get the trigger
             b.setOnClickListener(new View.OnClickListener() {
-                 @Override
-                 public void onClick(View view) {
-                     trigger();
-                 }
+                @Override
+                public void onClick(View view) {
+                    trigger();
+                }
             });
 
         }
@@ -910,7 +908,7 @@ public class expView implements Serializable{
             if (inputs == null || outputs == null)
                 return false;
             for (int i = 0; i < inputs.size(); i++) {
-                if  (i >= outputs.size())
+                if (i >= outputs.size())
                     continue;
                 if (outputs.get(i).buffer == null)
                     continue;
@@ -930,9 +928,9 @@ public class expView implements Serializable{
         //</div>
         //Note that the input is send from here as well as the AJAX-request is placed in the
         //onchange-listener in the markup
-        protected String createViewHTML(){
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
-                    "<button onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
+        protected String createViewHTML() {
+            return "<div style=\"font-size:" + this.labelSize / .4 + "%;\" class=\"buttonElement\" id=\"element" + htmlID + "\">" +
+                    "<button onclick=\"ajax('control?cmd=trigger&element=" + htmlID + "');\">" + this.label + "</button>" +
                     "</div>";
         }
     }
@@ -941,7 +939,20 @@ public class expView implements Serializable{
     //This class mostly wraps the graphView, which (being rather complex) is implemented in its own
     //class. See graphView.java...
     public class graphElement extends expViewElement implements Serializable {
+        final String warningText;
         private final graphElement self;
+        GraphView.scaleMode scaleMinX = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMaxX = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMinY = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMaxY = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMinZ = GraphView.scaleMode.auto;
+        GraphView.scaleMode scaleMaxZ = GraphView.scaleMode.auto;
+        double minX = 0.;
+        double maxX = 0.;
+        double minY = 0.;
+        double maxY = 0.;
+        double minZ = 0.;
+        double maxZ = 0.;
         transient private expViewFragment parent = null;
         transient private GraphView gv = null;
         transient private InteractiveGraphView interactiveGV = null;
@@ -949,10 +960,8 @@ public class expView implements Serializable{
         transient private floatBufferRepresentation[] dataX; //The x data to be displayed
         transient private floatBufferRepresentation[] dataY; //The y data to be displayed
         private double dataMinX, dataMaxX, dataMinY, dataMaxY, dataMinZ, dataMaxZ;
-
         private boolean isExclusive = false;
         private int margin;
-
         private Vector<GraphView.Style> style = new Vector<>(); //Show lines instead of points?
         private Vector<Integer> mapWidth = new Vector<>();
         private Vector<Integer> colorScale = new Vector<>();
@@ -973,24 +982,7 @@ public class expView implements Serializable{
         private int zPrecision = 3;
         private Vector<Double> lineWidth = new Vector<>();
         private Vector<Integer> color = new Vector<>();
-
         private String gridColor;
-
-        GraphView.scaleMode scaleMinX = GraphView.scaleMode.auto;
-        GraphView.scaleMode scaleMaxX = GraphView.scaleMode.auto;
-        GraphView.scaleMode scaleMinY = GraphView.scaleMode.auto;
-        GraphView.scaleMode scaleMaxY = GraphView.scaleMode.auto;
-        GraphView.scaleMode scaleMinZ = GraphView.scaleMode.auto;
-        GraphView.scaleMode scaleMaxZ = GraphView.scaleMode.auto;
-
-        double minX = 0.;
-        double maxX = 0.;
-        double minY = 0.;
-        double maxY = 0.;
-        double minZ = 0.;
-        double maxZ = 0.;
-
-        final String warningText;
 
         //Quite usual constructor...
         graphElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -1001,7 +993,7 @@ public class expView implements Serializable{
 
             aspectRatio = 2.5;
             gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
-            nCurves = (inputs.size()+1)/2;
+            nCurves = (inputs.size() + 1) / 2;
 
             for (int i = 0; i < nCurves; i++) {
                 color.add(res.getColor(R.color.highlight));
@@ -1156,7 +1148,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the actual view in Android
-        protected void createView(LinearLayout ll, Context c, Resources res, final expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, final expViewFragment parent, phyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
 
             this.parent = parent;
@@ -1167,7 +1159,7 @@ public class expView implements Serializable{
                 if (ctx instanceof Activity) {
                     act = (Activity) ctx;
                 }
-                ctx = ((ContextWrapper)ctx).getBaseContext();
+                ctx = ((ContextWrapper) ctx).getBaseContext();
             }
 
             //Create the graphView
@@ -1183,11 +1175,11 @@ public class expView implements Serializable{
                 DataExport dataExport = new DataExport(experiment);
 
                 DataExport.ExportSet set = dataExport.new ExportSet(this.label);
-                for (int i = 0; i < inputs.size(); i+=2) {
-                    if (i+1 < inputs.size() && inputs.get(i+1) != null)
-                        set.addSource(this.labelX + (i > 1 ? " " + (i / 2 + 1) : "") + (unitX != null && !unitX.isEmpty() ? " (" + unitX +")" : ""), inputs.get(i+1));
+                for (int i = 0; i < inputs.size(); i += 2) {
+                    if (i + 1 < inputs.size() && inputs.get(i + 1) != null)
+                        set.addSource(this.labelX + (i > 1 ? " " + (i / 2 + 1) : "") + (unitX != null && !unitX.isEmpty() ? " (" + unitX + ")" : ""), inputs.get(i + 1));
 
-                    if (style.get(i/2) == GraphView.Style.mapZ)
+                    if (style.get(i / 2) == GraphView.Style.mapZ)
                         set.addSource((this.labelZ != null ? this.labelZ : "z") + (unitZ != null && !unitZ.isEmpty() ? " (" + unitZ + ")" : ""), inputs.get(i));
                     else
                         set.addSource(this.labelY + (i > 1 ? " " + (i / 2 + 1) : "") + (unitY != null && !unitY.isEmpty() ? " (" + unitY + ")" : ""), inputs.get(i));
@@ -1258,11 +1250,11 @@ public class expView implements Serializable{
         //<span>Label</span>
         //<div>graph</div>
         //</div>
-        protected String createViewHTML(){
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
-                    "<span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span>" +
-                    (this.style.get(0) == GraphView.Style.mapXY ? "<div class=\"warningIcon\" onclick=\"alert('"+warningText+"')\"></div>" : "")+
-                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"><canvas></canvas></div></div>" +
+        protected String createViewHTML() {
+            return "<div style=\"font-size:" + this.labelSize / .4 + "%;\" class=\"graphElement\" id=\"element" + htmlID + "\">" +
+                    "<span class=\"label\" onclick=\"toggleExclusive(" + htmlID + ");\">" + this.label + "</span>" +
+                    (this.style.get(0) == GraphView.Style.mapXY ? "<div class=\"warningIcon\" onclick=\"alert('" + warningText + "')\"></div>" : "") +
+                    "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: " + 100.0 / this.aspectRatio + "%\"></div><div class=\"graph\"><canvas></canvas></div></div>" +
                     "</div>";
         }
 
@@ -1272,17 +1264,17 @@ public class expView implements Serializable{
                 return;
             needsUpdate = false;
 
-            for (int i = 0; i < inputs.size(); i+=2) {
-                if (inputs.size() > i+1) {
-                    dataBuffer x = experiment.getBuffer(inputs.get(i+1));
+            for (int i = 0; i < inputs.size(); i += 2) {
+                if (inputs.size() > i + 1) {
+                    dataBuffer x = experiment.getBuffer(inputs.get(i + 1));
                     if (x != null) {
-                        if (style.get(i/2) == GraphView.Style.hbars)
-                            dataX[i/2] = x.getFloatBufferBarValue();
-                        else if (style.get(i/2) == GraphView.Style.vbars)
-                            dataX[i/2] = x.getFloatBufferBarAxis(lineWidth.get(i/2));
+                        if (style.get(i / 2) == GraphView.Style.hbars)
+                            dataX[i / 2] = x.getFloatBufferBarValue();
+                        else if (style.get(i / 2) == GraphView.Style.vbars)
+                            dataX[i / 2] = x.getFloatBufferBarAxis(lineWidth.get(i / 2));
                         else
-                            dataX[i/2] = x.getFloatBuffer();
-                        if (style.get(i/2) != GraphView.Style.mapZ) {
+                            dataX[i / 2] = x.getFloatBuffer();
+                        if (style.get(i / 2) != GraphView.Style.mapZ) {
                             if (i == 0) {
                                 dataMinX = x.getMin();
                                 dataMaxX = x.getMax();
@@ -1292,19 +1284,19 @@ public class expView implements Serializable{
                             }
                         }
                     } else {
-                        dataX[i/2] = null;
+                        dataX[i / 2] = null;
                     }
                 }
 
                 dataBuffer y = experiment.getBuffer(inputs.get(i));
                 if (y != null) {
-                    if (style.get(i/2) == GraphView.Style.hbars)
-                        dataY[i/2] = y.getFloatBufferBarAxis(lineWidth.get(i/2));
-                    else if (style.get(i/2) == GraphView.Style.vbars)
-                        dataY[i/2] = y.getFloatBufferBarValue();
+                    if (style.get(i / 2) == GraphView.Style.hbars)
+                        dataY[i / 2] = y.getFloatBufferBarAxis(lineWidth.get(i / 2));
+                    else if (style.get(i / 2) == GraphView.Style.vbars)
+                        dataY[i / 2] = y.getFloatBufferBarValue();
                     else
-                        dataY[i/2] = y.getFloatBuffer();
-                    if (style.get(i/2) != GraphView.Style.mapZ) {
+                        dataY[i / 2] = y.getFloatBuffer();
+                    if (style.get(i / 2) != GraphView.Style.mapZ) {
                         if (i == 0) {
                             dataMinY = y.getMin();
                             dataMaxY = y.getMax();
@@ -1317,7 +1309,7 @@ public class expView implements Serializable{
                         dataMaxZ = y.getMax();
                     }
                 } else {
-                    dataY[i/2] = null;
+                    dataY[i / 2] = null;
                 }
             }
         }
@@ -1331,9 +1323,9 @@ public class expView implements Serializable{
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null)
                     continue;
-                sb.append("if (!data.hasOwnProperty(\""+inputs.get(i).replace("\"", "\\\"")+"\"))");
+                sb.append("if (!data.hasOwnProperty(\"" + inputs.get(i).replace("\"", "\\\"") + "\"))");
                 sb.append("    return;");
-                sb.append("elementData["+htmlID+"][\"datasets\"]["+i+"] = data[\""+inputs.get(i).replace("\"", "\\\"")+"\"];");
+                sb.append("elementData[" + htmlID + "][\"datasets\"][" + i + "] = data[\"" + inputs.get(i).replace("\"", "\\\"") + "\"];");
             }
             sb.append("}");
             return sb.toString();
@@ -1370,20 +1362,20 @@ public class expView implements Serializable{
             if (scaleMinX == GraphView.scaleMode.fixed && !Double.isNaN(minX))
                 scaleX += "\"min\":" + minX + ", ";
             else
-                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.min = minX;";
+                rescale += "elementData[" + htmlID + "][\"graph\"].options.scales.xAxes[0].ticks.min = minX;";
             if (scaleMaxX == GraphView.scaleMode.fixed && !Double.isNaN(maxX))
                 scaleX += "\"max\":" + maxX + ", ";
             else
-                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
+                rescale += "elementData[" + htmlID + "][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
             String scaleY = "";
             if (scaleMinY == GraphView.scaleMode.fixed && !Double.isNaN(minY))
                 scaleY += "\"min\":" + minY + ", ";
             else
-                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.yAxes[0].ticks.min = minY;";
+                rescale += "elementData[" + htmlID + "][\"graph\"].options.scales.yAxes[0].ticks.min = minY;";
             if (scaleMaxY == GraphView.scaleMode.fixed && !Double.isNaN(maxY))
                 scaleY += "\"max\":" + maxY + ", ";
             else
-                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.yAxes[0].ticks.max = maxY;";
+                rescale += "elementData[" + htmlID + "][\"graph\"].options.scales.yAxes[0].ticks.max = maxY;";
 
             String scaleZ = "";
             String colorScale = "[";
@@ -1392,9 +1384,9 @@ public class expView implements Serializable{
                     scaleZ += "minZ = " + minZ + ";";
                 if (scaleMaxZ == GraphView.scaleMode.fixed && !Double.isNaN(maxZ))
                     scaleZ += "maxZ = " + maxZ + ";";
-                scaleZ += "elementData["+htmlID+"][\"graph\"].logZ = " + (this.logZ ? "true" : "false") + ";";
-                scaleZ += "elementData["+htmlID+"][\"graph\"].minZ = minZ;";
-                scaleZ += "elementData["+htmlID+"][\"graph\"].maxZ = maxZ;";
+                scaleZ += "elementData[" + htmlID + "][\"graph\"].logZ = " + (this.logZ ? "true" : "false") + ";";
+                scaleZ += "elementData[" + htmlID + "][\"graph\"].minZ = minZ;";
+                scaleZ += "elementData[" + htmlID + "][\"graph\"].maxZ = maxZ;";
 
                 boolean first = true;
                 for (Integer color : this.gv.graphSetup.colorScale) {
@@ -1411,215 +1403,215 @@ public class expView implements Serializable{
 
             String styleDetection = "switch (i/2) {";
             String graphSetup = "[";
-            for (int i = 0; i < inputs.size(); i+=2) {
+            for (int i = 0; i < inputs.size(); i += 2) {
 
-                graphSetup +=   "{"+
-                                    "type: \"" + type +"\"," +
-                                    "showLine: "+ (style.get(i/2) == GraphView.Style.dots || style.get(i/2) == GraphView.Style.mapXY ? "false" : "true") +"," +
-                                    "fill: "+(style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? "\"origin\"" : "false")+"," +
-                                    "pointRadius: "+ (style.get(i/2) == GraphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"*scaleFactor," +
-                                    "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"*scaleFactor," +
-                                    "pointHoverRadius: "+ (4.0*lineWidth.get(i/2)) +"*scaleFactor," +
-                                    "lineTension: 0," +
-                                    "borderCapStyle: \"butt\"," +
-                                    "borderJoinStyle: \"round\"," +
-                                    "spanGaps: false," +
-                                    "borderColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
-                                    "backgroundColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
-                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) + "*scaleFactor," +
-                                    "xAxisID: \"xaxis\"," +
-                                    "yAxisID: \"yaxis\"" +
-                                "},";
+                graphSetup += "{" +
+                        "type: \"" + type + "\"," +
+                        "showLine: " + (style.get(i / 2) == GraphView.Style.dots || style.get(i / 2) == GraphView.Style.mapXY ? "false" : "true") + "," +
+                        "fill: " + (style.get(i / 2) == GraphView.Style.vbars || style.get(i / 2) == GraphView.Style.hbars ? "\"origin\"" : "false") + "," +
+                        "pointRadius: " + (style.get(i / 2) == GraphView.Style.dots ? 2.0 * lineWidth.get(i / 2) : 0) + "*scaleFactor," +
+                        "pointHitRadius: " + (4.0 * lineWidth.get(i / 2)) + "*scaleFactor," +
+                        "pointHoverRadius: " + (4.0 * lineWidth.get(i / 2)) + "*scaleFactor," +
+                        "lineTension: 0," +
+                        "borderCapStyle: \"butt\"," +
+                        "borderJoinStyle: \"round\"," +
+                        "spanGaps: false," +
+                        "borderColor: adjustableColor(\"#" + String.format("%08x", color.get(i / 2)).substring(2) + "\")," +
+                        "backgroundColor: adjustableColor(\"#" + String.format("%08x", color.get(i / 2)).substring(2) + "\")," +
+                        "borderWidth: " + (style.get(i / 2) == GraphView.Style.vbars || style.get(i / 2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i / 2)) + "*scaleFactor," +
+                        "xAxisID: \"xaxis\"," +
+                        "yAxisID: \"yaxis\"" +
+                        "},";
 
-                styleDetection += "case " + (i/2) + ": type = \"" + style.get(i/2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "*scaleFactor; break;";
+                styleDetection += "case " + (i / 2) + ": type = \"" + style.get(i / 2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "*scaleFactor; break;";
             }
             styleDetection += "}";
             graphSetup += "],";
 
             return "function () {" +
-                        "if (elementData["+htmlID+"][\"datasets\"].length < 1)" +
-                            "return;" +
-                        "var changed = false;" +
-                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i++) {" +
-                            "if (elementData["+htmlID+"][\"datasets\"][i][\"changed\"])" +
-                                "changed = true;" +
-                        "}" +
-                        "if (!changed)" +
-                            "return;" +
-                        "var d = [];" +
-                        "var minX = Number.POSITIVE_INFINITY; " +
-                        "var maxX = Number.NEGATIVE_INFINITY; " +
-                        "var minY = Number.POSITIVE_INFINITY; " +
-                        "var maxY = Number.NEGATIVE_INFINITY; " +
-                        "var minZ = Number.POSITIVE_INFINITY; " +
-                        "var maxZ = Number.NEGATIVE_INFINITY; " +
-                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
-                            "d[i/2] = [];" +
-                            "var xIndexed = ((i+1 >= elementData["+htmlID+"][\"datasets\"].length) || elementData["+htmlID+"][\"datasets\"][i+1][\"data\"].length == 0);" +
-                            "var type;" +
-                            "var lineWidth;" +
-                            styleDetection +
-                            "if (type == \""+ GraphView.Style.mapZ+"\" || (type == \""+ GraphView.Style.mapXY+"\" && elementData["+htmlID+"][\"datasets\"].length < i+2)) {" +
-                                "continue;" +
-                            "}" +
-                            "var lastX = false;" +
-                            "var lastY = false;" +
-                            "var nElements = elementData["+htmlID+"][\"datasets\"][i][\"data\"].length;" +
-                            "if (!xIndexed)" +
-                            "   nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length);" +
-                            "if (type == \""+ GraphView.Style.mapXY+"\")" +
-                                "nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"].length);" +
-                            "for (j = 0; j < nElements; j++) {" +
-                                "var x = xIndexed ? j : elementData["+htmlID+"][\"datasets\"][i+1][\"data\"][j];"+
-                                "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
-                                "if (x < minX)" +
-                                "    minX = x;" +
-                                "if (x > maxX)" +
-                                "    maxX = x;" +
-                                "if (y < minY)" +
-                                "    minY = y;" +
-                                "if (y > maxY)" +
-                                "    maxY = y;" +
-                                "if (type == \""+ GraphView.Style.vbars+"\") {" +
-                                    "if (lastX !== false && lastY !== false) {"+
-                                        "var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
-                                        "d[i/2][j*3+0] = {x: lastX+offset, y: lastY};" +
-                                        "d[i/2][j*3+1] = {x: x-offset, y: lastY};" +
-                                        "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
-                                    "}"+
-                                "} else if (type == \""+ GraphView.Style.hbars+"\") {" +
-                                    "if (lastX !== false && lastY !== false) {"+
-                                        "var offset = (y-lastX)*(1.0-lineWidth)/2.;" +
-                                        "d[i/2][j*3+0] = {x: lastX, y: lastY+offset};" +
-                                        "d[i/2][j*3+1] = {x: lastX, y: y-offset};" +
-                                        "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
-                                    "}"+
-                                "} else if (type == \""+ GraphView.Style.mapXY+"\") {" +
-                                    "var z = elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"][j];" +
-                                    "if (z < minZ)" +
-                                    "    minZ = z;" +
-                                    "if (z > maxZ)" +
-                                    "    maxZ = z;" +
-                                    "d[i/2][j] = {x: x, y: y, z: z};" +
-                                "} else {" +
-                                    "d[i/2][j] = {x: x, y: y};" +
-                                "}" +
-                                "lastX = x;" +
-                                "lastY = y;" +
-                            "}" +
+                    "if (elementData[" + htmlID + "][\"datasets\"].length < 1)" +
+                    "return;" +
+                    "var changed = false;" +
+                    "for (var i = 0; i < elementData[" + htmlID + "][\"datasets\"].length; i++) {" +
+                    "if (elementData[" + htmlID + "][\"datasets\"][i][\"changed\"])" +
+                    "changed = true;" +
+                    "}" +
+                    "if (!changed)" +
+                    "return;" +
+                    "var d = [];" +
+                    "var minX = Number.POSITIVE_INFINITY; " +
+                    "var maxX = Number.NEGATIVE_INFINITY; " +
+                    "var minY = Number.POSITIVE_INFINITY; " +
+                    "var maxY = Number.NEGATIVE_INFINITY; " +
+                    "var minZ = Number.POSITIVE_INFINITY; " +
+                    "var maxZ = Number.NEGATIVE_INFINITY; " +
+                    "for (var i = 0; i < elementData[" + htmlID + "][\"datasets\"].length; i+=2) {" +
+                    "d[i/2] = [];" +
+                    "var xIndexed = ((i+1 >= elementData[" + htmlID + "][\"datasets\"].length) || elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length == 0);" +
+                    "var type;" +
+                    "var lineWidth;" +
+                    styleDetection +
+                    "if (type == \"" + GraphView.Style.mapZ + "\" || (type == \"" + GraphView.Style.mapXY + "\" && elementData[" + htmlID + "][\"datasets\"].length < i+2)) {" +
+                    "continue;" +
+                    "}" +
+                    "var lastX = false;" +
+                    "var lastY = false;" +
+                    "var nElements = elementData[" + htmlID + "][\"datasets\"][i][\"data\"].length;" +
+                    "if (!xIndexed)" +
+                    "   nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length);" +
+                    "if (type == \"" + GraphView.Style.mapXY + "\")" +
+                    "nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"].length);" +
+                    "for (j = 0; j < nElements; j++) {" +
+                    "var x = xIndexed ? j : elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"][j];" +
+                    "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
+                    "if (x < minX)" +
+                    "    minX = x;" +
+                    "if (x > maxX)" +
+                    "    maxX = x;" +
+                    "if (y < minY)" +
+                    "    minY = y;" +
+                    "if (y > maxY)" +
+                    "    maxY = y;" +
+                    "if (type == \"" + GraphView.Style.vbars + "\") {" +
+                    "if (lastX !== false && lastY !== false) {" +
+                    "var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
+                    "d[i/2][j*3+0] = {x: lastX+offset, y: lastY};" +
+                    "d[i/2][j*3+1] = {x: x-offset, y: lastY};" +
+                    "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+                    "}" +
+                    "} else if (type == \"" + GraphView.Style.hbars + "\") {" +
+                    "if (lastX !== false && lastY !== false) {" +
+                    "var offset = (y-lastX)*(1.0-lineWidth)/2.;" +
+                    "d[i/2][j*3+0] = {x: lastX, y: lastY+offset};" +
+                    "d[i/2][j*3+1] = {x: lastX, y: y-offset};" +
+                    "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
+                    "}" +
+                    "} else if (type == \"" + GraphView.Style.mapXY + "\") {" +
+                    "var z = elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"][j];" +
+                    "if (z < minZ)" +
+                    "    minZ = z;" +
+                    "if (z > maxZ)" +
+                    "    maxZ = z;" +
+                    "d[i/2][j] = {x: x, y: y, z: z};" +
+                    "} else {" +
+                    "d[i/2][j] = {x: x, y: y};" +
+                    "}" +
+                    "lastX = x;" +
+                    "lastY = y;" +
+                    "}" +
 
-                        "}" +
-                        "if (minX > maxX) {" +
-                            "minX = 0;" +
-                            "maxX = 1;" +
-                        "}" +
-                        "if (minY > maxY) {" +
-                            "minY = 0;" +
-                            "maxY = 1;" +
-                        "}" +
-                        "if (minZ > maxZ) {" +
-                            "minZ = 0;" +
-                            "maxZ = 1;" +
-                        "}" +
+                    "}" +
+                    "if (minX > maxX) {" +
+                    "minX = 0;" +
+                    "maxX = 1;" +
+                    "}" +
+                    "if (minY > maxY) {" +
+                    "minY = 0;" +
+                    "maxY = 1;" +
+                    "}" +
+                    "if (minZ > maxZ) {" +
+                    "minZ = 0;" +
+                    "maxZ = 1;" +
+                    "}" +
 
-                        "if (!elementData["+htmlID+"][\"graph\"]) {" +
-                            "var ctx = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"graph\")[0].getElementsByTagName(\"canvas\")[0];" +
-                            "elementData["+htmlID+"][\"graph\"] = new Chart(ctx, {" +
-                                "type: \"" + type + "\"," +
-                                "mapwidth: "+this.mapWidth.get(0)+"," +
-                                "colorscale: " + colorScale + "," +
-                                "data: {datasets: "+
-                                    graphSetup +
-                                "}," +
-                                "options: {" +
-                                    "responsive: true, " +
-                                    "maintainAspectRatio: false, " +
-                                    "animation: false," +
-                                    "legend: false," +
-                                    "tooltips: {" +
-                                    "    titleFontSize: 15*scaleFactor," +
-                                    "    bodyFontSize: 15*scaleFactor," +
-                                    "    mode: \"nearest\"," +
-                                    "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
-                                        "callbacks: {" +
-                                        "   title: function() {}," +
-                                        "   label: function(tooltipItem, data) {" +
-                                        "       var lines = [];" +
-                                        "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].x + \""+this.unitX + "\");" +
-                                        "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y + \""+this.unitY + "\");" +
-                                        (this.style.get(0) == GraphView.Style.mapXY ? "lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].z + \""+this.unitZ + "\");" : "") +
-                                        "       return lines;" +
-                                        "   }" +
-                                        "}" +
-                                    "}," +
-                                    "hover: {" +
-                                    "    mode: \"nearest\"," +
-                                    "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
-                                    "}, " +
-                                    "scales: {" +
-                                        "xAxes: [{" +
-                                            "id: \"xaxis\"," +
-                                            "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
-                                            "position: \"bottom\"," +
-                                            "gridLines: {" +
-                                                "color: adjustableColor(\"#"+gridColor+"\")," +
-                                                "zeroLineColor: adjustableColor(\"#"+gridColor+"\")," +
-                                                "tickMarkLength: 0," +
-                                            "}," +
-                                            "scaleLabel: {" +
-                                                "display: true," +
-                                                "labelString: \""+this.labelX+(this.unitX != null && !this.unitX.isEmpty() ? " (" + this.unitX + ")" : "")+"\"," +
-                                                "fontColor: adjustableColor(\"#ffffff\")," +
-                                                "fontSize: 15*scaleFactor," +
-                                                "padding: 0, "+
-                                            "}," +
-                                            "ticks: {" +
-                                                "fontColor: adjustableColor(\"#ffffff\")," +
-                                                "fontSize: 15*scaleFactor," +
-                                                "padding: 3*scaleFactor, "+
-                                                "autoSkip: true," +
-                                                "maxTicksLimit: 10," +
-                                                "maxRotation: 0," +
-                                                scaleX+
-                                            "}," +
-                                            "afterBuildTicks: filterEdgeTicks" +
-                                        "}]," +
-                                        "yAxes: [{" +
-                                            "id: \"yaxis\"," +
-                                            "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
-                                            "position: \"bottom\"," +
-                                            "gridLines: {" +
-                                                "color: adjustableColor(\"#"+gridColor+"\")," +
-                                                "zeroLineColor: adjustableColor(\"#"+gridColor+"\")," +
-                                                "tickMarkLength: 0," +
-                                            "}," +
-                                            "scaleLabel: {" +
-                                                "display: true," +
-                                                "labelString: \""+this.labelY+(this.unitY != null && !this.unitY.isEmpty() ? " (" + this.unitY + ")" : "")+"\"," +
-                                                "fontColor: adjustableColor(\"#ffffff\")," +
-                                                "fontSize: 15*scaleFactor," +
-                                                "padding: 3*scaleFactor, "+
-                                            "}," +
-                                            "ticks: {" +
-                                                "fontColor: adjustableColor(\"#ffffff\")," +
-                                                "fontSize: 15*scaleFactor," +
-                                                "padding: 3*scaleFactor, "+
-                                                "autoSkip: true," +
-                                                "maxTicksLimit: 7," +
-                                                scaleY+
-                                            "}," +
-                                            "afterBuildTicks: filterEdgeTicks" +
-                                    "   }]," +
-                                    "}" +
-                                "}" +
-                            "});" +
-                        "}" +
-                        "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
-                            "elementData["+htmlID+"][\"graph\"].data.datasets[i/2].data = d[i/2];" +
-                        "}" +
-                        scaleZ +
-                        rescale +
-                        "elementData["+htmlID+"][\"graph\"].update();" +
+                    "if (!elementData[" + htmlID + "][\"graph\"]) {" +
+                    "var ctx = document.getElementById(\"element" + htmlID + "\").getElementsByClassName(\"graph\")[0].getElementsByTagName(\"canvas\")[0];" +
+                    "elementData[" + htmlID + "][\"graph\"] = new Chart(ctx, {" +
+                    "type: \"" + type + "\"," +
+                    "mapwidth: " + this.mapWidth.get(0) + "," +
+                    "colorscale: " + colorScale + "," +
+                    "data: {datasets: " +
+                    graphSetup +
+                    "}," +
+                    "options: {" +
+                    "responsive: true, " +
+                    "maintainAspectRatio: false, " +
+                    "animation: false," +
+                    "legend: false," +
+                    "tooltips: {" +
+                    "    titleFontSize: 15*scaleFactor," +
+                    "    bodyFontSize: 15*scaleFactor," +
+                    "    mode: \"nearest\"," +
+                    "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
+                    "callbacks: {" +
+                    "   title: function() {}," +
+                    "   label: function(tooltipItem, data) {" +
+                    "       var lines = [];" +
+                    "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].x + \"" + this.unitX + "\");" +
+                    "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y + \"" + this.unitY + "\");" +
+                    (this.style.get(0) == GraphView.Style.mapXY ? "lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].z + \"" + this.unitZ + "\");" : "") +
+                    "       return lines;" +
+                    "   }" +
+                    "}" +
+                    "}," +
+                    "hover: {" +
+                    "    mode: \"nearest\"," +
+                    "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
+                    "}, " +
+                    "scales: {" +
+                    "xAxes: [{" +
+                    "id: \"xaxis\"," +
+                    "type: \"" + (logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear") + "\"," +
+                    "position: \"bottom\"," +
+                    "gridLines: {" +
+                    "color: adjustableColor(\"#" + gridColor + "\")," +
+                    "zeroLineColor: adjustableColor(\"#" + gridColor + "\")," +
+                    "tickMarkLength: 0," +
+                    "}," +
+                    "scaleLabel: {" +
+                    "display: true," +
+                    "labelString: \"" + this.labelX + (this.unitX != null && !this.unitX.isEmpty() ? " (" + this.unitX + ")" : "") + "\"," +
+                    "fontColor: adjustableColor(\"#ffffff\")," +
+                    "fontSize: 15*scaleFactor," +
+                    "padding: 0, " +
+                    "}," +
+                    "ticks: {" +
+                    "fontColor: adjustableColor(\"#ffffff\")," +
+                    "fontSize: 15*scaleFactor," +
+                    "padding: 3*scaleFactor, " +
+                    "autoSkip: true," +
+                    "maxTicksLimit: 10," +
+                    "maxRotation: 0," +
+                    scaleX +
+                    "}," +
+                    "afterBuildTicks: filterEdgeTicks" +
+                    "}]," +
+                    "yAxes: [{" +
+                    "id: \"yaxis\"," +
+                    "type: \"" + (logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear") + "\"," +
+                    "position: \"bottom\"," +
+                    "gridLines: {" +
+                    "color: adjustableColor(\"#" + gridColor + "\")," +
+                    "zeroLineColor: adjustableColor(\"#" + gridColor + "\")," +
+                    "tickMarkLength: 0," +
+                    "}," +
+                    "scaleLabel: {" +
+                    "display: true," +
+                    "labelString: \"" + this.labelY + (this.unitY != null && !this.unitY.isEmpty() ? " (" + this.unitY + ")" : "") + "\"," +
+                    "fontColor: adjustableColor(\"#ffffff\")," +
+                    "fontSize: 15*scaleFactor," +
+                    "padding: 3*scaleFactor, " +
+                    "}," +
+                    "ticks: {" +
+                    "fontColor: adjustableColor(\"#ffffff\")," +
+                    "fontSize: 15*scaleFactor," +
+                    "padding: 3*scaleFactor, " +
+                    "autoSkip: true," +
+                    "maxTicksLimit: 7," +
+                    scaleY +
+                    "}," +
+                    "afterBuildTicks: filterEdgeTicks" +
+                    "   }]," +
+                    "}" +
+                    "}" +
+                    "});" +
+                    "}" +
+                    "for (var i = 0; i < elementData[" + htmlID + "][\"datasets\"].length; i+=2) {" +
+                    "elementData[" + htmlID + "][\"graph\"].data.datasets[i/2].data = d[i/2];" +
+                    "}" +
+                    scaleZ +
+                    rescale +
+                    "elementData[" + htmlID + "][\"graph\"].update();" +
                     "}";
         }
 
@@ -1730,7 +1722,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
 
             svgView = new ParametricSVGView(c);
@@ -1750,7 +1742,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the HTML version of this view:
-        protected String createViewHTML(){
+        protected String createViewHTML() {
             return "";
         }
 
@@ -1772,9 +1764,4 @@ public class expView implements Serializable{
             return "";
         }
     }
-
-    //Remember? We are in the expView class.
-    //An experiment view has a name and holds a bunch of expViewElement instances
-    public String name;
-    public Vector<expViewElement> elements = new Vector<>();
 }

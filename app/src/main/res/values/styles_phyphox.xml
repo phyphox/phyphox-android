@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="splashTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@drawable/splash</item>
@@ -12,10 +12,10 @@
         <item name="android:textColorSecondary">@color/main</item>
     </style>
 
-  <style name="PopupMenuPhyphox" parent="ThemeOverlay.AppCompat.Dark">
-      <item name="android:textColor">@color/mainExp</item>
-      <item name="android:colorBackground">@color/backgroundExp2</item>
-  </style>
+    <style name="PopupMenuPhyphox" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="android:textColor">@color/mainExp</item>
+        <item name="android:colorBackground">@color/backgroundExp2</item>
+    </style>
 
     <style name="phyphoxDialog" parent="Theme.AppCompat.Dialog.Alert">
         <item name="colorAccent">@color/highlight</item>

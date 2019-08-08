@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Ρυθμίσεις</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -133,7 +134,7 @@
 
     <string name="experimentinfo_hint">Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.</string>
 
-<string name="calibrated_magnetometer">Χρήση βαθμονομημένου μαγνητόμετρου</string>
+    <string name="calibrated_magnetometer">Χρήση βαθμονομημένου μαγνητόμετρου</string>
 
     <string name="categoryNewExperiment">Απλά πειράματα χρήστη</string>
     <string name="graph_tools_pan_and_zoom">Μετακίνηση και μεγέθυνση</string>

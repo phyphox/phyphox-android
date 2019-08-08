@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="action_settings">Ajustes</string>
+<resources>
+    <string name="action_settings">Ajustes</string>
     <string name="newExperiment">Añadir experimentos</string>
     <string name="newExperimentPhyphoxInfo">Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y compártelos con colegas, estudiantes y amigos.</string>
     <string name="newExperimentInputTitle">Título</string>

@@ -8,90 +8,90 @@
     android:theme="@style/rwth">
 
     <ScrollView
+        android:id="@+id/scrollView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/scrollView2"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" >
+        android:layout_alignParentBottom="true">
 
         <LinearLayout
-            android:orientation="vertical"
-            android:padding="@dimen/activity_horizontal_padding"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="@dimen/activity_horizontal_padding">
 
             <ImageView
+                android:id="@+id/rwth"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/rwth"
-                android:src="@drawable/rwth"
-                android:scaleType="fitCenter"
-                android:maxWidth="250dp"
                 android:layout_gravity="right"
-                android:adjustViewBounds="true" />
+                android:adjustViewBounds="true"
+                android:maxWidth="250dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/rwth" />
 
             <TextView
+                android:id="@+id/creditRWTH"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/creditsRWTH"
-                android:id="@+id/creditRWTH"
-                android:textSize="@dimen/credit_font_main"/>
+                android:textSize="@dimen/credit_font_main" />
 
             <TextView
+                android:id="@+id/creditNames"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/creditsNames"
-                android:id="@+id/creditNames"
-                android:textSize="@dimen/credit_font_main"
+                android:layout_gravity="left"
                 android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:layout_marginBottom="@dimen/activity_vertical_margin"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:paddingRight="@dimen/activity_horizontal_margin"
-                android:paddingTop="@dimen/activity_vertical_margin"
-                android:paddingBottom="@dimen/activity_vertical_margin"
                 android:background="@color/rwth"
-                android:layout_gravity="left"
-                android:textColor="@android:color/white" />
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                android:text="@string/creditsNames"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/credit_font_main" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/gpl"
                 android:id="@+id/gpl"
-                android:layout_marginTop="@dimen/lib_margin"
-                android:textSize="@dimen/credit_font"/>
-
-            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/creditsLibs"
+                android:layout_marginTop="@dimen/lib_margin"
+                android:text="@string/gpl"
+                android:textSize="@dimen/credit_font" />
+
+            <TextView
                 android:id="@+id/creditLibs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/lib_margin"
-                android:textSize="@dimen/credit_font"/>
+                android:text="@string/creditsLibs"
+                android:textSize="@dimen/credit_font" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/creditsApache"
                 android:id="@+id/creditsApache"
-                android:textSize="@dimen/credit_font"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="@dimen/lib_margin" />
-
-            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/creditsZxing"
-                android:id="@+id/creditsZxing"
-                android:textSize="@dimen/credit_font"
-                android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="@dimen/lib_margin" />
+                android:layout_alignParentRight="true"
+                android:layout_marginTop="@dimen/lib_margin"
+                android:text="@string/creditsApache"
+                android:textSize="@dimen/credit_font" />
+
+            <TextView
+                android:id="@+id/creditsZxing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginTop="@dimen/lib_margin"
+                android:text="@string/creditsZxing"
+                android:textSize="@dimen/credit_font" />
         </LinearLayout>
     </ScrollView>
 

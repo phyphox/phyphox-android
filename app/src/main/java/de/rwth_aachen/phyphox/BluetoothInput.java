@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,8 +16,6 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
-
-import static java.lang.Math.pow;
 
 
 /**
@@ -31,43 +28,36 @@ public class BluetoothInput extends Bluetooth {
      * UUID of the Descriptor for Client Characteristic Configuration
      */
     protected static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-
-    /**
-     * Used mode ("poll", "notification" or "indication")
-     */
-    private String mode;
-
-    /**
-     * If true, phyphox will subscribe to notifications when the measurement starts instead of subscribing after a connection has been established
-     */
-    private Boolean subscribeOnStart;
-
-    /**
-     * Sensor acquisiton period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
-     */
-    private long period;
-
-    /**
-     * Start time of the measurement or last measurement before a break to allow timestamps relative to the beginning of a measurement
-     */
-    private long t0 = 0;
-
-    /**
-     * Data-buffers
-     */
-    private Vector<dataOutput> data = new Vector<>();
-
-    private Lock dataLock;
-
     /**
      * Used to store data in mode "poll" before it will be retrieved all together
      */
     protected HashMap<Integer, Double> outputs;
+    /**
+     * Used mode ("poll", "notification" or "indication")
+     */
+    private String mode;
+    /**
+     * If true, phyphox will subscribe to notifications when the measurement starts instead of subscribing after a connection has been established
+     */
+    private Boolean subscribeOnStart;
+    /**
+     * Sensor acquisiton period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
+     */
+    private long period;
+    /**
+     * Start time of the measurement or last measurement before a break to allow timestamps relative to the beginning of a measurement
+     */
+    private long t0 = 0;
+    /**
+     * Data-buffers
+     */
+    private Vector<dataOutput> data = new Vector<>();
+    private Lock dataLock;
 
     /**
      * Create a new BluetoothInput.
      *
-     * @param idString        An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
+     * @param idString         An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
      * @param deviceName       name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress    address of the device (can be null if deviceName is not null)
      * @param uuidFilter       Optional filter to identify devices by an advertised service or characteristic
@@ -149,7 +139,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * Connect with the device and enable notifications if mode is "notification" or indications if it is "indication".
      * The call to setValue of the BluetoothGattDescriptor to enable notifications has a lock because it should not be possible to continue before it succeeds.
-     *
+     * <p>
      * The timeout of the lock is set to 3 seconds.
      *
      * @throws BluetoothException if there is an error on findDevice, openConnection, process CharacteristicData or enable notifications/indications.
@@ -168,9 +158,8 @@ public class BluetoothInput extends Bluetooth {
      * Disable descriptor for notification/indication again and then close the connection.
      * The call to setValue of the BluetoothGattDescriptor to disable notifications has a lock because it should not be possible to continue before it succeeds,
      * but there will be no error message if disabling notifications fails.
-     *
+     * <p>
      * The timeout of the lock is set to 2 seconds.
-     *
      */
     @Override
     public void closeConnection() {

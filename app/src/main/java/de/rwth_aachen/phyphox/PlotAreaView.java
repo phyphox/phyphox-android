@@ -6,37 +6,34 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.TextureView;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.Vector;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
+import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 
 public class PlotAreaView extends TextureView {
-
-    private void init() {
-
-    }
 
     public PlotAreaView(Context context) {
         super(context);
         init();
     }
 
-
     public PlotAreaView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
+    }
+
+    private void init() {
+
     }
 
 }
@@ -55,14 +52,9 @@ class CurveData {
 }
 
 class GraphSetup {
-    private final Object lock = new Object();
-
-    public boolean incrementalX = false;
-
-    int plotBoundL, plotBoundT, plotBoundW, plotBoundH;
-    int zaBoundL, zaBoundT, zaBoundW, zaBoundH;
-    float minX, maxX, minY, maxY, minZ, maxZ;
     public final Vector<CurveData> dataSets = new Vector<>();
+    private final Object lock = new Object();
+    public boolean incrementalX = false;
     public float[] positionMatrix = new float[16];
     public float[] zScaleMatrix = new float[16];
     public Vector<Integer> color = new Vector<>();
@@ -72,12 +64,13 @@ class GraphSetup {
     public boolean logX = false;
     public boolean logY = false;
     public boolean logZ = false;
-
     public Vector<Integer> colorScale = new Vector<>();
-
     public double xTics[] = null;
     public double yTics[] = null;
     public double zTics[] = null;
+    int plotBoundL, plotBoundT, plotBoundW, plotBoundH;
+    int zaBoundL, zaBoundT, zaBoundW, zaBoundH;
+    float minX, maxX, minY, maxY, minZ, maxZ;
 
     GraphSetup() {
         plotBoundL = 0;
@@ -143,8 +136,8 @@ class GraphSetup {
         float l, r, t, b;
 
         if (logX) {
-            float logMinX = (float)Math.log(minX);
-            float logMaxX = (float)Math.log(maxX);
+            float logMinX = (float) Math.log(minX);
+            float logMaxX = (float) Math.log(maxX);
             l = logMinX - plotBoundL / (float) plotBoundW * (logMaxX - logMinX);
             r = logMaxX + (w - plotBoundW - plotBoundL) / (float) plotBoundW * (logMaxX - logMinX);
         } else {
@@ -152,8 +145,8 @@ class GraphSetup {
             r = maxX + (w - plotBoundW - plotBoundL) / (float) plotBoundW * (maxX - minX);
         }
         if (logY) {
-            float logMinY = (float)Math.log(minY);
-            float logMaxY = (float)Math.log(maxY);
+            float logMinY = (float) Math.log(minY);
+            float logMaxY = (float) Math.log(maxY);
             b = logMinY - (h - plotBoundT - plotBoundH) / (float) plotBoundH * (logMaxY - logMinY);
             t = logMaxY + (plotBoundT) / (float) plotBoundH * (logMaxY - logMinY);
         } else {
@@ -175,7 +168,7 @@ class GraphSetup {
                 zmax += 1.0;
             }
             zminOnX = zmin - plotBoundL / (float) plotBoundW * (zmax - zmin);
-            zmaxOnX = zmax + (w - plotBoundW - plotBoundL) / (float) plotBoundW * (zmax- zmin);
+            zmaxOnX = zmax + (w - plotBoundW - plotBoundL) / (float) plotBoundW * (zmax - zmin);
 
             Matrix.orthoM(positionMatrix, 0, l, r, b, t, -zmin, -zmax);
             Matrix.orthoM(zScaleMatrix, 0, zminOnX, zmaxOnX, 0, 1, -zmin, -zmax);
@@ -188,15 +181,15 @@ class GraphSetup {
             if (dataSets.size() <= i) {
                 CurveData newData = new CurveData();
                 if (i == 0 || historyLength == 1) {
-                    newData.color[0] = ((color.get(i) & 0xff0000) >> 16)/255.f;
-                    newData.color[1] = ((color.get(i) & 0xff00) >> 8)/255.f;
-                    newData.color[2] = (color.get(i) & 0xff)/255.f;
+                    newData.color[0] = ((color.get(i) & 0xff0000) >> 16) / 255.f;
+                    newData.color[1] = ((color.get(i) & 0xff00) >> 8) / 255.f;
+                    newData.color[2] = (color.get(i) & 0xff) / 255.f;
                     newData.color[3] = 1.f;
                 } else {
                     newData.color[0] = 1.f;
                     newData.color[1] = 1.f;
                     newData.color[2] = 1.f;
-                    newData.color[3] = 0.6f-(i+1)*0.6f/historyLength;
+                    newData.color[3] = 0.6f - (i + 1) * 0.6f / historyLength;
                 }
                 newData.vboX = 0;
                 newData.vboY = 0;
@@ -219,7 +212,107 @@ class GraphSetup {
 }
 
 class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener {
+    final String vertexShader =
+            "uniform vec4 in_color;" +
+                    "uniform mat4 positionMatrix;" +
+
+                    "uniform int logXY;" +
+                    "uniform float size;" +
+
+                    "attribute float positionX;" +
+                    "attribute float positionY;" +
+
+                    "varying vec4 v_color;" +
+
+                    "float posX, posY;" +
+
+                    "void main () {" +
+                    "   v_color = in_color;" +
+                    "   if (logXY == 1 || logXY == 3)" +
+                    "       posX = log(positionX);" +
+                    "   else" +
+                    "       posX = positionX;" +
+                    "   if (logXY >= 2)" +
+                    "       posY = log(positionY);" +
+                    "   else" +
+                    "       posY = positionY;" +
+                    "   gl_Position = positionMatrix * vec4(posX, posY, 0., 1.);" +
+                    "   gl_PointSize = size;" +
+                    "}";
+    final String fragmentShader =
+            "precision mediump float;" +
+
+                    "varying vec4 v_color;" +
+
+                    "void main () {" +
+                    "   gl_FragColor = v_color;" +
+                    "}";
+    final String gridShader =
+            "attribute vec2 position;" +
+                    "uniform mat4 positionMatrix;" +
+
+                    "vec2 pos;" +
+
+                    "void main () {" +
+                    "   pos = vec2(positionMatrix * vec4(position, 0., 1.));" +
+                    "   gl_Position = vec4(pos, 0., 1.);" +
+                    "}";
+    final String gridFragmentShader =
+            "void main () {" +
+                    "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
+                    "}";
+    final String mapShader =
+            "uniform mat4 positionMatrix;" +
+
+                    "uniform int logXYZ;" +
+
+                    "attribute float positionX;" +
+                    "attribute float positionY;" +
+                    "attribute float positionZ;" +
+
+                    "float posX, posY, posZ;" +
+                    "vec4 posRaw;" +
+
+                    "void main () {" +
+                    "   if (logXYZ == 1 || logXYZ == 3 || logXYZ == 5 || logXYZ == 7)" +
+                    "       posX = log(positionX);" +
+                    "   else" +
+                    "       posX = positionX;" +
+                    "   if (logXYZ == 2 || logXYZ == 3 || logXYZ == 6 || logXYZ == 7)" +
+                    "       posY = log(positionY);" +
+                    "   else" +
+                    "       posY = positionY;" +
+                    "   if (logXYZ == 4 || logXYZ == 5 || logXYZ == 6 || logXYZ == 7)" +
+                    "       posZ = log(positionZ);" +
+                    "   else" +
+                    "       posZ = positionZ;" +
+                    "   posRaw = positionMatrix * vec4(posX, posY, posZ, 1.);" +
+                    "   gl_Position = vec4(posRaw.xy, clamp(posRaw.z, -1.0, 1.0), posRaw.w);" +
+                    "}";
+    final String mapFragmentShader =
+            "uniform sampler2D colorMap;" +
+                    "void main () {" +
+                    "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
+                    "}";
     private final Object lock = new Object();
+    private final int EGL_OPENGL_ES2_BIT = 4;
+    private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+    int h, w;
+    int bgColor;
+    int vboGrid = 0;
+    int vboZGrid = 0;
+    int vboZScaleX = 0;
+    int vboZScaleY = 0;
+    int vboZScaleZ = 0;
+    int colorScaleTexture = 0;
+    EGL10 egl;
+    EGLDisplay eglDisplay;
+    EGLContext eglContext;
+    EGLSurface eglSurface;
+    EGLConfig favConfig = null;
+    int[] surfaceAttribs = {
+            EGL10.EGL_NONE
+    };
     private SurfaceTexture surfaceTexture;
     private boolean done = false;
     private boolean readyToRender = false;
@@ -227,12 +320,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     private boolean updateBuffers = false;
     private boolean updateGrid = false;
     private SurfaceTexture newSurface = null;
-
     private GraphSetup graphSetup = null;
-
-    int h, w;
-    int bgColor;
-
     private int glProgram, gridProgram, mapProgram;
     private int positionXHandle, positionYHandle;
     private int mapPositionXHandle, mapPositionYHandle, mapPositionZHandle;
@@ -240,119 +328,26 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     private int positionMatrixHandle, mapPositionMatrixHandle;
     private int logXYHandle, mapLogXYZHandle, mapColorMapHandle;
     private int sizeHandle;
-
     private int gridPositionHandle;
     private int gridMatrixHandle;
     private int nGridLines = 0;
     private int nZGridLines = 0;
-    int vboGrid = 0;
-    int vboZGrid = 0;
-    int vboZScaleX = 0;
-    int vboZScaleY = 0;
-    int vboZScaleZ = 0;
-    int colorScaleTexture = 0;
-
-    EGL10 egl;
-    EGLDisplay eglDisplay;
-    EGLContext eglContext;
-    EGLSurface eglSurface;
-
-    EGLConfig favConfig = null;
-    int[] surfaceAttribs = {
+    private int[] attrib_list = {
+            EGL_CONTEXT_CLIENT_VERSION, 2,
             EGL10.EGL_NONE
     };
-
-    final String vertexShader =
-            "uniform vec4 in_color;" +
-            "uniform mat4 positionMatrix;" +
-
-            "uniform int logXY;" +
-            "uniform float size;" +
-
-            "attribute float positionX;" +
-            "attribute float positionY;" +
-
-            "varying vec4 v_color;" +
-
-            "float posX, posY;" +
-
-            "void main () {" +
-            "   v_color = in_color;" +
-            "   if (logXY == 1 || logXY == 3)" +
-            "       posX = log(positionX);" +
-            "   else" +
-            "       posX = positionX;" +
-            "   if (logXY >= 2)" +
-            "       posY = log(positionY);" +
-            "   else" +
-            "       posY = positionY;" +
-            "   gl_Position = positionMatrix * vec4(posX, posY, 0., 1.);" +
-            "   gl_PointSize = size;" +
-            "}";
-
-    final String fragmentShader =
-            "precision mediump float;" +
-
-            "varying vec4 v_color;" +
-
-            "void main () {" +
-            "   gl_FragColor = v_color;" +
-            "}";
-
-    final String gridShader =
-            "attribute vec2 position;" +
-            "uniform mat4 positionMatrix;" +
-
-            "vec2 pos;" +
-
-            "void main () {" +
-            "   pos = vec2(positionMatrix * vec4(position, 0., 1.));" +
-            "   gl_Position = vec4(pos, 0., 1.);" +
-            "}";
-
-    final String gridFragmentShader =
-            "void main () {" +
-            "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
-            "}";
-
-    final String mapShader =
-            "uniform mat4 positionMatrix;" +
-
-            "uniform int logXYZ;" +
-
-            "attribute float positionX;" +
-            "attribute float positionY;" +
-            "attribute float positionZ;" +
-
-            "float posX, posY, posZ;" +
-            "vec4 posRaw;" +
-
-            "void main () {" +
-            "   if (logXYZ == 1 || logXYZ == 3 || logXYZ == 5 || logXYZ == 7)" +
-            "       posX = log(positionX);" +
-            "   else" +
-            "       posX = positionX;" +
-            "   if (logXYZ == 2 || logXYZ == 3 || logXYZ == 6 || logXYZ == 7)" +
-            "       posY = log(positionY);" +
-            "   else" +
-            "       posY = positionY;" +
-            "   if (logXYZ == 4 || logXYZ == 5 || logXYZ == 6 || logXYZ == 7)" +
-            "       posZ = log(positionZ);" +
-            "   else" +
-            "       posZ = positionZ;" +
-            "   posRaw = positionMatrix * vec4(posX, posY, posZ, 1.);" +
-            "   gl_Position = vec4(posRaw.xy, clamp(posRaw.z, -1.0, 1.0), posRaw.w);" +
-            "}";
-
-    final String mapFragmentShader =
-            "uniform sampler2D colorMap;" +
-            "void main () {" +
-            "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
-            "}";
-
     PlotRenderer(Resources res) {
         super("PlotRenderer GL");
         bgColor = res.getColor(R.color.backgroundExp);
+    }
+
+    public static int loadShader(int type, String shaderCode) {
+        int shader = GLES20.glCreateShader(type);
+
+        GLES20.glShaderSource(shader, shaderCode);
+        GLES20.glCompileShader(shader);
+
+        return shader;
     }
 
     @Override
@@ -459,14 +454,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
     }
 
-    private final int EGL_OPENGL_ES2_BIT = 4;
-    private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
-
-    private int[] attrib_list = {
-            EGL_CONTEXT_CLIENT_VERSION, 2,
-            EGL10.EGL_NONE
-    };
-
     public void initGL() {
         egl = (EGL10) EGLContext.getEGL();
         eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
@@ -515,11 +502,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             int transp = egl.eglGetConfigAttrib(eglDisplay, config, EGL10.EGL_TRANSPARENT_TYPE, value) ? value[0] : 0;
 
             int score = 0;
-            score += 10*(r + g + b); //We want as many bits as possible here...
+            score += 10 * (r + g + b); //We want as many bits as possible here...
             score += a;              //Alpha is not too important, but nice to have some precision here
             score -= d;              //We don't need a depth buffer
             score -= s;              //And we do not need a stencil buffer
-            score += 5*samples;     //We love anti alias
+            score += 5 * samples;     //We love anti alias
             score += (transp == EGL10.EGL_NONE ? 3 : 0); //We prefer a non-transparent background
 
             if (score > configHighScore) {
@@ -565,15 +552,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         eglContext = null;
         eglDisplay = null;
         egl = null;
-    }
-
-    public static int loadShader(int type, String shaderCode){
-        int shader = GLES20.glCreateShader(type);
-
-        GLES20.glShaderSource(shader, shaderCode);
-        GLES20.glCompileShader(shader);
-
-        return shader;
     }
 
     public void initScene() {
@@ -641,7 +619,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         vboZScaleZ = ref[4];
 
         int texRef[] = new int[1];
-        GLES20.glGenTextures ( 1, texRef, 0 );
+        GLES20.glGenTextures(1, texRef, 0);
         colorScaleTexture = texRef[0];
 
         GLES20.glUseProgram(0);
@@ -668,13 +646,13 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glUniformMatrix4fv(gridMatrixHandle, 1, false, graphSetup.positionMatrix, 0);
 
         GLES20.glLineWidth(1.f);
-        GLES20.glDrawArrays(GLES20.GL_LINES, 0, 2*nGridLines);
+        GLES20.glDrawArrays(GLES20.GL_LINES, 0, 2 * nGridLines);
 
         GLES20.glDisableVertexAttribArray(gridPositionHandle);
 
         if (graphSetup.style.contains(GraphView.Style.mapXY)) {
 
-            GLES20.glScissor(graphSetup.zaBoundL+1, h-graphSetup.zaBoundH-graphSetup.zaBoundT-1, graphSetup.zaBoundW-2, graphSetup.zaBoundH-2);
+            GLES20.glScissor(graphSetup.zaBoundL + 1, h - graphSetup.zaBoundH - graphSetup.zaBoundT - 1, graphSetup.zaBoundW - 2, graphSetup.zaBoundH - 2);
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZGrid);
             GLES20.glEnableVertexAttribArray(gridPositionHandle);
@@ -685,7 +663,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             GLES20.glDrawArrays(GLES20.GL_LINES, 0, 2 * nZGridLines);
             GLES20.glDisableVertexAttribArray(gridPositionHandle);
 
-            GLES20.glScissor(graphSetup.plotBoundL+1, h-graphSetup.plotBoundH-graphSetup.plotBoundT-1, graphSetup.plotBoundW-2, graphSetup.plotBoundH-2);
+            GLES20.glScissor(graphSetup.plotBoundL + 1, h - graphSetup.plotBoundH - graphSetup.plotBoundT - 1, graphSetup.plotBoundW - 2, graphSetup.plotBoundH - 2);
         }
     }
 
@@ -743,9 +721,9 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         if (dataSet.n < 4)
             return;
 
-        if (i+1 >= graphSetup.dataSets.size())
+        if (i + 1 >= graphSetup.dataSets.size())
             return;
-        CurveData dataSetZ = graphSetup.dataSets.get(i+1);
+        CurveData dataSetZ = graphSetup.dataSets.get(i + 1);
         if (dataSetZ.n < 4)
             return;
         if (dataSet.vboX == 0)
@@ -776,7 +754,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         //Draw scale
 
-        GLES20.glScissor(graphSetup.zaBoundL+1, h-graphSetup.zaBoundH-graphSetup.zaBoundT-1, graphSetup.zaBoundW-2, graphSetup.zaBoundH-2);
+        GLES20.glScissor(graphSetup.zaBoundL + 1, h - graphSetup.zaBoundH - graphSetup.zaBoundT - 1, graphSetup.zaBoundW - 2, graphSetup.zaBoundH - 2);
 
         GLES20.glUniformMatrix4fv(mapPositionMatrixHandle, 1, false, graphSetup.zScaleMatrix, 0);
         GLES20.glUniform1i(mapLogXYZHandle, graphSetup.logZ ? 0x05 : 0x00);
@@ -792,7 +770,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
-        GLES20.glScissor(graphSetup.plotBoundL+1, h-graphSetup.plotBoundH-graphSetup.plotBoundT-1, graphSetup.plotBoundW-2, graphSetup.plotBoundH-2);
+        GLES20.glScissor(graphSetup.plotBoundL + 1, h - graphSetup.plotBoundH - graphSetup.plotBoundT - 1, graphSetup.plotBoundW - 2, graphSetup.plotBoundH - 2);
 
         //Clean up
 
@@ -806,14 +784,14 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
 
-        GLES20.glScissor(graphSetup.plotBoundL+1, h-graphSetup.plotBoundH-graphSetup.plotBoundT-1, graphSetup.plotBoundW-2, graphSetup.plotBoundH-2);
+        GLES20.glScissor(graphSetup.plotBoundL + 1, h - graphSetup.plotBoundH - graphSetup.plotBoundT - 1, graphSetup.plotBoundW - 2, graphSetup.plotBoundH - 2);
 
         graphSetup.updateMatrix(this.w, this.h);
 
         //Draw graph
 
         int lastValidX = 0;
-        for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {
+        for (int i = graphSetup.dataSets.size() - 1; i >= 0; i--) {
             if (graphSetup.style.get(i) == GraphView.Style.mapXY) {
                 drawMap(i);
             }
@@ -821,7 +799,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         drawGrid();
 
-        for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {
+        for (int i = graphSetup.dataSets.size() - 1; i >= 0; i--) {
             if (graphSetup.style.get(i) == GraphView.Style.mapZ || graphSetup.style.get(i) == GraphView.Style.mapXY) {
                 continue;
             }
@@ -892,7 +870,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                 data.n = 0;
 
             if (data.style == GraphView.Style.mapXY && (data.mapWidth > 0)) {
-                data.ibUsedCount = ((data.n / data.mapWidth)-1) * (2* data.mapWidth + 2);
+                data.ibUsedCount = ((data.n / data.mapWidth) - 1) * (2 * data.mapWidth + 2);
                 if (data.ibUsedCount > 4 && (data.ib == null || data.ibUsedCount > data.ibCount)) {
                     IntBuffer newIB = ByteBuffer.allocateDirect(data.ibUsedCount * 4).order(ByteOrder.nativeOrder()).asIntBuffer();
                     if (data.ib != null) {
@@ -934,17 +912,17 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         FloatBuffer gridData = ByteBuffer.allocateDirect((graphSetup.xTics.length + graphSetup.yTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         for (double x : graphSetup.xTics) {
-            gridData.put((float)(graphSetup.logX ? Math.log(x) : x));
-            gridData.put((float)(graphSetup.logY ? Math.log(graphSetup.minY): graphSetup.minY));
-            gridData.put((float)(graphSetup.logX ? Math.log(x) : x));
-            gridData.put((float)(graphSetup.logY ? Math.log(graphSetup.maxY): graphSetup.maxY));
+            gridData.put((float) (graphSetup.logX ? Math.log(x) : x));
+            gridData.put((float) (graphSetup.logY ? Math.log(graphSetup.minY) : graphSetup.minY));
+            gridData.put((float) (graphSetup.logX ? Math.log(x) : x));
+            gridData.put((float) (graphSetup.logY ? Math.log(graphSetup.maxY) : graphSetup.maxY));
             nGridLines++;
         }
         for (double y : graphSetup.yTics) {
-            gridData.put((float)(graphSetup.logX ? Math.log(graphSetup.minX): graphSetup.minX));
-            gridData.put((float)(graphSetup.logY ? Math.log(y) : y));
-            gridData.put((float)(graphSetup.logX ? Math.log(graphSetup.maxX): graphSetup.maxX));
-            gridData.put((float)(graphSetup.logY ? Math.log(y) : y));
+            gridData.put((float) (graphSetup.logX ? Math.log(graphSetup.minX) : graphSetup.minX));
+            gridData.put((float) (graphSetup.logY ? Math.log(y) : y));
+            gridData.put((float) (graphSetup.logX ? Math.log(graphSetup.maxX) : graphSetup.maxX));
+            gridData.put((float) (graphSetup.logY ? Math.log(y) : y));
             nGridLines++;
         }
         gridData.position(0);
@@ -958,10 +936,10 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         FloatBuffer zGridData = ByteBuffer.allocateDirect((graphSetup.zTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         for (double z : graphSetup.zTics) {
-            zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
-            zGridData.put((float)(0.));
-            zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
-            zGridData.put((float)(1.));
+            zGridData.put((float) (graphSetup.logZ ? Math.log(z) : z));
+            zGridData.put((float) (0.));
+            zGridData.put((float) (graphSetup.logZ ? Math.log(z) : z));
+            zGridData.put((float) (1.));
             nZGridLines++;
         }
         zGridData.position(0);
@@ -993,16 +971,16 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             ByteBuffer colorScaleTextureData = ByteBuffer.allocateDirect(nSteps * 3).order(ByteOrder.nativeOrder());
             for (int i = 0; i < nSteps; i++) {
                 int c = graphSetup.colorScale.get(i);
-                colorScaleTextureData.put((byte)(c >> 16)).put((byte)(c >> 8)).put((byte)c);
+                colorScaleTextureData.put((byte) (c >> 16)).put((byte) (c >> 8)).put((byte) c);
             }
             colorScaleTextureData.position(0);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, colorScaleTexture);
-            GLES20.glTexImage2D ( GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB, nSteps,1,0, GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, colorScaleTextureData);
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB, nSteps, 1, 0, GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, colorScaleTextureData);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glBindTexture ( GLES20.GL_TEXTURE_2D, 0 );
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         }
     }
 

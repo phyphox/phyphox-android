@@ -62,7 +62,7 @@ class TextIcon extends BaseColorDrawable {
         //Text-Paint
         this.paint = new Paint();
         paint.setColor(ContextCompat.getColor(c, R.color.main));
-        paint.setTextSize(c.getResources().getDimension(R.dimen.expElementIconSize)*0.5f);
+        paint.setTextSize(c.getResources().getDimension(R.dimen.expElementIconSize) * 0.5f);
         paint.setAntiAlias(true);
         paint.setFakeBoldText(true);
         paint.setStyle(Paint.Style.FILL);
@@ -86,7 +86,7 @@ class TextIcon extends BaseColorDrawable {
         //A rectangle and text on top. Quite simple.
         int w = canvas.getWidth();
         canvas.drawRect(new Rect(0, 0, w, w), paintBG);
-        canvas.drawText(text, w/2, w*2/3, paint);
+        canvas.drawText(text, w / 2, w * 2 / 3, paint);
     }
 }
 

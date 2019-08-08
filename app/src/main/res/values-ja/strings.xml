@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">設定</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -137,7 +138,7 @@
 
     <string name="experimentinfo_hint">本実験をどのように使用するか知るために実験インフォを確認してください．</string>
 
-<string name="graph_tools_pan_and_zoom">移動と拡大</string>
+    <string name="graph_tools_pan_and_zoom">移動と拡大</string>
     <string name="graph_tools_pick">データ選択</string>
     <string name="graph_tools_more">ツール</string>
     <string name="graph_tools_reset">ズームリセット</string>

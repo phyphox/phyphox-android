@@ -95,7 +95,7 @@
     <string name="timedRun">Partenza ritardata</string>
     <string name="loadingTitle">Caricamento</string>
     <string name="experimentsPhyphoxOrg">Idee e istruzioni per gli esperimenti</string>
-<string name="translationInfo">Lingue</string>
+    <string name="translationInfo">Lingue</string>
     <string name="translationText">Phyphox utilizzerà la prima lingua disponibile tra quelle nella lista delle tue lingue preferite. Per cambiare le tue preferenze vai nella sezione \"Impostazioni\" per Android qui sotto. Per scoprire quali lingue sono disponibili e come puoi contribuire, seleziona \"Vai al sito\".</string>
     <string name="translationToSettings">Impostazioni</string>
     <string name="translationToWebsite">Vai al sito</string>

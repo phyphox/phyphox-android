@@ -10,15 +10,15 @@ public class dataOutput implements Serializable {
     dataBuffer buffer = null;
     boolean clearBeforeWrite = true;
 
-    //Get value
-    public double getValue() {
-        return buffer.value;
-    }
-
     //Constructor with specified clear attribute
     protected dataOutput(dataBuffer buffer, boolean clear) {
         this.clearBeforeWrite = clear;
         this.buffer = buffer;
+    }
+
+    //Get value
+    public double getValue() {
+        return buffer.value;
     }
 
     //Get the number of elements actually filled into the buffer

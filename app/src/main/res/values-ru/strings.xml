@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Настройки</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -136,7 +137,7 @@
 
     <string name="experimentinfo_hint">Ознакомьтесь с информацией к экспериментам, чтобы узнать, как использовать этот эксперимент.</string>
 
-<string name="graph_tools_pan_and_zoom">Панорама и масштаб</string>
+    <string name="graph_tools_pan_and_zoom">Панорама и масштаб</string>
     <string name="graph_tools_pick">Выбор данных</string>
     <string name="graph_tools_more">Другие инструменты</string>
     <string name="graph_tools_reset">Сбросить масштаб</string>
@@ -260,5 +261,5 @@
     <string name="bt_more_info_link_button">Подробнее</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-<string name="export_empty">Эта экспериментальная конфигурация не определяет какие-либо данные для экспорта. В случае ошибки обратитесь к источнику QR-кода или файла конфигурации.</string>
-    </resources>
+    <string name="export_empty">Эта экспериментальная конфигурация не определяет какие-либо данные для экспорта. В случае ошибки обратитесь к источнику QR-кода или файла конфигурации.</string>
+</resources>

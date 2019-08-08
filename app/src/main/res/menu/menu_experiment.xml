@@ -1,45 +1,125 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" tools:context="de.rwth_aachen.phyphox.Experiment">
-    <item android:id="@+id/timer" android:title="0s"
-        android:orderInCategory="1" app:showAsAction="always" />
-    <item android:id="@+id/action_timed_play" android:title="@string/timed_start" android:icon="@drawable/timed_play"
-        android:orderInCategory="2" app:showAsAction="always" />
-    <item android:id="@+id/action_timed_pause" android:title="@string/timed_stop" android:icon="@drawable/timed_pause"
-        android:orderInCategory="3" app:showAsAction="always" />
-    <item android:id="@+id/action_play" android:title="@string/start" android:icon="@drawable/play"
-        android:orderInCategory="4" app:showAsAction="always" />
-    <item android:id="@+id/action_pause" android:title="@string/stop" android:icon="@drawable/pause"
-        android:orderInCategory="5" app:showAsAction="always" />
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="de.rwth_aachen.phyphox.Experiment">
+    <item
+        android:id="@+id/timer"
+        android:orderInCategory="1"
+        android:title="0s"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_timed_play"
+        android:icon="@drawable/timed_play"
+        android:orderInCategory="2"
+        android:title="@string/timed_start"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_timed_pause"
+        android:icon="@drawable/timed_pause"
+        android:orderInCategory="3"
+        android:title="@string/timed_stop"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_play"
+        android:icon="@drawable/play"
+        android:orderInCategory="4"
+        android:title="@string/start"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_pause"
+        android:icon="@drawable/pause"
+        android:orderInCategory="5"
+        android:title="@string/stop"
+        app:showAsAction="always" />
 
-    <item android:id="@+id/action_clear" android:title="@string/clear_data" android:icon="@drawable/delete"
-        android:orderInCategory="20" app:showAsAction="always" />
+    <item
+        android:id="@+id/action_clear"
+        android:icon="@drawable/delete"
+        android:orderInCategory="20"
+        android:title="@string/clear_data"
+        app:showAsAction="always" />
 
-    <item android:id="@+id/action_description" android:title="@string/show_description" android:icon="@drawable/info"
-        android:orderInCategory="30" app:showAsAction="never" />
-    <item android:id="@+id/action_link1" android:title="@string/show_description" android:orderInCategory="31" app:showAsAction="never" />
-    <item android:id="@+id/action_link2" android:title="@string/show_description" android:orderInCategory="32" app:showAsAction="never" />
-    <item android:id="@+id/action_link3" android:title="@string/show_description" android:orderInCategory="33" app:showAsAction="never" />
-    <item android:id="@+id/action_link4" android:title="@string/show_description" android:orderInCategory="34" app:showAsAction="never" />
-    <item android:id="@+id/action_link5" android:title="@string/show_description" android:orderInCategory="35" app:showAsAction="never" />
+    <item
+        android:id="@+id/action_description"
+        android:icon="@drawable/info"
+        android:orderInCategory="30"
+        android:title="@string/show_description"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_link1"
+        android:orderInCategory="31"
+        android:title="@string/show_description"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_link2"
+        android:orderInCategory="32"
+        android:title="@string/show_description"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_link3"
+        android:orderInCategory="33"
+        android:title="@string/show_description"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_link4"
+        android:orderInCategory="34"
+        android:title="@string/show_description"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_link5"
+        android:orderInCategory="35"
+        android:title="@string/show_description"
+        app:showAsAction="never" />
 
-    <item android:id="@+id/action_export" android:title="@string/export" android:icon="@drawable/download"
-        android:orderInCategory="50" app:showAsAction="never" />
-    <item android:id="@+id/action_share" android:title="@string/share" android:icon="@drawable/share"
-        android:orderInCategory="60" app:showAsAction="never" />
-    <item android:id="@+id/action_timedRun" android:title="@string/timedRun" android:icon="@drawable/timer"
-        android:orderInCategory="70" app:showAsAction="never" android:checkable="true"/>
-    <item android:id="@+id/action_remoteServer" android:title="@string/remoteServer"
-        android:orderInCategory="100" app:showAsAction="never" android:checkable="true" />
+    <item
+        android:id="@+id/action_export"
+        android:icon="@drawable/download"
+        android:orderInCategory="50"
+        android:title="@string/export"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_share"
+        android:icon="@drawable/share"
+        android:orderInCategory="60"
+        android:title="@string/share"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_timedRun"
+        android:checkable="true"
+        android:icon="@drawable/timer"
+        android:orderInCategory="70"
+        android:title="@string/timedRun"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_remoteServer"
+        android:checkable="true"
+        android:orderInCategory="100"
+        android:title="@string/remoteServer"
+        app:showAsAction="never" />
 
-    <item android:id="@+id/action_calibrated_magnetometer" android:title="@string/calibrated_magnetometer"
-        android:orderInCategory="150" app:showAsAction="never" android:checkable="true" />
-    <item android:id="@+id/action_force_gnss" android:title="@string/force_gnss"
-        android:orderInCategory="160" app:showAsAction="never" android:checkable="true" />
+    <item
+        android:id="@+id/action_calibrated_magnetometer"
+        android:checkable="true"
+        android:orderInCategory="150"
+        android:title="@string/calibrated_magnetometer"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_force_gnss"
+        android:checkable="true"
+        android:orderInCategory="160"
+        android:title="@string/force_gnss"
+        app:showAsAction="never" />
 
-    <item android:id="@+id/action_saveLocally" android:title="@string/save_locally" android:icon="@drawable/save_locally"
-        android:orderInCategory="300" app:showAsAction="never" />
+    <item
+        android:id="@+id/action_saveLocally"
+        android:icon="@drawable/save_locally"
+        android:orderInCategory="300"
+        android:title="@string/save_locally"
+        app:showAsAction="never" />
 
-    <item android:id="@+id/action_saveState" android:title="@string/save_state"
-        android:orderInCategory="400" app:showAsAction="never" />
+    <item
+        android:id="@+id/action_saveState"
+        android:orderInCategory="400"
+        android:title="@string/save_state"
+        app:showAsAction="never" />
 </menu>

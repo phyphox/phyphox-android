@@ -14,7 +14,6 @@ import android.util.Log;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
@@ -43,6 +42,18 @@ import javax.xml.transform.stream.StreamResult;
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
 public class phyphoxExperiment implements Serializable {
+    public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
+    public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
+    public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
+    public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
+    public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
+    public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
+    public gpsInput gpsIn = null;
+    public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
+    public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
+    public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
+    public Lock dataLock = new ReentrantLock();
+    public DataExport exporter; //An instance of the DataExport class for exporting functionality (see DataExport.java)
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
@@ -52,18 +63,6 @@ public class phyphoxExperiment implements Serializable {
     String category = ""; //The category of this experiment
     String icon = ""; //The icon. This is either a base64-encoded drawable (typically png) or (if its length is 3 or less characters) it is a short form which should be used in a simple generated logo (like "gyr" for gyroscope). (The experiment list will use the first three characters of the title if this is completely empty)
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment
-    public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
-    public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
-    public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
-    public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
-    public gpsInput gpsIn = null;
-    public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
-    public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
-    public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
-    public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
-    public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
-    public Lock dataLock = new ReentrantLock();
-
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     dataBuffer analysisDynamicSleep = null;
     long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
@@ -74,14 +73,12 @@ public class phyphoxExperiment implements Serializable {
     boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
     boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
-
     //Parameters for audio playback
     transient AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
     String audioSource; //The key name of the buffer which holds the data that should be played back through the speaker.
     int audioRate = 48000; //The playback rate (in Hz)
     int audioBufferSize = 0; //The size of the audio buffer
     boolean audioLoop = false; //Loop the track?
-
     //Parameters for audio record
     transient AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
     String micOutput; //The key name of the buffer which receives the data from audio recording.
@@ -89,8 +86,6 @@ public class phyphoxExperiment implements Serializable {
     int micRate = 48000; //The recording rate in Hz
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
-
-    public DataExport exporter; //An instance of the DataExport class for exporting functionality (see DataExport.java)
 
     //The constructor will just instantiate the DataExport. Everything else will be set directly by the phyphoxFile loading function (see phyphoxFile.java)
     phyphoxExperiment() {
@@ -133,21 +128,21 @@ public class phyphoxExperiment implements Serializable {
             try {
                 for (dataBuffer buffer : dataBuffers) { //Compare each databuffer name...
                     for (expView ev : experimentViews) {
-                            for (expView.expViewElement eve : ev.elements) { //...to each expViewElement
-                                try {
-                                    if (eve.onMayWriteToBuffers()) //The element may now write to its buffers if it wants to do it on its own...
+                        for (expView.expViewElement eve : ev.elements) { //...to each expViewElement
+                            try {
+                                if (eve.onMayWriteToBuffers()) //The element may now write to its buffers if it wants to do it on its own...
+                                    newUserInput = true;
+                                if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
+                                    Double v = eve.getValue(); //...get the value
+                                    if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
+                                        buffer.append(v);
                                         newUserInput = true;
-                                    if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
-                                        Double v = eve.getValue(); //...get the value
-                                        if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
-                                            buffer.append(v);
-                                            newUserInput = true;
-                                        }
                                     }
-                                } catch (Exception e) {
-                                    Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                                 }
+                            } catch (Exception e) {
+                                Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                             }
+                        }
                     }
                 }
             } finally {
@@ -170,7 +165,7 @@ public class phyphoxExperiment implements Serializable {
             if (!micRateOutput.isEmpty())
                 sampleRateBuffer = getBuffer(micRateOutput);
             dataBuffer recording = getBuffer(micOutput);
-            final int readBufferSize = Math.max(Math.min(recording.size, 4800),minBufferSize); //The dataBuffer for the recording
+            final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
             int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
             if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
@@ -372,7 +367,7 @@ public class phyphoxExperiment implements Serializable {
 
         //If we start IO and the data has not been reset, we want to set the first analysis time to now, offset by the duration of the last measurement period
         if (firstAnalysisTime != 0)
-            firstAnalysisTime = System.currentTimeMillis() - (analysisTime-firstAnalysisTime);
+            firstAnalysisTime = System.currentTimeMillis() - (analysisTime - firstAnalysisTime);
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
         for (sensorInput sensor : inputSensors)

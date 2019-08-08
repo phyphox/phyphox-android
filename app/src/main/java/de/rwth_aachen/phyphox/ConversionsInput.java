@@ -13,20 +13,161 @@ import java.util.Arrays;
 public class ConversionsInput {
 
 
+    private static Integer uInt16LittleEndian(byte lower, byte upper) {
+        Integer lowerByte = (int) lower & 0xFF;
+        Integer upperByte = (int) upper & 0xFF;
+        return ((upperByte << 8) + lowerByte);
+    }
+
+    private static Integer int16LittleEndian(byte lower, byte upper) {
+        Integer lowerByte = (int) lower & 0xFF;
+        Integer upperByte = (int) upper;
+        return ((upperByte << 8) + lowerByte);
+    }
+
+    /* private helper functions */
+
+    private static Integer uInt24LittleEndian(byte lower, byte medium, byte upper) {
+        Integer lowerByte = (int) lower & 0xFF;
+        Integer mediumByte = (int) medium & 0xFF;
+        Integer upperByte = (int) upper & 0xFF;
+        return ((upperByte << 16) + (mediumByte << 8) + lowerByte);
+    }
+
+    private static Integer int24LittleEndian(byte lower, byte medium, byte upper) {
+        Integer lowerByte = (int) lower & 0xFF;
+        Integer mediumByte = (int) medium & 0xFF;
+        Integer upperByte = (int) upper;
+        return ((upperByte << 16) + (mediumByte << 8) + lowerByte);
+    }
+
+    private static Long uInt32LittleEndian(byte lower, byte mLower, byte mUpper, byte upper) {
+        Long lowerByte = (long) lower & 0xFF;
+        Long mLowerByte = (long) mLower & 0xFF;
+        Long mUpperByte = (long) mUpper & 0xFF;
+        Long upperByte = (long) upper & 0xFF;
+        return ((upperByte << 24) + (mUpperByte << 16) + (mLowerByte << 8) + lowerByte);
+    }
+
+    private static Integer int32LittleEndian(byte lower, byte mLower, byte mUpper, byte upper) {
+        Integer lowerByte = (int) lower & 0xFF;
+        Integer mLowerByte = (int) mLower & 0xFF;
+        Integer mUpperByte = (int) mUpper & 0xFF;
+        Integer upperByte = (int) upper;
+        return ((upperByte << 24) + (mUpperByte << 16) + (mLowerByte << 8) + lowerByte);
+    }
+
+    public static double uInt16LittleEndian(byte[] data) {
+        return uInt16LittleEndian(data[0], data[1]);
+    }
+
+    public static double uInt16BigEndian(byte[] data) {
+        return uInt16LittleEndian(data[1], data[0]);
+    }
+
+
+
+    /* common functions */
+
+    public static double int16LittleEndian(byte[] data) {
+        return int16LittleEndian(data[0], data[1]);
+    }
+
+    public static double int16BigEndian(byte[] data) {
+        return int16LittleEndian(data[1], data[0]);
+    }
+
+    public static double uInt24LittleEndian(byte[] data) {
+        return uInt24LittleEndian(data[0], data[1], data[2]);
+    }
+
+    public static double uInt24BigEndian(byte[] data) {
+        return uInt24LittleEndian(data[2], data[1], data[0]);
+    }
+
+    public static double int24LittleEndian(byte[] data) {
+        return int24LittleEndian(data[0], data[1], data[2]);
+    }
+
+    public static double int24BigEndian(byte[] data) {
+        return int24LittleEndian(data[2], data[1], data[0]);
+    }
+
+    public static double uInt32LittleEndian(byte[] data) {
+        return uInt32LittleEndian(data[0], data[1], data[2], data[3]);
+    }
+
+    public static double uInt32BigEndian(byte[] data) {
+        return uInt32LittleEndian(data[3], data[2], data[1], data[0]);
+    }
+
+    public static double int32LittleEndian(byte[] data) {
+        return int32LittleEndian(data[0], data[1], data[2], data[3]);
+    }
+
+    public static double int32BigEndian(byte[] data) {
+        return int32LittleEndian(data[3], data[2], data[1], data[0]);
+    }
+
+    public static double float32LittleEndian(byte[] data) {
+        int bits = 0;
+        for (int i = 0; i < 4; i++) {
+            bits |= (data[i] & 0xFF) << (8 * i);
+        }
+        return Float.intBitsToFloat(bits);
+    }
+
+    public static double float32BigEndian(byte[] data) {
+        int bits = 0;
+        for (int i = 0; i < 4; i++) {
+            bits |= (data[i] & 0xFF) << (8 * (3 - i));
+        }
+        return Float.intBitsToFloat(bits);
+    }
+
+    public static double float64LittleEndian(byte[] data) {
+        long bits = 0;
+        for (int i = 0; i < 8; i++) {
+            bits |= (data[i] & 0xFF) << (8 * i);
+        }
+        return Double.longBitsToDouble(bits);
+    }
+
+    public static double float64BigEndian(byte[] data) {
+        long bits = 0;
+        for (int i = 0; i < 8; i++) {
+            bits |= (data[i] & 0xFF) << (8 * (7 - i));
+        }
+        return Double.longBitsToDouble(bits);
+    }
+
+    public static double int8(byte[] data) {
+        return data[0];
+    }
+
+    public static double uInt8(byte[] data) {
+        return data[0] & 0xff;
+    }
+
+    public static double singleByte(byte[] data) {
+        return uInt8(data);
+    }
 
     public static class InputConversion implements Serializable {
         InputConversion() {
 
         }
+
         protected double convert(byte[] data) {
             return Double.NaN;
         }
     }
 
     public static class SimpleInputConversion extends InputConversion implements Serializable {
-        private Method conversionFunction;
         int offset;
         int length;
+        private Method conversionFunction;
+
         SimpleInputConversion(Method conversionFunction, XmlPullParser xpp) {
             super();
             this.conversionFunction = conversionFunction;
@@ -56,134 +197,6 @@ public class ConversionsInput {
         }
     }
 
-    /* private helper functions */
-
-    private static Integer uInt16LittleEndian (byte lower, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer upperByte = (int) upper & 0xFF;
-        return ((upperByte << 8) + lowerByte);
-    }
-
-    private static Integer int16LittleEndian (byte lower, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer upperByte = (int) upper;
-        return ((upperByte << 8) + lowerByte);
-    }
-
-    private static Integer uInt24LittleEndian(byte lower, byte medium, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer mediumByte = (int) medium & 0xFF;
-        Integer upperByte = (int) upper & 0xFF;
-        return ((upperByte << 16) + (mediumByte << 8) + lowerByte);
-    }
-
-    private static Integer int24LittleEndian(byte lower, byte medium, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer mediumByte = (int) medium & 0xFF;
-        Integer upperByte = (int) upper;
-        return ((upperByte << 16) + (mediumByte << 8) + lowerByte);
-    }
-
-    private static Long uInt32LittleEndian (byte lower, byte mLower, byte mUpper, byte upper) {
-        Long lowerByte = (long) lower & 0xFF;
-        Long mLowerByte = (long) mLower & 0xFF;
-        Long mUpperByte = (long) mUpper & 0xFF;
-        Long upperByte = (long) upper & 0xFF;
-        return ((upperByte << 24) + (mUpperByte << 16) + (mLowerByte << 8) + lowerByte);
-    }
-
-    private static Integer int32LittleEndian (byte lower, byte mLower, byte mUpper, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer mLowerByte = (int) mLower & 0xFF;
-        Integer mUpperByte = (int) mUpper & 0xFF;
-        Integer upperByte = (int) upper;
-        return ((upperByte << 24) + (mUpperByte << 16) + (mLowerByte << 8) + lowerByte);
-    }
-
-
-
-    /* common functions */
-
-    public static double uInt16LittleEndian(byte[] data) {
-        return uInt16LittleEndian(data[0], data[1]);
-    }
-
-    public static double uInt16BigEndian(byte[] data) {
-        return uInt16LittleEndian(data[1], data[0]);
-    }
-
-    public static double int16LittleEndian (byte[] data) {
-        return int16LittleEndian(data[0], data[1]);
-    }
-
-    public static double int16BigEndian (byte[] data) {
-        return int16LittleEndian(data[1], data[0]);
-    }
-
-    public static double uInt24LittleEndian (byte[] data) {
-        return uInt24LittleEndian(data[0], data[1], data[2]);
-    }
-
-    public static double uInt24BigEndian (byte[] data) {
-        return uInt24LittleEndian(data[2], data[1], data[0]);
-    }
-
-    public static double int24LittleEndian (byte[] data) {
-        return int24LittleEndian(data[0], data[1], data[2]);
-    }
-
-    public static double int24BigEndian (byte[] data) {
-        return int24LittleEndian(data[2], data[1], data[0]);
-    }
-
-    public static double uInt32LittleEndian (byte[] data) {
-        return uInt32LittleEndian(data[0], data[1], data[2], data[3]);
-    }
-
-    public static double uInt32BigEndian (byte[] data) {
-        return uInt32LittleEndian(data[3], data[2], data[1], data[0]);
-    }
-
-    public static double int32LittleEndian (byte[] data) {
-        return int32LittleEndian(data[0], data[1], data[2], data[3]);
-    }
-
-    public static double int32BigEndian (byte[] data) {
-        return int32LittleEndian(data[3], data[2], data[1], data[0]);
-    }
-
-    public static double float32LittleEndian (byte[] data) {
-        int bits = 0;
-        for (int i = 0; i < 4; i++) {
-            bits |= (data[i] & 0xFF) << (8 * i);
-        }
-        return Float.intBitsToFloat(bits);
-    }
-
-    public static double float32BigEndian (byte[] data) {
-        int bits = 0;
-        for (int i = 0; i < 4; i++) {
-            bits |= (data[i] & 0xFF) << (8 * (3-i));
-        }
-        return Float.intBitsToFloat(bits);
-    }
-
-    public static double float64LittleEndian (byte[] data) {
-        long bits = 0;
-        for (int i = 0; i < 8; i++) {
-            bits |= (data[i] & 0xFF) << (8 * i);
-        }
-        return Double.longBitsToDouble(bits);
-    }
-
-    public static double float64BigEndian (byte[] data) {
-        long bits = 0;
-        for (int i = 0; i < 8; i++) {
-            bits |= (data[i] & 0xFF) << (8 * (7-i));
-        }
-        return Double.longBitsToDouble(bits);
-    }
-
     public static class string extends InputConversion implements Serializable {
         String decimalPoint;
         int offset = 0;
@@ -192,7 +205,7 @@ public class ConversionsInput {
         string(XmlPullParser xpp) {
             super();
             this.decimalPoint = xpp.getAttributeValue(null, "decimalPoint");
-            String offset= xpp.getAttributeValue(null, "offset");
+            String offset = xpp.getAttributeValue(null, "offset");
             String length = xpp.getAttributeValue(null, "length");
             if (offset != null) {
                 try {
@@ -211,7 +224,7 @@ public class ConversionsInput {
 
         }
 
-        public double convert (byte[] data) {
+        public double convert(byte[] data) {
             int actualLength = data.length - offset;
             if (length > 0 && length < actualLength)
                 actualLength = length;
@@ -236,6 +249,7 @@ public class ConversionsInput {
         String separator;
         String label;
         int index;
+
         formattedString(XmlPullParser xpp) {
             super();
             this.separator = xpp.getAttributeValue(null, "separator");
@@ -278,18 +292,6 @@ public class ConversionsInput {
             }
             return Double.NaN;
         }
-    }
-
-    public static double int8(byte[] data) {
-        return data[0];
-    }
-
-    public static double uInt8 (byte[] data) {
-        return data[0] & 0xff;
-    }
-
-    public static double singleByte (byte[] data) {
-        return uInt8(data);
     }
 
 }

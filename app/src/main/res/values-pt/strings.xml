@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Configurações</string>
     <string name="title_activity_experiment">phyphox</string>
 
@@ -22,7 +23,7 @@
     <string name="donotshowagain">Não mostrar novamente</string>
     <string name="experimentinfo_hint">Veja informações sobre o experimento para aprender como usá-lo.</string>
 
-<string name="translationToWebsite">Visitar website (em inglês)</string>
+    <string name="translationToWebsite">Visitar website (em inglês)</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#pt</string>
 
     <string name="info">Informações</string>

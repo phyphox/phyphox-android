@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -30,61 +29,25 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
 
-    private boolean interactive = false;
-    private boolean linearRegression = false;
+    final int markerMax = 2;
     public GraphView graphView;
-    private TextView graphLabel;
-    private ImageView expandImage, collapseImage;
-    private BottomNavigationView toolbar;
     public boolean allowLogX = false;
     public boolean allowLogY = false;
-
-    private PlotRenderer plotRenderer = null;
-
-    private DataExport dataExport = null;
-
     View rootView;
     FrameLayout graphFrame;
-
-    private class Marker {
-        boolean active = false;
-        float viewX, viewY;
-        float dataX, dataY, dataZ;
-
-        Marker() {
-        }
-
-        public void remove() {
-            active = false;
-            updateInfo();
-        }
-
-        public void set(float viewX, float viewY, float dataX, float dataY, float dataZ) {
-            linearRegression = false;
-
-            active = true;
-            this.viewX = viewX;
-            this.viewY = viewY;
-            this.dataX = dataX;
-            this.dataY = dataY;
-            this.dataZ = dataZ;
-
-            updateInfo();
-        }
-    }
-
-    final int markerMax = 2;
     Marker marker[] = new Marker[markerMax];
     PopupWindow popupWindowInfo = null;
     TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
-
+    private boolean interactive = false;
+    private boolean linearRegression = false;
+    private TextView graphLabel;
+    private ImageView expandImage, collapseImage;
+    private BottomNavigationView toolbar;
+    private PlotRenderer plotRenderer = null;
+    private DataExport dataExport = null;
     public InteractiveGraphView(Context context) {
         super(context);
         init(context);
@@ -101,10 +64,10 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         for (int i = 0; i < markerMax; i++)
             marker[i] = new Marker();
 
-        graphFrame = (FrameLayout)this.findViewById(R.id.graph_frame);
-        graphLabel = (TextView)this.findViewById(R.id.graph_label);
-        expandImage = (ImageView)this.findViewById(R.id.graph_expand_image);
-        collapseImage = (ImageView)this.findViewById(R.id.graph_collapse_image);
+        graphFrame = (FrameLayout) this.findViewById(R.id.graph_frame);
+        graphLabel = (TextView) this.findViewById(R.id.graph_label);
+        expandImage = (ImageView) this.findViewById(R.id.graph_expand_image);
+        collapseImage = (ImageView) this.findViewById(R.id.graph_collapse_image);
         toolbar = (BottomNavigationView) this.findViewById(R.id.graph_toolbar);
 
         toolbar.inflateMenu(R.menu.graph_menu);
@@ -169,7 +132,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                             if (ctx instanceof Activity) {
                                                 act = (Activity) ctx;
                                             }
-                                            ctx = ((ContextWrapper)ctx).getBaseContext();
+                                            ctx = ((ContextWrapper) ctx).getBaseContext();
                                         }
                                         if (act == null)
                                             break;
@@ -254,9 +217,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final Switch swAdvanced = (Switch) dialogView.findViewById(R.id.applyZoomAdvanced);
 
         final RadioGroup rgGenericOptions = (RadioGroup) dialogView.findViewById(R.id.applyZoomMode);
-        final GridLayout glXOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomX);
-        final GridLayout glYOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomY);
-        final GridLayout glZOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomZ);
+        final GridLayout glXOptions = (GridLayout) dialogView.findViewById(R.id.applyZoomX);
+        final GridLayout glYOptions = (GridLayout) dialogView.findViewById(R.id.applyZoomY);
+        final GridLayout glZOptions = (GridLayout) dialogView.findViewById(R.id.applyZoomZ);
 
         boolean hasZAxis = false;
         for (int i = 0; i < graphView.style.length; i++) {
@@ -391,8 +354,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             graphView.setTouchMode(GraphView.TouchMode.off);
             linearRegression = false;
             graphView.resetPicks();
-        }
-        else if (toolbar.getSelectedItemId() == R.id.graph_tools_pan)
+        } else if (toolbar.getSelectedItemId() == R.id.graph_tools_pan)
             graphView.setTouchMode(GraphView.TouchMode.zoom);
         else if (toolbar.getSelectedItemId() == R.id.graph_tools_pick)
             graphView.setTouchMode(GraphView.TouchMode.pick);
@@ -412,9 +374,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private void setPopupInfo(int x, int y, String text) {
         if (popupWindowInfo == null) {
             View pointInfoView = inflate(getContext(), R.layout.point_info, null);
-            popupWindowText = (TextView)pointInfoView.findViewById(R.id.point_info_text);
+            popupWindowText = (TextView) pointInfoView.findViewById(R.id.point_info_text);
             popupWindowInfo = new PopupWindow(pointInfoView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            if (Build.VERSION.SDK_INT >= 21){
+            if (Build.VERSION.SDK_INT >= 21) {
                 popupWindowInfo.setElevation(4.0f);
             }
             popupWindowInfo.setOutsideTouchable(false);
@@ -462,31 +424,31 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                             continue;
                         }
                         sumX += x;
-                        sumX2 += x*x;
+                        sumX2 += x * x;
                         sumY += y;
-                        sumY2 += y*y;
-                        sumXY += x*y;
+                        sumY2 += y * y;
+                        sumXY += x * y;
                     }
                 }
             }
 
             n -= skipped;
 
-            double norm = n * sumX2 - sumX*sumX;
+            double norm = n * sumX2 - sumX * sumX;
             if (norm == 0)
                 return;
 
-            double a = (n * sumXY  -  sumX * sumY) / norm;
-            double b = (sumY * sumX2  -  sumX * sumXY) / norm;
+            double a = (n * sumXY - sumX * sumY) / norm;
+            double b = (sumY * sumX2 - sumX * sumXY) / norm;
 
             int pos[] = new int[2];
             graphView.getLocationInWindow(pos);
 
             Point[] points = new Point[2];
-            int viewX1 =(int) Math.round(graphView.dataXToViewX(graphView.minX));
-            int viewX2 =(int) Math.round(graphView.dataXToViewX(graphView.maxX));
-            int viewY1 =(int) Math.round(graphView.dataYToViewY(graphView.minX * a + b));
-            int viewY2 =(int) Math.round(graphView.dataYToViewY(graphView.maxX * a + b));
+            int viewX1 = (int) Math.round(graphView.dataXToViewX(graphView.minX));
+            int viewX2 = (int) Math.round(graphView.dataXToViewX(graphView.maxX));
+            int viewY1 = (int) Math.round(graphView.dataYToViewY(graphView.minX * a + b));
+            int viewY2 = (int) Math.round(graphView.dataYToViewY(graphView.maxX * a + b));
             points[0] = new Point(viewX1, viewY1);
             points[1] = new Point(viewX2, viewY2);
             markerOverlayView.update(points, null);
@@ -494,15 +456,15 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_fit_label));
             sb.append("\na = ");
-            sb.append((float)a);
+            sb.append((float) a);
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
             sb.append(" / ");
             sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
             sb.append("\nb = ");
-            sb.append((float)b);
+            sb.append((float) b);
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
 
-            int infoX = Math.round((viewX1 + viewX2)/2.f + pos[0] - getRootView().getWidth()/2.f);
+            int infoX = Math.round((viewX1 + viewX2) / 2.f + pos[0] - getRootView().getWidth() / 2.f);
             int infoY = getRootView().getHeight() - pos[1] - Math.round(Math.min(viewY1, viewY2) - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
 
             setPopupInfo(infoX, infoY, sb.toString());
@@ -518,7 +480,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             int pos[] = new int[2];
             graphView.getLocationInWindow(pos);
 
-            int infoX = Math.round((marker[0].viewX + marker[1].viewX)/2.f + pos[0] - getRootView().getWidth()/2.f);
+            int infoX = Math.round((marker[0].viewX + marker[1].viewX) / 2.f + pos[0] - getRootView().getWidth() / 2.f);
             int infoY = getRootView().getHeight() - pos[1] - Math.round(Math.min(marker[0].viewY, marker[1].viewY) - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
 
             StringBuilder sb = new StringBuilder();
@@ -560,7 +522,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             points[0] = new Point(Math.round(activeMarker.viewX), Math.round(activeMarker.viewY));
             markerOverlayView.update(null, points);
 
-            int infoX = Math.round(activeMarker.viewX - getRootView().getWidth()/2.f + pos[0]);
+            int infoX = Math.round(activeMarker.viewX - getRootView().getWidth() / 2.f + pos[0]);
             int infoY = getRootView().getHeight() - pos[1] - Math.round(activeMarker.viewY - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
 
             StringBuilder sb = new StringBuilder();
@@ -611,6 +573,33 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             Log.e("cleanView", "Renderer: Interrupted execution.");
         }
         plotRenderer = null;
+    }
+
+    private class Marker {
+        boolean active = false;
+        float viewX, viewY;
+        float dataX, dataY, dataZ;
+
+        Marker() {
+        }
+
+        public void remove() {
+            active = false;
+            updateInfo();
+        }
+
+        public void set(float viewX, float viewY, float dataX, float dataY, float dataZ) {
+            linearRegression = false;
+
+            active = true;
+            this.viewX = viewX;
+            this.viewY = viewY;
+            this.dataX = dataX;
+            this.dataY = dataY;
+            this.dataZ = dataZ;
+
+            updateInfo();
+        }
     }
 
 }

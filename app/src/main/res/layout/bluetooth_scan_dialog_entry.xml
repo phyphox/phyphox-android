@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:layout_marginLeft="@dimen/activity_horizontal_margin"
     android:layout_marginRight="@dimen/activity_horizontal_margin"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-    <TextView android:id="@+id/device_name"
-        android:text="Name Placeholder"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/device_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="24sp"/>
-    <TextView android:id="@+id/device_not_supported"
-        android:text="@string/bt_device_not_supported"
-        android:textColor="@color/highlight"
+        android:text="Name Placeholder"
+        android:textSize="24sp" />
+
+    <TextView
+        android:id="@+id/device_not_supported"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/device_name"
         android:layout_alignParentLeft="true"
-        android:textSize="12sp"/>
+        android:text="@string/bt_device_not_supported"
+        android:textColor="@color/highlight"
+        android:textSize="12sp" />
 
     <ImageView
         android:id="@+id/signal_strength"

@@ -1,20 +1,14 @@
 package de.rwth_aachen.phyphox;
 
-import android.util.Log;
-
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,16 +23,14 @@ interface BufferNotification {
 
 public class dataBuffer implements Serializable {
     public String name; //The key name
-    private BlockingQueue<Double> buffer; //The actual buffer (will be initialized as ArrayBlockingQueue which is Serializable)
     public int size; //The target size
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
     public boolean untouched = true;
-    public Double [] init = new Double[0];
-
+    public Double[] init = new Double[0];
     //Analysis modules and graphs can register to receive notifications if a buffer changes.
     public Set<BufferNotification> updateListeners = new HashSet<>();
-
+    private BlockingQueue<Double> buffer; //The actual buffer (will be initialized as ArrayBlockingQueue which is Serializable)
     //This is not logically connected to the data Buffer itself, but it is more efficient to calculate only changes to the buffer, where we can keep track of those changes
     transient private floatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
     transient private floatBufferRepresentation floatCopyBarValue = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
@@ -87,9 +79,9 @@ public class dataBuffer implements Serializable {
             buffer.put(offset + 4, Float.NaN);
             buffer.put(offset + 5, Float.NaN);
         } else {
-            float d = (float)((value-last)*(1.-lineWidth)/2.);
-            float vOff = (float)value - d;
-            float lOff = (float)last + d;
+            float d = (float) ((value - last) * (1. - lineWidth) / 2.);
+            float vOff = (float) value - d;
+            float lOff = (float) last + d;
             buffer.put(offset, lOff);
             buffer.put(offset + 1, vOff);
             buffer.put(offset + 2, lOff);
@@ -122,7 +114,7 @@ public class dataBuffer implements Serializable {
         untouched = false;
         double last = this.value;
         this.value = value; //Update last value
-        if (this.size > 0 && buffer.size()+1 > this.size) { //If the buffer becomes larger than the target size, remove the first item (queue!)
+        if (this.size > 0 && buffer.size() + 1 > this.size) { //If the buffer becomes larger than the target size, remove the first item (queue!)
             buffer.poll();
             min = Double.NaN;
             max = Double.NaN;
@@ -134,14 +126,14 @@ public class dataBuffer implements Serializable {
             }
             if (floatCopyBarAxis != null) {
                 synchronized (floatCopyBarAxis.lock) {
-                    floatCopyBarAxis.offset+=6;
-                    floatCopyBarAxis.size-=6;
+                    floatCopyBarAxis.offset += 6;
+                    floatCopyBarAxis.size -= 6;
                 }
             }
             if (floatCopyBarValue != null) {
                 synchronized (floatCopyBarValue.lock) {
-                    floatCopyBarValue.offset+=6;
-                    floatCopyBarValue.size-=6;
+                    floatCopyBarValue.offset += 6;
+                    floatCopyBarValue.size -= 6;
                 }
             }
 
@@ -230,7 +222,7 @@ public class dataBuffer implements Serializable {
     //Append a short-array with [count] entries. This will be scaled to [-1:+1] and is used for audio data
     public void append(short value[], int count) {
         for (int i = 0; i < count; i++)
-            append((double)value[i]/(double)Short.MAX_VALUE); //Normalize to [-1:+1] and append
+            append((double) value[i] / (double) Short.MAX_VALUE); //Normalize to [-1:+1] and append
         notifyListeners(false, false);
     }
 
@@ -324,7 +316,7 @@ public class dataBuffer implements Serializable {
 
     public floatBufferRepresentation getFloatBufferBarAxis(double lineWidth) {
         this.lineWidth = lineWidth;
-        int n = buffer.size()*6;
+        int n = buffer.size() * 6;
         if (n <= 0)
             return new floatBufferRepresentation(null, 0, 0);
 
@@ -335,10 +327,10 @@ public class dataBuffer implements Serializable {
             int i = 0;
             double last = Double.NaN;
             while (it.hasNext() && i < n) {
-                double value = (double)it.next();
+                double value = (double) it.next();
                 putBarAxisValue(data, last, value, i);
                 last = value;
-                i+=6;
+                i += 6;
             }
             floatCopyBarAxis = new floatBufferRepresentation(data, 0, n);
         }
@@ -346,7 +338,7 @@ public class dataBuffer implements Serializable {
     }
 
     public floatBufferRepresentation getFloatBufferBarValue() {
-        int n = buffer.size()*6;
+        int n = buffer.size() * 6;
         if (n <= 0)
             return new floatBufferRepresentation(null, 0, 0);
 
@@ -357,10 +349,10 @@ public class dataBuffer implements Serializable {
             int i = 0;
             double last = Double.NaN;
             while (it.hasNext() && i < n) {
-                double value = (double)it.next();
+                double value = (double) it.next();
                 putBarValueValue(data, last, i);
                 last = value;
-                i+=6;
+                i += 6;
             }
             floatCopyBarValue = new floatBufferRepresentation(data, 0, n);
         }
@@ -373,7 +365,7 @@ public class dataBuffer implements Serializable {
         Iterator it = getIterator();
         int i = 0;
         while (it.hasNext()) {
-            ret[i] = (short)(((double)it.next())*(Short.MAX_VALUE)); //Rescale data to short range
+            ret[i] = (short) (((double) it.next()) * (Short.MAX_VALUE)); //Rescale data to short range
             i++;
         }
         return ret;
@@ -440,10 +432,10 @@ public class dataBuffer implements Serializable {
 }
 
 class floatBufferRepresentation {
+    transient public final Object lock = new Object();
     FloatBuffer data;
     int size;
     int offset;
-    transient public final Object lock = new Object();
 
     floatBufferRepresentation(FloatBuffer data, int offset, int size) {
         this.data = data;

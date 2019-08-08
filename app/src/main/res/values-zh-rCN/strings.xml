@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">手机物理工坊</string>
+<resources>
+    <string name="app_name">手机物理工坊</string>
     <string name="action_settings">设置</string>
     <string name="title_activity_experiment">手机物理工坊</string>
 
@@ -225,7 +226,7 @@
     <string name="bt_more_info_link_button">更多信息</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
-<string name="creditsLibs">用于远程传输的web界面使用了MIT授权有效的Javascript库\"Chart.js\" (http://chartjs.org)。对于傅里叶变换，我们使用了快速傅立叶转换库(http://fftw.org)，Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology，都是GNU通用授权（第二版或以后）有效的。</string>
+    <string name="creditsLibs">用于远程传输的web界面使用了MIT授权有效的Javascript库\"Chart.js\" (http://chartjs.org)。对于傅里叶变换，我们使用了快速傅立叶转换库(http://fftw.org)，Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology，都是GNU通用授权（第二版或以后）有效的。</string>
     <string name="vendorSensorWarning1">传感器</string>
     <string name="vendorSensorWarning2">未汇报正确的传感器类型。它可能是供应商特定的，我们只能从名字猜测其类型。因此，它可能不会如预期那样工作。</string>
 
@@ -254,4 +255,4 @@
     <string name="open_bluetooth_assets_title">针对蓝牙设备的实验</string>
     <string name="open_bluetooth_assets">针对你的设备，下列实验可从phyphox获得。你可以打开并使用它们，或者将它们全部添加到你的收藏中，以便从主菜单中轻松地访问。</string>
 
-    </resources>
+</resources>

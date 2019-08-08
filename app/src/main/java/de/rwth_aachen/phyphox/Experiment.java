@@ -18,11 +18,11 @@ import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
-import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.ShareCompat;
@@ -32,6 +32,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -55,7 +56,6 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.support.v7.widget.Toolbar;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -88,7 +88,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //This handler creates the "main loop" as it is repeatedly called using postDelayed
     //Not a real loop to keep some resources available
     final Handler updateViewsHandler = new Handler();
-
+    public boolean remoteInput = false; //Has there been an data input (inputViews for now) from the remote server that should be processed?
+    public boolean shouldDefocus = false; //Should the current view loose focus? (Neccessary to remotely edit an input view, which has focus on this device)
+    public SensorManager sensorManager; //The sensor manager
     //Status variables
     boolean measuring = false; //Measurement running?
     boolean loadCompleted = false; //Set to true when an experiment has been loaded successfully
@@ -97,49 +99,142 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean menuHintDismissed = false; //Remember that the user has clicked away the hint to the menu
     boolean startHintDismissed = false; //Remember that the user has clicked away the hint to the start button
     boolean saveLocallyDismissed = false; //Remember that the user did not want to save this experiment locally
-
-    //Remote server
-    private remoteServer remote = null; //The remote server (see remoteServer class)
-    private boolean serverEnabled = false; //Is the remote server activated?
     boolean remoteIntentMeasuring = false; //Is the remote interface expecting that the measurement is running?
     boolean updateState = false; //This is set to true when a state changed is initialized remotely. The measurement state will then be set to remoteIntentMeasuring.
-    public boolean remoteInput = false; //Has there been an data input (inputViews for now) from the remote server that should be processed?
-    public boolean shouldDefocus = false; //Should the current view loose focus? (Neccessary to remotely edit an input view, which has focus on this device)
-    private String sessionID = "";
-
     //Timed run status
     boolean timedRun = false; //Timed run enabled?
     double timedRunStartDelay = 3.; //Start delay for timed runs
     double timedRunStopDelay = 10.; //Stop delay for timed runs
     CountDownTimer cdTimer = null; //This holds the timer used for timed runs. If it is not null, a timed run is running and at the end of the countdown the measurement state will change
     long millisUntilFinished = 0; //This variable is used to cache the remaining countdown, so it is available outside the onTick-callback of the timer
-
     //The experiment
     phyphoxExperiment experiment; //The experiment (definition and functionality) after it has been loaded.
     TabLayout tabLayout;
     ViewPager pager;
     expViewPagerAdapter adapter;
-
-    //Others...
-    private Resources res; //Helper to easily access resources
-    public SensorManager sensorManager; //The sensor manager
     Intent intent; //Another helper to easily access the data of the intent that triggered this activity
     ProgressDialog progress; //Holds a progress dialog when a file is being loaded
     Bundle savedInstanceState = null; //Holds the saved instance state, so it can be handled outside onCreate
     MenuItem startMenuItem = null; //Reference to play-hint button
     ImageView hintAnimation = null; //Reference to the animated part of the play-hint button
-
     //The analysis progress bar
     ProgressBar analysisProgress;       //Reference to the progress bar view
     boolean analysisInProgress = false; //Set to true by second thread while analysis is running
     float analysisProgressAlpha = 0.f;  //Will be increased while analysis is running and decreased while idle. This smoothes the display and results in an everage transparency representing the average load.
-
     PopupWindow popupWindow = null;
+    //The updateData runnable runs on a second thread and performs the heavy math (if defined in the
+    // experiment)
+    Runnable updateData = new Runnable() {
+        @Override
+        public void run() {
+            //Do the analysis. All of these elements might fire exceptions,
+            // especially on badly defined experiments. So let's be save and catch anything that
+            // gets through to here.
+            while (measuring && !shutdown) {
+                if (experiment != null) { //This only makes sense if there is an experiment
+                    try {
+                        //time for some analysis?
+                        if (measuring) {
+                            analysisInProgress = true;
+                            experiment.processAnalysis(true); //Do the math.
+                            analysisInProgress = false;
+                        }
+                    } catch (Exception e) {
+                        Log.e("updateData", "Unhandled exception.", e);
+                    }
+                }
+                try {
+                    Thread.sleep(10);
+                } catch (Exception e) {
+                    Log.w("updateData", "Sleep interrupted");
+                }
+            }
+        }
+    };
+    //Remote server
+    private remoteServer remote = null; //The remote server (see remoteServer class)
+    private boolean serverEnabled = false; //Is the remote server activated?
+    //The updateViews runnable does everything UI related and hence runs on the UI thread
+    Runnable updateViews = new Runnable() {
+        @Override
+        public void run() {
+            updateViewsHandler.removeCallbacksAndMessages(null);
+
+            //Show progressbar if analysis is running (set by second thread)
+            if (analysisInProgress) {
+                analysisProgressAlpha += 0.05;
+                if (analysisProgressAlpha > 1.f)
+                    analysisProgressAlpha = 1.f;
+            } else {
+                analysisProgressAlpha -= 0.05;
+                if (analysisProgressAlpha < 0.f)
+                    analysisProgressAlpha = 0.f;
+            }
+            if (analysisProgressAlpha > 0.1) {
+                if (analysisProgressAlpha >= 0.9)
+                    analysisProgress.setAlpha(1.f);
+                else
+                    analysisProgress.setAlpha(analysisProgressAlpha);
+                analysisProgress.setVisibility(View.VISIBLE);
+            } else {
+                analysisProgress.setVisibility(View.INVISIBLE);
+            }
+
+            //If a defocus has been requested (on another thread), do so.
+            if (shouldDefocus) {
+                defocus();
+                shouldDefocus = false;
+            }
+
+            //If a state change has been requested (on another thread, i.e. remote server), do so
+            if (updateState) {
+                if (remoteIntentMeasuring) {
+                    if (timedRun)
+                        startTimedMeasurement();
+                    else
+                        startMeasurement();
+                } else
+                    stopMeasurement();
+                updateState = false;
+            }
+
+            if (experiment != null) {
+                try {
+                    //Get values from input views only if there isn't fresh data from the remote server which might get overridden
+                    if (!remoteInput) {
+                        experiment.handleInputViews(tabLayout.getSelectedTabPosition(), measuring);
+                    }
+                    //Update all the views currently visible
+                    if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
+                        if (remoteInput) {
+                            //If there has been remote input, we may reset it as updateViews will have taken care of this
+                            //This also means, that there is new input from the user
+                            remoteInput = false;
+                            experiment.newUserInput = true;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e("updateViews", "Unhandled exception.", e);
+                } finally {
+                    //If we are not supposed to stop, let's do it again in a short while
+                    if (!shutdown) {
+                        if (measuring)
+                            updateViewsHandler.postDelayed(this, 40);
+                        else
+                            updateViewsHandler.postDelayed(this, 400); //As there is no experiment running, we can take our time and maybe save some battery
+                    }
+                }
+            }
+        }
+    };
+    private String sessionID = "";
+    //Others...
+    private Resources res; //Helper to easily access resources
 
     @Override
     public void onBackPressed() {
         if (adapter != null && pager != null) {
-            expViewFragment f = (expViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
+            expViewFragment f = (expViewFragment) getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
             if (f != null && f.hasExclusive()) {
                 f.leaveExclusive();
                 return;
@@ -155,12 +250,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
-        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
 
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
 
-        this.analysisProgress = (ProgressBar)findViewById(R.id.progressBar);
+        this.analysisProgress = (ProgressBar) findViewById(R.id.progressBar);
         analysisProgress.setVisibility(View.INVISIBLE);
 
         //Set our custom action bar
@@ -178,7 +273,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             App app = (App) this.getApplicationContext();
             experiment = app.experiment;
             //experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
-        };
+        }
+        ;
         if (experiment != null) {
             //We saved our experiment. Lets just retrieve it and continue
             onExperimentLoaded(experiment);
@@ -321,8 +417,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
             }
 
-            tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
-            pager = ((ViewPager)findViewById(R.id.view_pager));
+            tabLayout = ((TabLayout) findViewById(R.id.tab_layout));
+            pager = ((ViewPager) findViewById(R.id.view_pager));
             FragmentManager manager = getSupportFragmentManager();
             adapter = new expViewPagerAdapter(manager, this.experiment);
             pager.setAdapter(adapter);
@@ -330,7 +426,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             pager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
             for (int i = 0; i < adapter.getCount(); i++) {
-                expViewFragment f = (expViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
+                expViewFragment f = (expViewFragment) getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
                 if (f != null)
                     f.recreateView();
             }
@@ -339,7 +435,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 tabLayout.setVisibility(View.GONE);
 
             try {
-                experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
+                experiment.init(sensorManager, (LocationManager) this.getSystemService(Context.LOCATION_SERVICE));
             } catch (Exception e) {
                 Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
             }
@@ -396,12 +492,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 connectBluetoothDevices(false, false);
                             }
                         }).setOnCancelListener(new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialog) {
-                                saveLocallyDismissed = true;
-                                connectBluetoothDevices(false, false);
-                            }
-                        });
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        saveLocallyDismissed = true;
+                        connectBluetoothDevices(false, false);
+                    }
+                });
                 AlertDialog dialog = builder.create();
                 dialog.show();
             } else {
@@ -420,12 +516,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //If the hint has been shown a few times, we do not show it again
         SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-        int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
+        int menuHintDismissCount = settings.getInt("menuHintDismissCount", 0);
         if (menuHintDismissCount >= 3)
             menuHintDismissed = true;
 
         //If the start button has been used a few times, we do not show its hint again
-        int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
+        int startHintDismissCount = settings.getInt("startHintDismissCount", 0);
         if (startHintDismissCount >= 3)
             startHintDismissed = true;
 
@@ -460,23 +556,23 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
                 // define onSuccess
                 if (startMeasurement) {
-                    btTask.onSuccess = new Runnable () {
-                      @Override
-                        public void run () {
-                          if (timed) {
-                              startTimedMeasurement();
-                          } else {
-                              startMeasurement();
-                          }
-                      }
+                    btTask.onSuccess = new Runnable() {
+                        @Override
+                        public void run() {
+                            if (timed) {
+                                startTimedMeasurement();
+                            } else {
+                                startMeasurement();
+                            }
+                        }
                     };
                 }
 
                 // set attributes of errorDialog
                 Bluetooth.errorDialog.context = Experiment.this;
-                Bluetooth.errorDialog.cancel = new Runnable () {
+                Bluetooth.errorDialog.cancel = new Runnable() {
                     @Override
-                    public void run () {
+                    public void run() {
                         btTask.progress.dismiss();
                     }
                 };
@@ -504,16 +600,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
         View hintView = inflater.inflate(R.layout.menu_hint, null);
-        TextView text = (TextView)hintView.findViewById(R.id.hint_text);
+        TextView text = (TextView) hintView.findViewById(R.id.hint_text);
         text.setText(textRessource);
         ImageView iv = ((ImageView) hintView.findViewById(R.id.hint_arrow));
-        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams)iv.getLayoutParams();
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) iv.getLayoutParams();
         lp.gravity = gravity;
         iv.setLayoutParams(lp);
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        if(Build.VERSION.SDK_INT >= 21){
+        if (Build.VERSION.SDK_INT >= 21) {
             popupWindow.setElevation(4.0f);
         }
 
@@ -542,7 +638,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
                 int pos[] = new int[2];
                 viewItem.getLocationOnScreen(pos);
-                if(isFinishing())
+                if (isFinishing())
                     return;
                 try {
                     popupWindow.showAtLocation(viewItem, Gravity.TOP | gravity, pos[0] + fromRight * viewItem.getHeight(), pos[1] + (int) (viewItem.getHeight() * 0.8));
@@ -560,8 +656,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 popupWindow = null;
                 menuHintDismissed = true;
                 SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-                int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
-                settings.edit().putInt("menuHintDismissCount", menuHintDismissCount+1).apply();
+                int menuHintDismissCount = settings.getInt("menuHintDismissCount", 0);
+                settings.edit().putInt("menuHintDismissCount", menuHintDismissCount + 1).apply();
             }
         }, Gravity.RIGHT, 0);
     }
@@ -573,7 +669,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 popupWindow = null;
                 startHintDismissed = true;
             }
-        }, Gravity.RIGHT, 2 );
+        }, Gravity.RIGHT, 2);
     }
 
     @Override
@@ -584,7 +680,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     //Create an animation to guide the inexperienced user to the start button.
-    private void showPlayHintAnimation () {
+    private void showPlayHintAnimation() {
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         hintAnimation = (ImageView) inflater.inflate(R.layout.play_animated, null);
 
@@ -601,7 +697,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     //Hide the start button hint animation
-    private void hidePlayHintAnimation () {
+    private void hidePlayHintAnimation() {
         if (hintAnimation != null) {
             hintAnimation.clearAnimation();
             hintAnimation.setVisibility(View.GONE);
@@ -637,23 +733,29 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         for (int i = 1; i <= 5; i++) {
             MenuItem link;
             switch (i) {
-                case 1: link = menu.findItem(R.id.action_link1);
+                case 1:
+                    link = menu.findItem(R.id.action_link1);
                     break;
-                case 2: link = menu.findItem(R.id.action_link2);
+                case 2:
+                    link = menu.findItem(R.id.action_link2);
                     break;
-                case 3: link = menu.findItem(R.id.action_link3);
+                case 3:
+                    link = menu.findItem(R.id.action_link3);
                     break;
-                case 4: link = menu.findItem(R.id.action_link4);
+                case 4:
+                    link = menu.findItem(R.id.action_link4);
                     break;
-                case 5: link = menu.findItem(R.id.action_link5);
+                case 5:
+                    link = menu.findItem(R.id.action_link5);
                     break;
-                default: link = menu.findItem(R.id.action_link5);
+                default:
+                    link = menu.findItem(R.id.action_link5);
                     break;
             }
             if (it.hasNext()) {
                 link.setVisible(true);
-                Map.Entry entry = (Map.Entry)it.next();
-                link.setTitle((String)entry.getKey());
+                Map.Entry entry = (Map.Entry) it.next();
+                link.setTitle((String) entry.getKey());
             } else
                 link.setVisible(false);
         }
@@ -719,9 +821,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 timer.setTitle(String.valueOf(millisUntilFinished / 1000 + 1) + "s");
             } else { //No timer running? Show the start value of the next timer, which is...
                 if (measuring) //...the stop delay if we are already measuring
-                    timer.setTitle(String.valueOf(Math.round(timedRunStopDelay))+"s");
+                    timer.setTitle(String.valueOf(Math.round(timedRunStopDelay)) + "s");
                 else //...the start delay if we are paused
-                    timer.setTitle(String.valueOf(Math.round(timedRunStartDelay))+"s");
+                    timer.setTitle(String.valueOf(Math.round(timedRunStartDelay)) + "s");
             }
         }
         return true;
@@ -744,9 +846,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public Vector<PlotAreaView> getAllPlotAreaViews(View v) {
         Vector<PlotAreaView> l = new Vector<>();
         if (v instanceof PlotAreaView) {
-            l.add((PlotAreaView)v);
+            l.add((PlotAreaView) v);
         } else if (v instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup)v;
+            ViewGroup vg = (ViewGroup) v;
             for (int i = 0; i < vg.getChildCount(); i++) {
                 l.addAll(getAllPlotAreaViews(vg.getChildAt(i)));
             }
@@ -754,12 +856,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return l;
     }
 
+    //Below follow two runnable, which act as our "main loop" (although this feels like a function,
+    //   technically these are instances of the Runnable class with our function being the
+    //   overridden version of the run() function. But it feels better to write the whole thing down
+    //   like a function...
+
     public Vector<GraphView> getAllGraphViews(View v) {
         Vector<GraphView> l = new Vector<>();
         if (v instanceof GraphView) {
-            l.add((GraphView)v);
+            l.add((GraphView) v);
         } else if (v instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup)v;
+            ViewGroup vg = (ViewGroup) v;
             for (int i = 0; i < vg.getChildCount(); i++) {
                 l.addAll(getAllGraphViews(vg.getChildAt(i)));
             }
@@ -789,8 +896,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Play button. Start a measurement
         if (id == R.id.action_play) {
             SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-            int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
-            settings.edit().putInt("startHintDismissCount", startHintDismissCount+1).apply();
+            int startHintDismissCount = settings.getInt("startHintDismissCount", 0);
+            settings.edit().putInt("startHintDismissCount", startHintDismissCount + 1).apply();
 
             if (timedRun) {
                 startTimedMeasurement();
@@ -938,8 +1045,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         public void onClick(DialogInterface dialog, int id) {
 
                             final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-                            String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
-                            File file = new File(getCacheDir(), "/"+filename);
+                            String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now) + ".phyphox";
+                            File file = new File(getCacheDir(), "/" + filename);
                             try {
                                 FileOutputStream output = new FileOutputStream(file);
                                 String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
@@ -1014,7 +1121,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-            File file = new File(this.getCacheDir(), "/"+ (fileName.isEmpty() ? "phyphox" : fileName) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
+            File file = new File(this.getCacheDir(), "/" + (fileName.isEmpty() ? "phyphox" : fileName) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()) + ".png");
             try {
                 FileOutputStream out = new FileOutputStream(file);
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
@@ -1057,7 +1164,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (id == R.id.action_force_gnss) {
             stopMeasurement();
             if (experiment.gpsIn != null) {
-                experiment.gpsIn.forceGNSS= !item.isChecked();
+                experiment.gpsIn.forceGNSS = !item.isChecked();
             }
         }
 
@@ -1087,7 +1194,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.TetherSettings");
                                 intent.setComponent(cn);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity( intent);
+                                startActivity(intent);
                             }
                         })
                         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -1117,7 +1224,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 stateLabel.setText(experiment.stateTitle);
                 stateLabel.setTextColor(res.getColor(R.color.main));
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
+                lp.setMargins(0, 0, 0, Math.round(res.getDimension(R.dimen.font)));
                 stateLabel.setLayoutParams(lp);
                 ll.addView(stateLabel);
             }
@@ -1163,22 +1270,28 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         int highlightLink = -1;
         switch (id) {
-            case R.id.action_link1: highlightLink = 0;
+            case R.id.action_link1:
+                highlightLink = 0;
                 break;
-            case R.id.action_link2: highlightLink = 1;
+            case R.id.action_link2:
+                highlightLink = 1;
                 break;
-            case R.id.action_link3: highlightLink = 2;
+            case R.id.action_link3:
+                highlightLink = 2;
                 break;
-            case R.id.action_link4: highlightLink = 3;
+            case R.id.action_link4:
+                highlightLink = 3;
                 break;
-            case R.id.action_link5: highlightLink = 4;
+            case R.id.action_link5:
+                highlightLink = 4;
                 break;
-            default: highlightLink = -1;
+            default:
+                highlightLink = -1;
                 break;
         }
         if (highlightLink >= 0) {
-            Map.Entry entry = (Map.Entry)experiment.highlightedLinks.entrySet().toArray()[highlightLink];
-            Uri uri = Uri.parse((String)entry.getValue());
+            Map.Entry entry = (Map.Entry) experiment.highlightedLinks.entrySet().toArray()[highlightLink];
+            Uri uri = Uri.parse((String) entry.getValue());
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             if (intent.resolveActivity(getPackageManager()) != null) {
                 startActivity(intent);
@@ -1194,116 +1307,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         return super.onOptionsItemSelected(item);
     }
-
-    //Below follow two runnable, which act as our "main loop" (although this feels like a function,
-    //   technically these are instances of the Runnable class with our function being the
-    //   overridden version of the run() function. But it feels better to write the whole thing down
-    //   like a function...
-
-    //The updateData runnable runs on a second thread and performs the heavy math (if defined in the
-    // experiment)
-    Runnable updateData = new Runnable() {
-        @Override
-        public void run() {
-            //Do the analysis. All of these elements might fire exceptions,
-            // especially on badly defined experiments. So let's be save and catch anything that
-            // gets through to here.
-            while (measuring && !shutdown) {
-                if (experiment != null) { //This only makes sense if there is an experiment
-                    try {
-                        //time for some analysis?
-                        if (measuring) {
-                            analysisInProgress = true;
-                            experiment.processAnalysis(true); //Do the math.
-                            analysisInProgress = false;
-                        }
-                    } catch (Exception e) {
-                        Log.e("updateData", "Unhandled exception.", e);
-                    }
-                }
-                try {
-                    Thread.sleep(10);
-                } catch (Exception e) {
-                    Log.w("updateData", "Sleep interrupted");
-                }
-            }
-        }
-    };
-
-    //The updateViews runnable does everything UI related and hence runs on the UI thread
-    Runnable updateViews = new Runnable() {
-        @Override
-        public void run() {
-            updateViewsHandler.removeCallbacksAndMessages(null);
-
-            //Show progressbar if analysis is running (set by second thread)
-            if (analysisInProgress) {
-                analysisProgressAlpha += 0.05;
-                if (analysisProgressAlpha > 1.f)
-                    analysisProgressAlpha = 1.f;
-            } else {
-                analysisProgressAlpha -= 0.05;
-                if (analysisProgressAlpha < 0.f)
-                    analysisProgressAlpha = 0.f;
-            }
-            if (analysisProgressAlpha > 0.1) {
-                if (analysisProgressAlpha >= 0.9)
-                    analysisProgress.setAlpha(1.f);
-                else
-                    analysisProgress.setAlpha(analysisProgressAlpha);
-                analysisProgress.setVisibility(View.VISIBLE);
-            } else {
-                analysisProgress.setVisibility(View.INVISIBLE);
-            }
-
-            //If a defocus has been requested (on another thread), do so.
-            if (shouldDefocus) {
-                defocus();
-                shouldDefocus = false;
-            }
-
-            //If a state change has been requested (on another thread, i.e. remote server), do so
-            if (updateState) {
-                if (remoteIntentMeasuring) {
-                    if (timedRun)
-                        startTimedMeasurement();
-                    else
-                        startMeasurement();
-                } else
-                    stopMeasurement();
-                updateState = false;
-            }
-
-            if (experiment != null) {
-                try {
-                    //Get values from input views only if there isn't fresh data from the remote server which might get overridden
-                    if (!remoteInput) {
-                        experiment.handleInputViews(tabLayout.getSelectedTabPosition(), measuring);
-                    }
-                    //Update all the views currently visible
-                    if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
-                        if (remoteInput) {
-                            //If there has been remote input, we may reset it as updateViews will have taken care of this
-                            //This also means, that there is new input from the user
-                            remoteInput = false;
-                            experiment.newUserInput = true;
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e("updateViews", "Unhandled exception.", e);
-                } finally {
-                    //If we are not supposed to stop, let's do it again in a short while
-                    if (!shutdown) {
-                        if (measuring)
-                            updateViewsHandler.postDelayed(this, 40);
-                        else
-                            updateViewsHandler.postDelayed(this, 400); //As there is no experiment running, we can take our time and maybe save some battery
-                    }
-                }
-            }
-        }
-    };
-
 
     //Start a measurement
     public void startMeasurement() {
@@ -1321,14 +1324,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Bluetooth.errorDialog.context = Experiment.this;
                 // try to connect the bluetooth devices again when the user clicks "try again"
                 Bluetooth.errorDialog.tryAgain = new Runnable() {
-                  @Override
-                     public void run() {
-                      connectBluetoothDevices(true, false);
-                  }
-                 };
-                 Bluetooth.errorDialog.run();
-                 return;
-	    }
+                    @Override
+                    public void run() {
+                        connectBluetoothDevices(true, false);
+                    }
+                };
+                Bluetooth.errorDialog.run();
+                return;
+            }
         }
 
         //Set measurement state
@@ -1365,7 +1368,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //No more turning off during the measurement
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             // check if all Bluetooth devices are connected and display an errorDialog if not
             Bluetooth notConnectedDevice = null;
             for (Bluetooth b : experiment.bluetoothInputs) {
@@ -1384,7 +1387,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
             if (notConnectedDevice != null) {
                 // show an error dialog
-                Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
+                Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection) + Bluetooth.BluetoothException.getMessage(notConnectedDevice);
                 Bluetooth.errorDialog.context = Experiment.this;
                 // try to connect the bluetooth devices again when the user clicks "try again"
                 Bluetooth.errorDialog.tryAgain = new Runnable() {
@@ -1399,7 +1402,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         //Not much more to do here. Just set up a countdown that will start the measurement
-        millisUntilFinished = Math.round(timedRunStartDelay*1000);
+        millisUntilFinished = Math.round(timedRunStartDelay * 1000);
         cdTimer = new CountDownTimer(millisUntilFinished, 100) {
 
             public void onTick(long muf) {
@@ -1462,7 +1465,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Start the remote server (see remoteServer class)
     private void startRemoteServer() {
-        TextView announcer = (TextView)findViewById(R.id.remoteInfo);
+        TextView announcer = (TextView) findViewById(R.id.remoteInfo);
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -1493,7 +1496,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
         lp.addRule(RelativeLayout.ABOVE, R.id.remoteInfo);
-        ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
+        ((ViewPager) findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         //Also we want to keep the device active for remote access
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -1504,7 +1507,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (!measuring)
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //Announce this to the user, so he knows why the webinterface stopped working.
-        TextView announcer = (TextView)findViewById(R.id.remoteInfo);
+        TextView announcer = (TextView) findViewById(R.id.remoteInfo);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
         else
@@ -1512,7 +1515,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
-        ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
+        ((ViewPager) findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         if (remote == null) //no server there? never mind.
             return;

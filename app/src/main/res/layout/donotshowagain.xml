@@ -10,24 +10,22 @@
         android:layout_width="match_parent"
         android:layout_height="0px"
         android:layout_weight="1"
-        android:padding="@dimen/activity_horizontal_margin"
-        android:minHeight="64dp">
+        android:minHeight="64dp"
+        android:padding="@dimen/activity_horizontal_margin">
 
         <TextView
-            android:text="@string/damageWarning"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:text="@string/damageWarning" />
 
     </ScrollView>
 
-    <CheckBox
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <CheckBox xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/donotshowagain"
+        style="@style/experimentList"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/donotshowagain"
         android:checked="false"
-        style="@style/experimentList">
-    </CheckBox>
+        android:text="@string/donotshowagain"></CheckBox>
 
 </LinearLayout>

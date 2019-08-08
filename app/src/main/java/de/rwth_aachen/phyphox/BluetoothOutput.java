@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 
 import java.util.UUID;
 import java.util.Vector;
@@ -28,7 +27,7 @@ public class BluetoothOutput extends Bluetooth {
      * @param idString        An identifier given by the experiment author used to group multiple devices and allow the user to distinguish them
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
-     * @param uuidFilter       Optional filter to identify devices by advertices service or attribute UUIDs
+     * @param uuidFilter      Optional filter to identify devices by advertices service or attribute UUIDs
      * @param context         context
      * @param buffers         list of dataOutputs to write the values
      * @param characteristics list of all characteristics the object should be able to operate on

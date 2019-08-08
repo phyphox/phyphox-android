@@ -3,10 +3,8 @@ package de.rwth_aachen.phyphox;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,20 +21,14 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.apache.poi.hssf.util.HSSFColor;
-
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Vector;
 
 /**
  * Created by Sebastian Staacks on 03.02.18.
@@ -48,17 +40,107 @@ public class BluetoothScanDialog {
     private final Activity parentActivity;
     private final Context ctx;
     private final BluetoothAdapter bta;
+    private final Object lock = new Object();
     private AlertDialog dialog;
     private TextView title;
     private ListView list;
     private DeviceListAdapter listAdapter;
     private BluetoothDeviceInfo selectedDevice = null;
-    private final Object lock = new Object();
-
     private String nameFilter;
     private UUID uuidFilter;
     private Set<String> supportedNameFilter;
     private Set<UUID> supportedUUIDFilter;
+    private BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
+        @Override
+        public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
+            final Set<UUID> uuids = new HashSet<>();
+
+            //Search scanRecord for UUIDs
+            int index = 0;
+            while (index < scanRecord.length - 2) {
+                int length = scanRecord[index];
+                if (index + length >= scanRecord.length) {
+                    Log.d("bluetooth", "Malformed scanRecord, length too long.");
+                    break;
+                }
+                if (length == 0)
+                    break;
+                int type = scanRecord[index + 1];
+
+                if (type == 0x02 || type == 0x03) {
+                    for (int subindex = 0; subindex < length - 1; subindex += 2) {
+                        String uuid16str = String.format("%02x%02x", scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
+                        UUID uuid = UUID.fromString(Bluetooth.baseUUID.toString().substring(0, 4) + uuid16str + Bluetooth.baseUUID.toString().substring(8));
+                        uuids.add(uuid);
+//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 16bit: " + uuid.toString());
+                    }
+                } else if (type == 0x04 || type == 0x05) {
+                    for (int subindex = 0; subindex < length - 1; subindex += 4) {
+                        String uuid32str = String.format("%02x%02x%02x%02x", scanRecord[index + subindex + 2 + 3], scanRecord[index + subindex + 2 + 2], scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
+                        UUID uuid = UUID.fromString(uuid32str + Bluetooth.baseUUID.toString().substring(8));
+                        uuids.add(uuid);
+//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 32bit: " + uuid.toString());
+                    }
+                } else if (length == 17 && (type == 0x06 || type == 0x07)) {
+                    //128 bit UUIDs
+                    for (int subindex = 0; subindex < length - 1; subindex += 16) {
+
+                        long leastSignificant = 0;
+                        for (int i = 7; i >= 0; i--) {
+                            leastSignificant <<= 8;
+                            leastSignificant |= (scanRecord[index + subindex + 2 + i] & 0xFF);
+                        }
+
+                        long mostSignificant = 0;
+                        for (int i = 7; i >= 0; i--) {
+                            mostSignificant <<= 8;
+                            mostSignificant |= (scanRecord[index + subindex + 2 + 8 + i] & 0xFF);
+                        }
+
+                        uuids.add(new UUID(mostSignificant, leastSignificant));
+//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 128bit: " + new UUID(mostSignificant, leastSignificant).toString());
+
+                    }
+                }
+                index += length + 1;
+            }
+
+            if (device.getName() == null || (!(nameFilter == null || nameFilter.isEmpty()) && !device.getName().contains(nameFilter))) {
+                return;
+            }
+
+            if (!(uuidFilter == null) && !uuids.contains(uuidFilter)) {
+                return;
+            }
+
+            boolean isSupported = (supportedNameFilter == null || supportedNameFilter.isEmpty());
+            if (!isSupported) {
+                for (String name : supportedNameFilter)
+                    if (device.getName().contains(name)) {
+                        isSupported = true;
+                        break;
+                    }
+            }
+
+            if (supportedUUIDFilter != null) {
+                for (UUID uuid : supportedUUIDFilter) {
+                    isSupported |= uuids.contains(uuid);
+                }
+            }
+
+            final boolean supported = isSupported;
+
+            final boolean phyphoxService = uuids.contains(Bluetooth.phyphoxServiceUUID);
+
+            parentActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    listAdapter.addDevice(new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi));
+                    listAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    };
 
     BluetoothScanDialog(final Activity activity, final Context context, BluetoothAdapter bta) {
         this.parentActivity = activity;
@@ -74,13 +156,13 @@ public class BluetoothScanDialog {
 
                 View view = inflater.inflate(R.layout.bluetooth_scan_dialog, null);
                 builder.setView(view)
-                       .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                           @Override
-                           public void onClick(DialogInterface dialog, int id) {
-                               dialog.dismiss();
-                           }
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                            }
 
-                       })
+                        })
                         .setPositiveButton(R.string.bt_more_info_link_button, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -120,98 +202,6 @@ public class BluetoothScanDialog {
             }
         });
     }
-
-    private BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
-                @Override
-                public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
-                    final Set<UUID> uuids = new HashSet<>();
-
-                    //Search scanRecord for UUIDs
-                    int index = 0;
-                    while (index < scanRecord.length - 2) {
-                        int length = scanRecord[index];
-                        if (index + length >= scanRecord.length) {
-                            Log.d("bluetooth", "Malformed scanRecord, length too long.");
-                            break;
-                        }
-                        if (length == 0)
-                            break;
-                        int type = scanRecord[index+1];
-
-                        if (type == 0x02 || type == 0x03) {
-                            for (int subindex = 0; subindex < length-1; subindex += 2) {
-                                String uuid16str = String.format("%02x%02x", scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
-                                UUID uuid = UUID.fromString(Bluetooth.baseUUID.toString().substring(0, 4) + uuid16str + Bluetooth.baseUUID.toString().substring(8));
-                                uuids.add(uuid);
-//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 16bit: " + uuid.toString());
-                            }
-                        } else if (type == 0x04 || type == 0x05) {
-                            for (int subindex = 0; subindex < length-1; subindex += 4) {
-                                String uuid32str = String.format("%02x%02x%02x%02x", scanRecord[index + subindex + 2 + 3], scanRecord[index + subindex + 2 + 2], scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
-                                UUID uuid = UUID.fromString(uuid32str + Bluetooth.baseUUID.toString().substring(8));
-                                uuids.add(uuid);
-//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 32bit: " + uuid.toString());
-                            }
-                        } else if (length == 17 && (type == 0x06 || type == 0x07)) {
-                            //128 bit UUIDs
-                            for (int subindex = 0; subindex < length-1; subindex += 16) {
-
-                                long leastSignificant = 0;
-                                for (int i = 7; i >= 0; i--) {
-                                    leastSignificant <<= 8;
-                                    leastSignificant |= (scanRecord[index + subindex + 2 + i] & 0xFF);
-                                }
-
-                                long mostSignificant = 0;
-                                for (int i = 7; i >= 0; i--) {
-                                    mostSignificant <<= 8;
-                                    mostSignificant |= (scanRecord[index + subindex + 2 + 8 + i] & 0xFF);
-                                }
-
-                                uuids.add(new UUID(mostSignificant, leastSignificant));
-//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 128bit: " + new UUID(mostSignificant, leastSignificant).toString());
-
-                            }
-                        }
-                        index += length+1;
-                    }
-
-                    if (device.getName() == null || (!(nameFilter == null || nameFilter.isEmpty()) && !device.getName().contains(nameFilter))) {
-                        return;
-                    }
-
-                    if (!(uuidFilter == null) && !uuids.contains(uuidFilter)) {
-                        return;
-                    }
-
-                    boolean isSupported = (supportedNameFilter == null || supportedNameFilter.isEmpty());
-                    if (!isSupported) {
-                        for (String name : supportedNameFilter)
-                            if (device.getName().contains(name)) {
-                                isSupported = true;
-                                break;
-                            }
-                    }
-
-                    if (supportedUUIDFilter != null) {
-                        for (UUID uuid : supportedUUIDFilter) {
-                            isSupported |= uuids.contains(uuid);
-                        }
-                    }
-
-                    final boolean supported = isSupported;
-
-                    final boolean phyphoxService = uuids.contains(Bluetooth.phyphoxServiceUUID);
-
-                    parentActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            listAdapter.addDevice(new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi));
-                            listAdapter.notifyDataSetChanged();
-                        }
-                });
-            }
-        };
 
     public boolean scanPermission() {
         if (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -277,6 +267,11 @@ public class BluetoothScanDialog {
         return selectedDevice;
     }
 
+    static class SubViews {
+        TextView deviceName;
+        TextView notSupported;
+        ImageView signalStrength;
+    }
 
     public class BluetoothDeviceInfo {
         BluetoothDevice device;
@@ -285,7 +280,7 @@ public class BluetoothScanDialog {
         Set<UUID> uuids;
         int lastRSSI;
 
-        BluetoothDeviceInfo (BluetoothDevice device, Boolean supported, Boolean phyphoxService, Set<UUID> uuids, int lastRSSI) {
+        BluetoothDeviceInfo(BluetoothDevice device, Boolean supported, Boolean phyphoxService, Set<UUID> uuids, int lastRSSI) {
             this.device = device;
             this.supported = supported;
             this.phyphoxService = phyphoxService;
@@ -298,11 +293,13 @@ public class BluetoothScanDialog {
     private class DeviceListAdapter extends BaseAdapter {
         private ArrayList<BluetoothDeviceInfo> devices;
         private LayoutInflater inflator;
+
         public DeviceListAdapter() {
             super();
             devices = new ArrayList<BluetoothDeviceInfo>();
             inflator = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
+
         public void addDevice(BluetoothDeviceInfo device) {
             boolean inList = false;
             for (BluetoothDeviceInfo item : devices) {
@@ -317,24 +314,30 @@ public class BluetoothScanDialog {
             if (!inList)
                 devices.add(device);
         }
+
         public BluetoothDeviceInfo getDevice(int position) {
             return devices.get(position);
         }
+
         public void clear() {
             devices.clear();
         }
+
         @Override
         public int getCount() {
             return devices.size();
         }
+
         @Override
         public Object getItem(int i) {
             return devices.get(i);
         }
+
         @Override
         public long getItemId(int i) {
             return i;
         }
+
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             SubViews subViews;
@@ -357,7 +360,7 @@ public class BluetoothScanDialog {
                 subViews.deviceName.setText(R.string.unknown);
             if (deviceInfo.supported || deviceInfo.phyphoxService) {
                 subViews.notSupported.setVisibility(View.GONE);
-                ((RelativeLayout.LayoutParams)subViews.deviceName.getLayoutParams()).addRule(RelativeLayout.CENTER_VERTICAL);
+                ((RelativeLayout.LayoutParams) subViews.deviceName.getLayoutParams()).addRule(RelativeLayout.CENTER_VERTICAL);
             } else {
                 subViews.notSupported.setVisibility(View.VISIBLE);
             }
@@ -378,11 +381,5 @@ public class BluetoothScanDialog {
 
             return view;
         }
-    }
-
-    static class SubViews {
-        TextView deviceName;
-        TextView notSupported;
-        ImageView signalStrength;
     }
 }

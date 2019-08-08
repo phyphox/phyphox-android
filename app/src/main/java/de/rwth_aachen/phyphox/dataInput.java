@@ -2,8 +2,6 @@ package de.rwth_aachen.phyphox;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 //dataInput wraps all data-containers (currently only dataBuffer) and constant values as possible
 // inputs. This allows analysis modules to access constant values as if they were buffers.
@@ -14,14 +12,6 @@ public class dataInput implements Serializable {
     double value = Double.NaN;
     dataBuffer buffer = null;
     boolean clearAfterRead = true;
-
-    //Get value
-    public double getValue() {
-        if (isBuffer)
-            return buffer.value;
-        else
-            return value;
-    }
 
     //Constructor if this should contain a buffer
     protected dataInput(dataBuffer buffer, boolean clear) {
@@ -41,6 +31,14 @@ public class dataInput implements Serializable {
     protected dataInput() {
         this.isBuffer = false;
         this.isEmpty = true;
+    }
+
+    //Get value
+    public double getValue() {
+        if (isBuffer)
+            return buffer.value;
+        else
+            return value;
     }
 
     //Get the number of elements actually filled into the buffer

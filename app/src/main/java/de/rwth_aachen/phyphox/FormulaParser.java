@@ -1,234 +1,13 @@
 package de.rwth_aachen.phyphox;
 
-import android.util.Log;
-
-import java.text.Normalizer;
 import java.util.Vector;
-import java.util.function.BiFunction;
 
 public class FormulaParser {
     Source base = null;
 
-    class FormulaException extends Exception {
-        FormulaException() {
-
-        }
-
-        FormulaException(String message) {
-            super(message);
-        }
-    }
-
-    class Source {
-        FormulaNode node = null;
-        Integer index = null;
-        boolean single = true;
-        Double value = Double.NaN;
-
-        Source(FormulaNode node) {
-            this.node = node;
-        }
-
-        Source(Integer index, boolean single) {
-            this.single = single;
-            this.index = index-1;
-        }
-
-        Source(Double value) {
-            this.value = value;
-        }
-
-        public Double get(Vector<Double[]> in, int i) throws FormulaException {
-            if (node != null) {
-                return node.calculate(in, i);
-            } else if (index != null) {
-                if (index >= in.size())
-                    throw new FormulaException("Index too large.");
-                Double[] thisIn = in.get(index);
-                if (thisIn.length == 0)
-                    throw new FormulaException("Empty input.");
-                if (single) {
-                    return thisIn[thisIn.length-1];
-                } else {
-                    if (i > thisIn.length)
-                        throw new FormulaException("Input too short.");
-                    return thisIn[i];
-                }
-            } else
-                return value;
-        }
-    }
-
-    class FormulaNode {
-        Function func;
-        Source in1, in2;
-
-        FormulaNode(Function func, Source in1, Source in2) {
-            this.func = func;
-            this.in1 = in1;
-            this.in2 = in2;
-        }
-
-        public Double calculate(Vector<Double[]> in, int i) throws FormulaException {
-            return func.apply(in1.get(in, i), in2 != null ? in2.get(in, i) : null);
-        }
-
-    }
-
-    static class Function {
-        protected Double apply (Double in1, Double in2) {
-            return Double.NaN;
-        }
-    }
-
-    static class AddFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return in1+in2;
-        }
-    }
-
-    static class MultiplyFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return in1*in2;
-        }
-    }
-
-    static class SubtractFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return in1-in2;
-        }
-    }
-
-    static class DivideFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return in1/in2;
-        }
-    }
-
-    static class ModuloFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return in1%in2;
-        }
-    }
-
-    static class PowerFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.pow(in1, in2);
-        }
-    }
-
-    static class MinusFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return -in1;
-        }
-    }
-
-    static class SqrtFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.sqrt(in1);
-        }
-    }
-
-    static class SinFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.sin(in1);
-        }
-    }
-
-    static class CosFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.cos(in1);
-        }
-    }
-
-    static class TanFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.tan(in1);
-        }
-    }
-
-    static class AsinFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.asin(in1);
-        }
-    }
-
-    static class AcosFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.acos(in1);
-        }
-    }
-
-    static class AtanFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.atan(in1);
-        }
-    }
-
-    static class Atan2Function extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.atan2(in1, in2);
-        }
-    }
-
-    static class SinhFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.sinh(in1);
-        }
-    }
-
-    static class CoshFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.cosh(in1);
-        }
-    }
-
-    static class TanhFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.tanh(in1);
-        }
-    }
-
-    static class ExpFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.exp(in1);
-        }
-    }
-
-    static class LogFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.log(in1);
-        }
-    }
-
-    static class AbsFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.abs(in1);
-        }
-    }
-
-    static class SignFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.signum(in1);
-        }
-    }
-
-    static class RoundFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return (double)Math.round(in1);
-        }
-    }
-
-    static class CeilFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.ceil(in1);
-        }
-    }
-
-    static class FloorFunction extends Function {
-        protected Double apply (Double in1, Double in2) {
-            return Math.floor(in1);
-        }
+    FormulaParser(String formula) throws FormulaException {
+        String strippedFormula = formula.replaceAll("\\s+", "").toLowerCase();
+        base = parse(strippedFormula, 0, strippedFormula.length());
     }
 
     private Source parse(String formula, int start, int end) throws FormulaException {
@@ -236,14 +15,16 @@ public class FormulaParser {
         if (start == end)
             return null;
 
-        if (formula.charAt(start) == '(' && formula.charAt(end-1) == ')') {
+        if (formula.charAt(start) == '(' && formula.charAt(end - 1) == ')') {
             int innerBracket = 1;
-            for (int j = start+1; j < end-1; j++) {
+            for (int j = start + 1; j < end - 1; j++) {
                 switch (formula.charAt(j)) {
-                    case '(': innerBracket++;
-                              break;
-                    case ')': innerBracket--;
-                              break;
+                    case '(':
+                        innerBracket++;
+                        break;
+                    case ')':
+                        innerBracket--;
+                        break;
                 }
                 if (innerBracket == 0)
                     break;
@@ -254,9 +35,9 @@ public class FormulaParser {
             }
         }
 
-        if (formula.charAt(start) == '[' && formula.charAt(end-1) == ']') {
+        if (formula.charAt(start) == '[' && formula.charAt(end - 1) == ']') {
             boolean indexOnly = true;
-            for (int j = start+1; j < end-1; j++) {
+            for (int j = start + 1; j < end - 1; j++) {
                 if (formula.charAt(j) == ']') {
                     indexOnly = false;
                     break;
@@ -280,7 +61,7 @@ public class FormulaParser {
         }
 
         if (formula.charAt(start) == '-') {
-            return new Source(new FormulaNode(new MinusFunction(), parse(formula, start+1, end), null));
+            return new Source(new FormulaNode(new MinusFunction(), parse(formula, start + 1, end), null));
         }
 
         int start1 = start;
@@ -317,7 +98,7 @@ public class FormulaParser {
                         }
                         break;
                     case '-':
-                        if (previousPriority >= 1 && !cmd.equals("e") && formula.charAt(i-1) != '+' && formula.charAt(i-1) != '*' && formula.charAt(i-1) != '-' && formula.charAt(i-1) != '/' && formula.charAt(i-1) != '%' && formula.charAt(i-1) != '^') {
+                        if (previousPriority >= 1 && !cmd.equals("e") && formula.charAt(i - 1) != '+' && formula.charAt(i - 1) != '*' && formula.charAt(i - 1) != '-' && formula.charAt(i - 1) != '/' && formula.charAt(i - 1) != '%' && formula.charAt(i - 1) != '^') {
                             previousPriority = 1;
                             operator = new SubtractFunction();
                             start1 = start;
@@ -384,18 +165,18 @@ public class FormulaParser {
 
                     if (previousPriority >= 4) {
 
-                        start1 = i+1;
-                        end1 = end-1;
-                        start2 = end-1;
-                        end2 = end-1;
+                        start1 = i + 1;
+                        end1 = end - 1;
+                        start2 = end - 1;
+                        end2 = end - 1;
 
                         int innerBracket = 0;
-                        for (int j = i+1; j < end; j++) {
+                        for (int j = i + 1; j < end; j++) {
                             if (formula.charAt(j) == ',') {
                                 if (innerBracket == 0) {
                                     end1 = j;
-                                    start2 = j+1;
-                                    end2 = end-1;
+                                    start2 = j + 1;
+                                    end2 = end - 1;
                                 }
                             } else if (formula.charAt(j) == '(') {
                                 innerBracket++;
@@ -406,42 +187,60 @@ public class FormulaParser {
 
                         previousPriority = 4;
                         switch (cmd) {
-                            case "sqrt": operator = new SqrtFunction();
-                                         break;
-                            case "sin":  operator = new SinFunction();
-                                         break;
-                            case "cos":  operator = new CosFunction();
-                                         break;
-                            case "tan":  operator = new TanFunction();
-                                         break;
-                            case "asin": operator = new AsinFunction();
-                                         break;
-                            case "acos": operator = new AcosFunction();
-                                         break;
-                            case "atan": operator = new AtanFunction();
-                                         break;
-                            case "atan2": operator = new Atan2Function();
-                                         break;
-                            case "sinh": operator = new SinhFunction();
-                                         break;
-                            case "cosh": operator = new CoshFunction();
-                                         break;
-                            case "tanh": operator = new TanhFunction();
-                                         break;
-                            case "exp":  operator = new ExpFunction();
-                                         break;
-                            case "log":  operator = new LogFunction();
-                                         break;
-                            case "abs":  operator = new AbsFunction();
-                                         break;
-                            case "sign": operator = new SignFunction();
-                                         break;
-                            case "round": operator = new RoundFunction();
-                                         break;
-                            case "ceil": operator = new CeilFunction();
-                                         break;
-                            case "floor": operator = new FloorFunction();
-                                         break;
+                            case "sqrt":
+                                operator = new SqrtFunction();
+                                break;
+                            case "sin":
+                                operator = new SinFunction();
+                                break;
+                            case "cos":
+                                operator = new CosFunction();
+                                break;
+                            case "tan":
+                                operator = new TanFunction();
+                                break;
+                            case "asin":
+                                operator = new AsinFunction();
+                                break;
+                            case "acos":
+                                operator = new AcosFunction();
+                                break;
+                            case "atan":
+                                operator = new AtanFunction();
+                                break;
+                            case "atan2":
+                                operator = new Atan2Function();
+                                break;
+                            case "sinh":
+                                operator = new SinhFunction();
+                                break;
+                            case "cosh":
+                                operator = new CoshFunction();
+                                break;
+                            case "tanh":
+                                operator = new TanhFunction();
+                                break;
+                            case "exp":
+                                operator = new ExpFunction();
+                                break;
+                            case "log":
+                                operator = new LogFunction();
+                                break;
+                            case "abs":
+                                operator = new AbsFunction();
+                                break;
+                            case "sign":
+                                operator = new SignFunction();
+                                break;
+                            case "round":
+                                operator = new RoundFunction();
+                                break;
+                            case "ceil":
+                                operator = new CeilFunction();
+                                break;
+                            case "floor":
+                                operator = new FloorFunction();
+                                break;
                         }
                     }
                     cmd = "";
@@ -464,11 +263,6 @@ public class FormulaParser {
         }
     }
 
-    FormulaParser(String formula) throws FormulaException {
-        String strippedFormula = formula.replaceAll("\\s+","").toLowerCase();
-        base = parse(strippedFormula, 0, strippedFormula.length());
-    }
-
     public void execute(Vector<Double[]> in, dataOutput out) {
         int n = 0;
         for (Double[] i : in) {
@@ -481,6 +275,228 @@ public class FormulaParser {
                 break;
             }
         }
+    }
+
+    static class Function {
+        protected Double apply(Double in1, Double in2) {
+            return Double.NaN;
+        }
+    }
+
+    static class AddFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return in1 + in2;
+        }
+    }
+
+    static class MultiplyFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return in1 * in2;
+        }
+    }
+
+    static class SubtractFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return in1 - in2;
+        }
+    }
+
+    static class DivideFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return in1 / in2;
+        }
+    }
+
+    static class ModuloFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return in1 % in2;
+        }
+    }
+
+    static class PowerFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.pow(in1, in2);
+        }
+    }
+
+    static class MinusFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return -in1;
+        }
+    }
+
+    static class SqrtFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.sqrt(in1);
+        }
+    }
+
+    static class SinFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.sin(in1);
+        }
+    }
+
+    static class CosFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.cos(in1);
+        }
+    }
+
+    static class TanFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.tan(in1);
+        }
+    }
+
+    static class AsinFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.asin(in1);
+        }
+    }
+
+    static class AcosFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.acos(in1);
+        }
+    }
+
+    static class AtanFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.atan(in1);
+        }
+    }
+
+    static class Atan2Function extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.atan2(in1, in2);
+        }
+    }
+
+    static class SinhFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.sinh(in1);
+        }
+    }
+
+    static class CoshFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.cosh(in1);
+        }
+    }
+
+    static class TanhFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.tanh(in1);
+        }
+    }
+
+    static class ExpFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.exp(in1);
+        }
+    }
+
+    static class LogFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.log(in1);
+        }
+    }
+
+    static class AbsFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.abs(in1);
+        }
+    }
+
+    static class SignFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.signum(in1);
+        }
+    }
+
+    static class RoundFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return (double) Math.round(in1);
+        }
+    }
+
+    static class CeilFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.ceil(in1);
+        }
+    }
+
+    static class FloorFunction extends Function {
+        protected Double apply(Double in1, Double in2) {
+            return Math.floor(in1);
+        }
+    }
+
+    class FormulaException extends Exception {
+        FormulaException() {
+
+        }
+
+        FormulaException(String message) {
+            super(message);
+        }
+    }
+
+    class Source {
+        FormulaNode node = null;
+        Integer index = null;
+        boolean single = true;
+        Double value = Double.NaN;
+
+        Source(FormulaNode node) {
+            this.node = node;
+        }
+
+        Source(Integer index, boolean single) {
+            this.single = single;
+            this.index = index - 1;
+        }
+
+        Source(Double value) {
+            this.value = value;
+        }
+
+        public Double get(Vector<Double[]> in, int i) throws FormulaException {
+            if (node != null) {
+                return node.calculate(in, i);
+            } else if (index != null) {
+                if (index >= in.size())
+                    throw new FormulaException("Index too large.");
+                Double[] thisIn = in.get(index);
+                if (thisIn.length == 0)
+                    throw new FormulaException("Empty input.");
+                if (single) {
+                    return thisIn[thisIn.length - 1];
+                } else {
+                    if (i > thisIn.length)
+                        throw new FormulaException("Input too short.");
+                    return thisIn[i];
+                }
+            } else
+                return value;
+        }
+    }
+
+    class FormulaNode {
+        Function func;
+        Source in1, in2;
+
+        FormulaNode(Function func, Source in1, Source in2) {
+            this.func = func;
+            this.in1 = in1;
+            this.in2 = in2;
+        }
+
+        public Double calculate(Vector<Double[]> in, int i) throws FormulaException {
+            return func.apply(in1.get(in, i), in2 != null ? in2.get(in, i) : null);
+        }
+
     }
 
 }

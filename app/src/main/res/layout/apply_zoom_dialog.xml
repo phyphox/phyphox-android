@@ -1,41 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="@dimen/activity_vertical_padding">
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="@dimen/activity_vertical_padding">
 
         <TextView
             android:id="@+id/applyZoomExplanation"
-            android:text="@string/applyZoomExplanation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            />
+            android:text="@string/applyZoomExplanation" />
 
         <RadioGroup
+            android:id="@+id/applyZoomMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/applyZoomMode"
-            android:layout_columnSpan="1"
-            android:layout_rowSpan="1">
+            android:layout_rowSpan="1"
+            android:layout_columnSpan="1">
+
             <RadioButton
                 android:id="@+id/applyZoomReset"
-                android:text="@string/applyZoomReset"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:text="@string/applyZoomReset" />
+
             <RadioButton
                 android:id="@+id/applyZoomKeep"
-                android:text="@string/applyZoomKeep"
-                android:checked="true"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/applyZoomKeep" />
         </RadioGroup>
 
         <GridLayout
@@ -43,65 +44,65 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/activity_vertical_padding"
-            android:visibility="gone"
-            android:columnCount="2">
+            android:columnCount="2"
+            android:visibility="gone">
 
             <ImageView
-                app:srcCompat="@drawable/zoom_horiz"
-                android:alpha="0.5"
-                android:layout_margin="@dimen/activity_vertical_padding"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                />
+                android:layout_rowSpan="4"
+                android:layout_columnSpan="1"
+                android:layout_margin="@dimen/activity_vertical_padding"
+                android:alpha="0.5"
+                app:srcCompat="@drawable/zoom_horiz" />
 
             <TextView
                 android:id="@+id/applyZoomXLabel"
-                android:layout_marginTop="@dimen/activity_vertical_padding"
-                android:layout_marginBottom="@dimen/activity_vertical_padding"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_rowSpan="1"
+                android:layout_columnSpan="1"
+                android:layout_marginTop="@dimen/activity_vertical_padding"
+                android:layout_marginBottom="@dimen/activity_vertical_padding" />
 
 
             <RadioGroup
+                android:id="@+id/applyZoomXMode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/applyZoomXMode"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="1">
+                android:layout_rowSpan="1"
+                android:layout_columnSpan="1">
+
                 <RadioButton
                     android:id="@+id/applyZoomXReset"
-                    android:text="@string/applyZoomReset"
-                    android:checked="true"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/applyZoomReset" />
+
                 <RadioButton
                     android:id="@+id/applyZoomXKeep"
-                    android:text="@string/applyZoomKeep"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:text="@string/applyZoomKeep" />
+
                 <RadioButton
                     android:id="@+id/applyZoomXFollow"
-                    android:text="@string/applyZoomFollow"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:text="@string/applyZoomFollow" />
             </RadioGroup>
 
             <TextView
-                android:text="@string/applyZoomApply"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                />
+                android:text="@string/applyZoomApply" />
 
             <Spinner
                 android:id="@+id/applyZoomXApplyTo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:entries="@array/applyZoomApplyToSpinner"
-                />
+                android:entries="@array/applyZoomApplyToSpinner" />
 
         </GridLayout>
 
@@ -110,60 +111,59 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/activity_vertical_padding"
-            android:visibility="gone"
-            android:columnCount="2">
+            android:columnCount="2"
+            android:visibility="gone">
 
             <ImageView
-                app:srcCompat="@drawable/zoom_vert"
-                android:alpha="0.5"
-                android:layout_margin="@dimen/activity_vertical_padding"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                />
+                android:layout_rowSpan="4"
+                android:layout_columnSpan="1"
+                android:layout_margin="@dimen/activity_vertical_padding"
+                android:alpha="0.5"
+                app:srcCompat="@drawable/zoom_vert" />
 
             <TextView
                 android:id="@+id/applyZoomYLabel"
-                android:layout_marginTop="@dimen/activity_vertical_padding"
-                android:layout_marginBottom="@dimen/activity_vertical_padding"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_rowSpan="1"
+                android:layout_columnSpan="1"
+                android:layout_marginTop="@dimen/activity_vertical_padding"
+                android:layout_marginBottom="@dimen/activity_vertical_padding" />
 
 
             <RadioGroup
+                android:id="@+id/applyZoomYMode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/applyZoomYMode"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="1">
+                android:layout_rowSpan="1"
+                android:layout_columnSpan="1">
+
                 <RadioButton
                     android:id="@+id/applyZoomYReset"
-                    android:text="@string/applyZoomReset"
-                    android:checked="true"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/applyZoomReset" />
+
                 <RadioButton
                     android:id="@+id/applyZoomYKeep"
-                    android:text="@string/applyZoomKeep"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:text="@string/applyZoomKeep" />
             </RadioGroup>
 
             <TextView
-                android:text="@string/applyZoomApply"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                />
+                android:text="@string/applyZoomApply" />
 
             <Spinner
                 android:id="@+id/applyZoomYApplyTo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:entries="@array/applyZoomApplyToSpinner"
-                />
+                android:entries="@array/applyZoomApplyToSpinner" />
 
         </GridLayout>
 
@@ -172,56 +172,57 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/activity_vertical_padding"
-            android:visibility="gone"
-            android:columnCount="2">
+            android:columnCount="2"
+            android:visibility="gone">
 
             <ImageView
-                app:srcCompat="@drawable/zoom_z"
-                android:alpha="0.5"
-                android:layout_margin="@dimen/activity_vertical_padding"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                />
+                android:layout_rowSpan="4"
+                android:layout_columnSpan="1"
+                android:layout_margin="@dimen/activity_vertical_padding"
+                android:alpha="0.5"
+                app:srcCompat="@drawable/zoom_z" />
 
             <TextView
                 android:id="@+id/applyZoomZLabel"
-                android:layout_marginTop="@dimen/activity_vertical_padding"
-                android:layout_marginBottom="@dimen/activity_vertical_padding"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_rowSpan="1"
+                android:layout_columnSpan="1"
+                android:layout_marginTop="@dimen/activity_vertical_padding"
+                android:layout_marginBottom="@dimen/activity_vertical_padding" />
 
 
             <RadioGroup
+                android:id="@+id/applyZoomZMode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/applyZoomZMode"
-                android:layout_columnSpan="1"
-                android:layout_rowSpan="1">
+                android:layout_rowSpan="1"
+                android:layout_columnSpan="1">
+
                 <RadioButton
                     android:id="@+id/applyZoomZReset"
-                    android:text="@string/applyZoomReset"
-                    android:checked="true"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/applyZoomReset" />
+
                 <RadioButton
                     android:id="@+id/applyZoomZKeep"
-                    android:text="@string/applyZoomKeep"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:text="@string/applyZoomKeep" />
             </RadioGroup>
 
         </GridLayout>
 
         <Switch
             android:id="@+id/applyZoomAdvanced"
-            android:text="@string/applyZoomAdvanced"
-            android:layout_marginTop="@dimen/activity_vertical_margin"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:text="@string/applyZoomAdvanced" />
 
     </LinearLayout>
 </ScrollView>

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.view.View;
 
 public class MarkerOverlayView extends View {
@@ -39,8 +38,8 @@ public class MarkerOverlayView extends View {
         if (graphSetup != null)
             canvas.clipRect(graphSetup.plotBoundL, graphSetup.plotBoundT, graphSetup.plotBoundL + graphSetup.plotBoundW, graphSetup.plotBoundT + graphSetup.plotBoundH);
         if (line != null && line.length > 1) {
-            for (int i = 0; i < line.length-1; i++)
-                canvas.drawLine(line[i].x, line[i].y, line[i+1].x, line[i+1].y, paint);
+            for (int i = 0; i < line.length - 1; i++)
+                canvas.drawLine(line[i].x, line[i].y, line[i + 1].x, line[i + 1].y, paint);
         }
         if (points != null) {
             for (int i = 0; i < points.length; i++)

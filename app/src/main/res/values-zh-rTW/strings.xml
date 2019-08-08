@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="action_settings">設定</string>
+<resources>
+    <string name="action_settings">設定</string>
     <string name="translationInfo">語言</string>
     <string name="app_name">手機物理實作</string>
     <string name="title_activity_experiment">手機物理實作</string>
@@ -80,7 +81,7 @@
 
     <string name="experimentinfo_hint">查看與此手機實作相關資訊，以了解該如何使用。</string>
 
-<string name="export">匯出數據</string>
+    <string name="export">匯出數據</string>
     <string name="pick_exportFormat">選擇數據格式</string>
 
     <string name="timedRunStopDelay">實驗長短(秒)</string>
@@ -134,4 +135,4 @@
 
     <string name="enableTimedRun">執行時域區間測量</string>
 
-    </resources>
+</resources>

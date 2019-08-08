@@ -5,18 +5,15 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Locale;
 import java.util.zip.CRC32;
 
@@ -74,11 +71,11 @@ public abstract class Helper {
 
         //Rule: Same base language? That is a pretty good match...
         if (baseLanguage.equals(resLanguage))
-            score+=100;
+            score += 100;
 
         //Rule: Same country/region? Even better...
         if (region.equals(resRegion))
-            score+=20;
+            score += 20;
 
         //Add scores for known related languages and variants (unfortunately not easily supported on older Android versions)
         if (resLanguage.equals("zh")) {
@@ -94,16 +91,16 @@ public abstract class Helper {
 
         //Rule: We slightly prefer English as an international fallback
         if (baseLanguage.equals("en"))
-            score+=2;
+            score += 2;
 
         return score;
     }
 
     public static float luminance(int c) {
-        float r = ((c & 0xff0000) >> 16)/255f;
-        float g = ((c & 0xff00) >> 8)/255f;
-        float b = (c & 0xff)/255f;
-        return 0.2126f*(float)Math.pow((r+0.055f)/1.055f, 2.4f) + 0.7152f*(float)Math.pow((g+0.055f)/1.055f, 2.4f) + 0.0722f*(float)Math.pow((b+0.055f)/1.055f, 2.4f);
+        float r = ((c & 0xff0000) >> 16) / 255f;
+        float g = ((c & 0xff00) >> 8) / 255f;
+        float b = (c & 0xff) / 255f;
+        return 0.2126f * (float) Math.pow((r + 0.055f) / 1.055f, 2.4f) + 0.7152f * (float) Math.pow((g + 0.055f) / 1.055f, 2.4f) + 0.0722f * (float) Math.pow((b + 0.055f) / 1.055f, 2.4f);
     }
 
     //Translate RGB values or pre-defined names into integer representations
@@ -111,22 +108,36 @@ public abstract class Helper {
         if (colorStr == null)
             return defaultValue;
         //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
-        switch(colorStr.toLowerCase()) {
-            case "orange": return res.getColor(R.color.presetOrange);
-            case "red": return res.getColor(R.color.presetRed);
-            case "magenta": return res.getColor(R.color.presetMagenta);
-            case "blue": return res.getColor(R.color.presetBlue);
-            case "green": return res.getColor(R.color.presetGreen);
-            case "yellow": return res.getColor(R.color.presetYellow);
-            case "white": return res.getColor(R.color.presetWhite);
+        switch (colorStr.toLowerCase()) {
+            case "orange":
+                return res.getColor(R.color.presetOrange);
+            case "red":
+                return res.getColor(R.color.presetRed);
+            case "magenta":
+                return res.getColor(R.color.presetMagenta);
+            case "blue":
+                return res.getColor(R.color.presetBlue);
+            case "green":
+                return res.getColor(R.color.presetGreen);
+            case "yellow":
+                return res.getColor(R.color.presetYellow);
+            case "white":
+                return res.getColor(R.color.presetWhite);
 
-            case "weakorange": return res.getColor(R.color.presetWeakOrange);
-            case "weakred": return res.getColor(R.color.presetWeakRed);
-            case "weakmagenta": return res.getColor(R.color.presetWeakMagenta);
-            case "weakblue": return res.getColor(R.color.presetWeakBlue);
-            case "weakgreen": return res.getColor(R.color.presetWeakGreen);
-            case "weakyellow": return res.getColor(R.color.presetWeakYellow);
-            case "weakwhite": return res.getColor(R.color.presetWeakWhite);
+            case "weakorange":
+                return res.getColor(R.color.presetWeakOrange);
+            case "weakred":
+                return res.getColor(R.color.presetWeakRed);
+            case "weakmagenta":
+                return res.getColor(R.color.presetWeakMagenta);
+            case "weakblue":
+                return res.getColor(R.color.presetWeakBlue);
+            case "weakgreen":
+                return res.getColor(R.color.presetWeakGreen);
+            case "weakyellow":
+                return res.getColor(R.color.presetWeakYellow);
+            case "weakwhite":
+                return res.getColor(R.color.presetWeakWhite);
         }
 
         //Not a constant, so it hast to be hex...
@@ -180,7 +191,7 @@ public abstract class Helper {
                 while ((count = input.read(buffer)) != -1) {
                     crc32.update(buffer, 0, count);
                 }
-            }catch (Exception e) {
+            } catch (Exception e) {
                 continue;
             }
             if (refCRC32 == crc32.getValue()) {
@@ -210,7 +221,7 @@ public abstract class Helper {
                 crc32.update(buffer, 0, count);
             }
             input.close();
-        }catch (Exception e) {
+        } catch (Exception e) {
             return false;
         }
 
