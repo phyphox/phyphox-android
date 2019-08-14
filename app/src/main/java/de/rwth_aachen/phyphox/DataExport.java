@@ -140,7 +140,7 @@ public class DataExport implements Serializable {
                             c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         }
 
-                        final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[extraIntents.size()]);
+                        final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[0]);
 
                         //Create chooser
                         Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
@@ -167,14 +167,14 @@ public class DataExport implements Serializable {
     //This function is used when all the dialogs are not done in the app, but on the web interface.
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
-    File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName) {
+    File exportDirect(ExportFormat format, File cacheDir, final String fileName) {
         for (int i = 0; i < exportSets.size(); i++) {
             exportSets.get(i).getData();
         }
 
         format.setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
 
-        return format.export(exportSets, cacheDir, minimalistic);
+        return format.export(exportSets, cacheDir, false);
     }
 
     //ExportSet class
@@ -290,17 +290,17 @@ public class DataExport implements Serializable {
                         }
 
                         //Contruct the table header in the first line
-                        String header = "";
+                        StringBuilder header = new StringBuilder();
                         for (int j = 0; j < set.data.length; j++) { //Each column gets a name...
-                            header += "\"" + set.sources.get(j).name + "\"";
+                            header.append("\"").append(set.sources.get(j).name).append("\"");
                             if (j < set.data.length - 1)
-                                header += separator;
+                                header.append(separator);
                         }
-                        header += "\n";
+                        header.append("\n");
                         if (minimalistic)
-                            stream.write(header.getBytes());
+                            stream.write(header.toString().getBytes());
                         else
-                            zstream.write(header.getBytes()); //Write the header to the zip-file
+                            zstream.write(header.toString().getBytes()); //Write the header to the zip-file
 
                         //Then add all the data
                         for (int i = 0; i < set.data[0].length; i++) { //For each row of data... The first column determines the number of rows
@@ -406,15 +406,10 @@ public class DataExport implements Serializable {
                     }
 
                     //We now have our Excel document. Let's write it to the file.
-                    FileOutputStream os = null;
-                    try { //Let's catch errors while writing separately
-                        os = new FileOutputStream(file);
+                    try (FileOutputStream os = new FileOutputStream(file)) { //Let's catch errors while writing separately
                         wb.write(os);
                     } catch (Exception e) {
                         Log.e("excelExport", "Unhandled exception during write.", e);
-                    } finally {
-                        if (os != null)
-                            os.close();
                     }
                 }
 

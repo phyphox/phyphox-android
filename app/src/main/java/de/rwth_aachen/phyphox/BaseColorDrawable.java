@@ -84,7 +84,7 @@ class TextIcon extends BaseColorDrawable {
     //Draw the icon
     public void draw(Canvas canvas) {
         //A rectangle and text on top. Quite simple.
-        int w = canvas.getWidth();
+        int w = getBounds().width();
         canvas.drawRect(new Rect(0, 0, w, w), paintBG);
         canvas.drawText(text, w / 2, w * 2 / 3, paint);
     }
@@ -110,7 +110,7 @@ class BitmapIcon extends BaseColorDrawable {
     //Draw the icon
     public void draw(Canvas canvas) {
         //A rectangle and text on top. Quite simple.
-        int size = canvas.getWidth();
+        int size = getBounds().width();
         int wSrc = icon.getWidth();
         int hSrc = icon.getHeight();
         canvas.drawRect(new Rect(0, 0, size, size), paintBG);
@@ -133,8 +133,8 @@ class VectorIcon extends BaseColorDrawable {
     //Draw the icon
     public void draw(Canvas canvas) {
         //A rectangle and text on top. Quite simple.
-        int w = canvas.getWidth();
-        int h = canvas.getHeight();
+        int w = getBounds().width();
+        int h = getBounds().height();
         svg.setDocumentWidth(w);
         svg.setDocumentHeight(h);
         canvas.drawRect(new Rect(0, 0, w, h), paintBG);

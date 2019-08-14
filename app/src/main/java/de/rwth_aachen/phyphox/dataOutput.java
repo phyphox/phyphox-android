@@ -7,8 +7,8 @@ import java.util.Iterator;
 //Also allowing to store additional parameters (like clearing the buffer before filling it)
 
 public class dataOutput implements Serializable {
-    dataBuffer buffer = null;
-    boolean clearBeforeWrite = true;
+    dataBuffer buffer;
+    boolean clearBeforeWrite;
 
     //Constructor with specified clear attribute
     dataOutput(dataBuffer buffer, boolean clear) {

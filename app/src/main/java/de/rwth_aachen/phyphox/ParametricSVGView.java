@@ -56,7 +56,7 @@ public class ParametricSVGView extends View {
         svgParts.clear();
         mapping.clear();
 
-        Pattern p = Pattern.compile("\\[\\[\\[(\\d)\\]\\]\\]");
+        Pattern p = Pattern.compile("\\[\\[\\[(\\d)]]]");
         Matcher m = p.matcher(code);
         int previous = 0;
         while (m.find()) {

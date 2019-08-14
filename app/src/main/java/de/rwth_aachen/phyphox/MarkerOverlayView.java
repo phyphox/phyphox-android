@@ -42,8 +42,7 @@ public class MarkerOverlayView extends View {
                 canvas.drawLine(line[i].x, line[i].y, line[i + 1].x, line[i + 1].y, paint);
         }
         if (points != null) {
-            for (int i = 0; i < points.length; i++)
-                canvas.drawCircle(points[i].x, points[i].y, 20, paint);
+            for (Point point : points) canvas.drawCircle(point.x, point.y, 20, paint);
         }
         canvas.restore();
     }

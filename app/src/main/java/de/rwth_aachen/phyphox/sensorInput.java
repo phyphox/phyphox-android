@@ -27,7 +27,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     transient private SensorManager sensorManager; //Hold the sensor manager
     private long lastReading; //Remember the time of the last reading to fullfill the rate
     private double avgX, avgY, avgZ, avgAccuracy; //Used for averaging
-    private boolean average = false; //Avergae over aquisition period?
+    private boolean average; //Avergae over aquisition period?
     private int aquisitions; //Number of aquisitions for this average
     private Lock dataLock;
     private Sensor sensor;

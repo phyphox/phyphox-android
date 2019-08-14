@@ -29,6 +29,7 @@ import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -192,7 +193,6 @@ public class Bluetooth implements Serializable {
                         displayErrorMessage(context.getResources().getString(R.string.bt_exception_disconnected) + BluetoothException.getMessage(Bluetooth.this));
                         (new ReconnectBluetoothTask()).execute(); // try to reconnect the device
                     }
-                    return;
             }
         }
 
@@ -421,7 +421,7 @@ public class Bluetooth implements Serializable {
             // it should not be possible to continue before the device is connected
             // timeout after 5 seconds if the device could not be connected
             result = cdl.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
         // throw exception if it was not possible to connect
         if (btGatt == null || !result) {
@@ -438,7 +438,7 @@ public class Bluetooth implements Serializable {
             // it should not be possible to continue before the services are discovered
             // timeout after 5 seconds if the services could not be discovered
             result = cdl.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
         if (!result) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_services), this);
@@ -749,7 +749,7 @@ public class Bluetooth implements Serializable {
             } else {
                 if (!b.mapping.containsKey(c)) {
                     // add Characteristic to the list for its BluetoothGattCharacteristic
-                    b.mapping.put(c, new ArrayList<Characteristic>());
+                    b.mapping.put(c, new ArrayList<>());
                 }
                 Characteristic toAdd = new Characteristic(this.index, this.conversionFunction);
                 b.valuesSize++;
@@ -795,7 +795,7 @@ public class Bluetooth implements Serializable {
             BluetoothGattCharacteristic c = b.findCharacteristic(this.uuid);
             if (!b.mapping.containsKey(c)) {
                 // add Characteristic to the list for its BluetoothGattCharacteristic
-                b.mapping.put(c, new ArrayList<Characteristic>());
+                b.mapping.put(c, new ArrayList<>());
             }
             Characteristic toAdd = new Characteristic(this.index, this.conversionFunction);
             b.valuesSize++;
@@ -841,7 +841,7 @@ public class Bluetooth implements Serializable {
         @Override
         public void process(Bluetooth b) throws BluetoothException {
             BluetoothGattCharacteristic c = b.findCharacteristic(this.uuid);
-            if (c.getValue() != null && c.getValue().equals(this.value)) {
+            if (c.getValue() != null && Arrays.equals(c.getValue(), this.value)) {
                 return; // value is already set
             }
             boolean result = c.setValue(this.value);
@@ -855,7 +855,7 @@ public class Bluetooth implements Serializable {
                 // it should not be possible to continue before the notifications are turned on
                 // timeout after 2 seconds if the device could not be connected
                 result = b.cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait too long
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
             if (!result) {
                 throw new BluetoothException(b.context.getResources().getString(R.string.bt_fail_writing), b);

@@ -30,7 +30,6 @@ public class gpsInput implements Serializable {
     private dataBuffer dataSatellites; //Data-buffer for status codes (note filled parallel to the other buffers)
     transient private LocationManager locationManager; //Hold the sensor manager
     private Lock dataLock;
-    private int lastStatus = 0;
     private double geoidCorrection = Double.NaN;
     private LocationListener locationListener = new LocationListener() {
         //Mandatory for LocationListener
@@ -60,8 +59,7 @@ public class gpsInput implements Serializable {
                     return;
                 try {
                     geoidCorrection = Double.parseDouble(parts[11]);
-                } catch (Exception e) {
-                    return;
+                } catch (Exception ignored) {
                 }
             }
         }
@@ -110,10 +108,7 @@ public class gpsInput implements Serializable {
     //Start the data aquisition by registering a listener for this location manager.
     public void start() {
         this.t0 = 0; //Reset t0. This will be set by the first sensor event
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-            this.lastStatus = 0;
-        else
-            this.lastStatus = -1;
+        locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);

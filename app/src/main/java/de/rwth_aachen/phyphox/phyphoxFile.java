@@ -324,9 +324,9 @@ abstract class phyphoxFile {
     // Blockparser for input or output assignments inside a bluetooth-block
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private static class bluetoothIoBlockParser extends xmlBlockParser {
-        static Class conversionsInput = (new ConversionsInput()).getClass();
-        static Class conversionsOutput = (new ConversionsOutput()).getClass();
-        static Class conversionsConfig = (new ConversionsConfig()).getClass();
+        static Class conversionsInput = ConversionsInput.class;
+        static Class conversionsOutput = ConversionsOutput.class;
+        static Class conversionsConfig = ConversionsConfig.class;
         Vector<dataOutput> outputList;
         Vector<dataInput> inputList;
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
@@ -640,43 +640,47 @@ abstract class phyphoxFile {
                     inputMapping[mappingIndex].count++;
 
                     //The input may have different types...
-                    if (type.equals("value")) {
-                        //Just a value, Is this allowed?
-                        if (inputMapping[mappingIndex].valueAllowed) {
-                            double value;
-                            try {
-                                value = Double.valueOf(getText());
-                            } catch (NumberFormatException e) {
-                                throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
+                    switch (type) {
+                        case "value":
+                            //Just a value, Is this allowed?
+                            if (inputMapping[mappingIndex].valueAllowed) {
+                                double value;
+                                try {
+                                    value = Double.valueOf(getText());
+                                } catch (NumberFormatException e) {
+                                    throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
+                                }
+                                inputList.set(targetIndex, new dataInput(value));
+                            } else {
+                                throw new phyphoxFileException("Value-type not allowed for input \"" + inputMapping[mappingIndex].name + "\".", xpp.getLineNumber());
                             }
-                            inputList.set(targetIndex, new dataInput(value));
-                        } else {
-                            throw new phyphoxFileException("Value-type not allowed for input \"" + inputMapping[mappingIndex].name + "\".", xpp.getLineNumber());
-                        }
-                    } else if (type.equals("buffer")) {
+                            break;
+                        case "buffer":
 
-                        //Check the type
-                        boolean clearAfterRead = getBooleanAttribute("clear", true);
+                            //Check the type
+                            boolean clearAfterRead = getBooleanAttribute("clear", true);
 
-                        //This is a buffer. Let's see if it exists
-                        String bufferName = getText();
-                        if (additionalTags != null)
-                            at.content = bufferName;
-                        dataBuffer buffer = experiment.getBuffer(bufferName);
-                        if (buffer == null)
-                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                        else {
-                            inputList.set(targetIndex, new dataInput(buffer, clearAfterRead));
-                        }
-                    } else if (type.equals("empty")) {
-                        //No input, Is this allowed?
-                        if (inputMapping[mappingIndex].emptyAllowed) {
-                            inputList.set(targetIndex, new dataInput());
-                        } else {
-                            throw new phyphoxFileException("Value-type not allowed for input \"" + inputMapping[mappingIndex].name + "\".", xpp.getLineNumber());
-                        }
-                    } else {
-                        throw new phyphoxFileException("Unknown input type \"" + type + "\".", xpp.getLineNumber());
+                            //This is a buffer. Let's see if it exists
+                            String bufferName = getText();
+                            if (additionalTags != null)
+                                at.content = bufferName;
+                            dataBuffer buffer = experiment.getBuffer(bufferName);
+                            if (buffer == null)
+                                throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                            else {
+                                inputList.set(targetIndex, new dataInput(buffer, clearAfterRead));
+                            }
+                            break;
+                        case "empty":
+                            //No input, Is this allowed?
+                            if (inputMapping[mappingIndex].emptyAllowed) {
+                                inputList.set(targetIndex, new dataInput());
+                            } else {
+                                throw new phyphoxFileException("Value-type not allowed for input \"" + inputMapping[mappingIndex].name + "\".", xpp.getLineNumber());
+                            }
+                            break;
+                        default:
+                            throw new phyphoxFileException("Unknown input type \"" + type + "\".", xpp.getLineNumber());
                     }
 
                     break;
@@ -784,19 +788,19 @@ abstract class phyphoxFile {
         protected void done() throws phyphoxFileException {
             //Check if the number of inputs and outputs are valid
             if (inputMapping != null) {
-                for (int i = 0; i < inputMapping.length; i++) {
-                    if ((inputMapping[i].maxCount > 0 && inputMapping[i].count > inputMapping[i].maxCount))
-                        throw new phyphoxFileException("A maximum of " + inputMapping[i].maxCount + " inputs was expected for " + inputMapping[i].name + " but " + inputMapping[i].count + " were found.", xpp.getLineNumber());
-                    if (inputMapping[i].count < inputMapping[i].minCount)
-                        throw new phyphoxFileException("A minimum of " + inputMapping[i].minCount + " inputs was expected for " + inputMapping[i].name + " but " + inputMapping[i].count + " were found.", xpp.getLineNumber());
+                for (ioBlockParser.ioMapping ioMapping : inputMapping) {
+                    if ((ioMapping.maxCount > 0 && ioMapping.count > ioMapping.maxCount))
+                        throw new phyphoxFileException("A maximum of " + ioMapping.maxCount + " inputs was expected for " + ioMapping.name + " but " + ioMapping.count + " were found.", xpp.getLineNumber());
+                    if (ioMapping.count < ioMapping.minCount)
+                        throw new phyphoxFileException("A minimum of " + ioMapping.minCount + " inputs was expected for " + ioMapping.name + " but " + ioMapping.count + " were found.", xpp.getLineNumber());
                 }
             }
             if (outputMapping != null) {
-                for (int i = 0; i < outputMapping.length; i++) {
-                    if ((outputMapping[i].maxCount > 0 && outputMapping[i].count > outputMapping[i].maxCount))
-                        throw new phyphoxFileException("A maximum of " + outputMapping[i].maxCount + " outputs was expected for " + outputMapping[i].name + " but " + outputMapping[i].count + " were found.", xpp.getLineNumber());
-                    if (outputMapping[i].count < outputMapping[i].minCount)
-                        throw new phyphoxFileException("A minimum of " + outputMapping[i].minCount + " outputs was expected for " + outputMapping[i].name + " but " + outputMapping[i].count + " were found.", xpp.getLineNumber());
+                for (ioBlockParser.ioMapping ioMapping : outputMapping) {
+                    if ((ioMapping.maxCount > 0 && ioMapping.count > ioMapping.maxCount))
+                        throw new phyphoxFileException("A maximum of " + ioMapping.maxCount + " outputs was expected for " + ioMapping.name + " but " + ioMapping.count + " were found.", xpp.getLineNumber());
+                    if (ioMapping.count < ioMapping.minCount)
+                        throw new phyphoxFileException("A minimum of " + ioMapping.minCount + " outputs was expected for " + ioMapping.name + " but " + ioMapping.count + " were found.", xpp.getLineNumber());
                 }
             }
         }
@@ -902,18 +906,18 @@ abstract class phyphoxFile {
 
         @Override
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
-            switch (tag.toLowerCase()) {
-                case "translation": //A translation block holds all translation information for a single language
-                    String thisLocale = getStringAttribute("locale");
-                    int thisLaguageRating = Helper.getLanguageRating(parent.getResources(), thisLocale);
-                    if (thisLaguageRating > languageRating) { //Check if the language matches better than previous ones...
-                        languageRating = thisLaguageRating;
-                        (new translationBlockParser(xpp, experiment, parent)).process(); //Jepp, use it!
-                    } else
-                        (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
-                    break;
-                default: //Unknown tag...
-                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
+            //A translation block holds all translation information for a single language
+            //Unknown tag...
+            if ("translation".equals(tag.toLowerCase())) {
+                String thisLocale = getStringAttribute("locale");
+                int thisLaguageRating = Helper.getLanguageRating(parent.getResources(), thisLocale);
+                if (thisLaguageRating > languageRating) { //Check if the language matches better than previous ones...
+                    languageRating = thisLaguageRating;
+                    (new translationBlockParser(xpp, experiment, parent)).process(); //Jepp, use it!
+                } else
+                    (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
+            } else {
+                throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -965,38 +969,38 @@ abstract class phyphoxFile {
 
         @Override
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
-            switch (tag.toLowerCase()) {
-                case "container": //A view defines an arangement of elements displayed to the user
-                    String type = getStringAttribute("type");
-                    if (type != null && !type.equals("buffer")) //There currently is only one buffer type. This tag is for future additions.
-                        throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
+            //A view defines an arangement of elements displayed to the user
+            //Unknown tag
+            if ("container".equals(tag.toLowerCase())) {
+                String type = getStringAttribute("type");
+                if (type != null && !type.equals("buffer")) //There currently is only one buffer type. This tag is for future additions.
+                    throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
 
-                    int size = getIntAttribute("size", 1);
-                    String strInit = getStringAttribute("init");
-                    boolean isStatic = getBooleanAttribute("static", false);
+                int size = getIntAttribute("size", 1);
+                String strInit = getStringAttribute("init");
+                boolean isStatic = getBooleanAttribute("static", false);
 
-                    String name = getText();
-                    if (!isValidIdentifier(name))
-                        throw new phyphoxFileException("\"" + name + "\" is not a valid name for a data-container.", xpp.getLineNumber());
+                String name = getText();
+                if (!isValidIdentifier(name))
+                    throw new phyphoxFileException("\"" + name + "\" is not a valid name for a data-container.", xpp.getLineNumber());
 
-                    dataBuffer newBuffer = experiment.createBuffer(name, size);
-                    newBuffer.setStatic(isStatic);
+                dataBuffer newBuffer = experiment.createBuffer(name, size);
+                newBuffer.setStatic(isStatic);
 
-                    if (strInit != null && !strInit.isEmpty()) {
-                        String[] strInitArray = strInit.split(",");
-                        Double[] init = new Double[strInitArray.length];
-                        for (int i = 0; i < init.length; i++) {
-                            try {
-                                init[i] = Double.parseDouble(strInitArray[i].trim());
-                            } catch (Exception e) {
-                                init[i] = Double.NaN;
-                            }
+                if (strInit != null && !strInit.isEmpty()) {
+                    String[] strInitArray = strInit.split(",");
+                    Double[] init = new Double[strInitArray.length];
+                    for (int i = 0; i < init.length; i++) {
+                        try {
+                            init[i] = Double.parseDouble(strInitArray[i].trim());
+                        } catch (Exception e) {
+                            init[i] = Double.NaN;
                         }
-                        newBuffer.setInit(init);
                     }
-                    break;
-                default: //Unknown tag
-                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
+                    newBuffer.setInit(init);
+                }
+            } else {
+                throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -1011,20 +1015,20 @@ abstract class phyphoxFile {
 
         @Override
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
-            switch (tag.toLowerCase()) {
-                case "view": //A view defines an arangement of elements displayed to the user
-                    expView newView = new expView(); //Create a new view
-                    newView.name = getTranslatedAttribute("label"); //Fill its name
-                    (new viewBlockParser(xpp, experiment, parent, newView)).process(); //And load its elements
-                    if (newView.name != null && newView.elements.size() > 0) //We will only add it if it has a name and at least a single view
-                        experiment.experimentViews.add(newView);
-                    else {
-                        //No name or no views. Complain!
-                        throw new phyphoxFileException("Invalid view.", xpp.getLineNumber());
-                    }
-                    break;
-                default: //Unknown tag
-                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
+            //A view defines an arangement of elements displayed to the user
+            //Unknown tag
+            if ("view".equals(tag.toLowerCase())) {
+                expView newView = new expView(); //Create a new view
+                newView.name = getTranslatedAttribute("label"); //Fill its name
+                (new viewBlockParser(xpp, experiment, parent, newView)).process(); //And load its elements
+                if (newView.name != null && newView.elements.size() > 0) //We will only add it if it has a name and at least a single view
+                    experiment.experimentViews.add(newView);
+                else {
+                    //No name or no views. Complain!
+                    throw new phyphoxFileException("Invalid view.", xpp.getLineNumber());
+                }
+            } else {
+                throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -1158,7 +1162,7 @@ abstract class phyphoxFile {
                     }
 
                     if (unitX == null && unitY == null && unitZ == null && labelX != null && labelY != null) {
-                        Pattern pattern = Pattern.compile("^(.+)\\ \\((.+)\\)$");
+                        Pattern pattern = Pattern.compile("^(.+) \\((.+)\\)$");
 
                         Matcher matcherX = pattern.matcher(labelX);
                         if (matcherX.find()) {
@@ -2726,7 +2730,7 @@ abstract class phyphoxFile {
                     if (zModeStr == null)
                         zModeStr = "average";
 
-                    Analysis.mapAM.ZMode zMode = Analysis.mapAM.ZMode.average;
+                    Analysis.mapAM.ZMode zMode;
 
                     switch (zModeStr) {
                         case "count":
@@ -3487,14 +3491,13 @@ abstract class phyphoxFile {
 
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, IOException, phyphoxFileException {
-            switch (tag.toLowerCase()) {
-                case "set": //An export set. These just group some dataBuffers to be exported as a set
-                    DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
-                    (new setBlockParser(xpp, experiment, parent, set)).process(); //Parse the information within
-                    experiment.exporter.addSet(set); //Add the set
-                    break;
-                default:
-                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
+            //An export set. These just group some dataBuffers to be exported as a set
+            if ("set".equals(tag.toLowerCase())) {
+                DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
+                (new setBlockParser(xpp, experiment, parent, set)).process(); //Parse the information within
+                experiment.exporter.addSet(set); //Add the set
+            } else {
+                throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -3516,17 +3519,16 @@ abstract class phyphoxFile {
 
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
-            switch (tag.toLowerCase()) {
-                case "data": //Add this data buffer to the set
-                    String name = xpp.getAttributeValue(null, "name");
-                    String src = getText();
-                    if (experiment.getBuffer(src) != null)
-                        set.addSource(name, src);
-                    else
-                        throw new phyphoxFileException("Export buffer " + src + " has not been defined as a buffer.", xpp.getLineNumber());
-                    break;
-                default:
-                    throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
+            //Add this data buffer to the set
+            if ("data".equals(tag.toLowerCase())) {
+                String name = xpp.getAttributeValue(null, "name");
+                String src = getText();
+                if (experiment.getBuffer(src) != null)
+                    set.addSource(name, src);
+                else
+                    throw new phyphoxFileException("Export buffer " + src + " has not been defined as a buffer.", xpp.getLineNumber());
+            } else {
+                throw new phyphoxFileException("Unknown tag " + tag, xpp.getLineNumber());
             }
         }
 
@@ -3540,7 +3542,7 @@ abstract class phyphoxFile {
 
         loadXMLAsyncTask(Intent intent, Experiment parent) {
             this.intent = intent;
-            this.parent = new WeakReference<Experiment>(parent);
+            this.parent = new WeakReference<>(parent);
         }
 
         //Load the file from the intent
@@ -3643,7 +3645,7 @@ abstract class phyphoxFile {
         //The constructor takes the intent to copy from and the parent activity to call back when finished.
         CopyXMLTask(Intent intent, Experiment parent) {
             this.intent = intent;
-            this.parent = new WeakReference<Experiment>(parent);
+            this.parent = new WeakReference<>(parent);
         }
 
         //Copying is done on a second thread...

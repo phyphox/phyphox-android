@@ -53,7 +53,6 @@ class CurveData {
 
 class GraphSetup {
     final Vector<CurveData> dataSets = new Vector<>();
-    private final Object lock = new Object();
     public Vector<Integer> color = new Vector<>();
     public Vector<GraphView.Style> style = new Vector<>();
     boolean incrementalX = false;
@@ -107,9 +106,9 @@ class GraphSetup {
         plotBoundH = Math.round(h);
     }
 
-    void setZAxisBounds(float l, float t, float w, float h) {
+    void setZAxisBounds(float l, float w, float h) {
         zaBoundL = Math.round(l);
-        zaBoundT = Math.round(t);
+        zaBoundT = Math.round((float) 0);
         zaBoundW = Math.round(w);
         zaBoundH = Math.round(h);
     }
@@ -212,90 +211,7 @@ class GraphSetup {
 }
 
 class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener {
-    private final String vertexShader =
-            "uniform vec4 in_color;" +
-                    "uniform mat4 positionMatrix;" +
-
-                    "uniform int logXY;" +
-                    "uniform float size;" +
-
-                    "attribute float positionX;" +
-                    "attribute float positionY;" +
-
-                    "varying vec4 v_color;" +
-
-                    "float posX, posY;" +
-
-                    "void main () {" +
-                    "   v_color = in_color;" +
-                    "   if (logXY == 1 || logXY == 3)" +
-                    "       posX = log(positionX);" +
-                    "   else" +
-                    "       posX = positionX;" +
-                    "   if (logXY >= 2)" +
-                    "       posY = log(positionY);" +
-                    "   else" +
-                    "       posY = positionY;" +
-                    "   gl_Position = positionMatrix * vec4(posX, posY, 0., 1.);" +
-                    "   gl_PointSize = size;" +
-                    "}";
-    private final String fragmentShader =
-            "precision mediump float;" +
-
-                    "varying vec4 v_color;" +
-
-                    "void main () {" +
-                    "   gl_FragColor = v_color;" +
-                    "}";
-    private final String gridShader =
-            "attribute vec2 position;" +
-                    "uniform mat4 positionMatrix;" +
-
-                    "vec2 pos;" +
-
-                    "void main () {" +
-                    "   pos = vec2(positionMatrix * vec4(position, 0., 1.));" +
-                    "   gl_Position = vec4(pos, 0., 1.);" +
-                    "}";
-    private final String gridFragmentShader =
-            "void main () {" +
-                    "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
-                    "}";
-    private final String mapShader =
-            "uniform mat4 positionMatrix;" +
-
-                    "uniform int logXYZ;" +
-
-                    "attribute float positionX;" +
-                    "attribute float positionY;" +
-                    "attribute float positionZ;" +
-
-                    "float posX, posY, posZ;" +
-                    "vec4 posRaw;" +
-
-                    "void main () {" +
-                    "   if (logXYZ == 1 || logXYZ == 3 || logXYZ == 5 || logXYZ == 7)" +
-                    "       posX = log(positionX);" +
-                    "   else" +
-                    "       posX = positionX;" +
-                    "   if (logXYZ == 2 || logXYZ == 3 || logXYZ == 6 || logXYZ == 7)" +
-                    "       posY = log(positionY);" +
-                    "   else" +
-                    "       posY = positionY;" +
-                    "   if (logXYZ == 4 || logXYZ == 5 || logXYZ == 6 || logXYZ == 7)" +
-                    "       posZ = log(positionZ);" +
-                    "   else" +
-                    "       posZ = positionZ;" +
-                    "   posRaw = positionMatrix * vec4(posX, posY, posZ, 1.);" +
-                    "   gl_Position = vec4(posRaw.xy, clamp(posRaw.z, -1.0, 1.0), posRaw.w);" +
-                    "}";
-    private final String mapFragmentShader =
-            "uniform sampler2D colorMap;" +
-                    "void main () {" +
-                    "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
-                    "}";
     private final Object lock = new Object();
-    private final int EGL_OPENGL_ES2_BIT = 4;
     private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
     private int h, w;
     private int bgColor;
@@ -354,10 +270,9 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     @Override
     public void run() {
         while (true) {
-            SurfaceTexture lSurfaceTexture = null;
 
             synchronized (lock) {
-                while (!done && (lSurfaceTexture = surfaceTexture) == null) {
+                while (!done && surfaceTexture == null) {
                     try {
                         lock.wait();
                     } catch (InterruptedException ie) {
@@ -384,7 +299,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             while (true) {
                 synchronized (lock) {
                     readyToRender = true;
-                    while (!(renderRequested || done || ((lSurfaceTexture = surfaceTexture) == null))) {
+                    while (!(renderRequested || done || (surfaceTexture == null))) {
                         try {
                             lock.wait();
                         } catch (InterruptedException ie) {
@@ -392,7 +307,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                         }
                     }
                     readyToRender = false;
-                    if (done || (lSurfaceTexture = surfaceTexture) == null) {
+                    if (done || surfaceTexture == null) {
                         break;
                     }
                     renderRequested = false;
@@ -443,7 +358,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                 drawFrame();
 
                 synchronized (lock) {
-                    if ((lSurfaceTexture = surfaceTexture) == null) {
+                    if (surfaceTexture == null) {
                         break;
                     } else
                         egl.eglSwapBuffers(eglDisplay, eglSurface);
@@ -462,6 +377,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             throw new RuntimeException("Could not initialize EGL10");
         }
 
+        int EGL_OPENGL_ES2_BIT = 4;
         int[] attribList = {
                 EGL10.EGL_RED_SIZE, 4,
                 EGL10.EGL_GREEN_SIZE, 4,
@@ -559,7 +475,40 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glClearColor(((bgColor & 0xff0000) >> 16) / 255.f, ((bgColor & 0xff00) >> 8) / 255.f, (bgColor & 0xff) / 255.f, 1.0f);
 
+        String vertexShader = "uniform vec4 in_color;" +
+                "uniform mat4 positionMatrix;" +
+
+                "uniform int logXY;" +
+                "uniform float size;" +
+
+                "attribute float positionX;" +
+                "attribute float positionY;" +
+
+                "varying vec4 v_color;" +
+
+                "float posX, posY;" +
+
+                "void main () {" +
+                "   v_color = in_color;" +
+                "   if (logXY == 1 || logXY == 3)" +
+                "       posX = log(positionX);" +
+                "   else" +
+                "       posX = positionX;" +
+                "   if (logXY >= 2)" +
+                "       posY = log(positionY);" +
+                "   else" +
+                "       posY = positionY;" +
+                "   gl_Position = positionMatrix * vec4(posX, posY, 0., 1.);" +
+                "   gl_PointSize = size;" +
+                "}";
         int iVertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShader);
+        String fragmentShader = "precision mediump float;" +
+
+                "varying vec4 v_color;" +
+
+                "void main () {" +
+                "   gl_FragColor = v_color;" +
+                "}";
         int iFragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
         glProgram = GLES20.glCreateProgram();
 
@@ -579,7 +528,38 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glUseProgram(0);
 
+        String mapShader = "uniform mat4 positionMatrix;" +
+
+                "uniform int logXYZ;" +
+
+                "attribute float positionX;" +
+                "attribute float positionY;" +
+                "attribute float positionZ;" +
+
+                "float posX, posY, posZ;" +
+                "vec4 posRaw;" +
+
+                "void main () {" +
+                "   if (logXYZ == 1 || logXYZ == 3 || logXYZ == 5 || logXYZ == 7)" +
+                "       posX = log(positionX);" +
+                "   else" +
+                "       posX = positionX;" +
+                "   if (logXYZ == 2 || logXYZ == 3 || logXYZ == 6 || logXYZ == 7)" +
+                "       posY = log(positionY);" +
+                "   else" +
+                "       posY = positionY;" +
+                "   if (logXYZ == 4 || logXYZ == 5 || logXYZ == 6 || logXYZ == 7)" +
+                "       posZ = log(positionZ);" +
+                "   else" +
+                "       posZ = positionZ;" +
+                "   posRaw = positionMatrix * vec4(posX, posY, posZ, 1.);" +
+                "   gl_Position = vec4(posRaw.xy, clamp(posRaw.z, -1.0, 1.0), posRaw.w);" +
+                "}";
         int iMapShader = loadShader(GLES20.GL_VERTEX_SHADER, mapShader);
+        String mapFragmentShader = "uniform sampler2D colorMap;" +
+                "void main () {" +
+                "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
+                "}";
         int iMapFragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, mapFragmentShader);
         mapProgram = GLES20.glCreateProgram();
 
@@ -599,7 +579,19 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glUseProgram(0);
 
+        String gridShader = "attribute vec2 position;" +
+                "uniform mat4 positionMatrix;" +
+
+                "vec2 pos;" +
+
+                "void main () {" +
+                "   pos = vec2(positionMatrix * vec4(position, 0., 1.));" +
+                "   gl_Position = vec4(pos, 0., 1.);" +
+                "}";
         int iGridShader = loadShader(GLES20.GL_VERTEX_SHADER, gridShader);
+        String gridFragmentShader = "void main () {" +
+                "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
+                "}";
         int iGridFragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, gridFragmentShader);
         gridProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(gridProgram, iGridShader);

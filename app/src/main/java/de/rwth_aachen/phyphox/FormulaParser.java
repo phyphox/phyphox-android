@@ -3,7 +3,7 @@ package de.rwth_aachen.phyphox;
 import java.util.Vector;
 
 public class FormulaParser {
-    Source base = null;
+    Source base;
 
     FormulaParser(String formula) throws FormulaException {
         String strippedFormula = formula.replaceAll("\\s+", "").toLowerCase();
@@ -72,7 +72,7 @@ public class FormulaParser {
 
         int previousPriority = 100;
         int brackets = 0;
-        String cmd = "";
+        StringBuilder cmd = new StringBuilder();
 
         //Look for "outer" operator
         for (int i = start; i < end; i++) {
@@ -88,7 +88,7 @@ public class FormulaParser {
             if (brackets == 0) {
                 switch (formula.charAt(i)) {
                     case '+':
-                        if (previousPriority >= 1 && !cmd.equals("e")) {
+                        if (!cmd.toString().equals("e")) {
                             previousPriority = 1;
                             operator = new AddFunction();
                             start1 = start;
@@ -98,7 +98,7 @@ public class FormulaParser {
                         }
                         break;
                     case '-':
-                        if (previousPriority >= 1 && !cmd.equals("e") && formula.charAt(i - 1) != '+' && formula.charAt(i - 1) != '*' && formula.charAt(i - 1) != '-' && formula.charAt(i - 1) != '/' && formula.charAt(i - 1) != '%' && formula.charAt(i - 1) != '^') {
+                        if (!cmd.toString().equals("e") && formula.charAt(i - 1) != '+' && formula.charAt(i - 1) != '*' && formula.charAt(i - 1) != '-' && formula.charAt(i - 1) != '/' && formula.charAt(i - 1) != '%' && formula.charAt(i - 1) != '^') {
                             previousPriority = 1;
                             operator = new SubtractFunction();
                             start1 = start;
@@ -149,15 +149,15 @@ public class FormulaParser {
                         break;
                 }
             }
-            if ((formula.charAt(i) >= 'a' && formula.charAt(i) <= 'z') || (!cmd.equals("") && formula.charAt(i) >= '0' && formula.charAt(i) <= '9')) {
+            if ((formula.charAt(i) >= 'a' && formula.charAt(i) <= 'z') || (!cmd.toString().equals("") && formula.charAt(i) >= '0' && formula.charAt(i) <= '9')) {
                 if (brackets == 0)
-                    cmd += formula.charAt(i);
+                    cmd.append(formula.charAt(i));
                 else
-                    cmd = "";
+                    cmd = new StringBuilder();
             } else {
-                if (!cmd.isEmpty()) {
-                    if (cmd.equals("e")) {
-                        cmd = "";
+                if (cmd.length() > 0) {
+                    if (cmd.toString().equals("e")) {
+                        cmd = new StringBuilder();
                         continue;
                     }
                     if (formula.charAt(i) != '(')
@@ -186,7 +186,7 @@ public class FormulaParser {
                         }
 
                         previousPriority = 4;
-                        switch (cmd) {
+                        switch (cmd.toString()) {
                             case "sqrt":
                                 operator = new SqrtFunction();
                                 break;
@@ -243,7 +243,7 @@ public class FormulaParser {
                                 break;
                         }
                     }
-                    cmd = "";
+                    cmd = new StringBuilder();
                 }
             }
         }
@@ -434,10 +434,6 @@ public class FormulaParser {
     }
 
     class FormulaException extends Exception {
-        FormulaException() {
-
-        }
-
         FormulaException(String message) {
             super(message);
         }

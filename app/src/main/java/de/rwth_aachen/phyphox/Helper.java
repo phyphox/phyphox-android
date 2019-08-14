@@ -146,14 +146,14 @@ public abstract class Helper {
         return Integer.parseInt(colorStr, 16) | 0xff000000;
     }
 
-    static void replaceTagInFile(String file, Context ctx, String tag, String newContent) {
+    static void replaceTagInFile(String file, Context ctx, String newContent) {
         try {
             FileInputStream in = ctx.openFileInput(file);
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(in);
             in.close();
 
             XPath xpath = XPathFactory.newInstance().newXPath();
-            NodeList nodes = (NodeList) xpath.evaluate(tag, doc, XPathConstants.NODESET);
+            NodeList nodes = (NodeList) xpath.evaluate("/phyphox/state-title", doc, XPathConstants.NODESET);
 
             for (int i = 0; i < nodes.getLength(); i++) {
                 nodes.item(i).setTextContent(newContent);

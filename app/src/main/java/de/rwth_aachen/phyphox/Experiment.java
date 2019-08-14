@@ -134,11 +134,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 if (experiment != null) { //This only makes sense if there is an experiment
                     try {
                         //time for some analysis?
-                        if (measuring) {
-                            analysisInProgress = true;
-                            experiment.processAnalysis(true); //Do the math.
-                            analysisInProgress = false;
-                        }
+                        analysisInProgress = true;
+                        experiment.processAnalysis(true); //Do the math.
+                        analysisInProgress = false;
                     } catch (Exception e) {
                         Log.e("updateData", "Unhandled exception.", e);
                     }
@@ -594,7 +592,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
-    private void showHint(int textRessource, PopupWindow.OnDismissListener dismissListener, final int gravity, final int fromRight) {
+    private void showHint(int textRessource, PopupWindow.OnDismissListener dismissListener, final int fromRight) {
         if (popupWindow != null)
             return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -603,7 +601,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         text.setText(textRessource);
         ImageView iv = hintView.findViewById(R.id.hint_arrow);
         LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) iv.getLayoutParams();
-        lp.gravity = gravity;
+        lp.gravity = Gravity.END;
         iv.setLayoutParams(lp);
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -640,7 +638,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 if (isFinishing())
                     return;
                 try {
-                    popupWindow.showAtLocation(viewItem, Gravity.TOP | gravity, pos[0] + fromRight * viewItem.getHeight(), pos[1] + (int) (viewItem.getHeight() * 0.8));
+                    popupWindow.showAtLocation(viewItem, Gravity.TOP | Gravity.END, pos[0] + fromRight * viewItem.getHeight(), pos[1] + (int) (viewItem.getHeight() * 0.8));
                 } catch (WindowManager.BadTokenException e) {
                     Log.e("showHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
                 }
@@ -658,7 +656,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 int menuHintDismissCount = settings.getInt("menuHintDismissCount", 0);
                 settings.edit().putInt("menuHintDismissCount", menuHintDismissCount + 1).apply();
             }
-        }, Gravity.RIGHT, 0);
+        }, 0);
     }
 
     private void showStartHint() {
@@ -668,7 +666,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 popupWindow = null;
                 startHintDismissed = true;
             }
-        }, Gravity.RIGHT, 2);
+        }, 2);
     }
 
     @Override
@@ -1267,7 +1265,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return true;
         }
 
-        int highlightLink = -1;
+        int highlightLink;
         switch (id) {
             case R.id.action_link1:
                 highlightLink = 0;

@@ -41,7 +41,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     PopupWindow popupWindowInfo = null;
     TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
-    private boolean interactive = false;
     private boolean linearRegression = false;
     private TextView graphLabel;
     private ImageView expandImage, collapseImage;
@@ -205,7 +204,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final TextView tvLabelY = dialogView.findViewById(R.id.applyZoomYLabel);
         final TextView tvLabelZ = dialogView.findViewById(R.id.applyZoomZLabel);
         final RadioButton rbReset = dialogView.findViewById(R.id.applyZoomReset);
-        final RadioButton rbKeep = dialogView.findViewById(R.id.applyZoomKeep);
+        dialogView.findViewById(R.id.applyZoomKeep);
         final RadioButton rbResetX = dialogView.findViewById(R.id.applyZoomXReset);
         final RadioButton rbKeepX = dialogView.findViewById(R.id.applyZoomXKeep);
         final RadioButton rbFollowX = dialogView.findViewById(R.id.applyZoomXFollow);
@@ -364,8 +363,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
         expandImage.setVisibility(interactive ? INVISIBLE : VISIBLE);
         collapseImage.setVisibility(interactive ? VISIBLE : INVISIBLE);
-
-        this.interactive = interactive;
     }
 
     public void setLabel(String label) {
@@ -409,7 +406,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             double sumX = 0.;
             double sumX2 = 0.;
             double sumY = 0.;
-            double sumY2 = 0.;
             double sumXY = 0.;
             synchronized (cd.fbX) {
                 synchronized (cd.fbY) {
@@ -427,7 +423,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         sumX += x;
                         sumX2 += x * x;
                         sumY += y;
-                        sumY2 += y * y;
                         sumXY += x * y;
                     }
                 }

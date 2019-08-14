@@ -27,7 +27,6 @@ public class dataBuffer implements Serializable {
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
     public Double[] init = new Double[0];
     boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
-    private boolean untouched = true;
     //Analysis modules and graphs can register to receive notifications if a buffer changes.
     private Set<BufferNotification> updateListeners = new HashSet<>();
     private BlockingQueue<Double> buffer; //The actual buffer (will be initialized as ArrayBlockingQueue which is Serializable)
@@ -111,7 +110,6 @@ public class dataBuffer implements Serializable {
 
     //Append a value to the buffer.
     public void append(double value, boolean notify) {
-        untouched = false;
         double last = this.value;
         this.value = value; //Update last value
         if (this.size > 0 && buffer.size() + 1 > this.size) { //If the buffer becomes larger than the target size, remove the first item (queue!)
@@ -241,7 +239,6 @@ public class dataBuffer implements Serializable {
     public void clear(boolean reset, boolean notify) {
         if (isStatic)
             return;
-        untouched = reset;
         buffer.clear();
         value = Double.NaN;
         if (floatCopy != null) {

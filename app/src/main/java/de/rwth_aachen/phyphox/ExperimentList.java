@@ -173,7 +173,7 @@ public class ExperimentList extends AppCompatActivity {
         String category = ""; //Experiment category
         int color = getResources().getColor(R.color.phyphox_color); //Icon base color
         boolean customColor = false;
-        String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
+        String icon; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
         BaseColorDrawable image = null; //This will hold the icon
 
@@ -187,7 +187,7 @@ public class ExperimentList extends AppCompatActivity {
             SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
             boolean inInput = false;
             boolean inOutput = false;
-            Integer unavailableSensor = -1;
+            int unavailableSensor = -1;
 
             int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
             while (eventType != XmlPullParser.END_DOCUMENT) { //Go through all tags until the end...
@@ -313,20 +313,19 @@ public class ExperimentList extends AppCompatActivity {
                                 UUID uuid = null;
                                 try {
                                     uuid = UUID.fromString(uuidStr);
-                                } catch (Exception e) {
-
+                                } catch (Exception ignored) {
                                 }
                                 if (name != null && !name.isEmpty()) {
                                     if (bluetoothDeviceNameList != null) {
                                         if (!bluetoothDeviceNameList.containsKey(name))
-                                            bluetoothDeviceNameList.put(name, new Vector<String>());
+                                            bluetoothDeviceNameList.put(name, new Vector<>());
                                         bluetoothDeviceNameList.get(name).add(experimentXML);
                                     }
                                 }
                                 if (uuid != null) {
                                     if (bluetoothDeviceUUIDList != null) {
                                         if (!bluetoothDeviceUUIDList.containsKey(uuid))
-                                            bluetoothDeviceUUIDList.put(uuid, new Vector<String>());
+                                            bluetoothDeviceUUIDList.put(uuid, new Vector<>());
                                         bluetoothDeviceUUIDList.get(uuid).add(experimentXML);
                                     }
                                 }
@@ -596,7 +595,6 @@ public class ExperimentList extends AppCompatActivity {
                     default:
                         progress.dismiss();
                         gatt.close();
-                        return;
                 }
             }
 
@@ -813,7 +811,6 @@ public class ExperimentList extends AppCompatActivity {
 
         View view = inflater.inflate(R.layout.open_multipe_dialog, null);
         builder.setView(view);
-        final Activity parent = this;
         if (!supportedExperiments.isEmpty()) {
             builder.setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
                 @Override
@@ -1042,12 +1039,12 @@ public class ExperimentList extends AppCompatActivity {
         });
     }
 
-    protected void showBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
+    protected void showBluetoothScanError(String msg, Boolean isFatal) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
-                .setTitle(isError ? R.string.newExperimentBluetoothErrorTitle : R.string.newExperimentBluetooth);
+                .setTitle(R.string.newExperimentBluetoothErrorTitle);
         if (!isFatal) {
-            builder.setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(R.string.tryagain, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     scanQRCode();
                 }
@@ -1686,7 +1683,7 @@ public class ExperimentList extends AppCompatActivity {
         adb.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 //User clicked ok. Did the user decide to skip future warnings?
-                Boolean skipWarning = false;
+                boolean skipWarning = false;
                 if (dontShowAgain.isChecked())
                     skipWarning = true;
 
@@ -1700,7 +1697,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //Check preferences if the user does not want to see warnings
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        Boolean skipWarning = settings.getBoolean("skipWarning", false);
+        boolean skipWarning = settings.getBoolean("skipWarning", false);
         if (!skipWarning)
             adb.show(); //User did not decide to skip, so show it.
     }
@@ -2051,12 +2048,12 @@ public class ExperimentList extends AppCompatActivity {
         //The constructor takes the intent to copy from and the parent activity to call back when finished.
         handleZipIntent(Intent intent, ExperimentList parent) {
             this.intent = intent;
-            this.parent = new WeakReference<ExperimentList>(parent);
+            this.parent = new WeakReference<>(parent);
         }
 
         handleZipIntent(Intent intent, ExperimentList parent, BluetoothDevice preselectedDevice) {
             this.intent = intent;
-            this.parent = new WeakReference<ExperimentList>(parent);
+            this.parent = new WeakReference<>(parent);
             this.preselectedDevice = preselectedDevice;
         }
 
@@ -2092,7 +2089,7 @@ public class ExperimentList extends AppCompatActivity {
                         return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
                     }
                     FileOutputStream out = new FileOutputStream(f);
-                    int size = 0;
+                    int size;
                     while ((size = zis.read(buffer)) > 0) {
                         out.write(buffer, 0, size);
                     }
@@ -2117,7 +2114,7 @@ public class ExperimentList extends AppCompatActivity {
     //So, this can be considered to be the experiment entries within an category
     private class ExperimentItemAdapter extends BaseAdapter {
         final private Activity parentActivity; //Reference to the main activity for the alertDialog when deleting files
-        final private boolean isSimpleExperiment, isSavedState;
+        final private boolean isSavedState;
         //Experiment data
         Vector<Integer> colors = new Vector<>(); //List of icons for each experiment
         Vector<Drawable> icons = new Vector<>(); //List of icons for each experiment
@@ -2133,7 +2130,7 @@ public class ExperimentList extends AppCompatActivity {
         ExperimentItemAdapter(Activity parentActivity, String category) {
             this.parentActivity = parentActivity;
             this.isSavedState = category.equals(res.getString(R.string.save_state_category));
-            this.isSimpleExperiment = category.equals(res.getString(R.string.categoryNewExperiment));
+            category.equals(res.getString(R.string.categoryNewExperiment));
         }
 
         void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
@@ -2321,7 +2318,7 @@ public class ExperimentList extends AppCompatActivity {
                                                             return;
                                                         //Confirmed. Rename the item and reload the list
                                                         if (isSavedState)
-                                                            Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), "/phyphox/state-title", newName);
+                                                            Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), newName);
                                                         loadExperimentList();
                                                     }
                                                 })
@@ -2557,12 +2554,12 @@ public class ExperimentList extends AppCompatActivity {
         //Copying is done on a second thread...
         protected BluetoothScanDialog.BluetoothDeviceInfo doInBackground(String... params) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent.get())) {
-                showBluetoothScanError(getResources().getString(R.string.bt_android_version), true, true);
+                showBluetoothScanError(getResources().getString(R.string.bt_android_version), true);
                 return null;
             } else {
                 BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
                 if (btAdapter == null || !Bluetooth.isEnabled()) {
-                    showBluetoothScanError(getResources().getString(R.string.bt_exception_disabled), true, false);
+                    showBluetoothScanError(getResources().getString(R.string.bt_exception_disabled), false);
                     return null;
                 }
                 BluetoothScanDialog bsd = new BluetoothScanDialog(parent.get(), parent.get(), btAdapter);

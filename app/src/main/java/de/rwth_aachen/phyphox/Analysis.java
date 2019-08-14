@@ -144,7 +144,7 @@ public class Analysis {
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
         Vector<Double[]> inputArrays = new Vector<>(); //The local copy of the input data when the analysis module starts its update
         Vector<Integer> inputArraySizes = new Vector<>(); //The local copy of the input data when the analysis module starts its update
-        boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
+        boolean isStatic; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
         boolean needsUpdate = true;
         boolean useArray = false;
         boolean clearInModule = false;
@@ -233,7 +233,7 @@ public class Analysis {
 
 //                long time = System.nanoTime() - updateStart;
 //                if (time > 1e6)
-//                    Log.d("AnalysisDebug", this.toString() + " update: " + (time*1e-6) + "ms");
+//                    Log.d("AnalysisDebug", this.toString() + " update: " + (time * 1e-6) + "ms");
 
 
                 // Uncomment to print the last value of inputs and outputs for debugging...
@@ -246,7 +246,7 @@ public class Analysis {
                 } else {
                     for (int i = 0; i < inputArrays.size() && i < inputArraySizes.size(); i++)
                         if (inputArrays.get(i) != null)
-                            Log.d("AnalysisDebug", "in: " + (inputArraySizes.get(i) > 0 ? inputArrays.get(i)[inputArraySizes.get(i)-1] : "[]") + " (length " + inputArraySizes.get(i) + ")");
+                            Log.d("AnalysisDebug", "in: " + (inputArraySizes.get(i) > 0 ? inputArrays.get(i)[inputArraySizes.get(i) - 1] : "[]") + " (length " + inputArraySizes.get(i) + ")");
                 }
                 for (dataOutput output : outputs)
                     if (output != null)
@@ -408,9 +408,9 @@ public class Analysis {
         @Override
         protected void update() {
 
-            boolean anyInput = true; //Is there any buffer left with values?
+            boolean anyInput; //Is there any buffer left with values?
             int i = 0;
-            while (anyInput) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double result = 0;
                 anyInput = false;
 
@@ -448,9 +448,9 @@ public class Analysis {
 
         @Override
         protected void update() {
-            boolean anyInput = true; //Is there any buffer left with values?
+            boolean anyInput; //Is there any buffer left with values?
             int i = 0;
-            while (anyInput) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double result = 0;
                 anyInput = false;
 
@@ -494,9 +494,9 @@ public class Analysis {
 
         @Override
         protected void update() {
-            boolean anyInput = true; //Is there any buffer left with values?
+            boolean anyInput; //Is there any buffer left with values?
             int i = 0;
-            while (anyInput) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double result = 1.;
                 anyInput = false;
 
@@ -534,9 +534,9 @@ public class Analysis {
 
         @Override
         protected void update() {
-            boolean anyInput = true; //Is there any buffer left with values?
+            boolean anyInput; //Is there any buffer left with values?
             int i = 0;
-            while (anyInput) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 double result = 0.;
                 anyInput = false;
 
@@ -614,9 +614,9 @@ public class Analysis {
                 }
             } else {
 
-                boolean anyInput = true; //Is there any buffer left with values?
+                boolean anyInput; //Is there any buffer left with values?
                 int i = 0;
-                while (anyInput) { //For each value of output buffer
+                while (true) { //For each value of output buffer
                     double result = 1.;
                     anyInput = false;
 
@@ -663,9 +663,9 @@ public class Analysis {
 
         @Override
         protected void update() {
-            boolean anyInput = true; //Is there any buffer left with values?
+            boolean anyInput; //Is there any buffer left with values?
             int i = 0;
-            while (anyInput) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 anyInput = false;
 
                 long a = 1;
@@ -718,9 +718,9 @@ public class Analysis {
 
         @Override
         protected void update() {
-            boolean anyInput = true; //Is there any buffer left with values?
+            boolean anyInput; //Is there any buffer left with values?
             int i = 0;
-            while (anyInput) { //For each value of output buffer
+            while (true) { //For each value of output buffer
                 anyInput = false;
 
                 long a = 1;
@@ -1074,7 +1074,7 @@ public class Analysis {
     //If the parameter "multiple" is set, this module will output multiple local maxima (and their positions)
     //In multiple mode input3 may set a threshold: A local maximum will be searched in ranges of consecutive values above the threshold, Default: 0
     public static class maxAM extends analysisModule implements Serializable {
-        private boolean multiple = false;
+        private boolean multiple;
 
         maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
             super(experiment, inputs, outputs);
@@ -1150,7 +1150,7 @@ public class Analysis {
     //If the parameter "multiple" is set, this module will output multiple local minima (and their positions)
     //In multiple mode input3 may set a threshold: A local minimum will be searched in ranges of consecutive values below the threshold, Default: 0
     public static class minAM extends analysisModule implements Serializable {
-        private boolean multiple = false;
+        private boolean multiple;
 
         minAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
             super(experiment, inputs, outputs);
@@ -1224,7 +1224,7 @@ public class Analysis {
     //The threshold is set by input3 (it defaults to 0)
     //The constructor parameter falling select positive or negative edge triggering (loaded with rising as default)
     public static class thresholdAM extends analysisModule implements Serializable {
-        boolean falling = false; //Falling or rising trigger?
+        boolean falling; //Falling or rising trigger?
 
         //Extended constructor which receives the threshold and falling as well.
         thresholdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean falling) {
@@ -1354,7 +1354,7 @@ public class Analysis {
     //zMode - can be "count", "sum" or "average". "count" counts the number of times x and y combinations fall into a bin (z is ignored here). "sum" sums up all z values that fall into the same bin. "average" averages the z values of a single bin.
     public static class mapAM extends analysisModule implements Serializable {
 
-        ZMode zMode = ZMode.count;
+        ZMode zMode;
 
         mapAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, ZMode zMode) {
             super(experiment, inputs, outputs);
@@ -1475,9 +1475,9 @@ public class Analysis {
     //Reduce: Combine neighboring values to a smaller array by an integer factor, either skipping values inbetween or summing them (also stretch values if there are too few)
     public static class reduceAM extends analysisModule implements Serializable {
 
-        boolean averageX = false;
-        boolean sumY = false;
-        boolean averageY = false;
+        boolean averageX;
+        boolean sumY;
+        boolean averageY;
 
         reduceAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean averageX, boolean sumY, boolean averageY) {
             super(experiment, inputs, outputs);
@@ -2033,7 +2033,6 @@ public class Analysis {
             boolean hasNext = true; //Will be set to false if ANY of the iterators has no next item
             while (hasNext) {
                 //Check if any input has a value left
-                hasNext = true;
                 for (Iterator it : its) {
                     if (!it.hasNext()) {
                         hasNext = false;

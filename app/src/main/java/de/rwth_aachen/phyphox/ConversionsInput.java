@@ -12,48 +12,47 @@ import java.util.Arrays;
 // The class holds public static functions which convert values from a byte array to a double value.
 public class ConversionsInput {
 
-
     private static Integer uInt16LittleEndian(byte lower, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer upperByte = (int) upper & 0xFF;
+        int lowerByte = (int) lower & 0xFF;
+        int upperByte = (int) upper & 0xFF;
         return ((upperByte << 8) + lowerByte);
     }
 
     private static Integer int16LittleEndian(byte lower, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer upperByte = (int) upper;
+        int lowerByte = (int) lower & 0xFF;
+        int upperByte = (int) upper;
         return ((upperByte << 8) + lowerByte);
     }
 
     /* private helper functions */
 
     private static Integer uInt24LittleEndian(byte lower, byte medium, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer mediumByte = (int) medium & 0xFF;
-        Integer upperByte = (int) upper & 0xFF;
+        int lowerByte = (int) lower & 0xFF;
+        int mediumByte = (int) medium & 0xFF;
+        int upperByte = (int) upper & 0xFF;
         return ((upperByte << 16) + (mediumByte << 8) + lowerByte);
     }
 
     private static Integer int24LittleEndian(byte lower, byte medium, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer mediumByte = (int) medium & 0xFF;
-        Integer upperByte = (int) upper;
+        int lowerByte = (int) lower & 0xFF;
+        int mediumByte = (int) medium & 0xFF;
+        int upperByte = (int) upper;
         return ((upperByte << 16) + (mediumByte << 8) + lowerByte);
     }
 
     private static Long uInt32LittleEndian(byte lower, byte mLower, byte mUpper, byte upper) {
-        Long lowerByte = (long) lower & 0xFF;
-        Long mLowerByte = (long) mLower & 0xFF;
-        Long mUpperByte = (long) mUpper & 0xFF;
-        Long upperByte = (long) upper & 0xFF;
+        long lowerByte = (long) lower & 0xFF;
+        long mLowerByte = (long) mLower & 0xFF;
+        long mUpperByte = (long) mUpper & 0xFF;
+        long upperByte = (long) upper & 0xFF;
         return ((upperByte << 24) + (mUpperByte << 16) + (mLowerByte << 8) + lowerByte);
     }
 
     private static Integer int32LittleEndian(byte lower, byte mLower, byte mUpper, byte upper) {
-        Integer lowerByte = (int) lower & 0xFF;
-        Integer mLowerByte = (int) mLower & 0xFF;
-        Integer mUpperByte = (int) mUpper & 0xFF;
-        Integer upperByte = (int) upper;
+        int lowerByte = (int) lower & 0xFF;
+        int mLowerByte = (int) mLower & 0xFF;
+        int mUpperByte = (int) mUpper & 0xFF;
+        int upperByte = (int) upper;
         return ((upperByte << 24) + (mUpperByte << 16) + (mLowerByte << 8) + lowerByte);
     }
 
@@ -190,7 +189,7 @@ public class ConversionsInput {
                 if (length > 0 && length < actualLength)
                     actualLength = length;
                 byte[] subdata = Arrays.copyOfRange(data, offset, offset + actualLength);
-                return (double) conversionFunction.invoke(null, subdata);
+                return (double) conversionFunction.invoke(null, (Object) subdata);
             } catch (Exception e) {
                 return Double.NaN;
             }
@@ -210,15 +209,13 @@ public class ConversionsInput {
             if (offset != null) {
                 try {
                     this.offset = Integer.valueOf(offset);
-                } catch (Exception e) {
-
+                } catch (Exception ignored) {
                 }
             }
             if (length != null) {
                 try {
                     this.length = Integer.valueOf(length);
-                } catch (Exception e) {
-
+                } catch (Exception ignored) {
                 }
             }
 

@@ -51,7 +51,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * Data-buffers
      */
-    private Vector<dataOutput> data = new Vector<>();
+    private Vector<dataOutput> data;
     private Lock dataLock;
 
     /**
@@ -107,7 +107,7 @@ public class BluetoothInput extends Bluetooth {
                     // it should not be possible to continue before the notifications are turned on
                     // timeout after 3 seconds if the device could not be connected
                     result = cdl.await(3, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
                 }
                 if (!result) {
                     throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification_fail_enable) + " " + characteristic.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_fail), this);
@@ -126,12 +126,11 @@ public class BluetoothInput extends Bluetooth {
             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
             cdl = new CancellableLatch(1);
             add(new WriteDescriptorCommand(btGatt, descriptor));
-            boolean result = false;
             try {
                 // it should not be possible to continue before the notifications are turned on
                 // timeout after 2 seconds if the device could not be connected
-                result = cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait when closing an experiment
-            } catch (InterruptedException e) {
+                cdl.await(2, TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -192,7 +191,7 @@ public class BluetoothInput extends Bluetooth {
                         for (BluetoothGattCharacteristic c : mapping.keySet()) {
                             add(new ReadCommand(btGatt, c));
                         }
-                        mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
+                        mainHandler.postDelayed(this, period / 1000000L); // poll data again after the period is over
                     }
                 };
                 mainHandler.post(readData);
@@ -241,7 +240,7 @@ public class BluetoothInput extends Bluetooth {
             case "notification":
             case "indication": {
                 for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    boolean result = btGatt.setCharacteristicNotification(c, false);
+                    btGatt.setCharacteristicNotification(c, false);
                 }
                 break;
             }

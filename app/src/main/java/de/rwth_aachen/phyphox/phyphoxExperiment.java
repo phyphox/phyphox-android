@@ -133,7 +133,7 @@ public class phyphoxExperiment implements Serializable {
                                 if (eve.onMayWriteToBuffers()) //The element may now write to its buffers if it wants to do it on its own...
                                     newUserInput = true;
                                 if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
-                                    Double v = eve.getValue(); //...get the value
+                                    double v = eve.getValue(); //...get the value
                                     if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
                                         buffer.append(v);
                                         newUserInput = true;
@@ -193,7 +193,7 @@ public class phyphoxExperiment implements Serializable {
             }
         }
 
-        Double sleep = analysisSleep;
+        double sleep = analysisSleep;
         if (analysisDynamicSleep != null && !Double.isNaN(analysisDynamicSleep.value) && !Double.isInfinite(analysisDynamicSleep.value)) {
             sleep = analysisDynamicSleep.value;
         }

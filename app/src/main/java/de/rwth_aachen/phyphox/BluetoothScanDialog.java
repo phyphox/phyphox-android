@@ -98,7 +98,7 @@ class BluetoothScanDialog {
                         }
 
                         uuids.add(new UUID(mostSignificant, leastSignificant));
-//                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 128bit: " + new UUID(mostSignificant, leastSignificant).toString());
+//                        Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 128bit: " + new UUID(mostSignificant, leastSignificant).toString());
 
                     }
                 }
@@ -246,10 +246,11 @@ class BluetoothScanDialog {
         parentActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                String s = idString != null && !idString.isEmpty() ? " (" + idString + ")" : "";
                 if (nameFilter == null || nameFilter.isEmpty()) {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_generic) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : ""));
+                    title.setText(ctx.getResources().getString(R.string.bt_scanning_generic) + s);
                 } else {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : ""));
+                    title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2) + s);
                 }
                 dialog.show();
             }
@@ -296,7 +297,7 @@ class BluetoothScanDialog {
 
         DeviceListAdapter() {
             super();
-            devices = new ArrayList<BluetoothDeviceInfo>();
+            devices = new ArrayList<>();
             inflator = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
 
