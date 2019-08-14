@@ -7,8 +7,8 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import java.util.ArrayList;
 import java.util.HashMap;

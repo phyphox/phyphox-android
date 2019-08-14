@@ -7,9 +7,11 @@ import android.content.DialogInterface;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
-import android.support.v7.app.AlertDialog;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -309,7 +311,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         }
 
         builder.setTitle(R.string.applyZoomTitle)
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.ok, (dialog, id) -> {
                     public void onClick(DialogInterface dialog, int id) {
                         double minX, maxX, minY, maxY, minZ, maxZ;
                         boolean simple = !swAdvanced.isChecked();

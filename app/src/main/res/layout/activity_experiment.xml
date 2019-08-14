@@ -6,7 +6,7 @@
     android:clickable="false"
     android:id="@+id/rootLayout">
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:layout_alignParentTop="true"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
@@ -22,9 +22,9 @@
             android:layout_height="wrap_content"
             style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
             android:id="@+id/titleText" />
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
-    <android.support.design.widget.TabLayout
+    <com.google.android.material.tabs.TabLayout
         android:elevation="4dp"
         android:background="@color/backgroundExp2"
         android:id="@+id/tab_layout"
@@ -51,7 +51,7 @@
         android:progressBackgroundTint="@android:color/transparent"
         android:layout_below="@+id/tab_layout" />
 
-    <android.support.v4.view.ViewPager
+    <androidx.viewpager.widget.ViewPager
         android:layout_below="@id/tab_layout"
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
