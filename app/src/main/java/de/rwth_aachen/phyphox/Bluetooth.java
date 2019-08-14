@@ -1,7 +1,6 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -13,7 +12,6 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -243,12 +241,7 @@ public class Bluetooth implements Serializable {
         this.context = context;
         this.mainHandler = new Handler(this.context.getMainLooper());
         // create toast to show error messages while the experiment is running
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                toast = Toast.makeText(Bluetooth.this.context, Bluetooth.this.context.getResources().getString(R.string.bt_default_error_message), Toast.LENGTH_LONG);
-            }
-        });
+        mainHandler.post(() -> toast = Toast.makeText(Bluetooth.this.context, Bluetooth.this.context.getResources().getString(R.string.bt_default_error_message), Toast.LENGTH_LONG));
 
         this.characteristics = characteristics;
         isRunning = false;
@@ -540,12 +533,9 @@ public class Bluetooth implements Serializable {
             mainHandler.post(errorDialog);
         } else {
             // show toast
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    toast.setText(message);
-                    toast.show();
-                }
+            mainHandler.post(() -> {
+                toast.setText(message);
+                toast.show();
             });
         }
     }
@@ -936,17 +926,11 @@ public class Bluetooth implements Serializable {
                 TextView tv = neLayout.findViewById(R.id.errorText);
                 tv.setText(message); // set error message as text
                 if (tryAgain != null) {
-                    errorDialog.setPositiveButton(context.getResources().getString(R.string.tryagain), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            tryAgain.run();
-                        }
-                    });
+                    errorDialog.setPositiveButton(context.getResources().getString(R.string.tryagain), (dialog, which) -> tryAgain.run());
                 }
-                errorDialog.setNegativeButton(context.getResources().getString(R.string.cancel), new Dialog.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (cancel != null) {
-                            cancel.run();
-                        }
+                errorDialog.setNegativeButton(context.getResources().getString(R.string.cancel), (dialog, which) -> {
+                    if (cancel != null) {
+                        cancel.run();
                     }
                 });
                 AlertDialog alertDialog = errorDialog.create();

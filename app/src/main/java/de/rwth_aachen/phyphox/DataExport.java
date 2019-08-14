@@ -3,7 +3,6 @@ package de.rwth_aachen.phyphox;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
@@ -87,74 +86,65 @@ public class DataExport implements Serializable {
         AlertDialog.Builder builder = new AlertDialog.Builder(c);
         builder.setTitle(R.string.pick_exportFormat) //Title from internationalization
                 .setSingleChoiceItems(options, 0, //Callback if the user changes the selection
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                selected.value = which; //Remember the selection
-                            }
+                        (dialog, which) -> {
+                            selected.value = which; //Remember the selection
                         })
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) { //Callback when the user confirms his selection
-                        //Lets do the actual export
+                .setPositiveButton(R.string.ok, (dialog, id) -> { //Callback when the user confirms his selection
+                    //Lets do the actual export
 
-                        //Set a file name including the current date
-                        exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
+                    //Set a file name including the current date
+                    exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
 
-                        //Call the export filter to write the data to a file
-                        File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic);
+                    //Call the export filter to write the data to a file
+                    File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic);
 
-                        //Use a FileProvider so we can send this file to other apps
-                        final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", exportFile);
+                    //Use a FileProvider so we can send this file to other apps
+                    final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", exportFile);
 
-                        //Create a share intent
-                        final Intent intent = ShareCompat.IntentBuilder.from(c)
-                                .setType(exportFormats[selected.value].getType(minimalistic)) //mime type from the export filter
-                                .setSubject(c.getString(R.string.export_subject))
-                                .setStream(uri)
-                                .getIntent()
-                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    //Create a share intent
+                    final Intent intent = ShareCompat.IntentBuilder.from(c)
+                            .setType(exportFormats[selected.value].getType(minimalistic)) //mime type from the export filter
+                            .setSubject(c.getString(R.string.export_subject))
+                            .setStream(uri)
+                            .getIntent()
+                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                        List<ResolveInfo> resInfoList = c.getPackageManager().queryIntentActivities(intent, 0);
-                        for (ResolveInfo ri : resInfoList) {
-                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        }
-
-                        //Create intents for apps that support viewing or editing the file
-                        final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
-                        viewIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
-                        viewIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                        resInfoList = c.getPackageManager().queryIntentActivities(viewIntent, 0);
-                        Vector<Intent> extraIntents = new Vector<>();
-                        for (ResolveInfo ri : resInfoList) {
-                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                            ))
-                                continue;
-                            Intent appIntent = new Intent();
-                            appIntent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
-                            appIntent.setAction(Intent.ACTION_VIEW);
-                            appIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
-                            appIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            extraIntents.add(appIntent);
-                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        }
-
-                        final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[0]);
-
-                        //Create chooser
-                        Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
-                        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntentsArray);
-
-                        //Execute this intent
-                        c.startActivity(chooser);
+                    List<ResolveInfo> resInfoList = c.getPackageManager().queryIntentActivities(intent, 0);
+                    for (ResolveInfo ri : resInfoList) {
+                        c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     }
+
+                    //Create intents for apps that support viewing or editing the file
+                    final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+                    viewIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
+                    viewIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    resInfoList = c.getPackageManager().queryIntentActivities(viewIntent, 0);
+                    Vector<Intent> extraIntents = new Vector<>();
+                    for (ResolveInfo ri : resInfoList) {
+                        if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                        ))
+                            continue;
+                        Intent appIntent = new Intent();
+                        appIntent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
+                        appIntent.setAction(Intent.ACTION_VIEW);
+                        appIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
+                        appIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        extraIntents.add(appIntent);
+                        c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    }
+
+                    final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[0]);
+
+                    //Create chooser
+                    Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
+                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntentsArray);
+
+                    //Execute this intent
+                    c.startActivity(chooser);
                 })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {//Callback if the user aborts the dialog.
-                        //Nothing to do here. We shall not export.
-                    }
+                .setNegativeButton(R.string.cancel, (dialog, id) -> {//Callback if the user aborts the dialog.
+                    //Nothing to do here. We shall not export.
                 });
 
         //Show the dialog which we have just built

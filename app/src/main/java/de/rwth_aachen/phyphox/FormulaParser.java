@@ -3,7 +3,7 @@ package de.rwth_aachen.phyphox;
 import java.util.Vector;
 
 public class FormulaParser {
-    Source base;
+    private Source base;
 
     FormulaParser(String formula) throws FormulaException {
         String strippedFormula = formula.replaceAll("\\s+", "").toLowerCase();

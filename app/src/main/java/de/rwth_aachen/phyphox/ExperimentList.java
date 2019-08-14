@@ -17,7 +17,6 @@ import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -53,7 +52,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -81,7 +79,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -425,12 +422,7 @@ public class ExperimentList extends AppCompatActivity {
         //Load experiments from local files
         try {
             //Get all files that end on ".phyphox"
-            File[] files = getFilesDir().listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String filename) {
-                    return filename.endsWith(".phyphox");
-                }
-            });
+            File[] files = getFilesDir().listFiles((dir, filename) -> filename.endsWith(".phyphox"));
 
             for (File file : files) {
                 //Load details for each experiment
@@ -491,12 +483,7 @@ public class ExperimentList extends AppCompatActivity {
             progress.dismiss();
         if (result.isEmpty()) {
             File tempPath = new File(getFilesDir(), "temp");
-            final File[] files = tempPath.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String filename) {
-                    return filename.endsWith(".phyphox");
-                }
-            });
+            final File[] files = tempPath.listFiles((dir, filename) -> filename.endsWith(".phyphox"));
             if (files.length == 0) {
                 Toast.makeText(this, "Error: There is no valid phyphox experiment in this zip file.", Toast.LENGTH_LONG).show();
             } else if (files.length == 1) {
@@ -517,25 +504,16 @@ public class ExperimentList extends AppCompatActivity {
                 View view = inflater.inflate(R.layout.open_multipe_dialog, null);
                 final Activity parent = this;
                 builder.setView(view)
-                        .setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int id) {
-                                for (File file : files) {
-                                    if (!Helper.experimentInCollection(file, parent))
-                                        file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
-                                }
-                                loadExperimentList();
-                                dialog.dismiss();
+                        .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
+                            for (File file : files) {
+                                if (!Helper.experimentInCollection(file, parent))
+                                    file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
                             }
-
+                            loadExperimentList();
+                            dialog.dismiss();
                         })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                            }
+                        .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
 
-                        });
                 AlertDialog dialog = builder.create();
 
                 ((TextView) view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_zip_dialog_instructions);
@@ -666,29 +644,23 @@ public class ExperimentList extends AppCompatActivity {
 
                     //From here we can estimate the progress, so let's show a determinate progress dialog instead
                     progress.dismiss();
-                    parent.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progress = new ProgressDialog(parent);
-                            progress.setTitle(res.getString(R.string.loadingTitle));
-                            progress.setMessage(res.getString(R.string.loadingText));
-                            progress.setIndeterminate(false);
-                            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                            progress.setCancelable(true);
-                            progress.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialogInterface) {
-                                    if (descriptor != null) {
-                                        descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                                        gatt.writeDescriptor(descriptor);
-                                    }
-                                    gatt.disconnect();
-                                }
-                            });
-                            progress.setProgress(0);
-                            progress.setMax(currentBluetoothDataSize);
-                            progress.show();
-                        }
+                    parent.runOnUiThread(() -> {
+                        progress = new ProgressDialog(parent);
+                        progress.setTitle(res.getString(R.string.loadingTitle));
+                        progress.setMessage(res.getString(R.string.loadingText));
+                        progress.setIndeterminate(false);
+                        progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                        progress.setCancelable(true);
+                        progress.setOnCancelListener(dialogInterface -> {
+                            if (descriptor != null) {
+                                descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                                gatt.writeDescriptor(descriptor);
+                            }
+                            gatt.disconnect();
+                        });
+                        progress.setProgress(0);
+                        progress.setMax(currentBluetoothDataSize);
+                        progress.show();
                     });
                 } else {
                     int size = data.length;
@@ -709,22 +681,22 @@ public class ExperimentList extends AppCompatActivity {
                         }
                         gatt.disconnect();
 
-                        /*
+/*
                         StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
-                        for(byte b: currentBluetoothData)
+                        for (byte b : currentBluetoothData)
                             sb.append(String.format("%02x ", b));
                         final String hex = sb.toString();
 
-                        for (int i = 0; i < hex.length(); i+= 48) {
-                            Log.d("TEST", hex.substring(i, Math.min(i+48, hex.length())));
+                        for (int i = 0; i < hex.length(); i += 48) {
+                            Log.d("TEST", hex.substring(i, Math.min(i + 48, hex.length())));
                         }
-                        */
+*/
 
                         CRC32 crc32 = new CRC32();
                         crc32.update(currentBluetoothData);
                         if (crc32.getValue() != currentBluetoothDataCRC32) {
                             showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) + " (CRC32)", device);
-                            //   Log.d("TEST", "CRC32: Expected " + currentBluetoothDataCRC32 + " but calculated " + crc32.getValue());
+//                            Log.d("TEST", "CRC32: Expected " + currentBluetoothDataCRC32 + " but calculated " + crc32.getValue());
                             return;
                         }
 
@@ -773,12 +745,9 @@ public class ExperimentList extends AppCompatActivity {
             }
         });
 
-        progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true, true, new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialogInterface) {
-                gatt.disconnect();
-                progress.dismiss();
-            }
+        progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true, true, dialogInterface -> {
+            gatt.disconnect();
+            progress.dismiss();
         });
     }
 
@@ -812,40 +781,30 @@ public class ExperimentList extends AppCompatActivity {
         View view = inflater.inflate(R.layout.open_multipe_dialog, null);
         builder.setView(view);
         if (!supportedExperiments.isEmpty()) {
-            builder.setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int id) {
-                    AssetManager assetManager = getAssets();
-                    try {
-                        for (String file : supportedExperiments) {
-                            InputStream in = assetManager.open("experiments/bluetooth/" + file);
-                            OutputStream out = new FileOutputStream(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
-                            byte[] buffer = new byte[1024];
-                            int count;
-                            while ((count = in.read(buffer)) != -1) {
-                                out.write(buffer, 0, count);
-                            }
-                            in.close();
-                            out.flush();
-                            out.close();
+            builder.setPositiveButton(R.string.open_save_all, (dialog, id) -> {
+                AssetManager assetManager = getAssets();
+                try {
+                    for (String file : supportedExperiments) {
+                        InputStream in = assetManager.open("experiments/bluetooth/" + file);
+                        OutputStream out = new FileOutputStream(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
+                        byte[] buffer = new byte[1024];
+                        int count;
+                        while ((count = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, count);
                         }
-                    } catch (Exception e) {
-                        Toast.makeText(ExperimentList.this, "Error: Could not retrieve assets.", Toast.LENGTH_LONG).show();
+                        in.close();
+                        out.flush();
+                        out.close();
                     }
-
-                    loadExperimentList();
-                    dialog.dismiss();
+                } catch (Exception e) {
+                    Toast.makeText(ExperimentList.this, "Error: Could not retrieve assets.", Toast.LENGTH_LONG).show();
                 }
 
+                loadExperimentList();
+                dialog.dismiss();
             });
         }
-        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-            }
-
-        });
+        builder.setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
 
         String instructions = "";
         if (!supportedExperiments.isEmpty()) {
@@ -855,12 +814,9 @@ public class ExperimentList extends AppCompatActivity {
             instructions += "\n\n";
         if (phyphoxService) {
             instructions += res.getString(R.string.newExperimentBluetoothLoadFromDeviceInfo);
-            builder.setNeutralButton(R.string.newExperimentBluetoothLoadFromDevice, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int id) {
-                    loadExperimentFromBluetoothDevice(device);
-                    dialog.dismiss();
-                }
+            builder.setNeutralButton(R.string.newExperimentBluetoothLoadFromDevice, (dialog, id) -> {
+                loadExperimentFromBluetoothDevice(device);
+                dialog.dismiss();
             });
         }
         AlertDialog dialog = builder.create();
@@ -1020,22 +976,13 @@ public class ExperimentList extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
                 .setTitle(isError ? R.string.newExperimentQRErrorTitle : R.string.newExperimentQR)
-                .setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        scanQRCode();
-                    }
-                })
-                .setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                .setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, (dialog, id) -> scanQRCode())
+                .setNegativeButton(res.getString(R.string.cancel), (dialog, id) -> {
 
-                    }
                 });
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            }
+        this.runOnUiThread(() -> {
+            AlertDialog dialog = builder.create();
+            dialog.show();
         });
     }
 
@@ -1044,23 +991,14 @@ public class ExperimentList extends AppCompatActivity {
         builder.setMessage(msg)
                 .setTitle(R.string.newExperimentBluetoothErrorTitle);
         if (!isFatal) {
-            builder.setPositiveButton(R.string.tryagain, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    scanQRCode();
-                }
-            });
+            builder.setPositiveButton(R.string.tryagain, (dialog, id) -> scanQRCode());
         }
-        builder.setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
+        builder.setNegativeButton(res.getString(R.string.cancel), (dialog, id) -> {
 
-            }
         });
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            }
+        this.runOnUiThread(() -> {
+            AlertDialog dialog = builder.create();
+            dialog.show();
         });
     }
 
@@ -1069,22 +1007,13 @@ public class ExperimentList extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
                 .setTitle(R.string.newExperimentBTReadErrorTitle)
-                .setPositiveButton(R.string.tryagain, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        loadExperimentFromBluetoothDevice(device);
-                    }
-                })
-                .setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                .setPositiveButton(R.string.tryagain, (dialog, id) -> loadExperimentFromBluetoothDevice(device))
+                .setNegativeButton(res.getString(R.string.cancel), (dialog, id) -> {
 
-                    }
                 });
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            }
+        this.runOnUiThread(() -> {
+            AlertDialog dialog = builder.create();
+            dialog.show();
         });
     }
 
@@ -1322,285 +1251,267 @@ public class ExperimentList extends AppCompatActivity {
         displayDoNotDamageYourPhone(); //Show the do-not-damage-your-phone-warning
 
         //Set the on-click-listener for the credits
-        View.OnClickListener ocl = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        View.OnClickListener ocl = v -> {
 
-                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox);
-                PopupMenu popup = new PopupMenu(wrapper, v);
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.action_credits:
-                                //Create the credits as an AlertDialog
-                                ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
-                                AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
-                                LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-                                View creditLayout = creditsInflater.inflate(R.layout.credits, null);
+            Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox);
+            PopupMenu popup = new PopupMenu(wrapper, v);
+            popup.setOnMenuItemClickListener(item -> {
+                switch (item.getItemId()) {
+                    case R.id.action_credits:
+                        //Create the credits as an AlertDialog
+                        ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
+                        AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
+                        LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+                        View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
-                                //Set the credit texts, which require HTML markup
-                                TextView tv = creditLayout.findViewById(R.id.creditNames);
+                        //Set the credit texts, which require HTML markup
+                        TextView tv = creditLayout.findViewById(R.id.creditNames);
 
-                                SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
-                                boolean first = true;
-                                for (String line : res.getString(R.string.creditsNames).split("\\n")) {
-                                    if (first)
-                                        first = false;
-                                    else
-                                        creditsNamesSpannable.append("\n");
-                                    creditsNamesSpannable.append(line.trim());
-                                }
-                                Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
-                                while (matcher.find()) {
-                                    creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-                                }
-                                tv.setText(creditsNamesSpannable);
-                                TextView tvA = creditLayout.findViewById(R.id.creditsApache);
-                                tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
-                                TextView tvB = creditLayout.findViewById(R.id.creditsZxing);
-                                tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
+                        SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
+                        boolean first = true;
+                        for (String line : res.getString(R.string.creditsNames).split("\\n")) {
+                            if (first)
+                                first = false;
+                            else
+                                creditsNamesSpannable.append("\n");
+                            creditsNamesSpannable.append(line.trim());
+                        }
+                        Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
+                        while (matcher.find()) {
+                            creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                        }
+                        tv.setText(creditsNamesSpannable);
+                        TextView tvA = creditLayout.findViewById(R.id.creditsApache);
+                        tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
+                        TextView tvB = creditLayout.findViewById(R.id.creditsZxing);
+                        tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
 
-                                //Finish alertDialog builder
-                                credits.setView(creditLayout);
-                                credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        //Nothing to do. Just close the thing.
+                        //Finish alertDialog builder
+                        credits.setView(creditLayout);
+                        credits.setPositiveButton(res.getText(R.string.close), (dialog, which) -> {
+                            //Nothing to do. Just close the thing.
+                        });
+
+                        //Present the dialog
+                        credits.show();
+                        return true;
+                    case R.id.action_helpExperiments: {
+                        Uri uri = Uri.parse(res.getString(R.string.experimentsPhyphoxOrgURL));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        if (intent.resolveActivity(getPackageManager()) != null) {
+                            startActivity(intent);
+                        }
+                    }
+                    return true;
+                    case R.id.action_helpFAQ: {
+                        Uri uri = Uri.parse(res.getString(R.string.faqPhyphoxOrgURL));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        if (intent.resolveActivity(getPackageManager()) != null) {
+                            startActivity(intent);
+                        }
+                    }
+                    return true;
+                    case R.id.action_helpRemote: {
+                        Uri uri = Uri.parse(res.getString(R.string.remotePhyphoxOrgURL));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        if (intent.resolveActivity(getPackageManager()) != null) {
+                            startActivity(intent);
+                        }
+                    }
+                    return true;
+                    case R.id.action_translationInfo: {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                        builder.setMessage(res.getString(R.string.translationText))
+                                .setTitle(R.string.translationInfo)
+                                .setPositiveButton(R.string.translationToWebsite, (dialog, id) -> {
+                                    Uri uri = Uri.parse(res.getString(R.string.translationToWebsiteURL));
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                    if (intent.resolveActivity(getPackageManager()) != null) {
+                                        startActivity(intent);
                                     }
+                                })
+                                .setNeutralButton(R.string.translationToSettings, (dialog, id) -> {
+                                    final Intent intent = new Intent(Intent.ACTION_MAIN, null);
+                                    intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                                    final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.LanguageSettings");
+                                    intent.setComponent(cn);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+                                })
+                                .setNegativeButton(R.string.cancel, (dialog, id) -> {
+
                                 });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    }
+                    return true;
+                    case R.id.action_deviceInfo: {
+                        StringBuilder sb = new StringBuilder();
 
-                                //Present the dialog
-                                credits.show();
-                                return true;
-                            case R.id.action_helpExperiments: {
-                                Uri uri = Uri.parse(res.getString(R.string.experimentsPhyphoxOrgURL));
-                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                    startActivity(intent);
-                                }
+                        PackageInfo pInfo;
+                        try {
+                            pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
+                        } catch (Exception e) {
+                            pInfo = null;
+                        }
+
+                        sb.append("<b>phyphox</b><br />");
+                        if (pInfo != null) {
+                            sb.append("Version: ");
+                            sb.append(pInfo.versionName);
+                            sb.append("<br />");
+                            sb.append("Build: ");
+                            sb.append(pInfo.versionCode);
+                            sb.append("<br />");
+                        } else {
+                            sb.append("Version: Unknown<br />");
+                            sb.append("Build: Unknown<br />");
+                        }
+                        sb.append("File format: ");
+                        sb.append(phyphoxFile.phyphoxFileVersion);
+                        sb.append("<br /><br />");
+
+                        sb.append("<b>Permissions</b><br />");
+                        if (pInfo != null && pInfo.requestedPermissions != null) {
+                            for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
+                                sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
+                                sb.append(": ");
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                                    sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
+                                else
+                                    sb.append("API < 16");
+                                sb.append("<br />");
                             }
-                            return true;
-                            case R.id.action_helpFAQ: {
-                                Uri uri = Uri.parse(res.getString(R.string.faqPhyphoxOrgURL));
-                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                    startActivity(intent);
-                                }
+                        } else {
+                            if (pInfo == null)
+                                sb.append("Unknown<br />");
+                            else
+                                sb.append("None<br />");
+                        }
+                        sb.append("<br />");
+
+                        sb.append("<b>Device</b><br />");
+                        sb.append("Model: ");
+                        sb.append(Build.MODEL);
+                        sb.append("<br />");
+                        sb.append("Brand: ");
+                        sb.append(Build.BRAND);
+                        sb.append("<br />");
+                        sb.append("Board: ");
+                        sb.append(Build.DEVICE);
+                        sb.append("<br />");
+                        sb.append("Manufacturer: ");
+                        sb.append(Build.MANUFACTURER);
+                        sb.append("<br />");
+                        sb.append("ABIS: ");
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
+                                if (i > 0)
+                                    sb.append(", ");
+                                sb.append(Build.SUPPORTED_ABIS[i]);
                             }
-                            return true;
-                            case R.id.action_helpRemote: {
-                                Uri uri = Uri.parse(res.getString(R.string.remotePhyphoxOrgURL));
-                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                    startActivity(intent);
-                                }
-                            }
-                            return true;
-                            case R.id.action_translationInfo: {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
-                                builder.setMessage(res.getString(R.string.translationText))
-                                        .setTitle(R.string.translationInfo)
-                                        .setPositiveButton(R.string.translationToWebsite, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                Uri uri = Uri.parse(res.getString(R.string.translationToWebsiteURL));
-                                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                                    startActivity(intent);
-                                                }
-                                            }
-                                        })
-                                        .setNeutralButton(R.string.translationToSettings, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                final Intent intent = new Intent(Intent.ACTION_MAIN, null);
-                                                intent.addCategory(Intent.CATEGORY_LAUNCHER);
-                                                final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.LanguageSettings");
-                                                intent.setComponent(cn);
-                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                                startActivity(intent);
-                                            }
-                                        })
-                                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
+                        } else {
+                            sb.append("API < 21");
+                        }
+                        sb.append("<br />");
+                        sb.append("Base OS: ");
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            sb.append(Build.VERSION.BASE_OS);
+                        } else {
+                            sb.append("API < 23");
+                        }
+                        sb.append("<br />");
+                        sb.append("Codename: ");
+                        sb.append(Build.VERSION.CODENAME);
+                        sb.append("<br />");
+                        sb.append("Release: ");
+                        sb.append(Build.VERSION.RELEASE);
+                        sb.append("<br />");
+                        sb.append("Patch: ");
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            sb.append(Build.VERSION.SECURITY_PATCH);
+                        } else {
+                            sb.append("API < 23");
+                        }
+                        sb.append("<br /><br />");
 
-                                            }
-                                        });
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
-                            }
-                            return true;
-                            case R.id.action_deviceInfo: {
-                                StringBuilder sb = new StringBuilder();
-
-                                PackageInfo pInfo;
-                                try {
-                                    pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
-                                } catch (Exception e) {
-                                    pInfo = null;
-                                }
-
-                                sb.append("<b>phyphox</b><br />");
-                                if (pInfo != null) {
-                                    sb.append("Version: ");
-                                    sb.append(pInfo.versionName);
-                                    sb.append("<br />");
-                                    sb.append("Build: ");
-                                    sb.append(pInfo.versionCode);
-                                    sb.append("<br />");
-                                } else {
-                                    sb.append("Version: Unknown<br />");
-                                    sb.append("Build: Unknown<br />");
-                                }
-                                sb.append("File format: ");
-                                sb.append(phyphoxFile.phyphoxFileVersion);
-                                sb.append("<br /><br />");
-
-                                sb.append("<b>Permissions</b><br />");
-                                if (pInfo != null && pInfo.requestedPermissions != null) {
-                                    for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
-                                        sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
-                                        sb.append(": ");
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                                            sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
-                                        else
-                                            sb.append("API < 16");
-                                        sb.append("<br />");
-                                    }
-                                } else {
-                                    if (pInfo == null)
-                                        sb.append("Unknown<br />");
-                                    else
-                                        sb.append("None<br />");
-                                }
+                        sb.append("<b>Sensors</b><br /><br />");
+                        SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+                        if (sensorManager == null) {
+                            sb.append("Unkown<br />");
+                        } else {
+                            for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+                                sb.append("<b>");
+                                sb.append(res.getString(sensorInput.getDescriptionRes(sensor.getType())));
+                                sb.append("</b> (type ");
+                                sb.append(sensor.getType());
+                                sb.append(")");
                                 sb.append("<br />");
-
-                                sb.append("<b>Device</b><br />");
-                                sb.append("Model: ");
-                                sb.append(Build.MODEL);
+                                sb.append("- Name: ");
+                                sb.append(sensor.getName());
                                 sb.append("<br />");
-                                sb.append("Brand: ");
-                                sb.append(Build.BRAND);
+                                sb.append("- Range: ");
+                                sb.append(sensor.getMaximumRange());
+                                sb.append(" ");
+                                sb.append(sensorInput.getUnit(sensor.getType()));
                                 sb.append("<br />");
-                                sb.append("Board: ");
-                                sb.append(Build.DEVICE);
+                                sb.append("- Resolution: ");
+                                sb.append(sensor.getResolution());
+                                sb.append(" ");
+                                sb.append(sensorInput.getUnit(sensor.getType()));
                                 sb.append("<br />");
-                                sb.append("Manufacturer: ");
-                                sb.append(Build.MANUFACTURER);
+                                sb.append("- Min delay: ");
+                                sb.append(sensor.getMinDelay());
+                                sb.append(" µs");
                                 sb.append("<br />");
-                                sb.append("ABIS: ");
+                                sb.append("- Max delay: ");
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                    for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
-                                        if (i > 0)
-                                            sb.append(", ");
-                                        sb.append(Build.SUPPORTED_ABIS[i]);
-                                    }
+                                    sb.append(sensor.getMaxDelay());
                                 } else {
                                     sb.append("API < 21");
                                 }
+                                sb.append(" µs");
                                 sb.append("<br />");
-                                sb.append("Base OS: ");
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    sb.append(Build.VERSION.BASE_OS);
-                                } else {
-                                    sb.append("API < 23");
-                                }
+                                sb.append("- Power: ");
+                                sb.append(sensor.getPower());
+                                sb.append(" mA");
                                 sb.append("<br />");
-                                sb.append("Codename: ");
-                                sb.append(Build.VERSION.CODENAME);
+                                sb.append("- Vendor: ");
+                                sb.append(sensor.getVendor());
                                 sb.append("<br />");
-                                sb.append("Release: ");
-                                sb.append(Build.VERSION.RELEASE);
-                                sb.append("<br />");
-                                sb.append("Patch: ");
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    sb.append(Build.VERSION.SECURITY_PATCH);
-                                } else {
-                                    sb.append("API < 23");
-                                }
+                                sb.append("- Version: ");
+                                sb.append(sensor.getVersion());
                                 sb.append("<br /><br />");
-
-                                sb.append("<b>Sensors</b><br /><br />");
-                                SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-                                if (sensorManager == null) {
-                                    sb.append("Unkown<br />");
-                                } else {
-                                    for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
-                                        sb.append("<b>");
-                                        sb.append(res.getString(sensorInput.getDescriptionRes(sensor.getType())));
-                                        sb.append("</b> (type ");
-                                        sb.append(sensor.getType());
-                                        sb.append(")");
-                                        sb.append("<br />");
-                                        sb.append("- Name: ");
-                                        sb.append(sensor.getName());
-                                        sb.append("<br />");
-                                        sb.append("- Range: ");
-                                        sb.append(sensor.getMaximumRange());
-                                        sb.append(" ");
-                                        sb.append(sensorInput.getUnit(sensor.getType()));
-                                        sb.append("<br />");
-                                        sb.append("- Resolution: ");
-                                        sb.append(sensor.getResolution());
-                                        sb.append(" ");
-                                        sb.append(sensorInput.getUnit(sensor.getType()));
-                                        sb.append("<br />");
-                                        sb.append("- Min delay: ");
-                                        sb.append(sensor.getMinDelay());
-                                        sb.append(" µs");
-                                        sb.append("<br />");
-                                        sb.append("- Max delay: ");
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                            sb.append(sensor.getMaxDelay());
-                                        } else {
-                                            sb.append("API < 21");
-                                        }
-                                        sb.append(" µs");
-                                        sb.append("<br />");
-                                        sb.append("- Power: ");
-                                        sb.append(sensor.getPower());
-                                        sb.append(" mA");
-                                        sb.append("<br />");
-                                        sb.append("- Vendor: ");
-                                        sb.append(sensor.getVendor());
-                                        sb.append("<br />");
-                                        sb.append("- Version: ");
-                                        sb.append(sensor.getVersion());
-                                        sb.append("<br /><br />");
-                                    }
-                                }
-
-                                final Spanned text = Html.fromHtml(sb.toString());
-                                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
-                                builder.setMessage(text)
-                                        .setTitle(R.string.deviceInfo)
-                                        .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                //Copy the device info to the clipboard and notify the user
-
-                                                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                                                ClipData data = ClipData.newPlainText(res.getString(R.string.deviceInfo), text);
-                                                cm.setPrimaryClip(data);
-
-                                                Toast.makeText(ExperimentList.this, res.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
-                                            }
-                                        })
-                                        .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                //Closed by user. Nothing to do.
-                                            }
-                                        });
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
                             }
-                            return true;
-                            default:
-                                return false;
                         }
-                    }
-                });
-                popup.inflate(R.menu.menu_help);
-                popup.show();
 
-            }
+                        final Spanned text = Html.fromHtml(sb.toString());
+                        AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                        builder.setMessage(text)
+                                .setTitle(R.string.deviceInfo)
+                                .setPositiveButton(R.string.copyToClipboard, (dialog, id) -> {
+                                    //Copy the device info to the clipboard and notify the user
+
+                                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                    ClipData data = ClipData.newPlainText(res.getString(R.string.deviceInfo), text);
+                                    cm.setPrimaryClip(data);
+
+                                    Toast.makeText(ExperimentList.this, res.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
+                                })
+                                .setNegativeButton(R.string.close, (dialog, id) -> {
+                                    //Closed by user. Nothing to do.
+                                });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    }
+                    return true;
+                    default:
+                        return false;
+                }
+            });
+            popup.inflate(R.menu.menu_help);
+            popup.show();
+
         };
         ImageView creditsV = findViewById(R.id.credits);
         creditsV.setOnClickListener(ocl);
@@ -1608,14 +1519,11 @@ public class ExperimentList extends AppCompatActivity {
         //Setup the on-click-listener for the create-new-experiment button
         final ExperimentList thisRef = this; //Context needs to be accessed in the onClickListener
 
-        Button.OnClickListener neocl = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (newExperimentDialogOpen)
-                    hideNewExperimentDialog();
-                else
-                    showNewExperimentDialog();
-            }
+        Button.OnClickListener neocl = v -> {
+            if (newExperimentDialogOpen)
+                hideNewExperimentDialog();
+            else
+                showNewExperimentDialog();
         };
 
         final FloatingActionButton newExperimentButton = findViewById(R.id.newExperiment);
@@ -1623,12 +1531,9 @@ public class ExperimentList extends AppCompatActivity {
         newExperimentButton.setOnClickListener(neocl);
         experimentListDimmer.setOnClickListener(neocl);
 
-        Button.OnClickListener neoclSimple = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideNewExperimentDialog();
-                newExperimentDialog(thisRef);
-            }
+        Button.OnClickListener neoclSimple = v -> {
+            hideNewExperimentDialog();
+            newExperimentDialog(thisRef);
         };
 
         final FloatingActionButton newExperimentSimple = findViewById(R.id.newExperimentSimple);
@@ -1636,12 +1541,9 @@ public class ExperimentList extends AppCompatActivity {
         newExperimentSimple.setOnClickListener(neoclSimple);
         newExperimentSimpleLabel.setOnClickListener(neoclSimple);
 
-        Button.OnClickListener neoclBluetooth = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideNewExperimentDialog();
-                (new runBluetoothScan(thisRef)).execute();
-            }
+        Button.OnClickListener neoclBluetooth = v -> {
+            hideNewExperimentDialog();
+            (new runBluetoothScan(thisRef)).execute();
         };
 
         final FloatingActionButton newExperimentBluetooth = findViewById(R.id.newExperimentBluetooth);
@@ -1649,12 +1551,9 @@ public class ExperimentList extends AppCompatActivity {
         newExperimentBluetooth.setOnClickListener(neoclBluetooth);
         newExperimentBluetoothLabel.setOnClickListener(neoclBluetooth);
 
-        Button.OnClickListener neoclQR = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideNewExperimentDialog();
-                scanQRCode();
-            }
+        Button.OnClickListener neoclQR = v -> {
+            hideNewExperimentDialog();
+            scanQRCode();
         };
 
         final FloatingActionButton newExperimentQR = findViewById(R.id.newExperimentQR);
@@ -1680,19 +1579,17 @@ public class ExperimentList extends AppCompatActivity {
         //Setup AlertDialog builder
         adb.setView(warningLayout);
         adb.setTitle(R.string.warning);
-        adb.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                //User clicked ok. Did the user decide to skip future warnings?
-                boolean skipWarning = false;
-                if (dontShowAgain.isChecked())
-                    skipWarning = true;
+        adb.setPositiveButton(res.getText(R.string.ok), (dialog, which) -> {
+            //User clicked ok. Did the user decide to skip future warnings?
+            boolean skipWarning = false;
+            if (dontShowAgain.isChecked())
+                skipWarning = true;
 
-                //Store user decision
-                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-                SharedPreferences.Editor editor = settings.edit();
-                editor.putBoolean("skipWarning", skipWarning);
-                editor.apply();
-            }
+            //Store user decision
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putBoolean("skipWarning", skipWarning);
+            editor.apply();
         });
 
         //Check preferences if the user does not want to see warnings
@@ -1729,309 +1626,305 @@ public class ExperimentList extends AppCompatActivity {
         //Setup the dialog builder...
         neDialog.setView(neLayout);
         neDialog.setTitle(R.string.newExperiment);
-        neDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                //Here we have to create the experiment definition file
-                //This is a lot of tedious work....
+        neDialog.setPositiveButton(res.getText(R.string.ok), (dialog, which) -> {
+            //Here we have to create the experiment definition file
+            //This is a lot of tedious work....
 
-                //Prepare the variables from user input
+            //Prepare the variables from user input
 
-                String title = neTitle.getText().toString(); //Title of the new experiment
+            String title = neTitle.getText().toString(); //Title of the new experiment
 
-                //Prepare the rate
-                double rate;
-                try {
-                    rate = Double.valueOf(neRate.getText().toString());
-                } catch (Exception e) {
-                    rate = 0;
-                    Toast.makeText(ExperimentList.this, "Invaid sensor rate. Fall back to fastest rate.", Toast.LENGTH_LONG).show();
+            //Prepare the rate
+            double rate;
+            try {
+                rate = Double.valueOf(neRate.getText().toString());
+            } catch (Exception e) {
+                rate = 0;
+                Toast.makeText(ExperimentList.this, "Invaid sensor rate. Fall back to fastest rate.", Toast.LENGTH_LONG).show();
+            }
+
+            //Collect the enabled sensors
+            boolean acc = neAccelerometer.isChecked();
+            boolean gyr = neGyroscope.isChecked();
+            boolean hum = neHumidity.isChecked();
+            boolean light = neLight.isChecked();
+            boolean lin = neLinearAcceleration.isChecked();
+            boolean loc = neLocation.isChecked();
+            boolean mag = neMagneticField.isChecked();
+            boolean pressure = nePressure.isChecked();
+            boolean prox = neProximity.isChecked();
+            boolean temp = neTemperature.isChecked();
+            if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp)) {
+                acc = true;
+                Toast.makeText(ExperimentList.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
+            }
+
+            //Generate random file name
+            String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox";
+
+            //Now write the whole file...
+            try {
+                FileOutputStream output = c.openFileOutput(file, MODE_PRIVATE);
+                output.write("<phyphox version=\"1.0\">".getBytes());
+
+                //Title, standard category and standard description
+                output.write(("<title>" + title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;") + "</title>").getBytes());
+                output.write(("<category>" + res.getString(R.string.categoryNewExperiment) + "</category>").getBytes());
+                output.write(("<color>red</color>").getBytes());
+                output.write("<description>Get raw data from selected sensors.</description>".getBytes());
+
+                //Buffers for all sensors
+                output.write("<data-containers>".getBytes());
+                if (acc) {
+                    output.write(("<container size=\"0\">acc_time</container>").getBytes());
+                    output.write(("<container size=\"0\">accX</container>").getBytes());
+                    output.write(("<container size=\"0\">accY</container>").getBytes());
+                    output.write(("<container size=\"0\">accZ</container>").getBytes());
                 }
-
-                //Collect the enabled sensors
-                boolean acc = neAccelerometer.isChecked();
-                boolean gyr = neGyroscope.isChecked();
-                boolean hum = neHumidity.isChecked();
-                boolean light = neLight.isChecked();
-                boolean lin = neLinearAcceleration.isChecked();
-                boolean loc = neLocation.isChecked();
-                boolean mag = neMagneticField.isChecked();
-                boolean pressure = nePressure.isChecked();
-                boolean prox = neProximity.isChecked();
-                boolean temp = neTemperature.isChecked();
-                if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp)) {
-                    acc = true;
-                    Toast.makeText(ExperimentList.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
+                if (gyr) {
+                    output.write(("<container size=\"0\">gyr_time</container>").getBytes());
+                    output.write(("<container size=\"0\">gyrX</container>").getBytes());
+                    output.write(("<container size=\"0\">gyrY</container>").getBytes());
+                    output.write(("<container size=\"0\">gyrZ</container>").getBytes());
                 }
-
-                //Generate random file name
-                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox";
-
-                //Now write the whole file...
-                try {
-                    FileOutputStream output = c.openFileOutput(file, MODE_PRIVATE);
-                    output.write("<phyphox version=\"1.0\">".getBytes());
-
-                    //Title, standard category and standard description
-                    output.write(("<title>" + title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;") + "</title>").getBytes());
-                    output.write(("<category>" + res.getString(R.string.categoryNewExperiment) + "</category>").getBytes());
-                    output.write(("<color>red</color>").getBytes());
-                    output.write("<description>Get raw data from selected sensors.</description>".getBytes());
-
-                    //Buffers for all sensors
-                    output.write("<data-containers>".getBytes());
-                    if (acc) {
-                        output.write(("<container size=\"0\">acc_time</container>").getBytes());
-                        output.write(("<container size=\"0\">accX</container>").getBytes());
-                        output.write(("<container size=\"0\">accY</container>").getBytes());
-                        output.write(("<container size=\"0\">accZ</container>").getBytes());
-                    }
-                    if (gyr) {
-                        output.write(("<container size=\"0\">gyr_time</container>").getBytes());
-                        output.write(("<container size=\"0\">gyrX</container>").getBytes());
-                        output.write(("<container size=\"0\">gyrY</container>").getBytes());
-                        output.write(("<container size=\"0\">gyrZ</container>").getBytes());
-                    }
-                    if (hum) {
-                        output.write(("<container size=\"0\">hum_time</container>").getBytes());
-                        output.write(("<container size=\"0\">hum</container>").getBytes());
-                    }
-                    if (light) {
-                        output.write(("<container size=\"0\">light_time</container>").getBytes());
-                        output.write(("<container size=\"0\">light</container>").getBytes());
-                    }
-                    if (lin) {
-                        output.write(("<container size=\"0\">lin_time</container>").getBytes());
-                        output.write(("<container size=\"0\">linX</container>").getBytes());
-                        output.write(("<container size=\"0\">linY</container>").getBytes());
-                        output.write(("<container size=\"0\">linZ</container>").getBytes());
-                    }
-                    if (loc) {
-                        output.write(("<container size=\"0\">loc_time</container>").getBytes());
-                        output.write(("<container size=\"0\">locLat</container>").getBytes());
-                        output.write(("<container size=\"0\">locLon</container>").getBytes());
-                        output.write(("<container size=\"0\">locZ</container>").getBytes());
-                        output.write(("<container size=\"0\">locV</container>").getBytes());
-                        output.write(("<container size=\"0\">locDir</container>").getBytes());
-                        output.write(("<container size=\"0\">locAccuracy</container>").getBytes());
-                        output.write(("<container size=\"0\">locZAccuracy</container>").getBytes());
-                        output.write(("<container size=\"0\">locStatus</container>").getBytes());
-                        output.write(("<container size=\"0\">locSatellites</container>").getBytes());
-                    }
-                    if (mag) {
-                        output.write(("<container size=\"0\">mag_time</container>").getBytes());
-                        output.write(("<container size=\"0\">magX</container>").getBytes());
-                        output.write(("<container size=\"0\">magY</container>").getBytes());
-                        output.write(("<container size=\"0\">magZ</container>").getBytes());
-                    }
-                    if (pressure) {
-                        output.write(("<container size=\"0\">pressure_time</container>").getBytes());
-                        output.write(("<container size=\"0\">pressure</container>").getBytes());
-                    }
-                    if (prox) {
-                        output.write(("<container size=\"0\">prox_time</container>").getBytes());
-                        output.write(("<container size=\"0\">prox</container>").getBytes());
-                    }
-                    if (temp) {
-                        output.write(("<container size=\"0\">temp_time</container>").getBytes());
-                        output.write(("<container size=\"0\">temp</container>").getBytes());
-                    }
-                    output.write("</data-containers>".getBytes());
-
-                    //Inputs for each sensor
-                    output.write("<input>".getBytes());
-                    if (acc)
-                        output.write(("<sensor type=\"accelerometer\" rate=\"" + rate + "\" ><output component=\"x\">accX</output><output component=\"y\">accY</output><output component=\"z\">accZ</output><output component=\"t\">acc_time</output></sensor>").getBytes());
-                    if (gyr)
-                        output.write(("<sensor type=\"gyroscope\" rate=\"" + rate + "\" ><output component=\"x\">gyrX</output><output component=\"y\">gyrY</output><output component=\"z\">gyrZ</output><output component=\"t\">gyr_time</output></sensor>").getBytes());
-                    if (hum)
-                        output.write(("<sensor type=\"humidity\" rate=\"" + rate + "\" ><output component=\"x\">hum</output><output component=\"t\">hum_time</output></sensor>").getBytes());
-                    if (light)
-                        output.write(("<sensor type=\"light\" rate=\"" + rate + "\" ><output component=\"x\">light</output><output component=\"t\">light_time</output></sensor>").getBytes());
-                    if (lin)
-                        output.write(("<sensor type=\"linear_acceleration\" rate=\"" + rate + "\" ><output component=\"x\">linX</output><output component=\"y\">linY</output><output component=\"z\">linZ</output><output component=\"t\">lin_time</output></sensor>").getBytes());
-                    if (loc)
-                        output.write(("<location><output component=\"lat\">locLat</output><output component=\"lon\">locLon</output><output component=\"z\">locZ</output><output component=\"t\">loc_time</output><output component=\"v\">locV</output><output component=\"dir\">locDir</output><output component=\"accuracy\">locAccuracy</output><output component=\"zAccuracy\">locZAccuracy</output><output component=\"status\">locStatus</output><output component=\"satellites\">locSatellites</output></location>").getBytes());
-                    if (mag)
-                        output.write(("<sensor type=\"magnetic_field\" rate=\"" + rate + "\" ><output component=\"x\">magX</output><output component=\"y\">magY</output><output component=\"z\">magZ</output><output component=\"t\">mag_time</output></sensor>").getBytes());
-                    if (pressure)
-                        output.write(("<sensor type=\"pressure\" rate=\"" + rate + "\" ><output component=\"x\">pressure</output><output component=\"t\">pressure_time</output></sensor>").getBytes());
-                    if (prox)
-                        output.write(("<sensor type=\"proximity\" rate=\"" + rate + "\" ><output component=\"x\">prox</output><output component=\"t\">prox_time</output></sensor>").getBytes());
-                    if (temp)
-                        output.write(("<sensor type=\"temperature\" rate=\"" + rate + "\" ><output component=\"x\">temp</output><output component=\"t\">temp_time</output></sensor>").getBytes());
-                    output.write("</input>".getBytes());
-
-                    //Views for each sensor
-                    output.write("<views>".getBytes());
-                    if (acc) {
-                        output.write("<view label=\"Accelerometer\">".getBytes());
-                        output.write(("<graph label=\"Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (gyr) {
-                        output.write("<view label=\"Gyroscope\">".getBytes());
-                        output.write(("<graph label=\"Gyroscope X\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Gyroscope Y\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Gyroscope Z\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (hum) {
-                        output.write("<view label=\"Humidity\">".getBytes());
-                        output.write(("<graph label=\"Humidity\" labelX=\"t (s)\" labelY=\"Relative Humidity (%)\" partialUpdate=\"true\"><input axis=\"x\">hum_time</input><input axis=\"y\">hum</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (light) {
-                        output.write("<view label=\"Light\">".getBytes());
-                        output.write(("<graph label=\"Illuminance\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\"><input axis=\"x\">light_time</input><input axis=\"y\">light</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (lin) {
-                        output.write("<view label=\"Linear Acceleration\">".getBytes());
-                        output.write(("<graph label=\"Linear Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (loc) {
-                        output.write("<view label=\"Location\">".getBytes());
-                        output.write(("<graph label=\"Latitude\" labelX=\"t (s)\" labelY=\"Latitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLat</input></graph>").getBytes());
-                        output.write(("<graph label=\"Longitude\" labelX=\"t (s)\" labelY=\"Longitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLon</input></graph>").getBytes());
-                        output.write(("<graph label=\"Height\" labelX=\"t (s)\" labelY=\"z (m)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locZ</input></graph>").getBytes());
-                        output.write(("<graph label=\"Velocity\" labelX=\"t (s)\" labelY=\"v (m/s)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locV</input></graph>").getBytes());
-                        output.write(("<graph label=\"Direction\" labelX=\"t (s)\" labelY=\"heading (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locDir</input></graph>").getBytes());
-                        output.write(("<value label=\"Horizontal Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locAccuracy</input></value>").getBytes());
-                        output.write(("<value label=\"Vertical Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locZAccuracy</input></value>").getBytes());
-                        output.write(("<value label=\"Satellites\" size=\"1\" precision=\"0\"><input>locSatellites</input></value>").getBytes());
-                        output.write(("<value label=\"Status\" size=\"1\" precision=\"0\"><input>locStatus</input><map max=\"-1\">GPS disabled</map><map max=\"0\">Waiting for signal</map><map max=\"1\">Active</map></value>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (mag) {
-                        output.write("<view label=\"Magnetometer\">".getBytes());
-                        output.write(("<graph label=\"Magnetic field X\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Magnetic field Y\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Magnetic field Z\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (pressure) {
-                        output.write("<view label=\"Pressure\">".getBytes());
-                        output.write(("<graph label=\"Pressure\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\"><input axis=\"x\">pressure_time</input><input axis=\"y\">pressure</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (prox) {
-                        output.write("<view label=\"Proximity\">".getBytes());
-                        output.write(("<graph label=\"Proximity\" labelX=\"t (s)\" labelY=\"Distance (cm)\" partialUpdate=\"true\"><input axis=\"x\">prox_time</input><input axis=\"y\">prox</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (temp) {
-                        output.write("<view label=\"Temperature\">".getBytes());
-                        output.write(("<graph label=\"Temperature\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    output.write("</views>".getBytes());
-
-                    //Export definitions for each sensor
-                    output.write("<export>".getBytes());
-                    if (acc) {
-                        output.write("<set name=\"Accelerometer\">".getBytes());
-                        output.write("<data name=\"Time (s)\">acc_time</data>".getBytes());
-                        output.write("<data name=\"Acceleration x (m/s^2)\">accX</data>".getBytes());
-                        output.write("<data name=\"Acceleration y (m/s^2)\">accY</data>".getBytes());
-                        output.write("<data name=\"Acceleration z (m/s^2)\">accZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (gyr) {
-                        output.write("<set name=\"Gyroscope\">".getBytes());
-                        output.write("<data name=\"Time (s)\">gyr_time</data>".getBytes());
-                        output.write("<data name=\"Gyroscope x (rad/s)\">gyrX</data>".getBytes());
-                        output.write("<data name=\"Gyroscope y (rad/s)\">gyrY</data>".getBytes());
-                        output.write("<data name=\"Gyroscope z (rad/s)\">gyrZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (hum) {
-                        output.write("<set name=\"Humidity\">".getBytes());
-                        output.write("<data name=\"Time (s)\">hum_time</data>".getBytes());
-                        output.write("<data name=\"Relative Humidity (%)\">hum</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (light) {
-                        output.write("<set name=\"Light\">".getBytes());
-                        output.write("<data name=\"Time (s)\">light_time</data>".getBytes());
-                        output.write("<data name=\"Illuminance (lx)\">light</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (lin) {
-                        output.write("<set name=\"Linear Acceleration\">".getBytes());
-                        output.write("<data name=\"Time (s)\">lin_time</data>".getBytes());
-                        output.write("<data name=\"Linear Acceleration x (m/s^2)\">linX</data>".getBytes());
-                        output.write("<data name=\"Linear Acceleration y (m/s^2)\">linY</data>".getBytes());
-                        output.write("<data name=\"Linear Acceleration z (m/s^2)\">linZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (loc) {
-                        output.write("<set name=\"Location\">".getBytes());
-                        output.write("<data name=\"Time (s)\">loc_time</data>".getBytes());
-                        output.write("<data name=\"Latitude (°)\">locLat</data>".getBytes());
-                        output.write("<data name=\"Longitude (°)\">locLon</data>".getBytes());
-                        output.write("<data name=\"Height (m)\">locZ</data>".getBytes());
-                        output.write("<data name=\"Velocity (m/s)\">locV</data>".getBytes());
-                        output.write("<data name=\"Direction (°)\">locDir</data>".getBytes());
-                        output.write("<data name=\"Horizontal Accuracy (m)\">locAccuracy</data>".getBytes());
-                        output.write("<data name=\"Vertical Accuracy (m)\">locZAccuracy</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (mag) {
-                        output.write("<set name=\"Magnetometer\">".getBytes());
-                        output.write("<data name=\"Time (s)\">mag_time</data>".getBytes());
-                        output.write("<data name=\"Magnetic field x (µT)\">magX</data>".getBytes());
-                        output.write("<data name=\"Magnetic field y (µT)\">magY</data>".getBytes());
-                        output.write("<data name=\"Magnetic field z (µT)\">magZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (pressure) {
-                        output.write("<set name=\"Pressure\">".getBytes());
-                        output.write("<data name=\"Time (s)\">pressure_time</data>".getBytes());
-                        output.write("<data name=\"Pressure (hPa)\">pressure</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (prox) {
-                        output.write("<set name=\"Proximity\">".getBytes());
-                        output.write("<data name=\"Time (s)\">prox_time</data>".getBytes());
-                        output.write("<data name=\"Distance (cm)\">prox</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (temp) {
-                        output.write("<set name=\"Temperature\">".getBytes());
-                        output.write("<data name=\"Time (s)\">temp_time</data>".getBytes());
-                        output.write("<data name=\"Temperature (°C)\">temp</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    output.write("</export>".getBytes());
-
-                    //And finally, the closing tag
-                    output.write("</phyphox>".getBytes());
-
-                    output.close();
-
-                    //Create an intent for this new file
-                    Intent intent = new Intent(c, Experiment.class);
-                    intent.putExtra(EXPERIMENT_XML, file);
-                    intent.putExtra(EXPERIMENT_ISTEMP, false);
-                    intent.putExtra(EXPERIMENT_ISASSET, false);
-                    intent.setAction(Intent.ACTION_VIEW);
-
-                    //Start the new experiment
-                    c.startActivity(intent);
-                } catch (Exception e) {
-                    Log.e("newExperiment", "Could not create new experiment.", e);
+                if (hum) {
+                    output.write(("<container size=\"0\">hum_time</container>").getBytes());
+                    output.write(("<container size=\"0\">hum</container>").getBytes());
                 }
+                if (light) {
+                    output.write(("<container size=\"0\">light_time</container>").getBytes());
+                    output.write(("<container size=\"0\">light</container>").getBytes());
+                }
+                if (lin) {
+                    output.write(("<container size=\"0\">lin_time</container>").getBytes());
+                    output.write(("<container size=\"0\">linX</container>").getBytes());
+                    output.write(("<container size=\"0\">linY</container>").getBytes());
+                    output.write(("<container size=\"0\">linZ</container>").getBytes());
+                }
+                if (loc) {
+                    output.write(("<container size=\"0\">loc_time</container>").getBytes());
+                    output.write(("<container size=\"0\">locLat</container>").getBytes());
+                    output.write(("<container size=\"0\">locLon</container>").getBytes());
+                    output.write(("<container size=\"0\">locZ</container>").getBytes());
+                    output.write(("<container size=\"0\">locV</container>").getBytes());
+                    output.write(("<container size=\"0\">locDir</container>").getBytes());
+                    output.write(("<container size=\"0\">locAccuracy</container>").getBytes());
+                    output.write(("<container size=\"0\">locZAccuracy</container>").getBytes());
+                    output.write(("<container size=\"0\">locStatus</container>").getBytes());
+                    output.write(("<container size=\"0\">locSatellites</container>").getBytes());
+                }
+                if (mag) {
+                    output.write(("<container size=\"0\">mag_time</container>").getBytes());
+                    output.write(("<container size=\"0\">magX</container>").getBytes());
+                    output.write(("<container size=\"0\">magY</container>").getBytes());
+                    output.write(("<container size=\"0\">magZ</container>").getBytes());
+                }
+                if (pressure) {
+                    output.write(("<container size=\"0\">pressure_time</container>").getBytes());
+                    output.write(("<container size=\"0\">pressure</container>").getBytes());
+                }
+                if (prox) {
+                    output.write(("<container size=\"0\">prox_time</container>").getBytes());
+                    output.write(("<container size=\"0\">prox</container>").getBytes());
+                }
+                if (temp) {
+                    output.write(("<container size=\"0\">temp_time</container>").getBytes());
+                    output.write(("<container size=\"0\">temp</container>").getBytes());
+                }
+                output.write("</data-containers>".getBytes());
+
+                //Inputs for each sensor
+                output.write("<input>".getBytes());
+                if (acc)
+                    output.write(("<sensor type=\"accelerometer\" rate=\"" + rate + "\" ><output component=\"x\">accX</output><output component=\"y\">accY</output><output component=\"z\">accZ</output><output component=\"t\">acc_time</output></sensor>").getBytes());
+                if (gyr)
+                    output.write(("<sensor type=\"gyroscope\" rate=\"" + rate + "\" ><output component=\"x\">gyrX</output><output component=\"y\">gyrY</output><output component=\"z\">gyrZ</output><output component=\"t\">gyr_time</output></sensor>").getBytes());
+                if (hum)
+                    output.write(("<sensor type=\"humidity\" rate=\"" + rate + "\" ><output component=\"x\">hum</output><output component=\"t\">hum_time</output></sensor>").getBytes());
+                if (light)
+                    output.write(("<sensor type=\"light\" rate=\"" + rate + "\" ><output component=\"x\">light</output><output component=\"t\">light_time</output></sensor>").getBytes());
+                if (lin)
+                    output.write(("<sensor type=\"linear_acceleration\" rate=\"" + rate + "\" ><output component=\"x\">linX</output><output component=\"y\">linY</output><output component=\"z\">linZ</output><output component=\"t\">lin_time</output></sensor>").getBytes());
+                if (loc)
+                    output.write(("<location><output component=\"lat\">locLat</output><output component=\"lon\">locLon</output><output component=\"z\">locZ</output><output component=\"t\">loc_time</output><output component=\"v\">locV</output><output component=\"dir\">locDir</output><output component=\"accuracy\">locAccuracy</output><output component=\"zAccuracy\">locZAccuracy</output><output component=\"status\">locStatus</output><output component=\"satellites\">locSatellites</output></location>").getBytes());
+                if (mag)
+                    output.write(("<sensor type=\"magnetic_field\" rate=\"" + rate + "\" ><output component=\"x\">magX</output><output component=\"y\">magY</output><output component=\"z\">magZ</output><output component=\"t\">mag_time</output></sensor>").getBytes());
+                if (pressure)
+                    output.write(("<sensor type=\"pressure\" rate=\"" + rate + "\" ><output component=\"x\">pressure</output><output component=\"t\">pressure_time</output></sensor>").getBytes());
+                if (prox)
+                    output.write(("<sensor type=\"proximity\" rate=\"" + rate + "\" ><output component=\"x\">prox</output><output component=\"t\">prox_time</output></sensor>").getBytes());
+                if (temp)
+                    output.write(("<sensor type=\"temperature\" rate=\"" + rate + "\" ><output component=\"x\">temp</output><output component=\"t\">temp_time</output></sensor>").getBytes());
+                output.write("</input>".getBytes());
+
+                //Views for each sensor
+                output.write("<views>".getBytes());
+                if (acc) {
+                    output.write("<view label=\"Accelerometer\">".getBytes());
+                    output.write(("<graph label=\"Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accX</input></graph>").getBytes());
+                    output.write(("<graph label=\"Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accY</input></graph>").getBytes());
+                    output.write(("<graph label=\"Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accZ</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (gyr) {
+                    output.write("<view label=\"Gyroscope\">".getBytes());
+                    output.write(("<graph label=\"Gyroscope X\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrX</input></graph>").getBytes());
+                    output.write(("<graph label=\"Gyroscope Y\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrY</input></graph>").getBytes());
+                    output.write(("<graph label=\"Gyroscope Z\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrZ</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (hum) {
+                    output.write("<view label=\"Humidity\">".getBytes());
+                    output.write(("<graph label=\"Humidity\" labelX=\"t (s)\" labelY=\"Relative Humidity (%)\" partialUpdate=\"true\"><input axis=\"x\">hum_time</input><input axis=\"y\">hum</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (light) {
+                    output.write("<view label=\"Light\">".getBytes());
+                    output.write(("<graph label=\"Illuminance\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\"><input axis=\"x\">light_time</input><input axis=\"y\">light</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (lin) {
+                    output.write("<view label=\"Linear Acceleration\">".getBytes());
+                    output.write(("<graph label=\"Linear Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linX</input></graph>").getBytes());
+                    output.write(("<graph label=\"Linear Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linY</input></graph>").getBytes());
+                    output.write(("<graph label=\"Linear Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linZ</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (loc) {
+                    output.write("<view label=\"Location\">".getBytes());
+                    output.write(("<graph label=\"Latitude\" labelX=\"t (s)\" labelY=\"Latitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLat</input></graph>").getBytes());
+                    output.write(("<graph label=\"Longitude\" labelX=\"t (s)\" labelY=\"Longitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLon</input></graph>").getBytes());
+                    output.write(("<graph label=\"Height\" labelX=\"t (s)\" labelY=\"z (m)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locZ</input></graph>").getBytes());
+                    output.write(("<graph label=\"Velocity\" labelX=\"t (s)\" labelY=\"v (m/s)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locV</input></graph>").getBytes());
+                    output.write(("<graph label=\"Direction\" labelX=\"t (s)\" labelY=\"heading (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locDir</input></graph>").getBytes());
+                    output.write(("<value label=\"Horizontal Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locAccuracy</input></value>").getBytes());
+                    output.write(("<value label=\"Vertical Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locZAccuracy</input></value>").getBytes());
+                    output.write(("<value label=\"Satellites\" size=\"1\" precision=\"0\"><input>locSatellites</input></value>").getBytes());
+                    output.write(("<value label=\"Status\" size=\"1\" precision=\"0\"><input>locStatus</input><map max=\"-1\">GPS disabled</map><map max=\"0\">Waiting for signal</map><map max=\"1\">Active</map></value>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (mag) {
+                    output.write("<view label=\"Magnetometer\">".getBytes());
+                    output.write(("<graph label=\"Magnetic field X\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magX</input></graph>").getBytes());
+                    output.write(("<graph label=\"Magnetic field Y\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magY</input></graph>").getBytes());
+                    output.write(("<graph label=\"Magnetic field Z\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magZ</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (pressure) {
+                    output.write("<view label=\"Pressure\">".getBytes());
+                    output.write(("<graph label=\"Pressure\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\"><input axis=\"x\">pressure_time</input><input axis=\"y\">pressure</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (prox) {
+                    output.write("<view label=\"Proximity\">".getBytes());
+                    output.write(("<graph label=\"Proximity\" labelX=\"t (s)\" labelY=\"Distance (cm)\" partialUpdate=\"true\"><input axis=\"x\">prox_time</input><input axis=\"y\">prox</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                if (temp) {
+                    output.write("<view label=\"Temperature\">".getBytes());
+                    output.write(("<graph label=\"Temperature\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                }
+                output.write("</views>".getBytes());
+
+                //Export definitions for each sensor
+                output.write("<export>".getBytes());
+                if (acc) {
+                    output.write("<set name=\"Accelerometer\">".getBytes());
+                    output.write("<data name=\"Time (s)\">acc_time</data>".getBytes());
+                    output.write("<data name=\"Acceleration x (m/s^2)\">accX</data>".getBytes());
+                    output.write("<data name=\"Acceleration y (m/s^2)\">accY</data>".getBytes());
+                    output.write("<data name=\"Acceleration z (m/s^2)\">accZ</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (gyr) {
+                    output.write("<set name=\"Gyroscope\">".getBytes());
+                    output.write("<data name=\"Time (s)\">gyr_time</data>".getBytes());
+                    output.write("<data name=\"Gyroscope x (rad/s)\">gyrX</data>".getBytes());
+                    output.write("<data name=\"Gyroscope y (rad/s)\">gyrY</data>".getBytes());
+                    output.write("<data name=\"Gyroscope z (rad/s)\">gyrZ</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (hum) {
+                    output.write("<set name=\"Humidity\">".getBytes());
+                    output.write("<data name=\"Time (s)\">hum_time</data>".getBytes());
+                    output.write("<data name=\"Relative Humidity (%)\">hum</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (light) {
+                    output.write("<set name=\"Light\">".getBytes());
+                    output.write("<data name=\"Time (s)\">light_time</data>".getBytes());
+                    output.write("<data name=\"Illuminance (lx)\">light</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (lin) {
+                    output.write("<set name=\"Linear Acceleration\">".getBytes());
+                    output.write("<data name=\"Time (s)\">lin_time</data>".getBytes());
+                    output.write("<data name=\"Linear Acceleration x (m/s^2)\">linX</data>".getBytes());
+                    output.write("<data name=\"Linear Acceleration y (m/s^2)\">linY</data>".getBytes());
+                    output.write("<data name=\"Linear Acceleration z (m/s^2)\">linZ</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (loc) {
+                    output.write("<set name=\"Location\">".getBytes());
+                    output.write("<data name=\"Time (s)\">loc_time</data>".getBytes());
+                    output.write("<data name=\"Latitude (°)\">locLat</data>".getBytes());
+                    output.write("<data name=\"Longitude (°)\">locLon</data>".getBytes());
+                    output.write("<data name=\"Height (m)\">locZ</data>".getBytes());
+                    output.write("<data name=\"Velocity (m/s)\">locV</data>".getBytes());
+                    output.write("<data name=\"Direction (°)\">locDir</data>".getBytes());
+                    output.write("<data name=\"Horizontal Accuracy (m)\">locAccuracy</data>".getBytes());
+                    output.write("<data name=\"Vertical Accuracy (m)\">locZAccuracy</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (mag) {
+                    output.write("<set name=\"Magnetometer\">".getBytes());
+                    output.write("<data name=\"Time (s)\">mag_time</data>".getBytes());
+                    output.write("<data name=\"Magnetic field x (µT)\">magX</data>".getBytes());
+                    output.write("<data name=\"Magnetic field y (µT)\">magY</data>".getBytes());
+                    output.write("<data name=\"Magnetic field z (µT)\">magZ</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (pressure) {
+                    output.write("<set name=\"Pressure\">".getBytes());
+                    output.write("<data name=\"Time (s)\">pressure_time</data>".getBytes());
+                    output.write("<data name=\"Pressure (hPa)\">pressure</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (prox) {
+                    output.write("<set name=\"Proximity\">".getBytes());
+                    output.write("<data name=\"Time (s)\">prox_time</data>".getBytes());
+                    output.write("<data name=\"Distance (cm)\">prox</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                if (temp) {
+                    output.write("<set name=\"Temperature\">".getBytes());
+                    output.write("<data name=\"Time (s)\">temp_time</data>".getBytes());
+                    output.write("<data name=\"Temperature (°C)\">temp</data>".getBytes());
+                    output.write("</set>".getBytes());
+                }
+                output.write("</export>".getBytes());
+
+                //And finally, the closing tag
+                output.write("</phyphox>".getBytes());
+
+                output.close();
+
+                //Create an intent for this new file
+                Intent intent = new Intent(c, Experiment.class);
+                intent.putExtra(EXPERIMENT_XML, file);
+                intent.putExtra(EXPERIMENT_ISTEMP, false);
+                intent.putExtra(EXPERIMENT_ISASSET, false);
+                intent.setAction(Intent.ACTION_VIEW);
+
+                //Start the new experiment
+                c.startActivity(intent);
+            } catch (Exception e) {
+                Log.e("newExperiment", "Could not create new experiment.", e);
             }
         });
-        neDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                //If the user aborts the dialog, we don't have to do anything
-            }
+        neDialog.setNegativeButton(res.getText(R.string.cancel), (dialog, which) -> {
+            //If the user aborts the dialog, we don't have to do anything
         });
 
         //Finally, show the dialog
@@ -2208,32 +2101,25 @@ public class ExperimentList extends AppCompatActivity {
 
                 //Create the convertView from our layout and create an onClickListener
                 convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.experiment_item, null);
-                convertView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (unavailableSensorList.get(position) < 0)
-                            start(position, v);
-                        else {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                            builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(unavailableSensorList.get(position)) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
-                                    .setTitle(R.string.sensorNotAvailableWarningTitle)
-                                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
+                convertView.setOnClickListener(v -> {
+                    if (unavailableSensorList.get(position) < 0)
+                        start(position, v);
+                    else {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                        builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(unavailableSensorList.get(position)) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
+                                .setTitle(R.string.sensorNotAvailableWarningTitle)
+                                .setPositiveButton(R.string.ok, (dialog, id) -> {
 
-                                        }
-                                    })
-                                    .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
-                                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                                startActivity(intent);
-                                            }
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
+                                })
+                                .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), (dialog, id) -> {
+                                    Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                    if (intent.resolveActivity(getPackageManager()) != null) {
+                                        startActivity(intent);
+                                    }
+                                });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
                     }
                 });
 
@@ -2272,73 +2158,59 @@ public class ExperimentList extends AppCompatActivity {
                 holder.menuBtn.setVisibility(ImageView.VISIBLE);
                 if (Helper.luminance(colors.get(position)) > 0.1)
                     holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
-                holder.menuBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
-                        popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
+                holder.menuBtn.setOnClickListener(v -> {
+                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
+                    popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
 
-                        popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
+                    popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
 
-                        popup.setOnMenuItemClickListener(new android.widget.PopupMenu.OnMenuItemClickListener() {
-                            @Override
-                            public boolean onMenuItemClick(MenuItem menuItem) {
-                                switch (menuItem.getItemId()) {
-                                    case R.id.experiment_item_delete: {
-                                        //Create dialog to ask the user if he REALLY wants to delete...
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                                        builder.setMessage(res.getString(R.string.confirmDelete))
-                                                .setTitle(R.string.confirmDeleteTitle)
-                                                .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        //Confirmed. Delete the item and reload the list
-                                                        deleteFile(xmlFiles.get(position));
-                                                        loadExperimentList();
-                                                    }
-                                                })
-                                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        //Aborted by user. Nothing to do.
-                                                    }
-                                                });
-                                        AlertDialog dialog = builder.create();
-                                        dialog.show();
-                                        return true;
-                                    }
-                                    case R.id.experiment_item_rename: {
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                                        final EditText edit = new EditText(parentActivity);
-                                        edit.setText(titles.get(position));
-                                        builder.setView(edit)
-                                                .setTitle(R.string.rename)
-                                                .setPositiveButton(R.string.rename, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        String newName = edit.getText().toString();
-                                                        if (newName.replaceAll("\\s+", "").isEmpty())
-                                                            return;
-                                                        //Confirmed. Rename the item and reload the list
-                                                        if (isSavedState)
-                                                            Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), newName);
-                                                        loadExperimentList();
-                                                    }
-                                                })
-                                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        //Aborted by user. Nothing to do.
-                                                    }
-                                                });
-                                        AlertDialog dialog = builder.create();
-                                        dialog.show();
-                                        return true;
-                                    }
-
-                                }
-                                return false;
+                    popup.setOnMenuItemClickListener(menuItem -> {
+                        switch (menuItem.getItemId()) {
+                            case R.id.experiment_item_delete: {
+                                //Create dialog to ask the user if he REALLY wants to delete...
+                                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                                builder.setMessage(res.getString(R.string.confirmDelete))
+                                        .setTitle(R.string.confirmDeleteTitle)
+                                        .setPositiveButton(R.string.delete, (dialog, id) -> {
+                                            //Confirmed. Delete the item and reload the list
+                                            deleteFile(xmlFiles.get(position));
+                                            loadExperimentList();
+                                        })
+                                        .setNegativeButton(R.string.cancel, (dialog, id) -> {
+                                            //Aborted by user. Nothing to do.
+                                        });
+                                AlertDialog dialog = builder.create();
+                                dialog.show();
+                                return true;
                             }
-                        });
+                            case R.id.experiment_item_rename: {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                                final EditText edit = new EditText(parentActivity);
+                                edit.setText(titles.get(position));
+                                builder.setView(edit)
+                                        .setTitle(R.string.rename)
+                                        .setPositiveButton(R.string.rename, (dialog, id) -> {
+                                            String newName = edit.getText().toString();
+                                            if (newName.replaceAll("\\s+", "").isEmpty())
+                                                return;
+                                            //Confirmed. Rename the item and reload the list
+                                            if (isSavedState)
+                                                Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), newName);
+                                            loadExperimentList();
+                                        })
+                                        .setNegativeButton(R.string.cancel, (dialog, id) -> {
+                                            //Aborted by user. Nothing to do.
+                                        });
+                                AlertDialog dialog = builder.create();
+                                dialog.show();
+                                return true;
+                            }
 
-                        popup.show();
-                    }
+                        }
+                        return false;
+                    });
+
+                    popup.show();
                 });
             }
 

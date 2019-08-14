@@ -136,12 +136,10 @@ public class expViewFragment extends Fragment {
         root = (ScrollView) inflater.inflate(R.layout.fragment_exp_view, container, false);
 
         final LinearLayout ll = root.findViewById(R.id.experimentView);
-        ll.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(ll.getWindowToken(), 0);
-                }
+        ll.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(ll.getWindowToken(), 0);
             }
         });
 

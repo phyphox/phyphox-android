@@ -734,21 +734,16 @@ public class expView implements Serializable {
             ll.addView(rootView);
 
             //Add a listener to the edit box to keep track of the focus
-            et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                public void onFocusChange(View v, boolean hasFocus) {
-                    focused = hasFocus;
-                    if (!hasFocus) {
-                        setValue(getValue()); //Write back the value actually used...
-                    }
+            et.setOnFocusChangeListener((v, hasFocus) -> {
+                focused = hasFocus;
+                if (!hasFocus) {
+                    setValue(getValue()); //Write back the value actually used...
                 }
             });
 
-            et.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    et.clearFocus();
-                    return true;
-                }
+            et.setOnEditorActionListener((textView, i, keyEvent) -> {
+                et.clearFocus();
+                return true;
             });
 
         }
@@ -878,12 +873,7 @@ public class expView implements Serializable {
             ll.addView(rootView);
 
             //Add a listener to the button to get the trigger
-            b.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    trigger();
-                }
-            });
+            b.setOnClickListener(view -> trigger());
 
         }
 
@@ -1206,16 +1196,13 @@ public class expView implements Serializable {
             interactiveGV.allowLogY = logY;
             gv.setPrecision(xPrecision, yPrecision, zPrecision);
 
-            interactiveGV.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (self.parent != null) {
-                        if (isExclusive) {
-                            interactiveGV.leaveDialog(self.parent, inputs.size() > 1 ? inputs.get(1) : null, inputs.size() > 0 ? inputs.get(0) : null, unitX, unitY);
-                        } else {
-                            interactiveGV.requestFocus();
-                            self.parent.requestExclusive(self);
-                        }
+            interactiveGV.setOnClickListener(view -> {
+                if (self.parent != null) {
+                    if (isExclusive) {
+                        interactiveGV.leaveDialog(self.parent, inputs.size() > 1 ? inputs.get(1) : null, inputs.size() > 0 ? inputs.get(0) : null, unitX, unitY);
+                    } else {
+                        interactiveGV.requestFocus();
+                        self.parent.requestExclusive(self);
                     }
                 }
             });

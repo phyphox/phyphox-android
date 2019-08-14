@@ -12,7 +12,6 @@ import org.w3c.dom.NodeList;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.zip.CRC32;
@@ -172,12 +171,7 @@ public abstract class Helper {
     private static boolean experimentInCollection(long refCRC32, Activity act) {
         CRC32 crc32 = new CRC32();
 
-        File[] files = act.getFilesDir().listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(".phyphox");
-            }
-        });
+        File[] files = act.getFilesDir().listFiles((dir, filename) -> filename.endsWith(".phyphox"));
 
         boolean found = false;
 

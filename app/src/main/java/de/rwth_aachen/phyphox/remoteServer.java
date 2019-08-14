@@ -61,12 +61,12 @@ public class remoteServer extends Thread {
     private static final int HttpServerPORT = 8080; //We have to pick a high port number. We may not use 80...
     private static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
     private final phyphoxExperiment experiment; //Reference to the experiment we want to control
-    String sessionID = "";
+    String sessionID;
     boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
     Resources res; //Resource reference for comfortable access
     private HttpService httpService; //Holds our http service
     private BasicHttpContext basicHttpContext; //A simple http context...
-    private boolean RUNNING = false; //Keeps the main loop alive...
+    private boolean RUNNING; //Keeps the main loop alive...
     private Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
     private Vector<Integer> htmlID2View = new Vector<>(); //This maps htmlIDs to the view of the element
     private Vector<Integer> htmlID2Element = new Vector<>(); //This maps htmlIDs to the view of the element
@@ -94,7 +94,7 @@ public class remoteServer extends Thread {
 
     //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
     static String getAddresses() {
-        String ret = "";
+        StringBuilder ret = new StringBuilder();
         try {
             Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
             while (enumNetworkInterfaces.hasMoreElements()) { //For each network interface
@@ -105,7 +105,7 @@ public class remoteServer extends Thread {
 
                     //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
                     if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
-                        ret += "http://" + inetAddress.getHostAddress() + ":" + HttpServerPORT + "\n";
+                        ret.append("http://").append(inetAddress.getHostAddress()).append(":").append(HttpServerPORT).append("\n");
                     }
 
                 }
@@ -115,7 +115,7 @@ public class remoteServer extends Thread {
         } catch (SocketException e) {
             Log.e("getAdresses", "Error getting the IP.", e);
         }
-        return ret;
+        return ret.toString();
     }
 
     //buildStyleCSS loads the css file from the resources and replaces some placeholders

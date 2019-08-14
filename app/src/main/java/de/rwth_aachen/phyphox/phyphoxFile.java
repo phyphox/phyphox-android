@@ -356,9 +356,9 @@ abstract class phyphoxFile {
 
             // get "conversion" attribute
             String conversionFunctionName = getStringAttribute("conversion");
-            ConversionsConfig.ConfigConversion configConversionFunction = null;
+            ConversionsConfig.ConfigConversion configConversionFunction;
             ConversionsInput.InputConversion inputConversionFunction = null;
-            ConversionsOutput.OutputConversion outputConversionFunction = null;
+            ConversionsOutput.OutputConversion outputConversionFunction;
 
             switch (tag.toLowerCase()) {
                 case "input": {

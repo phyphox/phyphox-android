@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -39,7 +38,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -477,23 +475,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage(res.getString(R.string.save_locally_message))
                         .setTitle(R.string.save_locally)
-                        .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-                                new phyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
-                            }
+                        .setPositiveButton(R.string.save_locally_button, (dialog, id) -> {
+                            progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+                            new phyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
                         })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                saveLocallyDismissed = true;
-                                connectBluetoothDevices(false, false);
-                            }
-                        }).setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialog) {
-                        saveLocallyDismissed = true;
-                        connectBluetoothDevices(false, false);
-                    }
+                        .setNegativeButton(R.string.cancel, (dialog, id) -> {
+                            saveLocallyDismissed = true;
+                            connectBluetoothDevices(false, false);
+                        }).setOnCancelListener(dialog -> {
+                    saveLocallyDismissed = true;
+                    connectBluetoothDevices(false, false);
                 });
                 AlertDialog dialog = builder.create();
                 dialog.show();
@@ -532,10 +523,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(res.getString(R.string.vendorSensorWarning1) + " " + res.getString(sensor.getDescriptionRes()) + " " + res.getString(R.string.vendorSensorWarning2))
                 .setTitle(R.string.vendorSensorTitle)
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                .setPositiveButton(R.string.ok, (dialog, id) -> {
 
-                    }
                 });
 
         AlertDialog dialog = builder.create();
@@ -553,39 +542,28 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
                 // define onSuccess
                 if (startMeasurement) {
-                    btTask.onSuccess = new Runnable() {
-                        @Override
-                        public void run() {
-                            if (timed) {
-                                startTimedMeasurement();
-                            } else {
-                                startMeasurement();
-                            }
+                    btTask.onSuccess = () -> {
+                        if (timed) {
+                            startTimedMeasurement();
+                        } else {
+                            startMeasurement();
                         }
                     };
                 }
 
                 // set attributes of errorDialog
                 Bluetooth.errorDialog.context = Experiment.this;
-                Bluetooth.errorDialog.cancel = new Runnable() {
-                    @Override
-                    public void run() {
-                        btTask.progress.dismiss();
+                Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
+                Bluetooth.errorDialog.tryAgain = () -> {
+                    // start a new task with the same attributes
+                    Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
+                    newBtTask.progress = btTask.progress;
+                    newBtTask.onSuccess = btTask.onSuccess;
+                    // show ProgressDialog again
+                    if (btTask.progress != null) {
+                        btTask.progress.show();
                     }
-                };
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                    @Override
-                    public void run() {
-                        // start a new task with the same attributes
-                        Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
-                        newBtTask.progress = btTask.progress;
-                        newBtTask.onSuccess = btTask.onSuccess;
-                        // show ProgressDialog again
-                        if (btTask.progress != null) {
-                            btTask.progress.show();
-                        }
-                        newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-                    }
+                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
                 };
                 btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
             }
@@ -615,57 +593,46 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         popupWindow.setFocusable(true);
         LinearLayout ll = hintView.findViewById(R.id.hint_root);
 
-        ll.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (popupWindow != null)
-                    popupWindow.dismiss();
-                return true;
-            }
+        ll.setOnTouchListener((view, motionEvent) -> {
+            if (popupWindow != null)
+                popupWindow.dismiss();
+            return true;
         });
 
         popupWindow.setOnDismissListener(dismissListener);
 
 
-        findViewById(R.id.rootLayout).post(new Runnable() {
-            public void run() {
-                View viewItem = findViewById(R.id.customActionBar);
-                if (viewItem == null) {
-                    return;
-                }
-                int[] pos = new int[2];
-                viewItem.getLocationOnScreen(pos);
-                if (isFinishing())
-                    return;
-                try {
-                    popupWindow.showAtLocation(viewItem, Gravity.TOP | Gravity.END, pos[0] + fromRight * viewItem.getHeight(), pos[1] + (int) (viewItem.getHeight() * 0.8));
-                } catch (WindowManager.BadTokenException e) {
-                    Log.e("showHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
-                }
+        findViewById(R.id.rootLayout).post(() -> {
+            View viewItem = findViewById(R.id.customActionBar);
+            if (viewItem == null) {
+                return;
+            }
+            int[] pos = new int[2];
+            viewItem.getLocationOnScreen(pos);
+            if (isFinishing())
+                return;
+            try {
+                popupWindow.showAtLocation(viewItem, Gravity.TOP | Gravity.END, pos[0] + fromRight * viewItem.getHeight(), pos[1] + (int) (viewItem.getHeight() * 0.8));
+            } catch (WindowManager.BadTokenException e) {
+                Log.e("showHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
             }
         });
     }
 
     private void showMenuHint() {
-        showHint(R.string.experimentinfo_hint, new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                popupWindow = null;
-                menuHintDismissed = true;
-                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
-                int menuHintDismissCount = settings.getInt("menuHintDismissCount", 0);
-                settings.edit().putInt("menuHintDismissCount", menuHintDismissCount + 1).apply();
-            }
+        showHint(R.string.experimentinfo_hint, () -> {
+            popupWindow = null;
+            menuHintDismissed = true;
+            SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+            int menuHintDismissCount = settings.getInt("menuHintDismissCount", 0);
+            settings.edit().putInt("menuHintDismissCount", menuHintDismissCount + 1).apply();
         }, 0);
     }
 
     private void showStartHint() {
-        showHint(R.string.start_hint, new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                popupWindow = null;
-                startHintDismissed = true;
-            }
+        showHint(R.string.start_hint, () -> {
+            popupWindow = null;
+            startHintDismissed = true;
         }, 2);
     }
 
@@ -935,35 +902,31 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
             builder.setView(vLayout)
                     .setTitle(R.string.timedRunDialogTitle)
-                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            timedRun = cbTimedRunEnabled.isChecked();
-                            itemRef.setChecked(timedRun);
+                    .setPositiveButton(R.string.ok, (dialog, id1) -> {
+                        timedRun = cbTimedRunEnabled.isChecked();
+                        itemRef.setChecked(timedRun);
 
-                            String startDelayRaw = etTimedRunStartDelay.getText().toString();
-                            try {
-                                timedRunStartDelay = Double.valueOf(startDelayRaw);
-                            } catch (Exception e) {
-                                timedRunStartDelay = 0.;
-                            }
-
-                            String stopDelayRaw = etTimedRunStopDelay.getText().toString();
-                            try {
-                                timedRunStopDelay = Double.valueOf(stopDelayRaw);
-                            } catch (Exception e) {
-                                timedRunStopDelay = 0.;
-                            }
-
-                            if (timedRun && measuring)
-                                stopMeasurement();
-                            else
-                                invalidateOptionsMenu();
+                        String startDelayRaw = etTimedRunStartDelay.getText().toString();
+                        try {
+                            timedRunStartDelay = Double.valueOf(startDelayRaw);
+                        } catch (Exception e) {
+                            timedRunStartDelay = 0.;
                         }
+
+                        String stopDelayRaw = etTimedRunStopDelay.getText().toString();
+                        try {
+                            timedRunStopDelay = Double.valueOf(stopDelayRaw);
+                        } catch (Exception e) {
+                            timedRunStopDelay = 0.;
+                        }
+
+                        if (timedRun && measuring)
+                            stopMeasurement();
+                        else
+                            invalidateOptionsMenu();
                     })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
+                    .setNegativeButton(R.string.cancel, (dialog, id12) -> {
 
-                        }
                     });
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -974,15 +937,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (id == R.id.action_clear) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.clear_data_question))
-                    .setPositiveButton(R.string.clear_data, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            clearData();
-                        }
-                    })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-
-                        }
+                    .setPositiveButton(R.string.clear_data, (dialog, id13) -> clearData())
+                    .setNegativeButton(R.string.cancel, (dialog, id14) -> {
                     });
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -995,10 +951,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage(res.getString(R.string.export_empty))
                         .setTitle(R.string.export)
-                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-
-                            }
+                        .setPositiveButton(R.string.ok, (dialog, id15) -> {
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();
@@ -1020,65 +973,58 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             customTitleET.setText(getString(R.string.save_state_default_title) + " " + df.format(now));
             builder.setMessage(res.getString(R.string.save_state_message))
                     .setTitle(R.string.save_state)
-                    .setPositiveButton(R.string.save_state_save, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            try {
-                                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
-                                FileOutputStream output = openFileOutput(file, Activity.MODE_PRIVATE);
-                                String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
-                                output.close();
-                                if (result != null) {
-                                    Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
-                                    return;
-                                }
-                            } catch (Exception e) {
-                                Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    .setPositiveButton(R.string.save_state_save, (dialog, id16) -> {
+                        try {
+                            String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
+                            FileOutputStream output = openFileOutput(file, Activity.MODE_PRIVATE);
+                            String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
+                            output.close();
+                            if (result != null) {
+                                Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
                                 return;
                             }
-                            Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
+                        } catch (Exception e) {
+                            Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            return;
                         }
+                        Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
                     })
-                    .setNeutralButton(R.string.save_state_share, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-
-                            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-                            String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now) + ".phyphox";
-                            File file = new File(getCacheDir(), "/" + filename);
-                            try {
-                                FileOutputStream output = new FileOutputStream(file);
-                                String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
-                                output.close();
-                                if (result != null) {
-                                    Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
-                                    return;
-                                }
-                            } catch (Exception e) {
-                                Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    .setNeutralButton(R.string.save_state_share, (dialog, id17) -> {
+                        final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+                        String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now) + ".phyphox";
+                        File file = new File(getCacheDir(), "/" + filename);
+                        try {
+                            FileOutputStream output = new FileOutputStream(file);
+                            String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
+                            output.close();
+                            if (result != null) {
+                                Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
                                 return;
                             }
-
-                            final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
-                            final Intent intent = ShareCompat.IntentBuilder.from(Experiment.this)
-                                    .setType("application/octet-stream") //mime type from the export filter
-                                    .setSubject(getString(R.string.save_state_subject))
-                                    .setStream(uri)
-                                    .getIntent()
-                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
-                            for (ResolveInfo ri : resInfoList) {
-                                grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            }
-
-                            //Execute this intent
-                            startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
+                        } catch (Exception e) {
+                            Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            return;
                         }
+
+                        final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                        final Intent intent = ShareCompat.IntentBuilder.from(Experiment.this)
+                                .setType("application/octet-stream") //mime type from the export filter
+                                .setSubject(getString(R.string.save_state_subject))
+                                .setStream(uri)
+                                .getIntent()
+                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                        List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                        for (ResolveInfo ri : resInfoList) {
+                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+
+                        //Execute this intent
+                        startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
                     })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
+                    .setNegativeButton(R.string.cancel, (dialog, id18) -> {
 
-                        }
                     });
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -1177,27 +1123,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage(res.getString(R.string.remoteServerWarning))
                         .setTitle(R.string.remoteServerWarningTitle)
-                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                itemRef.setChecked(true);
-                                serverEnabled = true;
-                                startRemoteServer();
-                            }
+                        .setPositiveButton(R.string.ok, (dialog, id19) -> {
+                            itemRef.setChecked(true);
+                            serverEnabled = true;
+                            startRemoteServer();
                         })
-                        .setNeutralButton(R.string.hotspotSettings, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                final Intent intent = new Intent(Intent.ACTION_MAIN, null);
-                                intent.addCategory(Intent.CATEGORY_LAUNCHER);
-                                final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.TetherSettings");
-                                intent.setComponent(cn);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(intent);
-                            }
+                        .setNeutralButton(R.string.hotspotSettings, (dialog, id110) -> {
+                            final Intent intent = new Intent(Intent.ACTION_MAIN, null);
+                            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                            final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.TetherSettings");
+                            intent.setComponent(cn);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
                         })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
+                        .setNegativeButton(R.string.cancel, (dialog, id111) -> {
 
-                            }
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();
@@ -1236,13 +1176,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Button btn = new Button(builder.getContext());
                 btn.setText(label);
                 final String url = experiment.links.get(label);
-                btn.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View view) {
-                        Uri uri = Uri.parse(url);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        if (intent.resolveActivity(getPackageManager()) != null) {
-                            startActivity(intent);
-                        }
+                btn.setOnClickListener(view -> {
+                    Uri uri = Uri.parse(url);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    if (intent.resolveActivity(getPackageManager()) != null) {
+                        startActivity(intent);
                     }
                 });
                 btn.setBackgroundResource(R.drawable.background_ripple);
@@ -1256,9 +1194,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             builder.setView(sv);
 
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                }
+            builder.setPositiveButton(R.string.ok, (dialog, id112) -> {
             });
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -1320,12 +1256,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Bluetooth.errorDialog.message = e.getMessage();
                 Bluetooth.errorDialog.context = Experiment.this;
                 // try to connect the bluetooth devices again when the user clicks "try again"
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                    @Override
-                    public void run() {
-                        connectBluetoothDevices(true, false);
-                    }
-                };
+                Bluetooth.errorDialog.tryAgain = () -> connectBluetoothDevices(true, false);
                 Bluetooth.errorDialog.run();
                 return;
             }
@@ -1387,12 +1318,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection) + Bluetooth.BluetoothException.getMessage(notConnectedDevice);
                 Bluetooth.errorDialog.context = Experiment.this;
                 // try to connect the bluetooth devices again when the user clicks "try again"
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                    @Override
-                    public void run() {
-                        connectBluetoothDevices(true, true);
-                    }
-                };
+                Bluetooth.errorDialog.tryAgain = () -> connectBluetoothDevices(true, true);
                 Bluetooth.errorDialog.run();
                 return;
             }

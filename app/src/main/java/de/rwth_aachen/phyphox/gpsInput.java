@@ -50,17 +50,14 @@ public class gpsInput implements Serializable {
             onSensorChanged(location);
         }
     };
-    private GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
-        @Override
-        public void onNmeaReceived(long timestamp, String nmea) {
-            if (nmea.length() > 19 && nmea.substring(3, 6).equals("GGA")) {
-                String[] parts = nmea.split(",");
-                if (parts.length < 10)
-                    return;
-                try {
-                    geoidCorrection = Double.parseDouble(parts[11]);
-                } catch (Exception ignored) {
-                }
+    private GpsStatus.NmeaListener nmeaListener = (timestamp, nmea) -> {
+        if (nmea.length() > 19 && nmea.substring(3, 6).equals("GGA")) {
+            String[] parts = nmea.split(",");
+            if (parts.length < 10)
+                return;
+            try {
+                geoidCorrection = Double.parseDouble(parts[11]);
+            } catch (Exception ignored) {
             }
         }
     };

@@ -6,7 +6,6 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -18,7 +17,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -132,12 +130,9 @@ class BluetoothScanDialog {
 
             final boolean phyphoxService = uuids.contains(Bluetooth.phyphoxServiceUUID);
 
-            parentActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    listAdapter.addDevice(new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi));
-                    listAdapter.notifyDataSetChanged();
-                }
+            parentActivity.runOnUiThread(() -> {
+                listAdapter.addDevice(new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi));
+                listAdapter.notifyDataSetChanged();
             });
         }
     };
@@ -147,59 +142,41 @@ class BluetoothScanDialog {
         this.ctx = context;
         this.bta = bta;
 
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+        activity.runOnUiThread(() -> {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+            LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-                View view = inflater.inflate(R.layout.bluetooth_scan_dialog, null);
-                builder.setView(view)
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                            }
-
-                        })
-                        .setPositiveButton(R.string.bt_more_info_link_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Uri uri = Uri.parse(context.getString(R.string.bt_more_info_link_url));
-                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                if (intent.resolveActivity(activity.getPackageManager()) != null) {
-                                    activity.startActivity(intent);
-                                }
-                                dialog.dismiss();
-                            }
-                        });
-                dialog = builder.create();
-
-                title = view.findViewById(R.id.bluetooth_scan_dialog_title);
-                list = view.findViewById(R.id.bluetooth_scan_dialog_items);
-                listAdapter = new DeviceListAdapter();
-                list.setAdapter(listAdapter);
-                list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                        if (!listAdapter.getDevice(pos).supported && !listAdapter.getDevice(pos).phyphoxService)
-                            return;
-                        selectedDevice = listAdapter.getDevice(pos);
-                        dialog.dismiss();
-                    }
-                });
-
-                dialog.setTitle(context.getResources().getString(R.string.bt_pick_device));
-                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        synchronized (lock) {
-                            lock.notify();
+            View view = inflater.inflate(R.layout.bluetooth_scan_dialog, null);
+            builder.setView(view)
+                    .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss())
+                    .setPositiveButton(R.string.bt_more_info_link_button, (dialog, which) -> {
+                        Uri uri = Uri.parse(context.getString(R.string.bt_more_info_link_url));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                            activity.startActivity(intent);
                         }
-                    }
-                });
-            }
+                        dialog.dismiss();
+                    });
+            dialog = builder.create();
+
+            title = view.findViewById(R.id.bluetooth_scan_dialog_title);
+            list = view.findViewById(R.id.bluetooth_scan_dialog_items);
+            listAdapter = new DeviceListAdapter();
+            list.setAdapter(listAdapter);
+            list.setOnItemClickListener((adapterView, view1, pos, l) -> {
+                if (!listAdapter.getDevice(pos).supported && !listAdapter.getDevice(pos).phyphoxService)
+                    return;
+                selectedDevice = listAdapter.getDevice(pos);
+                dialog.dismiss();
+            });
+
+            dialog.setTitle(context.getResources().getString(R.string.bt_pick_device));
+            dialog.setOnDismissListener(dialogInterface -> {
+                synchronized (lock) {
+                    lock.notify();
+                }
+            });
         });
     }
 
@@ -208,23 +185,18 @@ class BluetoothScanDialog {
             //Android 6.0: No permission? Request it!
             final Activity parent = this.parentActivity;
 
-            parent.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(parent);
-                    builder.setMessage(parent.getResources().getText(R.string.bt_location_explanation));
-                    builder.setCancelable(false);
-                    builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
-                                    //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
-                                }
-                            });
-                    final AlertDialog alert = builder.create();
-                    alert.show();
-                }
+            parent.runOnUiThread(() -> {
+                AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+                builder.setMessage(parent.getResources().getText(R.string.bt_location_explanation));
+                builder.setCancelable(false);
+                builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
+                        (dialog, id) -> {
+                            dialog.cancel();
+                            ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
+                            //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
+                        });
+                final AlertDialog alert = builder.create();
+                alert.show();
             });
 
             return false;
@@ -243,17 +215,14 @@ class BluetoothScanDialog {
 
         bta.startLeScan(scanCallback);
 
-        parentActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                String s = idString != null && !idString.isEmpty() ? " (" + idString + ")" : "";
-                if (nameFilter == null || nameFilter.isEmpty()) {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_generic) + s);
-                } else {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2) + s);
-                }
-                dialog.show();
+        parentActivity.runOnUiThread(() -> {
+            String s = idString != null && !idString.isEmpty() ? " (" + idString + ")" : "";
+            if (nameFilter == null || nameFilter.isEmpty()) {
+                title.setText(ctx.getResources().getString(R.string.bt_scanning_generic) + s);
+            } else {
+                title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2) + s);
             }
+            dialog.show();
         });
 
         synchronized (lock) {
