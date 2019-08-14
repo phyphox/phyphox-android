@@ -11,7 +11,7 @@ public class ConversionsConfig {
         return (data).getBytes();
     }
 
-    public static byte[] int16LittleEndian(String data) {
+    private static byte[] int16LittleEndian(String data) {
         return ConversionsOutput.int16LittleEndian(Double.parseDouble(data));
     }
 
@@ -19,7 +19,7 @@ public class ConversionsConfig {
         return int16LittleEndian(data);
     }
 
-    public static byte[] int24LittleEndian(String data) {
+    private static byte[] int24LittleEndian(String data) {
         return ConversionsOutput.int24LittleEndian(Double.parseDouble(data));
     }
 
@@ -35,7 +35,7 @@ public class ConversionsConfig {
         return ConversionsOutput.uInt32LittleEndian(Double.parseDouble(data));
     }
 
-    public static byte[] int16BigEndian(String data) {
+    private static byte[] int16BigEndian(String data) {
         return ConversionsOutput.int16BigEndian(Double.parseDouble(data));
     }
 
@@ -43,7 +43,7 @@ public class ConversionsConfig {
         return int16BigEndian(data);
     }
 
-    public static byte[] int24BigEndian(String data) {
+    private static byte[] int24BigEndian(String data) {
         return ConversionsOutput.int24BigEndian(Double.parseDouble(data));
     }
 
@@ -75,7 +75,7 @@ public class ConversionsConfig {
         return ConversionsOutput.float64BigEndian(Double.parseDouble(data));
     }
 
-    public static byte[] singleByte(String data) {
+    private static byte[] singleByte(String data) {
         return new byte[]{Byte.parseByte(data)};
     }
 

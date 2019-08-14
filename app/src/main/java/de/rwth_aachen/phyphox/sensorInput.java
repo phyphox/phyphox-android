@@ -14,16 +14,16 @@ import java.util.concurrent.locks.Lock;
 //  the android identifiers and handles their output, which is written to the dataBuffers
 public class sensorInput implements SensorEventListener, Serializable {
     public int type; //Sensor type (Android identifier)
-    public boolean calibrated = true;
-    public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
-    public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
-    public dataBuffer dataX; //Data-buffer for x
-    public dataBuffer dataY; //Data-buffer for y (3D sensors only)
-    public dataBuffer dataZ; //Data-buffer for z (3D sensors only)
-    public dataBuffer dataT; //Data-buffer for t
-    public dataBuffer dataAbs; //Data-buffer for absolute value
-    public dataBuffer dataAccuracy; //Data-buffer for absolute value
-    public boolean vendorSensor = false;
+    public long period;
+    public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
+    boolean calibrated = true;
+    boolean vendorSensor = false;
+    private dataBuffer dataX; //Data-buffer for x
+    private dataBuffer dataY; //Data-buffer for y (3D sensors only)
+    private dataBuffer dataZ; //Data-buffer for z (3D sensors only)
+    private dataBuffer dataT; //Data-buffer for t
+    private dataBuffer dataAbs; //Data-buffer for absolute value
+    private dataBuffer dataAccuracy; //Data-buffer for absolute value
     transient private SensorManager sensorManager; //Hold the sensor manager
     private long lastReading; //Remember the time of the last reading to fullfill the rate
     private double avgX, avgY, avgZ, avgAccuracy; //Used for averaging
@@ -34,7 +34,7 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
     // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    protected sensorInput(String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws SensorException {
+    sensorInput(String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws SensorException {
         this.dataLock = lock;
 
         if (rate <= 0)
@@ -67,7 +67,7 @@ public class sensorInput implements SensorEventListener, Serializable {
             this.dataAccuracy = buffers.get(5).buffer;
     }
 
-    public static int resolveSensorString(String type) {
+    static int resolveSensorString(String type) {
         //Interpret the type string
         switch (type) {
             case "linear_acceleration":
@@ -94,7 +94,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     }
 
     //Get the internationalization string for a sensor type
-    public static int getDescriptionRes(int type) {
+    static int getDescriptionRes(int type) {
         switch (type) {
             case Sensor.TYPE_LINEAR_ACCELERATION:
                 return R.string.sensorLinearAcceleration;
@@ -123,7 +123,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         return R.string.unknown;
     }
 
-    public static String getUnit(int type) {
+    static String getUnit(int type) {
         switch (type) {
             case Sensor.TYPE_LINEAR_ACCELERATION:
                 return "m/s²";
@@ -183,7 +183,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         return null;
     }
 
-    public void attachSensorManager(SensorManager sensorManager) {
+    void attachSensorManager(SensorManager sensorManager) {
         this.sensorManager = sensorManager;
         sensor = findSensor();
     }
@@ -193,7 +193,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         return (sensor != null);
     }
 
-    public int getDescriptionRes() {
+    int getDescriptionRes() {
         return sensorInput.getDescriptionRes(type);
     }
 
@@ -310,8 +310,8 @@ public class sensorInput implements SensorEventListener, Serializable {
         }
     }
 
-    public class SensorException extends Exception {
-        public SensorException(String message) {
+    class SensorException extends Exception {
+        SensorException(String message) {
             super(message);
         }
     }

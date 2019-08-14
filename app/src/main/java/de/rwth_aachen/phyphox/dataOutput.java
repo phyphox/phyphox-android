@@ -11,7 +11,7 @@ public class dataOutput implements Serializable {
     boolean clearBeforeWrite = true;
 
     //Constructor with specified clear attribute
-    protected dataOutput(dataBuffer buffer, boolean clear) {
+    dataOutput(dataBuffer buffer, boolean clear) {
         this.clearBeforeWrite = clear;
         this.buffer = buffer;
     }

@@ -15,7 +15,7 @@ import com.caverock.androidsvg.SVG;
 //This is the base class of our experiment icons. It is basically just stuff drawn on a colored background.
 //All icons are supposed to be used as squares!
 abstract class BaseColorDrawable extends Drawable {
-    protected final Paint paintBG; //The paint for the background
+    final Paint paintBG; //The paint for the background
 
     BaseColorDrawable(Context c) {
         //Background paint
@@ -55,7 +55,7 @@ class TextIcon extends BaseColorDrawable {
     private final Paint paint; //The paint for the characters
 
     //The constructor takes a context and the characters to display. It also sets up the paints
-    public TextIcon(String text, Context c) {
+    TextIcon(String text, Context c) {
         super(c);
         this.text = text; //Store the characters
 
@@ -97,7 +97,7 @@ class BitmapIcon extends BaseColorDrawable {
     private final Bitmap icon;
 
     //The constructor takes a context and the characters to display. It also sets up the paints
-    public BitmapIcon(Bitmap icon, Context c) {
+    BitmapIcon(Bitmap icon, Context c) {
         super(c);
         this.icon = icon;
 
@@ -124,7 +124,7 @@ class VectorIcon extends BaseColorDrawable {
     private final SVG svg;
 
     //The constructor takes a context and the characters to display. It also sets up the paints
-    public VectorIcon(SVG svg, Context c) {
+    VectorIcon(SVG svg, Context c) {
         super(c);
         this.svg = svg;
     }

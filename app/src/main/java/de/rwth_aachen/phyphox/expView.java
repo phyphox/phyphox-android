@@ -58,15 +58,15 @@ public class expView implements Serializable {
     public abstract class expViewElement implements Serializable, BufferNotification {
         public State state = State.normal;
         protected String label; //Each element has a label. Usually naming the data shown
-        protected float labelSize; //Size of the label
-        protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
         protected Vector<String> inputs;
-        protected boolean needsUpdate = true;
-        protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
-        transient protected View rootView; //Holds the root view of the element
+        float labelSize; //Size of the label
+        String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
+        boolean needsUpdate = true;
+        int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
+        transient View rootView; //Holds the root view of the element
 
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
-        protected expViewElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+        expViewElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             this.label = label;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.valueOutput = valueOutput;
@@ -121,7 +121,7 @@ public class expView implements Serializable {
         //This function should be called from the outside. It will take the unique HTML id and store
         //it before calling createViewHTML to create the actual HTML markup. This way createViewHTML
         //can use the ID, which only has to be set up once.
-        protected String getViewHTML(int id) {
+        String getViewHTML(int id) {
             this.htmlID = id;
             return createViewHTML();
         }
@@ -164,7 +164,7 @@ public class expView implements Serializable {
 
         //This returns the key name of the output dataBuffer. Called by the main loop to figure out
         //where to store user input
-        protected String getValueOutput() {
+        String getValueOutput() {
             return this.valueOutput;
         }
 
@@ -212,7 +212,7 @@ public class expView implements Serializable {
     //valueElement implements a simple text display for a single value with an unit and a given
     //format.
     public class valueElement extends expViewElement implements Serializable {
-        protected Vector<Mapping> mappings = new Vector<>();
+        Vector<Mapping> mappings = new Vector<>();
         transient private TextView tv = null;
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private double size;
@@ -235,12 +235,12 @@ public class expView implements Serializable {
             this.color = res.getColor(R.color.mainExp);
         }
 
-        protected void addMapping(Mapping mapping) {
+        void addMapping(Mapping mapping) {
             this.mappings.add(mapping);
         }
 
         //Create the formatter for the notation and precision: for example  %.2e or %.2f
-        protected void updateFormatter() {
+        void updateFormatter() {
             if (scientificNotation)
                 formatter = "%." + precision + "e";
             else
@@ -248,7 +248,7 @@ public class expView implements Serializable {
         }
 
         //Interface to set scientific notation
-        protected void setScientificNotation(boolean sn) {
+        void setScientificNotation(boolean sn) {
             this.scientificNotation = sn;
             updateFormatter();
         }
@@ -427,12 +427,12 @@ public class expView implements Serializable {
             return sb.toString();
         }
 
-        protected class Mapping {
+        class Mapping {
             Double min = Double.NEGATIVE_INFINITY;
             Double max = Double.POSITIVE_INFINITY;
             String str;
 
-            protected Mapping(String str) {
+            Mapping(String str) {
                 this.str = str;
             }
         }
@@ -441,7 +441,7 @@ public class expView implements Serializable {
         private class MiddleRelativeSizeSpan extends MetricAffectingSpan {
             private final float mProportion;
 
-            public MiddleRelativeSizeSpan(float proportion) {
+            MiddleRelativeSizeSpan(float proportion) {
                 mProportion = proportion;
             }
 
@@ -612,7 +612,7 @@ public class expView implements Serializable {
         }
 
         //Interface to set a default value
-        protected void setDefaultValue(double v) {
+        void setDefaultValue(double v) {
             this.defaultValue = v;
         }
 
@@ -635,7 +635,7 @@ public class expView implements Serializable {
         }
 
         //Interface to set limits
-        protected void setLimits(double min, double max) {
+        void setLimits(double min, double max) {
             this.min = min;
             this.max = max;
         }
@@ -851,7 +851,7 @@ public class expView implements Serializable {
             super(label, valueOutput, inputs, res);
         }
 
-        protected void setIO(Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        void setIO(Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             this.inputs = inputs;
             this.outputs = outputs;
         }
@@ -1008,22 +1008,22 @@ public class expView implements Serializable {
         }
 
         //Interface to change the height of the graph
-        protected void setAspectRatio(double aspectRatio) {
+        void setAspectRatio(double aspectRatio) {
             this.aspectRatio = aspectRatio;
         }
 
-        protected void setLineWidth(double lineWidth, int i) {
+        void setLineWidth(double lineWidth, int i) {
             this.lineWidth.set(i, lineWidth);
             if (gv != null)
                 gv.setLineWidth(lineWidth, i);
         }
 
-        protected void setLineWidth(double lineWidth) {
+        void setLineWidth(double lineWidth) {
             for (int i = 0; i < nCurves || i < historyLength; i++)
                 setLineWidth(lineWidth, i);
         }
 
-        protected void setColor(int color, int i) {
+        void setColor(int color, int i) {
             this.color.set(i, color);
             if (gv != null)
                 gv.setColor(color, i);
@@ -1034,7 +1034,7 @@ public class expView implements Serializable {
                 setColor(color, i);
         }
 
-        protected void setStyle(GraphView.Style style, int i) {
+        void setStyle(GraphView.Style style, int i) {
             this.style.set(i, style);
             if (gv != null)
                 gv.setStyle(style, i);
@@ -1046,24 +1046,24 @@ public class expView implements Serializable {
                 setStyle(style, i);
         }
 
-        protected void setColorScale(Vector<Integer> scale) {
+        void setColorScale(Vector<Integer> scale) {
             this.colorScale = scale;
             if (gv != null)
                 gv.setColorScale(scale);
         }
 
-        protected void setMapWidth(int width, int i) {
+        void setMapWidth(int width, int i) {
             this.mapWidth.set(i, width);
             if (gv != null)
                 gv.setMapWidth(width, i);
         }
 
-        protected void setMapWidth(int width) {
+        void setMapWidth(int width) {
             for (int i = 0; i < nCurves || i < historyLength; i++)
                 setMapWidth(width, i);
         }
 
-        public void setScaleModeX(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
+        void setScaleModeX(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
             this.scaleMinX = minMode;
             this.scaleMaxX = maxMode;
             this.minX = minV;
@@ -1072,7 +1072,7 @@ public class expView implements Serializable {
                 gv.setScaleModeX(minMode, minV, maxMode, maxV);
         }
 
-        public void setScaleModeY(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
+        void setScaleModeY(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
             this.scaleMinY = minMode;
             this.scaleMaxY = maxMode;
             this.minY = minV;
@@ -1081,7 +1081,7 @@ public class expView implements Serializable {
                 gv.setScaleModeY(minMode, minV, maxMode, maxV);
         }
 
-        public void setScaleModeZ(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
+        void setScaleModeZ(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
             this.scaleMinZ = minMode;
             this.scaleMaxZ = maxMode;
             this.minZ = minV;
@@ -1091,7 +1091,7 @@ public class expView implements Serializable {
         }
 
         //Interface to set a history length
-        protected void setHistoryLength(int hl) {
+        void setHistoryLength(int hl) {
             this.historyLength = hl;
             if (gv != null)
                 gv.setHistoryLength(hl);
@@ -1102,7 +1102,7 @@ public class expView implements Serializable {
         }
 
         //Interface to set the axis labels.
-        protected void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ) {
+        void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ) {
             this.labelX = labelX;
             this.labelY = labelY;
             this.labelZ = labelZ;
@@ -1114,20 +1114,20 @@ public class expView implements Serializable {
         }
 
         //Interface to set log scales
-        protected void setLogScale(boolean logX, boolean logY, boolean logZ) {
+        void setLogScale(boolean logX, boolean logY, boolean logZ) {
             this.logX = logX;
             this.logY = logY;
             this.logZ = logZ;
         }
 
-        protected void setPrecision(int xPrecision, int yPrecision, int zPrecision) {
+        void setPrecision(int xPrecision, int yPrecision, int zPrecision) {
             this.xPrecision = xPrecision;
             this.yPrecision = yPrecision;
             this.zPrecision = zPrecision;
         }
 
         //Interface to set partial updates vs. full updates of the data sets
-        protected void setPartialUpdate(boolean pu) {
+        void setPartialUpdate(boolean pu) {
             this.partialUpdate = pu;
             if (gv != null)
                 gv.graphSetup.incrementalX = pu;
@@ -1652,7 +1652,7 @@ public class expView implements Serializable {
         //If unit AND buffer are null, the zoom is applied to the same axis on all graphs
         //If unit is set, it is applied to all axes with the same unit on all graphs
         //If buffer is set, it is applied to all axes with the same buffer on all graphs
-        public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
+        void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
             if (unit != null) {
                 if (unitX.equals(unit)) {
                     gv.zoomMinX = min;
@@ -1702,13 +1702,13 @@ public class expView implements Serializable {
             super(label, valueOutput, inputs, res);
         }
 
-        public void setBackgroundColor(int c) {
+        void setBackgroundColor(int c) {
             this.backgroundColor = c;
             if (svgView != null)
                 svgView.setBackgroundColor(c);
         }
 
-        public void setSvgParts(String source) {
+        void setSvgParts(String source) {
             this.source = source;
             if (svgView != null)
                 svgView.setSvgParts(source);

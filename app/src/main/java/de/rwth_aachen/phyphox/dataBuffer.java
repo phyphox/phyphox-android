@@ -25,11 +25,11 @@ public class dataBuffer implements Serializable {
     public String name; //The key name
     public int size; //The target size
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
-    public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
-    public boolean untouched = true;
     public Double[] init = new Double[0];
+    boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
+    private boolean untouched = true;
     //Analysis modules and graphs can register to receive notifications if a buffer changes.
-    public Set<BufferNotification> updateListeners = new HashSet<>();
+    private Set<BufferNotification> updateListeners = new HashSet<>();
     private BlockingQueue<Double> buffer; //The actual buffer (will be initialized as ArrayBlockingQueue which is Serializable)
     //This is not logically connected to the data Buffer itself, but it is more efficient to calculate only changes to the buffer, where we can keep track of those changes
     transient private floatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
@@ -60,11 +60,11 @@ public class dataBuffer implements Serializable {
         updateListeners.add(listener);
     }
 
-    public void unregister(BufferNotification listener) {
+    void unregister(BufferNotification listener) {
         updateListeners.remove(listener);
     }
 
-    public void notifyListeners(boolean clear, boolean reset) {
+    private void notifyListeners(boolean clear, boolean reset) {
         for (BufferNotification listener : updateListeners) {
             listener.notifyUpdate(clear, reset);
         }
@@ -282,7 +282,7 @@ public class dataBuffer implements Serializable {
     }
 
     //Retrieve the iterator of the BlockingQueue
-    public Iterator<Double> getIterator() {
+    Iterator<Double> getIterator() {
         return buffer.iterator();
     }
 
@@ -292,7 +292,7 @@ public class dataBuffer implements Serializable {
         return buffer.toArray(ret);
     }
 
-    public floatBufferRepresentation getFloatBuffer() {
+    floatBufferRepresentation getFloatBuffer() {
         int n = buffer.size();
         if (n == 0)
             return new floatBufferRepresentation(null, 0, 0);
@@ -311,7 +311,7 @@ public class dataBuffer implements Serializable {
         return floatCopy;
     }
 
-    public floatBufferRepresentation getFloatBufferBarAxis(double lineWidth) {
+    floatBufferRepresentation getFloatBufferBarAxis(double lineWidth) {
         this.lineWidth = lineWidth;
         int n = buffer.size() * 6;
         if (n <= 0)
@@ -334,7 +334,7 @@ public class dataBuffer implements Serializable {
         return floatCopyBarAxis;
     }
 
-    public floatBufferRepresentation getFloatBufferBarValue() {
+    floatBufferRepresentation getFloatBufferBarValue() {
         int n = buffer.size() * 6;
         if (n <= 0)
             return new floatBufferRepresentation(null, 0, 0);
@@ -357,7 +357,7 @@ public class dataBuffer implements Serializable {
     }
 
     //Get all values as a short array. The data will be scaled so that (-/+)1 matches (-/+)Short.MAX_VALUE, used for audio data
-    public short[] getShortArray() {
+    short[] getShortArray() {
         short[] ret = new short[buffer.size()];
         Iterator it = getIterator();
         int i = 0;

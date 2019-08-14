@@ -51,55 +51,55 @@ import java.util.concurrent.TimeUnit;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Bluetooth implements Serializable {
 
-    public final static UUID baseUUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");
-    public final static UUID phyphoxServiceUUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a");
-    public final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
-    public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
+    final static UUID baseUUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");
+    final static UUID phyphoxServiceUUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a");
+    final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
+    static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
     transient private static BluetoothAdapter btAdapter;
-    public String idString;
-    public String deviceName;
-    public String deviceAddress;
-    public UUID uuidFilter;
-    protected transient BluetoothDevice btDevice;
-    protected transient BluetoothGatt btGatt;
     /**
      * holds data to all characteristics to add or configure once the device is connected
      */
     protected Vector<CharacteristicData> characteristics;
     /**
-     * number of values from characteristics that should be written
-     */
-    protected int valuesSize;
-    /**
-     * maps all characteristics that have extra=time with the index of the buffer
-     */
-    protected HashMap<BluetoothGattCharacteristic, Integer> saveTime = new HashMap<>();
-    /**
      * each BluetoothGattCharacteristic that should be read or written maps with an array list of Characteristics
      */
     protected HashMap<BluetoothGattCharacteristic, ArrayList<Characteristic>> mapping = new HashMap<>();
+    protected Activity activity;
+    protected Context context;
+    String deviceAddress;
+    transient BluetoothGatt btGatt;
+    /**
+     * number of values from characteristics that should be written
+     */
+    int valuesSize;
+    /**
+     * maps all characteristics that have extra=time with the index of the buffer
+     */
+    HashMap<BluetoothGattCharacteristic, Integer> saveTime = new HashMap<>();
     /**
      * used for important asynchronous tasks for example connectGatt
      */
-    protected CancellableLatch cdl;
+    CancellableLatch cdl;
     /**
      * indicates whether the experiment is running or not
      */
-    protected boolean isRunning;
+    boolean isRunning;
     /**
      * true if the experiment is running but the device disconnected
      */
-    protected boolean forcedBreak;
-    protected Activity activity;
-    protected Context context;
-    /**
-     * used to display errors while the experiment is running
-     */
-    protected Toast toast;
+    boolean forcedBreak;
     /**
      * is able to change UI and is used for example to display errors
      */
-    protected Handler mainHandler;
+    Handler mainHandler;
+    private String idString;
+    private String deviceName;
+    private UUID uuidFilter;
+    private transient BluetoothDevice btDevice;
+    /**
+     * used to display errors while the experiment is running
+     */
+    private Toast toast;
     /**
      * queue for the BluetoothCommands
      */
@@ -264,7 +264,7 @@ public class Bluetooth implements Serializable {
      * @param context context
      * @return true if Bluetooth Low Energy is supported
      */
-    public static boolean isSupported(Context context) {
+    static boolean isSupported(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
     }
 
@@ -288,7 +288,7 @@ public class Bluetooth implements Serializable {
      *
      * @return list of paired Bluetooth Low Energy devices.
      */
-    public static Vector<BluetoothDevice> getPairedDevices() {
+    private static Vector<BluetoothDevice> getPairedDevices() {
         Vector<BluetoothDevice> result = new Vector<>();
         for (BluetoothDevice b : btAdapter.getBondedDevices()) {
             int type = b.getType();
@@ -299,7 +299,7 @@ public class Bluetooth implements Serializable {
         return result;
     }
 
-    public static Map<String, BluetoothDevice> knownDevicesFromIO(final Vector<? extends Bluetooth>... list) {
+    private static Map<String, BluetoothDevice> knownDevicesFromIO(final Vector<? extends Bluetooth>... list) {
         Map<String, BluetoothDevice> knownDevices = new HashMap<>();
         for (Vector<? extends Bluetooth> v : list) {
             for (Bluetooth b : v) {
@@ -315,7 +315,7 @@ public class Bluetooth implements Serializable {
      *
      * @return true if the device is connected.
      */
-    public boolean isConnected() {
+    boolean isConnected() {
         if (btAdapter == null)
             return false;
         if (!btAdapter.isEnabled())
@@ -353,7 +353,7 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is disabled or if the device could not be found
      */
-    public void findDevice(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
+    private void findDevice(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
@@ -405,7 +405,7 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is not enabled, if the connection could not be opened or if the services could not be discovered
      */
-    protected void openConnection() throws BluetoothException {
+    private void openConnection() throws BluetoothException {
         if (!isEnabled()) {
             if (btGatt != null) {
                 btGatt.close();
@@ -505,7 +505,7 @@ public class Bluetooth implements Serializable {
      * @return the BluetoothGattCharacteristic
      * @throws BluetoothException if the BluetoothGattCharacteristic could not be found
      */
-    protected BluetoothGattCharacteristic findCharacteristic(UUID uuid) throws BluetoothException {
+    private BluetoothGattCharacteristic findCharacteristic(UUID uuid) throws BluetoothException {
         List<BluetoothGattService> services = btGatt.getServices();
         for (BluetoothGattService g : services) {
             List<BluetoothGattCharacteristic> characteristics = g.getCharacteristics();
@@ -523,7 +523,7 @@ public class Bluetooth implements Serializable {
      *
      * @param message will be displayed
      */
-    protected void displayErrorMessage(final String message) {
+    private void displayErrorMessage(final String message) {
         displayErrorMessage(message, !isRunning);
     }
 
@@ -533,7 +533,7 @@ public class Bluetooth implements Serializable {
      * @param message    will be displayed
      * @param showDialog display message in an AlertDialog if true and in a Toast if false
      */
-    protected void displayErrorMessage(final String message, boolean showDialog) {
+    private void displayErrorMessage(final String message, boolean showDialog) {
         if (showDialog) {
             // show Error Dialog
             errorDialog.message = message;
@@ -554,7 +554,7 @@ public class Bluetooth implements Serializable {
      * Execute the next command in the queue if there is no command running and the queue is not empty.
      * The method displays an error message if the command could not be started.
      */
-    protected void executeNext() {
+    private void executeNext() {
         if (commandQueue.size() == 0) {
             return;
         }
@@ -616,7 +616,7 @@ public class Bluetooth implements Serializable {
          *
          * @param count number of times the latch has to be counted down.
          */
-        public CancellableLatch(int count) {
+        CancellableLatch(int count) {
             super(count);
             cancelled = false;
         }
@@ -657,9 +657,9 @@ public class Bluetooth implements Serializable {
         /**
          * Method that will be called to convert the value of the characteristic.
          */
-        public ConversionsConfig.ConfigConversion configConversionFunction = null;
-        public ConversionsInput.InputConversion inputConversionFunction = null;
-        public ConversionsOutput.OutputConversion outputConversionFunction = null;
+        ConversionsConfig.ConfigConversion configConversionFunction = null;
+        ConversionsInput.InputConversion inputConversionFunction = null;
+        ConversionsOutput.OutputConversion outputConversionFunction = null;
 
         /**
          * Create a new Characteristic.
@@ -672,12 +672,12 @@ public class Bluetooth implements Serializable {
             this.configConversionFunction = conversionFunction;
         }
 
-        public Characteristic(int index, ConversionsInput.InputConversion conversionFunction) {
+        Characteristic(int index, ConversionsInput.InputConversion conversionFunction) {
             this.index = index;
             this.inputConversionFunction = conversionFunction;
         }
 
-        public Characteristic(int index, ConversionsOutput.OutputConversion conversionFunction) {
+        Characteristic(int index, ConversionsOutput.OutputConversion conversionFunction) {
             this.index = index;
             this.outputConversionFunction = conversionFunction;
         }
@@ -706,17 +706,17 @@ public class Bluetooth implements Serializable {
      */
     public static class InputData extends CharacteristicData {
         /**
-         * True if the Characteristic has extra=time
-         */
-        public boolean extraTime;
-        /**
          * Index of the buffer
          */
         public int index;
         /**
+         * True if the Characteristic has extra=time
+         */
+        boolean extraTime;
+        /**
          * Method that will be called to convert the value of the characteristic
          */
-        public ConversionsInput.InputConversion conversionFunction;
+        ConversionsInput.InputConversion conversionFunction;
 
         /**
          * Create a new InputData.
@@ -726,7 +726,7 @@ public class Bluetooth implements Serializable {
          * @param index              index of the buffer
          * @param conversionFunction InputConversion instance that will used to convert the value of the characteristic
          */
-        public InputData(UUID uuid, boolean extraTime, int index, ConversionsInput.InputConversion conversionFunction) {
+        InputData(UUID uuid, boolean extraTime, int index, ConversionsInput.InputConversion conversionFunction) {
             this.uuid = uuid;
             this.extraTime = extraTime;
             this.index = index;
@@ -769,7 +769,7 @@ public class Bluetooth implements Serializable {
         /**
          * Method that will be called to convert the value of the characteristic.
          */
-        public ConversionsOutput.OutputConversion conversionFunction;
+        ConversionsOutput.OutputConversion conversionFunction;
 
         /**
          * Create a new OutputData.
@@ -778,7 +778,7 @@ public class Bluetooth implements Serializable {
          * @param index              index of the buffer
          * @param conversionFunction OutputConversion instance that will be used to convert the value of the characteristic
          */
-        public OutputData(UUID uuid, int index, ConversionsOutput.OutputConversion conversionFunction) {
+        OutputData(UUID uuid, int index, ConversionsOutput.OutputConversion conversionFunction) {
             this.uuid = uuid;
             this.index = index;
             this.conversionFunction = conversionFunction;
@@ -820,7 +820,7 @@ public class Bluetooth implements Serializable {
          * @param conversionFunction ConfigConversion instance that will be used to convert the value of the characteristic
          * @throws phyphoxFile.phyphoxFileException if there is an error while converting the data
          */
-        public ConfigData(UUID uuid, String data, ConversionsConfig.ConfigConversion conversionFunction) throws phyphoxFile.phyphoxFileException {
+        ConfigData(UUID uuid, String data, ConversionsConfig.ConfigConversion conversionFunction) throws phyphoxFile.phyphoxFileException {
             this.uuid = uuid;
             try {
                 this.value = conversionFunction.convert(data);
@@ -866,7 +866,7 @@ public class Bluetooth implements Serializable {
     /**
      * Thrown to indicate that there was an error concerning Bluetooth.
      */
-    public static class BluetoothException extends Exception {
+    static class BluetoothException extends Exception {
 
         /**
          * Create new BluetoothException and add device data to the message.
@@ -874,7 +874,7 @@ public class Bluetooth implements Serializable {
          * @param message the detail message
          * @param b       Bluetooth to add device data
          */
-        public BluetoothException(String message, Bluetooth b) {
+        BluetoothException(String message, Bluetooth b) {
             super(message + getMessage(b));
         }
 
@@ -884,7 +884,7 @@ public class Bluetooth implements Serializable {
          * @param b Bluetooth
          * @return String representation about the device data
          */
-        public static String getMessage(Bluetooth b) {
+        static String getMessage(Bluetooth b) {
             String message = System.getProperty("line.separator") + b.context.getResources().getString(R.string.bt_exception_device);
             if (b.deviceAddress != null) {
                 message += " " + b.context.getResources().getString(R.string.bt_exception_device_address) + " \"" + b.deviceAddress + "\"";
@@ -911,13 +911,13 @@ public class Bluetooth implements Serializable {
          */
         public Context context;
         /**
-         * Run on try again.
-         */
-        public Runnable tryAgain;
-        /**
          * Run on cancel.
          */
         public Runnable cancel;
+        /**
+         * Run on try again.
+         */
+        Runnable tryAgain;
 
         /**
          * Create the AlertDialog and show it.
@@ -967,7 +967,7 @@ public class Bluetooth implements Serializable {
         /**
          * Will be run when all Bluetooth devices are connected successfully.
          */
-        public Runnable onSuccess;
+        Runnable onSuccess;
 
         /**
          * Try to connect all Bluetooth devices and display the error if there is one.
@@ -1043,7 +1043,7 @@ public class Bluetooth implements Serializable {
          * @param gatt           BluetoothGatt the command should be executed on
          * @param characteristic BluetoothGattCharacteristic the command should be executed on
          */
-        public BluetoothCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        BluetoothCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             this.gatt = gatt;
             this.characteristic = characteristic;
         }
@@ -1053,7 +1053,7 @@ public class Bluetooth implements Serializable {
          *
          * @param gatt BluetoothGatt the command should be executed on
          */
-        public BluetoothCommand(BluetoothGatt gatt) {
+        BluetoothCommand(BluetoothGatt gatt) {
             this.gatt = gatt;
             this.characteristic = null;
         }
@@ -1084,7 +1084,7 @@ public class Bluetooth implements Serializable {
          * @param gatt           BluetoothGatt the command should be executed on
          * @param characteristic BluetoothGattCharacteristic that should be written
          */
-        public WriteCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        WriteCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super(gatt, characteristic);
         }
 
@@ -1126,7 +1126,7 @@ public class Bluetooth implements Serializable {
          * @param gatt       BluetoothGatt the command should be executed on
          * @param descriptor BluetoothGattDescriptor that should be written
          */
-        public WriteDescriptorCommand(BluetoothGatt gatt, BluetoothGattDescriptor descriptor) {
+        WriteDescriptorCommand(BluetoothGatt gatt, BluetoothGattDescriptor descriptor) {
             super(gatt);
             this.descriptor = descriptor;
         }
@@ -1163,7 +1163,7 @@ public class Bluetooth implements Serializable {
          * @param gatt           BluetoothGatt the command should be executed on
          * @param characteristic BluetoothGattCharacteristic that should be read
          */
-        public ReadCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        ReadCommand(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super(gatt, characteristic);
         }
 
@@ -1198,7 +1198,7 @@ public class Bluetooth implements Serializable {
          *
          * @param gatt BluetoothGatt whose services should be discovered
          */
-        public DiscoverCommand(BluetoothGatt gatt) {
+        DiscoverCommand(BluetoothGatt gatt) {
             super(gatt);
         }
 

@@ -52,22 +52,22 @@ class CurveData {
 }
 
 class GraphSetup {
-    public final Vector<CurveData> dataSets = new Vector<>();
+    final Vector<CurveData> dataSets = new Vector<>();
     private final Object lock = new Object();
-    public boolean incrementalX = false;
-    public float[] positionMatrix = new float[16];
-    public float[] zScaleMatrix = new float[16];
     public Vector<Integer> color = new Vector<>();
-    public int historyLength = 1;
     public Vector<GraphView.Style> style = new Vector<>();
-    public Vector<Float> lineWidth = new Vector<>();
-    public boolean logX = false;
-    public boolean logY = false;
-    public boolean logZ = false;
-    public Vector<Integer> colorScale = new Vector<>();
-    public double[] xTics = null;
-    public double[] yTics = null;
-    public double[] zTics = null;
+    boolean incrementalX = false;
+    float[] positionMatrix = new float[16];
+    float[] zScaleMatrix = new float[16];
+    int historyLength = 1;
+    Vector<Float> lineWidth = new Vector<>();
+    boolean logX = false;
+    boolean logY = false;
+    boolean logZ = false;
+    Vector<Integer> colorScale = new Vector<>();
+    double[] xTics = null;
+    double[] yTics = null;
+    double[] zTics = null;
     int plotBoundL, plotBoundT, plotBoundW, plotBoundH;
     int zaBoundL, zaBoundT, zaBoundW, zaBoundH;
     float minX, maxX, minY, maxY, minZ, maxZ;
@@ -89,7 +89,7 @@ class GraphSetup {
         colorScale.add(0xffffffff);
     }
 
-    public void initSize(int n) {
+    void initSize(int n) {
         color.setSize(n);
         style.setSize(n);
         lineWidth.setSize(n);
@@ -100,28 +100,28 @@ class GraphSetup {
         }
     }
 
-    public void setPlotBounds(float l, float t, float w, float h) {
+    void setPlotBounds(float l, float t, float w, float h) {
         plotBoundL = Math.round(l);
         plotBoundT = Math.round(t);
         plotBoundW = Math.round(w);
         plotBoundH = Math.round(h);
     }
 
-    public void setZAxisBounds(float l, float t, float w, float h) {
+    void setZAxisBounds(float l, float t, float w, float h) {
         zaBoundL = Math.round(l);
         zaBoundT = Math.round(t);
         zaBoundW = Math.round(w);
         zaBoundH = Math.round(h);
     }
 
-    public void setTics(double[] xTics, double[] yTics, double[] zTics, PlotRenderer plotRenderer) {
+    void setTics(double[] xTics, double[] yTics, double[] zTics, PlotRenderer plotRenderer) {
         this.xTics = xTics;
         this.yTics = yTics;
         this.zTics = zTics;
         plotRenderer.notifyUpdateGrid();
     }
 
-    public void setDataBounds(float minX, float maxX, float minY, float maxY, float minZ, float maxZ) {
+    void setDataBounds(float minX, float maxX, float minY, float maxY, float minZ, float maxZ) {
         this.minX = minX;
         this.maxX = maxX;
         this.minY = minY;
@@ -130,7 +130,7 @@ class GraphSetup {
         this.maxZ = maxZ;
     }
 
-    public void updateMatrix(float w, float h) {
+    void updateMatrix(float w, float h) {
         if (maxX == minX || maxY == minY || plotBoundW == 0 || plotBoundH == 0)
             return;
         float l, r, t, b;
@@ -176,7 +176,7 @@ class GraphSetup {
             Matrix.orthoM(positionMatrix, 0, l, r, b, t, -1, 1);
     }
 
-    public void setData(floatBufferRepresentation[] x, floatBufferRepresentation[] y, int n, GraphView.Style[] style, int[] mapWidth, PlotRenderer plotRenderer) {
+    void setData(floatBufferRepresentation[] x, floatBufferRepresentation[] y, int n, GraphView.Style[] style, int[] mapWidth, PlotRenderer plotRenderer) {
         for (int i = 0; i < n; i++) {
             if (dataSets.size() <= i) {
                 CurveData newData = new CurveData();
@@ -212,7 +212,7 @@ class GraphSetup {
 }
 
 class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener {
-    final String vertexShader =
+    private final String vertexShader =
             "uniform vec4 in_color;" +
                     "uniform mat4 positionMatrix;" +
 
@@ -239,7 +239,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     "   gl_Position = positionMatrix * vec4(posX, posY, 0., 1.);" +
                     "   gl_PointSize = size;" +
                     "}";
-    final String fragmentShader =
+    private final String fragmentShader =
             "precision mediump float;" +
 
                     "varying vec4 v_color;" +
@@ -247,7 +247,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     "void main () {" +
                     "   gl_FragColor = v_color;" +
                     "}";
-    final String gridShader =
+    private final String gridShader =
             "attribute vec2 position;" +
                     "uniform mat4 positionMatrix;" +
 
@@ -257,11 +257,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     "   pos = vec2(positionMatrix * vec4(position, 0., 1.));" +
                     "   gl_Position = vec4(pos, 0., 1.);" +
                     "}";
-    final String gridFragmentShader =
+    private final String gridFragmentShader =
             "void main () {" +
                     "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
                     "}";
-    final String mapShader =
+    private final String mapShader =
             "uniform mat4 positionMatrix;" +
 
                     "uniform int logXYZ;" +
@@ -289,7 +289,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     "   posRaw = positionMatrix * vec4(posX, posY, posZ, 1.);" +
                     "   gl_Position = vec4(posRaw.xy, clamp(posRaw.z, -1.0, 1.0), posRaw.w);" +
                     "}";
-    final String mapFragmentShader =
+    private final String mapFragmentShader =
             "uniform sampler2D colorMap;" +
                     "void main () {" +
                     "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
@@ -297,20 +297,20 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     private final Object lock = new Object();
     private final int EGL_OPENGL_ES2_BIT = 4;
     private final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
-    int h, w;
-    int bgColor;
-    int vboGrid = 0;
-    int vboZGrid = 0;
-    int vboZScaleX = 0;
-    int vboZScaleY = 0;
-    int vboZScaleZ = 0;
-    int colorScaleTexture = 0;
-    EGL10 egl;
-    EGLDisplay eglDisplay;
-    EGLContext eglContext;
-    EGLSurface eglSurface;
-    EGLConfig favConfig = null;
-    int[] surfaceAttribs = {
+    private int h, w;
+    private int bgColor;
+    private int vboGrid = 0;
+    private int vboZGrid = 0;
+    private int vboZScaleX = 0;
+    private int vboZScaleY = 0;
+    private int vboZScaleZ = 0;
+    private int colorScaleTexture = 0;
+    private EGL10 egl;
+    private EGLDisplay eglDisplay;
+    private EGLContext eglContext;
+    private EGLSurface eglSurface;
+    private EGLConfig favConfig = null;
+    private int[] surfaceAttribs = {
             EGL10.EGL_NONE
     };
     private SurfaceTexture surfaceTexture;
@@ -336,12 +336,13 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             EGL_CONTEXT_CLIENT_VERSION, 2,
             EGL10.EGL_NONE
     };
+
     PlotRenderer(Resources res) {
         super("PlotRenderer GL");
         bgColor = res.getColor(R.color.backgroundExp);
     }
 
-    public static int loadShader(int type, String shaderCode) {
+    private static int loadShader(int type, String shaderCode) {
         int shader = GLES20.glCreateShader(type);
 
         GLES20.glShaderSource(shader, shaderCode);
@@ -454,7 +455,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
     }
 
-    public void initGL() {
+    private void initGL() {
         egl = (EGL10) EGLContext.getEGL();
         eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
         if (!egl.eglInitialize(eglDisplay, null)) {
@@ -543,7 +544,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     }
 
-    public void deinitGL() {
+    private void deinitGL() {
         if (surfaceTexture != null)
             surfaceTexture.release();
         egl.eglDestroySurface(eglDisplay, eglSurface);
@@ -554,7 +555,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         egl = null;
     }
 
-    public void initScene() {
+    private void initScene() {
 
         GLES20.glClearColor(((bgColor & 0xff0000) >> 16) / 255.f, ((bgColor & 0xff00) >> 8) / 255.f, (bgColor & 0xff) / 255.f, 1.0f);
 
@@ -631,7 +632,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
     }
 
-    public void deinitScene() {
+    private void deinitScene() {
 
     }
 
@@ -779,7 +780,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glDisableVertexAttribArray(mapPositionZHandle);
     }
 
-    public void drawFrame() {
+    private void drawFrame() {
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
@@ -986,11 +987,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     ////// Careful, all methods below will be called from UI thread /////
 
-    public void setGraphSetup(GraphSetup gs) {
+    void setGraphSetup(GraphSetup gs) {
         this.graphSetup = gs;
     }
 
-    public void requestRender() {
+    void requestRender() {
         if (!readyToRender)
             return;
         synchronized (lock) {
@@ -999,15 +1000,15 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
     }
 
-    public void notifyUpdateBuffers() {
+    void notifyUpdateBuffers() {
         updateBuffers = true;
     }
 
-    public void notifyUpdateGrid() {
+    void notifyUpdateGrid() {
         updateGrid = true;
     }
 
-    public void halt() {
+    void halt() {
         synchronized (lock) {
             done = true;
             lock.notify();

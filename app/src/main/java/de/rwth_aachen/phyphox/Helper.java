@@ -36,7 +36,7 @@ public abstract class Helper {
         }
     }
 
-    public static int getLanguageRating(Resources res, String language) {
+    static int getLanguageRating(Resources res, String language) {
         if (language == null || language.isEmpty())
             return 1; //This can only happen to the base translation. Its language is not specified, but it's probably better for the target audience than a non-matching language - with one exception: If the base language is not specified and an English block is declared as a translation, then the base language is probably just a place-holder, so English is preferred in this case.
 
@@ -96,7 +96,7 @@ public abstract class Helper {
         return score;
     }
 
-    public static float luminance(int c) {
+    static float luminance(int c) {
         float r = ((c & 0xff0000) >> 16) / 255f;
         float g = ((c & 0xff00) >> 8) / 255f;
         float b = (c & 0xff) / 255f;
@@ -104,7 +104,7 @@ public abstract class Helper {
     }
 
     //Translate RGB values or pre-defined names into integer representations
-    public static int parseColor(String colorStr, int defaultValue, Resources res) {
+    static int parseColor(String colorStr, int defaultValue, Resources res) {
         if (colorStr == null)
             return defaultValue;
         //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
@@ -146,7 +146,7 @@ public abstract class Helper {
         return Integer.parseInt(colorStr, 16) | 0xff000000;
     }
 
-    public static void replaceTagInFile(String file, Context ctx, String tag, String newContent) {
+    static void replaceTagInFile(String file, Context ctx, String tag, String newContent) {
         try {
             FileInputStream in = ctx.openFileInput(file);
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(in);
@@ -169,7 +169,7 @@ public abstract class Helper {
         }
     }
 
-    public static boolean experimentInCollection(long refCRC32, Activity act) {
+    private static boolean experimentInCollection(long refCRC32, Activity act) {
         CRC32 crc32 = new CRC32();
 
         File[] files = act.getFilesDir().listFiles(new FilenameFilter() {
@@ -203,7 +203,7 @@ public abstract class Helper {
         return found;
     }
 
-    public static boolean experimentInCollection(byte[] source, Activity act) {
+    static boolean experimentInCollection(byte[] source, Activity act) {
         CRC32 crc32 = new CRC32();
         crc32.update(source);
         long refCRC32 = crc32.getValue();
@@ -211,7 +211,7 @@ public abstract class Helper {
         return experimentInCollection(refCRC32, act);
     }
 
-    public static boolean experimentInCollection(File file, Activity act) {
+    static boolean experimentInCollection(File file, Activity act) {
         CRC32 crc32 = new CRC32();
         try {
             InputStream input = new FileInputStream(file);

@@ -145,7 +145,7 @@ public class ConversionsInput {
         return data[0];
     }
 
-    public static double uInt8(byte[] data) {
+    private static double uInt8(byte[] data) {
         return data[0] & 0xff;
     }
 

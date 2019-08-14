@@ -35,7 +35,7 @@ import java.util.UUID;
  */
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class BluetoothScanDialog {
+class BluetoothScanDialog {
 
     private final Activity parentActivity;
     private final Context ctx;
@@ -203,7 +203,7 @@ public class BluetoothScanDialog {
         });
     }
 
-    public boolean scanPermission() {
+    boolean scanPermission() {
         if (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             //Android 6.0: No permission? Request it!
             final Activity parent = this.parentActivity;
@@ -232,7 +232,7 @@ public class BluetoothScanDialog {
         return true;
     }
 
-    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter, final Set<UUID> supportedUUIDFilter, final String idString) {
+    BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter, final Set<UUID> supportedUUIDFilter, final String idString) {
         this.nameFilter = nameFilter;
         this.uuidFilter = uuidFilter;
         this.supportedNameFilter = supportedNameFilter;
@@ -273,7 +273,7 @@ public class BluetoothScanDialog {
         ImageView signalStrength;
     }
 
-    public class BluetoothDeviceInfo {
+    class BluetoothDeviceInfo {
         BluetoothDevice device;
         Boolean supported;
         Boolean phyphoxService;
@@ -294,13 +294,13 @@ public class BluetoothScanDialog {
         private ArrayList<BluetoothDeviceInfo> devices;
         private LayoutInflater inflator;
 
-        public DeviceListAdapter() {
+        DeviceListAdapter() {
             super();
             devices = new ArrayList<BluetoothDeviceInfo>();
             inflator = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
 
-        public void addDevice(BluetoothDeviceInfo device) {
+        void addDevice(BluetoothDeviceInfo device) {
             boolean inList = false;
             for (BluetoothDeviceInfo item : devices) {
                 if (item.device.equals(device.device)) {
@@ -315,7 +315,7 @@ public class BluetoothScanDialog {
                 devices.add(device);
         }
 
-        public BluetoothDeviceInfo getDevice(int position) {
+        BluetoothDeviceInfo getDevice(int position) {
             return devices.get(position);
         }
 

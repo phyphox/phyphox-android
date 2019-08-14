@@ -181,6 +181,7 @@ public class GraphView extends View {
 
     };
     private ScaleGestureDetector scaleGestureDetector;
+
     //Simple constructor just needs a context to call the View constructor
     //Initialize some stuff...
     public GraphView(Context context, PlotAreaView plotAreaView, PlotRenderer plotRenderer) {

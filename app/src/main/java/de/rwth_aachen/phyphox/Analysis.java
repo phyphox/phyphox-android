@@ -33,7 +33,7 @@ public class Analysis {
     public static native void fftw3autocorrelation(float[] x, int n);
 
     public static class FFT implements Serializable {
-        public int np2;
+        int np2;
         private int n, logn; //input size, power-of-two filled size, log2 of input size (integer)
         private double[] cos, sin; //Lookup table
 
@@ -138,20 +138,20 @@ public class Analysis {
     //analysisModule is is the prototype from which each analysis module inherits its interface
     public static class analysisModule implements Serializable, BufferNotification {
         protected Vector<dataInput> inputs = new Vector<>(); //The local copy of the input data when the analysis module starts its update
-        protected Vector<Double[]> inputArrays = new Vector<>(); //The local copy of the input data when the analysis module starts its update
-        protected Vector<Integer> inputArraySizes = new Vector<>(); //The local copy of the input data when the analysis module starts its update
         protected Vector<dataOutput> outputs; //The keys of outputBuffers
         protected phyphoxExperiment experiment; //experiment reference to access buffers
-        protected boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
         protected boolean deterministic = true;
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
-        protected boolean needsUpdate = true;
-        protected boolean useArray = false;
-        protected boolean clearInModule = false;
+        Vector<Double[]> inputArrays = new Vector<>(); //The local copy of the input data when the analysis module starts its update
+        Vector<Integer> inputArraySizes = new Vector<>(); //The local copy of the input data when the analysis module starts its update
+        boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
+        boolean needsUpdate = true;
+        boolean useArray = false;
+        boolean clearInModule = false;
         private Vector<dataInput> inputsOriginal; //The key of input dataBuffers, note that this is private, so derived classes cannot access this directly, but have to use the copy
 
         //Main contructor
-        protected analysisModule(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        analysisModule(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             this.experiment = experiment;
             this.inputsOriginal = inputs;
             this.outputs = outputs;
@@ -188,7 +188,7 @@ public class Analysis {
         }
 
         //Wrapper to update the module only if it is not static or has never been executed and to clear the buffer if required
-        protected boolean updateIfNotStatic() {
+        boolean updateIfNotStatic() {
             if (needsUpdate && !(isStatic && executed)) {
 //                long updateStart = System.nanoTime();
 
@@ -268,7 +268,7 @@ public class Analysis {
     //Get the seconds since the experiment started
     public static class timerAM extends analysisModule implements Serializable {
 
-        protected timerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        timerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             deterministic = false;
         }
@@ -283,7 +283,7 @@ public class Analysis {
     public static class formulaAM extends analysisModule implements Serializable {
         FormulaParser formula;
 
-        protected formulaAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, String formula) throws FormulaParser.FormulaException {
+        formulaAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, String formula) throws FormulaParser.FormulaException {
             super(experiment, inputs, outputs);
             useArray = true;
             this.formula = new FormulaParser(formula);
@@ -299,7 +299,7 @@ public class Analysis {
     // Get the number of elements in the input buffer
     public static class countAM extends analysisModule implements Serializable {
 
-        protected countAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        countAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -315,7 +315,7 @@ public class Analysis {
     public static class ifAM extends analysisModule implements Serializable {
         boolean less, equal, greater;
 
-        protected ifAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean less, boolean equal, boolean greater) {
+        ifAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean less, boolean equal, boolean greater) {
             super(experiment, inputs, outputs);
             this.less = less;
             this.equal = equal;
@@ -349,7 +349,7 @@ public class Analysis {
     // Get the average value of this buffer (ignoring NaNs)
     public static class averageAM extends analysisModule implements Serializable {
 
-        protected averageAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        averageAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -400,7 +400,7 @@ public class Analysis {
     //Add input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class addAM extends analysisModule implements Serializable {
 
-        protected addAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        addAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -441,7 +441,7 @@ public class Analysis {
     //Subtract input values (i1-i2-i3-i4...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class subtractAM extends analysisModule implements Serializable {
 
-        protected subtractAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        subtractAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -487,7 +487,7 @@ public class Analysis {
     //Multiply input values. The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class multiplyAM extends analysisModule implements Serializable {
 
-        protected multiplyAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        multiplyAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -527,7 +527,7 @@ public class Analysis {
     //Divide input values (i1/i2/i3/...). The output has the length of the longest input buffer or the size of the output buffer (whichever is smaller). Missing values in shorter buffers are filled from the last value.
     public static class divideAM extends analysisModule implements Serializable {
 
-        protected divideAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        divideAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -574,7 +574,7 @@ public class Analysis {
     // Missing values in shorter buffers are filled from the last value.
     public static class powerAM extends analysisModule implements Serializable {
 
-        protected powerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        powerAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -656,7 +656,7 @@ public class Analysis {
     // Missing values in shorter buffers are filled from the last value.
     public static class gcdAM extends analysisModule implements Serializable {
 
-        protected gcdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        gcdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -711,7 +711,7 @@ public class Analysis {
     // Missing values in shorter buffers are filled from the last value.
     public static class lcmAM extends analysisModule implements Serializable {
 
-        protected lcmAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        lcmAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -766,7 +766,7 @@ public class Analysis {
     // The output has the length of the input buffer or at 1 for a value.
     public static class absAM extends analysisModule implements Serializable {
 
-        protected absAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        absAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -785,7 +785,7 @@ public class Analysis {
     public static class roundAM extends analysisModule implements Serializable {
         boolean floor, ceil;
 
-        protected roundAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean floor, boolean ceil) {
+        roundAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean floor, boolean ceil) {
             super(experiment, inputs, outputs);
             this.floor = floor;
             this.ceil = ceil;
@@ -812,7 +812,7 @@ public class Analysis {
     // The output has the length of the input buffer or at 1 for a value.
     public static class logAM extends analysisModule implements Serializable {
 
-        protected logAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        logAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -832,7 +832,7 @@ public class Analysis {
     public static class sinAM extends analysisModule implements Serializable {
         boolean deg;
 
-        protected sinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+        sinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
             this.deg = deg;
@@ -857,7 +857,7 @@ public class Analysis {
     public static class cosAM extends analysisModule implements Serializable {
         boolean deg;
 
-        protected cosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+        cosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
             this.deg = deg;
@@ -883,7 +883,7 @@ public class Analysis {
     public static class tanAM extends analysisModule implements Serializable {
         boolean deg;
 
-        protected tanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+        tanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
             this.deg = deg;
@@ -904,7 +904,7 @@ public class Analysis {
     }
 
     public static class sinhAM extends analysisModule implements Serializable {
-        protected sinhAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        sinhAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -920,7 +920,7 @@ public class Analysis {
 
     public static class coshAM extends analysisModule implements Serializable {
 
-        protected coshAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        coshAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -936,7 +936,7 @@ public class Analysis {
 
     public static class tanhAM extends analysisModule implements Serializable {
 
-        protected tanhAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        tanhAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -953,7 +953,7 @@ public class Analysis {
     public static class asinAM extends analysisModule implements Serializable {
         boolean deg;
 
-        protected asinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+        asinAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
             this.deg = deg;
@@ -976,7 +976,7 @@ public class Analysis {
     public static class acosAM extends analysisModule implements Serializable {
         boolean deg;
 
-        protected acosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+        acosAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
             this.deg = deg;
@@ -999,7 +999,7 @@ public class Analysis {
     public static class atanAM extends analysisModule implements Serializable {
         boolean deg;
 
-        protected atanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+        atanAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
             this.deg = deg;
@@ -1022,7 +1022,7 @@ public class Analysis {
     public static class atan2AM extends analysisModule implements Serializable {
         boolean deg;
 
-        protected atan2AM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
+        atan2AM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean deg) {
             super(experiment, inputs, outputs);
             useArray = true;
             this.deg = deg;
@@ -1048,7 +1048,7 @@ public class Analysis {
     //Get the first value of the dataset.
     public static class firstAM extends analysisModule implements Serializable {
 
-        protected firstAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        firstAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -1076,7 +1076,7 @@ public class Analysis {
     public static class maxAM extends analysisModule implements Serializable {
         private boolean multiple = false;
 
-        protected maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
+        maxAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
             super(experiment, inputs, outputs);
             this.multiple = multiple;
         }
@@ -1152,7 +1152,7 @@ public class Analysis {
     public static class minAM extends analysisModule implements Serializable {
         private boolean multiple = false;
 
-        protected minAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
+        minAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean multiple) {
             super(experiment, inputs, outputs);
             this.multiple = multiple;
         }
@@ -1227,7 +1227,7 @@ public class Analysis {
         boolean falling = false; //Falling or rising trigger?
 
         //Extended constructor which receives the threshold and falling as well.
-        protected thresholdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean falling) {
+        thresholdAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean falling) {
             super(experiment, inputs, outputs);
             this.falling = falling;
         }
@@ -1285,7 +1285,7 @@ public class Analysis {
     //Binning: get number of elements that fall into the intervals x0..x0+dx..x0+2dx.. (default: x0 = 0, dx = 1)
     public static class binningAM extends analysisModule implements Serializable {
 
-        protected binningAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        binningAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1356,7 +1356,7 @@ public class Analysis {
 
         ZMode zMode = ZMode.count;
 
-        protected mapAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, ZMode zMode) {
+        mapAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, ZMode zMode) {
             super(experiment, inputs, outputs);
             this.zMode = zMode;
             useArray = true;
@@ -1446,7 +1446,7 @@ public class Analysis {
     //Append all inputs to the output.
     public static class appendAM extends analysisModule implements Serializable {
 
-        protected appendAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        appendAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1479,7 +1479,7 @@ public class Analysis {
         boolean sumY = false;
         boolean averageY = false;
 
-        protected reduceAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean averageX, boolean sumY, boolean averageY) {
+        reduceAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs, boolean averageX, boolean sumY, boolean averageY) {
             super(experiment, inputs, outputs);
             this.averageX = averageX;
             this.sumY = sumY;
@@ -1560,7 +1560,7 @@ public class Analysis {
     public static class fftAM extends analysisModule implements Serializable {
         private FFT fft;
 
-        protected fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        fftAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
 
             useArray = true;
@@ -1643,7 +1643,7 @@ public class Analysis {
     //A min and max can be set through inputs as well, which limit the x-range used for calculation
     public static class autocorrelationAM extends analysisModule implements Serializable {
 
-        protected autocorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        autocorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -1715,7 +1715,7 @@ public class Analysis {
     //output1 is the periodicity in units of input1
     public static class periodicityAM extends analysisModule implements Serializable {
 
-        protected periodicityAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        periodicityAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1824,7 +1824,7 @@ public class Analysis {
     //The resulting array has exactly one element less than the input array
     public static class differentiateAM extends analysisModule implements Serializable {
 
-        protected differentiateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        differentiateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1856,7 +1856,7 @@ public class Analysis {
     //The resulting array has exactly as many elements as the input array
     public static class integrateAM extends analysisModule implements Serializable {
 
-        protected integrateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        integrateAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -1883,7 +1883,7 @@ public class Analysis {
     //This does not work if both have the same size. Pad one input to match the target total size first.
     //The size of the output is the difference of both input sizes.
     public static class crosscorrelationAM extends analysisModule implements Serializable {
-        protected crosscorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        crosscorrelationAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -1969,13 +1969,13 @@ public class Analysis {
         int calcWidth; //range to which the gauss is calculated
         double[] gauss; //Gauss-weight look-up-table
 
-        protected gaussSmoothAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        gaussSmoothAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             setSigma(3); //default
         }
 
         //Change sigma
-        protected void setSigma(double sigma) {
+        void setSigma(double sigma) {
             this.calcWidth = (int) Math.round(sigma * 3); //Adapt calculation range: 3x sigma should be plenty
 
             gauss = new double[calcWidth * 2 + 1];
@@ -2017,7 +2017,7 @@ public class Analysis {
     //You need exactly as many outputs as there are inputs.
     public static class matchAM extends analysisModule implements Serializable {
 
-        protected matchAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        matchAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -2067,7 +2067,7 @@ public class Analysis {
     public static class rangefilterAM extends analysisModule implements Serializable {
 
         //Constructor also takes arrays of min and max values
-        protected rangefilterAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        rangefilterAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
             useArray = true;
         }
@@ -2150,7 +2150,7 @@ public class Analysis {
         double vstop = 100.;
         int vlength = -1;
 
-        protected rampGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        rampGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -2184,7 +2184,7 @@ public class Analysis {
         double vvalue = 0.;
         int vlength = -1;
 
-        protected constGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        constGeneratorAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 
@@ -2210,7 +2210,7 @@ public class Analysis {
     //or starting at index start and stopping at index end-1
     public static class subrangeAM extends analysisModule implements Serializable {
 
-        protected subrangeAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        subrangeAM(phyphoxExperiment experiment, Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             super(experiment, inputs, outputs);
         }
 

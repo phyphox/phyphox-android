@@ -58,16 +58,16 @@ import java.util.Vector;
 @SuppressWarnings("deprecation")
 public class remoteServer extends Thread {
 
-    static final int HttpServerPORT = 8080; //We have to pick a high port number. We may not use 80...
-    static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
+    private static final int HttpServerPORT = 8080; //We have to pick a high port number. We may not use 80...
+    private static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
     private final phyphoxExperiment experiment; //Reference to the experiment we want to control
-    public String sessionID = "";
-    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
-    HttpService httpService; //Holds our http service
-    BasicHttpContext basicHttpContext; //A simple http context...
-    boolean RUNNING = false; //Keeps the main loop alive...
+    String sessionID = "";
+    boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
     Resources res; //Resource reference for comfortable access
-    Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
+    private HttpService httpService; //Holds our http service
+    private BasicHttpContext basicHttpContext; //A simple http context...
+    private boolean RUNNING = false; //Keeps the main loop alive...
+    private Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
     private Vector<Integer> htmlID2View = new Vector<>(); //This maps htmlIDs to the view of the element
     private Vector<Integer> htmlID2Element = new Vector<>(); //This maps htmlIDs to the view of the element
 
@@ -93,7 +93,7 @@ public class remoteServer extends Thread {
     }
 
     //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
-    public static String getAddresses() {
+    static String getAddresses() {
         String ret = "";
         try {
             Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
@@ -119,7 +119,7 @@ public class remoteServer extends Thread {
     }
 
     //buildStyleCSS loads the css file from the resources and replaces some placeholders
-    protected void buildStyleCSS() {
+    private void buildStyleCSS() {
         //We use a stringbuilder to collect our strings
         StringBuilder sb = new StringBuilder();
         //...and we need to read from the resource file
@@ -163,7 +163,7 @@ public class remoteServer extends Thread {
     }
 
     //getBase64PNG takes a drawable and returns a string with the base64-encoded image
-    protected String getBase64PNG(Drawable src) {
+    private String getBase64PNG(Drawable src) {
         //We need a bitmap first as the source might be any drawable resource
         Bitmap bm;
         if (src instanceof BitmapDrawable) {
@@ -196,7 +196,7 @@ public class remoteServer extends Thread {
 
     //Constructs the HTML file and replaces some placeholder.
     //This is where the experiment views place their HTML code.
-    protected void buildIndexHTML() {
+    private void buildIndexHTML() {
         //A string builder is great for collecting strings...
         StringBuilder sb = new StringBuilder();
 
@@ -424,7 +424,7 @@ public class remoteServer extends Thread {
 
 
     //Stop the server by siply setting RUNNING to false
-    public synchronized void stopServer() {
+    synchronized void stopServer() {
         RUNNING = false;
     }
 

@@ -8,7 +8,7 @@ public class expViewPagerAdapter extends FragmentPagerAdapter {
 
     private phyphoxExperiment experiment;
 
-    public expViewPagerAdapter(FragmentManager fm, phyphoxExperiment experiment) {
+    expViewPagerAdapter(FragmentManager fm, phyphoxExperiment experiment) {
         super(fm);
         this.experiment = experiment;
     }

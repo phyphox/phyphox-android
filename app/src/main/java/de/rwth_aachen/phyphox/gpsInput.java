@@ -16,24 +16,23 @@ import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 public class gpsInput implements Serializable {
-    public dataBuffer dataLat; //Data-buffer for latitude
-    public dataBuffer dataLon; //Data-buffer for longitude
-    public dataBuffer dataZ; //Data-buffer for height
-    public dataBuffer dataV; //Data-buffer for velocity
-    public dataBuffer dataDir; //Data-buffer for direction
-    public dataBuffer dataT; //Data-buffer for time
-
-    public dataBuffer dataAccuracy; //Data-buffer for horizontal accuracy
-    public dataBuffer dataZAccuracy; //Data-buffer for height accuracy
-    public dataBuffer dataStatus; //Data-buffer for status codes (note filled parallel to the other buffers)
-    public dataBuffer dataSatellites; //Data-buffer for status codes (note filled parallel to the other buffers)
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
-    public boolean forceGNSS = false;
+    boolean forceGNSS = false;
+    private dataBuffer dataLat; //Data-buffer for latitude
+    private dataBuffer dataLon; //Data-buffer for longitude
+    private dataBuffer dataZ; //Data-buffer for height
+    private dataBuffer dataV; //Data-buffer for velocity //Data-buffer for time
+    private dataBuffer dataDir; //Data-buffer for direction
+    private dataBuffer dataT;
+    private dataBuffer dataAccuracy; //Data-buffer for horizontal accuracy
+    private dataBuffer dataZAccuracy; //Data-buffer for height accuracy
+    private dataBuffer dataStatus; //Data-buffer for status codes (note filled parallel to the other buffers)
+    private dataBuffer dataSatellites; //Data-buffer for status codes (note filled parallel to the other buffers)
     transient private LocationManager locationManager; //Hold the sensor manager
     private Lock dataLock;
     private int lastStatus = 0;
     private double geoidCorrection = Double.NaN;
-    LocationListener locationListener = new LocationListener() {
+    private LocationListener locationListener = new LocationListener() {
         //Mandatory for LocationListener
         public void onProviderDisabled(String provider) {
             onStatusUpdate(0);
@@ -52,7 +51,7 @@ public class gpsInput implements Serializable {
             onSensorChanged(location);
         }
     };
-    GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
+    private GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
         @Override
         public void onNmeaReceived(long timestamp, String nmea) {
             if (nmea.length() > 19 && nmea.substring(3, 6).equals("GGA")) {
@@ -69,7 +68,7 @@ public class gpsInput implements Serializable {
     };
 
     //The constructor
-    protected gpsInput(Vector<dataOutput> buffers, Lock lock) {
+    gpsInput(Vector<dataOutput> buffers, Lock lock) {
         this.dataLock = lock;
 
         //Store the buffer references if any
@@ -100,11 +99,11 @@ public class gpsInput implements Serializable {
     }
 
     //Check if GPS hardware is available
-    public static boolean isAvailable(Context context) {
+    static boolean isAvailable(Context context) {
         return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS));
     }
 
-    public void attachLocationManager(LocationManager locationManager) {
+    void attachLocationManager(LocationManager locationManager) {
         this.locationManager = locationManager;
     }
 
@@ -133,7 +132,7 @@ public class gpsInput implements Serializable {
         locationManager.removeNmeaListener(nmeaListener);
     }
 
-    public void onStatusUpdate(int status) {
+    private void onStatusUpdate(int status) {
         if (dataStatus == null)
             return;
 
@@ -155,7 +154,7 @@ public class gpsInput implements Serializable {
     }
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
-    public void onSensorChanged(Location event) {
+    private void onSensorChanged(Location event) {
         if (t0 == 0) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                 t0 = event.getElapsedRealtimeNanos();

@@ -27,7 +27,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * UUID of the Descriptor for Client Characteristic Configuration
      */
-    protected static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     /**
      * Used to store data in mode "poll" before it will be retrieved all together
      */
@@ -70,7 +70,7 @@ public class BluetoothInput extends Bluetooth {
      * @param characteristics  list of all characteristics the object should be able to operate on
      * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, double rate, boolean subscribeOnStart, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
+    BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, double rate, boolean subscribeOnStart, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
             throws phyphoxFile.phyphoxFileException {
 
         super(idString, deviceName, deviceAddress, uuidFilter, activity, context, characteristics);

@@ -48,6 +48,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private BottomNavigationView toolbar;
     private PlotRenderer plotRenderer = null;
     private DataExport dataExport = null;
+
     public InteractiveGraphView(Context context) {
         super(context);
         init(context);

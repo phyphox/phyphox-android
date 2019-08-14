@@ -2130,13 +2130,13 @@ public class ExperimentList extends AppCompatActivity {
         private String preselectedBluetoothAddress = null;
 
         //The constructor takes the activity reference. That's all.
-        public ExperimentItemAdapter(Activity parentActivity, String category) {
+        ExperimentItemAdapter(Activity parentActivity, String category) {
             this.parentActivity = parentActivity;
             this.isSavedState = category.equals(res.getString(R.string.save_state_category));
             this.isSimpleExperiment = category.equals(res.getString(R.string.categoryNewExperiment));
         }
 
-        public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
+        void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
             this.preselectedBluetoothAddress = preselectedBluetoothAddress;
         }
 
@@ -2181,7 +2181,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
+        void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -2349,7 +2349,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //This mini class holds all the Android views to be displayed
-        public class Holder {
+        class Holder {
             ImageView icon; //The icon
             TextView title; //The title text
             TextView info;  //The short description text
@@ -2371,7 +2371,7 @@ public class ExperimentList extends AppCompatActivity {
         //Constructor for the category class, takes a category name, the layout into which it should
         // place its views and the calling activity (mostly to display the dialog in the onClick
         // listener of the delete button for each element - maybe this should be restructured).
-        public ExperimentsInCategory(String name, Activity parentActivity) {
+        ExperimentsInCategory(String name, Activity parentActivity) {
             //Store what we need.
             this.name = name;
             parentContext = parentActivity;
@@ -2432,17 +2432,17 @@ public class ExperimentList extends AppCompatActivity {
             catLayout.addView(experimentSubList);
         }
 
-        public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
+        void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
             experiments.setPreselectedBluetoothAddress(preselectedBluetoothAddress);
         }
 
-        public void addToParent(LinearLayout parentLayout) {
+        void addToParent(LinearLayout parentLayout) {
             //Add the layout to the layout designated by the caller
             parentLayout.addView(catLayout);
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
-        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
+        void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
             experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor);
             Integer n = colorCount.get(color);
             if (n == null)
@@ -2465,7 +2465,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Helper to check if the name of this category matches a given string
-        public boolean hasName(String cat) {
+        boolean hasName(String cat) {
             return cat.equals(name);
         }
 

@@ -10,7 +10,7 @@ public class ConversionsOutput {
         return (data + "").getBytes();
     }
 
-    public static byte[] int16LittleEndian(double data) {
+    static byte[] int16LittleEndian(double data) {
         byte lowerByte = (byte) data;
         byte upperByte = (byte) ((int) data >> 8);
         return new byte[]{lowerByte, upperByte};
@@ -20,7 +20,7 @@ public class ConversionsOutput {
         return int16LittleEndian(data);
     }
 
-    public static byte[] int24LittleEndian(double data) {
+    static byte[] int24LittleEndian(double data) {
         byte lowerByte = (byte) data;
         byte mediumByte = (byte) ((int) data >> 8);
         byte upperByte = (byte) ((int) data >> 16);
@@ -31,7 +31,7 @@ public class ConversionsOutput {
         return int24LittleEndian(data);
     }
 
-    public static byte[] int32LittleEndian(double data) {
+    static byte[] int32LittleEndian(double data) {
         byte lowerByte = (byte) data;
         byte mLowerByte = (byte) ((int) data >> 8);
         byte mUpperByte = (byte) ((int) data >> 16);
@@ -39,7 +39,7 @@ public class ConversionsOutput {
         return new byte[]{lowerByte, mLowerByte, mUpperByte, upperByte};
     }
 
-    public static byte[] uInt32LittleEndian(double data) {
+    static byte[] uInt32LittleEndian(double data) {
         byte lowerByte = (byte) ((long) data);
         byte mLowerByte = (byte) ((long) data >> 8);
         byte mUpperByte = (byte) ((long) data >> 16);
@@ -47,7 +47,7 @@ public class ConversionsOutput {
         return new byte[]{lowerByte, mLowerByte, mUpperByte, upperByte};
     }
 
-    public static byte[] int16BigEndian(double data) {
+    static byte[] int16BigEndian(double data) {
         byte lowerByte = (byte) data;
         byte upperByte = (byte) ((int) data >> 8);
         return new byte[]{upperByte, lowerByte};
@@ -57,7 +57,7 @@ public class ConversionsOutput {
         return int16BigEndian(data);
     }
 
-    public static byte[] int24BigEndian(double data) {
+    static byte[] int24BigEndian(double data) {
         byte lowerByte = (byte) data;
         byte mediumByte = (byte) ((int) data >> 8);
         byte upperByte = (byte) ((int) data >> 16);
@@ -68,7 +68,7 @@ public class ConversionsOutput {
         return int24BigEndian(data);
     }
 
-    public static byte[] int32BigEndian(double data) {
+    static byte[] int32BigEndian(double data) {
         byte lowerByte = (byte) data;
         byte mLowerByte = (byte) ((int) data >> 8);
         byte mUpperByte = (byte) ((int) data >> 16);
@@ -76,7 +76,7 @@ public class ConversionsOutput {
         return new byte[]{upperByte, mUpperByte, mLowerByte, lowerByte};
     }
 
-    public static byte[] uInt32BigEndian(double data) {
+    static byte[] uInt32BigEndian(double data) {
         byte lowerByte = (byte) ((long) data);
         byte mLowerByte = (byte) ((long) data >> 8);
         byte mUpperByte = (byte) ((long) data >> 16);
@@ -84,7 +84,7 @@ public class ConversionsOutput {
         return new byte[]{upperByte, mUpperByte, mLowerByte, lowerByte};
     }
 
-    public static byte[] float32LittleEndian(double data) {
+    static byte[] float32LittleEndian(double data) {
         int bits = Float.floatToIntBits((float) data);
 
         byte lowerByte = (byte) (bits);
@@ -94,7 +94,7 @@ public class ConversionsOutput {
         return new byte[]{lowerByte, mLowerByte, mUpperByte, upperByte};
     }
 
-    public static byte[] float32BigEndian(double data) {
+    static byte[] float32BigEndian(double data) {
         int bits = Float.floatToIntBits((float) data);
 
         byte lowerByte = (byte) bits;
@@ -104,7 +104,7 @@ public class ConversionsOutput {
         return new byte[]{upperByte, mUpperByte, mLowerByte, lowerByte};
     }
 
-    public static byte[] float64LittleEndian(double data) {
+    static byte[] float64LittleEndian(double data) {
         long bits = Double.doubleToLongBits(data);
 
         byte b0 = (byte) (bits);
@@ -118,7 +118,7 @@ public class ConversionsOutput {
         return new byte[]{b0, b1, b2, b3, b4, b5, b6, b7};
     }
 
-    public static byte[] float64BigEndian(double data) {
+    static byte[] float64BigEndian(double data) {
         long bits = Double.doubleToLongBits(data);
 
         byte b0 = (byte) (bits);
@@ -132,7 +132,7 @@ public class ConversionsOutput {
         return new byte[]{b7, b6, b5, b4, b3, b2, b1, b0};
     }
 
-    public static byte[] singleByte(double data) {
+    private static byte[] singleByte(double data) {
         return new byte[]{(byte) data};
     }
 

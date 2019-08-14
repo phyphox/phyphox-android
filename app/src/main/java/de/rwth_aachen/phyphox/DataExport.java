@@ -38,7 +38,7 @@ import java.util.zip.ZipOutputStream;
 public class DataExport implements Serializable {
 
     //This array holds instances of all export formats that should be presented to the user
-    public final ExportFormat[] exportFormats = {
+    final ExportFormat[] exportFormats = {
             new ExcelFormat(),
             new CsvFormat(',', '.', "CSV (Comma, decimal point)"),
             new CsvFormat('\t', '.', "CSV (Tabulator, decimal point)"),
@@ -46,7 +46,7 @@ public class DataExport implements Serializable {
             new CsvFormat('\t', ',', "CSV (Tabulator, decimal comma)"),
             new CsvFormat(';', ',', "CSV (Semicolon, decimal comma)")
     };
-    public Vector<ExportSet> exportSets = new Vector<>(); //The available export sets
+    Vector<ExportSet> exportSets = new Vector<>(); //The available export sets
     private phyphoxExperiment experiment; //The phyphoxExperiment which uses this DataExport
 
     //The constructor just has to store a reference to the experiment
@@ -55,7 +55,7 @@ public class DataExport implements Serializable {
     }
 
     //Add an ExportSet to this exporter
-    public void addSet(ExportSet set) {
+    void addSet(ExportSet set) {
         this.exportSets.add(set);
     }
 
@@ -74,7 +74,7 @@ public class DataExport implements Serializable {
     //Let the user select a fiile format. This takes a list of chosen sets as it is supposed to be
     //  called after the user has already chosen the sets to export.
     //If successfull it will trigger the actual export as a share intent
-    protected void showFormatDialog(final Vector<ExportSet> chosenSets, final Activity c, final boolean minimalistic, final String fileName) {
+    private void showFormatDialog(final Vector<ExportSet> chosenSets, final Activity c, final boolean minimalistic, final String fileName) {
         final mutableInteger selected = new mutableInteger(); //This will hold the result
 
         //Create the charsequences that should be presented to the user
@@ -167,7 +167,7 @@ public class DataExport implements Serializable {
     //This function is used when all the dialogs are not done in the app, but on the web interface.
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
-    protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName) {
+    File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName) {
         for (int i = 0; i < exportSets.size(); i++) {
             exportSets.get(i).getData();
         }
@@ -180,7 +180,7 @@ public class DataExport implements Serializable {
     //ExportSet class
     //An export set is a collection of related dataBuffers, which (ideally) have the same size
     //exportSets are defined for each experiments and represent logical subsets of all dataBuffers which the user might want to export
-    public class ExportSet implements Serializable {
+    class ExportSet implements Serializable {
         String name;
         //The set consists of an arbitrary number of sourceMappings. So each entry in the dataSet has a name and a dataBuffer-source
         Vector<SourceMapping> sources = new Vector<>();
@@ -198,12 +198,12 @@ public class DataExport implements Serializable {
         }
 
         //Add dataBuffers with names to this set
-        public void addSource(String name, String source) {
+        void addSource(String name, String source) {
             this.sources.add(new SourceMapping(name, source));
         }
 
         //Retrieve all data from the dataBuffers
-        public void getData() {
+        void getData() {
             data = new Double[sources.size()][];
             for (int i = 0; i < sources.size(); i++) {
                 dataBuffer buffer = experiment.getBuffer(sources.get(i).source); //Get the buffer for this source
@@ -212,7 +212,7 @@ public class DataExport implements Serializable {
         }
 
         //This class maps dataBuffers (by their key name) to a name in this ExportSet
-        protected class SourceMapping implements Serializable {
+        class SourceMapping implements Serializable {
             String name;
             String source;
 
@@ -225,9 +225,9 @@ public class DataExport implements Serializable {
 
     //This abstract class defines the interface for a specific export format
     protected abstract class ExportFormat implements Serializable {
-        protected String filenameBase = "phyphox";
+        String filenameBase = "phyphox";
 
-        public void setFilenameBase(String fb) {
+        void setFilenameBase(String fb) {
             filenameBase = fb;
         }
 
@@ -245,8 +245,8 @@ public class DataExport implements Serializable {
     //To provite multiple datasets, the plain-text files are grouped into a single zip-file.
     protected class CsvFormat extends ExportFormat implements Serializable {
         protected char separator; //The separator, typically "," or "\t"
-        protected char decimalPoint; //The separator, typically "," or "\t"
         protected String name; //The name of this format can be changed to describe different separators
+        char decimalPoint; //The separator, typically "," or "\t"
 
         //This constructor allows to set a separator and a name
         CsvFormat(char separator, char decimalPoint, String name) {

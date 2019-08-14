@@ -32,7 +32,7 @@ public class BluetoothOutput extends Bluetooth {
      * @param buffers         list of dataOutputs to write the values
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public BluetoothOutput(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    BluetoothOutput(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
         super(idString, deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
 
@@ -43,7 +43,7 @@ public class BluetoothOutput extends Bluetooth {
     /**
      * Write data to the Characteristics.
      */
-    public void sendData() {
+    void sendData() {
         if (!forcedBreak) {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
                 for (Characteristic c : mapping.get(characteristic)) {

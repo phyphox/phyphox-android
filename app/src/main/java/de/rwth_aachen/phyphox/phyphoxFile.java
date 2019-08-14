@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
-public abstract class phyphoxFile {
+abstract class phyphoxFile {
 
     final static String phyphoxFileVersion = "1.7";
 
@@ -64,12 +64,12 @@ public abstract class phyphoxFile {
     }
 
     //Returns true if the string is a valid identifier for a dataBuffer, very early versions had some rules here, but we now allow anything as long as it is not empty.
-    public static boolean isValidIdentifier(String s) {
+    private static boolean isValidIdentifier(String s) {
         return !s.isEmpty();
     }
 
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
-    public static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
+    private static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         int n;
@@ -84,7 +84,7 @@ public abstract class phyphoxFile {
     }
 
     //Helper function to open an inputStream from various intents
-    public static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
+    static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
         languageRating = 0;//If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
         translation = new HashMap<>();
 
@@ -189,7 +189,7 @@ public abstract class phyphoxFile {
     }
 
     //PhyphoxStream bundles the result of an opened stream
-    public static class PhyphoxStream {
+    static class PhyphoxStream {
         boolean isLocal;                //is the stream a local resource? (asset or private file)
         InputStream inputStream = null; //the input stream or null on error
         byte[] source = null;           //A copy of the input for non-local sources
@@ -197,12 +197,12 @@ public abstract class phyphoxFile {
     }
 
     //Exceptions caused by a bad phyphox file
-    public static class phyphoxFileException extends Exception {
-        public phyphoxFileException(String message) {
+    static class phyphoxFileException extends Exception {
+        phyphoxFileException(String message) {
             super(message);
         }
 
-        public phyphoxFileException(String message, int line) {
+        phyphoxFileException(String message, int line) {
             super("Line " + line + ": " + message);
         }
     }
@@ -212,8 +212,8 @@ public abstract class phyphoxFile {
     // processEndTag
     protected static class xmlBlockParser {
         protected Experiment parent; //For some elements we need access to the parent activity
-        protected XmlPullParser xpp; //The pull parser used handed to this parser
         protected phyphoxExperiment experiment; //The experiment to be loaded
+        XmlPullParser xpp; //The pull parser used handed to this parser
         private String tag; //The tag of the block that should be handled by this parser
         private int rootDepth; //The depth of the base of the block handled by this parser
 
@@ -234,17 +234,17 @@ public abstract class phyphoxFile {
         }
 
         //Helper to receive a string typed attribute
-        protected String getStringAttribute(String identifier) {
+        String getStringAttribute(String identifier) {
             return xpp.getAttributeValue(null, identifier);
         }
 
         //Helper to receive a string typed attribute and translate it
-        protected String getTranslatedAttribute(String identifier) {
+        String getTranslatedAttribute(String identifier) {
             return translate(xpp.getAttributeValue(null, identifier));
         }
 
         //Helper to receive an integer typed attribute, if invalid or not present, return default
-        protected int getIntAttribute(String identifier, int defaultValue) {
+        int getIntAttribute(String identifier, int defaultValue) {
             try {
                 return Integer.valueOf(xpp.getAttributeValue(null, identifier));
             } catch (Exception e) {
@@ -253,7 +253,7 @@ public abstract class phyphoxFile {
         }
 
         //Helper to receive a double typed attribute, if invalid or not present, return default
-        protected double getDoubleAttribute(String identifier, double defaultValue) {
+        double getDoubleAttribute(String identifier, double defaultValue) {
             try {
                 return Double.valueOf(xpp.getAttributeValue(null, identifier));
             } catch (Exception e) {
@@ -262,7 +262,7 @@ public abstract class phyphoxFile {
         }
 
         //Helper to receive a boolean attribute, if invalid or not present, return default
-        protected boolean getBooleanAttribute(String identifier, boolean defaultValue) {
+        boolean getBooleanAttribute(String identifier, boolean defaultValue) {
             final String att = xpp.getAttributeValue(null, identifier);
             if (att == null)
                 return defaultValue;
@@ -270,7 +270,7 @@ public abstract class phyphoxFile {
         }
 
         //Helper to receive a color attribute, if invalid or not present, return default
-        protected int getColorAttribute(String identifier, int defaultValue) {
+        int getColorAttribute(String identifier, int defaultValue) {
             final String att = xpp.getAttributeValue(null, identifier);
 
             return Helper.parseColor(att, defaultValue, parent.getResources());
@@ -324,9 +324,9 @@ public abstract class phyphoxFile {
     // Blockparser for input or output assignments inside a bluetooth-block
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private static class bluetoothIoBlockParser extends xmlBlockParser {
-        protected static Class conversionsInput = (new ConversionsInput()).getClass();
-        protected static Class conversionsOutput = (new ConversionsOutput()).getClass();
-        protected static Class conversionsConfig = (new ConversionsConfig()).getClass();
+        static Class conversionsInput = (new ConversionsInput()).getClass();
+        static Class conversionsOutput = (new ConversionsOutput()).getClass();
+        static Class conversionsConfig = (new ConversionsConfig()).getClass();
         Vector<dataOutput> outputList;
         Vector<dataInput> inputList;
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
@@ -504,9 +504,11 @@ public abstract class phyphoxFile {
         ioMapping[] inputMapping;
         ioMapping[] outputMapping;
         String mappingAttribute;
+
         ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
             this(xpp, experiment, parent, inputList, outputList, inputMapping, outputMapping, mappingAttribute, null);
         }
+
         ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute, Vector<AdditionalTag> additionalTags) {
             super(xpp, experiment, parent);
             this.inputList = inputList;
@@ -799,7 +801,7 @@ public abstract class phyphoxFile {
             }
         }
 
-        public static class ioMapping {
+        static class ioMapping {
             String name;
             boolean asRequired = true;
             int repeatableOffset = -1;
@@ -810,7 +812,7 @@ public abstract class phyphoxFile {
             int count = 0;
         }
 
-        public static class AdditionalTag {
+        static class AdditionalTag {
             String name;
             String content;
             Map<String, String> attributes = new HashMap<>();

@@ -14,7 +14,7 @@ public class dataInput implements Serializable {
     boolean clearAfterRead = true;
 
     //Constructor if this should contain a buffer
-    protected dataInput(dataBuffer buffer, boolean clear) {
+    dataInput(dataBuffer buffer, boolean clear) {
         this.clearAfterRead = clear;
         isBuffer = true;
         this.isEmpty = false;
@@ -22,13 +22,13 @@ public class dataInput implements Serializable {
     }
 
     //Constructor if this should contain a constant value
-    protected dataInput(double value) {
+    dataInput(double value) {
         isBuffer = false;
         this.isEmpty = false;
         this.value = value;
     }
 
-    protected dataInput() {
+    dataInput() {
         this.isBuffer = false;
         this.isEmpty = true;
     }
@@ -52,7 +52,7 @@ public class dataInput implements Serializable {
     }
 
     //Retrieve the iterator of the BlockingQueue
-    public Iterator<Double> getIterator() {
+    Iterator<Double> getIterator() {
         if (isBuffer)
             return buffer.getIterator();
         else
