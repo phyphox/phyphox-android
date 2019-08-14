@@ -95,7 +95,7 @@ public class gpsInput implements Serializable {
 
     //Check if GPS hardware is available
     static boolean isAvailable(Context context) {
-        return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS));
+        return (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS));
     }
 
     void attachLocationManager(LocationManager locationManager) {

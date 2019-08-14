@@ -1618,7 +1618,7 @@ abstract class phyphoxFile {
                     experiment.gpsIn = new gpsInput(outputs, experiment.dataLock);
                     experiment.gpsIn.attachLocationManager((LocationManager) parent.getSystemService(Context.LOCATION_SERVICE));
 
-                    if (!gpsInput.isAvailable(parent)) {
+                    if (gpsInput.isAvailable(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(R.string.location) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
                     }
 
@@ -1673,7 +1673,7 @@ abstract class phyphoxFile {
                     break;
                 }
                 case "bluetooth": { //A bluetooth input
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || Bluetooth.isSupported(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                     } else {
                         double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
@@ -3451,7 +3451,7 @@ abstract class phyphoxFile {
                     break;
                 }
                 case "bluetooth": { //A bluetooth output
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || Bluetooth.isSupported(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                     } else {
                         String idString = getTranslatedAttribute("id");

@@ -199,9 +199,9 @@ class BluetoothScanDialog {
                 alert.show();
             });
 
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter, final Set<UUID> supportedUUIDFilter, final String idString) {
@@ -210,7 +210,7 @@ class BluetoothScanDialog {
         this.supportedNameFilter = supportedNameFilter;
         this.supportedUUIDFilter = supportedUUIDFilter;
 
-        if (!scanPermission())
+        if (scanPermission())
             return null;
 
         bta.startLeScan(scanCallback);

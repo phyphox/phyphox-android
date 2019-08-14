@@ -297,7 +297,7 @@ public class ExperimentList extends AppCompatActivity {
                             case "location":
                                 if (!inInput || unavailableSensor >= 0)
                                     break;
-                                if (!gpsInput.isAvailable(this)) {
+                                if (gpsInput.isAvailable(this)) {
                                     unavailableSensor = R.string.location;
                                 }
                                 break;
@@ -328,7 +328,7 @@ public class ExperimentList extends AppCompatActivity {
                                 }
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
                                     unavailableSensor = R.string.bluetooth;
-                                } else if (!Bluetooth.isSupported(this)) {
+                                } else if (Bluetooth.isSupported(this)) {
                                     unavailableSensor = R.string.bluetooth;
                                 }
                                 if (!customColor)
@@ -2425,7 +2425,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //Copying is done on a second thread...
         protected BluetoothScanDialog.BluetoothDeviceInfo doInBackground(String... params) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent.get())) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || Bluetooth.isSupported(parent.get())) {
                 showBluetoothScanError(getResources().getString(R.string.bt_android_version), true);
                 return null;
             } else {

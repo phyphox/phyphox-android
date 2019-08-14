@@ -258,7 +258,7 @@ public class Bluetooth implements Serializable {
      * @return true if Bluetooth Low Energy is supported
      */
     static boolean isSupported(Context context) {
-        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
+        return !context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
     }
 
     /**
@@ -378,7 +378,7 @@ public class Bluetooth implements Serializable {
             //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
-            if (!bsd.scanPermission())
+            if (bsd.scanPermission())
                 return;
             BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null, idString);
             if (bdi != null)
