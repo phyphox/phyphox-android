@@ -46,7 +46,7 @@ public class dataOutput implements Serializable {
         buffer.append(value);
     }
 
-    public void append(Double value[], Integer count) {
+    public void append(Double[] value, Integer count) {
         buffer.append(value, count);
     }
 

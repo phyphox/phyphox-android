@@ -208,19 +208,19 @@ public class dataBuffer implements Serializable {
     }
 
     //Append a double-array with [count] entries.
-    public void append(Double value[], Integer count, boolean notify) {
+    public void append(Double[] value, Integer count, boolean notify) {
         for (int i = 0; i < count; i++)
             append(value[i], false);
         if (notify)
             notifyListeners(false, false);
     }
 
-    public void append(Double value[], Integer count) {
+    public void append(Double[] value, Integer count) {
         append(value, count, true);
     }
 
     //Append a short-array with [count] entries. This will be scaled to [-1:+1] and is used for audio data
-    public void append(short value[], int count) {
+    public void append(short[] value, int count) {
         for (int i = 0; i < count; i++)
             append((double) value[i] / (double) Short.MAX_VALUE); //Normalize to [-1:+1] and append
         notifyListeners(false, false);
@@ -241,10 +241,7 @@ public class dataBuffer implements Serializable {
     public void clear(boolean reset, boolean notify) {
         if (isStatic)
             return;
-        if (reset)
-            untouched = true;
-        else
-            untouched = false;
+        untouched = reset;
         buffer.clear();
         value = Double.NaN;
         if (floatCopy != null) {
@@ -291,7 +288,7 @@ public class dataBuffer implements Serializable {
 
     //Get all values as a double array
     public Double[] getArray() {
-        Double ret[] = new Double[buffer.size()];
+        Double[] ret = new Double[buffer.size()];
         return buffer.toArray(ret);
     }
 
@@ -361,7 +358,7 @@ public class dataBuffer implements Serializable {
 
     //Get all values as a short array. The data will be scaled so that (-/+)1 matches (-/+)Short.MAX_VALUE, used for audio data
     public short[] getShortArray() {
-        short ret[] = new short[buffer.size()];
+        short[] ret = new short[buffer.size()];
         Iterator it = getIterator();
         int i = 0;
         while (it.hasNext()) {

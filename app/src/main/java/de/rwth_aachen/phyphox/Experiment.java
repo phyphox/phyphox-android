@@ -255,11 +255,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
 
-        this.analysisProgress = (ProgressBar) findViewById(R.id.progressBar);
+        this.analysisProgress = findViewById(R.id.progressBar);
         analysisProgress.setVisibility(View.INVISIBLE);
 
         //Set our custom action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.customActionBar);
+        Toolbar toolbar = findViewById(R.id.customActionBar);
         setSupportActionBar(toolbar);
 
         //We want to get the back-button in the actionbar (even on old Android versions)
@@ -274,7 +274,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             experiment = app.experiment;
             //experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
         }
-        ;
         if (experiment != null) {
             //We saved our experiment. Lets just retrieve it and continue
             onExperimentLoaded(experiment);
@@ -417,8 +416,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
             }
 
-            tabLayout = ((TabLayout) findViewById(R.id.tab_layout));
-            pager = ((ViewPager) findViewById(R.id.view_pager));
+            tabLayout = findViewById(R.id.tab_layout);
+            pager = findViewById(R.id.view_pager);
             FragmentManager manager = getSupportFragmentManager();
             adapter = new expViewPagerAdapter(manager, this.experiment);
             pager.setAdapter(adapter);
@@ -457,7 +456,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             //   non-interactive state...
 
             //Append TextView with error message to the base linear layout
-            TextView tv = (TextView) findViewById(R.id.errorMessage);
+            TextView tv = findViewById(R.id.errorMessage);
             tv.setText(experiment.message);
             tv.setVisibility(View.VISIBLE);
             this.experiment = null;
@@ -600,9 +599,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
         View hintView = inflater.inflate(R.layout.menu_hint, null);
-        TextView text = (TextView) hintView.findViewById(R.id.hint_text);
+        TextView text = hintView.findViewById(R.id.hint_text);
         text.setText(textRessource);
-        ImageView iv = ((ImageView) hintView.findViewById(R.id.hint_arrow));
+        ImageView iv = hintView.findViewById(R.id.hint_arrow);
         LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) iv.getLayoutParams();
         lp.gravity = gravity;
         iv.setLayoutParams(lp);
@@ -616,7 +615,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         popupWindow.setOutsideTouchable(true);
         popupWindow.setTouchable(true);
         popupWindow.setFocusable(true);
-        LinearLayout ll = (LinearLayout) hintView.findViewById(R.id.hint_root);
+        LinearLayout ll = hintView.findViewById(R.id.hint_root);
 
         ll.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -636,7 +635,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 if (viewItem == null) {
                     return;
                 }
-                int pos[] = new int[2];
+                int[] pos = new int[2];
                 viewItem.getLocationOnScreen(pos);
                 if (isFinishing())
                     return;
@@ -818,12 +817,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //If the timedRun is active, we have to set the value of the countdown
         if (timedRun) {
             if (cdTimer != null) { //Timer running? Show the last known value of millisUntilFinished
-                timer.setTitle(String.valueOf(millisUntilFinished / 1000 + 1) + "s");
+                timer.setTitle((millisUntilFinished / 1000 + 1) + "s");
             } else { //No timer running? Show the start value of the next timer, which is...
                 if (measuring) //...the stop delay if we are already measuring
-                    timer.setTitle(String.valueOf(Math.round(timedRunStopDelay)) + "s");
+                    timer.setTitle(Math.round(timedRunStopDelay) + "s");
                 else //...the start delay if we are paused
-                    timer.setTitle(String.valueOf(Math.round(timedRunStartDelay)) + "s");
+                    timer.setTitle(Math.round(timedRunStartDelay) + "s");
             }
         }
         return true;
@@ -930,11 +929,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
             View vLayout = inflater.inflate(R.layout.timed_run_layout, null);
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            final CheckBox cbTimedRunEnabled = (CheckBox) vLayout.findViewById(R.id.timedRunEnabled);
+            final CheckBox cbTimedRunEnabled = vLayout.findViewById(R.id.timedRunEnabled);
             cbTimedRunEnabled.setChecked(timedRun);
-            final EditText etTimedRunStartDelay = (EditText) vLayout.findViewById(R.id.timedRunStartDelay);
+            final EditText etTimedRunStartDelay = vLayout.findViewById(R.id.timedRunStartDelay);
             etTimedRunStartDelay.setText(String.valueOf(timedRunStartDelay));
-            final EditText etTimedRunStopDelay = (EditText) vLayout.findViewById(R.id.timedRunStopDelay);
+            final EditText etTimedRunStopDelay = vLayout.findViewById(R.id.timedRunStopDelay);
             etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
             builder.setView(vLayout)
                     .setTitle(R.string.timedRunDialogTitle)
@@ -1017,7 +1016,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             final View dialogView = this.getLayoutInflater().inflate(R.layout.savestate_dialog, null);
             builder.setView(dialogView);
-            final EditText customTitleET = (EditText) dialogView.findViewById(R.id.customTitle);
+            final EditText customTitleET = dialogView.findViewById(R.id.customTitle);
             DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
             final Date now = Calendar.getInstance().getTime();
             customTitleET.setText(getString(R.string.save_state_default_title) + " " + df.format(now));
@@ -1104,7 +1103,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Bitmap bmp = pav.getBitmap();
                 pav.setDrawingCacheEnabled(false);
 
-                int location[] = new int[2];
+                int[] location = new int[2];
                 pav.getLocationOnScreen(location);
                 canvas.drawBitmap(bmp, location[0], location[1], null);
             }
@@ -1115,7 +1114,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Bitmap bmp = Bitmap.createBitmap(gv.getDrawingCache());
                 gv.setDrawingCacheEnabled(false);
 
-                int location[] = new int[2];
+                int[] location = new int[2];
                 gv.getLocationOnScreen(location);
                 canvas.drawBitmap(bmp, location[0], location[1], null);
             }
@@ -1465,7 +1464,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Start the remote server (see remoteServer class)
     private void startRemoteServer() {
-        TextView announcer = (TextView) findViewById(R.id.remoteInfo);
+        TextView announcer = findViewById(R.id.remoteInfo);
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -1496,7 +1495,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
         lp.addRule(RelativeLayout.ABOVE, R.id.remoteInfo);
-        ((ViewPager) findViewById(R.id.view_pager)).setLayoutParams(lp);
+        findViewById(R.id.view_pager).setLayoutParams(lp);
 
         //Also we want to keep the device active for remote access
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -1507,7 +1506,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (!measuring)
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //Announce this to the user, so he knows why the webinterface stopped working.
-        TextView announcer = (TextView) findViewById(R.id.remoteInfo);
+        TextView announcer = findViewById(R.id.remoteInfo);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
         else
@@ -1515,7 +1514,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
-        ((ViewPager) findViewById(R.id.view_pager)).setLayoutParams(lp);
+        findViewById(R.id.view_pager).setLayoutParams(lp);
 
         if (remote == null) //no server there? never mind.
             return;

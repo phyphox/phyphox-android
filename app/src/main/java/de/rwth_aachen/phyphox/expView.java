@@ -50,8 +50,8 @@ public class expView implements Serializable {
     public String name;
     public Vector<expViewElement> elements = new Vector<>();
 
-    public static enum State {
-        hidden, normal, maximized;
+    public enum State {
+        hidden, normal, maximized
     }
 
     //Abstract expViewElement class defining the interface for any element of an experiment view

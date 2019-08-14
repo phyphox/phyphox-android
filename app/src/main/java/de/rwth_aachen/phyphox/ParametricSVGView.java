@@ -34,13 +34,13 @@ public class ParametricSVGView extends View {
 
         if (widthMode == MeasureSpec.UNSPECIFIED && heightMode == MeasureSpec.UNSPECIFIED) {
             width = 600;
-            height = (int) Math.round(600 / aspectRatio);
+            height = Math.round(600 / aspectRatio);
         } else if (widthMode == MeasureSpec.UNSPECIFIED) {
             height = heightSize;
-            width = (int) Math.round(height * aspectRatio);
+            width = Math.round(height * aspectRatio);
         } else if (heightMode == MeasureSpec.UNSPECIFIED) {
             width = widthSize;
-            height = (int) Math.round(width / aspectRatio);
+            height = Math.round(width / aspectRatio);
         } else {
             width = widthSize;
             height = heightSize;

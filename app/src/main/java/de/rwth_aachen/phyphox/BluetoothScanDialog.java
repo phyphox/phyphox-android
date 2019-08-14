@@ -176,8 +176,8 @@ public class BluetoothScanDialog {
                         });
                 dialog = builder.create();
 
-                title = (TextView) view.findViewById(R.id.bluetooth_scan_dialog_title);
-                list = (ListView) view.findViewById(R.id.bluetooth_scan_dialog_items);
+                title = view.findViewById(R.id.bluetooth_scan_dialog_title);
+                list = view.findViewById(R.id.bluetooth_scan_dialog_items);
                 listAdapter = new DeviceListAdapter();
                 list.setAdapter(listAdapter);
                 list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -345,9 +345,9 @@ public class BluetoothScanDialog {
             if (view == null) {
                 view = inflator.inflate(R.layout.bluetooth_scan_dialog_entry, null);
                 subViews = new SubViews();
-                subViews.deviceName = (TextView) view.findViewById(R.id.device_name);
-                subViews.notSupported = (TextView) view.findViewById(R.id.device_not_supported);
-                subViews.signalStrength = (ImageView) view.findViewById(R.id.signal_strength);
+                subViews.deviceName = view.findViewById(R.id.device_name);
+                subViews.notSupported = view.findViewById(R.id.device_not_supported);
+                subViews.signalStrength = view.findViewById(R.id.signal_strength);
                 view.setTag(subViews);
             } else {
                 subViews = (SubViews) view.getTag();

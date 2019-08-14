@@ -413,14 +413,14 @@ public class ExperimentList extends AppCompatActivity {
     private void loadExperimentList() {
 
         //Save scroll position to restore this later
-        ScrollView sv = ((ScrollView) findViewById(R.id.experimentScroller));
+        ScrollView sv = findViewById(R.id.experimentScroller);
         int scrollY = sv.getScrollY();
 
         //Clear the old list first
         categories.clear();
         bluetoothDeviceNameList.clear();
         bluetoothDeviceUUIDList.clear();
-        LinearLayout catList = (LinearLayout) findViewById(R.id.experimentList);
+        LinearLayout catList = findViewById(R.id.experimentList);
         catList.removeAllViews();
 
         //Load experiments from local files
@@ -541,7 +541,7 @@ public class ExperimentList extends AppCompatActivity {
 
                 ((TextView) view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_zip_dialog_instructions);
 
-                LinearLayout catList = (LinearLayout) view.findViewById(R.id.open_multiple_dialog_list);
+                LinearLayout catList = view.findViewById(R.id.open_multiple_dialog_list);
 
                 dialog.setTitle(getResources().getString(R.string.open_zip_title));
 
@@ -658,7 +658,6 @@ public class ExperimentList extends AppCompatActivity {
                         currentBluetoothDataSize <<= 8;
                         currentBluetoothDataSize |= (data[7 + i] & 0xFF);
                     }
-                    ;
                     currentBluetoothDataCRC32 = 0;
                     for (int i = 0; i < 4; i++) {
                         currentBluetoothDataCRC32 <<= 8;
@@ -871,7 +870,7 @@ public class ExperimentList extends AppCompatActivity {
 
         ((TextView) view.findViewById(R.id.open_multiple_dialog_instructions)).setText(instructions);
 
-        LinearLayout catList = (LinearLayout) view.findViewById(R.id.open_multiple_dialog_list);
+        LinearLayout catList = view.findViewById(R.id.open_multiple_dialog_list);
 
         dialog.setTitle(getResources().getString(R.string.open_bluetooth_assets_title));
 
@@ -932,14 +931,14 @@ public class ExperimentList extends AppCompatActivity {
 
     protected void showNewExperimentDialog() {
         newExperimentDialogOpen = true;
-        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
-        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
-        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
-        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
-        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
-        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
-        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
-        final View backgroundDimmer = (View) findViewById(R.id.experimentListDimmer);
+        final FloatingActionButton newExperimentButton = findViewById(R.id.newExperiment);
+        final FloatingActionButton newExperimentSimple = findViewById(R.id.newExperimentSimple);
+        final FloatingActionButton newExperimentBluetooth = findViewById(R.id.newExperimentBluetooth);
+        final FloatingActionButton newExperimentQR = findViewById(R.id.newExperimentQR);
+        final TextView newExperimentSimpleLabel = findViewById(R.id.newExperimentSimpleLabel);
+        final TextView newExperimentBluetoothLabel = findViewById(R.id.newExperimentBluetoothLabel);
+        final TextView newExperimentQRLabel = findViewById(R.id.newExperimentQRLabel);
+        final View backgroundDimmer = findViewById(R.id.experimentListDimmer);
 
         Animation rotate45In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate45);
         Animation fabIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_in);
@@ -966,14 +965,14 @@ public class ExperimentList extends AppCompatActivity {
 
     protected void hideNewExperimentDialog() {
         newExperimentDialogOpen = false;
-        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
-        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
-        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
-        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
-        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
-        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
-        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
-        final View backgroundDimmer = (View) findViewById(R.id.experimentListDimmer);
+        final FloatingActionButton newExperimentButton = findViewById(R.id.newExperiment);
+        final FloatingActionButton newExperimentSimple = findViewById(R.id.newExperimentSimple);
+        final FloatingActionButton newExperimentBluetooth = findViewById(R.id.newExperimentBluetooth);
+        final FloatingActionButton newExperimentQR = findViewById(R.id.newExperimentQR);
+        final TextView newExperimentSimpleLabel = findViewById(R.id.newExperimentSimpleLabel);
+        final TextView newExperimentBluetoothLabel = findViewById(R.id.newExperimentBluetoothLabel);
+        final TextView newExperimentQRLabel = findViewById(R.id.newExperimentQRLabel);
+        final View backgroundDimmer = findViewById(R.id.experimentListDimmer);
 
         Animation rotate0In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate0);
         Animation fabOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_out);
@@ -1344,7 +1343,7 @@ public class ExperimentList extends AppCompatActivity {
                                 View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
                                 //Set the credit texts, which require HTML markup
-                                TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
+                                TextView tv = creditLayout.findViewById(R.id.creditNames);
 
                                 SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
                                 boolean first = true;
@@ -1360,9 +1359,9 @@ public class ExperimentList extends AppCompatActivity {
                                     creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
                                 }
                                 tv.setText(creditsNamesSpannable);
-                                TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
+                                TextView tvA = creditLayout.findViewById(R.id.creditsApache);
                                 tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
-                                TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
+                                TextView tvB = creditLayout.findViewById(R.id.creditsZxing);
                                 tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
 
                                 //Finish alertDialog builder
@@ -1606,7 +1605,7 @@ public class ExperimentList extends AppCompatActivity {
 
             }
         };
-        ImageView creditsV = (ImageView) findViewById(R.id.credits);
+        ImageView creditsV = findViewById(R.id.credits);
         creditsV.setOnClickListener(ocl);
 
         //Setup the on-click-listener for the create-new-experiment button
@@ -1622,8 +1621,8 @@ public class ExperimentList extends AppCompatActivity {
             }
         };
 
-        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
-        final View experimentListDimmer = (View) findViewById(R.id.experimentListDimmer);
+        final FloatingActionButton newExperimentButton = findViewById(R.id.newExperiment);
+        final View experimentListDimmer = findViewById(R.id.experimentListDimmer);
         newExperimentButton.setOnClickListener(neocl);
         experimentListDimmer.setOnClickListener(neocl);
 
@@ -1635,8 +1634,8 @@ public class ExperimentList extends AppCompatActivity {
             }
         };
 
-        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
-        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
+        final FloatingActionButton newExperimentSimple = findViewById(R.id.newExperimentSimple);
+        final TextView newExperimentSimpleLabel = findViewById(R.id.newExperimentSimpleLabel);
         newExperimentSimple.setOnClickListener(neoclSimple);
         newExperimentSimpleLabel.setOnClickListener(neoclSimple);
 
@@ -1648,8 +1647,8 @@ public class ExperimentList extends AppCompatActivity {
             }
         };
 
-        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
-        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
+        final FloatingActionButton newExperimentBluetooth = findViewById(R.id.newExperimentBluetooth);
+        final TextView newExperimentBluetoothLabel = findViewById(R.id.newExperimentBluetoothLabel);
         newExperimentBluetooth.setOnClickListener(neoclBluetooth);
         newExperimentBluetoothLabel.setOnClickListener(neoclBluetooth);
 
@@ -1661,8 +1660,8 @@ public class ExperimentList extends AppCompatActivity {
             }
         };
 
-        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
-        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
+        final FloatingActionButton newExperimentQR = findViewById(R.id.newExperimentQR);
+        final TextView newExperimentQRLabel = findViewById(R.id.newExperimentQRLabel);
         newExperimentQR.setOnClickListener(neoclQR);
         newExperimentQRLabel.setOnClickListener(neoclQR);
 
@@ -1679,7 +1678,7 @@ public class ExperimentList extends AppCompatActivity {
         View warningLayout = adbInflater.inflate(R.layout.donotshowagain, null);
 
         //This reference is used to address a do-not-show-again checkbox within the dialog
-        final CheckBox dontShowAgain = (CheckBox) warningLayout.findViewById(R.id.donotshowagain);
+        final CheckBox dontShowAgain = warningLayout.findViewById(R.id.donotshowagain);
 
         //Setup AlertDialog builder
         adb.setView(warningLayout);
@@ -1715,20 +1714,20 @@ public class ExperimentList extends AppCompatActivity {
         View neLayout = neInflater.inflate(R.layout.new_experiment, null);
 
         //Get a bunch of references to the dialog elements
-        final EditText neTitle = (EditText) neLayout.findViewById(R.id.neTitle); //The edit box for the title of the new experiment
-        final EditText neRate = (EditText) neLayout.findViewById(R.id.neRate); //Edit box for the aquisition rate
+        final EditText neTitle = neLayout.findViewById(R.id.neTitle); //The edit box for the title of the new experiment
+        final EditText neRate = neLayout.findViewById(R.id.neRate); //Edit box for the aquisition rate
 
         //More references: Checkboxes for sensors
-        final CheckBox neAccelerometer = (CheckBox) neLayout.findViewById(R.id.neAccelerometer);
-        final CheckBox neGyroscope = (CheckBox) neLayout.findViewById(R.id.neGyroscope);
-        final CheckBox neHumidity = (CheckBox) neLayout.findViewById(R.id.neHumidity);
-        final CheckBox neLight = (CheckBox) neLayout.findViewById(R.id.neLight);
-        final CheckBox neLinearAcceleration = (CheckBox) neLayout.findViewById(R.id.neLinearAcceleration);
-        final CheckBox neLocation = (CheckBox) neLayout.findViewById(R.id.neLocation);
-        final CheckBox neMagneticField = (CheckBox) neLayout.findViewById(R.id.neMagneticField);
-        final CheckBox nePressure = (CheckBox) neLayout.findViewById(R.id.nePressure);
-        final CheckBox neProximity = (CheckBox) neLayout.findViewById(R.id.neProximity);
-        final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
+        final CheckBox neAccelerometer = neLayout.findViewById(R.id.neAccelerometer);
+        final CheckBox neGyroscope = neLayout.findViewById(R.id.neGyroscope);
+        final CheckBox neHumidity = neLayout.findViewById(R.id.neHumidity);
+        final CheckBox neLight = neLayout.findViewById(R.id.neLight);
+        final CheckBox neLinearAcceleration = neLayout.findViewById(R.id.neLinearAcceleration);
+        final CheckBox neLocation = neLayout.findViewById(R.id.neLocation);
+        final CheckBox neMagneticField = neLayout.findViewById(R.id.neMagneticField);
+        final CheckBox nePressure = neLayout.findViewById(R.id.nePressure);
+        final CheckBox neProximity = neLayout.findViewById(R.id.neProximity);
+        final CheckBox neTemperature = neLayout.findViewById(R.id.neTemperature);
 
         //Setup the dialog builder...
         neDialog.setView(neLayout);
@@ -2243,10 +2242,10 @@ public class ExperimentList extends AppCompatActivity {
 
                 //Create our holder and set its refernces to the views
                 holder = new Holder();
-                holder.icon = (ImageView) convertView.findViewById(R.id.expIcon);
-                holder.title = (TextView) convertView.findViewById(R.id.expTitle);
-                holder.info = (TextView) convertView.findViewById(R.id.expInfo);
-                holder.menuBtn = (ImageButton) convertView.findViewById(R.id.menuButton);
+                holder.icon = convertView.findViewById(R.id.expIcon);
+                holder.title = convertView.findViewById(R.id.expTitle);
+                holder.info = convertView.findViewById(R.id.expInfo);
+                holder.menuBtn = convertView.findViewById(R.id.menuButton);
 
                 //Connect the convertView and the holder to retrieve it later
                 convertView.setTag(holder);

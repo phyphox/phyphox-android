@@ -47,7 +47,7 @@ class CurveData {
     int mapWidth;
     int n;
     GraphView.Style style;
-    float color[] = new float[4];
+    float[] color = new float[4];
     transient floatBufferRepresentation fbX, fbY;
 }
 
@@ -65,9 +65,9 @@ class GraphSetup {
     public boolean logY = false;
     public boolean logZ = false;
     public Vector<Integer> colorScale = new Vector<>();
-    public double xTics[] = null;
-    public double yTics[] = null;
-    public double zTics[] = null;
+    public double[] xTics = null;
+    public double[] yTics = null;
+    public double[] zTics = null;
     int plotBoundL, plotBoundT, plotBoundW, plotBoundH;
     int zaBoundL, zaBoundT, zaBoundW, zaBoundH;
     float minX, maxX, minY, maxY, minZ, maxZ;
@@ -114,7 +114,7 @@ class GraphSetup {
         zaBoundH = Math.round(h);
     }
 
-    public void setTics(double xTics[], double yTics[], double zTics[], PlotRenderer plotRenderer) {
+    public void setTics(double[] xTics, double[] yTics, double[] zTics, PlotRenderer plotRenderer) {
         this.xTics = xTics;
         this.yTics = yTics;
         this.zTics = zTics;
@@ -176,7 +176,7 @@ class GraphSetup {
             Matrix.orthoM(positionMatrix, 0, l, r, b, t, -1, 1);
     }
 
-    public void setData(floatBufferRepresentation x[], floatBufferRepresentation y[], int n, GraphView.Style style[], int mapWidth[], PlotRenderer plotRenderer) {
+    public void setData(floatBufferRepresentation[] x, floatBufferRepresentation[] y, int n, GraphView.Style[] style, int[] mapWidth, PlotRenderer plotRenderer) {
         for (int i = 0; i < n; i++) {
             if (dataSets.size() <= i) {
                 CurveData newData = new CurveData();
@@ -610,7 +610,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         gridPositionHandle = GLES20.glGetAttribLocation(gridProgram, "position");
         gridMatrixHandle = GLES20.glGetUniformLocation(gridProgram, "positionMatrix");
 
-        int ref[] = new int[5];
+        int[] ref = new int[5];
         GLES20.glGenBuffers(5, ref, 0);
         vboGrid = ref[0];
         vboZGrid = ref[1];
@@ -618,7 +618,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         vboZScaleY = ref[3];
         vboZScaleZ = ref[4];
 
-        int texRef[] = new int[1];
+        int[] texRef = new int[1];
         GLES20.glGenTextures(1, texRef, 0);
         colorScaleTexture = texRef[0];
 
@@ -818,19 +818,19 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         for (CurveData data : graphSetup.dataSets) {
             if (data.vboY == 0 || (data.vboX == 0 && data.fbX != null)) {
                 if (data.fbX != null) {
-                    int ref[] = new int[2];
+                    int[] ref = new int[2];
                     GLES20.glGenBuffers(2, ref, 0);
                     data.vboX = ref[0];
                     data.vboY = ref[1];
                 } else {
-                    int ref[] = new int[1];
+                    int[] ref = new int[1];
                     GLES20.glGenBuffers(1, ref, 0);
                     data.vboX = 0;
                     data.vboY = ref[0];
                 }
             }
             if (data.ibo == 0 && data.style == GraphView.Style.mapXY) {
-                int ref[] = new int[1];
+                int[] ref = new int[1];
                 GLES20.glGenBuffers(1, ref, 0);
                 data.ibo = ref[0];
             }

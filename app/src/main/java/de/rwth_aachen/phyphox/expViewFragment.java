@@ -58,7 +58,7 @@ public class expViewFragment extends Fragment {
             layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
             layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         }
-        LinearLayout ll = (LinearLayout) root.findViewById(R.id.experimentView);
+        LinearLayout ll = root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
         for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
             if (element == caller) {
@@ -83,7 +83,7 @@ public class expViewFragment extends Fragment {
             layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
             layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         }
-        LinearLayout ll = (LinearLayout) root.findViewById(R.id.experimentView);
+        LinearLayout ll = root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
         for (expView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
             element.restore();
@@ -102,7 +102,7 @@ public class expViewFragment extends Fragment {
     public void recreateView() {
         if (root == null)
             return;
-        LinearLayout ll = (LinearLayout) root.findViewById(R.id.experimentView);
+        LinearLayout ll = root.findViewById(R.id.experimentView);
         ll.removeAllViews();
 
         root.setFillViewport(false);
@@ -135,7 +135,7 @@ public class expViewFragment extends Fragment {
         // Inflate the layout for this fragment
         root = (ScrollView) inflater.inflate(R.layout.fragment_exp_view, container, false);
 
-        final LinearLayout ll = (LinearLayout) root.findViewById(R.id.experimentView);
+        final LinearLayout ll = root.findViewById(R.id.experimentView);
         ll.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
@@ -160,7 +160,7 @@ public class expViewFragment extends Fragment {
             return;
         root.setFillViewport(false);
 
-        LinearLayout ll = (LinearLayout) root.findViewById(R.id.experimentView);
+        LinearLayout ll = root.findViewById(R.id.experimentView);
         ll.removeAllViews();
 
         if (((Experiment) getActivity()).experiment != null && ((Experiment) getActivity()).experiment.experimentViews.size() > index) {

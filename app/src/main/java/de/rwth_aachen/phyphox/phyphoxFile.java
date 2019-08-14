@@ -65,10 +65,7 @@ public abstract class phyphoxFile {
 
     //Returns true if the string is a valid identifier for a dataBuffer, very early versions had some rules here, but we now allow anything as long as it is not empty.
     public static boolean isValidIdentifier(String s) {
-        if (s.isEmpty()) {
-            return false;
-        }
-        return true;
+        return !s.isEmpty();
     }
 
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
@@ -195,7 +192,7 @@ public abstract class phyphoxFile {
     public static class PhyphoxStream {
         boolean isLocal;                //is the stream a local resource? (asset or private file)
         InputStream inputStream = null; //the input stream or null on error
-        byte source[] = null;           //A copy of the input for non-local sources
+        byte[] source = null;           //A copy of the input for non-local sources
         String errorMessage = "";       //Error message that can be displayed to the user
     }
 
@@ -381,11 +378,11 @@ public abstract class phyphoxFile {
                                 Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
                                 outputConversionFunction = (ConversionsOutput.OutputConversion) constructor.newInstance(xpp);
                             } catch (Exception e) {
-                                Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{dataBuffer.class});
+                                Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, dataBuffer.class);
                                 outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
                             }
                         } catch (Exception e) {
-                            Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
+                            Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, double.class);
                             outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
                         }
                     } catch (NoSuchMethodException e) {
@@ -437,10 +434,10 @@ public abstract class phyphoxFile {
                         try {
                             try {
                                 Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsInput$" + conversionFunctionName);
-                                Constructor constructor = conversionClass.getDeclaredConstructor(new Class[]{XmlPullParser.class});
+                                Constructor constructor = conversionClass.getDeclaredConstructor(XmlPullParser.class);
                                 inputConversionFunction = (ConversionsInput.InputConversion) constructor.newInstance(xpp);
                             } catch (Exception e) {
-                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
+                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, byte[].class);
                                 inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod, xpp);
                             }
                         } catch (NoSuchMethodException e) {
@@ -984,8 +981,8 @@ public abstract class phyphoxFile {
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
-                        String strInitArray[] = strInit.split(",");
-                        Double init[] = new Double[strInitArray.length];
+                        String[] strInitArray = strInit.split(",");
+                        Double[] init = new Double[strInitArray.length];
                         for (int i = 0; i < init.length; i++) {
                             try {
                                 init[i] = Double.parseDouble(strInitArray[i].trim());

@@ -66,7 +66,7 @@ public class dataInput implements Serializable {
         } else if (isEmpty) {
             return new Double[0];
         } else {
-            Double ret[] = new Double[1];
+            Double[] ret = new Double[1];
             ret[0] = value;
             return ret;
         }
@@ -79,7 +79,7 @@ public class dataInput implements Serializable {
         } else if (isEmpty) {
             return new short[0];
         } else {
-            short ret[] = new short[1];
+            short[] ret = new short[1];
             ret[0] = (short) (value * (Short.MAX_VALUE)); //Rescale data to short range;
             return ret;
         }

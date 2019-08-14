@@ -280,10 +280,7 @@ public class Bluetooth implements Serializable {
         if (btAdapter == null) {
             return false;
         }
-        if (!btAdapter.isEnabled()) {
-            return false;
-        }
-        return true;
+        return btAdapter.isEnabled();
     }
 
     /**
@@ -323,7 +320,7 @@ public class Bluetooth implements Serializable {
             return false;
         if (!btAdapter.isEnabled())
             return false;
-        return ((BluetoothManager) context.getSystemService(context.BLUETOOTH_SERVICE)).getConnectedDevices(BluetoothProfile.GATT).contains(btDevice);
+        return ((BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE)).getConnectedDevices(BluetoothProfile.GATT).contains(btDevice);
     }
 
     /**
@@ -936,7 +933,7 @@ public class Bluetooth implements Serializable {
                 LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 View neLayout = neInflater.inflate(R.layout.error_dialog, null);
                 errorDialog.setView(neLayout);
-                TextView tv = (TextView) neLayout.findViewById(R.id.errorText);
+                TextView tv = neLayout.findViewById(R.id.errorText);
                 tv.setText(message); // set error message as text
                 if (tryAgain != null) {
                     errorDialog.setPositiveButton(context.getResources().getString(R.string.tryagain), new DialogInterface.OnClickListener() {

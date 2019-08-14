@@ -356,7 +356,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double in[] = inputArrays.get(0);
+            Double[] in = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             if (size == 0)
                 return;
@@ -366,7 +366,6 @@ public class Analysis {
             for (int i = 0; i < size; i++) {
                 if (in[i].isNaN() || in[i].isInfinite())
                     continue;
-                ;
                 sum += in[i];
                 count++;
             }
@@ -389,7 +388,6 @@ public class Analysis {
                 for (int i = 0; i < size; i++) {
                     if (in[i].isNaN() || in[i].isInfinite())
                         continue;
-                    ;
                     sum += (in[i] - avg) * (in[i] - avg);
                     count++;
                 }
@@ -417,7 +415,7 @@ public class Analysis {
                 anyInput = false;
 
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
-                    Double in[] = inputArrays.get(j);
+                    Double[] in = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
                     if (in == null || size == 0) {
                         anyInput = false;
@@ -457,7 +455,7 @@ public class Analysis {
                 anyInput = false;
 
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
-                    Double in[] = inputArrays.get(j);
+                    Double[] in = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
                     if (in == null || size == 0) {
                         anyInput = false;
@@ -503,7 +501,7 @@ public class Analysis {
                 anyInput = false;
 
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
-                    Double in[] = inputArrays.get(j);
+                    Double[] in = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
                     if (in == null || size == 0) {
                         anyInput = false;
@@ -543,7 +541,7 @@ public class Analysis {
                 anyInput = false;
 
                 for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
-                    Double in[] = inputArrays.get(j);
+                    Double[] in = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
                     if (in == null || size == 0) {
                         anyInput = false;
@@ -593,8 +591,8 @@ public class Analysis {
                 Double[] a = inputArrays.get(0);
                 Double[] b = inputArrays.get(1);
 
-                final double ad[] = new double[sizeA];
-                final double bd[] = new double[sizeB];
+                final double[] ad = new double[sizeA];
+                final double[] bd = new double[sizeB];
 
                 for (int i = 0; i < sizeA; i++) {
                     ad[i] = a[i];
@@ -623,7 +621,7 @@ public class Analysis {
                     anyInput = false;
 
                     for (int j = 0; j < inputArrays.size(); j++) { //For each input buffer
-                        Double in[] = inputArrays.get(j);
+                        Double[] in = inputArrays.get(j);
                         int size = inputArraySizes.get(j);
                         if (in == null || size == 0) {
                             anyInput = false;
@@ -674,7 +672,7 @@ public class Analysis {
                 long b = 1;
 
                 for (int j = 0; j < inputArrays.size() && j < 2; j++) { //For each input buffer
-                    Double in[] = inputArrays.get(j);
+                    Double[] in = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
                     if (in == null || size == 0) {
                         anyInput = false;
@@ -729,7 +727,7 @@ public class Analysis {
                 long b = 1;
 
                 for (int j = 0; j < inputArrays.size() && j < 2; j++) { //For each input buffer
-                    Double in[] = inputArrays.get(j);
+                    Double[] in = inputArrays.get(j);
                     int size = inputArraySizes.get(j);
                     if (in == null || size == 0) {
                         anyInput = false;
@@ -775,7 +773,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++)
                 outputs.get(0).append(Math.abs(array[i]));
@@ -796,7 +794,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++) {
                 if (!floor && !ceil)
@@ -821,7 +819,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++) {
                 outputs.get(0).append(Math.log(array[i]));
@@ -842,7 +840,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             if (deg) {
                 for (int i = 0; i < size; i++)
@@ -867,7 +865,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             if (deg) {
                 for (int i = 0; i < size; i++)
@@ -893,7 +891,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             if (deg) {
                 for (int i = 0; i < size; i++)
@@ -913,7 +911,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++)
                 outputs.get(0).append(Math.sinh(array[i]));
@@ -929,7 +927,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++)
                 outputs.get(0).append(Math.cosh(array[i]));
@@ -945,7 +943,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++)
                 outputs.get(0).append(Math.tanh(array[i]));
@@ -963,7 +961,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             if (deg) {
                 for (int i = 0; i < size; i++)
@@ -986,7 +984,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             if (deg) {
                 for (int i = 0; i < size; i++)
@@ -1009,7 +1007,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
+            Double[] array = inputArrays.get(0);
             int size = inputArraySizes.get(0);
             if (deg) {
                 for (int i = 0; i < size; i++)
@@ -1032,8 +1030,8 @@ public class Analysis {
 
         @Override
         protected void update() {
-            Double array[] = inputArrays.get(0);
-            Double array2[] = inputArrays.get(1);
+            Double[] array = inputArrays.get(0);
+            Double[] array2 = inputArrays.get(1);
             int size = inputArraySizes.get(0);
             if (size > inputArraySizes.get(1))
                 size = inputArraySizes.get(1);
@@ -1441,7 +1439,7 @@ public class Analysis {
         }
 
         public enum ZMode {
-            count, sum, average;
+            count, sum, average
         }
     }
 
@@ -1582,7 +1580,7 @@ public class Analysis {
                 if (size < 2)
                     return;
 
-                final float xy[] = new float[2 * size];
+                final float[] xy = new float[2 * size];
 
                 for (int i = 0; i < size; i++) {
                     xy[2 * i] = inputArrays.get(0)[i].floatValue();
@@ -1608,8 +1606,8 @@ public class Analysis {
                     fft.prepare(size);
                 }
 
-                Double x[] = Arrays.copyOf(inputArrays.get(0), fft.np2);
-                Double y[];
+                Double[] x = Arrays.copyOf(inputArrays.get(0), fft.np2);
+                Double[] y;
                 if (inputArrays.size() > 1)
                     y = Arrays.copyOf(inputArrays.get(1), fft.np2);
                 else
@@ -1665,10 +1663,10 @@ public class Analysis {
             else
                 maxt = inputArrays.get(3)[inputArraySizes.get(3) - 1];
 
-            Double y[] = inputArrays.get(1);
+            Double[] y = inputArrays.get(1);
 
             int size = inputArraySizes.get(1);
-            Double x[];
+            Double[] x;
             if (inputArrays.get(0) != null) {
                 x = inputArrays.get(0);
                 if (x.length < size)
@@ -1724,8 +1722,8 @@ public class Analysis {
         @Override
         protected void update() {
             //Get arrays for random access
-            Double x[] = inputs.get(0).buffer.getArray();
-            Double y[] = inputs.get(1).buffer.getArray();
+            Double[] x = inputs.get(0).buffer.getArray();
+            Double[] y = inputs.get(1).buffer.getArray();
 
             int n = inputs.get(1).buffer.getFilledSize();
 
@@ -1903,8 +1901,8 @@ public class Analysis {
                 Double[] a = inputArrays.get(0);
                 Double[] b = inputArrays.get(1);
 
-                final float af[] = new float[size];
-                final float bf[] = new float[size];
+                final float[] af = new float[size];
+                final float[] bf = new float[size];
 
                 if (sizeA > sizeB) {
                     for (int i = 0; i < sizeA; i++) {
@@ -1931,7 +1929,8 @@ public class Analysis {
                 }
             } else {
 
-                Double a[], b[];
+                Double[] a;
+                Double[] b;
                 int asize, bsize;
                 //Put the larger input in a and the smaller one in b
                 if (inputArraySizes.get(0) > inputArraySizes.get(1)) {
@@ -1993,7 +1992,7 @@ public class Analysis {
         @Override
         protected void update() {
             //Get array for random access
-            Double y[] = inputs.get(0).getArray();
+            Double[] y = inputs.get(0).getArray();
 
             for (int i = 0; i < y.length; i++) { //For each data-point
                 double sum = 0;

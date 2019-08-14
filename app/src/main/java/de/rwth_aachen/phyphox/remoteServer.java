@@ -610,9 +610,9 @@ public class remoteServer extends Thread {
                         else {
                             //Get all the values...
                             boolean firstValue = true; //Find first iteration, so the other ones can add a seperator
-                            Double data[] = db.getArray();
+                            Double[] data = db.getArray();
                             int n = db.getFilledSize();
-                            Double dataRef[];
+                            Double[] dataRef;
                             if (db_reference == db)
                                 dataRef = data;
                             else {
@@ -669,7 +669,7 @@ public class remoteServer extends Thread {
 
                 //Countdown state
                 sb.append(", \"countDown\":");
-                sb.append(String.valueOf(callActivity.millisUntilFinished));
+                sb.append(callActivity.millisUntilFinished);
                 sb.append("\n}\n}\n");
             } finally {
                 experiment.dataLock.unlock();

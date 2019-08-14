@@ -37,7 +37,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     public boolean allowLogY = false;
     View rootView;
     FrameLayout graphFrame;
-    Marker marker[] = new Marker[markerMax];
+    Marker[] marker = new Marker[markerMax];
     PopupWindow popupWindowInfo = null;
     TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
@@ -64,11 +64,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         for (int i = 0; i < markerMax; i++)
             marker[i] = new Marker();
 
-        graphFrame = (FrameLayout) this.findViewById(R.id.graph_frame);
-        graphLabel = (TextView) this.findViewById(R.id.graph_label);
-        expandImage = (ImageView) this.findViewById(R.id.graph_expand_image);
-        collapseImage = (ImageView) this.findViewById(R.id.graph_collapse_image);
-        toolbar = (BottomNavigationView) this.findViewById(R.id.graph_toolbar);
+        graphFrame = this.findViewById(R.id.graph_frame);
+        graphLabel = this.findViewById(R.id.graph_label);
+        expandImage = this.findViewById(R.id.graph_expand_image);
+        collapseImage = this.findViewById(R.id.graph_collapse_image);
+        toolbar = this.findViewById(R.id.graph_toolbar);
 
         toolbar.inflateMenu(R.menu.graph_menu);
         toolbar.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -200,26 +200,26 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         final View dialogView = inflate(getContext(), R.layout.apply_zoom_dialog, null);
         builder.setView(dialogView);
-        final TextView tvLabelX = (TextView) dialogView.findViewById(R.id.applyZoomXLabel);
-        final TextView tvLabelY = (TextView) dialogView.findViewById(R.id.applyZoomYLabel);
-        final TextView tvLabelZ = (TextView) dialogView.findViewById(R.id.applyZoomZLabel);
-        final RadioButton rbReset = (RadioButton) dialogView.findViewById(R.id.applyZoomReset);
-        final RadioButton rbKeep = (RadioButton) dialogView.findViewById(R.id.applyZoomKeep);
-        final RadioButton rbResetX = (RadioButton) dialogView.findViewById(R.id.applyZoomXReset);
-        final RadioButton rbKeepX = (RadioButton) dialogView.findViewById(R.id.applyZoomXKeep);
-        final RadioButton rbFollowX = (RadioButton) dialogView.findViewById(R.id.applyZoomXFollow);
-        final RadioButton rbResetY = (RadioButton) dialogView.findViewById(R.id.applyZoomYReset);
-        final RadioButton rbKeepY = (RadioButton) dialogView.findViewById(R.id.applyZoomYKeep);
-        final RadioButton rbResetZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZReset);
-        final RadioButton rbKeepZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZKeep);
-        final Spinner sApplyX = (Spinner) dialogView.findViewById(R.id.applyZoomXApplyTo);
-        final Spinner sApplyY = (Spinner) dialogView.findViewById(R.id.applyZoomYApplyTo);
-        final Switch swAdvanced = (Switch) dialogView.findViewById(R.id.applyZoomAdvanced);
+        final TextView tvLabelX = dialogView.findViewById(R.id.applyZoomXLabel);
+        final TextView tvLabelY = dialogView.findViewById(R.id.applyZoomYLabel);
+        final TextView tvLabelZ = dialogView.findViewById(R.id.applyZoomZLabel);
+        final RadioButton rbReset = dialogView.findViewById(R.id.applyZoomReset);
+        final RadioButton rbKeep = dialogView.findViewById(R.id.applyZoomKeep);
+        final RadioButton rbResetX = dialogView.findViewById(R.id.applyZoomXReset);
+        final RadioButton rbKeepX = dialogView.findViewById(R.id.applyZoomXKeep);
+        final RadioButton rbFollowX = dialogView.findViewById(R.id.applyZoomXFollow);
+        final RadioButton rbResetY = dialogView.findViewById(R.id.applyZoomYReset);
+        final RadioButton rbKeepY = dialogView.findViewById(R.id.applyZoomYKeep);
+        final RadioButton rbResetZ = dialogView.findViewById(R.id.applyZoomZReset);
+        final RadioButton rbKeepZ = dialogView.findViewById(R.id.applyZoomZKeep);
+        final Spinner sApplyX = dialogView.findViewById(R.id.applyZoomXApplyTo);
+        final Spinner sApplyY = dialogView.findViewById(R.id.applyZoomYApplyTo);
+        final Switch swAdvanced = dialogView.findViewById(R.id.applyZoomAdvanced);
 
-        final RadioGroup rgGenericOptions = (RadioGroup) dialogView.findViewById(R.id.applyZoomMode);
-        final GridLayout glXOptions = (GridLayout) dialogView.findViewById(R.id.applyZoomX);
-        final GridLayout glYOptions = (GridLayout) dialogView.findViewById(R.id.applyZoomY);
-        final GridLayout glZOptions = (GridLayout) dialogView.findViewById(R.id.applyZoomZ);
+        final RadioGroup rgGenericOptions = dialogView.findViewById(R.id.applyZoomMode);
+        final GridLayout glXOptions = dialogView.findViewById(R.id.applyZoomX);
+        final GridLayout glYOptions = dialogView.findViewById(R.id.applyZoomY);
+        final GridLayout glZOptions = dialogView.findViewById(R.id.applyZoomZ);
 
         boolean hasZAxis = false;
         for (int i = 0; i < graphView.style.length; i++) {
@@ -374,7 +374,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private void setPopupInfo(int x, int y, String text) {
         if (popupWindowInfo == null) {
             View pointInfoView = inflate(getContext(), R.layout.point_info, null);
-            popupWindowText = (TextView) pointInfoView.findViewById(R.id.point_info_text);
+            popupWindowText = pointInfoView.findViewById(R.id.point_info_text);
             popupWindowInfo = new PopupWindow(pointInfoView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             if (Build.VERSION.SDK_INT >= 21) {
                 popupWindowInfo.setElevation(4.0f);
@@ -441,7 +441,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             double a = (n * sumXY - sumX * sumY) / norm;
             double b = (sumY * sumX2 - sumX * sumXY) / norm;
 
-            int pos[] = new int[2];
+            int[] pos = new int[2];
             graphView.getLocationInWindow(pos);
 
             Point[] points = new Point[2];
@@ -477,7 +477,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             points[1] = new Point(Math.round(marker[1].viewX), Math.round(marker[1].viewY));
             markerOverlayView.update(points, points);
 
-            int pos[] = new int[2];
+            int[] pos = new int[2];
             graphView.getLocationInWindow(pos);
 
             int infoX = Math.round((marker[0].viewX + marker[1].viewX) / 2.f + pos[0] - getRootView().getWidth() / 2.f);
@@ -513,7 +513,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
         } else if (marker[0].active || marker[1].active) {
 
-            int pos[] = new int[2];
+            int[] pos = new int[2];
             graphView.getLocationInWindow(pos);
 
             Marker activeMarker = marker[0].active ? marker[0] : marker[1];

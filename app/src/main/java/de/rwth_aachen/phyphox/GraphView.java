@@ -50,8 +50,8 @@ public class GraphView extends View {
     PlotRenderer plotRenderer;
     GraphSetup graphSetup;
     private PointInfo pointInfoListener = null;
-    private int pickedPointIndex[] = new int[maxPicked];
-    private int pickedPointGraphIndex[] = new int[maxPicked];
+    private int[] pickedPointIndex = new int[maxPicked];
+    private int[] pickedPointGraphIndex = new int[maxPicked];
     private floatBufferRepresentation[] graphX; //The x data to be displayed
     private double[] histMinX, histMaxX;
     private floatBufferRepresentation[] graphY; //The y data to be displayed
@@ -918,7 +918,6 @@ public class GraphView extends View {
         double workingMaxY = Double.isNaN(zoomMaxY) ? maxY : zoomMaxY;
         double workingMinZ = Double.isNaN(zoomMinZ) ? minZ : zoomMinZ;
         double workingMaxZ = Double.isNaN(zoomMaxZ) ? maxZ : zoomMaxZ;
-        ;
 
         //Do we need a zscale?
         boolean zScale = false;
@@ -1079,11 +1078,11 @@ public class GraphView extends View {
     }
 
     public enum Style {
-        lines, dots, hbars, vbars, mapXY, mapZ, unknown;
+        lines, dots, hbars, vbars, mapXY, mapZ, unknown
     }
 
     public enum TouchMode {
-        off, zoom, pick;
+        off, zoom, pick
     }
 
     public enum scaleMode {
