@@ -4,7 +4,8 @@ import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+
+import androidx.annotation.RequiresApi;
 
 import java.util.UUID;
 import java.util.Vector;

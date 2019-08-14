@@ -8,7 +8,7 @@
     android:paddingBottom="0dp"
     tools:context="de.rwth_aachen.phyphox.Experiment">
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/customActionBar"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
@@ -27,9 +27,9 @@
             style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
-    <android.support.design.widget.TabLayout
+    <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="36dp"
@@ -55,7 +55,7 @@
         android:progressBackgroundTint="@android:color/transparent"
         android:progressTint="@color/main" />
 
-    <android.support.v4.view.ViewPager
+    <androidx.viewpager.widget.ViewPager
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

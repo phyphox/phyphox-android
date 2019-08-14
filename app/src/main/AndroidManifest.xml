@@ -138,7 +138,7 @@
             android:name="org.apache.http.legacy"
             android:required="false" />
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="de.rwth_aachen.phyphox.exportProvider"
             android:exported="false"
             android:grantUriPermissions="true">

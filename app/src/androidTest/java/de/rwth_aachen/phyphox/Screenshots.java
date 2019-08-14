@@ -2,10 +2,11 @@ package de.rwth_aachen.phyphox;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.support.test.espresso.Espresso;
-import android.support.test.espresso.matcher.ViewMatchers;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.espresso.Espresso;
+import androidx.test.espresso.matcher.ViewMatchers;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.rule.ActivityTestRule;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -20,8 +21,8 @@ import tools.fastlane.screengrab.Screengrab;
 import tools.fastlane.screengrab.UiAutomatorScreenshotStrategy;
 import tools.fastlane.screengrab.locale.LocaleTestRule;
 
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.swipeLeft;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.swipeLeft;
 
 
 @RunWith(AndroidJUnit4.class)

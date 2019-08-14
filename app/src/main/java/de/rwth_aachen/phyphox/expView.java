@@ -6,8 +6,6 @@ import android.content.ContextWrapper;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.AppCompatEditText;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
@@ -22,6 +20,9 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+
+import androidx.appcompat.widget.AppCompatEditText;
+import androidx.core.content.ContextCompat;
 
 import java.io.Serializable;
 import java.util.Vector;

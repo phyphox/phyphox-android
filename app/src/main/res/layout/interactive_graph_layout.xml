@@ -36,7 +36,7 @@
         android:layout_above="@id/graph_toolbar"
         android:layout_below="@id/graph_label" />
 
-    <android.support.design.widget.BottomNavigationView
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/graph_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

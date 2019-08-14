@@ -5,13 +5,14 @@ import android.animation.LayoutTransition;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+
+import androidx.fragment.app.Fragment;
 
 public class expViewFragment extends Fragment {
     private static final String ARG_INDEX = "index";
