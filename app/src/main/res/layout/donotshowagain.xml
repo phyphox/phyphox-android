@@ -20,12 +20,12 @@
 
     </ScrollView>
 
-    <CheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+    <CheckBox
         android:id="@+id/donotshowagain"
         style="@style/experimentList"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:checked="false"
-        android:text="@string/donotshowagain"></CheckBox>
+        android:text="@string/donotshowagain" />
 
 </LinearLayout>

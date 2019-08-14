@@ -19,6 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/device_name"
+        android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
         android:text="@string/bt_device_not_supported"
         android:textColor="@color/highlight"

@@ -21,9 +21,7 @@
         <RadioGroup
             android:id="@+id/applyZoomMode"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_rowSpan="1"
-            android:layout_columnSpan="1">
+            android:layout_height="wrap_content">
 
             <RadioButton
                 android:id="@+id/applyZoomReset"

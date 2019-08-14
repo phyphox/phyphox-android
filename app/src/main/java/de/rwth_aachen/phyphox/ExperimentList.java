@@ -501,7 +501,7 @@ public class ExperimentList extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-                View view = inflater.inflate(R.layout.open_multipe_dialog, null);
+                View view = inflater.inflate(R.layout.open_multiple_dialog, null);
                 final Activity parent = this;
                 builder.setView(view)
                         .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
@@ -778,7 +778,7 @@ public class ExperimentList extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        View view = inflater.inflate(R.layout.open_multipe_dialog, null);
+        View view = inflater.inflate(R.layout.open_multiple_dialog, null);
         builder.setView(view);
         if (!supportedExperiments.isEmpty()) {
             builder.setPositiveButton(R.string.open_save_all, (dialog, id) -> {

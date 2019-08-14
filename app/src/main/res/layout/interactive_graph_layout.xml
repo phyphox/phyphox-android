@@ -24,7 +24,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:layout_marginStart="@dimen/graph_label_start_margin"
         android:layout_marginLeft="@dimen/graph_label_start_margin"
+        android:layout_toEndOf="@id/graph_expand_image"
         android:layout_toRightOf="@id/graph_expand_image" />
 
     <FrameLayout
@@ -32,7 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/graph_toolbar"
-        android:layout_below="@id/graph_label"></FrameLayout>
+        android:layout_below="@id/graph_label" />
 
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/graph_toolbar"
@@ -43,6 +45,5 @@
         app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
         app:itemTextAppearanceInactive="@style/BottomNavigationView"
         app:labelVisibilityMode="labeled" />
-
 
 </merge>

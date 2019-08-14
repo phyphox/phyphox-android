@@ -7,12 +7,12 @@
     android:orientation="vertical"
     android:padding="10dp">
 
-    <CheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+    <CheckBox
         android:id="@+id/timedRunEnabled"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:checked="false"
-        android:text="@string/enableTimedRun"></CheckBox>
+        android:text="@string/enableTimedRun" />
 
     <TableLayout
         android:layout_width="match_parent"
@@ -22,8 +22,7 @@
 
         <TableRow
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_column="0">
+            android:layout_height="match_parent">
 
             <TextView
                 android:id="@+id/textView"
@@ -36,7 +35,6 @@
                 android:id="@id/timedRunStartDelay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:editable="false"
                 android:ems="10"
                 android:enabled="true"
                 android:inputType="numberDecimal"
@@ -45,8 +43,7 @@
 
         <TableRow
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_column="0">
+            android:layout_height="match_parent">
 
             <TextView
                 android:id="@+id/textView2"
@@ -59,12 +56,11 @@
                 android:id="@id/timedRunStopDelay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:editable="false"
                 android:ems="10"
                 android:enabled="true"
                 android:inputType="numberDecimal"
                 android:text="10" />
+
         </TableRow>
     </TableLayout>
-
 </LinearLayout>
