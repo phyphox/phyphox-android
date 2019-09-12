@@ -4,21 +4,14 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PointF;
-import android.support.v4.view.MotionEventCompat;
-import android.support.v4.view.ScaleGestureDetectorCompat;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.widget.RelativeLayout;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Vector;
-
-import static android.view.MotionEvent.INVALID_POINTER_ID;
 
 //The graphView class implements an Android view which displays a data graph
 

@@ -8,6 +8,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -312,71 +313,69 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
         builder.setTitle(R.string.applyZoomTitle)
                 .setPositiveButton(R.string.ok, (dialog, id) -> {
-                    public void onClick(DialogInterface dialog, int id) {
-                        double minX, maxX, minY, maxY, minZ, maxZ;
-                        boolean simple = !swAdvanced.isChecked();
+                    double minX, maxX, minY, maxY, minZ, maxZ;
+                    boolean simple = !swAdvanced.isChecked();
 
-                        if ((simple && rbReset.isChecked()) || (!simple && rbResetX.isChecked())) {
-                            minX = Double.NaN;
-                            maxX = Double.NaN;
-                        } else {
-                            minX = graphView.zoomMinX;
-                            maxX = graphView.zoomMaxX;
-                        }
-                        if ((simple && rbReset.isChecked()) || (!simple && rbResetY.isChecked())) {
-                            minY = Double.NaN;
-                            maxY = Double.NaN;
-                        } else {
-                            minY = graphView.zoomMinY;
-                            maxY = graphView.zoomMaxY;
-                        }
-                        graphView.zoomMinX = minX;
-                        graphView.zoomMaxX = maxX;
-                        graphView.zoomMinY = minY;
-                        graphView.zoomMaxY = maxY;
-                        graphView.zoomFollows = (simple && graphView.zoomFollows) || (!simple && rbFollowX.isChecked());
-
-                        if (!simple) {
-
-                            switch (sApplyX.getSelectedItemPosition()) {
-                                case 1:
-                                    parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false);
-                                    break;
-                                case 2:
-                                    parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false);
-                                    break;
-                                case 3:
-                                    parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false);
-                                    break;
-                            }
-
-                            switch (sApplyY.getSelectedItemPosition()) {
-                                case 1:
-                                    parent.applyZoom(minY, maxY, false, null, bufferY, true);
-                                    break;
-                                case 2:
-                                    parent.applyZoom(minY, maxY, false, unitY, null, true);
-                                    break;
-                                case 3:
-                                    parent.applyZoom(minY, maxY, false, null, null, true);
-                                    break;
-                            }
-                        }
-
-                        if (zShown) {
-                            if ((simple && rbReset.isChecked()) || (!simple && rbResetZ.isChecked())) {
-                                minZ = Double.NaN;
-                                maxZ = Double.NaN;
-                            } else {
-                                minZ = graphView.zoomMinZ;
-                                maxZ = graphView.zoomMaxZ;
-                            }
-                            graphView.zoomMinZ = minZ;
-                            graphView.zoomMaxZ = maxZ;
-                        }
-
-                        parent.leaveExclusive();
+                    if ((simple && rbReset.isChecked()) || (!simple && rbResetX.isChecked())) {
+                        minX = Double.NaN;
+                        maxX = Double.NaN;
+                    } else {
+                        minX = graphView.zoomMinX;
+                        maxX = graphView.zoomMaxX;
                     }
+                    if ((simple && rbReset.isChecked()) || (!simple && rbResetY.isChecked())) {
+                        minY = Double.NaN;
+                        maxY = Double.NaN;
+                    } else {
+                        minY = graphView.zoomMinY;
+                        maxY = graphView.zoomMaxY;
+                    }
+                    graphView.zoomMinX = minX;
+                    graphView.zoomMaxX = maxX;
+                    graphView.zoomMinY = minY;
+                    graphView.zoomMaxY = maxY;
+                    graphView.zoomFollows = (simple && graphView.zoomFollows) || (!simple && rbFollowX.isChecked());
+
+                    if (!simple) {
+
+                        switch (sApplyX.getSelectedItemPosition()) {
+                            case 1:
+                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false);
+                                break;
+                            case 2:
+                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false);
+                                break;
+                            case 3:
+                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false);
+                                break;
+                        }
+
+                        switch (sApplyY.getSelectedItemPosition()) {
+                            case 1:
+                                parent.applyZoom(minY, maxY, false, null, bufferY, true);
+                                break;
+                            case 2:
+                                parent.applyZoom(minY, maxY, false, unitY, null, true);
+                                break;
+                            case 3:
+                                parent.applyZoom(minY, maxY, false, null, null, true);
+                                break;
+                        }
+                    }
+
+                    if (zShown) {
+                        if ((simple && rbReset.isChecked()) || (!simple && rbResetZ.isChecked())) {
+                            minZ = Double.NaN;
+                            maxZ = Double.NaN;
+                        } else {
+                            minZ = graphView.zoomMinZ;
+                            maxZ = graphView.zoomMaxZ;
+                        }
+                        graphView.zoomMinZ = minZ;
+                        graphView.zoomMaxZ = maxZ;
+                    }
+
+                    parent.leaveExclusive();
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
