@@ -55,6 +55,7 @@ public class phyphoxExperiment implements Serializable {
     public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
     public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
     public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
+    public SensorInputTimeReference sensorInputTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
     public gpsInput gpsIn = null;
     public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
@@ -95,6 +96,7 @@ public class phyphoxExperiment implements Serializable {
     //The constructor will just instantiate the DataExport. Everything else will be set directly by the phyphoxFile loading function (see phyphoxFile.java)
     phyphoxExperiment() {
         exporter = new DataExport(this);
+        sensorInputTimeReference = new SensorInputTimeReference();
     }
 
     //Create a new buffer
@@ -375,6 +377,7 @@ public class phyphoxExperiment implements Serializable {
             firstAnalysisTime = System.currentTimeMillis() - (analysisTime-firstAnalysisTime);
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
+        sensorInputTimeReference.reset();
         for (sensorInput sensor : inputSensors)
             sensor.start();
 

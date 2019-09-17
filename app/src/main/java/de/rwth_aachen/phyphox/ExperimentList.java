@@ -753,7 +753,7 @@ public class ExperimentList extends AppCompatActivity {
                                 String type = xpp.getAttributeValue(null, "type");
                                 sensorInput testSensor;
                                 try {
-                                    testSensor = new sensorInput(type, 0, false, null, null);
+                                    testSensor = new sensorInput(type, 0, false, null, null, null);
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (sensorInput.SensorException e) {
                                     unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));

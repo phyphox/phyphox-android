@@ -1420,7 +1420,7 @@ public abstract class phyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new sensorInput(type, rate, average, outputs, experiment.dataLock));
+                        experiment.inputSensors.add(new sensorInput(type, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (sensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
