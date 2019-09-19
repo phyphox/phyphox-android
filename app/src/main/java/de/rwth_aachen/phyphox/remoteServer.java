@@ -101,11 +101,11 @@ public class remoteServer extends Thread {
     protected void buildStyleCSS () {
         //We use a stringbuilder to collect our strings
         StringBuilder sb = new StringBuilder();
-        //...and we need to read from the resource file
-        BufferedReader br = new BufferedReader(new InputStreamReader(this.res.openRawResource(R.raw.style)));
         String line;
         try {
-            //While ẃe get lines from the resource file, replace placeholders and hand the line to the stringbuilder
+            //...and we need to read from the resource file
+            BufferedReader br = new BufferedReader(new InputStreamReader(res.getAssets().open("remote/style.css")));
+            //While we get lines from the resource file, replace placeholders and hand the line to the stringbuilder
             while ((line = br.readLine()) != null) {
                 //Set some drawables directly in the css as base64-encoded PNGs
                 if (line.contains("###drawablePlay###"))
@@ -178,12 +178,10 @@ public class remoteServer extends Thread {
     protected void buildIndexHTML () {
         //A string builder is great for collecting strings...
         StringBuilder sb = new StringBuilder();
-
-        //Read from the resource file
-        BufferedReader br = new BufferedReader(new InputStreamReader(this.res.openRawResource(R.raw.index)));
-
         String line;
         try {
+            //Read from the resource file
+            BufferedReader br = new BufferedReader(new InputStreamReader(res.getAssets().open("remote/index.html")));
             //While we receive new lines, look for placeholders. replace placeholders with data and append them to our stringbuilder
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) { //The title. This one is easy...
@@ -500,7 +498,7 @@ public class remoteServer extends Thread {
                            HttpContext httpContext) throws HttpException, IOException {
 
             BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = res.openRawResource(R.raw.phyphox_orange);
+            InputStream inputStream = res.getAssets().open("remote/phyphox_orange.png");
             entity.setContent(inputStream);
 
             //Set the header and THEN send the file
