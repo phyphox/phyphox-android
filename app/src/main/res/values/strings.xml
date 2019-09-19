@@ -100,7 +100,7 @@ Camilla Lummerzheim
         Phyphox is open source software released under the GNU General Public Licence. Please visit http://phyphox.org for further information and to get access to its source code. However, the name \"phyphox\" and \"RWTH Aachen\" are registered trademarks.
     </string>
     <string name="creditsLibs">
-        The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later).
+        The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later). GPS elevation data is converted from the WGS84 ellipsoid to the EGM84 geoid using EGM84 data (30\' resolution) and a ported function from the GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).
     </string>
     <string name="creditsApache" translatable="false">
         <![CDATA[

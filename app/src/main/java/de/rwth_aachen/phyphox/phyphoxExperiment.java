@@ -14,7 +14,6 @@ import android.util.Log;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
@@ -57,7 +56,7 @@ public class phyphoxExperiment implements Serializable {
     public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public SensorInputTimeReference sensorInputTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
-    public gpsInput gpsIn = null;
+    public GpsInput gpsIn = null;
     public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
     public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
     public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
@@ -423,8 +422,9 @@ public class phyphoxExperiment implements Serializable {
             si.attachSensorManager(sensorManager);
         }
 
-        if (gpsIn != null)
+        if (gpsIn != null) {
             gpsIn.attachLocationManager(locationManager);
+        }
 
     }
 

@@ -291,6 +291,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         this.experiment = experiment; //Store the loaded experiment
         if (experiment.loaded) { //Everything went fine, no errors
+            if (experiment.gpsIn != null) {
+                experiment.gpsIn.prepare(res);
+            }
+
             //If the experiment has been launched from a Bluetooth scan, we need to set the bluetooth device in the experiment so it does not ask the user again
             String btAddress = intent.getStringExtra(ExperimentList.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
             if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {

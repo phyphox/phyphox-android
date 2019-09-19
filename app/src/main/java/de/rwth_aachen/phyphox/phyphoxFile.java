@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -39,7 +38,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
@@ -50,7 +48,7 @@ import java.util.regex.Pattern;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.7";
+    final static String phyphoxFileVersion = "1.8";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -1446,6 +1444,7 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "lat"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "lon"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "zwgs84"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "v"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "dir"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
@@ -1457,10 +1456,10 @@ public abstract class phyphoxFile {
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
-                    experiment.gpsIn = new gpsInput(outputs, experiment.dataLock);
+                    experiment.gpsIn = new GpsInput(outputs, experiment.dataLock);
                     experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
 
-                    if (!gpsInput.isAvailable(parent)) {
+                    if (!GpsInput.isAvailable(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(R.string.location) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
                     }
 
