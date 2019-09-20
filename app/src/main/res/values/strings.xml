@@ -269,6 +269,7 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="bt_device_not_supported">No experiment available.</string>
 
     <string name="bt_location_explanation">Android requires a location permission for Bluetooth scans as the result could be used to derive location information. We will now request these permissions. You need to grant them in order to do a Bluetooth scan.</string>
+    <string name="bt_location_service_explanation">In addition to the permission to get location information, Android requires location services to be enabled for Bluetooth scans as the result could be used to derive location information. We will redirect you to your system settings.</string>
 
     <string name="bt_exception_uuid">Characteristic with UUID</string>
     <string name="bt_exception_uuid2">not found.</string>

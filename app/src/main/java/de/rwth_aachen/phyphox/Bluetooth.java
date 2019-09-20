@@ -273,6 +273,8 @@ public class Bluetooth implements Serializable {
             BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
             if (!bsd.scanPermission())
                 return;
+            if (!bsd.locationEnabled())
+                return;
             BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null, idString);
             if (bdi != null)
                 btDevice = bdi.device;

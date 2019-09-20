@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.RequiresApi;
@@ -214,7 +215,10 @@ public class BluetoothScanDialog {
         };
 
     public boolean scanPermission() {
-        if (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+            return true;
+
+        if (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             //Android 6.0: No permission? Request it!
             final Activity parent = this.parentActivity;
 
@@ -223,15 +227,57 @@ public class BluetoothScanDialog {
                 public void run() {
                     AlertDialog.Builder builder = new AlertDialog.Builder(parent);
                     builder.setMessage(parent.getResources().getText(R.string.bt_location_explanation));
-                    builder.setCancelable(false);
+                    builder.setCancelable(true);
                     builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
                                     dialog.cancel();
-                                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
+                                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
                                     //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
                                 }
                             });
+                    builder.setNegativeButton(parent.getResources().getText(R.string.cancel), new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, final int id) {
+                            dialog.cancel();
+                        }
+                    });
+                    final AlertDialog alert = builder.create();
+                    alert.show();
+                }
+            });
+
+            return false;
+        }
+        return true;
+    }
+
+    public boolean locationEnabled() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+            return true;
+
+        LocationManager locationManager =( LocationManager)parentActivity.getSystemService(Context.LOCATION_SERVICE);
+        if (!( locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))) {
+
+            //Android 6.0: Location service not enabled? Ask to enable it.
+            final Activity parent = this.parentActivity;
+            parent.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+                    builder.setMessage(parent.getResources().getText(R.string.bt_location_service_explanation));
+                    builder.setCancelable(true);
+                    builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                    parent.startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                                }
+                            });
+                    builder.setNegativeButton(parent.getResources().getText(R.string.cancel), new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, final int id) {
+                            dialog.cancel();
+                        }
+                    });
                     final AlertDialog alert = builder.create();
                     alert.show();
                 }
@@ -249,6 +295,9 @@ public class BluetoothScanDialog {
         this.supportedUUIDFilter = supportedUUIDFilter;
 
         if (!scanPermission())
+            return null;
+
+        if (!locationEnabled())
             return null;
 
         bta.startLeScan(scanCallback);

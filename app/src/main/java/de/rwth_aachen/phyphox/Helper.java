@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;

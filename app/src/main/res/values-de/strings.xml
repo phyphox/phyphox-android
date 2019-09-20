@@ -230,6 +230,7 @@
     <string name="bt_device_not_supported">Keine Experimente verfügbar.</string>
 
     <string name="bt_location_explanation">Android benötigt Standort-Rechte für Bluetooth-Scans, da die Ergebnisse genutzt werden könnten um einen Standort abzuleiten. Wir werden diese Rechte nun anfragen. Du musst die Rechte bestätigen um nach Bluetooth-Geräten suchen zu können.</string>
+    <string name="bt_location_service_explanation">Zusätzlich zu den Standort-Rechten muss die Standort-Funktion aktiviert sein, damit Android uns einen Bluetooth-Scan erlaubt, da aus diesem der Standort abgeleitet werden könnte. Wir leiten dich daher zu den System-Einstellungen weiter.</string>
 
     <string name="bt_exception_config">Der Wert der Charakteristik</string>
     <string name="bt_exception_config2">konnte nicht gesetzt werden.</string>
