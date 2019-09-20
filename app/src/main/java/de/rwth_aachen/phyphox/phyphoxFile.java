@@ -239,18 +239,18 @@ public abstract class phyphoxFile {
 
         //Helper to receive a string typed attribute
         protected String getStringAttribute(String identifier) {
-            return xpp.getAttributeValue(null, identifier);
+            return xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
         }
 
         //Helper to receive a string typed attribute and translate it
         protected String getTranslatedAttribute(String identifier) {
-            return translate(xpp.getAttributeValue(null, identifier));
+            return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
         }
 
         //Helper to receive an integer typed attribute, if invalid or not present, return default
         protected int getIntAttribute(String identifier, int defaultValue) {
             try {
-                return Integer.valueOf(xpp.getAttributeValue(null, identifier));
+                return Integer.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
             } catch (Exception e) {
                 return defaultValue;
             }
@@ -259,7 +259,7 @@ public abstract class phyphoxFile {
         //Helper to receive a double typed attribute, if invalid or not present, return default
         protected double getDoubleAttribute(String identifier, double defaultValue) {
             try {
-                return Double.valueOf(xpp.getAttributeValue(null, identifier));
+                return Double.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
             } catch (Exception e) {
                 return defaultValue;
             }
@@ -267,7 +267,7 @@ public abstract class phyphoxFile {
 
         //Helper to receive a boolean attribute, if invalid or not present, return default
         protected boolean getBooleanAttribute(String identifier, boolean defaultValue) {
-            final String att = xpp.getAttributeValue(null, identifier);
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
             if (att == null)
                 return defaultValue;
             return Boolean.valueOf(att);
@@ -275,7 +275,7 @@ public abstract class phyphoxFile {
 
         //Helper to receive a color attribute, if invalid or not present, return default
         protected int getColorAttribute(String identifier, int defaultValue) {
-            final String att = xpp.getAttributeValue(null, identifier);
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
 
             return Helper.parseColor(att, defaultValue, parent.getResources());
         }
@@ -1144,7 +1144,7 @@ public abstract class phyphoxFile {
 
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
-                    while (xpp.getAttributeValue(null,"mapColor"+colorStepIndex) != null) {
+                    while (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE,"mapColor"+colorStepIndex) != null) {
                         int color = getColorAttribute("mapColor"+colorStepIndex, parent.getResources().getColor(R.color.highlight));
                         colorScale.add(color);
                         colorStepIndex++;
@@ -1182,7 +1182,7 @@ public abstract class phyphoxFile {
                     int zPrecision = getIntAttribute("zPrecision", 3);
                     int color = parent.getResources().getColor(R.color.highlight);
                     boolean globalColor = false;
-                    if (xpp.getAttributeValue(null, "color") != null) {
+                    if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {
                         color = getColorAttribute("color", parent.getResources().getColor(R.color.highlight));
                         globalColor = true;
                     }
@@ -2337,7 +2337,7 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, IOException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "set": //An export set. These just group some dataBuffers to be exported as a set
-                    DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
+                    DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "name")); //Create the set with the given name
                     (new setBlockParser(xpp, experiment, parent, set)).process(); //Parse the information within
                     experiment.exporter.addSet(set); //Add the set
                 break;
@@ -2366,7 +2366,7 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
                 case "data": //Add this data buffer to the set
-                    String name = xpp.getAttributeValue(null, "name");
+                    String name = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "name");
                     String src = getText();
                     if (experiment.getBuffer(src) != null)
                         set.addSource(name, src);
@@ -2411,6 +2411,7 @@ public abstract class phyphoxFile {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
 
                 XmlPullParser xpp = Xml.newPullParser();
+                xpp.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
                 xpp.setInput(reader);
 
                 //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
@@ -2418,7 +2419,7 @@ public abstract class phyphoxFile {
                 while (eventType != XmlPullParser.END_DOCUMENT) {
                     if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("phyphox")) {
                         //Phyphox tag. This is what we need to read, but let's check the file version first.
-                        String fileVersion = xpp.getAttributeValue(null, "version");
+                        String fileVersion = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "version");
                         if (fileVersion != null) {
                             //A file version has been given. (If not, some user probably created the file manually. Let's allow this although it should not be encouraged.)
                             //Parse the file version and the version of this class
@@ -2445,7 +2446,7 @@ public abstract class phyphoxFile {
                                 return experiment;
                             }
 
-                            String globalLocale = xpp.getAttributeValue(null, "locale");
+                            String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
                             languageRating = Helper.getLanguageRating(parent.get().getResources(), globalLocale);
                         }
                         (new phyphoxBlockParser(xpp, experiment, parent.get())).process();
