@@ -333,6 +333,8 @@ public class BluetoothScanDialog {
         Boolean phyphoxService;
         Set<UUID> uuids;
         int lastRSSI;
+        boolean oneOfMany;
+        boolean strongestSignal;
 
         BluetoothDeviceInfo (BluetoothDevice device, Boolean supported, Boolean phyphoxService, Set<UUID> uuids, int lastRSSI) {
             this.device = device;
@@ -340,6 +342,8 @@ public class BluetoothScanDialog {
             this.phyphoxService = phyphoxService;
             this.uuids = uuids;
             this.lastRSSI = lastRSSI;
+            this.strongestSignal = true;
+            this.oneOfMany = false;
         }
     }
 
@@ -353,17 +357,27 @@ public class BluetoothScanDialog {
             inflator = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
         public void addDevice(BluetoothDeviceInfo device) {
-            boolean inList = false;
+            BluetoothDeviceInfo foundItem = null;
             for (BluetoothDeviceInfo item : devices) {
                 if (item.device.equals(device.device)) {
-                    inList = true;
-                    item.uuids.addAll(device.uuids);
-                    item.supported |= device.supported;
-                    item.phyphoxService |= device.phyphoxService;
-                    item.lastRSSI = device.lastRSSI;
+                    foundItem = item;
+                } else if (item.device.getName().equals(device.device.getName())) {
+                    item.oneOfMany = true;
+                    device.oneOfMany = true;
+                    if (item.lastRSSI > device.lastRSSI) {
+                        device.strongestSignal = false;
+                    } else {
+                        item.strongestSignal = false;
+                    }
                 }
             }
-            if (!inList)
+            if (foundItem != null) {
+                foundItem.uuids.addAll(device.uuids);
+                foundItem.supported |= device.supported;
+                foundItem.phyphoxService |= device.phyphoxService;
+                foundItem.lastRSSI = device.lastRSSI;
+                foundItem.strongestSignal = device.strongestSignal;
+            } else
                 devices.add(device);
         }
         public BluetoothDeviceInfo getDevice(int position) {
@@ -411,7 +425,7 @@ public class BluetoothScanDialog {
                 subViews.notSupported.setVisibility(View.VISIBLE);
             }
 
-            int color = deviceInfo.supported || deviceInfo.phyphoxService ? ctx.getResources().getColor(R.color.main) : ctx.getResources().getColor(R.color.mainDisabled);
+            int color = deviceInfo.supported || deviceInfo.phyphoxService ? (deviceInfo.oneOfMany && deviceInfo.strongestSignal ? ctx.getResources().getColor(R.color.highlight) : ctx.getResources().getColor(R.color.main)) : ctx.getResources().getColor(R.color.mainDisabled);
             subViews.deviceName.setTextColor(color);
 
             if (deviceInfo.lastRSSI > -30)
