@@ -1,3 +1,178 @@
+commit 700745cdbb34e964e1abda86183809fd8dd95796
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Thu May 24 08:00:45 2018 -0400
+
+    Bump FFTW_MINOR_VERSION for fftw-3.3.8
+
+commit 902d0982522cdf6f0acd60f01f59203824e8e6f3
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Thu May 24 07:43:02 2018 -0400
+
+    update NEWS
+
+commit 41b0d9eff394891ba3327b9062811d48677bb411
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Thu May 24 07:35:36 2018 -0400
+
+    CFLAGS: don't use -ffast-math
+    
+    -ffast-math is a relic from 1999 when it was kind of necessary for
+    full use of FMA on powerpc.  Nowadays it is just a liability.  For
+    example, 'gcc-8 -ffast-math' ignores the disctintion between +0 and
+    -0, thus breaking the avx and avx2 implementations in fftw-3.7.
+
+commit 19eeeca592f63413698f23dd02b9961f22581803
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Thu May 24 07:29:00 2018 -0400
+
+    Fixes for gcc-8
+    
+    It looks like 'gcc-8 -ffast-math' does honor the distinction between
+    +0.0 and -0.0 in floating-point constants.  I suppose that technically
+    -ffast-math has the right to do so.
+    
+    For good measure, this patch encodes such constants as their explicit
+    binary representation.  A separate patch will disable -ffast-math.
+
+commit bf478afbf2367df0f38c77f31d1f912aeeb82585
+Author: Miklos Espak <miklos.espak@motilent.co.uk>
+Date:   Thu Apr 26 18:31:57 2018 +0100
+
+    Define include directory for installed targets (#141)
+
+commit ab888adf510338c03ea8ac49b4aab91fb57f1479
+Author: Steven G. Johnson <stevenj@mit.edu>
+Date:   Sat Apr 14 11:40:39 2018 -0400
+
+    don't need both identifier and name fields
+
+commit 2b999c600c58c78b8acb78c3352b02d9df6f6e60
+Author: Steven G. Johnson <stevenj@alum.mit.edu>
+Date:   Fri Apr 13 08:43:35 2018 -0400
+
+    JSON doesn't like trailing commas
+
+commit 92eee8bbc4252c871aa870d2dce88eb98d0c7d18
+Author: Steven G. Johnson <stevenj@alum.mit.edu>
+Date:   Fri Apr 13 08:38:50 2018 -0400
+
+    list both C and OCaml (as explained in codemeta/codemeta#181)
+
+commit 35e5609f17e212bf1c40da9b2ebe66784ad37052
+Author: Steven G. Johnson <stevenj@alum.mit.edu>
+Date:   Thu Apr 12 12:01:15 2018 -0400
+
+    add codemeta file
+
+commit eba07c46b5d2f7824d293ab59aa5c29a25034963
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Mon Feb 19 09:30:29 2018 -0500
+
+    Call _mm256_zeroupper() when leaving avx512 code
+    
+    Carsten Steger says:
+    
+       simd-avx512.h defines VLEAVE as nothing in FFTW 3.3.7.  However, the
+       current Intel® 64 and IA-32 Architectures Optimization Reference Manual,
+       chapter 15.18, recommends the following:
+       - When you have to mix group B instructions with Intel SSE instructions,
+         or you suspect that such a mixture might occur, use the VZEROUPPER
+         instruction whenever a transition is expected.
+       - Add VZEROUPPER after group B instructions were executed and before any
+         function call that might lead to Intel SSE instruction execution.
+       - Add VZEROUPPER at the end of any function that uses group B instructions.
+       - Add VZEROUPPER before thread creation if not already in a clean state
+         so that the thread does not inherit Dirty Upper State.
+       (Group B are instruction types that modify bits 128-511 of vector
+       registers 0-15.)
+    
+       Therefore, I believe it would be prudent to define VLEAVE as
+       _mm256_zeroupper in simd-avx512.h (see the attached patch).
+    
+    At https://software.intel.com/en-us/forums/intel-isa-extensions/topic/704023
+    Mark Charney says:
+    
+       To be clear, we very much still recommend using VZEROUPPER on
+       Skylake. Even though it does not have the same penalties as earlier
+       designs in that family for mixing AVX and SSE code, we definitely
+       recommend using VZEROUPPER on Skylake.
+    
+       Yes it would obviously be better if there were one solution.  For
+       code that has to run on both families, the "common code" solution
+       is to use the Xeon guidelines.
+    
+    If Mark Charney recommends VZEROUPPER, that's good enough for me.
+
+commit b267008613d082975b108252ed596ba0916ffa31
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Wed Nov 22 12:54:18 2017 -0500
+
+    fftw3-mpi.f03 should be regenerated when Makefile changes
+
+commit 708b202fd593cf1002cf97dce0863e2a438e3720
+Merge: 2e0cfdda 8ba34c40
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Mon Nov 20 09:37:17 2017 -0500
+
+    Merge pull request #113 from xantares/mingw
+    
+    CMake enhancements
+
+commit 2e0cfddacacccc8a1e6e679c5e3fa81fb0219bda
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Mon Nov 20 07:07:30 2017 -0500
+
+    Attempt to strengthen language in README.md
+
+commit 8ba34c40fef38f661c9c413781990a7c021ba22b
+Author: Michel Zou <xantares09@hotmail.com>
+Date:   Thu Nov 9 22:33:51 2017 +0100
+
+    Preliminary Fortran support
+
+commit bd753a7679ecca2799640e7c8ced6f1f784f1b51
+Author: Michel Zou <xantares09@hotmail.com>
+Date:   Mon Nov 6 23:00:29 2017 +0100
+
+    CMake MinGW fixes
+    
+    Mostly fixes the SSE2 macro in config.h, otherwise minor detection fixes
+
+commit da5372a175bcb09578359960869c76da74c9fda3
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Tue Oct 31 20:21:17 2017 -0400
+
+    EXTRA_DIST += README-perfcnt.md
+
+commit 1b64d9269254e9d0a0f0b088e5eceb0db92d531f
+Merge: b5ccc557 2be183c3
+Author: Matteo Frigo <athena@fftw.org>
+Date:   Tue Oct 31 20:19:13 2017 -0400
+
+    Merge pull request #112 from alexeicolin/PR--armv7-pmccntr-counter-and-docs
+    
+    Pr  armv7 pmccntr counter and docs
+
+commit 2be183c3a44d58aaa11909ba8882310fb44d598c
+Author: Alexei Colin <ac@alexeicolin.com>
+Date:   Tue Oct 31 23:34:38 2017 +0000
+
+    perf counters: name ARMv8 PMCCNTR_EL0 explicitly
+    
+    For consistency with the rest.
+
+commit 504ece7f8ffc60c2a03b28d977e9825230052d48
+Author: Alexei Colin <ac@alexeicolin.com>
+Date:   Tue Oct 31 23:28:48 2017 +0000
+
+    perf counters: add PMCCNTR for ARMv7 and add docs
+    
+    The existing armv7 counter (CNTVCT) does need enabling from kernel mode (so
+    updated the configure help), and the enable bit is different from the PMU
+    enable bit (described in the new docs).
+    
+    Tested on XU4: printed the returned counter values and they look reasonable.
+
 commit b5ccc557fd2e57bfc955f0db9b5182e92f9cb55c
 Author: Matteo Frigo <athena@fftw.org>
 Date:   Sun Oct 29 08:13:04 2017 -0400
