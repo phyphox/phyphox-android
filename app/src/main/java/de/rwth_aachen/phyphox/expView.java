@@ -10,7 +10,6 @@ import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -18,9 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 

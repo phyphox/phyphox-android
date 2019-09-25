@@ -5,14 +5,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.os.Build;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -33,9 +26,10 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
 

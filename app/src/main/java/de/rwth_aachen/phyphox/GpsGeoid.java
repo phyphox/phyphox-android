@@ -2,11 +2,7 @@ package de.rwth_aachen.phyphox;
 
 //This is a simplified port of the geoid correction code found in the GeographicLib (https://geographiclib.sourceforge.io/)
 
-import android.util.Log;
-
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
 public class GpsGeoid {
     double offset = 0.0;
