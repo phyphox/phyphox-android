@@ -13,7 +13,7 @@ android {
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
         versionCode 1010301 //1.01.03-01
 
-        resConfigs "en", "b+sr+Latn", "cs", "de", "el", "es", "fa", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sl", "sr", "tr", "vi", "zh-rCN", "zh-rTW"
+        resConfigs "en", "cs", "de", "el", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
             useSupportLibrary = true
         }
