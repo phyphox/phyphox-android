@@ -2,8 +2,6 @@ package de.rwth_aachen.phyphox;
 
 import java.io.Serializable;
 import java.util.Iterator;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 //dataInput wraps all data-containers (currently only dataBuffer) and constant values as possible
 // inputs. This allows analysis modules to access constant values as if they were buffers.

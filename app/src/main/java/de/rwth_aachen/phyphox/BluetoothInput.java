@@ -18,8 +18,6 @@ import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
-import static java.lang.Math.pow;
-
 
 /**
  * The BluetoothInput class encapsulates an input to Bluetooth devices.

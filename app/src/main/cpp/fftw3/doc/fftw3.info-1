@@ -1,6 +1,6 @@
 This is fftw3.info, produced by makeinfo version 6.3 from fftw3.texi.
 
-This manual is for FFTW (version 3.3.7, 29 October 2017).
+This manual is for FFTW (version 3.3.8, 24 May 2018).
 
    Copyright (C) 2003 Matteo Frigo.
 
@@ -32,7 +32,7 @@ FFTW User Manual
 
 Welcome to FFTW, the Fastest Fourier Transform in the West.  FFTW is a
 collection of fast C routines to compute the discrete Fourier transform.
-This manual documents FFTW version 3.3.7.
+This manual documents FFTW version 3.3.8.
 
 * Menu:
 
@@ -57,7 +57,7 @@ File: fftw3.info,  Node: Introduction,  Next: Tutorial,  Prev: Top,  Up: Top
 1 Introduction
 **************
 
-This manual documents version 3.3.7 of FFTW, the _Fastest Fourier
+This manual documents version 3.3.8 of FFTW, the _Fastest Fourier
 Transform in the West_.  FFTW is a comprehensive collection of fast C
 routines for computing the discrete Fourier transform (DFT) and various
 special cases thereof.
