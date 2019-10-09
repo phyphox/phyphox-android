@@ -542,7 +542,13 @@ public class expView implements Serializable{
         //</div>
         protected String createViewHTML(){
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;color:#"+c+"\" class=\"infoElement adjustableColor\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"" +
+                        "font-size:"+this.labelSize*size/.4*0.85+"%;" +
+                        "color:#"+c+";" +
+                        "font-weight:"+((typeface & Typeface.BOLD) > 0 ? "bold" : "normal")+";" +
+                        "font-style:"+((typeface & Typeface.ITALIC) > 0 ? "italic" : "normal")+";" +
+                        "text-align:"+(gravity == Gravity.END ? "end" : (gravity == Gravity.CENTER ? "center" : "start"))+";" +
+                        "\" class=\"infoElement adjustableColor\" id=\"element"+htmlID+"\">" +
                     "<p>"+this.label+"</p>" +
                     "</div>";
         }
