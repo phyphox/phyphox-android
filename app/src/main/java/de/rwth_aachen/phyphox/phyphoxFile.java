@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 import android.util.Xml;
+import android.view.Gravity;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -1116,8 +1117,19 @@ public abstract class phyphoxFile {
                 }
                 case "info": { //An info element just shows some text
                     int color = getColorAttribute("color", parent.getResources().getColor(R.color.mainExp));
+                    boolean bold = getBooleanAttribute("bold", false);
+                    boolean italic = getBooleanAttribute("italic", false);
+                    String gravityString = getStringAttribute("align");
+                    int gravity = Gravity.START;
+                    if (gravityString != null && gravityString.equals("right"))
+                        gravity = Gravity.END;
+                    else if (gravityString != null && gravityString.equals("center"))
+                        gravity = Gravity.CENTER;
+                    float size = (float)getDoubleAttribute("size", 1.0);
+
                     expView.infoElement infoe = newView.new infoElement(label, null, null, parent.getResources()); //No inputs, just the label and resources
                     infoe.setColor(color);
+                    infoe.setFormatting(bold, italic, gravity, size);
                     newView.elements.add(infoe);
                     break;
                 }

@@ -475,6 +475,9 @@ public class expView implements Serializable{
     public class infoElement extends expViewElement implements Serializable {
 
         private int color;
+        private int gravity = Gravity.START;
+        private int typeface = Typeface.NORMAL;
+        private float size = 1.0f;
 
         //Constructor takes the same arguments as the expViewElement constructor
         infoElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -484,6 +487,19 @@ public class expView implements Serializable{
 
         protected void setColor(int c) {
             this.color = c;
+        }
+
+        public void setFormatting(boolean bold, boolean italic, int gravity, float size) {
+            this.gravity = gravity;
+            if (bold && italic)
+                typeface = Typeface.BOLD_ITALIC;
+            else if (bold)
+                typeface = Typeface.BOLD;
+            else if (italic)
+                typeface = Typeface.ITALIC;
+            else
+                typeface = Typeface.NORMAL;
+            this.size = size;
         }
 
         @Override
@@ -506,8 +522,9 @@ public class expView implements Serializable{
 //            lllp.setMargins(0, margin, 0, margin);
             textView.setLayoutParams(lllp);
             textView.setText(this.label);
-            textView.setGravity(Gravity.LEFT);
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.info_element_font));
+            textView.setGravity(gravity);
+            textView.setTypeface(null, typeface);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.info_element_font) * size);
 
             textView.setTextColor(color);
 
@@ -535,6 +552,7 @@ public class expView implements Serializable{
     //separatorElement implements a simple spacing, optionally showing line
     public class separatorElement extends expViewElement implements Serializable {
         private int color = 0;
+
         private float height = 0.1f;
 
         //Label is not used
