@@ -1109,7 +1109,7 @@ public class ExperimentList extends AppCompatActivity {
                     showBluetoothScanError(getResources().getString(R.string.bt_exception_disabled), true, false);
                     return null;
                 }
-                BluetoothScanDialog bsd = new BluetoothScanDialog(parent.get(), parent.get(), btAdapter);
+                BluetoothScanDialog bsd = new BluetoothScanDialog(false, parent.get(), parent.get(), btAdapter);
                 return bsd.getBluetoothDevice(null, null, bluetoothDeviceNameList.keySet(), bluetoothDeviceUUIDList.keySet(), null);
             }
         }

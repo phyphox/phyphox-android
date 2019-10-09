@@ -1520,6 +1520,7 @@ public abstract class phyphoxFile {
                                     throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
                                 }
                             }
+                            Boolean autoConnect = getBooleanAttribute("autoConnect", false);
 
                             String modeStr = getStringAttribute("mode");
                             if (modeStr == null)
@@ -1552,7 +1553,7 @@ public abstract class phyphoxFile {
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
-                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
+                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
                                 experiment.bluetoothInputs.add(b);
                             } catch (phyphoxFileException e) {
                                 throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
@@ -2310,11 +2311,12 @@ public abstract class phyphoxFile {
                                 throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
                             }
                         }
+                        Boolean autoConnect = getBooleanAttribute("autoConnect", false);
 
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
-                        BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, parent, parent, inputs, characteristics);
+                        BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, autoConnect, parent, parent, inputs, characteristics);
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;

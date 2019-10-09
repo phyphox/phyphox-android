@@ -69,6 +69,7 @@ public class BluetoothInput extends Bluetooth {
      * @param deviceName       name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress    address of the device (can be null if deviceName is not null)
      * @param uuidFilter       Optional filter to identify devices by an advertised service or characteristic
+     * @param autoConnect     If true, phyphox will not show a scan dialog and connect with the first matching device instead
      * @param mode             mode that should be used (can be "poll", "notification" or "indication")
      * @param subscribeOnStart Only subscribe to notifications when the measurement starts instead of after establishing a connection
      * @param rate             rate in Hz (only for mode "poll")
@@ -78,10 +79,10 @@ public class BluetoothInput extends Bluetooth {
      * @param characteristics  list of all characteristics the object should be able to operate on
      * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, double rate, boolean subscribeOnStart, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
+    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, boolean autoConnect, double rate, boolean subscribeOnStart, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
             throws phyphoxFile.phyphoxFileException {
 
-        super(idString, deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
+        super(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics);
 
         this.mode = mode.toLowerCase();
         this.subscribeOnStart = subscribeOnStart;

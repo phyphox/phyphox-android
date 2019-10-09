@@ -66,6 +66,7 @@ public class Bluetooth implements Serializable {
     public String deviceName;
     public String deviceAddress;
     public UUID uuidFilter;
+    public Boolean autoConnect;
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -167,14 +168,16 @@ public class Bluetooth implements Serializable {
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
      * @param uuidFilter      Optional filter to identify a device by an advertised service or characteristic
+     * @param autoConnect     If true, phyphox will not show a scan dialog and connect with the first matching device instead
      * @param context         context
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public Bluetooth(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
+    public Bluetooth(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Boolean autoConnect, Activity activity, Context context, Vector<CharacteristicData> characteristics) {
         this.idString = idString;
         this.deviceName = (deviceName == null ? "" : deviceName);
         this.deviceAddress = deviceAddress;
         this.uuidFilter = uuidFilter;
+        this.autoConnect = autoConnect;
 
         this.activity = activity;
         this.context = context;
@@ -269,7 +272,7 @@ public class Bluetooth implements Serializable {
         if (btDevice == null) {
             //No matching device found - Now we have to scan for unpaired devices and present possible matches to the user if there are more than one.
 
-            BluetoothScanDialog bsd = new BluetoothScanDialog(activity, context, btAdapter);
+            BluetoothScanDialog bsd = new BluetoothScanDialog(autoConnect, activity, context, btAdapter);
             if (!bsd.scanPermission())
                 return;
             if (!bsd.locationEnabled())

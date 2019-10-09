@@ -54,7 +54,10 @@ public class BluetoothScanDialog {
     private Set<String> supportedNameFilter;
     private Set<UUID> supportedUUIDFilter;
 
-    BluetoothScanDialog(final Activity activity, final Context context, BluetoothAdapter bta) {
+    private Boolean autoConnect;
+
+    BluetoothScanDialog(Boolean autoConnect, final Activity activity, final Context context, BluetoothAdapter bta) {
+        this.autoConnect = autoConnect;
         this.parentActivity = activity;
         this.ctx = context;
         this.bta = bta;
@@ -64,45 +67,36 @@ public class BluetoothScanDialog {
             public void run() {
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-                View view = inflater.inflate(R.layout.bluetooth_scan_dialog, null);
-                builder.setView(view)
-                       .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                           @Override
-                           public void onClick(DialogInterface dialog, int id) {
-                               dialog.dismiss();
-                           }
+                if (!autoConnect) {
+                    LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-                       })
-                        .setPositiveButton(R.string.bt_more_info_link_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Uri uri = Uri.parse(context.getString(R.string.bt_more_info_link_url));
-                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                if (intent.resolveActivity(activity.getPackageManager()) != null) {
-                                    activity.startActivity(intent);
+                    View view = inflater.inflate(R.layout.bluetooth_scan_dialog, null);
+                    builder.setView(view)
+                            .setPositiveButton(R.string.bt_more_info_link_button, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Uri uri = Uri.parse(context.getString(R.string.bt_more_info_link_url));
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                    if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                                        activity.startActivity(intent);
+                                    }
+                                    dialog.dismiss();
                                 }
-                                dialog.dismiss();
-                            }
-                        });
-                dialog = builder.create();
+                            });
+                    title = (TextView) view.findViewById(R.id.bluetooth_scan_dialog_title);
+                    list = (ListView) view.findViewById(R.id.bluetooth_scan_dialog_items);
+                }
+                builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                   @Override
+                   public void onClick(DialogInterface dialog, int id) {
+                       dialog.dismiss();
+                   }
 
-                title = (TextView) view.findViewById(R.id.bluetooth_scan_dialog_title);
-                list = (ListView) view.findViewById(R.id.bluetooth_scan_dialog_items);
-                listAdapter = new DeviceListAdapter();
-                list.setAdapter(listAdapter);
-                list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                        if (!listAdapter.getDevice(pos).supported && !listAdapter.getDevice(pos).phyphoxService)
-                            return;
-                        selectedDevice = listAdapter.getDevice(pos);
-                        dialog.dismiss();
-                    }
                 });
 
-                dialog.setTitle(context.getResources().getString(R.string.bt_pick_device));
+                dialog = builder.create();
+
                 dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
@@ -111,99 +105,126 @@ public class BluetoothScanDialog {
                         }
                     }
                 });
+
+                if (!autoConnect) {
+                    listAdapter = new DeviceListAdapter();
+                    list.setAdapter(listAdapter);
+                    list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+                            if (!listAdapter.getDevice(pos).supported && !listAdapter.getDevice(pos).phyphoxService)
+                                return;
+                            selectedDevice = listAdapter.getDevice(pos);
+                            dialog.dismiss();
+                        }
+                    });
+
+                    dialog.setTitle(context.getResources().getString(R.string.bt_pick_device));
+                }
             }
         });
     }
 
     private BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
-                @Override
-                public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
-                    final Set<UUID> uuids = new HashSet<>();
+            @Override
+            public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
+                final Set<UUID> uuids = new HashSet<>();
 
-                    //Search scanRecord for UUIDs
-                    int index = 0;
-                    while (index < scanRecord.length - 2) {
-                        int length = scanRecord[index];
-                        if (index + length >= scanRecord.length) {
-                            Log.d("bluetooth", "Malformed scanRecord, length too long.");
-                            break;
-                        }
-                        if (length == 0)
-                            break;
-                        int type = scanRecord[index+1];
+                //Search scanRecord for UUIDs
+                int index = 0;
+                while (index < scanRecord.length - 2) {
+                    int length = scanRecord[index];
+                    if (index + length >= scanRecord.length) {
+                        Log.d("bluetooth", "Malformed scanRecord, length too long.");
+                        break;
+                    }
+                    if (length == 0)
+                        break;
+                    int type = scanRecord[index+1];
 
-                        if (type == 0x02 || type == 0x03) {
-                            for (int subindex = 0; subindex < length-1; subindex += 2) {
-                                String uuid16str = String.format("%02x%02x", scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
-                                UUID uuid = UUID.fromString(Bluetooth.baseUUID.toString().substring(0, 4) + uuid16str + Bluetooth.baseUUID.toString().substring(8));
-                                uuids.add(uuid);
+                    if (type == 0x02 || type == 0x03) {
+                        for (int subindex = 0; subindex < length-1; subindex += 2) {
+                            String uuid16str = String.format("%02x%02x", scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
+                            UUID uuid = UUID.fromString(Bluetooth.baseUUID.toString().substring(0, 4) + uuid16str + Bluetooth.baseUUID.toString().substring(8));
+                            uuids.add(uuid);
 //                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 16bit: " + uuid.toString());
-                            }
-                        } else if (type == 0x04 || type == 0x05) {
-                            for (int subindex = 0; subindex < length-1; subindex += 4) {
-                                String uuid32str = String.format("%02x%02x%02x%02x", scanRecord[index + subindex + 2 + 3], scanRecord[index + subindex + 2 + 2], scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
-                                UUID uuid = UUID.fromString(uuid32str + Bluetooth.baseUUID.toString().substring(8));
-                                uuids.add(uuid);
+                        }
+                    } else if (type == 0x04 || type == 0x05) {
+                        for (int subindex = 0; subindex < length-1; subindex += 4) {
+                            String uuid32str = String.format("%02x%02x%02x%02x", scanRecord[index + subindex + 2 + 3], scanRecord[index + subindex + 2 + 2], scanRecord[index + subindex + 2 + 1], scanRecord[index + subindex + 2]);
+                            UUID uuid = UUID.fromString(uuid32str + Bluetooth.baseUUID.toString().substring(8));
+                            uuids.add(uuid);
 //                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 32bit: " + uuid.toString());
+                        }
+                    } else if (length == 17 && (type == 0x06 || type == 0x07)) {
+                        //128 bit UUIDs
+                        for (int subindex = 0; subindex < length-1; subindex += 16) {
+
+                            long leastSignificant = 0;
+                            for (int i = 7; i >= 0; i--) {
+                                leastSignificant <<= 8;
+                                leastSignificant |= (scanRecord[index + subindex + 2 + i] & 0xFF);
                             }
-                        } else if (length == 17 && (type == 0x06 || type == 0x07)) {
-                            //128 bit UUIDs
-                            for (int subindex = 0; subindex < length-1; subindex += 16) {
 
-                                long leastSignificant = 0;
-                                for (int i = 7; i >= 0; i--) {
-                                    leastSignificant <<= 8;
-                                    leastSignificant |= (scanRecord[index + subindex + 2 + i] & 0xFF);
-                                }
+                            long mostSignificant = 0;
+                            for (int i = 7; i >= 0; i--) {
+                                mostSignificant <<= 8;
+                                mostSignificant |= (scanRecord[index + subindex + 2 + 8 + i] & 0xFF);
+                            }
 
-                                long mostSignificant = 0;
-                                for (int i = 7; i >= 0; i--) {
-                                    mostSignificant <<= 8;
-                                    mostSignificant |= (scanRecord[index + subindex + 2 + 8 + i] & 0xFF);
-                                }
-
-                                uuids.add(new UUID(mostSignificant, leastSignificant));
+                            uuids.add(new UUID(mostSignificant, leastSignificant));
 //                                Log.d("bluetooth", "Device advertised: " + (device.getName() != null ? device.getName() : "null") + ", 128bit: " + new UUID(mostSignificant, leastSignificant).toString());
 
-                            }
-                        }
-                        index += length+1;
-                    }
-
-                    if (device.getName() == null || (!(nameFilter == null || nameFilter.isEmpty()) && !device.getName().contains(nameFilter))) {
-                        return;
-                    }
-
-                    if (!(uuidFilter == null) && !uuids.contains(uuidFilter)) {
-                        return;
-                    }
-
-                    boolean isSupported = (supportedNameFilter == null || supportedNameFilter.isEmpty());
-                    if (!isSupported) {
-                        for (String name : supportedNameFilter)
-                            if (device.getName().contains(name)) {
-                                isSupported = true;
-                                break;
-                            }
-                    }
-
-                    if (supportedUUIDFilter != null) {
-                        for (UUID uuid : supportedUUIDFilter) {
-                            isSupported |= uuids.contains(uuid);
                         }
                     }
+                    index += length+1;
+                }
 
-                    final boolean supported = isSupported;
+                if (device.getName() == null || (!(nameFilter == null || nameFilter.isEmpty()) && !device.getName().contains(nameFilter))) {
+                    return;
+                }
 
-                    final boolean phyphoxService = uuids.contains(Bluetooth.phyphoxServiceUUID);
+                if (!(uuidFilter == null) && !uuids.contains(uuidFilter)) {
+                    return;
+                }
 
+                boolean isSupported = (supportedNameFilter == null || supportedNameFilter.isEmpty());
+                if (!isSupported) {
+                    for (String name : supportedNameFilter)
+                        if (device.getName().contains(name)) {
+                            isSupported = true;
+                            break;
+                        }
+                }
+
+                if (supportedUUIDFilter != null) {
+                    for (UUID uuid : supportedUUIDFilter) {
+                        isSupported |= uuids.contains(uuid);
+                    }
+                }
+
+                final boolean supported = isSupported;
+
+                final boolean phyphoxService = uuids.contains(Bluetooth.phyphoxServiceUUID);
+
+                final BluetoothDeviceInfo deviceInfo = new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi);
+
+                if (autoConnect) {
+                    Log.d("TEST", "DEVICE: " + device.getName());
+                    if (supported || phyphoxService) {
+                        Log.d("TEST", "Accepted.");
+                        selectedDevice = deviceInfo;
+                        dialog.dismiss();
+                    }
+                } else {
                     parentActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            listAdapter.addDevice(new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi));
+                            listAdapter.addDevice(deviceInfo);
                             listAdapter.notifyDataSetChanged();
                         }
-                });
+                    });
+                }
             }
         };
 
@@ -298,11 +319,16 @@ public class BluetoothScanDialog {
         parentActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                String notification;
                 if (nameFilter == null || nameFilter.isEmpty()) {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_generic) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : ""));
+                    notification = ctx.getResources().getString(R.string.bt_scanning_generic) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : "");
                 } else {
-                    title.setText(ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + " \"" + ctx.getResources().getString(R.string.bt_scanning_specific2) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : ""));
+                    notification = ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + "\" " + ctx.getResources().getString(R.string.bt_scanning_specific2) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : "");
                 }
+                if (autoConnect)
+                    dialog.setMessage(notification);
+                else
+                    title.setText(notification);
                 dialog.show();
             }
         });
