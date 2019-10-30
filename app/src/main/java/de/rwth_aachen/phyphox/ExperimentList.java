@@ -483,7 +483,7 @@ public class ExperimentList extends AppCompatActivity {
             LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-//            layout.setMargins(res.getDimensionPixelOffset(R.dimen.expElementMargin), 0, res.getDimensionPixelOffset(R.dimen.expElementMargin), res.getDimensionPixelOffset(R.dimen.expElementMargin));
+//            layout.setMargins(context.getDimensionPixelOffset(R.dimen.expElementMargin), 0, context.getDimensionPixelOffset(R.dimen.expElementMargin), context.getDimensionPixelOffset(R.dimen.expElementMargin));
             categoryHeadline.setLayoutParams(layout);
             categoryHeadline.setText(name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
