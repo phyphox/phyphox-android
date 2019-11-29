@@ -1,2 +1,261 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Налаштування</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="graph_tools_pan_and_zoom">Зсув і масштабування</string>
+    <string name="graph_tools_pick">Вибрати дані</string>
+    <string name="graph_tools_more">Інші інструменти</string>
+    <string name="graph_tools_reset">Скинути збільшення</string>
+    <string name="graph_tools_follow">Іти за новими даними</string>
+    <string name="graph_tools_linear_fit">Лінійна модель</string>
+    <string name="graph_tools_export">Експортувати ці дані</string>
+    <string name="graph_tools_log_x">Логарифмічна вісь x</string>
+    <string name="graph_tools_log_y">Логарифмічна вісь y</string>
+
+    <string name="graph_point_label">Точка</string>
+    <string name="graph_slope_label">Нахил</string>
+    <string name="graph_difference_label">Різниця</string>
+    <string name="graph_fit_label">Лінійна модель: y = a x + b</string>
+
+    <string name="applyZoomTitle">Масштабувати</string>
+    <string name="applyZoomExplanation">Виходячи з інтерактивного режиму цього графіку, вирішіть чи зберігати масштабування.</string>
+    <string name="applyZoomAdvanced">Додаткові налаштування</string>
+    <string name="applyZoomApply">Застосувати до…</string>
+
+    <string name="applyZoomReset">Скинути до стандартного</string>
+    <string name="applyZoomKeep">Зберегти вибране</string>
+    <string name="applyZoomFollow">Зберегти і йти за новими даними</string>
+
+    <string name="applyZoomThis">Лише цього графіка</string>
+    <string name="applyZoomSameVariable">Інших графіків: Однакова змінна</string>
+    <string name="applyZoomSameUnit">Інших графіків: Однакова одиниця виміру</string>
+    <string name="applyZoomSameAxis">Інших графіків: Однакова вісь</string>
+
+    <string name="newExperiment">Додати експерименти</string>
+
+    <string name="newExperimentSimple">Додати простий експеримент</string>
+    <string name="newExperimentPhyphoxInfo">Щоб створити складніші експерименти і поділитися ними з колегами, студентами та друзями - завітайте на phyphox.org.</string>
+    <string name="newExperimentInputTitle">Назва</string>
+    <string name="newExperimentInputBufferSize">Розмір буферу (кількість значень,що треба зберегти)</string>
+    <string name="newExperimentInputRate">Частота сенсора (в Гц, 0= максимально можлива)</string>
+    <string name="newExperimentInputSensors">Активні сенсори</string>
+
+    <string name="newExperimentBluetooth">Додати експеримент для пристрою Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Помилка сканування Bluetooth</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Завантаження з пристрою</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">На цьому пристрої знайдено конфігурацію експеримента phyphox. Виберіть \"Завантажити з пристрою\" щоб відкрити її.</string>
+
+    <string name="newExperimentQR">Додати експеримент з QR коду</string>
+
+    <string name="newExperimentQRscan">Скануйте QR код з конфігурацією експеримента.</string>
+    <string name="newExperimentQRErrorTitle">Помилка QR коду.</string>
+    <string name="newExperimentQRNoExperiment">Не знайдено QR код з конфігурацією експерименту.</string>
+    <string name="newExperimentQRcrcMismatch">Щойно відсканований QR код не сумісний з попередніми. Будь-ласка, переконайтеся, що ви скануєте коди для одного і того ж експерименту.</string>
+    <string name="newExperimentQRCodesMissing1">Щойно відсканований QR код є частиною набору з</string>
+    <string name="newExperimentQRCodesMissing2">кодів. Натисніть \"Продовжити\" щоб відсканувати інші. Залишилось кодів:</string>
+    <string name="newExperimentQRBadCRC">Невірна контрольна сума. Це означає, що або QR код пошкоджено, або відбулась помилка під час сканування.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Помилка експерименту Bluetooth.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Дані експерименту пошкоджено при передачі.</string>
+
+    <string name="generalErrorDialog">Сталася помилка.</string>
+
+    <string name="help">Допомога та інформація</string>
+    <string name="experimentsPhyphoxOrg">Ідеї для експериментів і інструкції</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Часті питання</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Інформація про віддалений контроль</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Мови</string>
+    <string name="translationText">Phyphox використовує першу мову з Вашого списку системних мов. Щоб змінити Ваші налаштування Андроїду, натисніть на \"Налаштування\" нижче. Щоб дізнатися, які мови доступні і як ви можете допомогти, виберіть \"Відвідати сторінку\".</string>
+    <string name="translationToSettings">Налаштування</string>
+    <string name="translationToWebsite">Відвідати сторінку</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+
+    <string name="deviceInfo">Інформація про пристрій</string>
+    <string name="copyToClipboard">Скопіювати в буфер обміну</string>
+    <string name="deviceInfoCopied">Інформацію про пристрій скопійовано до буфера обміну.</string>
+
+    <string name="warning">Попередження</string>
+    <string name="donotshowagain">Більше не показувати</string>
+    <string name="damageWarning">"Будь-ласка, дбайливо поводьтеся з Вашим телефоном під час експериментів.  Ні в якому разі не дозволяйте йому падати на тверді поверхні з висоти і не піддавайте його впливу сильних магнітних полів. Автори phyphox не несуть відповідальності за будь-які пошкодження Вашого телефону."</string>
+
+    <string name="info">Інформація</string>
+    <string name="credits">Подяки</string>
+    <string name="creditsRWTH">phyphox було створено в Інституті Фізики №2 Університету Аахена.</string>
+    <string name="creditsNames">Розробка і концепт:
+\n Dr. Sebastian Staacks
+\n Концепт:
+\n Prof. Christoph Stampfer
+\n Програмування:
+\n Dominik Dorsel
+\n Jonas Gessner
+\n Camilla Lummerzheim</string>
+    <string name="gpl">Phyphox це програма з відкритим кодом, що розповсюджується згідно GNU General Public Licence. Для додаткової інформації і отримання доступу до коду відвідайте http://phyphox.org. Ти не менше, назви \"phyphox\" і \"RWTH Aachen\" є зареєстрованими торговими марками.</string>
+    <string name="creditsLibs">Веб-інтерфейс для віддаленого доступу використовує JavaScript бібліотеку\"Chart.js\" (http://chartjs.org), що доступна згідно MIT ліцензії. Для перетворень Фур\'є, ми використовуємо бібліотеку FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, що доступна згідно GNU General Public Licence (версії 2 чи вище).</string>
+    <string name="sensorLinearAcceleration">Лінійне прискорення</string>
+    <string name="sensorLight">Освітлення</string>
+    <string name="sensorGyroscope">Гіроскоп</string>
+    <string name="sensorAccelerometer">Акселерометр</string>
+    <string name="sensorMagneticField">Магнітне поле</string>
+    <string name="sensorPressure">Тиск</string>
+    <string name="sensorTemperature">Температура</string>
+    <string name="sensorHumidity">Вологість</string>
+    <string name="sensorProximity">Наближення</string>
+    <string name="sensorVendor">Сенсори виробника</string>
+
+    <string name="vendorSensorTitle">Сенсор виробника</string>
+    <string name="vendorSensorWarning1">Сенсор</string>
+    <string name="vendorSensorWarning2">"не повідомляє коректно про свій тип. Ми лише  вгадуємо дію цього сенсору виробника з його назви, тому, можливо, він не буде коректно працювати."</string>
+
+    <string name="location">Розташування</string>
+
+    <string name="sensorNotAvailableWarningTitle">Сенсор не доступний.</string>
+    <string name="sensorNotAvailableWarningText1">Сенсор</string>
+    <string name="sensorNotAvailableWarningText2">не доступний. Зазвичай це означає, що Ваш пристрій просто не має сенсора цього типу.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Додаткова інформація</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="tryagain">Ще раз</string>
+    <string name="doContinue">Продовжити</string>
+    <string name="close">Закрити</string>
+    <string name="next">Далі</string>
+    <string name="cancel">Відміна</string>
+    <string name="unknown">невідомий сенсор</string>
+
+    <string name="rename">Перемейнувати</string>
+    <string name="delete">Видалити</string>
+    <string name="confirmDelete">Хочете видалити експеримент з Вашої колекції?</string>
+    <string name="confirmDeleteTitle">Точно видалити?</string>
+
+    <string name="stop">Стоп</string>
+    <string name="start">Старт</string>
+    <string name="clear_data">Стерти дані</string>
+    <string name="clear_data_question">Стерти записані дані?</string>
+    <string name="clear">Очистити</string>
+    <string name="timed_stop">Зупинити контроль часу</string>
+    <string name="timed_start">Розпочати контроль часу</string>
+
+    <string name="loadingTitle">Завантаження</string>
+    <string name="loadingText">Експеримент завантажується…</string>
+    <string name="loadingBluetoothConnectionText">Під\'єднання до пристрою Bluetooth…</string>
+
+    <string name="timedRunDialogTitle">Контроль часу</string>
+    <string name="timedRunStartDelay">Затримка початку (сек)</string>
+    <string name="timedRunStopDelay">Тривалість експерименту (сек)</string>
+    <string name="enableTimedRun">Використовувати контроль часу</string>
+
+    <string name="export">Експорт даних</string>
+    <string name="export_empty">Конфігурація цього експерименту не передбачає експорт даних. Якщо це помилка, зв\'яжіться з розробником QR коду чи конфігураційного файлу.</string>
+    <string name="export_subject">Дані з phyphox</string>
+    <string name="export_pick_share">Виберіть метод експорту</string>
+
+    <string name="share">Поділитись знімком екрану</string>
+    <string name="share_subject">Знімок екрану з phyphox</string>
+    <string name="share_pick_share">Поділитися через</string>
+
+    <string name="remoteServer">Дозволити віддалений доступ</string>
+    <string name="remoteServerWarning">Ви збираєтеся дозволити віддалений доступ до отриманих Вами даних. Робіть це тільки у мережах, яким Ви довіряєте! Майте на увазі, що прямий доступ між приладами може бути неможливим у багатьох корпоративних та університетських мережах.
+\n
+\nДля кращої безпеки і продуктивності слід під\'єднуватись до Вашого приладу через мобільну точку доступу.
+\n
+\nНатиснувши ok, ви отримаєте доступ до Ваших вимірів з будь-якого браузера у тій самій мережі.</string>
+    <string name="remoteServerWarningTitle">Попередження щодо безпеки!</string>
+    <string name="remoteServerNoNetwork">Спочатку необхідно встановити WiFi з\'єднання з віддаленим пристроєм. Будь-ласка, включіть WiFi або створіть мобільну точку доступу.</string>
+    <string name="remoteServerActive">Віддалений доступ активовано. Отримайте доступ до цього експерименту за адресою: 
+\n%1$s</string>
+    <string name="hotspotSettings">Налаштування точки доступу</string>
+
+    <string name="remoteColorMapWarning">"Кольоровий графік у інтерфейсі віддаленого доступу є наближенням. На відміну від графіків у мобільному застосунку,  віддалений інтерфейс в даний час не може правильно обробити нееквідистантні дані чи логарифмічні осі x та y. Тому дані зі змінними інтервалами можуть відображатися у неправильних позиціях."</string>
+
+    <string name="calibrated_magnetometer">Використовувати калібрований магнетометр</string>
+    <string name="force_gnss">Тільки супутникові дані</string>
+
+    <string name="switchToPhoneLayout">Вид: Вузький</string>
+    <string name="switchColumns1">Вид: 1 колонка</string>
+    <string name="switchColumns2">Вид: 2 колонки</string>
+    <string name="switchColumns3">Вид: 3 колонки</string>
+    <string name="toggleBrightMode">Світлий режим</string>
+    <string name="fontSize">Розмір шрифта</string>
+
+    <string name="show_description">Інформація про експеримент</string>
+    <string name="save_locally">Додати експеримент до колекції</string>
+    <string name="save_locally_done">Експеримент успішно додано до колекції.</string>
+    <string name="save_locally_message">Цей експеримент було відкрито з віддаленого джерела. Ви хочете додати його до своєї колекції?</string>
+    <string name="save_locally_button">Зберегти до колекції</string>
+    <string name="save_state">Зберегти стан експерименту</string>
+    <string name="save_state_category">Збережені стани експериментів</string>
+    <string name="save_state_message">Ви можете зберегти до Вашої колекції стан цього експерименту включно з Вашими даними або поділитися ним зі сторонньою програмою.</string>
+    <string name="save_state_title">Назва</string>
+    <string name="save_state_save">До колекції</string>
+    <string name="save_state_share">Поділитись</string>
+    <string name="save_state_subject">Стан експерименту від phyphox</string>
+    <string name="save_state_default_title">Виміри</string>
+    <string name="save_state_success">Стан було збережено до твоєї колекції.</string>
+
+    <string name="open_zip_title">Відкриття кількох експериментів</string>
+    <string name="open_zip_dialog_instructions">Цей ресурс містить кілька експериментів. Ви можете або вибрати один з них і, якщо хочете, зберегти його до Вашої колекції, або натиснути на кнопку нижче щоб зберегти їх всіх до Вашої колекції відразу.</string>
+    <string name="open_save_all">Зберегти все</string>
+
+    <string name="open_bluetooth_assets_title">Експерименти для пристрою Bluetooth</string>
+    <string name="open_bluetooth_assets">Наступні експерименти від phyphox доступні для Вашого пристрою. Можете просто відкрити і використовувати їх або додати їх до колекції для зручного доступу до них з головного меню.</string>
+
+    <string name="timedRun">Контроль часу</string>
+
+    <string name="pick_exportSets">Виберіть набір даних для експорту.</string>
+    <string name="pick_exportFormat">Виберіть формат даних.</string>
+
+    <string name="noDrawableData">Немає даних для відображення.</string>
+
+    <string name="categoryNewExperiment">Прості експерименти користувача</string>
+    <string name="categoryRawSensor">Первинні дані сенсорів</string>
+
+    <string name="experimentinfo_hint">Загляньте в інформацію про експеримент, щоб дізнатись про те, як ним користуватись.</string>
+    <string name="start_hint">Торкніться трикутника щоб розпочати експеримент.</string>
+
+    <string name="bluetooth">Bluetooth Low Energy</string>
+    <string name="bt_android_version">Bluetooth Low Energy не підтримується на Android версії нижче ніж 4.3.</string>
+
+    <string name="bt_pick_device">Будь-ласка, виберіть пристрій.</string>
+    <string name="bt_scanning_generic">Пошук пристроїв Bluetooth…</string>
+    <string name="bt_scanning_specific1">Пошук пристроїв Bluetooth з</string>
+    <string name="bt_scanning_specific2">в їх назві…</string>
+    <string name="bt_device_not_supported">Немає доступних експериментів.</string>
+
+    <string name="bt_location_explanation">Android вимагає дозвіл доступу до розташування для пошуку Bluetooth пристроїв, так як результат може бути використаний для отримання інформації про розташування. Зараз ви отримаєте запит на цей дозвіл. Необхідно надати його для проведення сканування пристроїв Bluetooth.</string>
+
+    <string name="bt_exception_uuid">Характеристика з UUID</string>
+    <string name="bt_exception_uuid2">не знайдена.</string>
+    <string name="bt_exception_disabled">Bluetooth деактивовано. Будь-ласка, включіть bluetooth та спробуйте знову.</string>
+    <string name="bt_exception_connection">Не вдається відкрити з\'єднання Bluetooth.</string>
+    <string name="bt_exception_notfound">Bluetooth пристрій не знайдено.</string>
+    <string name="bt_exception_services">Не вдається знайти сервіс.</string>
+    <string name="bt_exception_device">Помилка для пристрою з</string>
+    <string name="bt_exception_device_address">адресою</string>
+    <string name="bt_exception_device_name">назвою</string>
+    <string name="bt_exception_rate">Невірне значення для rate.</string>
+    <string name="bt_exception_notification">Повідомлення для характеристики з UUID</string>
+    <string name="bt_exception_notification_enable">не може бути активоване.</string>
+    <string name="bt_exception_notification_disable">не може бути знову деактивоване.</string>
+    <string name="bt_exception_notification_fail_enable">Включення повідомлень для характеристики з UUID</string>
+    <string name="bt_exception_notification_fail">не спрацювало.</string>
+    <string name="bt_exception_config">Значення характеристики</string>
+    <string name="bt_exception_config2">встановити не вдалося.</string>
+    <string name="bt_exception_no_connection">Немає зв\'язку з пристроєм Bluetooth. Неможливо розпочати експеримент.</string>
+    <string name="bt_exception_disconnected">Зв\'язок з пристроєм Bluetooth було втрачено.</string>
+    <string name="bt_default_error_message">Помилка з пристроєм Bluetooth.</string>
+
+    <string name="bt_error_writing">Помилка при запису характеристики з UUID</string>
+    <string name="bt_error_reading">Помилка при зчитуванні характеристики з UUID</string>
+    <string name="bt_error_discovering">Помилка при відкритті сервісів з пристрою Bluetooth.</string>
+    <string name="bt_fail_reading">Невдала операція зчитування.</string>
+    <string name="bt_fail_writing">Невдала операція запису.</string>
+
+    <string name="bt_more_info_link_text">"Якщо Ваш пристрій не підтримується, виберіть \"Інформація\" щоб дізнатись більше про гнучку підтримку  Bluetooth Low Energy в phyphox на нашій веб-сторінці."</string>
+    <string name="bt_more_info_link_button">Інформація</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+</resources>
