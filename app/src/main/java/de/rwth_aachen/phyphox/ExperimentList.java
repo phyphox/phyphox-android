@@ -567,6 +567,10 @@ public class ExperimentList extends AppCompatActivity {
                 return -1;
             if (b.name.equals(res.getString(R.string.save_state_category)))
                 return 1;
+            if (a.name.equals("phyphox.org"))
+                return 1;
+            if (b.name.equals("phyphox.org"))
+                return -1;
             return a.name.toLowerCase().compareTo(b.name.toLowerCase());
         }
     }
