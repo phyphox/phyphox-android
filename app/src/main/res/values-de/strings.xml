@@ -21,8 +21,8 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliothek \"Chart.js\" (http://chartjs.org), welche der MIT Lizenz unterliegt. Für Fourier-Transformationen nutzen wir die Bibliothek FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, welche der GNU General Public Licence (version 2 oder später) unterliegt.</string>
-    <string name="creditsRWTH">Phyphox wurde am 2. Physikalischen Institut der RWTH Aachen entwickelt.</string>
+    <string name="creditsLibs">Das Web-Interface für den Fernzugriff nutzt die JavaScript Bibliothek \"Chart.js\" (http://chartjs.org), welche der MIT Lizenz unterliegt. Für Fourier-Transformationen nutzen wir die Bibliothek FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, welche der GNU General Public Licence (version 2 oder später) unterliegt. Die GPS-Höhe wird über die EGM84-Daten (30\' Auflösung) und einem portierten Algorithmus der GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence) vom WGS84 Ellipsoiden auf den EGM84 Geoiden umgerechnet.</string>
+    <string name="creditsRWTH">Phyphox® wurde am 2. Physikalischen Institut der RWTH Aachen entwickelt.</string>
     <string name="damageWarning">Seien Sie beim Experimentieren vorsichtig, um Ihr Smartphone nicht zu beschädigen. Vermeiden Sie insbesondere, das Gerät auf harte Oberflächen fallen zu lassen oder es starken Magnetfeldern auszusetzen. Die Entwickler dieser App übernehmen keine Verantwortung für Schäden an Ihrem Gerät.</string>
     <string name="delete">Löschen</string>
     <string name="donotshowagain">Nicht erneut anzeigen</string>
@@ -197,7 +197,7 @@
     <string name="copyToClipboard">Kopieren</string>
     <string name="deviceInfoCopied">Die Geräte-Info wurde in die Zwischenablage kopiert.</string>
 
-    <string name="gpl">Phyphox ist Open Source Software, welche unter der GNU General Public Licence steht. Weitere Informationen sowie den Quellcode findest du unter http://phyphox.org. Bei den Begriffen \"phyphox\" und \"RWTH Aachen\" handelt es sich hingegen um geschützte Marken.</string>
+    <string name="gpl">Phyphox® ist Open Source Software, welche unter der GNU General Public Licence steht. Weitere Informationen sowie den Quellcode findest du unter http://phyphox.org. Bei den Begriffen \"phyphox\" und \"RWTH Aachen\" handelt es sich hingegen um geschützte Marken.</string>
     <string name="sensorVendor">Herstellerspezifisch</string>
 
     <string name="vendorSensorTitle">Herstellerspezifischer Sensor</string>
@@ -230,11 +230,22 @@
     <string name="bt_device_not_supported">Keine Experimente verfügbar.</string>
 
     <string name="bt_location_explanation">Android benötigt Standort-Rechte für Bluetooth-Scans, da die Ergebnisse genutzt werden könnten um einen Standort abzuleiten. Wir werden diese Rechte nun anfragen. Du musst die Rechte bestätigen um nach Bluetooth-Geräten suchen zu können.</string>
+    <string name="bt_location_service_explanation">Zusätzlich zu den Standort-Rechten muss die Standort-Funktion aktiviert sein, damit Android uns einen Bluetooth-Scan erlaubt, da aus diesem der Standort abgeleitet werden könnte. Wir leiten dich daher zu den System-Einstellungen weiter.</string>
 
     <string name="bt_exception_config">Der Wert der Charakteristik</string>
     <string name="bt_exception_config2">konnte nicht gesetzt werden.</string>
     <string name="bt_more_info_link_text">Wenn dein Gerät nicht unterstützt wird, wähle \"Weitere Infos\" um mehr über die flexible Bluetooth Low Energy Unterstützung in phyphox auf unserer Webseite zu erfahren.</string>
     <string name="bt_more_info_link_button">Mehr Infos</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble-de</string>
+
+    <string name="networkPrivacyWarning">Datenschutz-Warnung</string>
+    <string name="networkVisitPrivacyURL">Datenschutzerklärung</string>
+    <string name="networkPrivacyInfo">Dieses Experiment nutzt eine Netzwerkverbindung, was bedeutet, dass Daten an einen Netzwerk-Dienst übermittelt werden können. Um mehr Details zu erfahren, kannst du unten auf Datenschutzerklärung tippen, was dich auf eine Webseite führen wird, die eine Datenschutzerklärung beinhaltet, welche vom Autor dieser Experiment-Konfiguration bereitgestellt wird. Wenn der Netzwerk-Dienst kein lokales Gerät ist, sollte dir bewusst sein, dass phyphox möglicherweise folgende Daten übertragen wird:</string>
+    <string name="networkPrivacyUniqueID">Eine ID, die eindeutig für dieses Gerät und den Netzwerk-Dienst ist. Dies ermöglicht es, alle mit diesem Gerät über dieses Experiment verschickten Daten einander zuzuordnen.</string>
+    <string name="networkPrivacySensorData">Daten von den folgenden Sensoren:</string>
+    <string name="networkPrivacySensorMicrophone">Aufnahmen vom Mikrofon oder Daten die aus solchen Aufnahmen abgeleitet wurden.</string>
+    <string name="networkPrivacySensorLocation">Standortdaten (GPS-Daten oder ähnliches).</string>
+    <string name="networkPrivacyDeviceInfo">Genaue Informationen zu dem Modell deines Geräts und/oder zur Version von phyphox.</string>
+    <string name="networkPrivacySensorInfo">Technische Details zu den folgenden Sensoren:</string>
 
 </resources>

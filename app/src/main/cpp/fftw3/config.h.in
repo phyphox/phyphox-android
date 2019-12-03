@@ -81,11 +81,14 @@
 /* Define if you have enabled the CNTVCT cycle counter on ARMv7a */
 #undef HAVE_ARMV7A_CNTVCT
 
-/* Define if you have enabled the cycle counter on ARMv8 */
-#undef HAVE_ARMV8CC
+/* Define if you have enabled the PMCCNTR cycle counter on ARMv7a */
+#undef HAVE_ARMV7A_PMCCNTR
 
 /* Define if you have enabled the CNTVCT_EL0 cycle counter on ARMv8 */
 #undef HAVE_ARMV8_CNTVCT_EL0
+
+/* Define if you have enabled the PMCCNTR_EL0 cycle counter on ARMv8 */
+#undef HAVE_ARMV8_PMCCNTR_EL0
 
 /* Define to enable AVX optimizations. */
 #undef HAVE_AVX

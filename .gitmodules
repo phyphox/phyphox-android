@@ -1,6 +1,6 @@
 [submodule "app/src/main/assets/experiments"]
 	path = app/src/main/assets/experiments
 	url = https://github.com/Staacks/phyphox-experiments
-[submodule "app/src/main/res/raw"]
-	path = app/src/main/res/raw
+[submodule "app/src/main/assets/remote"]
+	path = app/src/main/assets/remote
 	url = https://github.com/Staacks/phyphox-webinterface

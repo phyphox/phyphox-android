@@ -6,13 +6,10 @@ import android.content.ContextWrapper;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.AppCompatEditText;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -20,11 +17,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+
+import androidx.appcompat.widget.AppCompatEditText;
+import androidx.core.content.ContextCompat;
 
 import java.io.Serializable;
 import java.util.Vector;
@@ -477,6 +475,9 @@ public class expView implements Serializable{
     public class infoElement extends expViewElement implements Serializable {
 
         private int color;
+        private int gravity = Gravity.START;
+        private int typeface = Typeface.NORMAL;
+        private float size = 1.0f;
 
         //Constructor takes the same arguments as the expViewElement constructor
         infoElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -486,6 +487,19 @@ public class expView implements Serializable{
 
         protected void setColor(int c) {
             this.color = c;
+        }
+
+        public void setFormatting(boolean bold, boolean italic, int gravity, float size) {
+            this.gravity = gravity;
+            if (bold && italic)
+                typeface = Typeface.BOLD_ITALIC;
+            else if (bold)
+                typeface = Typeface.BOLD;
+            else if (italic)
+                typeface = Typeface.ITALIC;
+            else
+                typeface = Typeface.NORMAL;
+            this.size = size;
         }
 
         @Override
@@ -504,12 +518,13 @@ public class expView implements Serializable{
             LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
-//            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.info_element_margin), res.getDisplayMetrics());
+//            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, context.getDimension(R.dimen.info_element_margin), context.getDisplayMetrics());
 //            lllp.setMargins(0, margin, 0, margin);
             textView.setLayoutParams(lllp);
             textView.setText(this.label);
-            textView.setGravity(Gravity.LEFT);
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.info_element_font));
+            textView.setGravity(gravity);
+            textView.setTypeface(null, typeface);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.info_element_font) * size);
 
             textView.setTextColor(color);
 
@@ -527,7 +542,13 @@ public class expView implements Serializable{
         //</div>
         protected String createViewHTML(){
             String c = String.format("%08x", color).substring(2);
-            return "<div style=\"font-size:"+this.labelSize/.4*0.85+"%;color:#"+c+"\" class=\"infoElement adjustableColor\" id=\"element"+htmlID+"\">" +
+            return "<div style=\"" +
+                        "font-size:"+this.labelSize*size/.4*0.85+"%;" +
+                        "color:#"+c+";" +
+                        "font-weight:"+((typeface & Typeface.BOLD) > 0 ? "bold" : "normal")+";" +
+                        "font-style:"+((typeface & Typeface.ITALIC) > 0 ? "italic" : "normal")+";" +
+                        "text-align:"+(gravity == Gravity.END ? "end" : (gravity == Gravity.CENTER ? "center" : "start"))+";" +
+                        "\" class=\"infoElement adjustableColor\" id=\"element"+htmlID+"\">" +
                     "<p>"+this.label+"</p>" +
                     "</div>";
         }
@@ -537,6 +558,7 @@ public class expView implements Serializable{
     //separatorElement implements a simple spacing, optionally showing line
     public class separatorElement extends expViewElement implements Serializable {
         private int color = 0;
+
         private float height = 0.1f;
 
         //Label is not used
@@ -872,7 +894,7 @@ public class expView implements Serializable{
             Button b = new Button(c);
 
             LinearLayout.LayoutParams vglp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-//            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.info_element_margin), res.getDisplayMetrics());
+//            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, context.getDimension(R.dimen.info_element_margin), context.getDisplayMetrics());
 //            vglp.setMargins(0, margin, 0, 0);
             vglp.gravity = Gravity.CENTER;
 

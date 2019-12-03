@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import java.util.UUID;
 import java.util.Vector;
@@ -29,13 +29,14 @@ public class BluetoothOutput extends Bluetooth {
      * @param deviceName      name of the device (can be null if deviceAddress is not null)
      * @param deviceAddress   address of the device (can be null if deviceName is not null)
      * @param uuidFilter       Optional filter to identify devices by advertices service or attribute UUIDs
+     * @param autoConnect     If true, phyphox will not show a scan dialog and connect with the first matching device instead
      * @param context         context
      * @param buffers         list of dataOutputs to write the values
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public BluetoothOutput(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    public BluetoothOutput(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Boolean autoConnect, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
 
-        super(idString, deviceName, deviceAddress, uuidFilter, activity, context, characteristics);
+        super(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics);
 
         this.data = buffers;
     }

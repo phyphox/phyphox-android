@@ -2,14 +2,10 @@ package de.rwth_aachen.phyphox;
 
 import android.util.Log;
 
-import org.apache.poi.util.ArrayUtil;
-
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.regex.Matcher;
 
 // The analysis class is used to to do math operations on dataBuffers
 

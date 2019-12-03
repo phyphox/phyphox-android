@@ -1,10 +1,6 @@
 package de.rwth_aachen.phyphox;
 
-import android.util.Log;
-
-import java.text.Normalizer;
 import java.util.Vector;
-import java.util.function.BiFunction;
 
 public class FormulaParser {
     Source base = null;

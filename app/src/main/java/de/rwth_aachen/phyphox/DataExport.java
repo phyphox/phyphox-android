@@ -7,9 +7,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.support.v4.app.ShareCompat;
-import android.support.v4.content.FileProvider;
 import android.util.Log;
+
+import androidx.core.app.ShareCompat;
+import androidx.core.content.FileProvider;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
