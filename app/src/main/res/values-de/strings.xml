@@ -238,4 +238,14 @@
     <string name="bt_more_info_link_button">Mehr Infos</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble-de</string>
 
+    <string name="networkPrivacyWarning">Datenschutz-Warnung</string>
+    <string name="networkVisitPrivacyURL">Datenschutzerklärung</string>
+    <string name="networkPrivacyInfo">Dieses Experiment nutzt eine Netzwerkverbindung, was bedeutet, dass Daten an einen Netzwerk-Dienst übermittelt werden können. Um mehr Details zu erfahren, kannst du unten auf Datenschutzerklärung tippen, was dich auf eine Webseite führen wird, die eine Datenschutzerklärung beinhaltet, welche vom Autor dieser Experiment-Konfiguration bereitgestellt wird. Wenn der Netzwerk-Dienst kein lokales Gerät ist, sollte dir bewusst sein, dass phyphox möglicherweise folgende Daten übertragen wird:</string>
+    <string name="networkPrivacyUniqueID">Eine ID, die eindeutig für dieses Gerät und den Netzwerk-Dienst ist. Dies ermöglicht es, alle mit diesem Gerät über dieses Experiment verschickten Daten einander zuzuordnen.</string>
+    <string name="networkPrivacySensorData">Daten von den folgenden Sensoren:</string>
+    <string name="networkPrivacySensorMicrophone">Aufnahmen vom Mikrofon oder Daten die aus solchen Aufnahmen abgeleitet wurden.</string>
+    <string name="networkPrivacySensorLocation">Standortdaten (GPS-Daten oder ähnliches).</string>
+    <string name="networkPrivacyDeviceInfo">Genaue Informationen zu dem Modell deines Geräts und/oder zur Version von phyphox.</string>
+    <string name="networkPrivacySensorInfo">Technische Details zu den folgenden Sensoren:</string>
+
 </resources>

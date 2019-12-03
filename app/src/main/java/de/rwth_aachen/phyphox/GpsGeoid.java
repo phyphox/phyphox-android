@@ -79,7 +79,6 @@ public class GpsGeoid {
         fy -= iy;
         iy += (height - 1)/2;
         ix += ix < 0 ? width : (ix >= width ? -width : 0);
-        double[] t;
 
         if (!(ix == _ix && iy == _iy)) {
             v00 = rawval(ix    , iy    );

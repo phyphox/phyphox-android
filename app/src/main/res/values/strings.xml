@@ -302,4 +302,14 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="bt_more_info_link_button">More info</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
+    <string name="networkPrivacyWarning">Privacy warning</string>
+    <string name="networkVisitPrivacyURL">Privacy policy</string>
+    <string name="networkPrivacyInfo">This experiment uses a network connection, which means that experiment data can be transmitted to a network service. You can find more details by clicking the privacy policy button below, which will take you to a website with a privacy policy provided by the creator of this experiment. If the network service is not a local device, you should be aware that phyphox may transmit the following information if you start this experiment:</string>
+    <string name="networkPrivacyUniqueID">An id that is unique to this device and the network service, which allow to match all data send from this device through this experiment configuration.</string>
+    <string name="networkPrivacySensorData">Data from the following sensors:</string>
+    <string name="networkPrivacySensorMicrophone">Recordings or data derived from recordings from the microphone.</string>
+    <string name="networkPrivacySensorLocation">Location data (GPS data or similar).</string>
+    <string name="networkPrivacyDeviceInfo">Detailed information about the model of your device and/or the version of phyphox.</string>
+    <string name="networkPrivacySensorInfo">Technical details about the following sensors:</string>
+
 </resources>
