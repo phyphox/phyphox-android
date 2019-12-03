@@ -1,6 +1,6 @@
 package de.rwth_aachen.phyphox;
 
-import android.content.res.Resources;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
@@ -8,32 +8,19 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
-import android.util.SparseIntArray;
 
-import org.apache.http.ConnectionReuseStrategy;
-import org.apache.http.Header;
-import org.apache.http.HeaderIterator;
-import org.apache.http.HttpEntity;
+import androidx.appcompat.content.res.AppCompatResources;
+
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.HttpVersion;
-import org.apache.http.ParseException;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.TokenIterator;
 import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.entity.ContentProducer;
-import org.apache.http.entity.EntityTemplate;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.DefaultHttpServerConnection;
-import org.apache.http.message.BasicTokenIterator;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.BasicHttpProcessor;
-import org.apache.http.protocol.ExecutionContext;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.protocol.HttpRequestHandlerRegistry;
@@ -51,8 +38,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -62,13 +47,9 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
@@ -85,7 +66,7 @@ public class remoteServer extends Thread {
     BasicHttpContext basicHttpContext; //A simple http context...
     static final int HttpServerPORT = 8080; //We have to pick a high port number. We may not use 80...
     boolean RUNNING = false; //Keeps the main loop alive...
-    Resources res; //Resource reference for comfortable access
+    Context context; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
 
     public String sessionID = "";
@@ -101,33 +82,33 @@ public class remoteServer extends Thread {
     protected void buildStyleCSS () {
         //We use a stringbuilder to collect our strings
         StringBuilder sb = new StringBuilder();
-        //...and we need to read from the resource file
-        BufferedReader br = new BufferedReader(new InputStreamReader(this.res.openRawResource(R.raw.style)));
         String line;
         try {
-            //While ẃe get lines from the resource file, replace placeholders and hand the line to the stringbuilder
+            //...and we need to read from the resource file
+            BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("remote/style.css")));
+            //While we get lines from the resource file, replace placeholders and hand the line to the stringbuilder
             while ((line = br.readLine()) != null) {
                 //Set some drawables directly in the css as base64-encoded PNGs
                 if (line.contains("###drawablePlay###"))
-                    line = line.replace("###drawablePlay###", getBase64PNG(res.getDrawable(R.drawable.play)));
+                    line = line.replace("###drawablePlay###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.play)));
                 if (line.contains("###drawableTimedPlay###"))
-                    line = line.replace("###drawableTimedPlay###", getBase64PNG(res.getDrawable(R.drawable.timed_play)));
+                    line = line.replace("###drawableTimedPlay###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.timed_play)));
                 if (line.contains("###drawablePause###"))
-                    line = line.replace("###drawablePause###", getBase64PNG(res.getDrawable(R.drawable.pause)));
+                    line = line.replace("###drawablePause###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.pause)));
                 if (line.contains("###drawableTimedPause###"))
-                    line = line.replace("###drawableTimedPause###", getBase64PNG(res.getDrawable(R.drawable.timed_pause)));
+                    line = line.replace("###drawableTimedPause###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.timed_pause)));
                 if (line.contains("###drawableClearData###"))
-                    line = line.replace("###drawableClearData###", getBase64PNG(res.getDrawable(R.drawable.delete)));
+                    line = line.replace("###drawableClearData###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.delete)));
 //                if (line.contains("###drawableExport###"))
-//                    line = line.replace("###drawableExport###", getBase64PNG(res.getDrawable(R.drawable.download)));
+//                    line = line.replace("###drawableExport###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.download)));
                 if (line.contains("###drawableMore###"))
-                    line = line.replace("###drawableMore###", getBase64PNG(res.getDrawable(R.drawable.more)));
+                    line = line.replace("###drawableMore###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.more)));
                 if (line.contains("###drawableMaximize###"))
-                    line = line.replace("###drawableMaximize###", getBase64PNG(res.getDrawable(R.drawable.unfold_more)));
+                    line = line.replace("###drawableMaximize###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.unfold_more)));
                 if (line.contains("###drawableRestore###"))
-                    line = line.replace("###drawableRestore###", getBase64PNG(res.getDrawable(R.drawable.unfold_less)));
+                    line = line.replace("###drawableRestore###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.unfold_less)));
                 if (line.contains("###drawableWarning###"))
-                    line = line.replace("###drawableWarning###", getBase64PNG(res.getDrawable(R.drawable.warning)));
+                    line = line.replace("###drawableWarning###", getBase64PNG(AppCompatResources.getDrawable(context, R.drawable.warning)));
 
                 //Add the line and a linebreak
                 sb.append(line);
@@ -178,43 +159,41 @@ public class remoteServer extends Thread {
     protected void buildIndexHTML () {
         //A string builder is great for collecting strings...
         StringBuilder sb = new StringBuilder();
-
-        //Read from the resource file
-        BufferedReader br = new BufferedReader(new InputStreamReader(this.res.openRawResource(R.raw.index)));
-
         String line;
         try {
+            //Read from the resource file
+            BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("remote/index.html")));
             //While we receive new lines, look for placeholders. replace placeholders with data and append them to our stringbuilder
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) { //The title. This one is easy...
                     sb.append(line.replace("<!-- [[title]] -->", experiment.title));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[clearDataTranslation]] -->")) { //The localized string for "clear data"
-                        sb.append(line.replace("<!-- [[clearDataTranslation]] -->", res.getString(R.string.clear_data)));
+                        sb.append(line.replace("<!-- [[clearDataTranslation]] -->", context.getString(R.string.clear_data)));
                         sb.append("\n");
                 } else if (line.contains("<!-- [[clearConfirmTranslation]] -->")) { //The localized string for "Clear data?"
-                    sb.append(line.replace("<!-- [[clearConfirmTranslation]] -->", res.getString(R.string.clear_data_question)));
+                    sb.append(line.replace("<!-- [[clearConfirmTranslation]] -->", context.getString(R.string.clear_data_question)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[exportTranslation]] -->")) { //The localized string for "clear data"
-                    sb.append(line.replace("<!-- [[exportTranslation]] -->", res.getString(R.string.export)));
+                    sb.append(line.replace("<!-- [[exportTranslation]] -->", context.getString(R.string.export)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[switchToPhoneLayoutTranslation]] -->")) { //The localized string for "clear data"
-                    sb.append(line.replace("<!-- [[switchToPhoneLayoutTranslation]] -->", res.getString(R.string.switchToPhoneLayout)));
+                    sb.append(line.replace("<!-- [[switchToPhoneLayoutTranslation]] -->", context.getString(R.string.switchToPhoneLayout)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns1Translation]] -->")) { //The localized string for "clear data"
-                    sb.append(line.replace("<!-- [[switchColumns1Translation]] -->", res.getString(R.string.switchColumns1)));
+                    sb.append(line.replace("<!-- [[switchColumns1Translation]] -->", context.getString(R.string.switchColumns1)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns2Translation]] -->")) { //The localized string for "clear data"
-                    sb.append(line.replace("<!-- [[switchColumns2Translation]] -->", res.getString(R.string.switchColumns2)));
+                    sb.append(line.replace("<!-- [[switchColumns2Translation]] -->", context.getString(R.string.switchColumns2)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns3Translation]] -->")) { //The localized string for "clear data"
-                    sb.append(line.replace("<!-- [[switchColumns3Translation]] -->", res.getString(R.string.switchColumns3)));
+                    sb.append(line.replace("<!-- [[switchColumns3Translation]] -->", context.getString(R.string.switchColumns3)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[toggleBrightModeTranslation]] -->")) {
-                    sb.append(line.replace("<!-- [[toggleBrightModeTranslation]] -->", res.getString(R.string.toggleBrightMode)));
+                    sb.append(line.replace("<!-- [[toggleBrightModeTranslation]] -->", context.getString(R.string.toggleBrightMode)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[fontSizeTranslation]] -->")) {
-                    sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", res.getString(R.string.fontSize)));
+                    sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", context.getString(R.string.fontSize)));
                     sb.append("\n");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     //The viewLayout is a JSON object with our view setup. All the experiment views
@@ -332,7 +311,7 @@ public class remoteServer extends Thread {
     remoteServer(phyphoxExperiment experiment, Experiment callActivity, String sessionID) {
         this.experiment = experiment;
         this.callActivity = callActivity;
-        this.res = callActivity.getResources();
+        this.context = callActivity;
 
         //Create the css and html files
         buildStyleCSS();
@@ -500,7 +479,7 @@ public class remoteServer extends Thread {
                            HttpContext httpContext) throws HttpException, IOException {
 
             BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = res.openRawResource(R.raw.phyphox_orange);
+            InputStream inputStream = context.getAssets().open("remote/phyphox_orange.png");
             entity.setContent(inputStream);
 
             //Set the header and THEN send the file

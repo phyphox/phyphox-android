@@ -5,7 +5,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
-import android.util.Log;
 
 import java.io.Serializable;
 import java.util.Vector;
@@ -14,10 +13,12 @@ import java.util.concurrent.locks.Lock;
 //The sensorInput class encapsulates a sensor, maps their name from the phyphox-file format to
 //  the android identifiers and handles their output, which is written to the dataBuffers
 public class sensorInput implements SensorEventListener, Serializable {
+
     public int type; //Sensor type (Android identifier)
     public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
-    public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+    private SensorInputTimeReference sensorInputTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+
     public dataBuffer dataX; //Data-buffer for x
     public dataBuffer dataY; //Data-buffer for y (3D sensors only)
     public dataBuffer dataZ; //Data-buffer for z (3D sensors only)
@@ -60,8 +61,9 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
     // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    protected sensorInput(String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock) throws SensorException {
+    protected sensorInput(String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
         this.dataLock = lock;
+        this.sensorInputTimeReference = sensorInputTimeReference;
 
         if (rate <= 0)
             this.period = 0;
@@ -199,7 +201,6 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     //Start the data aquisition by registering a listener for this sensor.
     public void start() {
-        this.t0 = 0; //Reset t0. This will be set by the first sensor event
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)) {
             if (calibrated)
@@ -231,11 +232,6 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(SensorEvent event) {
-        if (t0 == 0) {
-            t0 = event.timestamp; //Any event sets t0
-            if (dataT != null && dataT.getFilledSize() > 0)
-                t0 -= dataT.value * 1e9;
-        }
 
         //From here only listen to "this" sensor
         if (event.sensor.getType() == sensor.getType()) {
@@ -284,6 +280,13 @@ public class sensorInput implements SensorEventListener, Serializable {
                 //Append the data to available buffers
                 dataLock.lock();
                 try {
+                    if (!sensorInputTimeReference.isValid()) {
+                        long t0 = event.timestamp;
+                        if (dataT != null && dataT.getFilledSize() > 0)
+                            t0 -= dataT.value * 1e9;
+                        sensorInputTimeReference.set(t0); //Any event sets t0
+                    }
+
                     if (dataX != null)
                         dataX.append(avgX / aquisitions);
                     if (dataY != null)
@@ -291,7 +294,7 @@ public class sensorInput implements SensorEventListener, Serializable {
                     if (dataZ != null)
                         dataZ.append(avgZ / aquisitions);
                     if (dataT != null)
-                        dataT.append((event.timestamp - t0) * 1e-9); //We want seconds since t0
+                        dataT.append((event.timestamp - sensorInputTimeReference.get()) * 1e-9); //We want seconds since t0
                     if (dataAbs != null)
                         dataAbs.append(Math.sqrt(avgX*avgX+avgY*avgY+avgZ*avgZ) / aquisitions);
                     if (dataAccuracy != null)

@@ -1,27 +1,25 @@
 package de.rwth_aachen.phyphox;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.GpsStatus;
+import android.content.res.Resources;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
-import android.location.OnNmeaMessageListener;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import java.io.Serializable;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
-public class gpsInput implements Serializable {
+public class GpsInput implements Serializable {
     public dataBuffer dataLat; //Data-buffer for latitude
     public dataBuffer dataLon; //Data-buffer for longitude
     public dataBuffer dataZ; //Data-buffer for height
+    public dataBuffer dataZWGS84; //Data-buffer for height above WGS84 ellipsoid
     public dataBuffer dataV; //Data-buffer for velocity
     public dataBuffer dataDir; //Data-buffer for direction
     public dataBuffer dataT; //Data-buffer for time
@@ -33,22 +31,24 @@ public class gpsInput implements Serializable {
     transient private LocationManager locationManager; //Hold the sensor manager
 
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+    public double lastSatBasedLocation;
 
     private Lock dataLock;
     private int lastStatus = 0;
-    private double geoidCorrection = Double.NaN;
+    private GpsGeoid geoid;
+
 
     public boolean forceGNSS = false;
 
     //The constructor
-    protected gpsInput(Vector<dataOutput> buffers, Lock lock) {
+    protected GpsInput(Vector<dataOutput> buffers, Lock lock) {
         this.dataLock = lock;
 
         //Store the buffer references if any
         if (buffers == null)
             return;
 
-        buffers.setSize(10);
+        buffers.setSize(11);
         if (buffers.get(0) != null)
             this.dataLat = buffers.get(0).buffer;
         if (buffers.get(1) != null)
@@ -56,23 +56,29 @@ public class gpsInput implements Serializable {
         if (buffers.get(2) != null)
             this.dataZ = buffers.get(2).buffer;
         if (buffers.get(3) != null)
-            this.dataV = buffers.get(3).buffer;
+            this.dataZWGS84 = buffers.get(3).buffer;
         if (buffers.get(4) != null)
-            this.dataDir = buffers.get(4).buffer;
+            this.dataV = buffers.get(4).buffer;
         if (buffers.get(5) != null)
-            this.dataT = buffers.get(5).buffer;
+            this.dataDir = buffers.get(5).buffer;
         if (buffers.get(6) != null)
-            this.dataAccuracy = buffers.get(6).buffer;
+            this.dataT = buffers.get(6).buffer;
         if (buffers.get(7) != null)
-            this.dataZAccuracy = buffers.get(7).buffer;
+            this.dataAccuracy = buffers.get(7).buffer;
         if (buffers.get(8) != null)
-            this.dataStatus = buffers.get(8).buffer;
+            this.dataZAccuracy = buffers.get(8).buffer;
         if (buffers.get(9) != null)
-            this.dataSatellites = buffers.get(9).buffer;
+            this.dataStatus = buffers.get(9).buffer;
+        if (buffers.get(10) != null)
+            this.dataSatellites = buffers.get(10).buffer;
     }
 
     public void attachLocationManager(LocationManager locationManager) {
         this.locationManager = locationManager;
+    }
+
+    public void prepare(Resources res) {
+        geoid = new GpsGeoid(res.openRawResource(R.raw.egm84_30));
     }
 
     //Check if GPS hardware is available
@@ -83,6 +89,7 @@ public class gpsInput implements Serializable {
     //Start the data aquisition by registering a listener for this location manager.
     public void start() {
         this.t0 = 0; //Reset t0. This will be set by the first sensor event
+        lastSatBasedLocation = -100.0; //We did not yet have a GNSS-based location
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
             this.lastStatus = 0;
         else
@@ -90,7 +97,6 @@ public class gpsInput implements Serializable {
 
         try {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            locationManager.addNmeaListener(nmeaListener);
             if (!forceGNSS)
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         } catch (SecurityException e) {
@@ -102,7 +108,6 @@ public class gpsInput implements Serializable {
     //Stop the data aquisition by unregistering the listener for this location manager
     public void stop() {
         locationManager.removeUpdates(locationListener);
-        locationManager.removeNmeaListener(nmeaListener);
     }
 
     LocationListener locationListener = new LocationListener() {
@@ -123,22 +128,6 @@ public class gpsInput implements Serializable {
         }
     };
 
-    GpsStatus.NmeaListener nmeaListener = new GpsStatus.NmeaListener() {
-        @Override
-        public void onNmeaReceived(long timestamp, String nmea) {
-            if (nmea.length() > 19 && nmea.substring(3, 6).equals("GGA")) {
-                String[] parts = nmea.split(",");
-                if (parts.length < 10)
-                    return;
-                try {
-                    geoidCorrection = Double.parseDouble(parts[11]);
-                } catch (Exception e) {
-                    return;
-                }
-            }
-        }
-    };
-
     public void onStatusUpdate(int status) {
         if (dataStatus == null)
             return;
@@ -147,10 +136,7 @@ public class gpsInput implements Serializable {
         try {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                 if (status == LocationProvider.AVAILABLE)
-                    if (Double.isNaN(geoidCorrection))
-                        dataStatus.append(2);
-                    else
-                        dataStatus.append(1);
+                    dataStatus.append(1);
                 else
                     dataStatus.append(0);
             else
@@ -174,30 +160,36 @@ public class gpsInput implements Serializable {
             }
         }
 
+        double newT;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+            newT = (event.getElapsedRealtimeNanos() - t0) * 1e-9;
+        else
+            newT = (event.getTime() - t0) * 1e-3;
+        if (newT < dataT.value)
+            return;
+
+        if (event.getProvider().equals(LocationManager.GPS_PROVIDER))
+            lastSatBasedLocation = newT;
+        else { //To if we have a recent GNSS-based location, we ignore other providers for a while as they are not necessary and make data interpretation unnecessary complicated, especially for students who do not know about the different location providers
+            if (newT - lastSatBasedLocation < 10)
+                return;
+        }
+
         //Append the data to available buffers
         dataLock.lock();
         try {
-            if (dataT != null) {
-                double newT;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
-                    newT = (event.getElapsedRealtimeNanos() - t0) * 1e-9;
-                else
-                    newT = (event.getTime() - t0) * 1e-3;
-                if (newT < dataT.value)
-                    return;
+            if (dataT != null)
                 dataT.append(newT);
-            }
-
             if (dataLat != null)
                 dataLat.append(event.getLatitude());
             if (dataLon != null)
                 dataLon.append(event.getLongitude());
+            if (dataZWGS84 != null) {
+                dataZWGS84.append(event.getAltitude());
+            }
             if (dataZ != null) {
-                if (Double.isNaN(geoidCorrection)) {
-                    dataZ.append(event.getAltitude());
-                } else {
-                    dataZ.append(event.getAltitude() - geoidCorrection);
-                }
+                dataZ.append(event.getAltitude() != 0 ? event.getAltitude() - geoid.height(event.getLatitude(), event.getLongitude()) : 0.0);
             }
             if (dataV != null)
                 dataV.append(event.getSpeed());

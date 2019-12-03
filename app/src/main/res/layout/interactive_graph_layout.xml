@@ -37,7 +37,7 @@
         android:layout_above="@id/graph_toolbar">
     </FrameLayout>
 
-    <android.support.design.widget.BottomNavigationView
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:visibility="gone"
         android:id="@+id/graph_toolbar"
         android:layout_width="match_parent"

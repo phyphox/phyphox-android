@@ -7,18 +7,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Xml;
+import android.view.Gravity;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -38,7 +39,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.7";
+    final static String phyphoxFileVersion = "1.8";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -240,18 +240,18 @@ public abstract class phyphoxFile {
 
         //Helper to receive a string typed attribute
         protected String getStringAttribute(String identifier) {
-            return xpp.getAttributeValue(null, identifier);
+            return xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
         }
 
         //Helper to receive a string typed attribute and translate it
         protected String getTranslatedAttribute(String identifier) {
-            return translate(xpp.getAttributeValue(null, identifier));
+            return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
         }
 
         //Helper to receive an integer typed attribute, if invalid or not present, return default
         protected int getIntAttribute(String identifier, int defaultValue) {
             try {
-                return Integer.valueOf(xpp.getAttributeValue(null, identifier));
+                return Integer.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
             } catch (Exception e) {
                 return defaultValue;
             }
@@ -260,7 +260,7 @@ public abstract class phyphoxFile {
         //Helper to receive a double typed attribute, if invalid or not present, return default
         protected double getDoubleAttribute(String identifier, double defaultValue) {
             try {
-                return Double.valueOf(xpp.getAttributeValue(null, identifier));
+                return Double.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
             } catch (Exception e) {
                 return defaultValue;
             }
@@ -268,7 +268,7 @@ public abstract class phyphoxFile {
 
         //Helper to receive a boolean attribute, if invalid or not present, return default
         protected boolean getBooleanAttribute(String identifier, boolean defaultValue) {
-            final String att = xpp.getAttributeValue(null, identifier);
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
             if (att == null)
                 return defaultValue;
             return Boolean.valueOf(att);
@@ -276,7 +276,7 @@ public abstract class phyphoxFile {
 
         //Helper to receive a color attribute, if invalid or not present, return default
         protected int getColorAttribute(String identifier, int defaultValue) {
-            final String att = xpp.getAttributeValue(null, identifier);
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
 
             return Helper.parseColor(att, defaultValue, parent.getResources());
         }
@@ -1117,8 +1117,19 @@ public abstract class phyphoxFile {
                 }
                 case "info": { //An info element just shows some text
                     int color = getColorAttribute("color", parent.getResources().getColor(R.color.mainExp));
+                    boolean bold = getBooleanAttribute("bold", false);
+                    boolean italic = getBooleanAttribute("italic", false);
+                    String gravityString = getStringAttribute("align");
+                    int gravity = Gravity.START;
+                    if (gravityString != null && gravityString.equals("right"))
+                        gravity = Gravity.END;
+                    else if (gravityString != null && gravityString.equals("center"))
+                        gravity = Gravity.CENTER;
+                    float size = (float)getDoubleAttribute("size", 1.0);
+
                     expView.infoElement infoe = newView.new infoElement(label, null, null, parent.getResources()); //No inputs, just the label and resources
                     infoe.setColor(color);
+                    infoe.setFormatting(bold, italic, gravity, size);
                     newView.elements.add(infoe);
                     break;
                 }
@@ -1145,7 +1156,7 @@ public abstract class phyphoxFile {
 
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
-                    while (xpp.getAttributeValue(null,"mapColor"+colorStepIndex) != null) {
+                    while (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE,"mapColor"+colorStepIndex) != null) {
                         int color = getColorAttribute("mapColor"+colorStepIndex, parent.getResources().getColor(R.color.highlight));
                         colorScale.add(color);
                         colorStepIndex++;
@@ -1183,7 +1194,7 @@ public abstract class phyphoxFile {
                     int zPrecision = getIntAttribute("zPrecision", 3);
                     int color = parent.getResources().getColor(R.color.highlight);
                     boolean globalColor = false;
-                    if (xpp.getAttributeValue(null, "color") != null) {
+                    if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {
                         color = getColorAttribute("color", parent.getResources().getColor(R.color.highlight));
                         globalColor = true;
                     }
@@ -1419,7 +1430,7 @@ public abstract class phyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new sensorInput(type, rate, average, outputs, experiment.dataLock));
+                        experiment.inputSensors.add(new sensorInput(type, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (sensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
@@ -1445,6 +1456,7 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "lat"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "lon"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                            new ioBlockParser.ioMapping() {{name = "zwgs84"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "v"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "dir"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
@@ -1456,10 +1468,10 @@ public abstract class phyphoxFile {
                     Vector<dataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
-                    experiment.gpsIn = new gpsInput(outputs, experiment.dataLock);
+                    experiment.gpsIn = new GpsInput(outputs, experiment.dataLock);
                     experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
 
-                    if (!gpsInput.isAvailable(parent)) {
+                    if (!GpsInput.isAvailable(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(R.string.location) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
                     }
 
@@ -1520,6 +1532,7 @@ public abstract class phyphoxFile {
                                     throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
                                 }
                             }
+                            Boolean autoConnect = getBooleanAttribute("autoConnect", false);
 
                             String modeStr = getStringAttribute("mode");
                             if (modeStr == null)
@@ -1552,7 +1565,7 @@ public abstract class phyphoxFile {
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
-                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
+                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
                                 experiment.bluetoothInputs.add(b);
                             } catch (phyphoxFileException e) {
                                 throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
@@ -2310,11 +2323,12 @@ public abstract class phyphoxFile {
                                 throw new phyphoxFileException("Invalid UUID: " + uuidFilterStr, xpp.getLineNumber());
                             }
                         }
+                        Boolean autoConnect = getBooleanAttribute("autoConnect", false);
 
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
-                        BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, parent, parent, inputs, characteristics);
+                        BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, autoConnect, parent, parent, inputs, characteristics);
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;
@@ -2337,7 +2351,7 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, IOException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "set": //An export set. These just group some dataBuffers to be exported as a set
-                    DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(null, "name")); //Create the set with the given name
+                    DataExport.ExportSet set = experiment.exporter.new ExportSet(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "name")); //Create the set with the given name
                     (new setBlockParser(xpp, experiment, parent, set)).process(); //Parse the information within
                     experiment.exporter.addSet(set); //Add the set
                 break;
@@ -2366,7 +2380,7 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
                 case "data": //Add this data buffer to the set
-                    String name = xpp.getAttributeValue(null, "name");
+                    String name = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "name");
                     String src = getText();
                     if (experiment.getBuffer(src) != null)
                         set.addSource(name, src);
@@ -2411,6 +2425,7 @@ public abstract class phyphoxFile {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
 
                 XmlPullParser xpp = Xml.newPullParser();
+                xpp.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
                 xpp.setInput(reader);
 
                 //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
@@ -2418,7 +2433,7 @@ public abstract class phyphoxFile {
                 while (eventType != XmlPullParser.END_DOCUMENT) {
                     if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("phyphox")) {
                         //Phyphox tag. This is what we need to read, but let's check the file version first.
-                        String fileVersion = xpp.getAttributeValue(null, "version");
+                        String fileVersion = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "version");
                         if (fileVersion != null) {
                             //A file version has been given. (If not, some user probably created the file manually. Let's allow this although it should not be encouraged.)
                             //Parse the file version and the version of this class
@@ -2445,7 +2460,7 @@ public abstract class phyphoxFile {
                                 return experiment;
                             }
 
-                            String globalLocale = xpp.getAttributeValue(null, "locale");
+                            String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
                             languageRating = Helper.getLanguageRating(parent.get().getResources(), globalLocale);
                         }
                         (new phyphoxBlockParser(xpp, experiment, parent.get())).process();
