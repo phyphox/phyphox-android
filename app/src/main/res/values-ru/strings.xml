@@ -38,7 +38,7 @@
 \nDominik Dorsel 
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеку JavaScript «Chart.js» (http://chartjs.org), доступную под лицензией MIT. Для преобразования Фурье мы используем библиотеку FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Массачусетский технологический институт, который доступен под общим названием GNU General Public Лицензия (версия 2 или новее).</string>
+    <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеку JavaScript «Chart.js» (http://chartjs.org), доступную под лицензией MIT. Для преобразования Фурье мы используем библиотеку FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Массачусетский технологический институт, который доступен под общим названием GNU General Public Лицензия (версия 2 или новее). Данные GPS по высоте над уровнем моря преобразуются из эллипсоида WGS84 в геоид EGM84 с помощью данных EGM84 (разрешение 30\') и функции переноса из GographicLib (https://geographiclib.sourceforge.io/, лицензия MIT/X11).</string>
     <string name="sensorLinearAcceleration">Линейное ускорение</string>
     <string name="sensorLight">Свет</string>
     <string name="sensorGyroscope">Гироскоп</string>
@@ -190,7 +190,7 @@
     <string name="copyToClipboard">Скопировать в буфер обмена</string>
     <string name="deviceInfoCopied">Информация об устройстве была скопирована в буфер обмена.</string>
 
-    <string name="gpl">Phyphox - это программное обеспечение с открытым исходным кодом, выпущенное под лицензией GNU General Public License. Посетите http://phyphox.org для получения дополнительной информации и получения доступа к исходному коду. Однако названия «phyphox» и «RWTH Aachen» являются зарегистрированными товарными знаками.</string>
+    <string name="gpl">Phyphox® - это программное обеспечение с открытым исходным кодом, выпущенное под лицензией GNU General Public License. Посетите http://phyphox.org для получения дополнительной информации и получения доступа к исходному коду. Однако названия «phyphox» и «RWTH Aachen» являются зарегистрированными товарными знаками.</string>
     <string name="sensorVendor">Специфический для производителя</string>
 
     <string name="vendorSensorTitle">Специфический датчик от производителя</string>
@@ -261,4 +261,17 @@
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
 <string name="export_empty">Эта экспериментальная конфигурация не определяет какие-либо данные для экспорта. В случае ошибки обратитесь к источнику QR-кода или файла конфигурации.</string>
-    </resources>
+    <string name="toggleBrightMode">Яркий режим</string>
+    <string name="bt_location_service_explanation">В дополнение к разрешению на получение информации о местоположении, Android требует, чтобы службы местоположения были включены для сканирования по Bluetooth, в результате чего их можно было бы использовать для получения информации о местоположении. Мы перенаправим вас к настройкам вашей системы.</string>
+
+    <string name="networkPrivacyWarning">Предупреждение о конфиденциальности</string>
+    <string name="networkVisitPrivacyURL">Политика конфиденциальности</string>
+    <string name="networkPrivacyInfo">В этом эксперименте используется сетевое соединение, что означает, что экспериментальные данные могут передаваться в сетевую службу. Вы можете найти более подробную информацию, нажав ниже на кнопку \"Политика конфиденциальности\", которая приведет вас на веб-сайт с политикой конфиденциальности, предоставленной создателем этого эксперимента. Если сетевая служба не является локальным устройством, следует помнить, что при запуске данного эксперимента phyphox может передавать следующую информацию:</string>
+    <string name="networkPrivacyUniqueID">Идентификатор, уникальный для данного устройства и сетевой службы, позволяющий сопоставлять все данные, отправляемые с этого устройства через эту экспериментальную конфигурацию.</string>
+    <string name="networkPrivacySensorData">Данные следующих датчиков:</string>
+    <string name="networkPrivacySensorMicrophone">Записи или данные, полученные из записей с микрофона.</string>
+    <string name="networkPrivacySensorLocation">Данные о местоположении (данные GPS или аналогичные данные).</string>
+    <string name="networkPrivacyDeviceInfo">Подробная информация о модели устройства и/или версии phyphox.</string>
+    <string name="networkPrivacySensorInfo">Технические подробности о следующих датчиках:</string>
+
+</resources>
