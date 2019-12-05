@@ -1,7 +1,9 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+
+import de.rwth_aachen.phyphox.dataBuffer;
 
 // The class holds public static functions which convert double values to a byte array that can be written to a characteristic.
 public class ConversionsOutput {
@@ -17,7 +19,7 @@ public class ConversionsOutput {
 
     public static class SimpleOutputConversion extends OutputConversion implements Serializable {
         private Method conversionFunction;
-        SimpleOutputConversion(Method conversionFunction) {
+        public SimpleOutputConversion(Method conversionFunction) {
             super();
             this.conversionFunction = conversionFunction;
         }

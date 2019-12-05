@@ -23,8 +23,10 @@ import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
@@ -38,6 +40,11 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
+import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
@@ -89,6 +96,9 @@ public class phyphoxExperiment implements Serializable {
     int micRate = 48000; //The recording rate in Hz
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
+
+    //Network connections
+    List<NetworkConnection> networkConnections = new ArrayList<>();
 
     public DataExport exporter; //An instance of the DataExport class for exporting functionality (see DataExport.java)
 
@@ -164,6 +174,16 @@ public class phyphoxExperiment implements Serializable {
     public void processAnalysis(boolean measuring) {
         if (!loaded)
             return;
+
+        //Send and receive network data if used
+        for (NetworkConnection networkConnection : networkConnections) {
+            dataLock.lock();
+            try {
+                networkConnection.pushDataToBuffers();
+            } finally {
+                dataLock.unlock();
+            }
+        }
 
         //Get the data from the audio recording if used
         if (audioRecord != null && measuring) {
@@ -296,6 +316,17 @@ public class phyphoxExperiment implements Serializable {
             }
         }
 
+        //Send and receive network data if used
+        for (NetworkConnection networkConnection : networkConnections) {
+            dataLock.lock();
+            try {
+                networkConnection.doExecute();
+                networkConnection.pushDataToBuffers();
+            } finally {
+                dataLock.unlock();
+            }
+        }
+
         recordingUsed = true;
         newData = true; //We have fresh data to present.
         lastAnalysis = System.currentTimeMillis(); //Remember when we were done this time
@@ -355,6 +386,9 @@ public class phyphoxExperiment implements Serializable {
         if (gpsIn != null)
             gpsIn.stop();
 
+        for (NetworkConnection networkConnection : networkConnections)
+            networkConnection.stop();
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             //Bluetooth
             for (BluetoothInput bti : bluetoothInputs)
@@ -391,6 +425,9 @@ public class phyphoxExperiment implements Serializable {
                 btO.start();
             }
         }
+
+        for (NetworkConnection networkConnection : networkConnections)
+            networkConnection.start();
 
         //Audio Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)

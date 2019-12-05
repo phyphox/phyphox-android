@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -38,6 +38,9 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.phyphoxFile;
 
 /**
  * The Bluetooth class encapsulates a generic Bluetooth connection and deals with the following tasks:
@@ -1119,7 +1122,7 @@ public class Bluetooth implements Serializable {
      * Runnable that displays an AlertDialog with an error message and has the option to try again.
      * The attributes are public so they can be set.
      */
-    protected static class OnExceptionRunnable implements Runnable {
+    public static class OnExceptionRunnable implements Runnable {
         /**
          * Message that will be displayed.
          */

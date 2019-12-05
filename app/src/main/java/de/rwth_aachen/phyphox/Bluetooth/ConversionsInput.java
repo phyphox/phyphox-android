@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 
 import android.util.Log;
@@ -27,7 +27,7 @@ public class ConversionsInput {
         private Method conversionFunction;
         int offset;
         int length;
-        SimpleInputConversion(Method conversionFunction, XmlPullParser xpp) {
+        public SimpleInputConversion(Method conversionFunction, XmlPullParser xpp) {
             super();
             this.conversionFunction = conversionFunction;
             try {
