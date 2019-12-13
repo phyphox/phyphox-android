@@ -29,7 +29,7 @@
 
     <string name="info">Πληροφορίες</string>
     <string name="credits">Μνεία</string>
-    <string name="creditsRWTH">Η εφαρμογή phyphox δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.</string>
+    <string name="creditsRWTH">Η εφαρμογή phyphox® δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.</string>
     <string name="creditsNames">Ανάπτυξη και Ιδέα:
 \n Dr. Sebastian Staacks
 \n Ιδέα:
@@ -38,7 +38,7 @@
 \n Dominik Dorsel
 \n Jonas Gessner
 \n Camilla Lummerzheim</string>
-    <string name="creditsLibs">"Το  web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later)."</string>
+    <string name="creditsLibs">"Το  web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84  χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το  GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence)"</string>
     <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
     <string name="sensorLight">Φως</string>
     <string name="sensorGyroscope">Γυροσκόπιο</string>
@@ -190,7 +190,7 @@
     <string name="copyToClipboard">Αντιγραφή στο πρόχειρο</string>
     <string name="deviceInfoCopied">Οι πληροφορίες της συσκευής αντιστράφηκαν στο πρόχειρο.</string>
 
-    <string name="gpl">Το phyphox είναι λογισμικό ανοιχτού κώδικα που δημοσιεύτηκε κάτω από την άδεια GNU General Public Licence. Παρακαλώ επισκεφτείτε τη σελίδα http://phyphοx.org για παραπάνω πληροφορίες καθώς και για να αποκτήσετε πρόσβαση στον κώδικά του. Όμως τα ονόματα \"phyphox\" και \"RWTH Aachen\" είναι καταχωρημένα εμπορικά σήματα.</string>
+    <string name="gpl">Το phyphox® είναι λογισμικό ανοιχτού κώδικα που δημοσιεύτηκε κάτω από την άδεια GNU General Public Licence. Παρακαλώ επισκεφτείτε τη σελίδα http://phyphοx.org για παραπάνω πληροφορίες καθώς και για να αποκτήσετε πρόσβαση στον κώδικά του. Όμως τα ονόματα \"phyphox\" και \"RWTH Aachen\" είναι καταχωρημένα εμπορικά σήματα.</string>
     <string name="sensorVendor">Καθοριζόμενος από τον προμηθευτή</string>
 
     <string name="vendorSensorTitle">Αισθητήρας καθοριζόμενος από τον προμηθευτή</string>
@@ -259,5 +259,15 @@
     <string name="bt_more_info_link_text">Αν η συσκευή σας δεν υποστηρίζεται, επιλέξτε \"περισσότερες πληροφορίες\" για να μάθετε περισσότερα σχετικά με την ευέλικτη υποστήριξη του phyphox στο Bluetooth Low Energy.</string>
     <string name="bt_more_info_link_button">Περισσότερες πληροφορίες</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+<string name="networkPrivacyWarning">Προειδοποίηση Απορρήτου</string>
+    <string name="networkVisitPrivacyURL">Πολιτική Απορρήτου</string>
+    <string name="networkPrivacyInfo">"Το πείραμα αυτό χρησιμοποιεί μια σύνδεση δικτύου, το οποίο σημαίνει ότι δεδομένα μπορεί να μεταδίδονται σε μια δικτυακή υπηρεσία. Μπορείτε να βρείτε περισσότερες λεπτομέρειες πατώντας το πλήκτρο Πολιτικής Απορρήτου το οποίο θα σας μεταφέρει σε μια ιστοσελίδα με την πολιτική απορρήτου, που παρέχει ο δημιουργός του προγράμματος.  Αν η υπηρεσία δικτύου δεν είναι μια τοπική συσκευή, πρέπει να γνωρίζετε ότι το phyphox ενδέχεται να μεταδώσει τις παρακάτω πληροφορίες με την εκκίνηση του πειράματος:"</string>
+    <string name="networkPrivacyUniqueID">Ένα αναγνωριστικό που είναι μοναδικό για αυτή τη συσκευή και τη συσκευή δικτύου, το οποίο χρησιμοποιείται για την αντιστοίχηση των δεδομένων που στέλνονται από τη συσκευή.</string>
+    <string name="networkPrivacySensorData">Δεδομένα απο τους παρακάτω αισθητήρες:</string>
+    <string name="networkPrivacySensorMicrophone">Εγγραφές ή δεδομένα προερχόμενα από εγγραφές του μικροφώνου.</string>
+    <string name="networkPrivacySensorLocation">Δεδομένα τοποθεσίας (δεδομένα GPS ή παραπλήσια).</string>
+    <string name="networkPrivacyDeviceInfo">Αναλυτικές πληροφορίες που αφορούν το μοντέλο της συσκευής και/ή την έκδοση του phyhox.</string>
+    <string name="networkPrivacySensorInfo">Τεχνικές λεπτομέρειες σχετικά με τους ακόλουθους αισθητήρες:</string>
 
 </resources>
