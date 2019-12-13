@@ -30,7 +30,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">La interfaz web para el acceso remoto utiliza la librería de JavaScript \"Chart.js\" (http://chartjs.org), disponible bajo licencia del MIT. Para la transformada de Fourier, utilizamos la librería FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Instituto Tecnológico de Massachusetts, la cual se encuentra disponible bajo Licencia Pública General de GNU (versión 2 o posterior).</string>
+    <string name="creditsLibs">La interfaz web para el acceso remoto utiliza la librería de JavaScript \"Chart.js\" (http://chartjs.org), disponible bajo licencia del MIT. Para la transformada de Fourier, utilizamos la librería FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Instituto Tecnológico de Massachusetts, la cual se encuentra disponible bajo Licencia Pública General de GNU (versión 2 o posterior). Los datos de elevación del GPS se convierten del elipsoide WGS84 al geoide EGM84 utilizando datos EGM84 (resolución de 30 \') y una función portada de GographicLib (https://geographiclib.sourceforge.io/, licencia MIT / X11).</string>
     <string name="sensorLinearAcceleration">Aceleración Lineal</string>
     <string name="sensorLight">Luz</string>
     <string name="sensorGyroscope">Giroscopio</string>
@@ -256,5 +256,19 @@
     <string name="bt_more_info_link_text">Si tu dispositivo no está soportado, haz click en \"Más información\" para aprender más sobre el soporte flexible para Bluetooth LE en phyphox en nuestro sitio web.</string>
     <string name="bt_more_info_link_button">Más información</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+<string name="export_empty">Esta configuración de experimento no define ningún dato a exportar. Si se trata de un error, comuníquese con la fuente del código QR o el archivo de configuración.</string>
+    <string name="toggleBrightMode">Modo brillante</string>
+    <string name="bt_location_service_explanation">Además del permiso para obtener información de ubicación, Android requiere que los servicios de ubicación estén habilitados para escaneos Bluetooth, ya que el resultado podría usarse para obtener información de ubicación. Le redirigiremos a la configuración de su sistema.</string>
+
+    <string name="networkPrivacyWarning">Advertencia de privacidad</string>
+    <string name="networkVisitPrivacyURL">Política de privacidad</string>
+    <string name="networkPrivacyInfo">Este experimento utiliza una conexión de red, lo que significa que los datos del experimento pueden transmitirse a un servicio de red. Puede encontrar más detalles haciendo clic en el botón de política de privacidad a continuación, que lo llevará a un sitio web con una política de privacidad proporcionada por el creador de este experimento. Si el servicio de red no es un dispositivo local, debe tener en cuenta que phyphox puede transmitir la siguiente información si inicia este experimento:</string>
+    <string name="networkPrivacyUniqueID">Una identificación que es única para este dispositivo y el servicio de red, que permite hacer coincidir todos los datos enviados desde este dispositivo a través de esta configuración de experimento.</string>
+    <string name="networkPrivacySensorData">Datos de los siguientes sensores:</string>
+    <string name="networkPrivacySensorMicrophone">Grabaciones o datos derivados de grabaciones del micrófono.</string>
+    <string name="networkPrivacySensorLocation">Datos de ubicación (datos de GPS o similares).</string>
+    <string name="networkPrivacyDeviceInfo">Información detallada sobre el modelo de su dispositivo y / o la versión de phyphox.</string>
+    <string name="networkPrivacySensorInfo">Detalles técnicos sobre los siguientes sensores:</string>
 
 </resources>
