@@ -74,7 +74,7 @@
     <string name="export_subject">Datos de phyphox</string>
     <string name="export_pick_share">Elige un método para exportar</string>
 
-    <string name="share">Compartir captura</string>
+    <string name="share">Compartir captura de pantalla</string>
     <string name="share_subject">Captura de pantalla de phyphox</string>
     <string name="share_pick_share">Elige un medio para compartir</string>
 
@@ -99,7 +99,7 @@
     <string name="loadingBluetoothConnectionText">Conectando a dispositivo Bluetooth…</string>
 
     <string name="timedRunDialogTitle">Tarea cronometrada</string>
-    <string name="timedRunStartDelay">Retraso de ejecución (s)</string>
+    <string name="timedRunStartDelay">Retraso de inicio (s)</string>
     <string name="timedRunStopDelay">Duración del experimento (s)</string>
     <string name="enableTimedRun">Ejecutar tarea cronometrada</string>
 
@@ -137,7 +137,7 @@
 
     <string name="applyZoomReset">Restablecer a los predeterminados</string>
     <string name="applyZoomKeep">Mantener como seleccionado</string>
-    <string name="remoteColorMapWarning">El espectro de color en la interfaz remota es sólo una aproximación. Al contrario del espectro en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x y y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.</string>
+    <string name="remoteColorMapWarning">El gráfico en la interfaz remota es sólo una aproximación. Al contrario de la gráfica en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x e y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.</string>
 
     <string name="calibrated_magnetometer">Utiliza un magnetómetro calibrado</string>
     <string name="force_gnss">Sólo ubicación satelital</string>
@@ -154,10 +154,10 @@
     <string name="save_locally_message">Este experimento ha sido abierto desde una fuente remota. ¿Deseas agregarlo a tu colección?</string>
     <string name="save_locally_button">Guardar en la colección</string>
     <string name="save_state">Guardar experimento</string>
-    <string name="save_state_category">Experimentos guardados</string>
+    <string name="save_state_category">Estados de experimento guardados</string>
     <string name="save_state_message">Puedes guardar el estado actual de este experimento, incluyendo tus datos, en tu colección o bien compartirlo con aplicaciones de terceros.</string>
     <string name="save_state_title">Título</string>
-    <string name="save_state_save">En colección</string>
+    <string name="save_state_save">A colección</string>
     <string name="save_state_share">Compartir</string>
     <string name="save_state_subject">Estado del experimento para phyphox</string>
     <string name="save_state_default_title">Medición</string>
@@ -172,7 +172,7 @@
 
     <string name="timedRun">Ejecución cronometrada</string>
 
-    <string name="pick_exportFormat">Elige el formato de la información.</string>
+    <string name="pick_exportFormat">Elige el formato de datos.</string>
 
     <string name="applyZoomFollow">Mantener y seguir nuevos datos</string>
 
@@ -207,10 +207,10 @@
     <string name="vendorSensorTitle">Sensor específico del fabricante</string>
     <string name="vendorSensorWarning1">El sensor</string>
     <string name="pick_exportSets">Elige los conjuntos de datos para exportar.</string>
-    <string name="noDrawableData">No hay datos por graficar.</string>
+    <string name="noDrawableData">No hay datos graficables.</string>
 
-    <string name="categoryNewExperiment">Experimentos personales simples</string>
-    <string name="categoryRawSensor">Sensores primarios</string>
+    <string name="categoryNewExperiment">Experimentos personalizados simples</string>
+    <string name="categoryRawSensor">Sensores sin procesar</string>
 
     <string name="experimentinfo_hint">Revisa la información del experimento para aprender cómo utilizarlo.</string>
     <string name="start_hint">Toca el triángulo para comenzar el experimento.</string>
@@ -224,31 +224,31 @@
     <string name="bt_scanning_specific2">en su nombre…</string>
     <string name="bt_device_not_supported">No hay experimento disponible.</string>
 
-    <string name="bt_location_explanation">Androide necesita permisos de ubicación para buscar dispositivos Bluetooth, puesto que el resultado podría utilizarse para derivar información de ubicación. Vamos a solicitar ahora estos permisos. Debes autorizarlos para poder buscar dispositivos Bluetooth.</string>
+    <string name="bt_location_explanation">Android necesita permisos de ubicación para buscar dispositivos Bluetooth, puesto que el resultado podría utilizarse para derivar información de ubicación. Vamos a solicitar ahora estos permisos. Debes autorizarlos para poder buscar dispositivos Bluetooth.</string>
 
-    <string name="bt_exception_uuid">La characteristic con UUID</string>
+    <string name="bt_exception_uuid">Característica con UUID</string>
     <string name="bt_exception_uuid2">no se ha encontrado.</string>
     <string name="bt_exception_disabled">Bluetooth esta deshabilitado. Activa por favor el Bluetooth e intenta nuevamente.</string>
     <string name="bt_exception_connection">La conexión Bluetooth no pudo realizarse.</string>
     <string name="bt_exception_notfound">Dispositivo Bluetooth no localizado.</string>
-    <string name="bt_exception_services">No se han encontrado services.</string>
+    <string name="bt_exception_services">No se han encontrado servicios.</string>
     <string name="bt_exception_device">Error de conexión con el dispositivo</string>
     <string name="bt_exception_device_address">la dirección</string>
     <string name="bt_exception_device_name">llamado</string>
-    <string name="bt_exception_rate">Valor inválido para el rate.</string>
-    <string name="bt_exception_notification">La notificación para la characteristic con el UUID</string>
+    <string name="bt_exception_rate">Valor inválido para tasa.</string>
+    <string name="bt_exception_notification">La notificación para la característica con el UUID</string>
     <string name="bt_exception_notification_enable">no pudo habilitarse.</string>
     <string name="bt_exception_notification_disable">no pudo deshabilitarse nuevamente.</string>
-    <string name="bt_exception_notification_fail_enable">La habilitación de las notificaciones para la characteristic con el UUID</string>
+    <string name="bt_exception_notification_fail_enable">La habilitación de las notificaciones para la característica con el UUID</string>
     <string name="bt_exception_notification_fail">no fue exitosa.</string>
-    <string name="bt_exception_config">El valor para la characteristic</string>
+    <string name="bt_exception_config">El valor para la característica</string>
     <string name="bt_exception_config2">no pudo establecerse.</string>
     <string name="bt_exception_no_connection">El dispositivo Bluetooth no está conectado. El experimento no puede ser iniciado.</string>
     <string name="bt_exception_disconnected">El dispositivo Bluetooth ha sido desconectado.</string>
     <string name="bt_default_error_message">Ha ocurrido un error con el dispositivo Bluetooth.</string>
 
-    <string name="bt_error_writing">Error al intentar escribir la Characteristic con UUID</string>
-    <string name="bt_error_reading">Error al intentar leer la characteristic con UUID</string>
+    <string name="bt_error_writing">Error al intentar escribir la característica con UUID</string>
+    <string name="bt_error_reading">Error al intentar leer la característica con UUID</string>
     <string name="bt_error_discovering">Error al intentar encontrar los services del dispositivo Bluetooth.</string>
     <string name="bt_fail_reading">La operación de lectura no fue exitosa.</string>
     <string name="bt_fail_writing">La operación de escritura no fue exitosa.</string>
@@ -258,7 +258,7 @@
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
 <string name="export_empty">Esta configuración de experimento no define ningún dato a exportar. Si se trata de un error, comuníquese con la fuente del código QR o el archivo de configuración.</string>
-    <string name="toggleBrightMode">Modo brillante</string>
+    <string name="toggleBrightMode">Modo de brillo</string>
     <string name="bt_location_service_explanation">Además del permiso para obtener información de ubicación, Android requiere que los servicios de ubicación estén habilitados para escaneos Bluetooth, ya que el resultado podría usarse para obtener información de ubicación. Le redirigiremos a la configuración de su sistema.</string>
 
     <string name="networkPrivacyWarning">Advertencia de privacidad</string>
