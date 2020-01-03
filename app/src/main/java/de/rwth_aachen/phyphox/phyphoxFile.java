@@ -392,6 +392,7 @@ public abstract class phyphoxFile {
                             try {
                                 Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput$" + conversionFunctionName);
                                 Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                                constructor.setAccessible(true);
                                 outputConversionFunction = (ConversionsOutput.OutputConversion) constructor.newInstance(xpp);
                             } catch (Exception e) {
                                 Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{dataBuffer.class});
@@ -402,7 +403,7 @@ public abstract class phyphoxFile {
                             outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
                         }
                     } catch (NoSuchMethodException e) {
-                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                     }
 
                     // check if buffer exists
@@ -451,13 +452,14 @@ public abstract class phyphoxFile {
                             try {
                                 Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsInput$" + conversionFunctionName);
                                 Constructor constructor = conversionClass.getDeclaredConstructor(new Class[]{XmlPullParser.class});
+                                constructor.setAccessible(true);
                                 inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
                             } catch (Exception e) {
                                 Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
                                 inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod, xpp);
                             }
                         } catch (NoSuchMethodException e) {
-                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                            throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                         }
                     }
 
@@ -484,13 +486,14 @@ public abstract class phyphoxFile {
                         try {
                             Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig$" + conversionFunctionName);
                             Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                            constructor.setAccessible(true);
                             configConversionFunction = (ConversionsConfig.ConfigConversion)constructor.newInstance(xpp);
                         } catch (Exception e) {
                             Method conversionMethod = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
                             configConversionFunction = new ConversionsConfig.SimpleConfigConversion(conversionMethod);
                         }
                     } catch (NoSuchMethodException e) {
-                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                     }
                     try {
                         // add data to configs

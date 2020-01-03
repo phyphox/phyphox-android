@@ -212,9 +212,7 @@ public class BluetoothScanDialog {
                 final BluetoothDeviceInfo deviceInfo = new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi);
 
                 if (autoConnect) {
-                    Log.d("TEST", "DEVICE: " + device.getName());
                     if (supported || phyphoxService) {
-                        Log.d("TEST", "Accepted.");
                         selectedDevice = deviceInfo;
                         dialog.dismiss();
                     }

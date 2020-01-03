@@ -222,7 +222,6 @@ public class ConversionsInput {
                 s = new String(subdata);
             else
                 s = (new String(subdata)).replace(this.decimalPoint, ".");
-            Log.d("TEST", "-------------" + s);
             try {
                 return Double.parseDouble(s);
             } catch (Exception e) {
