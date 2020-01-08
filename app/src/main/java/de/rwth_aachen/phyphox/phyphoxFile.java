@@ -62,7 +62,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.8";
+    public final static String phyphoxFileVersion = "1.9";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -1593,12 +1593,15 @@ public abstract class phyphoxFile {
                             }
 
                             boolean subscribeOnStart = getBooleanAttribute("subscribeOnStart", false);
+                            int mtu = getIntAttribute("mtu", 0);
 
                             Vector<dataOutput> outputs = new Vector<>();
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
                                 BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
+                                if (mtu > 0)
+                                    b.requestMTU = mtu;
                                 experiment.bluetoothInputs.add(b);
                             } catch (phyphoxFileException e) {
                                 throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
@@ -2496,11 +2499,14 @@ public abstract class phyphoxFile {
                             }
                         }
                         Boolean autoConnect = getBooleanAttribute("autoConnect", false);
+                        int mtu = getIntAttribute("mtu", 0);
 
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
                         BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, autoConnect, parent, parent, inputs, characteristics);
+                        if (mtu > 0)
+                            b.requestMTU = mtu;
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;

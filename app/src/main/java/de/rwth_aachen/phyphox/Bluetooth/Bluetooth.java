@@ -18,6 +18,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -70,6 +71,7 @@ public class Bluetooth implements Serializable {
     public String deviceAddress;
     public UUID uuidFilter;
     public Boolean autoConnect;
+    public int requestMTU;
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -560,6 +562,9 @@ public class Bluetooth implements Serializable {
             switch (newState) {
                 case BluetoothProfile.STATE_CONNECTED:
                     if (status == BluetoothGatt.GATT_SUCCESS) {
+                        if (requestMTU > 0) {
+                            add(new RequestMTUCommand(gatt, requestMTU));
+                        }
                         if (isRunning) {
                             try {
                                 start(); // start collecting / sending data again if the experiment is running
@@ -897,6 +902,45 @@ public class Bluetooth implements Serializable {
             return context.getResources().getString(R.string.bt_error_discovering);
         }
     } // end of class DiscoverCommand
+
+    /**
+     * Command to request a specific MTU size
+     */
+    protected class RequestMTUCommand extends BluetoothCommand {
+        int mtu;
+        /**
+         * Create a new RequestMTUCommand.
+         *
+         * @param gatt BluetoothGatt whose services should be discovered
+         */
+        public RequestMTUCommand(BluetoothGatt gatt, int mtu) {
+            super(gatt);
+            this.mtu = mtu;
+        }
+
+        /**
+         * Discover services.
+         *
+         * @return true if the operation was initiated successfully.
+         */
+        @Override
+        public boolean execute() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                return gatt.requestMtu(mtu);
+            } else
+                return false;
+        }
+
+        /**
+         * Return the error message that should be displayed if execute() returns false
+         *
+         * @return the error message
+         */
+        @Override
+        public String getErrorMessage() {
+            return "Could not set MTU as requested by the experiment configuration.";
+        }
+    } // end of class RequestMTUCommand
 
 
     /**
