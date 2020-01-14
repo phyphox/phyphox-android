@@ -256,7 +256,7 @@ public class ConversionsInput {
                 s = (new String(data)).split(this.separator);
             if (s.length <= this.index)
                 return Double.NaN;
-            if (this.label.isEmpty()) {
+            if (this.label == null || this.label.isEmpty()) {
                 //Use the index to pick the entry (CSV style)
                 try {
                     return Double.parseDouble(s[this.index]);
