@@ -1,0 +1,272 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Inställningar</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="graph_tools_pan_and_zoom">Flytta och zooma</string>
+    <string name="graph_tools_pick">Välj datapunkt</string>
+    <string name="graph_tools_more">Fler verktyg</string>
+    <string name="graph_tools_reset">Återställ zoom</string>
+    <string name="graph_tools_follow">Följ nya data</string>
+    <string name="graph_tools_linear_fit">Linjär anpassning</string>
+    <string name="graph_tools_export">Exportera data</string>
+    <string name="graph_tools_log_x">Logaritmisk x-axel</string>
+    <string name="graph_tools_log_y">Logaritmisk y-axel</string>
+
+    <string name="graph_point_label">Punkt</string>
+    <string name="graph_slope_label">Lutning</string>
+    <string name="graph_difference_label">Skillnad</string>
+    <string name="graph_fit_label">Linjär anpassning: y = a x + b</string>
+
+    <string name="applyZoomTitle">Välj zoom</string>
+    <string name="applyZoomExplanation">När du stänger din interaktiva mod för grafen kan du välja om du vill behålla din inzoomning.</string>
+    <string name="applyZoomAdvanced">Avancerade möjligheter</string>
+    <string name="applyZoomApply">Tillämpa för…</string>
+
+    <string name="applyZoomReset">Återställ till grundinställning</string>
+    <string name="applyZoomKeep">Behåll</string>
+    <string name="applyZoomFollow">Behåll och följ nya data</string>
+
+    <string name="applyZoomThis">Endast denna graf</string>
+    <string name="applyZoomSameVariable">Andra grafer: Samma variabel</string>
+    <string name="applyZoomSameUnit">Andra grafer: Samma enhet</string>
+    <string name="applyZoomSameAxis">Andra grafer: Samma axel</string>
+
+    <string name="newExperiment">Lägg till experiment</string>
+
+    <string name="newExperimentSimple">Lägg till ett enkelt experiment</string>
+    <string name="newExperimentPhyphoxInfo">Besök phyphox.org för att skapa mer avancerade experiment, inklusive dataanalys, och dela med kolleger, studenter och vänner.</string>
+    <string name="newExperimentInputTitle">Titel</string>
+    <string name="newExperimentInputBufferSize">Bufferstorlek (hur många värden ska lagras)</string>
+    <string name="newExperimentInputRate">Sensorfrekvens (i Hz, 0 = så snabbt som möjligt)</string>
+    <string name="newExperimentInputSensors">Aktiva sensorer</string>
+
+    <string name="newExperimentBluetooth">Lägg till experiment för enhet med Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth skanningsfel</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Ladda ned från enheten</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Denna enhet har sitt eget phyphox-experiment. Välj ladda ned från enheten för att öppna det.</string>
+
+    <string name="newExperimentQR">Lägg till experiment från QR-kod</string>
+
+    <string name="newExperimentQRscan">Skanna en QR-kod som innehåller ett phyphox-experiment.</string>
+    <string name="newExperimentQRErrorTitle">QR-kod-fel.</string>
+    <string name="newExperimentQRNoExperiment">Kan inte hitta en QR-kod som innehåller ett phyphox-experiment.</string>
+    <string name="newExperimentQRcrcMismatch">Den QR-kod du just skannade verkar inte matcha de tidigare koderna. Se till att bara scanna koder som hör till samma experiment.</string>
+    <string name="newExperimentQRCodesMissing1">Den QR-kod du just skannade är en del av en grupp med</string>
+    <string name="newExperimentQRCodesMissing2">"koder. Tryck \"FORTSÄTT\" för att skanna de övriga  koderna. Antal koder som saknas:"</string>
+    <string name="newExperimentQRBadCRC">Ogiltig checksumma. Detta betyder antingen att det är något fel på QR koden eller att något blev fel under skanningen.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Bluetooth experiment-fel.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Data som överförts från experimentet är skadade.</string>
+
+    <string name="generalErrorDialog">Ett fel uppstod.</string>
+
+    <string name="help">Hjälp och info</string>
+    <string name="experimentsPhyphoxOrg">Experiment-förslag och instruktioner</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Vanliga frågor</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Fjärrkontroll-hjälp</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Språk</string>
+    <string name="translationText">Phyphox kommer att använda det första tillgängliga språket från din lista med föredragna språk. För att ändra dina preferenser, gå till dina Android-\"inställningar\" nedan. För att veta vilka språk som finns tillgängliga och hur du kan hjälpa till, välj \"besök webbplatsen\".</string>
+    <string name="translationToSettings">Inställningar</string>
+    <string name="translationToWebsite">Besök webbplatsen</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#se</string>
+
+    <string name="deviceInfo">Information om din enhet</string>
+    <string name="copyToClipboard">Kopiera till urklipp</string>
+    <string name="deviceInfoCopied">Informationen om din enhet har kopierats till Urklipp.</string>
+
+    <string name="warning">Varning</string>
+    <string name="donotshowagain">Visa inte igen</string>
+    <string name="damageWarning">Var försiktig så att du inte skadar din telefon medan du experimenterar. Var speciellt försiktig så att du inte tappar den på hårda ytor och utsätt den inte för mycket starka magnetfält. Skaparna av phyphox tar inte något ansvar för skador på din telefon.</string>
+
+    <string name="info">Info</string>
+    <string name="credits">Credit</string>
+    <string name="creditsRWTH">phyphox® har utvecklats på 2nd Institute of Physics vid RWTH Aachen University.</string>
+    <string name="creditsNames">Utveckling och koncept:
+\n Dr. Sebastian Staacks
+\n Koncept:
+\n Prof. Christoph Stampfer
+\n Programmerin:
+\n Dominik Dorsel
+\n Jonas Gessner
+\n Camilla Lummerzheim</string>
+    <string name="gpl">Phyphox® är öppen mjukvara under GNU General Public Licence. Besök http://phyphox.org för ytterligare information och tillgång till källkod. Namnet \"phyphox\" och \"RWTH Aachen\" är dock regisserade varumärken.</string>
+    <string name="creditsLibs">The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later). GPS elevation data is converted from the WGS84 ellipsoid to the EGM84 geoid using EGM84 data (30\' resolution) and a ported function from the GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
+    <string name="sensorLinearAcceleration">Linjär acceleration</string>
+    <string name="sensorLight">Ljus</string>
+    <string name="sensorGyroscope">Gyroskop</string>
+    <string name="sensorAccelerometer">Accelerometer</string>
+    <string name="sensorMagneticField">Magnetfält</string>
+    <string name="sensorPressure">Lufttryck</string>
+    <string name="sensorTemperature">Temperatur</string>
+    <string name="sensorHumidity">Luftfuktighet</string>
+    <string name="sensorProximity">Närhet</string>
+    <string name="sensorVendor">Leverantörsspecifik</string>
+
+    <string name="vendorSensorTitle">Leverantörsspecifik sensor</string>
+    <string name="vendorSensorWarning1">Sensor</string>
+    <string name="vendorSensorWarning2">rapporterar inte rätt sensortyp. Den verkar vara leverantörsspecifika och vi kan bara gissa från namnet vilken typ det är. Det kan hända att den inte fungerar som förväntat.</string>
+
+    <string name="location">Plats</string>
+
+    <string name="sensorNotAvailableWarningTitle">Sensor inte tillgänglig.</string>
+    <string name="sensorNotAvailableWarningText1">Sensorn</string>
+    <string name="sensorNotAvailableWarningText2">är inte tillgänglig. Detta betyder vanligen att din enhet inte har denna sensortyp.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Mer information</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">OK</string>
+    <string name="tryagain">Försök igen</string>
+    <string name="doContinue">Fortsätt</string>
+    <string name="close">Stäng</string>
+    <string name="next">Nästa</string>
+    <string name="cancel">Avbryt</string>
+    <string name="unknown">okänd</string>
+
+    <string name="rename">Byt namn</string>
+    <string name="delete">Ta bort</string>
+    <string name="confirmDelete">Vill du ta bort detta experiment från din samling?</string>
+    <string name="confirmDeleteTitle">Bekräfta borttagning?</string>
+
+    <string name="stop">Stopp</string>
+    <string name="start">Start</string>
+    <string name="clear_data">Rensa data</string>
+    <string name="clear_data_question">Rensa insamlade data?</string>
+    <string name="clear">Rensa</string>
+    <string name="timed_stop">Stanna tidsstyrd mätning</string>
+    <string name="timed_start">Starta tidsstyrd mätning</string>
+
+    <string name="loadingTitle">Hämtar</string>
+    <string name="loadingText">Experimentet hämtas…</string>
+    <string name="loadingBluetoothConnectionText">Ansluter till Bluetooth-enhet…</string>
+
+    <string name="timedRunDialogTitle">Tidsstyrd datainsamling</string>
+    <string name="timedRunStartDelay">Startfördröjning (s)</string>
+    <string name="timedRunStopDelay">Experimentets varaktighet (s)</string>
+    <string name="enableTimedRun">Gör en tidsstyrd mätning</string>
+
+    <string name="export">Exportera data</string>
+    <string name="export_empty">Denna experiment-konfiguration definierar inte några data som ska exporteras. Om detta är fel, kontakta den som skapat QR-koden eller konfigurationsfilen.</string>
+    <string name="export_subject">Data från phyphox</string>
+    <string name="export_pick_share">Välj metod för dataexport</string>
+
+    <string name="share">Dela skärmklipp</string>
+    <string name="share_subject">Skärmklipp från phyphox</string>
+    <string name="share_pick_share">Välj metod för datadelning</string>
+
+    <string name="remoteServer">Tillåt fjärranslutning</string>
+    <string name="remoteServerWarning">Du håller på att tillåta fjärranslutning till dina insamlade data. Du ska bara göra detta på ett pålitligt nätverk. Notera också att direkt access mellan olika uenheter inte är möjlig på alla företags- eller universitetsnätverk.
+\n
+\nFör bästa säkerhet och prestanda bör du ansluta till denna enhet genom sammankoppling/\"tethering\" (mobile hotspot).
+\n
+\nEfter att du tryckt OK kan du komma åt din mätning från vilken webbläsare som helst på samma nätverk.</string>
+    <string name="remoteServerWarningTitle">Säkerhetsvarning!</string>
+    <string name="remoteServerNoNetwork">Du behöver sätta upp en Wifi anslutning till fjärrenheten först. Aktivera Wifi och skapa en mobil hotspot.</string>
+    <string name="remoteServerActive">Fjärranslutning aktiverad. Du kan komma åt experimentet genom följande URL: 
+\n%1$s</string>
+    <string name="hotspotSettings">Hotspot-inställningar</string>
+
+    <string name="remoteColorMapWarning">Färgplotten över fjärranslutning är bara en approximation. Till skillnad från plotten inom appen, så kan den för näravarande inte hantera icke-ekvidistanta data eller logaritmiska skalor för x- och y-axeln. Data med varierande intervall kan alltså hamna på fel stället i grafen.</string>
+
+    <string name="calibrated_magnetometer">Använd en kalibrerad magnetometer</string>
+    <string name="force_gnss">Endast platsangivelse från satellit</string>
+
+    <string name="switchToPhoneLayout">Visa: Smal</string>
+    <string name="switchColumns1">Visa: 1 kolumn</string>
+    <string name="switchColumns2">Visa: 2 kolumner</string>
+    <string name="switchColumns3">Visa: 3 kolumner</string>
+    <string name="toggleBrightMode">Ljust läge</string>
+    <string name="fontSize">Textstorlek</string>
+
+    <string name="show_description">Experiment-information</string>
+    <string name="save_locally">Lägg experimentet till samlingen</string>
+    <string name="save_locally_done">Experimentet har lagts till i samlingen.</string>
+    <string name="save_locally_message">Detta experiment har öppnas från en fjärrkälla. Vill du lägga till det till din experimentsamling?</string>
+    <string name="save_locally_button">Spara till samlingen</string>
+    <string name="save_state">Spara experiment-tillståndet</string>
+    <string name="save_state_category">Sparade experiment-tillstånd</string>
+    <string name="save_state_message">Du kan spara tillståndet för detta experiment, inklusive dina data, till din samling eller dela det med tredjepartsapp.</string>
+    <string name="save_state_title">Titel</string>
+    <string name="save_state_save">Till samlingen</string>
+    <string name="save_state_share">Dela</string>
+    <string name="save_state_subject">Experiment-tillstånd för phyphox</string>
+    <string name="save_state_default_title">Mätning</string>
+    <string name="save_state_success">Tillståndet har sparats till din samling.</string>
+
+    <string name="open_zip_title">Öppnar en grupp experiment</string>
+    <string name="open_zip_dialog_instructions">Denna resurs innehåller flera experiment. Du kan antingen välja ett av dem och öppna det och eventuellt spara det till din samling, eller använda knappen nedan för att spara alla på en gång.</string>
+    <string name="open_save_all">Spara alla</string>
+
+    <string name="open_bluetooth_assets_title">Experiment för Bluetooth enhet</string>
+    <string name="open_bluetooth_assets">Följande experiment för din enhet är tillgängliga från phyphox. Du kan antingen bara öppna dem och använda dem eller lägga till alla till din samling för att lätt komma åt dem från huvudmenyn.</string>
+
+    <string name="timedRun">Tidsstyrd körning</string>
+
+    <string name="pick_exportSets">Välj data att exportera.</string>
+    <string name="pick_exportFormat">Välj dataformat.</string>
+
+    <string name="noDrawableData">Inga data att rita.</string>
+
+    <string name="categoryNewExperiment">Enkla egna experiment</string>
+    <string name="categoryRawSensor">Råa sensorer</string>
+
+    <string name="experimentinfo_hint">Läs experiment-info för att vet hur man ska använda experimentet.</string>
+    <string name="start_hint">Rör triangeln för att starta experimentet.</string>
+
+    <string name="bluetooth">Bluetooth lågenergi</string>
+    <string name="bt_android_version">Bluetooth Lågenergi understöds inte av Android Versions lägre än 4.3.</string>
+
+    <string name="bt_pick_device">Välj enhet.</string>
+    <string name="bt_scanning_generic">Söker efter Bluetooth-enheter…</string>
+    <string name="bt_scanning_specific1">Söker efter Bluetooth-enheter med</string>
+    <string name="bt_scanning_specific2">in namnet…</string>
+    <string name="bt_device_not_supported">Inga tillgängliga experiment.</string>
+
+    <string name="bt_location_explanation">Android behöver tillåtelse att använda platsinformation för Bluetooth-skanning eftersom resultaten skulle kunna användas för att tar fram platsinformation. Vi kommer nu att begära dessa tillstånd. Du måste ge tillåtelse för att kunna göra en Bluetooth-skanning.</string>
+    <string name="bt_location_service_explanation">Förutom tillåtelse att få platsinformation behöver Android också tillstånd för platsinformation för Bluetooth skanning eftersom resultatet kan användas för att bestämma din plats. Vi kommer att skicka dig vidare till systeminställningar.</string>
+
+    <string name="bt_exception_uuid">Karakteristik med UUID</string>
+    <string name="bt_exception_uuid2">kan inte hittas.</string>
+    <string name="bt_exception_disabled">Bluetooth är inte aktiverat. Aktivera bluetooth och försök igen.</string>
+    <string name="bt_exception_connection">Bluetooth-anslutning kunde inte öppnas.</string>
+    <string name="bt_exception_notfound">Kan inte hitta Bluetooth-enhet.</string>
+    <string name="bt_exception_services">Kan inte upptäcka service.</string>
+    <string name="bt_exception_device">Fel för enheten med</string>
+    <string name="bt_exception_device_address">adress</string>
+    <string name="bt_exception_device_name">namn</string>
+    <string name="bt_exception_rate">Felaktigt värde för rate.</string>
+    <string name="bt_exception_notification">Meddelande för karakteristiken för UUID</string>
+    <string name="bt_exception_notification_enable">kunde inte aktiveras.</string>
+    <string name="bt_exception_notification_disable">kunde inte avaktiveras igen.</string>
+    <string name="bt_exception_notification_fail_enable">Stänger av meddelanden för karaktäristiken för UUID</string>
+    <string name="bt_exception_notification_fail">misslyckades.</string>
+    <string name="bt_exception_config">Värdet för karaktäristiken</string>
+    <string name="bt_exception_config2">kunde inte sättas.</string>
+    <string name="bt_exception_no_connection">Bluetooth-enheten är inte ansluten. Experimentet kan inte startas.</string>
+    <string name="bt_exception_disconnected">Bluetooth-enheten har kopplats bort.</string>
+    <string name="bt_default_error_message">Något är fel med Bluetooth-enheten.</string>
+
+    <string name="bt_error_writing">Fel medan UUID-karaktäristiken skrevs</string>
+    <string name="bt_error_reading">Fel under läsning av UUID karaktäristiken</string>
+    <string name="bt_error_discovering">Fel medan bluetooth-enhetens tjänster upptäcktes.</string>
+    <string name="bt_fail_reading">Läsningen misslyckades.</string>
+    <string name="bt_fail_writing">Skrivningen misslyckades.</string>
+
+    <string name="bt_more_info_link_text">Om det inte finns stöd för din enhet, välj \"mer information\" för att få veta mer om flexibelt stöd i phyphox för Bluetooth Low Energy.</string>
+    <string name="bt_more_info_link_button">Mer information</string>
+    <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+    <string name="networkPrivacyWarning">Integritetsvarning</string>
+    <string name="networkVisitPrivacyURL">Integritetspolicy</string>
+    <string name="networkPrivacyInfo">Detta experiment använder en nätverksanslutning vilket innebär att experimentdata kan skickas över ett nätverk. Du hittar fler detaljer genom att klicka på integritetspolicy-knappen nedan. Du kommer då till en webbplats med en integritetspolicy skapad av den som tagit fram detta experiment. Om nätverksservicen inte är lokal bör du vara medveten om att phyphox kan skicka följande information när du startar detta experiment:</string>
+    <string name="networkPrivacyUniqueID">Ett ID som är unikt för denna enhet och nätverks-tjänst, som möjliggör matchning av alla data som skickas från enjeten genom denna experiment-konfiguration.</string>
+    <string name="networkPrivacySensorData">Data från följande sensorer:</string>
+    <string name="networkPrivacySensorMicrophone">Inspelningar eller data som skapats från inspelningar genom telefonen.</string>
+    <string name="networkPrivacySensorLocation">Platsinformation (GPS data eller liknande).</string>
+    <string name="networkPrivacyDeviceInfo">Detaljerad information om din enhet och/eller phyphox-versionen.</string>
+    <string name="networkPrivacySensorInfo">Tekniska detaljer för följande sensorer:</string>
+
+</resources>
