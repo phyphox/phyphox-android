@@ -210,7 +210,7 @@
     <string name="noDrawableData">No hay datos graficables.</string>
 
     <string name="categoryNewExperiment">Experimentos personalizados simples</string>
-    <string name="categoryRawSensor">Sensores sin procesar</string>
+    <string name="categoryRawSensor">Sensores</string>
 
     <string name="experimentinfo_hint">Revisa la información del experimento para aprender cómo utilizarlo.</string>
     <string name="start_hint">Toca el triángulo para comenzar el experimento.</string>
