@@ -29,7 +29,7 @@
 
     <string name="info">Info</string>
     <string name="credits">Bodovi</string>
-    <string name="creditsRWTH">phyphox je nastao na drugom institutu za fiziku, Univerzitet u Aachan RWTH.</string>
+    <string name="creditsRWTH">phyphox je nastao na Drugom institutu za fiziku, Univerzitet u Aachan RWTH.</string>
     <string name="creditsNames">Razvoj i koncept:
 \nDr. Sebastian Staacks
 \nKoncept:
@@ -38,7 +38,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"Chart.js\"(http://chartjs.org), dostupnu pod MIT licencom. Za Furijeove transformacije, koristimo FFTW biblioteku (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, koja je dostupna pod GNU generalna javna licenca (verzija 2 ili kasnije).</string>
+    <string name="creditsLibs">Veb interfejs za daljinsko upravljanje koristi Java skript biblioteku \"Chart.js\"(http://chartjs.org), dostupnu pod MIT licencom. Za Furijeove transformacije, koristimo FFTW biblioteku (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, koja je dostupna pod GNU generalna javna licenca (verzija 2 ili kasnije). Podaci o visini GPS-a pretvaraju se iz elipsoida VGS84 u EGM84 geoid koristeći EGM84 podatke (rezolucija 30 \') i prenesenu funkciju iz GographicLib (https://geographiclib.sourceforge.io/, licenca MIT / Ks11).</string>
     <string name="sensorLinearAcceleration">Linearno ubrzanje</string>
     <string name="sensorLight">Svetlost</string>
     <string name="sensorGyroscope">Žiroskop</string>
@@ -191,7 +191,7 @@
     <string name="vendorSensorWarning1">Senzor</string>
     <string name="vendorSensorWarning2">nije predstavljen tačan tip senzora. Izgleeda da je specifičan za proizvođača i njegov tip se može samo naslutiti iz naslova. Stoga, moguće je da neće raditi, kao što se očekuje.</string>
 
-    <string name="gpl">Phyphox je softver otvorenog koda realizovan pod GNU General Public Licence. Molimo posetite http://phyphox.org za više informacija i pristup izvornom kodu. Ipak, naziv \"phyphox\" i \"RWTH Aachen\" su registrovane robne marke.</string>
+    <string name="gpl">Phyphox® je softver otvorenog koda realizovan pod GNU General Public Licence. Molimo posetite http://phyphox.org za više informacija i pristup izvornom kodu. Ipak, naziv \"phyphox\" i \"RWTH Aachen\" su registrovane robne marke.</string>
     <string name="sensorVendor">Karakteristike dobavljača</string>
 
     <string name="vendorSensorTitle">Senzor karakterističan za dobavljača</string>
@@ -257,5 +257,19 @@
     <string name="bt_more_info_link_text">Ukoliko Vaš uređaj nije podržan, izaberite opciju \"more info\" da biste saznali viže o prilagodljivoj Bluetooth Low Energy podršci u phyphox na našem veb sajtu.</string>
     <string name="bt_more_info_link_button">Više informacija</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+<string name="export_empty">Ova konfiguracija eksperimenta ne definiše podatke koje treba izvoziti. Ako je ovo greška, obratite se izvoru QR koda ili konfiguracione datoteke.</string>
+    <string name="toggleBrightMode">Osvetljeni mod</string>
+    <string name="bt_location_service_explanation">Pored dozvole za dobijanje informacija o lokaciji, Android zahteva da se omoguće usluge lokacije za skeniranje Bluetooth-a, jer bi se rezultat mogao koristiti za dobijanje informacija o lokaciji. Preusmerićemo vas na sistemska podešavanja.</string>
+
+    <string name="networkPrivacyWarning">Upozorenje o privatnosti</string>
+    <string name="networkVisitPrivacyURL">Polisa privatnosti</string>
+    <string name="networkPrivacyInfo">Ovaj eksperiment koristi mrežnu vezu, što znači da se podaci eksperimenta mogu preneti na mrežni servis. Više detalja možete pronaći klikom na dugme smernice za privatnost dole, koje će vas odvesti na veb lokaciju sa politikom privatnosti koju je stvorio autor ovog eksperimenta. Ako mrežna usluga nije lokalni uređaj, trebali biste biti svesni da phyphox može preneti sledeće informacije ako pokrenete ovaj eksperiment:</string>
+    <string name="networkPrivacyUniqueID">ID koji je jedinstven za ovaj uređaj i mrežni servis, koji omogućavaju da se podudaraju sa svim podacima koji se šalju sa ovog uređaja kroz ovu eksperimentalnu konfiguraciju</string>
+    <string name="networkPrivacySensorData">Podaci sa sledećih senzora:</string>
+    <string name="networkPrivacySensorMicrophone">Snimci ili podaci dobijeni snimanjem sa mikrofona.</string>
+    <string name="networkPrivacySensorLocation">Podaci o položaju (GPS podaci ili slični).</string>
+    <string name="networkPrivacyDeviceInfo">Detaljne informacije o modelu vašeg uređaja i / ili verziji phyphox-a.</string>
+    <string name="networkPrivacySensorInfo">Tehnički podaci o sledećim senzorima:</string>
 
 </resources>
