@@ -260,4 +260,14 @@
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
 
 <string name="export_empty">Cette configuration expérimentale ne nécessite pas de définir de données à exporter. Si il s\'agit d\'une erreur, merci de contacter le responsable du QR code ou du fichier de configuration.</string>
+    <string name="toggleBrightMode">Mode Lumineux</string>
+    <string name="bt_location_service_explanation">En plus de l\'autorisation d\'obtenir des informations sur la localisation, Android exige que les services de localisation soient activés pour les scans Bluetooth car le résultat pourrait être utilisé pour trouver des informations de localisation. Nous vous redirigerons vers les paramètres de votre système.
+\n
+\n</string>
+
+    <string name="networkPrivacyWarning">Avertissement de confidentialité</string>
+    <string name="networkVisitPrivacyURL">Politique de confidentialité</string>
+    <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que le phyphox peut transmettre les informations suivantes si vous démarrez cette expérience:
+\n
+\n"</string>
     </resources>
