@@ -38,7 +38,7 @@
 \nDominik Dorsel 
 \nJonas Gessner 
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus). La donnée GPS d\'élévation est convertie à partir d\'une ellipsoïde WGS84 en geoïde EGM84 en utilisant des données EGM84 (résolution 30\') et une fonction portée issue de GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
+    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus). Les données d\'élévation GPS sont converties de l\'ellipsoïde WGS84 au géoïde EGM84 à l\'aide des données EGM84 (résolution 30 \') et d\'une fonction portée de GographicLib (https://geographiclib.sourceforge.io/, licence MIT / X11).</string>
     <string name="sensorLight">Luminosité</string>
     <string name="sensorGyroscope">Gyroscope</string>
     <string name="sensorAccelerometer">Accéléromètre</string>
@@ -261,18 +261,16 @@
 
 <string name="export_empty">Cette configuration expérimentale ne nécessite pas de définir de données à exporter. Si il s\'agit d\'une erreur, merci de contacter le responsable du QR code ou du fichier de configuration.</string>
     <string name="toggleBrightMode">Mode Lumineux</string>
-    <string name="bt_location_service_explanation">En plus de l\'autorisation d\'obtenir des informations sur la localisation, Android exige que les services de localisation soient activés pour les scans Bluetooth car le résultat pourrait être utilisé pour trouver des informations de localisation. Nous vous redirigerons vers les paramètres de votre système.
-\n
-\n</string>
+    <string name="bt_location_service_explanation">En plus de l\'autorisation d\'obtenir des informations sur la localisation, Android exige que les services de localisation soient activés pour les scans Bluetooth car le résultat pourrait être utilisé pour trouver des informations de localisation. Nous vous redirigerons vers les paramètres de votre système.</string>
 
     <string name="networkPrivacyWarning">Avertissement de confidentialité</string>
     <string name="networkVisitPrivacyURL">Politique de confidentialité</string>
-    <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que  phyphox peut transmettre les informations suivantes si vous démarrez cette expérience:"</string>
+    <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que phyphox peut transmettre les informations suivantes si vous démarrez cette expérience :"</string>
     <string name="networkPrivacyUniqueID">Un identifiant unique à cet appareil et au service réseau, qui permet de faire correspondre toutes les données envoyées depuis cet appareil via cette configuration d\'expérience.</string>
     <string name="networkPrivacySensorData">Données issues des capteurs suivants :</string>
     <string name="networkPrivacySensorMicrophone">Enregistrements ou données issues des enregistrements du microphone.</string>
-    <string name="networkPrivacySensorLocation">Données de localisation (données GPS ou similaires)</string>
+    <string name="networkPrivacySensorLocation">Données de localisation (données GPS ou similaires).</string>
     <string name="networkPrivacyDeviceInfo">Des informations détaillées sur le modèle de votre appareil et / ou la version de phyphox.</string>
-    <string name="networkPrivacySensorInfo">Détails techniques sur les capteurs suivants:</string>
+    <string name="networkPrivacySensorInfo">Détails techniques sur les capteurs suivants :</string>
 
 </resources>
