@@ -268,4 +268,11 @@
     <string name="networkPrivacyWarning">Avertissement de confidentialité</string>
     <string name="networkVisitPrivacyURL">Politique de confidentialité</string>
     <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que  phyphox peut transmettre les informations suivantes si vous démarrez cette expérience:"</string>
-    </resources>
+    <string name="networkPrivacyUniqueID">Un identifiant unique à cet appareil et au service réseau, qui permet de faire correspondre toutes les données envoyées depuis cet appareil via cette configuration d\'expérience.</string>
+    <string name="networkPrivacySensorData">Données issues des capteurs suivants :</string>
+    <string name="networkPrivacySensorMicrophone">Enregistrements ou données issues des enregistrements du microphone.</string>
+    <string name="networkPrivacySensorLocation">Données de localisation (données GPS ou similaires)</string>
+    <string name="networkPrivacyDeviceInfo">Des informations détaillées sur le modèle de votre appareil et / ou la version de phyphox.</string>
+    <string name="networkPrivacySensorInfo">Détails techniques sur les capteurs suivants:</string>
+
+</resources>
