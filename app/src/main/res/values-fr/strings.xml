@@ -29,7 +29,7 @@
 
     <string name="info">Info</string>
     <string name="credits">Crédits</string>
-    <string name="creditsRWTH">phyphox a été créé à l\'institut de physique II de l\'université technique de Rhénanie-Westphalie à Aix-la-Chapelle (RWTH Aachen University).</string>
+    <string name="creditsRWTH">phyphox® a été créé à l\'institut de physique II de l\'université technique de Rhénanie-Westphalie à Aix-la-Chapelle (RWTH Aachen University).</string>
     <string name="creditsNames">Concept et développement : 
 \nDr. Sebastian Staacks 
 \nConcept : 
@@ -38,7 +38,7 @@
 \nDominik Dorsel 
 \nJonas Gessner 
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus).</string>
+    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus). La donnée GPS d\'élévation est convertie à partir d\'une ellipsoïde WGS84 en geoïde EGM84 en utilisant des données EGM84 (résolution 30\') et une fonction portée issue de GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
     <string name="sensorLight">Luminosité</string>
     <string name="sensorGyroscope">Gyroscope</string>
     <string name="sensorAccelerometer">Accéléromètre</string>
@@ -161,7 +161,7 @@
     <string name="copyToClipboard">Copier dans le presse-papiers</string>
     <string name="deviceInfoCopied">Les informations de votre appareil ont été copiées dans le presse-papiers.</string>
 
-    <string name="gpl">Phyphox est un logiciel open source distribué sous licence GNU General Public License. Veuillez visiter http://phyphox.org pour plus d\'informations et pour accéder à son code source. Cependant, les noms \"phyphox\" et \"RWTH Aachen\" sont des marques déposées.</string>
+    <string name="gpl">Phyphox® est un logiciel open source distribué sous licence GNU General Public License. Veuillez visiter http://phyphox.org pour plus d\'informations et pour accéder à son code source. Cependant, les noms \"phyphox\" et \"RWTH Aachen\" sont des marques déposées.</string>
     <string name="sensorLinearAcceleration">Accélération linéaire</string>
     <string name="sensorVendor">Spécifique au fabricant</string>
 
