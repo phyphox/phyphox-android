@@ -267,7 +267,5 @@
 
     <string name="networkPrivacyWarning">Avertissement de confidentialité</string>
     <string name="networkVisitPrivacyURL">Politique de confidentialité</string>
-    <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que le phyphox peut transmettre les informations suivantes si vous démarrez cette expérience:
-\n
-\n"</string>
+    <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que  phyphox peut transmettre les informations suivantes si vous démarrez cette expérience:"</string>
     </resources>
