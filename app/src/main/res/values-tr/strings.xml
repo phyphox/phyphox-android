@@ -91,14 +91,14 @@
     <string name="damageWarning">Deney yaparken telefonunuza zarar vermemeye lütfen dikkat edin. Sert yüzeyler üzerine düşürmemek için özel dikkat gösterin ve aşırı manyetik alanlara maruz bırakmayın. Telefonunuzdaki herhangi bir hasardan Phyphox\'un yazarları sorumlu değildir.</string>
 
     <string name="creditsRWTH">phyphox, RWTH Aachen Üniversitesi 2. Fizik Enstitüsü\'nde kuruldu.</string>
-    <string name="creditsNames">Fikir ve Geliştirme:
-\n…Dr. Sebastian Staacks
-\n…Konsept:
-\n…Prof. Christoph Stampfer
-\n…Programlama:
-\n…Dominik Dorsel
-\n…Jonas Gessner
-\n…Camilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>Fikir:<br/><b>Prof. Christoph Stampfer</b><br/>Tasarım:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Yazılım:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">Fikir ve Geliştirme: 
+\nDr. Sebastian Staacks 
+\nKonsept: 
+\nProf. Christoph Stampfer 
+\nProgramlama: 
+\nDominik Dorsel 
+\nJonas Gessner 
+\nCamilla Lummerzheim<br/><b>Dr. Sebastian Staacks</b><br/>Fikir:<br/><b>Prof. Christoph Stampfer</b><br/>Tasarım:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>Yazılım:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
     <string name="creditsLibs">Uzaktan erişim için web arayüzü, MIT lisansı altında bulunan “Chart.js” (http://chartjs.org) JavaScript kütüphanesini kullanmaktadır. Fourier dönüşümü için, FFTW kütüphanesini kullanıyoruz (http://fftw.org), Telif Hakkı © 2003, 2007-11 Matteo Frigo, Telif Hakkı © 2003, 2007-11 Massachusetts Teknoloji Enstitüsü, GNU Genel Kamuoyu Lisansı altındadır. (sürüm 2 veya üstü).</string>
     <string name="sensorNotAvailableWarningText2">mevcut değil. Genellikle cihazınızın bu tip bir sensöre sahip olmadığı anlamına gelir.</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
