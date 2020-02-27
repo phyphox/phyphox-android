@@ -7,6 +7,7 @@ import android.hardware.SensorManager;
 import android.os.Build;
 
 import java.io.Serializable;
+import java.security.InvalidParameterException;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
@@ -18,6 +19,8 @@ public class sensorInput implements SensorEventListener, Serializable {
     public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     private SensorInputTimeReference sensorInputTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+
+    public boolean ignoreUnavailable = false;
 
     public dataBuffer dataX; //Data-buffer for x
     public dataBuffer dataY; //Data-buffer for y (3D sensors only)
@@ -35,7 +38,11 @@ public class sensorInput implements SensorEventListener, Serializable {
     private Lock dataLock;
 
     public boolean vendorSensor = false;
-    private Sensor sensor;
+    public Sensor sensor;
+
+    public enum SensorName {
+        accelerometer, linear_acceleration, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity
+    }
 
     public class SensorException extends Exception {
         public SensorException(String message) {
@@ -43,38 +50,42 @@ public class sensorInput implements SensorEventListener, Serializable {
         }
     }
 
-    public static int resolveSensorString(String type) {
+    public static int resolveSensorName(SensorName type) {
         //Interpret the type string
         switch (type) {
-            case "linear_acceleration": return Sensor.TYPE_LINEAR_ACCELERATION;
-            case "light": return Sensor.TYPE_LIGHT;
-            case "gyroscope": return Sensor.TYPE_GYROSCOPE;
-            case "accelerometer": return Sensor.TYPE_ACCELEROMETER;
-            case "magnetic_field": return Sensor.TYPE_MAGNETIC_FIELD;
-            case "pressure": return Sensor.TYPE_PRESSURE;
-            case "temperature": return Sensor.TYPE_AMBIENT_TEMPERATURE;
-            case "humidity": return Sensor.TYPE_RELATIVE_HUMIDITY;
-            case "proximity": return Sensor.TYPE_PROXIMITY;
+            case linear_acceleration: return Sensor.TYPE_LINEAR_ACCELERATION;
+            case light: return Sensor.TYPE_LIGHT;
+            case gyroscope: return Sensor.TYPE_GYROSCOPE;
+            case accelerometer: return Sensor.TYPE_ACCELEROMETER;
+            case magnetic_field: return Sensor.TYPE_MAGNETIC_FIELD;
+            case pressure: return Sensor.TYPE_PRESSURE;
+            case temperature: return Sensor.TYPE_AMBIENT_TEMPERATURE;
+            case humidity: return Sensor.TYPE_RELATIVE_HUMIDITY;
+            case proximity: return Sensor.TYPE_PROXIMITY;
             default: return -1;
         }
     }
 
-    //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
-    // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    protected sensorInput(String type, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
+    public static int resolveSensorString(String type) {
+        try {
+            return resolveSensorName(SensorName.valueOf(type));
+        } catch (InvalidParameterException e) {
+            return -1;
+        }
+    }
+
+    private sensorInput(boolean ignoreUnavailable, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
         this.dataLock = lock;
         this.sensorInputTimeReference = sensorInputTimeReference;
 
         if (rate <= 0)
             this.period = 0;
         else
-            this.period = (long)((1/rate)*1e9); //Period in ns
+            this.period = (long) ((1 / rate) * 1e9); //Period in ns
 
         this.average = average;
 
-        this.type = resolveSensorString(type);
-        if (this.type < 0)
-            throw  new SensorException("Unknown sensor.");
+        this.ignoreUnavailable = ignoreUnavailable;
 
         //Store the buffer references if any
         if (buffers == null)
@@ -93,6 +104,24 @@ public class sensorInput implements SensorEventListener, Serializable {
             this.dataAbs = buffers.get(4).buffer;
         if (buffers.get(5) != null)
             this.dataAccuracy = buffers.get(5).buffer;
+    }
+
+    //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
+    // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
+    public sensorInput(SensorName type, boolean ignoreUnavailable, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
+        this(ignoreUnavailable, rate, average, buffers, lock, sensorInputTimeReference);
+
+        this.type = resolveSensorName(type);
+        if (this.type < 0)
+            throw new SensorException("Unknown sensor.");
+    }
+
+    public sensorInput(String type, boolean ignoreUnavailable, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
+        this(ignoreUnavailable, rate, average, buffers, lock, sensorInputTimeReference);
+
+        this.type = resolveSensorString(type);
+        if (this.type < 0)
+            throw new SensorException("Unknown sensor.");
     }
 
     private Sensor findSensor() {
@@ -201,6 +230,8 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     //Start the data aquisition by registering a listener for this sensor.
     public void start() {
+        if (sensor == null)
+            return;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)) {
             if (calibrated)
@@ -222,6 +253,8 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     //Stop the data aquisition by unregistering the listener for this sensor
     public void stop() {
+        if (sensor == null)
+            return;
         this.sensorManager.unregisterListener(this);
     }
 

@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 
 import android.app.Activity;
@@ -18,6 +18,10 @@ import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.dataOutput;
+import de.rwth_aachen.phyphox.phyphoxFile;
+
 
 /**
  * The BluetoothInput class encapsulates an input to Bluetooth devices.
@@ -28,7 +32,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * UUID of the Descriptor for Client Characteristic Configuration
      */
-    protected static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    public static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     /**
      * Used mode ("poll", "notification" or "indication")

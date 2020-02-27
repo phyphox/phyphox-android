@@ -25,7 +25,13 @@ import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.content.ContextCompat;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Vector;
+
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
 // specific way to show the results of an element.
@@ -865,10 +871,13 @@ public class expView implements Serializable{
     }
 
     //buttonElement implements a simple button which writes values from inputs to outputs when triggered
-    public class buttonElement extends expViewElement implements Serializable {
+    public class buttonElement extends expViewElement implements Serializable, NetworkService.RequestCallback {
         private Vector<dataInput> inputs = null;
         private Vector<dataOutput> outputs = null;
+        private Vector<String> triggers = null;
+        private List<NetworkConnection> networkConnections = null;
         private boolean triggered = false;
+        private expViewFragment parent;
 
         //No special constructor.
         buttonElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -878,6 +887,10 @@ public class expView implements Serializable{
         protected void setIO(Vector<dataInput> inputs, Vector<dataOutput> outputs) {
             this.inputs = inputs;
             this.outputs = outputs;
+        }
+
+        protected void setTriggers(Vector<String> triggers) {
+            this.triggers = triggers;
         }
 
         @Override
@@ -890,6 +903,11 @@ public class expView implements Serializable{
         //Create the view in Android and append it to the linear layout
         protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
+
+            this.parent =parent;
+
+            networkConnections = experiment.networkConnections;
+
             //The button
             Button b = new Button(c);
 
@@ -920,6 +938,27 @@ public class expView implements Serializable{
         @Override
         protected void trigger() {
             triggered = true;
+            for (String t : triggers) {
+                for (NetworkConnection nc : networkConnections) {
+                    if (nc.id.equals(t)) {
+                        List<NetworkService.RequestCallback> requestCallbacks = new ArrayList<>();
+                        requestCallbacks.add(this);
+                        nc.execute(requestCallbacks);
+                        ((Button)rootView).setEnabled(false);
+                        ((Button)rootView).setAlpha(0.5f);
+                    }
+                }
+            }
+        }
+
+        public void requestFinished(NetworkService.ServiceResult result) {
+            parent.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ((Button)rootView).setEnabled(true);
+                    ((Button)rootView).setAlpha(1f);
+                }
+            });
         }
 
         @Override

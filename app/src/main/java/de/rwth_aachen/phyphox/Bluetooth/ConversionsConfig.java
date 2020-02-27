@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 
 import java.io.Serializable;
@@ -18,7 +18,7 @@ public class ConversionsConfig {
 
     public static class SimpleConfigConversion extends ConfigConversion implements Serializable {
         private Method conversionFunction;
-        SimpleConfigConversion(Method conversionFunction) {
+        public SimpleConfigConversion(Method conversionFunction) {
             super();
             this.conversionFunction = conversionFunction;
         }

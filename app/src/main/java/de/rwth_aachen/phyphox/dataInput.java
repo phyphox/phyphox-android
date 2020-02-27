@@ -10,7 +10,7 @@ public class dataInput implements Serializable {
     boolean isBuffer = false;
     boolean isEmpty = false;
     double value = Double.NaN;
-    dataBuffer buffer = null;
+    public dataBuffer buffer = null;
     boolean clearAfterRead = true;
 
     //Get value

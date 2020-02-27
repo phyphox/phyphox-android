@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 
 import android.util.Log;
@@ -27,7 +27,7 @@ public class ConversionsInput {
         private Method conversionFunction;
         int offset;
         int length;
-        SimpleInputConversion(Method conversionFunction, XmlPullParser xpp) {
+        public SimpleInputConversion(Method conversionFunction, XmlPullParser xpp) {
             super();
             this.conversionFunction = conversionFunction;
             try {
@@ -222,7 +222,6 @@ public class ConversionsInput {
                 s = new String(subdata);
             else
                 s = (new String(subdata)).replace(this.decimalPoint, ".");
-            Log.d("TEST", "-------------" + s);
             try {
                 return Double.parseDouble(s);
             } catch (Exception e) {
@@ -257,7 +256,7 @@ public class ConversionsInput {
                 s = (new String(data)).split(this.separator);
             if (s.length <= this.index)
                 return Double.NaN;
-            if (this.label.isEmpty()) {
+            if (this.label == null || this.label.isEmpty()) {
                 //Use the index to pick the entry (CSV style)
                 try {
                     return Double.parseDouble(s[this.index]);

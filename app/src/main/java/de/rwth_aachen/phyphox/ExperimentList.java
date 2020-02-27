@@ -102,6 +102,10 @@ import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
+
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
 
@@ -567,6 +571,10 @@ public class ExperimentList extends AppCompatActivity {
                 return -1;
             if (b.name.equals(res.getString(R.string.save_state_category)))
                 return 1;
+            if (a.name.equals("phyphox.org"))
+                return 1;
+            if (b.name.equals("phyphox.org"))
+                return -1;
             return a.name.toLowerCase().compareTo(b.name.toLowerCase());
         }
     }
@@ -726,15 +734,17 @@ public class ExperimentList extends AppCompatActivity {
                                 if (!inInput || unavailableSensor >= 0)
                                     break;
                                 String type = xpp.getAttributeValue(null, "type");
+                                String ignoreUnavailableStr = xpp.getAttributeValue(null, "ignoreUnavailable");
+                                boolean ignoreUnavailable = (ignoreUnavailableStr != null && Boolean.valueOf(ignoreUnavailableStr));
                                 sensorInput testSensor;
                                 try {
-                                    testSensor = new sensorInput(type, 0, false, null, null, null);
+                                    testSensor = new sensorInput(type, ignoreUnavailable,0, false, null, null, null);
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (sensorInput.SensorException e) {
                                     unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
                                     break;
                                 }
-                                if (!testSensor.isAvailable()) {
+                                if (!(testSensor.isAvailable() || testSensor.ignoreUnavailable)) {
                                     unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
                                 }
                                 break;

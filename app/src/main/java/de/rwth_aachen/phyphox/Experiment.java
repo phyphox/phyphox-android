@@ -54,6 +54,7 @@ import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
+import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 
@@ -63,6 +64,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -71,9 +73,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
+
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
-public class Experiment extends AppCompatActivity implements View.OnClickListener {
+public class Experiment extends AppCompatActivity implements View.OnClickListener, NetworkConnection.ScanDialogDismissedDelegate, NetworkConnection.NetworkConnectionDataPolicyInfoDelegate {
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -210,7 +217,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         stopRemoteServer(); //Remote server should stop when the app is not active
         shutdown = true; //Stop the loop
         stopMeasurement(); //Stop the measurement
+
         if (experiment != null && experiment.loaded) {
+            for (NetworkConnection networkConnection : experiment.networkConnections) {
+                networkConnection.disconnect();
+                networkConnection.specificAddress = null;
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
                 for (BluetoothInput bti : experiment.bluetoothInputs)
@@ -306,7 +318,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             //We should set the experiment title....
-            ((TextView) findViewById(R.id.titleText)).setText(experiment.title);
+            TextView titleText = ((TextView) findViewById(R.id.titleText));
+            titleText.setText(experiment.title);
+            float defaultSize = titleText.getTextSize();
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(titleText, (int)(defaultSize*0.49), Math.round(defaultSize), 1, TypedValue.COMPLEX_UNIT_PX);
+
 
             int startView = 0;
 
@@ -373,17 +389,24 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             this.experiment = null;
         }
 
-        //Check if experiment is already in list and if so, flag it as local.
-        if (experiment.source != null && Helper.experimentInCollection(experiment.source, this)) {
-            experiment.isLocal = true;
-        }
         for (sensorInput sensor : experiment.inputSensors) {
             if (sensor.vendorSensor) {
                 showSensorWarning(sensor);
             }
         }
-        //If this experiment has been loaded from a external source, we offer to save it locally
-        if (!experiment.isLocal && experiment.loaded) {
+
+        //Check if experiment is already in list and if so, flag it as local.
+        if (experiment.source != null && Helper.experimentInCollection(experiment.source, this)) {
+            experiment.isLocal = true;
+        }
+
+        if (experiment.loaded && experiment.networkConnections.size() > 0) {
+            String[] sensors = new String[experiment.inputSensors.size()];
+            for (int i = 0; i < experiment.inputSensors.size(); i++) {
+                sensors[i] = res.getString(experiment.inputSensors.get(i).getDescriptionRes());
+            }
+            experiment.networkConnections.get(0).getDataAndPolicyDialog(experiment.audioRecord != null, experiment.gpsIn != null, experiment.inputSensors.size() > 0, sensors, this, this).show();
+        } else if (!experiment.isLocal && experiment.loaded) { //If this experiment has been loaded from a external source, we offer to save it locally
             menuHintDismissed = true; //Do not show menu startMenuItem for external experiments
 
             if (!saveLocallyDismissed) {
@@ -453,6 +476,23 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    public void connectNetworkConnections() {
+        for (NetworkConnection networkConnection : experiment.networkConnections) {
+            if (networkConnection.specificAddress == null)
+                networkConnection.connect(this);
+            return;
+        }
+        connectBluetoothDevices(false, false);
+    }
+
+    public void networkScanDialogDismissed() {
+        connectNetworkConnections();
+    }
+
+    public void dataPolicyInfoDismissed() {
+        connectNetworkConnections();
     }
 
     // connects to the bluetooth devices in an async task

@@ -1,14 +1,18 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
 import java.util.UUID;
 import java.util.Vector;
+
+import de.rwth_aachen.phyphox.dataBuffer;
+import de.rwth_aachen.phyphox.dataInput;
 
 
 /**

@@ -13,6 +13,7 @@ import android.media.AudioRecord;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
@@ -45,11 +46,23 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig;
+import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
+import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkConversion;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkDiscovery;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkMetadata;
+import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    final static String phyphoxFileVersion = "1.8";
+    public final static String phyphoxFileVersion = "1.9";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -377,8 +390,9 @@ public abstract class phyphoxFile {
                     try {
                         try {
                             try {
-                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsOutput$" + conversionFunctionName);
+                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput$" + conversionFunctionName);
                                 Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                                constructor.setAccessible(true);
                                 outputConversionFunction = (ConversionsOutput.OutputConversion) constructor.newInstance(xpp);
                             } catch (Exception e) {
                                 Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{dataBuffer.class});
@@ -389,7 +403,7 @@ public abstract class phyphoxFile {
                             outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
                         }
                     } catch (NoSuchMethodException e) {
-                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                     }
 
                     // check if buffer exists
@@ -436,15 +450,16 @@ public abstract class phyphoxFile {
                        }
                         try {
                             try {
-                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsInput$" + conversionFunctionName);
+                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsInput$" + conversionFunctionName);
                                 Constructor constructor = conversionClass.getDeclaredConstructor(new Class[]{XmlPullParser.class});
+                                constructor.setAccessible(true);
                                 inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
                             } catch (Exception e) {
                                 Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
                                 inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod, xpp);
                             }
                         } catch (NoSuchMethodException e) {
-                            throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                            throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                         }
                     }
 
@@ -469,15 +484,16 @@ public abstract class phyphoxFile {
                     }
                     try {
                         try {
-                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.ConversionsConfig$" + conversionFunctionName);
+                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig$" + conversionFunctionName);
                             Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
+                            constructor.setAccessible(true);
                             configConversionFunction = (ConversionsConfig.ConfigConversion)constructor.newInstance(xpp);
                         } catch (Exception e) {
                             Method conversionMethod = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
                             configConversionFunction = new ConversionsConfig.SimpleConfigConversion(conversionMethod);
                         }
                     } catch (NoSuchMethodException e) {
-                        throw new phyphoxFileException("invalid conversion function.", xpp.getLineNumber());
+                        throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                     }
                     try {
                         // add data to configs
@@ -870,6 +886,9 @@ public abstract class phyphoxFile {
                     break;
                 case "input": //Holds inputs like sensors or the microphone
                     (new inputBlockParser(xpp, experiment, parent)).process();
+                    break;
+                case "network": //Holds inputs like sensors or the microphone
+                    (new networkBlockParser(xpp, experiment, parent)).process();
                     break;
                 case "analysis": //Holds a number of math modules which will be executed in the order they occur
                     experiment.analysisSleep = getDoubleAttribute("sleep", 0.02); //Time between executions
@@ -1346,16 +1365,29 @@ public abstract class phyphoxFile {
                 }
                 case "button": { //The edit element can take input from the user
                     //Allowed input/output configuration
+                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = true; emptyAllowed = true; repeatableOffset = 0;}},
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = true; emptyAllowed = true; repeatableOffset = 0;}},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0;}}
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 0; maxCount = 0; repeatableOffset = 0;}}
                     };
-                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, null)).process(); //Load inputs and outputs
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, null, ats)).process(); //Load inputs and outputs
 
                     expView.buttonElement be = newView.new buttonElement(label, null, null, parent.getResources()); //This one is user-event driven and does not regularly read or write values
                     be.setIO(inputs, outputs);
+                    Vector<String> triggers = new Vector<>();
+                    for (ioBlockParser.AdditionalTag at : ats) {
+                        if (at.name.equals("input"))
+                            continue;
+                        if (at.name.equals("output"))
+                            continue;
+                        if (!at.name.equals("trigger")) {
+                            throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
+                        }
+                        triggers.add(at.content);
+                    }
+                    be.setTriggers(triggers);
                     newView.elements.add(be);
                     break;
                 }
@@ -1415,6 +1447,7 @@ public abstract class phyphoxFile {
                     boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
 
                     String type = getStringAttribute("type");
+                    boolean ignoreUnavailable = getBooleanAttribute("ignoreUnavailable", false);
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
@@ -1430,14 +1463,14 @@ public abstract class phyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new sensorInput(type, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
+                        experiment.inputSensors.add(new sensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (sensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
                     }
 
                     //Check if the sensor is available on this device
-                    if (!experiment.inputSensors.lastElement().isAvailable()) {
+                    if (!(experiment.inputSensors.lastElement().isAvailable() || experiment.inputSensors.lastElement().ignoreUnavailable)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(experiment.inputSensors.lastElement().getDescriptionRes()) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
                     }
                     break;
@@ -1560,18 +1593,160 @@ public abstract class phyphoxFile {
                             }
 
                             boolean subscribeOnStart = getBooleanAttribute("subscribeOnStart", false);
+                            int mtu = getIntAttribute("mtu", 0);
 
                             Vector<dataOutput> outputs = new Vector<>();
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
                                 BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
+                                if (mtu > 0)
+                                    b.requestMTU = mtu;
                                 experiment.bluetoothInputs.add(b);
                             } catch (phyphoxFileException e) {
                                 throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber()); // throw it again with LineNumber
                             }
                         }
                         break;
+                }
+                default: //Unknown tag
+                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+            }
+        }
+
+    }
+
+    //Blockparser for the network block
+    private static class networkBlockParser extends xmlBlockParser {
+
+        networkBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+            super(xpp, experiment, parent);
+        }
+
+        @Override
+        protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
+            switch (tag.toLowerCase()) {
+                case "connection":
+                    String id = getStringAttribute("id");
+                    String privacyURL = getStringAttribute("privacy");
+                    String address = getStringAttribute("address");
+                    String discoveryAddress = getStringAttribute("discoveryAddress");
+                    boolean autoConnect = getBooleanAttribute("autoConnect", false);
+                    double interval = getDoubleAttribute("interval", 0.0);
+
+                    String discoveryStr = getStringAttribute("discovery");
+                    NetworkDiscovery.Discovery discovery = null;
+                    if (discoveryStr != null) {
+                        switch (discoveryStr) {
+                            case "http":
+                                discovery = new NetworkDiscovery.Http(discoveryAddress);
+                                break;
+                            default:
+                                throw new phyphoxFileException("Unknown discovery "+discoveryStr, xpp.getLineNumber());
+                        }
+                    }
+
+                    String serviceStr = getStringAttribute("service");
+                    NetworkService.Service service = null;
+                    if (serviceStr != null) {
+                        switch (serviceStr) {
+                            case "http/get":
+                                service = new NetworkService.HttpGet();
+                                break;
+                            case "http/post":
+                                service = new NetworkService.HttpPost();
+                                break;
+                            default:
+                                throw new phyphoxFileException("Unknown service "+serviceStr, xpp.getLineNumber());
+                        }
+                    }
+
+                    String conversionStr = getStringAttribute("conversion");
+                    NetworkConversion.Conversion conversion = null;
+                    if (conversionStr != null) {
+                        switch (conversionStr) {
+                            case "json":
+                                conversion = new NetworkConversion.Json();
+                                break;
+                            default:
+                                throw new phyphoxFileException("Unknown conversion "+conversionStr, xpp.getLineNumber());
+                        }
+                    }
+
+                    Map<String, NetworkConnection.NetworkSendableData> send = new HashMap<>();
+                    Map<String, NetworkConnection.NetworkReceivableData> receive = new HashMap<>();
+
+
+                    (new networkConnectionBlockParser(xpp, experiment, parent, send, receive)).process();
+
+                    experiment.networkConnections.add(new NetworkConnection(id, privacyURL, address, discovery, autoConnect, service, conversion, send, receive, interval, parent));
+
+                    break;
+                default: //Unknown tag...
+                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+            }
+        }
+
+    }
+
+    //Blockparser for a connection block within the network block
+    private static class networkConnectionBlockParser extends xmlBlockParser {
+        Map<String, NetworkConnection.NetworkSendableData> send;
+        Map<String, NetworkConnection.NetworkReceivableData> receive;
+
+        networkConnectionBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Map<String, NetworkConnection.NetworkSendableData> send, Map<String, NetworkConnection.NetworkReceivableData> receive) {
+            super(xpp, experiment, parent);
+            this.send = send;
+            this.receive = receive;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
+            switch (tag.toLowerCase()) {
+                case "send": {
+                    NetworkConnection.NetworkSendableData sendable;
+
+                    String id = getStringAttribute("id");
+                    if (id == null)
+                        throw new phyphoxFileException("Missing id in send element.", xpp.getLineNumber());
+
+                    String type = getStringAttribute("type");
+                    if (type == null || type.equals("buffer")) {
+                        String bufferName = getText();
+                        dataBuffer buffer = experiment.getBuffer(bufferName);
+                        if (buffer == null)
+                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                        sendable = new NetworkConnection.NetworkSendableData(buffer);
+                    } else if (type.equals("meta")) {
+                        String metaName = getText();
+                        try {
+                            sendable = new NetworkConnection.NetworkSendableData(new NetworkMetadata(metaName, parent));
+                        } catch (IllegalArgumentException e) {
+                            throw new phyphoxFileException("Unknown meta data \"" + metaName + "\".", xpp.getLineNumber());
+                        }
+                    } else {
+                        throw new phyphoxFileException("Unknown type \"" + type + "\".", xpp.getLineNumber());
+                    }
+                    send.put(id, sendable);
+                    break;
+                }
+                case "receive": {
+                    NetworkConnection.NetworkReceivableData receivable;
+
+                    String id = getStringAttribute("id");
+                    if (id == null)
+                        throw new phyphoxFileException("Missing id in send element.", xpp.getLineNumber());
+
+                    boolean clear = getBooleanAttribute("clear", false);
+
+                    String bufferName = getText();
+                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    if (buffer == null)
+                        throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                    receivable = new NetworkConnection.NetworkReceivableData(buffer, clear);
+
+                    receive.put(id, receivable);
+                    break;
                 }
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
@@ -2324,11 +2499,14 @@ public abstract class phyphoxFile {
                             }
                         }
                         Boolean autoConnect = getBooleanAttribute("autoConnect", false);
+                        int mtu = getIntAttribute("mtu", 0);
 
                         Vector<dataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
                         BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, autoConnect, parent, parent, inputs, characteristics);
+                        if (mtu > 0)
+                            b.requestMTU = mtu;
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;

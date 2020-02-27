@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Bluetooth;
 
 import android.Manifest;
 import android.app.Activity;
@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import de.rwth_aachen.phyphox.R;
+
 /**
  * Created by Sebastian Staacks on 03.02.18.
  */
@@ -56,7 +58,7 @@ public class BluetoothScanDialog {
 
     private Boolean autoConnect;
 
-    BluetoothScanDialog(Boolean autoConnect, final Activity activity, final Context context, BluetoothAdapter bta) {
+    public BluetoothScanDialog(Boolean autoConnect, final Activity activity, final Context context, BluetoothAdapter bta) {
         this.autoConnect = autoConnect;
         this.parentActivity = activity;
         this.ctx = context;
@@ -210,9 +212,7 @@ public class BluetoothScanDialog {
                 final BluetoothDeviceInfo deviceInfo = new BluetoothDeviceInfo(device, supported, phyphoxService, uuids, rssi);
 
                 if (autoConnect) {
-                    Log.d("TEST", "DEVICE: " + device.getName());
                     if (supported || phyphoxService) {
-                        Log.d("TEST", "Accepted.");
                         selectedDevice = deviceInfo;
                         dialog.dismiss();
                     }
@@ -347,10 +347,10 @@ public class BluetoothScanDialog {
 
 
     public class BluetoothDeviceInfo {
-        BluetoothDevice device;
+        public BluetoothDevice device;
         Boolean supported;
-        Boolean phyphoxService;
-        Set<UUID> uuids;
+        public Boolean phyphoxService;
+        public Set<UUID> uuids;
         int lastRSSI;
         boolean oneOfMany;
         boolean strongestSignal;
