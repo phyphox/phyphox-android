@@ -128,7 +128,7 @@
     <string name="timedRun">Zamanlı deneme</string>
 
     <string name="categoryNewExperiment">Basit özel deneyler</string>
-    <string name="categoryRawSensor">Ham sensörler</string>
+    <string name="categoryRawSensor">Ham Sensörler</string>
 
     <string name="remoteServerWarning">Elde edilen verilere uzaktan erişimi etkinleştirmek üzeresiniz. Bunu sadece güvenli bir ağda yapmanız tavsiye edilir. Ayrıca, birçok şirket veya üniversite ağında cihazlar arasında doğrudan erişim mümkün olmayabilir.
 \n
