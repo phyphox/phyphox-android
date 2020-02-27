@@ -2,18 +2,18 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "29.0.3"
 
     defaultConfig {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
         targetSdkVersion 29
 
-        versionName "1.1.5-beta1"
+        versionName "1.1.5-beta2"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1010500 //1.01.05-00
+        versionCode 1010501 //1.01.05-01
 
-        resConfigs "en", "cs", "de", "el", "es", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "vi", "zh-rCN", "zh-rTW"
+        resConfigs "en", "cs", "de", "el", "es", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "tr", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -58,12 +58,12 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.android.material:material:1.1.0'
     implementation 'androidx.annotation:annotation:1.1.0'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.appcompat:appcompat-resources:1.1.0'
-    implementation 'androidx.core:core:1.1.0'
-    implementation 'androidx.fragment:fragment:1.1.0'
+    implementation 'androidx.core:core:1.2.0'
+    implementation 'androidx.fragment:fragment:1.2.2'
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
     //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md
