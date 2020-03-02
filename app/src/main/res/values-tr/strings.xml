@@ -90,7 +90,7 @@
 
     <string name="damageWarning">Deney yaparken telefonunuza zarar vermemeye lütfen dikkat edin. Sert yüzeyler üzerine düşürmemek için özel dikkat gösterin ve aşırı manyetik alanlara maruz bırakmayın. Telefonunuzdaki herhangi bir hasardan Phyphox\'un yazarları sorumlu değildir.</string>
 
-    <string name="creditsRWTH">phyphox, RWTH Aachen Üniversitesi 2. Fizik Enstitüsü\'nde kuruldu.</string>
+    <string name="creditsRWTH">Phyphox® RWTH Aachen Üniversitesi 2. Fizik Enstitüsü\'nde oluşturulmuştur.</string>
     <string name="creditsNames">Fikir ve Geliştirme:
 \nDr. Sebastian Staacks
 \nKonsept:
@@ -99,7 +99,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Uzaktan erişim için web arayüzü, MIT lisansı altında bulunan “Chart.js” (http://chartjs.org) JavaScript kütüphanesini kullanmaktadır. Fourier dönüşümü için, FFTW kütüphanesini kullanıyoruz (http://fftw.org), Telif Hakkı © 2003, 2007-11 Matteo Frigo, Telif Hakkı © 2003, 2007-11 Massachusetts Teknoloji Enstitüsü, GNU Genel Kamuoyu Lisansı altındadır. (sürüm 2 veya üstü).</string>
+    <string name="creditsLibs">Uzaktan erişim için web arayüzü, MIT lisansı altında bulunan “Chart.js” (http://chartjs.org) JavaScript kütüphanesini kullanmaktadır. Fourier dönüşümü için, FFTW kütüphanesi kullanılmaktadır (http://fftw.org), Telif Hakkı © 2003, 2007-11 Matteo Frigo, Telif Hakkı © 2003, 2007-11 Massachusetts Teknoloji Enstitüsü, GNU Genel Kamuoyu Lisansı altındadır. (sürüm 2 veya üstü). GPS yükseklik verileri, EGM84 verileri (30 \'çözünürlük) ve GographicLib\'den taşınan bir fonksiyon (https://geographiclib.sourceforge.io/, MIT / X11 lisansı) kullanılarak WGS84 elipsoidinden EGM84 geoid\'e dönüştürülmektedir.</string>
     <string name="sensorNotAvailableWarningText2">mevcut değil. Genellikle cihazınızın bu tip bir sensöre sahip olmadığı anlamına gelir.</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
 
@@ -190,7 +190,7 @@
     <string name="copyToClipboard">Panoya kopyala</string>
     <string name="deviceInfoCopied">Cihaz bilgisi panoya kopyalandı.</string>
 
-    <string name="gpl">Phyphox, GNU Genel Kamu Lisansı kapsamında yayınlanan açık kaynaklı bir yazılımdır. Daha fazla bilgi ve kaynak koduna erişmek için lütfen http://phyphox.org adresini ziyaret edin. Ayrıca, \"phyphox\" ve \"RWTH Aachen\" adları tescilli ticari markalardır.</string>
+    <string name="gpl">Phyphox®, GNU Genel Kamu Lisansı kapsamında yayınlanan açık kaynaklı bir yazılımdır. Daha fazla bilgi ve kaynak koduna erişmek için lütfen http://phyphox.org adresini ziyaret edin. Ayrıca, \"phyphox\" ve \"RWTH Aachen\" adları tescilli ticari markalardır.</string>
     <string name="sensorVendor">Satıcıya özel</string>
 
     <string name="vendorSensorTitle">Satıcıya özgü sensör</string>
@@ -259,5 +259,19 @@
     <string name="bt_more_info_link_text">Cihazınız desteklenmiyorsa, web sitemizde phyphox\'taki esnek Bluetooth Düşük Enerji desteği hakkında daha fazla bilgi edinmek için \"daha fazla bilgi\" seçeneğini seçin.</string>
     <string name="bt_more_info_link_button">Daha fazla bilgi</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+
+<string name="export_empty">Bu deney konfigürasyonu dışa aktarılacak herhangi bir veri tanımlamıyor. Bu bir hata ise, lütfen QR kodunun veya yapılandırma dosyasının kaynağına başvurun.</string>
+    <string name="toggleBrightMode">Parlak mod</string>
+    <string name="bt_location_service_explanation">Konum bilgisi alma iznine ek olarak, Android, konum bilgilerinin türetilmesi için kullanılabileceği için Bluetooth taramalarında konum servislerinin etkinleştirilmesini gerektirir. Sizi sistem ayarlarınıza yönlendireceğiz.</string>
+
+    <string name="networkPrivacyWarning">Gizlilik uyarısı</string>
+    <string name="networkVisitPrivacyURL">Gizlilik Politikası</string>
+    <string name="networkPrivacyInfo">Bu deney bir ağ bağlantısı kullanmaktadır; bu durum deney verilerinin bir şebeke servisine aktarılabileceği anlamına gelmektedir. Sizi deneyin yapımcısı tarafından sağlanan gizlilik politikasına sahip bir web sitesine götürecek olan, aşağıdaki \"gizlilik politikası\" düğmesini tıklayarak daha fazla ayrıntı bulabilirsiniz. Ağ hizmeti yerel bir cihaz değilse, bu deneyi başlatırsanız phyphox\'un aşağıdaki bilgileri iletebileceğinin bilincinde olmalısınız:</string>
+    <string name="networkPrivacyUniqueID">Bu cihaza ve şebeke servisine özgü bir kimlik, deney yapılandırması aracılığıyla bu cihazdan gönderilen tüm verilerin eşleştirilmesine izin verir.</string>
+    <string name="networkPrivacySensorData">Aşağıdaki sensörlerden alınan veriler:</string>
+    <string name="networkPrivacySensorMicrophone">Ses kayıtları veya mikrofondan yapılan kayıtlardan elde edilen veriler.</string>
+    <string name="networkPrivacySensorLocation">Konum verileri (GPS verileri veya benzeri).</string>
+    <string name="networkPrivacyDeviceInfo">Cihazınızın modeli ve / veya phyphox sürümü hakkında ayrıntılı bilgi.</string>
+    <string name="networkPrivacySensorInfo">Aşağıdaki sensörler hakkında teknik detaylar:</string>
 
 </resources>
