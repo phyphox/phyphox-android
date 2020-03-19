@@ -283,6 +283,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         tvLabelY.setText(graphView.getLabelAndUnitY());
         tvLabelZ.setText(graphView.getLabelAndUnitZ());
         rbFollowX.setVisibility(graphView.graphSetup.incrementalX ? VISIBLE : GONE);
+
+        if (graphView.previouslyKept) {
+            rbKeep.setChecked(true);
+        } else {
+            rbReset.setChecked(true);
+        }
+
         if (graphView.zoomFollows && graphView.graphSetup.incrementalX && !Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
             rbFollowX.setChecked(true);
         } else if (!Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
@@ -309,6 +316,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 .setPositiveButton(R.string.ok, (dialog, id) -> {
                     double minX, maxX, minY, maxY, minZ, maxZ;
                     boolean simple = !swAdvanced.isChecked();
+
+                    graphView.previouslyKept = (simple && rbKeep.isChecked()) || (!simple && (rbKeepX.isChecked() || rbKeepY.isChecked() || rbKeepZ.isChecked()));
 
                     if ((simple && rbReset.isChecked()) || (!simple && rbResetX.isChecked())) {
                         minX = Double.NaN;

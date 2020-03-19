@@ -83,6 +83,8 @@ public class GraphView extends View {
     private double[] lineWidth;
     private int[] color;
 
+    public boolean previouslyKept = false; //Keeps track if the user has kept his zoom when he left the interactive mode the last time
+
     public enum scaleMode {
         auto, extend, fixed
     }
