@@ -96,11 +96,14 @@ public class GpsInput implements Serializable {
             this.lastStatus = -1;
 
         try {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            if (!forceGNSS)
+            if (locationManager.getAllProviders().contains(LocationManager.GPS_PROVIDER))
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            if (!forceGNSS && locationManager.getAllProviders().contains(LocationManager.NETWORK_PROVIDER))
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         } catch (SecurityException e) {
             Log.e("gps start", "Security exception when requesting location updates: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            Log.e("gps start", "Illegal argument despite existing provider: " + e.getMessage());
         }
         onStatusUpdate(0);
     }

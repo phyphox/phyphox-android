@@ -41,7 +41,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     public Sensor sensor;
 
     public enum SensorName {
-        accelerometer, linear_acceleration, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity
+        accelerometer, linear_acceleration, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity, attitude
     }
 
     public class SensorException extends Exception {
@@ -62,6 +62,7 @@ public class sensorInput implements SensorEventListener, Serializable {
             case temperature: return Sensor.TYPE_AMBIENT_TEMPERATURE;
             case humidity: return Sensor.TYPE_RELATIVE_HUMIDITY;
             case proximity: return Sensor.TYPE_PROXIMITY;
+            case attitude: return Sensor.TYPE_ROTATION_VECTOR;
             default: return -1;
         }
     }
@@ -191,6 +192,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                 return R.string.sensorHumidity;
             case Sensor.TYPE_PROXIMITY:
                 return R.string.sensorProximity;
+            case Sensor.TYPE_ROTATION_VECTOR:
+                return R.string.sensorAttitude;
         }
         if (type >= Sensor.TYPE_DEVICE_PRIVATE_BASE) {
             return R.string.sensorVendor;
@@ -329,7 +332,10 @@ public class sensorInput implements SensorEventListener, Serializable {
                     if (dataT != null)
                         dataT.append((event.timestamp - sensorInputTimeReference.get()) * 1e-9); //We want seconds since t0
                     if (dataAbs != null)
-                        dataAbs.append(Math.sqrt(avgX*avgX+avgY*avgY+avgZ*avgZ) / aquisitions);
+                        if (type == Sensor.TYPE_ROTATION_VECTOR)
+                            dataAbs.append(Math.sqrt(aquisitions*aquisitions-avgX*avgX-avgY*avgY-avgZ*avgZ) / aquisitions);
+                        else
+                            dataAbs.append(Math.sqrt(avgX*avgX+avgY*avgY+avgZ*avgZ) / aquisitions);
                     if (dataAccuracy != null)
                         dataAccuracy.append(accuracy);
                 } finally {

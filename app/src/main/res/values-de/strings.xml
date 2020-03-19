@@ -89,6 +89,7 @@
     <string name="sensorTemperature">Temperatur</string>
     <string name="sensorHumidity">Luftfeuchtigkeit</string>
     <string name="sensorProximity">Annäherung</string>
+    <string name="sensorAttitude">Lage</string>
     <string name="share">Screenshot teilen</string>
     <string name="share_pick_share">Wählen Sie eine App zum Teilen</string>
     <string name="share_subject">Screenshot aus phyphox</string>
