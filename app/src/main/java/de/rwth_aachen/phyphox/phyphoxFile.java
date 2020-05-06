@@ -62,7 +62,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class phyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.9";
+    public final static String phyphoxFileVersion = "1.10";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();

@@ -209,6 +209,14 @@ public class FormulaParser {
         }
     }
 
+    static class HeavisideFunction extends Function {
+        protected Double apply (Double in1, Double in2) {
+            if (in1.isNaN())
+                return Double.NaN;
+            return in1 >= 0 ? 1.0 : 0.0;
+        }
+    }
+
     static class RoundFunction extends Function {
         protected Double apply (Double in1, Double in2) {
             return (double)Math.round(in1);
@@ -224,6 +232,18 @@ public class FormulaParser {
     static class FloorFunction extends Function {
         protected Double apply (Double in1, Double in2) {
             return Math.floor(in1);
+        }
+    }
+
+    static class MinFunction extends Function {
+        protected Double apply (Double in1, Double in2) {
+            return Math.min(in1, in2);
+        }
+    }
+
+    static class MaxFunction extends Function {
+        protected Double apply (Double in1, Double in2) {
+            return Math.max(in1, in2);
         }
     }
 
@@ -432,11 +452,17 @@ public class FormulaParser {
                                          break;
                             case "sign": operator = new SignFunction();
                                          break;
+                            case "heaviside": operator = new HeavisideFunction();
+                                         break;
                             case "round": operator = new RoundFunction();
                                          break;
                             case "ceil": operator = new CeilFunction();
                                          break;
                             case "floor": operator = new FloorFunction();
+                                         break;
+                            case "min": operator = new MinFunction();
+                                         break;
+                            case "max": operator = new MaxFunction();
                                          break;
                         }
                     }
