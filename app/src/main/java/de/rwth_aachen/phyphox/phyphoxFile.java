@@ -235,6 +235,8 @@ public abstract class phyphoxFile {
         protected XmlPullParser xpp; //The pull parser used handed to this parser
         protected phyphoxExperiment experiment; //The experiment to be loaded
 
+        private boolean textAdvanced;
+
         //The constructor takes the tag, and the experiment to fill
         xmlBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
             this.xpp = xpp;
@@ -245,6 +247,7 @@ public abstract class phyphoxFile {
         //Helper to receive the text block of a tag
         protected String getText() throws XmlPullParserException, IOException {
             String text = xpp.nextText();
+            textAdvanced = true;
             if (text != null)
                 return text.trim();
             else
@@ -320,6 +323,7 @@ public abstract class phyphoxFile {
             //Loop until we leave the block again. So unless the depth matches root level and we see
             //our tag as an end tag, we should continue
             while (xpp.getDepth() != rootDepth || eventType != XmlPullParser.END_TAG || !xpp.getName().equalsIgnoreCase(tag)) {
+                textAdvanced = false;
                 switch (eventType) {
                     case XmlPullParser.END_DOCUMENT: //We should not reach the end of the document wthin this block
                         throw new phyphoxFileException("Unexpected end of document.", xpp.getLineNumber());
@@ -330,10 +334,107 @@ public abstract class phyphoxFile {
                         processEndTag(xpp.getName());
                         break;
                 }
-                eventType = xpp.next();
+                if (!textAdvanced)
+                    eventType = xpp.next();
+                else
+                    eventType = xpp.getEventType();
             }
 
             done();
+        }
+    }
+
+    //Blockparser for AudioOutput plugin section
+    private static class AudioOutputPluginBlockParser extends xmlBlockParser {
+        AudioOutput audioOutput;
+        AudioOutput.AudioOutputPlugin currentPlugin = null;
+        int level = 0;
+
+        AudioOutputPluginBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, AudioOutput audioOutput) {
+            super(xpp, experiment, parent);
+            this.audioOutput = audioOutput;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            level++;
+            switch (tag.toLowerCase()) {
+                case "input": {
+                    String parameter = getStringAttribute("parameter");
+
+                    dataInput input;
+                    String type = getStringAttribute("type");
+                    if (type == null)
+                        type = "buffer";
+
+                    if (type.equals("buffer")) {
+                        String bufferName = getText();
+                        dataBuffer buffer = experiment.getBuffer(bufferName);
+                        if (buffer == null) {
+                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                        }
+                        input = new dataInput(buffer, false);
+                    } else if (type.equals("value")) {
+                        double value;
+                        try {
+                            value = Double.valueOf(getText());
+                        } catch (NumberFormatException e) {
+                            throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
+                        }
+                        input = new dataInput(value);
+                    } else {
+                        throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
+                    }
+                    if (level == 1) {
+                        //Direct input
+                        currentPlugin = audioOutput.new AudioOutputPluginDirect(input);
+                    } else if (level == 2) {
+                        //Parameter
+                        if (currentPlugin != null) {
+                            if (parameter == null)
+                                throw new phyphoxFileException("Parameter attribute required for this plugin.", xpp.getLineNumber());
+
+                            if (!currentPlugin.setParameter(parameter, input))
+                                throw new phyphoxFileException("Parameter \""+parameter+"\" not supported by this plugin.", xpp.getLineNumber());
+                        } else {
+                            throw new phyphoxFileException("Unexpected input tag. No related audio plugin.", xpp.getLineNumber());
+                        }
+                    } else {
+                        throw new phyphoxFileException("Unexpected input tag.", xpp.getLineNumber());
+                    }
+                    break;
+                }
+                case "tone": {
+                    if (level == 1) {
+                        //Tone plugin
+                        currentPlugin = audioOutput.new AudioOutputPluginTone();
+                    } else {
+                        throw new phyphoxFileException("Unexpected tone tag.", xpp.getLineNumber());
+                    }
+                    break;
+                }
+                case "noise": {
+                    if (level == 1) {
+                        //Noise plugin
+                        currentPlugin = audioOutput.new AudioOutputPluginNoise();
+                    } else {
+                        throw new phyphoxFileException("Unexpected noise tag.", xpp.getLineNumber());
+                    }
+                    break;
+                }
+                default: {
+                    throw new phyphoxFileException("Unexpected tag \"" + tag + "\"", xpp.getLineNumber());
+                }
+            }
+        }
+
+        @Override
+        protected void processEndTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            level--;
+            if (level == 0 && currentPlugin != null) {
+                audioOutput.attachPlugin(currentPlugin);
+                currentPlugin = null;
+            }
         }
     }
 
@@ -2455,32 +2556,14 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
                 case "audio": { //Audio output, aka speaker
-                    experiment.audioLoop = getBooleanAttribute("loop", false); //Loop the output?
-                    experiment.audioRate = getIntAttribute("rate", 48000); //Sample frequency
-
-                    //Allowed input/output configuration
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{
-                                name = "in";
-                                asRequired = false;
-                                minCount = 1;
-                                maxCount = 1;
-                                valueAllowed = false;
-                            }}
-                    };
-                    Vector<dataInput> inputs = new Vector<>();
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
-
-                    experiment.audioSource = inputs.get(0).buffer.name;
-                    experiment.audioBufferSize = inputs.get(0).buffer.size;
-
-                    //To avoid to short audio loops, we will write the audio data multiple times
-                    // until we reached at least one second. In the worst case (one sample less than
-                    // one second) we will have data for just short of 2 seconds.
-                    if (experiment.audioLoop && experiment.audioBufferSize < 2 * experiment.audioRate)
-                        experiment.audioBufferSize = 2 * experiment.audioRate;
-
+                    boolean loop = getBooleanAttribute("loop", false); //Loop the output?
+                    int rate = getIntAttribute("rate", 48000); //Sample frequency
+                    boolean normalize = getBooleanAttribute("normalize", false); //Normalize amplitude of all inputs
+                    AudioOutput audioOutput = new AudioOutput(loop, rate, normalize);
+                    (new AudioOutputPluginBlockParser(xpp, experiment, parent, audioOutput)).process();
+                    experiment.audioOutput = audioOutput;
                     break;
+
                 }
                 case "bluetooth": { //A bluetooth output
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {

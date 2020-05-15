@@ -82,12 +82,8 @@ public class phyphoxExperiment implements Serializable {
     boolean newData = true; //Will be set to true if we have fresh data to present
     boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
 
-    //Parameters for audio playback
-    transient AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
-    String audioSource; //The key name of the buffer which holds the data that should be played back through the speaker.
-    int audioRate = 48000; //The playback rate (in Hz)
-    int audioBufferSize = 0; //The size of the audio buffer
-    boolean audioLoop = false; //Loop the track?
+    //Audio output is handled in its own class, which will be instantiated by the file parser if required
+    public AudioOutput audioOutput = null;
 
     //Parameters for audio record
     transient AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
@@ -256,57 +252,9 @@ public class phyphoxExperiment implements Serializable {
             dataLock.unlock();
         }
 
-        //Send the results to audio playback if used
-        if (audioTrack != null && measuring) {
-            if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && getBuffer(audioSource).isStatic)) {
-                //If the data is not static, or the audio track not yet initialized, we have to push our data to the audioTrack
-
-                if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
-                    audioTrack.pause(); //Stop the playback first
-
-
-                //Get the data to output
-                short[] data = getBuffer(audioSource).getShortArray();
-                if (data.length > 0) {
-                    int result; //Will hold the write result to log errors
-                    int loopedBufferSize = 0;
-
-                    if (audioLoop) {
-                        //In case of loops we want to repeat the data buffer. However, some
-                        //  implementations do not allow short loops. So as a workaround we increase
-                        //  the size of the audio buffer to at least 1 second and make it a multiple
-                        //  size of the samples that we have to loop. The samples will be written
-                        //  to this buffer multiple times. This way the device will accept the loop.
-                        loopedBufferSize = data.length;
-                        if (loopedBufferSize < audioRate) {
-                            loopedBufferSize = (audioRate / data.length + 1) * data.length;
-                        }
-                        short[] filledBuffer = new short[loopedBufferSize];
-                        for (int i = 0; i < loopedBufferSize; i++)
-                            filledBuffer[i] = data[i % data.length];
-                        result = audioTrack.write(filledBuffer, 0, loopedBufferSize);
-                    } else //Usually, just write the small buffer...
-                        result = audioTrack.write(data, 0, data.length);
-
-                    if (result <= 0)
-                        Log.e("processAnalysis", "Unexpected audio write result: " + result + " written.");
-
-                    audioTrack.reloadStaticData();
-                    audioTrack.setPlaybackHeadPosition(0);
-                    if (audioLoop) //If looping is enabled, loop from the end of the data
-                        audioTrack.setLoopPoints(0, loopedBufferSize, -1);
-                }
-            } else { //If the data is static and already loaded, we just have to rewind...
-                if (!audioLoop) { //We only want to play again since we are not looping
-                    audioTrack.stop();
-                    audioTrack.reloadStaticData();
-                }
-            }
-        }
-
-        //Restart if used.
-        if (measuring && audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
-            audioTrack.play();
+        //Play audio
+        if (measuring && audioOutput != null) {
+            audioOutput.play();
         }
 
         if (measuring && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -376,8 +324,8 @@ public class phyphoxExperiment implements Serializable {
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
             audioRecord.stop();
         //Playback
-        if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
-            audioTrack.pause();
+        if (audioOutput != null) {
+            audioOutput.stop();
         }
         //Sensors
         for (sensorInput sensor : inputSensors)
@@ -442,13 +390,8 @@ public class phyphoxExperiment implements Serializable {
             updateViews(i, true);
         }
 
-        //Create the audioTrack instance
-        if (audioSource != null) {
-            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2 * audioBufferSize, AudioTrack.MODE_STATIC);
-            if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
-                throw new Exception("Could not initialize audio. (" + audioTrack.getState() + ")");
-            }
-        }
+        //Initialize audio output
+        audioOutput.init();
 
         //Create audioTrack instance
         if (micBufferSize > 0)
