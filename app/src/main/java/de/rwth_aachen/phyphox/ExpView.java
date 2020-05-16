@@ -27,7 +27,6 @@ import androidx.core.content.ContextCompat;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
@@ -50,7 +49,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //finally only consist of two values showing the results of the analysis: A frequency and a period.
 
 
-public class expView implements Serializable{
+public class ExpView implements Serializable{
 
     public static enum State {
         hidden, normal, maximized;
@@ -100,7 +99,7 @@ public class expView implements Serializable{
 
         //Abstract function to force child classes to implement createView
         //This will take a linear layout, which should be filled by this function
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment) {
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             if (inputs != null) {
                 for (String buffer : inputs) {
                     if (buffer != null)
@@ -110,7 +109,7 @@ public class expView implements Serializable{
             needsUpdate = true;
         }
 
-        protected void cleanView(phyphoxExperiment experiment) {
+        protected void cleanView(PhyphoxExperiment experiment) {
             if (inputs != null) {
                 for (String buffer : inputs) {
                     if (buffer != null)
@@ -179,7 +178,7 @@ public class expView implements Serializable{
         }
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
-        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
         }
 
         //This is called when the element should be triggered (i.e. button press triggered by the remote interface)
@@ -338,7 +337,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android vews we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
             //Create a row consisting of label and value
@@ -399,7 +398,7 @@ public class expView implements Serializable{
 
         @Override
         //We just have to send calculated value and the unit to the textView
-        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             if (!needsUpdate)
                 return;
             needsUpdate = false;
@@ -516,7 +515,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
             //Create the text as textView
@@ -588,7 +587,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
             //Create the text as textView
@@ -678,7 +677,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, final Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
             //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
@@ -848,7 +847,7 @@ public class expView implements Serializable{
 
         @Override
         //Set the value if the element is not focused
-        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             //Enter value from buffer if it has not been changed by the user
             //This ensures, that the old value is restored if the view has to be created after the views have been switched.
             double v = experiment.getBuffer(inputs.get(0)).value;
@@ -872,19 +871,19 @@ public class expView implements Serializable{
 
     //buttonElement implements a simple button which writes values from inputs to outputs when triggered
     public class buttonElement extends expViewElement implements Serializable, NetworkService.RequestCallback {
-        private Vector<dataInput> inputs = null;
-        private Vector<dataOutput> outputs = null;
+        private Vector<DataInput> inputs = null;
+        private Vector<DataOutput> outputs = null;
         private Vector<String> triggers = null;
         private List<NetworkConnection> networkConnections = null;
         private boolean triggered = false;
-        private expViewFragment parent;
+        private ExpViewFragment parent;
 
         //No special constructor.
         buttonElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
         }
 
-        protected void setIO(Vector<dataInput> inputs, Vector<dataOutput> outputs) {
+        protected void setIO(Vector<DataInput> inputs, Vector<DataOutput> outputs) {
             this.inputs = inputs;
             this.outputs = outputs;
         }
@@ -901,7 +900,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
             this.parent =parent;
@@ -1003,12 +1002,12 @@ public class expView implements Serializable{
     //class. See graphView.java...
     public class graphElement extends expViewElement implements Serializable {
         private final graphElement self;
-        transient private expViewFragment parent = null;
+        transient private ExpViewFragment parent = null;
         transient private GraphView gv = null;
         transient private InteractiveGraphView interactiveGV = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
-        transient private floatBufferRepresentation[] dataX; //The x data to be displayed
-        transient private floatBufferRepresentation[] dataY; //The y data to be displayed
+        transient private FloatBufferRepresentation[] dataX; //The x data to be displayed
+        transient private FloatBufferRepresentation[] dataY; //The y data to be displayed
         private double dataMinX, dataMaxX, dataMinY, dataMaxY, dataMinZ, dataMaxZ;
 
         private boolean isExclusive = false;
@@ -1069,8 +1068,8 @@ public class expView implements Serializable{
                 lineWidth.add(1.0);
                 style.add(GraphView.Style.lines);
                 mapWidth.add(0);
-                dataX = new floatBufferRepresentation[nCurves];
-                dataY = new floatBufferRepresentation[nCurves];
+                dataX = new FloatBufferRepresentation[nCurves];
+                dataY = new FloatBufferRepresentation[nCurves];
             }
 
             warningText = res.getString(R.string.remoteColorMapWarning).replace("'", "\\'");
@@ -1165,8 +1164,8 @@ public class expView implements Serializable{
             if (gv != null)
                 gv.setHistoryLength(hl);
             if (hl > 1) {
-                dataX = new floatBufferRepresentation[1];
-                dataY = new floatBufferRepresentation[1];
+                dataX = new FloatBufferRepresentation[1];
+                dataY = new FloatBufferRepresentation[1];
             }
         }
 
@@ -1217,7 +1216,7 @@ public class expView implements Serializable{
 
         @Override
         //Create the actual view in Android
-        protected void createView(LinearLayout ll, Context c, Resources res, final expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, final ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
             this.parent = parent;
@@ -1304,7 +1303,7 @@ public class expView implements Serializable{
         }
 
         @Override
-        public void cleanView(phyphoxExperiment experiment) {
+        public void cleanView(PhyphoxExperiment experiment) {
             super.cleanView(experiment);
 
             interactiveGV.stop();
@@ -1328,14 +1327,14 @@ public class expView implements Serializable{
         }
 
         @Override
-        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             if (!needsUpdate)
                 return;
             needsUpdate = false;
 
             for (int i = 0; i < inputs.size(); i+=2) {
                 if (inputs.size() > i+1) {
-                    dataBuffer x = experiment.getBuffer(inputs.get(i+1));
+                    DataBuffer x = experiment.getBuffer(inputs.get(i+1));
                     if (x != null) {
                         if (style.get(i/2) == GraphView.Style.hbars)
                             dataX[i/2] = x.getFloatBufferBarValue();
@@ -1357,7 +1356,7 @@ public class expView implements Serializable{
                     }
                 }
 
-                dataBuffer y = experiment.getBuffer(inputs.get(i));
+                DataBuffer y = experiment.getBuffer(inputs.get(i));
                 if (y != null) {
                     if (style.get(i/2) == GraphView.Style.hbars)
                         dataY[i/2] = y.getFloatBufferBarAxis(lineWidth.get(i/2));
@@ -1791,7 +1790,7 @@ public class expView implements Serializable{
 
         @Override
         //Append the Android views we need to the linear layout
-        protected void createView(LinearLayout ll, Context c, Resources res, expViewFragment parent, phyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
             svgView = new ParametricSVGView(c);
@@ -1817,7 +1816,7 @@ public class expView implements Serializable{
 
         @Override
         //We just have to send calculated value and the unit to the textView
-        protected void onMayReadFromBuffers(phyphoxExperiment experiment) {
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             if (!needsUpdate)
                 return;
             needsUpdate = false;

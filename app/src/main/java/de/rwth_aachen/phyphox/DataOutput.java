@@ -6,8 +6,8 @@ import java.util.Iterator;
 //dataOutput wraps all data-containers (currently only dataBuffer) as possible outputs.
 //Also allowing to store additional parameters (like clearing the buffer before filling it)
 
-public class dataOutput implements Serializable {
-    dataBuffer buffer = null;
+public class DataOutput implements Serializable {
+    DataBuffer buffer = null;
     boolean clearBeforeWrite = true;
 
     //Get value
@@ -16,7 +16,7 @@ public class dataOutput implements Serializable {
     }
 
     //Constructor with specified clear attribute
-    protected dataOutput(dataBuffer buffer, boolean clear) {
+    protected DataOutput(DataBuffer buffer, boolean clear) {
         this.clearBeforeWrite = clear;
         this.buffer = buffer;
     }

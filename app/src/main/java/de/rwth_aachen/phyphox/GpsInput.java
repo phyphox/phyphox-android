@@ -16,18 +16,18 @@ import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 public class GpsInput implements Serializable {
-    public dataBuffer dataLat; //Data-buffer for latitude
-    public dataBuffer dataLon; //Data-buffer for longitude
-    public dataBuffer dataZ; //Data-buffer for height
-    public dataBuffer dataZWGS84; //Data-buffer for height above WGS84 ellipsoid
-    public dataBuffer dataV; //Data-buffer for velocity
-    public dataBuffer dataDir; //Data-buffer for direction
-    public dataBuffer dataT; //Data-buffer for time
+    public DataBuffer dataLat; //Data-buffer for latitude
+    public DataBuffer dataLon; //Data-buffer for longitude
+    public DataBuffer dataZ; //Data-buffer for height
+    public DataBuffer dataZWGS84; //Data-buffer for height above WGS84 ellipsoid
+    public DataBuffer dataV; //Data-buffer for velocity
+    public DataBuffer dataDir; //Data-buffer for direction
+    public DataBuffer dataT; //Data-buffer for time
 
-    public dataBuffer dataAccuracy; //Data-buffer for horizontal accuracy
-    public dataBuffer dataZAccuracy; //Data-buffer for height accuracy
-    public dataBuffer dataStatus; //Data-buffer for status codes (note filled parallel to the other buffers)
-    public dataBuffer dataSatellites; //Data-buffer for status codes (note filled parallel to the other buffers)
+    public DataBuffer dataAccuracy; //Data-buffer for horizontal accuracy
+    public DataBuffer dataZAccuracy; //Data-buffer for height accuracy
+    public DataBuffer dataStatus; //Data-buffer for status codes (note filled parallel to the other buffers)
+    public DataBuffer dataSatellites; //Data-buffer for status codes (note filled parallel to the other buffers)
     transient private LocationManager locationManager; //Hold the sensor manager
 
     public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
@@ -41,7 +41,7 @@ public class GpsInput implements Serializable {
     public boolean forceGNSS = false;
 
     //The constructor
-    protected GpsInput(Vector<dataOutput> buffers, Lock lock) {
+    protected GpsInput(Vector<DataOutput> buffers, Lock lock) {
         this.dataLock = lock;
 
         //Store the buffer references if any

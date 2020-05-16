@@ -4,18 +4,18 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-public class expViewPagerAdapter extends FragmentPagerAdapter {
+public class ExpViewPagerAdapter extends FragmentPagerAdapter {
 
-    private phyphoxExperiment experiment;
+    private PhyphoxExperiment experiment;
 
-    public expViewPagerAdapter(FragmentManager fm, phyphoxExperiment experiment) {
+    public ExpViewPagerAdapter(FragmentManager fm, PhyphoxExperiment experiment) {
         super(fm);
         this.experiment = experiment;
     }
 
     @Override
     public Fragment getItem(int position) {
-        return expViewFragment.newInstance(position);
+        return ExpViewFragment.newInstance(position);
     }
 
     @Override

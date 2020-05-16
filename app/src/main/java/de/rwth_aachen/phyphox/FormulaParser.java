@@ -491,7 +491,7 @@ public class FormulaParser {
         base = parse(strippedFormula, 0, strippedFormula.length());
     }
 
-    public void execute(Vector<Double[]> in, dataOutput out) {
+    public void execute(Vector<Double[]> in, DataOutput out) {
         int n = 0;
         for (Double[] i : in) {
             n = Math.max(n, i.length);

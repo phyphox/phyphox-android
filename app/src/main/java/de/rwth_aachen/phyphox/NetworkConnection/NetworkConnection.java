@@ -8,27 +8,18 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-import android.util.ArraySet;
-import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 
 import de.rwth_aachen.phyphox.R;
-import de.rwth_aachen.phyphox.dataBuffer;
-import de.rwth_aachen.phyphox.sensorInput;
+import de.rwth_aachen.phyphox.DataBuffer;
+import de.rwth_aachen.phyphox.SensorInput;
 
 public class NetworkConnection implements NetworkService.RequestCallback, NetworkDiscovery.DiscoveryCallback {
 
@@ -41,9 +32,9 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
     }
 
     public static class NetworkSendableData {
-        dataBuffer buffer = null;
+        DataBuffer buffer = null;
         NetworkMetadata metadata = null;
-        public NetworkSendableData(dataBuffer buffer) {
+        public NetworkSendableData(DataBuffer buffer) {
             this.buffer = buffer;
         }
         public NetworkSendableData(NetworkMetadata metadata) {
@@ -52,9 +43,9 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
     }
 
     public static class NetworkReceivableData {
-        dataBuffer buffer;
+        DataBuffer buffer;
         boolean clear;
-        public NetworkReceivableData(dataBuffer buffer, boolean clear) {
+        public NetworkReceivableData(DataBuffer buffer, boolean clear) {
             this.buffer = buffer;
             this.clear = clear;
         }
@@ -147,7 +138,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                         break;
                     case sensorMetadata:
                         infoSensorInfo = true;
-                        infoSensorInfoList.add(ctx.getResources().getString(sensorInput.getDescriptionRes(sensorInput.resolveSensorName(sendable.metadata.sensor))));
+                        infoSensorInfoList.add(ctx.getResources().getString(SensorInput.getDescriptionRes(SensorInput.resolveSensorName(sendable.metadata.sensor))));
                         break;
                 }
             }

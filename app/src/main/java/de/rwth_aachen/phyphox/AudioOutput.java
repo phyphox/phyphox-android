@@ -3,7 +3,6 @@ package de.rwth_aachen.phyphox;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,19 +12,19 @@ public class AudioOutput {
     private static float[] sineLookup = new float[sineLookupSize];
 
     public abstract class AudioOutputPlugin {
-        public abstract boolean setParameter(String parameter, dataInput input);
+        public abstract boolean setParameter(String parameter, DataInput input);
         public abstract float getAmplitude();
         public abstract void generate(float[] buffer, int samples, int rate, int index, boolean loop);
     }
 
     public class AudioOutputPluginDirect extends AudioOutputPlugin {
-        dataInput input;
-        AudioOutputPluginDirect(dataInput input) {
+        DataInput input;
+        AudioOutputPluginDirect(DataInput input) {
             this.input = input;
         }
 
         @Override
-        public boolean setParameter(String parameter, dataInput input) {
+        public boolean setParameter(String parameter, DataInput input) {
             return false;
         }
 
@@ -55,13 +54,13 @@ public class AudioOutput {
     }
 
     public class AudioOutputPluginTone extends AudioOutputPlugin {
-        private dataInput amplitude = new dataInput(1.0f);
-        private dataInput duration = new dataInput(1.0f);
-        private dataInput frequency = new dataInput(440f);
+        private DataInput amplitude = new DataInput(1.0f);
+        private DataInput duration = new DataInput(1.0f);
+        private DataInput frequency = new DataInput(440f);
         private double phase = 0.f;
 
         @Override
-        public boolean setParameter(String parameter, dataInput input) {
+        public boolean setParameter(String parameter, DataInput input) {
             switch (parameter) {
                 case "amplitude": amplitude = input;
                     return true;
@@ -100,11 +99,11 @@ public class AudioOutput {
     }
 
     public class AudioOutputPluginNoise extends AudioOutputPlugin {
-        private dataInput amplitude = new dataInput(1.0f);
-        private dataInput duration = new dataInput(1.0f);
+        private DataInput amplitude = new DataInput(1.0f);
+        private DataInput duration = new DataInput(1.0f);
 
         @Override
-        public boolean setParameter(String parameter, dataInput input) {
+        public boolean setParameter(String parameter, DataInput input) {
             switch (parameter) {
                 case "amplitude": amplitude = input;
                     return true;
@@ -144,6 +143,7 @@ public class AudioOutput {
     private final int bufferBaseSize = 2048; //This is actually a fourth of the total buffer, similar to the four buffers used on iOS
     private int index = 0;
     private boolean playing = false;
+    private boolean active = false;
 
     private AudioTrack audioTrack;
 
@@ -181,7 +181,7 @@ public class AudioOutput {
             short[] shortData = new short[bufferBaseSize];
             float amplitude;
 
-            while (playing) {
+            while (playing && active) {
                 Arrays.fill(floatData, 0);
                 amplitude = 0.0f;
 
@@ -211,10 +211,13 @@ public class AudioOutput {
         }
     };
 
+    public void start() {
+        active = true;
+    }
+
     public void play() {
         index = 0;
-
-        if (playing)
+        if (playing || !active)
             return;
 
         playing = true;
@@ -229,6 +232,7 @@ public class AudioOutput {
     }
 
     public void stop() {
+        active = false;
         playing = false;
         audioTrack.stop();
     }

@@ -4,15 +4,14 @@ import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
-import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
 import java.util.UUID;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.dataBuffer;
-import de.rwth_aachen.phyphox.dataInput;
+import de.rwth_aachen.phyphox.DataBuffer;
+import de.rwth_aachen.phyphox.DataInput;
 
 
 /**
@@ -24,7 +23,7 @@ public class BluetoothOutput extends Bluetooth {
     /**
      * Data-buffers
      */
-    public Vector<dataInput> data;
+    public Vector<DataInput> data;
 
     /**
      * Create a new BluetoothOutput.
@@ -38,7 +37,7 @@ public class BluetoothOutput extends Bluetooth {
      * @param buffers         list of dataOutputs to write the values
      * @param characteristics list of all characteristics the object should be able to operate on
      */
-    public BluetoothOutput(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Boolean autoConnect, Activity activity, Context context, Vector<dataInput> buffers, Vector<CharacteristicData> characteristics) {
+    public BluetoothOutput(String idString, String deviceName, String deviceAddress, UUID uuidFilter, Boolean autoConnect, Activity activity, Context context, Vector<DataInput> buffers, Vector<CharacteristicData> characteristics) {
 
         super(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics);
 
@@ -71,7 +70,7 @@ public class BluetoothOutput extends Bluetooth {
      * @param conversionFunction method to convert data (from ConversionsOutput)
      * @return the converted value
      */
-    private byte[] convertData(dataBuffer data, ConversionsOutput.OutputConversion conversionFunction) {
+    private byte[] convertData(DataBuffer data, ConversionsOutput.OutputConversion conversionFunction) {
         try {
             return conversionFunction.convert(data);
         } catch (Exception e) {

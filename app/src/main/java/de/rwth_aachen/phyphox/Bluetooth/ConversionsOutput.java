@@ -3,7 +3,7 @@ package de.rwth_aachen.phyphox.Bluetooth;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
-import de.rwth_aachen.phyphox.dataBuffer;
+import de.rwth_aachen.phyphox.DataBuffer;
 
 // The class holds public static functions which convert double values to a byte array that can be written to a characteristic.
 public class ConversionsOutput {
@@ -12,7 +12,7 @@ public class ConversionsOutput {
         OutputConversion() {
 
         }
-        protected byte[] convert(dataBuffer data) {
+        protected byte[] convert(DataBuffer data) {
             return null;
         }
     }
@@ -25,7 +25,7 @@ public class ConversionsOutput {
         }
 
         @Override
-        protected byte[] convert(dataBuffer data) {
+        protected byte[] convert(DataBuffer data) {
             try {
                 return (byte[]) conversionFunction.invoke(null, data);
             } catch (Exception e) {
@@ -175,7 +175,7 @@ public class ConversionsOutput {
         return singleByte(data);
     }
 
-    public static byte[] byteArray (dataBuffer data) {
+    public static byte[] byteArray (DataBuffer data) {
         Double[] dataArray = data.getArray();
         byte[] result = new byte[dataArray.length];
         for (int i = 0; i < dataArray.length; i++)

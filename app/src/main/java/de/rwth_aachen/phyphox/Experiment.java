@@ -64,7 +64,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -108,7 +107,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean saveLocallyDismissed = false; //Remember that the user did not want to save this experiment locally
 
     //Remote server
-    private remoteServer remote = null; //The remote server (see remoteServer class)
+    private RemoteServer remote = null; //The remote server (see remoteServer class)
     private boolean serverEnabled = false; //Is the remote server activated?
     boolean remoteIntentMeasuring = false; //Is the remote interface expecting that the measurement is running?
     boolean updateState = false; //This is set to true when a state changed is initialized remotely. The measurement state will then be set to remoteIntentMeasuring.
@@ -124,10 +123,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     long millisUntilFinished = 0; //This variable is used to cache the remaining countdown, so it is available outside the onTick-callback of the timer
 
     //The experiment
-    phyphoxExperiment experiment; //The experiment (definition and functionality) after it has been loaded.
+    PhyphoxExperiment experiment; //The experiment (definition and functionality) after it has been loaded.
     TabLayout tabLayout;
     ViewPager pager;
-    expViewPagerAdapter adapter;
+    ExpViewPagerAdapter adapter;
 
     //Others...
     private Resources res; //Helper to easily access resources
@@ -148,7 +147,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     @Override
     public void onBackPressed() {
         if (adapter != null && pager != null) {
-            expViewFragment f = (expViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
+            ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
             if (f != null && f.hasExclusive()) {
                 f.leaveExclusive();
                 return;
@@ -195,7 +194,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             //Start loading the experiment in a second thread (mostly for network loading, but it won't hurt in any case...)
             //So display a ProgressDialog and instantiate and execute loadXMLAsyncTask (see phyphoxFile class)
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-            (new phyphoxFile.loadXMLAsyncTask(intent, this)).execute();
+            (new PhyphoxFile.loadXMLAsyncTask(intent, this)).execute();
         }
 
     }
@@ -294,7 +293,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //This is called from the experiment loading thread in onPostExecute, so the experiment should
     //   be ready and can be presented to the user
-    public void onExperimentLoaded(phyphoxExperiment experiment) {
+    public void onExperimentLoaded(PhyphoxExperiment experiment) {
         try {
             progress.dismiss(); //Close progress display
         } catch (Exception e) {
@@ -346,13 +345,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
             pager = ((ViewPager)findViewById(R.id.view_pager));
             FragmentManager manager = getSupportFragmentManager();
-            adapter = new expViewPagerAdapter(manager, this.experiment);
+            adapter = new ExpViewPagerAdapter(manager, this.experiment);
             pager.setAdapter(adapter);
             tabLayout.setupWithViewPager(pager);
             pager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
             for (int i = 0; i < adapter.getCount(); i++) {
-                expViewFragment f = (expViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
+                ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
                 if (f != null)
                     f.recreateView();
             }
@@ -389,14 +388,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             this.experiment = null;
         }
 
-        for (sensorInput sensor : experiment.inputSensors) {
+        for (SensorInput sensor : experiment.inputSensors) {
             if (sensor.vendorSensor) {
                 showSensorWarning(sensor);
             }
         }
 
         //Check if experiment is already in list and if so, flag it as local.
-        if (experiment.source != null && Helper.experimentInCollection(experiment.source, this)) {
+        if (experiment.source != null && Helper.experimentInCollection(experiment.crc32, this)) {
             experiment.isLocal = true;
         }
 
@@ -416,7 +415,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-                                new phyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
+                                new PhyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
                             }
                         })
                         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -464,7 +463,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             showStartHint();
     }
 
-    private void showSensorWarning(sensorInput sensor) {
+    private void showSensorWarning(SensorInput sensor) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(res.getString(R.string.vendorSensorWarning1) + " " + res.getString(sensor.getDescriptionRes()) + " " + res.getString(R.string.vendorSensorWarning2))
                 .setTitle(R.string.vendorSensorTitle)
@@ -740,7 +739,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         boolean magnetometer = false;
         boolean calibrated = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) != null) {
-            for (sensorInput sensor : experiment.inputSensors) {
+            for (SensorInput sensor : experiment.inputSensors) {
                 if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
                     magnetometer = true;
                     calibrated = sensor.calibrated;
@@ -1092,7 +1091,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (id == R.id.action_calibrated_magnetometer) {
             stopMeasurement();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                for (sensorInput sensor : experiment.inputSensors) {
+                for (SensorInput sensor : experiment.inputSensors) {
                     if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
                         sensor.calibrated = !item.isChecked();
                     }
@@ -1235,7 +1234,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Save locally button (copy to collection). Instantiate and start the copying thread.
         if (id == R.id.action_saveLocally) {
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-            new phyphoxFile.CopyXMLTask(intent, this).execute();
+            new PhyphoxFile.CopyXMLTask(intent, this).execute();
         }
 
         return super.onOptionsItemSelected(item);
@@ -1494,7 +1493,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {
-            for (dataBuffer buffer : experiment.dataBuffers)
+            for (DataBuffer buffer : experiment.dataBuffers)
                 buffer.clear(true);
         } finally {
             experiment.dataLock.unlock();
@@ -1520,14 +1519,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Instantiate and start the server
         if (sessionID.isEmpty()) {
-            remote = new remoteServer(experiment, this);
+            remote = new RemoteServer(experiment, this);
             sessionID = remote.sessionID;
         } else
-            remote = new remoteServer(experiment, this, sessionID);
+            remote = new RemoteServer(experiment, this, sessionID);
         remote.start();
 
         //Announce this to the user as there are security concerns.
-        final String addressList = remoteServer.getAddresses().replaceAll("\\s+$", "");
+        final String addressList = RemoteServer.getAddresses().replaceAll("\\s+$", "");
         if (addressList.isEmpty())
             announcer.setText(res.getString(R.string.remoteServerNoNetwork));
         else

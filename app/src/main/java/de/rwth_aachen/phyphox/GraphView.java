@@ -49,9 +49,9 @@ public class GraphView extends View {
     private int pickedPointIndex[] = new int[maxPicked];
     private int pickedPointGraphIndex[] = new int[maxPicked];
 
-    private floatBufferRepresentation[] graphX; //The x data to be displayed
+    private FloatBufferRepresentation[] graphX; //The x data to be displayed
     private double[] histMinX, histMaxX;
-    private floatBufferRepresentation[] graphY; //The y data to be displayed
+    private FloatBufferRepresentation[] graphY; //The y data to be displayed
     private double[] histMinY, histMaxY;
     private double histMinZ, histMaxZ;
 
@@ -565,8 +565,8 @@ public class GraphView extends View {
 
     public void setCurves(int n) {
         nCurves = n;
-        graphX = new floatBufferRepresentation[n];
-        graphY = new floatBufferRepresentation[n];
+        graphX = new FloatBufferRepresentation[n];
+        graphY = new FloatBufferRepresentation[n];
         histMinX = new double[n];
         histMaxX = new double[n];
         histMinY = new double[n];
@@ -672,7 +672,7 @@ public class GraphView extends View {
     }
 
     //Add a new graph and (if enabled) push the old graphs back into history
-    public void addGraphData(floatBufferRepresentation[] graphY, double minY, double maxY, floatBufferRepresentation[] graphX, double minX, double maxX, double minZ, double maxZ) {
+    public void addGraphData(FloatBufferRepresentation[] graphY, double minY, double maxY, FloatBufferRepresentation[] graphX, double minX, double maxX, double minZ, double maxZ) {
         if (graphY == null || graphX == null || graphX[0] == null || graphY[0] == null)
             return;
 
@@ -715,7 +715,7 @@ public class GraphView extends View {
     }
 
     //This overloads addGraphData to take pure y-data without x data
-    public void addGraphData(floatBufferRepresentation[] graphY, double min, double max) {
+    public void addGraphData(FloatBufferRepresentation[] graphY, double min, double max) {
         if (graphY == null || graphY[0] == null)
             return;
         //Create standard x data with indices
@@ -728,10 +728,10 @@ public class GraphView extends View {
         for (int i = 0; i < graphY[0].size; i++)
             data.put((float)i);
 
-        floatBufferRepresentation[] graphX = new floatBufferRepresentation[graphY.length];
+        FloatBufferRepresentation[] graphX = new FloatBufferRepresentation[graphY.length];
         for (int i = 0; i < graphY.length; i++)
             graphX[i] = null;
-        graphX[0] = new floatBufferRepresentation(data, 0, graphY[0].size);
+        graphX[0] = new FloatBufferRepresentation(data, 0, graphY[0].size);
 
         //Call the full addGraphData with the artificial x data
         addGraphData(graphY, min, max, graphX, 0, graphY[0].size-1, Double.NaN, Double.NaN);

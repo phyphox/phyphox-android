@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import de.rwth_aachen.phyphox.R;
-import de.rwth_aachen.phyphox.dataOutput;
-import de.rwth_aachen.phyphox.phyphoxFile;
+import de.rwth_aachen.phyphox.DataOutput;
+import de.rwth_aachen.phyphox.PhyphoxFile;
 
 
 /**
@@ -57,7 +57,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * Data-buffers
      */
-    private Vector<dataOutput> data = new Vector<>();
+    private Vector<DataOutput> data = new Vector<>();
 
     private Lock dataLock;
 
@@ -81,10 +81,10 @@ public class BluetoothInput extends Bluetooth {
      * @param lock             lock to write data to the buffers
      * @param context          context
      * @param characteristics  list of all characteristics the object should be able to operate on
-     * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
+     * @throws PhyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, boolean autoConnect, double rate, boolean subscribeOnStart, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
-            throws phyphoxFile.phyphoxFileException {
+    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, boolean autoConnect, double rate, boolean subscribeOnStart, Vector<DataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
+            throws PhyphoxFile.phyphoxFileException {
 
         super(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics);
 
@@ -92,7 +92,7 @@ public class BluetoothInput extends Bluetooth {
         this.subscribeOnStart = subscribeOnStart;
 
         if (mode.equals("poll") && rate < 0) {
-            throw new phyphoxFile.phyphoxFileException(context.getResources().getString(R.string.bt_exception_rate));
+            throw new PhyphoxFile.phyphoxFileException(context.getResources().getString(R.string.bt_exception_rate));
         }
 
         this.dataLock = lock;
@@ -310,7 +310,7 @@ public class BluetoothInput extends Bluetooth {
             // find the last time data was retrieved
             double max = 0;
             for (Integer i : saveTime.values()) {
-                dataOutput dataOutput = this.data.get(i);
+                DataOutput dataOutput = this.data.get(i);
                 if (dataOutput != null && dataOutput.getFilledSize() > 0 && dataOutput.getValue() > max) {
                     max = dataOutput.getValue();
                 }
@@ -348,7 +348,7 @@ public class BluetoothInput extends Bluetooth {
         if (t0 == 0) {
             t0 = t;
             for (Integer i : saveTime.values()) {
-                dataOutput dataOutput = data.get(i);
+                DataOutput dataOutput = data.get(i);
                 if (dataOutput != null && dataOutput.getFilledSize() > 0) {
                     t0 -= dataOutput.getValue() * 1e9;
                     break;

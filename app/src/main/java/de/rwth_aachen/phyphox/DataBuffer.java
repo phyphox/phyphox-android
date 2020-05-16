@@ -21,7 +21,7 @@ interface BufferNotification {
     void notifyUpdate(boolean clear, boolean reset); //Notify that a buffer has changed. Also notify if the buffer has been cleared (for example during
 }
 
-public class dataBuffer implements Serializable {
+public class DataBuffer implements Serializable {
     public String name; //The key name
     private BlockingQueue<Double> buffer; //The actual buffer (will be initialized as ArrayBlockingQueue which is Serializable)
     public int size; //The target size
@@ -34,9 +34,9 @@ public class dataBuffer implements Serializable {
     public Set<BufferNotification> updateListeners = new HashSet<>();
 
     //This is not logically connected to the data Buffer itself, but it is more efficient to calculate only changes to the buffer, where we can keep track of those changes
-    transient private floatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
-    transient private floatBufferRepresentation floatCopyBarValue = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
-    transient private floatBufferRepresentation floatCopyBarAxis = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
+    transient private FloatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
+    transient private FloatBufferRepresentation floatCopyBarValue = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
+    transient private FloatBufferRepresentation floatCopyBarAxis = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
     private double lineWidth = 1.0; //Used to calculate the right geometry of bar charts
 
     private int floatCopyCapacity = 0;
@@ -47,7 +47,7 @@ public class dataBuffer implements Serializable {
     private double max = Double.NaN;
 
     //Contructor. Set key name and target size.
-    protected dataBuffer(String name, int size) {
+    protected DataBuffer(String name, int size) {
         this.size = size;
         this.name = name;
         if (size > 0)
@@ -297,10 +297,10 @@ public class dataBuffer implements Serializable {
         return buffer.toArray(ret);
     }
 
-    public floatBufferRepresentation getFloatBuffer() {
+    public FloatBufferRepresentation getFloatBuffer() {
         int n = buffer.size();
         if (n == 0)
-            return new floatBufferRepresentation(null, 0, 0);
+            return new FloatBufferRepresentation(null, 0, 0);
 
         if (floatCopy == null) {
             FloatBuffer data = ByteBuffer.allocateDirect(n * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -311,16 +311,16 @@ public class dataBuffer implements Serializable {
                 data.put((float) (double) it.next());
                 i++;
             }
-            floatCopy = new floatBufferRepresentation(data, 0, n);
+            floatCopy = new FloatBufferRepresentation(data, 0, n);
         }
         return floatCopy;
     }
 
-    public floatBufferRepresentation getFloatBufferBarAxis(double lineWidth) {
+    public FloatBufferRepresentation getFloatBufferBarAxis(double lineWidth) {
         this.lineWidth = lineWidth;
         int n = buffer.size()*6;
         if (n <= 0)
-            return new floatBufferRepresentation(null, 0, 0);
+            return new FloatBufferRepresentation(null, 0, 0);
 
         if (floatCopyBarAxis == null) {
             FloatBuffer data = ByteBuffer.allocateDirect(n * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -334,15 +334,15 @@ public class dataBuffer implements Serializable {
                 last = value;
                 i+=6;
             }
-            floatCopyBarAxis = new floatBufferRepresentation(data, 0, n);
+            floatCopyBarAxis = new FloatBufferRepresentation(data, 0, n);
         }
         return floatCopyBarAxis;
     }
 
-    public floatBufferRepresentation getFloatBufferBarValue() {
+    public FloatBufferRepresentation getFloatBufferBarValue() {
         int n = buffer.size()*6;
         if (n <= 0)
-            return new floatBufferRepresentation(null, 0, 0);
+            return new FloatBufferRepresentation(null, 0, 0);
 
         if (floatCopyBarValue == null) {
             FloatBuffer data = ByteBuffer.allocateDirect(n * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -356,7 +356,7 @@ public class dataBuffer implements Serializable {
                 last = value;
                 i+=6;
             }
-            floatCopyBarValue = new floatBufferRepresentation(data, 0, n);
+            floatCopyBarValue = new FloatBufferRepresentation(data, 0, n);
         }
         return floatCopyBarValue;
     }
@@ -373,8 +373,8 @@ public class dataBuffer implements Serializable {
         return ret;
     }
 
-    public dataBuffer copy() {
-        dataBuffer db = new dataBuffer(this.name, this.size);
+    public DataBuffer copy() {
+        DataBuffer db = new DataBuffer(this.name, this.size);
         db.append(this.getArray(), this.getFilledSize());
         db.isStatic = this.isStatic;
         return db;
@@ -433,13 +433,13 @@ public class dataBuffer implements Serializable {
     }
 }
 
-class floatBufferRepresentation {
+class FloatBufferRepresentation {
     FloatBuffer data;
     int size;
     int offset;
     transient public final Object lock = new Object();
 
-    floatBufferRepresentation(FloatBuffer data, int offset, int size) {
+    FloatBufferRepresentation(FloatBuffer data, int offset, int size) {
         this.data = data;
         this.size = size;
         this.offset = offset;

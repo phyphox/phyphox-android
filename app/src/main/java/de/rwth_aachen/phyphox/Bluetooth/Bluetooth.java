@@ -18,7 +18,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -41,7 +40,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import de.rwth_aachen.phyphox.R;
-import de.rwth_aachen.phyphox.phyphoxFile;
+import de.rwth_aachen.phyphox.PhyphoxFile;
 
 /**
  * The Bluetooth class encapsulates a generic Bluetooth connection and deals with the following tasks:
@@ -1081,14 +1080,14 @@ public class Bluetooth implements Serializable {
          * @param uuid               UUID of the characteristic
          * @param data               data that will be converted to the value that should be written
          * @param conversionFunction ConfigConversion instance that will be used to convert the value of the characteristic
-         * @throws phyphoxFile.phyphoxFileException if there is an error while converting the data
+         * @throws PhyphoxFile.phyphoxFileException if there is an error while converting the data
          */
-        public ConfigData(UUID uuid, String data, ConversionsConfig.ConfigConversion conversionFunction) throws phyphoxFile.phyphoxFileException {
+        public ConfigData(UUID uuid, String data, ConversionsConfig.ConfigConversion conversionFunction) throws PhyphoxFile.phyphoxFileException {
             this.uuid = uuid;
             try {
                 this.value = conversionFunction.convert(data);
             } catch (Exception e) { // catch any exception that occurs in the conversion function
-                throw new phyphoxFile.phyphoxFileException("An error occurred on the conversion function" + " \"" + conversionFunction.getClass().getName() + "\". ");
+                throw new PhyphoxFile.phyphoxFileException("An error occurred on the conversion function" + " \"" + conversionFunction.getClass().getName() + "\". ");
             }
         }
 

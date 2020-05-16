@@ -80,13 +80,13 @@ public class DataExport implements Serializable {
         public void getData() {
             data = new Double[sources.size()][];
             for (int i = 0; i < sources.size(); i++) {
-                dataBuffer buffer = experiment.getBuffer(sources.get(i).source); //Get the buffer for this source
+                DataBuffer buffer = experiment.getBuffer(sources.get(i).source); //Get the buffer for this source
                 data[i] = buffer.getArray(); //Get all data as a double array
             }
         }
     }
 
-    private phyphoxExperiment experiment; //The phyphoxExperiment which uses this DataExport
+    private PhyphoxExperiment experiment; //The phyphoxExperiment which uses this DataExport
     public Vector<ExportSet> exportSets = new Vector<>(); //The available export sets
 
     //This abstract class defines the interface for a specific export format
@@ -310,7 +310,7 @@ public class DataExport implements Serializable {
     };
 
     //The constructor just has to store a reference to the experiment
-    DataExport(phyphoxExperiment experiment) {
+    DataExport(PhyphoxExperiment experiment) {
         this.experiment = experiment;
     }
 

@@ -3,7 +3,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/scrollView"
-        tools:context="de.rwth_aachen.phyphox.expViewFragment"
+        tools:context="de.rwth_aachen.phyphox.ExpViewFragment"
         android:clickable="true"
         android:background="@color/backgroundExp" >
 

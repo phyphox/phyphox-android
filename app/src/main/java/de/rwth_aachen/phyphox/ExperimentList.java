@@ -736,16 +736,16 @@ public class ExperimentList extends AppCompatActivity {
                                 String type = xpp.getAttributeValue(null, "type");
                                 String ignoreUnavailableStr = xpp.getAttributeValue(null, "ignoreUnavailable");
                                 boolean ignoreUnavailable = (ignoreUnavailableStr != null && Boolean.valueOf(ignoreUnavailableStr));
-                                sensorInput testSensor;
+                                SensorInput testSensor;
                                 try {
-                                    testSensor = new sensorInput(type, ignoreUnavailable,0, false, null, null, null);
+                                    testSensor = new SensorInput(type, ignoreUnavailable,0, false, null, null, null);
                                     testSensor.attachSensorManager(sensorManager);
-                                } catch (sensorInput.SensorException e) {
-                                    unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
+                                } catch (SensorInput.SensorException e) {
+                                    unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
                                     break;
                                 }
                                 if (!(testSensor.isAvailable() || testSensor.ignoreUnavailable)) {
-                                    unavailableSensor = sensorInput.getDescriptionRes(sensorInput.resolveSensorString(type));
+                                    unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
                                 }
                                 break;
                             case "location":
@@ -959,7 +959,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //Copying is done on a second thread...
         protected String doInBackground(String... params) {
-            phyphoxFile.PhyphoxStream phyphoxStream = phyphoxFile.openXMLInputStream(intent, parent.get());
+            PhyphoxFile.PhyphoxStream phyphoxStream = PhyphoxFile.openXMLInputStream(intent, parent.get());
             if (!phyphoxStream.errorMessage.isEmpty()) {
                 return phyphoxStream.errorMessage;
             }
@@ -2012,7 +2012,7 @@ public class ExperimentList extends AppCompatActivity {
                                     sb.append("Build: Unknown<br />");
                                 }
                                 sb.append("File format: ");
-                                sb.append(phyphoxFile.phyphoxFileVersion);
+                                sb.append(PhyphoxFile.phyphoxFileVersion);
                                 sb.append("<br /><br />");
 
                                 sb.append("<b>Permissions</b><br />");
@@ -2086,7 +2086,7 @@ public class ExperimentList extends AppCompatActivity {
                                 } else {
                                     for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
                                         sb.append("<b>");
-                                        sb.append(res.getString(sensorInput.getDescriptionRes(sensor.getType())));
+                                        sb.append(res.getString(SensorInput.getDescriptionRes(sensor.getType())));
                                         sb.append("</b> (type ");
                                         sb.append(sensor.getType());
                                         sb.append(")");
@@ -2097,12 +2097,12 @@ public class ExperimentList extends AppCompatActivity {
                                         sb.append("- Range: ");
                                         sb.append(sensor.getMaximumRange());
                                         sb.append(" ");
-                                        sb.append(sensorInput.getUnit(sensor.getType()));
+                                        sb.append(SensorInput.getUnit(sensor.getType()));
                                         sb.append("<br />");
                                         sb.append("- Resolution: ");
                                         sb.append(sensor.getResolution());
                                         sb.append(" ");
-                                        sb.append(sensorInput.getUnit(sensor.getType()));
+                                        sb.append(SensorInput.getUnit(sensor.getType()));
                                         sb.append("<br />");
                                         sb.append("- Min delay: ");
                                         sb.append(sensor.getMinDelay());

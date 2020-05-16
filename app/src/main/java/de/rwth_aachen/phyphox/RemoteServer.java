@@ -29,6 +29,9 @@ import org.apache.http.protocol.ResponseConnControl;
 import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -58,9 +61,9 @@ import java.util.Vector;
 //something else, we need to suppress deprication warnings if we do not want to get flooded.
 
 @SuppressWarnings( "deprecation" )
-public class remoteServer extends Thread {
+public class RemoteServer extends Thread {
 
-    private final phyphoxExperiment experiment; //Reference to the experiment we want to control
+    private final PhyphoxExperiment experiment; //Reference to the experiment we want to control
 
     HttpService httpService; //Holds our http service
     BasicHttpContext basicHttpContext; //A simple http context...
@@ -308,7 +311,7 @@ public class remoteServer extends Thread {
     }
 
     //The constructor takes the experiment to control and the activity of which we need to show/control the status
-    remoteServer(phyphoxExperiment experiment, Experiment callActivity, String sessionID) {
+    RemoteServer(PhyphoxExperiment experiment, Experiment callActivity, String sessionID) {
         this.experiment = experiment;
         this.callActivity = callActivity;
         this.context = callActivity;
@@ -324,7 +327,7 @@ public class remoteServer extends Thread {
         startHttpService();
     }
 
-    remoteServer(phyphoxExperiment experiment, Experiment callActivity) {
+    RemoteServer(PhyphoxExperiment experiment, Experiment callActivity) {
         this(experiment, callActivity, String.format("%06x", (System.nanoTime() & 0xffffff)));
     }
 
@@ -424,6 +427,7 @@ public class remoteServer extends Thread {
         registry.register("/get", new getCommandHandler()); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
         registry.register("/control", new controlCommandHandler()); //The control command starts and stops measurements
         registry.register("/export", new exportCommandHandler()); //The export command requests a data file containing sets as requested by the paramters
+        registry.register("/config", new configCommandHandler()); //The config command requests information on the currently active experiment configuration
         httpService.setHandlerResolver(registry);
     }
 
@@ -589,8 +593,8 @@ public class remoteServer extends Thread {
                             sb.append(",\n"); //Seperate the object with a comma, if this is not the first item
 
                         //Get the databuffers. The one requested and the threshold reference
-                        dataBuffer db = experiment.getBuffer(buffer.name);
-                        dataBuffer db_reference;
+                        DataBuffer db = experiment.getBuffer(buffer.name);
+                        DataBuffer db_reference;
                         if (buffer.reference.equals(""))
                             db_reference = db;
                         else
@@ -846,6 +850,130 @@ public class remoteServer extends Thread {
             }
 
             //Send error or file
+            response.setEntity(entity);
+
+        }
+
+    }
+
+    //The config query does not take any parameters
+    //It returns information on the currently active experiment configuration like title, category, checksum, inputs, buffers, ...
+    class configCommandHandler implements HttpRequestHandler {
+
+        @Override
+        public void handle(HttpRequest request, HttpResponse response,
+                           HttpContext httpContext) throws HttpException, IOException {
+
+            String result;
+            try {
+                JSONObject json = new JSONObject();
+
+                json.put("crc32", Long.toHexString(experiment.crc32).toLowerCase());
+                json.put("title", experiment.baseTitle.replace("\"","\\\""));
+                json.put("localTitle", experiment.title.replace("\"","\\\""));
+                json.put("category", experiment.baseCategory.replace("\"","\\\""));
+                json.put("localCategory", experiment.category.replace("\"","\\\""));
+
+                JSONArray buffers = new JSONArray();
+                for (DataBuffer buffer : experiment.dataBuffers) {
+                    buffers.put(new JSONObject().put("name", buffer.name.replace("\"","\\\"")).put("size", buffer.size));
+                }
+                json.put("buffers", buffers);
+
+                JSONArray inputs = new JSONArray();
+                if (experiment.audioRecord != null) {
+                    JSONArray outputs = new JSONArray();
+                    outputs.put(new JSONObject().put("out", experiment.micOutput));
+                    if (!experiment.micRateOutput.isEmpty())
+                        outputs.put(new JSONObject().put("rate", experiment.micRateOutput));
+
+                    inputs.put(new JSONObject()
+                            .put("source", "audio")
+                            .put("outputs", outputs)
+                    );
+                }
+                if (experiment.gpsIn != null) {
+                    JSONArray outputs = new JSONArray();
+                    if (experiment.gpsIn.dataLat != null)
+                        outputs.put(new JSONObject().put("lat", experiment.gpsIn.dataLat.name));
+                    if (experiment.gpsIn.dataLon != null)
+                        outputs.put(new JSONObject().put("lon", experiment.gpsIn.dataLon.name));
+                    if (experiment.gpsIn.dataZ != null)
+                        outputs.put(new JSONObject().put("z", experiment.gpsIn.dataZ.name));
+                    if (experiment.gpsIn.dataZWGS84 != null)
+                        outputs.put(new JSONObject().put("zwgs84", experiment.gpsIn.dataZWGS84.name));
+                    if (experiment.gpsIn.dataV != null)
+                        outputs.put(new JSONObject().put("v", experiment.gpsIn.dataV.name));
+                    if (experiment.gpsIn.dataDir != null)
+                        outputs.put(new JSONObject().put("dir", experiment.gpsIn.dataDir.name));
+                    if (experiment.gpsIn.dataT != null)
+                        outputs.put(new JSONObject().put("t", experiment.gpsIn.dataT.name));
+                    if (experiment.gpsIn.dataAccuracy != null)
+                        outputs.put(new JSONObject().put("accuracy", experiment.gpsIn.dataAccuracy.name));
+                    if (experiment.gpsIn.dataZAccuracy != null)
+                        outputs.put(new JSONObject().put("zAccuracy", experiment.gpsIn.dataZAccuracy.name));
+                    if (experiment.gpsIn.dataStatus != null)
+                        outputs.put(new JSONObject().put("status", experiment.gpsIn.dataStatus.name));
+                    if (experiment.gpsIn.dataSatellites != null)
+                        outputs.put(new JSONObject().put("satellites", experiment.gpsIn.dataSatellites.name));
+
+                    inputs.put(new JSONObject()
+                            .put("source", "location")
+                            .put("outputs", outputs)
+                    );
+                }
+                for (SensorInput input : experiment.inputSensors) {
+                    JSONArray outputs = new JSONArray();
+
+                    if (input.dataX != null)
+                        outputs.put(new JSONObject().put("x", input.dataX.name));
+                    if (input.dataY != null)
+                        outputs.put(new JSONObject().put("y", input.dataY.name));
+                    if (input.dataZ != null)
+                        outputs.put(new JSONObject().put("z", input.dataZ.name));
+                    if (input.dataAbs != null)
+                        outputs.put(new JSONObject().put("abs", input.dataAbs.name));
+                    if (input.dataT != null)
+                        outputs.put(new JSONObject().put("t", input.dataT.name));
+                    if (input.dataAccuracy != null)
+                        outputs.put(new JSONObject().put("accuracy", input.dataAccuracy.name));
+
+                    inputs.put(new JSONObject()
+                            .put("source", input.sensorName.name())
+                            .put("outputs", outputs)
+                    );
+                }
+                if (experiment.bluetoothInputs.size() > 0) {
+                    inputs.put(new JSONObject()
+                            .put("source", "bluetooth"));
+                }
+                json.put("inputs", inputs);
+
+                JSONArray export = new JSONArray();
+                for (DataExport.ExportSet set : experiment.exporter.exportSets) {
+                    JSONArray sources = new JSONArray();
+                    for (DataExport.ExportSet.SourceMapping mapping : set.sources) {
+                        sources.put(new JSONObject()
+                                .put("label", mapping.name.replace("\"","\\\""))
+                                .put("buffer", mapping.source.replace("\"","\\\""))
+                        );
+                    }
+                    export.put(new JSONObject().put("set", set.name.replace("\"","\\\"")).put("sources", sources));
+                }
+                json.put("export", export);
+
+                result = json.toString();
+            } catch (JSONException e) {
+                result = "{\"result\": false}";
+                Log.e("configHandler", "Error: " + e.getMessage());
+            }
+
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
+
+            response.setHeader("Content-Type", "application/json");
             response.setEntity(entity);
 
         }
