@@ -869,14 +869,14 @@ public class RemoteServer extends Thread {
                 JSONObject json = new JSONObject();
 
                 json.put("crc32", Long.toHexString(experiment.crc32).toLowerCase());
-                json.put("title", experiment.baseTitle.replace("\"","\\\""));
-                json.put("localTitle", experiment.title.replace("\"","\\\""));
-                json.put("category", experiment.baseCategory.replace("\"","\\\""));
-                json.put("localCategory", experiment.category.replace("\"","\\\""));
+                json.put("title", experiment.baseTitle);
+                json.put("localTitle", experiment.title);
+                json.put("category", experiment.baseCategory);
+                json.put("localCategory", experiment.category);
 
                 JSONArray buffers = new JSONArray();
                 for (DataBuffer buffer : experiment.dataBuffers) {
-                    buffers.put(new JSONObject().put("name", buffer.name.replace("\"","\\\"")).put("size", buffer.size));
+                    buffers.put(new JSONObject().put("name", buffer.name).put("size", buffer.size));
                 }
                 json.put("buffers", buffers);
 
@@ -954,11 +954,11 @@ public class RemoteServer extends Thread {
                     JSONArray sources = new JSONArray();
                     for (DataExport.ExportSet.SourceMapping mapping : set.sources) {
                         sources.put(new JSONObject()
-                                .put("label", mapping.name.replace("\"","\\\""))
-                                .put("buffer", mapping.source.replace("\"","\\\""))
+                                .put("label", mapping.name)
+                                .put("buffer", mapping.source)
                         );
                     }
-                    export.put(new JSONObject().put("set", set.name.replace("\"","\\\"")).put("sources", sources));
+                    export.put(new JSONObject().put("set", set.name).put("sources", sources));
                 }
                 json.put("export", export);
 
