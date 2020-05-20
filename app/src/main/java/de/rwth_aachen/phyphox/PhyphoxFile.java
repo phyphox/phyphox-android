@@ -1009,6 +1009,9 @@ public abstract class PhyphoxFile {
                     }
                     experiment.optimization = getBooleanAttribute("optimization", false); //Time between executions
                     experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false); //Only execute when the user changed something?
+                    experiment.timedRun = getBooleanAttribute("timedRun", false);
+                    experiment.timedRunStartDelay = getDoubleAttribute("timedRunStartDelay", 3.0);
+                    experiment.timedRunStopDelay = getDoubleAttribute("timedRunStopDelay", 10.0);
                     (new analysisBlockParser(xpp, experiment, parent)).process();
                     break;
                 case "output": //Holds outputs like the speaker

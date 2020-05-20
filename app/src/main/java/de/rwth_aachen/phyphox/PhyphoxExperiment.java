@@ -83,6 +83,10 @@ public class PhyphoxExperiment implements Serializable {
     boolean newData = true; //Will be set to true if we have fresh data to present
     boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
 
+    boolean timedRun = false; //Timed run enabled?
+    double timedRunStartDelay = 3.; //Start delay for timed runs
+    double timedRunStopDelay = 10.; //Stop delay for timed runs
+
     //Audio output is handled in its own class, which will be instantiated by the file parser if required
     public AudioOutput audioOutput = null;
 
