@@ -1302,23 +1302,54 @@ public class ExperimentList extends AppCompatActivity {
                             }
                         }
 
-                        byte [] finalBluetoothData = inflatePartialZip(currentBluetoothData);
+                        if (currentBluetoothData[0] == '<'
+                            && currentBluetoothData[1] == 'p'
+                            && currentBluetoothData[2] == 'h'
+                            && currentBluetoothData[3] == 'y'
+                            && currentBluetoothData[4] == 'p'
+                            && currentBluetoothData[5] == 'h'
+                            && currentBluetoothData[6] == 'o'
+                            && currentBluetoothData[7] == 'x') {
+                            //This is just an XML file, store it
+                            File xmlFile;
+                            try {
+                                xmlFile = new File(tempPath, "bt.phyphox");
+                                FileOutputStream out = new FileOutputStream(xmlFile);
+                                out.write(currentBluetoothData);
+                                out.close();
+                            } catch (Exception e) {
+                                showBluetoothExperimentReadError("Could not write Bluetooth experiment content to phyphox file.", device);
+                                return;
+                            }
 
-                        File zipFile;
-                        try {
-                            zipFile = new File(tempPath, "bt.zip");
-                            FileOutputStream out = new FileOutputStream(zipFile);
-                            out.write(finalBluetoothData);
-                            out.close();
-                        } catch (Exception e) {
-                            showBluetoothExperimentReadError("Could not write Bluetooth experiment content to zip file.", device);
-                            return;
+                            //Create an intent for this file
+                            Intent intent = new Intent(parent, Experiment.class);
+                            intent.setData(Uri.fromFile(xmlFile));
+                            intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, device.getAddress());
+                            intent.setAction(Intent.ACTION_VIEW);
+
+                            //Open the file
+                            startActivity(intent);
+                        } else {
+
+                            byte[] finalBluetoothData = inflatePartialZip(currentBluetoothData);
+
+                            File zipFile;
+                            try {
+                                zipFile = new File(tempPath, "bt.zip");
+                                FileOutputStream out = new FileOutputStream(zipFile);
+                                out.write(finalBluetoothData);
+                                out.close();
+                            } catch (Exception e) {
+                                showBluetoothExperimentReadError("Could not write Bluetooth experiment content to zip file.", device);
+                                return;
+                            }
+
+                            Intent zipIntent = new Intent(parent, Experiment.class);
+                            zipIntent.setData(Uri.fromFile(zipFile));
+                            zipIntent.setAction(Intent.ACTION_VIEW);
+                            new handleZipIntent(zipIntent, parent, device).execute();
                         }
-
-                        Intent zipIntent = new Intent(parent, Experiment.class);
-                        zipIntent.setData(Uri.fromFile(zipFile));
-                        zipIntent.setAction(Intent.ACTION_VIEW);
-                        new handleZipIntent(zipIntent, parent, device).execute();
                     }
                 }
             }
