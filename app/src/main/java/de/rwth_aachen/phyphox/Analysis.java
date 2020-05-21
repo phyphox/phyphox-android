@@ -2013,6 +2013,162 @@ public class Analysis {
         }
     }
 
+    //Smooth data using locally estimated scatterplot smoothing (LOESS) aka local regression
+    //x is the x coordinates of the input data
+    //y is the y coordinates of the input data
+    //d has to be given as the width of the tri-cubic weighting function and can be set dynamically via an input
+    //xi is the x coordinates at which the loess function should be evaluated
+    public static class loessAM extends analysisModule implements Serializable {
+        double d;
+
+        protected loessAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        protected double weight(double dx) {
+            if (dx > d)
+                return 0.0;
+            double v = dx / d;
+            v = 1.0 - v*v*v;
+            return v*v*v;
+        }
+
+        @Override
+        protected void update() {
+            //Get arrays for random access
+            Double x[] = inputArrays.get(0);
+            Double y[] = inputArrays.get(1);
+            if (inputArraySizes.get(2) == 0)
+                return;
+            d = inputArrays.get(2)[0];
+            if (d <= 0.0 || Double.isNaN(d))
+                return;
+            Double xout[] = inputArrays.get(3);
+            int incount = Math.min(inputArraySizes.get(0), inputArraySizes.get(1));
+            int outcount = inputArraySizes.get(3);
+
+            for (int i = 0; i < outcount; i++) {
+                double xi = xout[i];
+
+                double sumWeights = 0.;
+                double sumX = 0.;
+                double sumX2 = 0.;
+                double sumY = 0.;
+                double sumXY = 0.;
+
+                for (int j = 0; j < incount; j++) {
+                    double xj = x[j];
+                    double yj = y[j];
+                    if (Double.isNaN(xj) || Double.isNaN(yj)) {
+                        continue;
+                    }
+                    double dx = Math.abs(xi - xj);
+                    if (dx > d)
+                        continue;
+                    double w = weight(dx);
+
+                    sumWeights += w;
+                    sumX += w*xj;
+                    sumX2 += w*xj*xj;
+                    sumY += w*yj;
+                    sumXY += w*xj*yj;
+                }
+
+                if (sumWeights == 0.0) {
+                    outputs.get(0).append(Double.NaN);
+                    continue;
+                }
+
+                double norm = sumX2 - sumX*sumX/sumWeights;
+                if (norm == 0) {
+                    outputs.get(0).append(Double.NaN);
+                    continue;
+                }
+
+                double a = (sumXY  -  sumX * sumY/sumWeights) / norm;
+                double b = sumY/sumWeights - a * sumX/sumWeights;
+
+                double yi = a*xi+b;
+
+                outputs.get(0).append(yi); //Append the result to the output buffer
+            }
+        }
+    }
+
+    //Interpolate data
+    //x is the x coordinates of the input data. Has to be monotonic!
+    //y is the y coordinates of the input data
+    //xi is the x coordinates at which to interpolate. Has to be monotonic!
+    //Additional parameter "method" can be "previous", "next", "nearest", "linear"
+    public static class interpolateAM extends analysisModule implements Serializable {
+        public enum InterpolationMethod {
+            previous, next, nearest, linear
+        }
+
+        InterpolationMethod method = InterpolationMethod.linear;
+
+        protected interpolateAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, InterpolationMethod method) {
+            super(experiment, inputs, outputs);
+            this.method = method;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double x[] = inputArrays.get(0);
+            Double y[] = inputArrays.get(1);
+            Double xout[] = inputArrays.get(2);
+            int incount = Math.min(inputArraySizes.get(0), inputArraySizes.get(1));
+            int outcount = inputArraySizes.get(2);
+
+            int j = 0;
+            for (int i = 0; i < outcount; i++) {
+                if (incount == 0) {
+                    outputs.get(0).append(Double.NaN);
+                    continue;
+                } else if (incount == 1) {
+                    outputs.get(0).append(y[0]);
+                    continue;
+                }
+                double xi = xout[i];
+
+                while (j < incount && x[j] < xi)
+                    j++;
+
+                if (j == 0) {
+                    outputs.get(0).append(y[j]);
+                    continue;
+                } else if (j == incount) {
+                    outputs.get(0).append(y[incount-1]);
+                    continue;
+                } else if (x[j] == xi) {
+                    outputs.get(0).append(y[j]);
+                    continue;
+                }
+
+                double yi;
+                switch (method) {
+                    case previous:
+                        yi = y[j-1];
+                        break;
+                    case next:
+                        yi = y[j];
+                        break;
+                    case nearest:
+                        yi = (xi - x[j-1] < x[j] - xi) ? y[j-1] : y[j];
+                        break;
+                    case linear:
+                        yi = y[j-1] + (y[j]-y[j-1])*(xi-x[j-1])/(x[j]-x[j-1]);
+                        break;
+                    default:
+                        yi = Double.NaN;
+                        break;
+                }
+                outputs.get(0).append(yi); //Append the result to the output buffer
+            }
+        }
+    }
 
     //Match a couple of inputs and only return those that have a valid value in every input
     //You need exactly as many outputs as there are inputs.

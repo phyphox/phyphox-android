@@ -2478,6 +2478,52 @@ public abstract class PhyphoxFile {
                         gsAM.setSigma(sigma);
                     experiment.analysis.add(gsAM);
                 } break;
+                case "loess": { //Smooth data with LOESS
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "d"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.loessAM(experiment, inputs, outputs));
+                } break;
+                case "interpolate": { //Smooth data with LOESS
+                    String interpolationMethodStr = getStringAttribute("method");
+                    if (interpolationMethodStr == null)
+                        interpolationMethodStr = "linear";
+
+                    Analysis.interpolateAM.InterpolationMethod method = Analysis.interpolateAM.InterpolationMethod.linear;
+
+                    switch (interpolationMethodStr) {
+                        case "previous":   method = Analysis.interpolateAM.InterpolationMethod.previous;
+                            break;
+                        case "next":   method = Analysis.interpolateAM.InterpolationMethod.next;
+                            break;
+                        case "nearest":   method = Analysis.interpolateAM.InterpolationMethod.nearest;
+                            break;
+                        case "linear":   method = Analysis.interpolateAM.InterpolationMethod.linear;
+                            break;
+                        default:        throw new phyphoxFileException("Unknown interpolation methode " + interpolationMethodStr, xpp.getLineNumber());
+                    }
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.interpolateAM(experiment, inputs, outputs, method));
+                } break;
                 case "match": { //Arbitrary inputs and outputs, for each input[n] a min[n] and max[n] can be defined. The module filters the inputs in parallel and returns only those sets that match the filters
 
                     ioBlockParser.ioMapping[] inputMapping = {
