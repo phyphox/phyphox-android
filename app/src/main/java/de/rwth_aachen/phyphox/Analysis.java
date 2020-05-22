@@ -2014,10 +2014,10 @@ public class Analysis {
     }
 
     //Smooth data using locally estimated scatterplot smoothing (LOESS) aka local regression
-    //x is the x coordinates of the input data
+    //x is the x coordinates of the input data. Has to be monotonic!
     //y is the y coordinates of the input data
     //d has to be given as the width of the tri-cubic weighting function and can be set dynamically via an input
-    //xi is the x coordinates at which the loess function should be evaluated
+    //xi is the x coordinates at which the loess function should be evaluated. Has to be monotonic!
     public static class loessAM extends analysisModule implements Serializable {
         double d;
 
@@ -2048,48 +2048,79 @@ public class Analysis {
             int incount = Math.min(inputArraySizes.get(0), inputArraySizes.get(1));
             int outcount = inputArraySizes.get(3);
 
+            int minj = 0;
+
             for (int i = 0; i < outcount; i++) {
                 double xi = xout[i];
 
-                double sumWeights = 0.;
-                double sumX = 0.;
-                double sumX2 = 0.;
-                double sumY = 0.;
-                double sumXY = 0.;
+                double w;
+                double sw = 0.;
+                double swx = 0.;
+                double swxx = 0.;
+                double swxxx = 0.;
+                double swxxxx = 0.;
+                double swy = 0.;
+                double swxy = 0.;
+                double swxxy = 0.;
+                double dx, xj, yj, wx, wxx, wxxx;
 
-                for (int j = 0; j < incount; j++) {
-                    double xj = x[j];
-                    double yj = y[j];
+                for (int j = minj; j < incount; j++) {
+                    xj = x[j];
+                    yj = y[j];
                     if (Double.isNaN(xj) || Double.isNaN(yj)) {
                         continue;
                     }
-                    double dx = Math.abs(xi - xj);
-                    if (dx > d)
-                        continue;
-                    double w = weight(dx);
+                    dx = xj-xi;
+                    if (Math.abs(dx) > d) {
+                        if (dx < 0) {
+                            minj = j+1;
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
 
-                    sumWeights += w;
-                    sumX += w*xj;
-                    sumX2 += w*xj*xj;
-                    sumY += w*yj;
-                    sumXY += w*xj*yj;
+                    w = weight(Math.abs(dx));
+
+                    sw += w;
+                    wx = w*dx;
+                    swx += wx;
+                    wxx = wx*dx;
+                    swxx += wxx;
+                    wxxx = wxx*dx;
+                    swxxx += wxxx;
+                    swxxxx += wxxx*dx;
+                    swy += w*yj;
+                    swxy += wx*yj;
+                    swxxy += wxx*yj;
                 }
 
-                if (sumWeights == 0.0) {
-                    outputs.get(0).append(Double.NaN);
-                    continue;
-                }
+                /*
+                //Full calculation for the local cubic fit if we used xj instead of dx in the sums above.
+                //However, by shifting each evaluation location xi to zero, the sixth-order factors become more stable and we only need to calculate the y intercept.
+                double a = swxx*swxxxx-swxxx*swxxx;
+                double b = swxx*swxxx-swx*swxxxx;
+                double c = swx*swxxx-swxx*swxx;
+                double d = sw*swxxxx-swxx*swxx;
+                double e = swx*swxx-sw*swxxx;
+                double f = sw*swxx-swx*swx;
 
-                double norm = sumX2 - sumX*sumX/sumWeights;
-                if (norm == 0) {
-                    outputs.get(0).append(Double.NaN);
-                    continue;
-                }
+                double det = sw*swxx*swxxxx+2*swx*swxx*swxxx-swxx*swxx*swxx-swx*swx*swxxxx-sw*swxxx*swxxx;
 
-                double a = (sumXY  -  sumX * sumY/sumWeights) / norm;
-                double b = sumY/sumWeights - a * sumX/sumWeights;
+                double b1 = (a*swy + b*swxy + c*swxxy)/det;
+                double b2 = (b*swy + d*swxy + e*swxxy)/det;
+                double b3 = (c*swy + e*swxy + f*swxxy)/det;
 
-                double yi = a*xi+b;
+                double yi = b1 + b2*xi+b3*xi*xi;
+                */
+
+                double a = swxx*swxxxx-swxxx*swxxx;
+                double b = swxx*swxxx-swx*swxxxx;
+                double c = swx*swxxx-swxx*swxx;
+
+                double det = sw*swxx*swxxxx+2*swx*swxx*swxxx-swxx*swxx*swxx-swx*swx*swxxxx-sw*swxxx*swxxx;
+
+                double yi = (a*swy + b*swxy + c*swxxy)/det;
 
                 outputs.get(0).append(yi); //Append the result to the output buffer
             }
