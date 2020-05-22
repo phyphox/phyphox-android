@@ -2097,34 +2097,30 @@ public class Analysis {
                     swxxy += wxx*yj;
                 }
 
-                /*
-                //Full calculation for the local cubic fit if we used xj instead of dx in the sums above.
-                //However, by shifting each evaluation location xi to zero, the sixth-order factors become more stable and we only need to calculate the y intercept.
-                double a = swxx*swxxxx-swxxx*swxxx;
-                double b = swxx*swxxx-swx*swxxxx;
-                double c = swx*swxxx-swxx*swxx;
-                double d = sw*swxxxx-swxx*swxx;
-                double e = swx*swxx-sw*swxxx;
-                double f = sw*swxx-swx*swx;
-
-                double det = sw*swxx*swxxxx+2*swx*swxx*swxxx-swxx*swxx*swxx-swx*swx*swxxxx-sw*swxxx*swxxx;
-
-                double b1 = (a*swy + b*swxy + c*swxxy)/det;
-                double b2 = (b*swy + d*swxy + e*swxxy)/det;
-                double b3 = (c*swy + e*swxy + f*swxxy)/det;
-
-                double yi = b1 + b2*xi+b3*xi*xi;
-                */
-
                 double a = swxx*swxxxx-swxxx*swxxx;
                 double b = swxx*swxxx-swx*swxxxx;
                 double c = swx*swxxx-swxx*swxx;
 
                 double det = sw*swxx*swxxxx+2*swx*swxx*swxxx-swxx*swxx*swxx-swx*swx*swxxxx-sw*swxxx*swxxx;
 
-                double yi = (a*swy + b*swxy + c*swxxy)/det;
+                double yi0 = (a*swy + b*swxy + c*swxxy)/det;
 
-                outputs.get(0).append(yi); //Append the result to the output buffer
+                outputs.get(0).append(yi0); //Append the result to the output buffer
+
+                if (outputs.size() > 1) {
+                    double d = sw*swxxxx-swxx*swxx;
+                    double e = swx*swxx-sw*swxxx;
+                    double f = sw*swxx-swx*swx;
+
+                    if (outputs.get(1) != null) {
+                        double yi1 = (b * swy + d * swxy + e * swxxy) / det;
+                        outputs.get(1).append(yi1);
+                    }
+                    if (outputs.size() > 2 && outputs.get(2) != null) {
+                        double yi2 = (c * swy + e * swxy + f * swxxy) / det;
+                        outputs.get(2).append(yi2);
+                    }
+                }
             }
         }
     }
