@@ -2565,6 +2565,20 @@ public abstract class PhyphoxFile {
 
                     experiment.analysis.add(new Analysis.subrangeAM(experiment, inputs, outputs));
                 } break;
+                case "sort": {
+
+                    boolean descending= getBooleanAttribute("descending", false);
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.sortAM(experiment, inputs, outputs, descending));
+                } break;
                 case "ramp": { //Create a linear ramp (great for creating time-bases)
 
                     ioBlockParser.ioMapping[] inputMapping = {

@@ -3,7 +3,9 @@ package de.rwth_aachen.phyphox;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -2431,6 +2433,51 @@ public class Analysis {
                         outputs.get(i-3).append(Arrays.copyOfRange(inputs.get(i).getArray(), start, thisEnd), thisEnd-start);
                 }
             }
+        }
+    }
+
+    //Sort the input buffers such that the content of the first supplied buffer is ascending
+    //Setting descending to true reverses the output
+    //The output length will correspond to the shortest of the input buffers
+    public static class sortAM extends analysisModule implements Serializable {
+        boolean descending = false;
+
+        protected sortAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, boolean descending) {
+            super(experiment, inputs, outputs);
+            this.descending = descending;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double[] mainArray = inputArrays.get(0);
+            int n = inputArraySizes.get(0);
+            for (int i = 1; i < inputArraySizes.size(); i++)
+                if (inputArraySizes.get(i) < n)
+                    n = inputArraySizes.get(i);
+
+            Integer[] indexArray = new Integer[n];
+            for (int i = 0; i < n; i++)
+                indexArray[i] = i;
+
+            class IndexArrayLookupComparator implements Comparator<Integer> {
+                @Override
+                public int compare(Integer i1, Integer i2) {
+                    if (descending)
+                        return mainArray[i2].compareTo(mainArray[i1]);
+                    else
+                        return mainArray[i1].compareTo(mainArray[i2]);
+                }
+            }
+
+            Arrays.sort(indexArray, new IndexArrayLookupComparator());
+
+            for (int i = 0; i < n; i++) {
+                for (int out = 0; out < outputs.size() && out < inputArrays.size(); out++) {
+                    outputs.get(out).append(inputArrays.get(out)[indexArray[i]]);
+                }
+            }
+
         }
     }
 
