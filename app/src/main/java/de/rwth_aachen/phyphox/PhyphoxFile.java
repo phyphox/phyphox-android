@@ -1821,6 +1821,8 @@ public abstract class PhyphoxFile {
                     if (id == null)
                         throw new phyphoxFileException("Missing id in send element.", xpp.getLineNumber());
 
+                    String datatype = getStringAttribute("datatype");
+
                     String type = getStringAttribute("type");
                     if (type == null || type.equals("buffer")) {
                         String bufferName = getText();
@@ -1828,6 +1830,10 @@ public abstract class PhyphoxFile {
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                         sendable = new NetworkConnection.NetworkSendableData(buffer);
+                        if (datatype != null) {
+                            sendable.additionalAttributes = new HashMap<>();
+                            sendable.additionalAttributes.put("datatype", datatype);
+                        }
                     } else if (type.equals("meta")) {
                         String metaName = getText();
                         try {

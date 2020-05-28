@@ -109,14 +109,23 @@ public class NetworkService {
                         if (item.getValue().metadata != null)
                             json.put(item.getKey(), item.getValue().metadata.get(parameters.address));
                         else if (item.getValue().buffer != null) {
-                            JSONArray jsonArray = new JSONArray();
-                            for (double v : item.getValue().buffer.getArray()) {
+                            String datatype = item.getValue().additionalAttributes != null ? item.getValue().additionalAttributes.get("datatype") : null;
+                            if (datatype != null && datatype.equals("number")) {
+                                double v = item.getValue().buffer.value;
                                 if (Double.isNaN(v) || Double.isInfinite(v))
-                                    jsonArray.put(null);
+                                    json.put(item.getKey(), null);
                                 else
-                                    jsonArray.put(v);;
+                                    json.put(item.getKey(), v);
+                            } else {
+                                JSONArray jsonArray = new JSONArray();
+                                for (double v : item.getValue().buffer.getArray()) {
+                                    if (Double.isNaN(v) || Double.isInfinite(v))
+                                        jsonArray.put(null);
+                                    else
+                                        jsonArray.put(v);;
+                                }
+                                json.put(item.getKey(), jsonArray);
                             }
-                            json.put(item.getKey(), jsonArray);
                         }
                     }
 

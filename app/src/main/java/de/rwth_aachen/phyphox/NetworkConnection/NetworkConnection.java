@@ -34,6 +34,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
     public static class NetworkSendableData {
         DataBuffer buffer = null;
         NetworkMetadata metadata = null;
+        public Map<String, String> additionalAttributes = null;
         public NetworkSendableData(DataBuffer buffer) {
             this.buffer = buffer;
         }
