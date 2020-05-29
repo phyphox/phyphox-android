@@ -169,7 +169,7 @@ public class GpsInput implements Serializable {
             newT = (event.getElapsedRealtimeNanos() - t0) * 1e-9;
         else
             newT = (event.getTime() - t0) * 1e-3;
-        if (newT < dataT.value)
+        if (dataT != null && newT < dataT.value)
             return;
 
         if (event.getProvider().equals(LocationManager.GPS_PROVIDER))
