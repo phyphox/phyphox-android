@@ -78,7 +78,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     final int markerMax = 2;
     Marker marker[] = new Marker[markerMax];
-    PopupWindow popupWindowInfo = null;
+    public PopupWindow popupWindowInfo = null;
     TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
 

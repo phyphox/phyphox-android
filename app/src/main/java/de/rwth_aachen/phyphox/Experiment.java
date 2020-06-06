@@ -792,6 +792,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Recursively get all TextureViews, used for screenshots
     public Vector<PlotAreaView> getAllPlotAreaViews(View v) {
         Vector<PlotAreaView> l = new Vector<>();
+        if (v.getVisibility() != View.VISIBLE)
+            return l;
         if (v instanceof PlotAreaView) {
             l.add((PlotAreaView)v);
         } else if (v instanceof ViewGroup) {
@@ -803,14 +805,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return l;
     }
 
-    public Vector<GraphView> getAllGraphViews(View v) {
-        Vector<GraphView> l = new Vector<>();
-        if (v instanceof GraphView) {
-            l.add((GraphView)v);
+    public Vector<InteractiveGraphView> getAllInteractiveGraphViews(View v) {
+        Vector<InteractiveGraphView> l = new Vector<>();
+        if (v.getVisibility() != View.VISIBLE)
+            return l;
+        if (v instanceof InteractiveGraphView) {
+            l.add((InteractiveGraphView)v);
         } else if (v instanceof ViewGroup) {
             ViewGroup vg = (ViewGroup)v;
             for (int i = 0; i < vg.getChildCount(); i++) {
-                l.addAll(getAllGraphViews(vg.getChildAt(i)));
+                l.addAll(getAllInteractiveGraphViews(vg.getChildAt(i)));
             }
         }
         return l;
@@ -1051,8 +1055,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 canvas.drawBitmap(bmp, location[0], location[1], null);
             }
 
-            Vector<GraphView> gvList = getAllGraphViews(screenView);
-            for (GraphView gv : gvList) {
+            Vector<InteractiveGraphView> gvList = getAllInteractiveGraphViews(screenView);
+            for (InteractiveGraphView gv : gvList) {
                 gv.setDrawingCacheEnabled(true);
                 Bitmap bmp = Bitmap.createBitmap(gv.getDrawingCache());
                 gv.setDrawingCacheEnabled(false);
@@ -1060,6 +1064,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 int location[] = new int[2];
                 gv.getLocationOnScreen(location);
                 canvas.drawBitmap(bmp, location[0], location[1], null);
+
+                if (gv.popupWindowInfo != null) {
+                    View popupView = gv.popupWindowInfo.getContentView();
+                    popupView.setDrawingCacheEnabled(true);
+                    bmp = Bitmap.createBitmap(popupView.getDrawingCache());
+                    popupView.setDrawingCacheEnabled(false);
+
+                    popupView.getLocationOnScreen(location);
+                    canvas.drawBitmap(bmp, location[0], location[1], null);
+                }
+
+
             }
 
             final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
