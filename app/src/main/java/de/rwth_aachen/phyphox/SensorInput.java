@@ -141,13 +141,19 @@ public class SensorInput implements SensorEventListener, Serializable {
                     continue;
                 String name = s.getName().toLowerCase();
                 if (type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
-                    if (name.contains("temperature") || name.contains("thermo")) {
+                    if (name.toLowerCase().contains("temperature") || name.toLowerCase().contains("thermo")) {
                         sensor = s;
                         break;
                     }
                 }
                 if (type == Sensor.TYPE_RELATIVE_HUMIDITY) {
-                    if (name.contains("humidity")) {
+                    if (name.toLowerCase().contains("humidity")) {
+                        sensor = s;
+                        break;
+                    }
+                }
+                if (type == Sensor.TYPE_PRESSURE) {
+                    if (name.toLowerCase().contains("pressure")) {
                         sensor = s;
                         break;
                     }
