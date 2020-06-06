@@ -20,7 +20,7 @@ public class Analysis {
             System.loadLibrary("fftw3f");
             System.loadLibrary("analysis");
             nativeLib = true;
-            Log.d("cpp library", "Using native analysis library.");
+            Log.i("cpp library", "Using native analysis library.");
         } catch (Error e) {
             Log.w("cpp library", "Could not load native analysis library. Falling back to Java implementation.");
         }

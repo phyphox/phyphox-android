@@ -999,7 +999,13 @@ public class GraphView extends View {
         int graphL = 0;
         int graphT = 0;
         for (double tic : yTics) {
-            double tw = paint.measureText(String.format("%."+yPrecision+"g", tic))+res.getDimension(R.dimen.graph_font)/2.;
+            double tw;
+            try {
+                tw = paint.measureText(String.format("%." + yPrecision + "g", tic)) + res.getDimension(R.dimen.graph_font) / 2.;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                tw = paint.measureText(String.format("%." + yPrecision + "f", tic)) + res.getDimension(R.dimen.graph_font) / 2.;
+            }
             if (tw > graphL)
                 graphL = (int)Math.ceil(tw);
         }
@@ -1031,14 +1037,24 @@ public class GraphView extends View {
             if (tic < workingMinX || tic > workingMaxX)
                 continue;
             double x = dataXToViewX(tic);
-            canvas.drawText(String.format("%."+xPrecision+"g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            try {
+                canvas.drawText(String.format("%."+xPrecision+"g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                canvas.drawText(String.format("%."+xPrecision+"f", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            }
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (double tic : yTics) {
             if (tic < workingMinY || tic > workingMaxY)
                 continue;
             double y = dataYToViewY(tic);
-            canvas.drawText(String.format("%."+yPrecision+"g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            try {
+                canvas.drawText(String.format("%."+yPrecision+"g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                canvas.drawText(String.format("%."+yPrecision+"f", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            }
         }
         if (zScale) {
             paint.setTextAlign(Paint.Align.CENTER);
@@ -1046,7 +1062,12 @@ public class GraphView extends View {
                 if (tic < workingMinZ || tic > workingMaxZ)
                     continue;
                 double x = dataZToViewX(tic);
-                canvas.drawText(String.format("%."+zPrecision+"g", tic), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                try {
+                    canvas.drawText(String.format("%."+zPrecision+"g", tic), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                    canvas.drawText(String.format("%."+zPrecision+"f", tic), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                }
             }
         }
 
