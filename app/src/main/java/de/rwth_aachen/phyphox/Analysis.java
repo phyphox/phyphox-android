@@ -1733,6 +1733,8 @@ public class Analysis {
 
             //Get dx and overlap
             int dx = (int)inputs.get(2).getValue();
+            if (dx <= 0)
+                return;
 
             //Overlap is optional...
             int overlap = 0;
