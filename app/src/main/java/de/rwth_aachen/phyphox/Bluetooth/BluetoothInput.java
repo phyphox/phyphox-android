@@ -156,6 +156,8 @@ public class BluetoothInput extends Bluetooth {
                 result = cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait when closing an experiment
             } catch (InterruptedException e) {
             }
+
+            result = btGatt.setCharacteristicNotification(characteristic, false);
         }
     }
 
@@ -235,14 +237,9 @@ public class BluetoothInput extends Bluetooth {
      */
     @Override
     public void stop() {
-        super.stop();
 
         if (subscribeOnStart && mode.equals("notification")) {
             unsubscribeFromNotifications();
-
-            for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                boolean result = btGatt.setCharacteristicNotification(c, false);
-            }
         }
 
         if (mode.equals("poll")) {
@@ -250,6 +247,8 @@ public class BluetoothInput extends Bluetooth {
                 mainHandler.removeCallbacksAndMessages(null);
             }
         }
+
+        super.stop();
     }
 
     /**
