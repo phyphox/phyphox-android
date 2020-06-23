@@ -106,6 +106,16 @@ public class BluetoothInput extends Bluetooth {
     }
 
     private void subscribeToNotifications() throws BluetoothException {
+        if (mode.equals("notification")) {
+            // turn on characteristic notification for each characteristic
+            for (BluetoothGattCharacteristic c : mapping.keySet()) {
+                boolean result = btGatt.setCharacteristicNotification(c, true);
+                if (!result) {
+                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
+                }
+            }
+        }
+
         for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
             if (descriptor != null) {
@@ -197,40 +207,26 @@ public class BluetoothInput extends Bluetooth {
             this.t0 = 0; //Reset t0. This will be set by the first sensor event
         }
 
-        switch (mode) {
-            case "poll": {
-                final Runnable readData = new Runnable() {
-                    @Override
-                    public void run() {
-                        // read data from all characteristics
-                        for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                            add(new ReadCommand(btGatt, c));
-                        }
-                        mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
+        if (mode.equals("poll")) {
+            final Runnable readData = new Runnable() {
+                @Override
+                public void run() {
+                    // read data from all characteristics
+                    for (BluetoothGattCharacteristic c : mapping.keySet()) {
+                        add(new ReadCommand(btGatt, c));
                     }
-                };
-                mainHandler.post(readData);
-                break;
-            }
-            case "notification":
-            case "indication": {
-                // turn on characteristic notification for each characteristic
-                for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    boolean result = btGatt.setCharacteristicNotification(c, true);
-                    if (!result) {
-                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
-                    }
+                    mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
                 }
-                break;
-            }
+            };
+            mainHandler.post(readData);
         }
+
+        super.start();
 
         // enable descriptor for notification
         if (subscribeOnStart && (mode.equals("notification") || mode.equals("indication"))) {
             subscribeToNotifications();
         }
-
-        super.start();
     }
 
 
@@ -243,21 +239,15 @@ public class BluetoothInput extends Bluetooth {
 
         if (subscribeOnStart && mode.equals("notification")) {
             unsubscribeFromNotifications();
+
+            for (BluetoothGattCharacteristic c : mapping.keySet()) {
+                boolean result = btGatt.setCharacteristicNotification(c, false);
+            }
         }
 
-        switch (mode) {
-            case "poll": {
-                if (mainHandler != null) {
-                    mainHandler.removeCallbacksAndMessages(null);
-                }
-                break;
-            }
-            case "notification":
-            case "indication": {
-                for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    boolean result = btGatt.setCharacteristicNotification(c, false);
-                }
-                break;
+        if (mode.equals("poll")) {
+            if (mainHandler != null) {
+                mainHandler.removeCallbacksAndMessages(null);
             }
         }
     }
@@ -302,6 +292,9 @@ public class BluetoothInput extends Bluetooth {
      */
     @Override
     protected void retrieveData(byte[] data, BluetoothGattCharacteristic characteristic) {
+        if (!isRunning)
+            return; //Experiment has not started yet. Discard early events.
+
         ArrayList<Characteristic> characteristics = mapping.get(characteristic);
         long t = System.nanoTime();
         // set t0 if it is not yet set
