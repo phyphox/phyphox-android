@@ -17,6 +17,15 @@ public class NetworkConversion {
         protected abstract Double[] get(String id) throws ConversionException;
     }
 
+    public static class None extends Conversion {
+        public void prepare(byte[] data) throws ConversionException {
+        }
+
+        public Double[] get(String id) throws ConversionException {
+            return new Double[0];
+        }
+    }
+
     public static class Json extends Conversion {
         JSONObject json = null;
 

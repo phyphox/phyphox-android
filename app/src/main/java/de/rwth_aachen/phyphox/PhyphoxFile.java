@@ -1782,7 +1782,8 @@ public abstract class PhyphoxFile {
                             default:
                                 throw new phyphoxFileException("Unknown conversion "+conversionStr, xpp.getLineNumber());
                         }
-                    }
+                    } else
+                        conversion = new NetworkConversion.None();
 
                     Map<String, NetworkConnection.NetworkSendableData> send = new HashMap<>();
                     Map<String, NetworkConnection.NetworkReceivableData> receive = new HashMap<>();
