@@ -1776,6 +1776,9 @@ public abstract class PhyphoxFile {
                     NetworkConversion.Conversion conversion = null;
                     if (conversionStr != null) {
                         switch (conversionStr) {
+                            case "none":
+                                conversion = new NetworkConversion.None();
+                                break;
                             case "json":
                                 conversion = new NetworkConversion.Json();
                                 break;
