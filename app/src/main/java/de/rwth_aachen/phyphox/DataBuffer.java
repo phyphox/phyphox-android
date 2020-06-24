@@ -113,6 +113,9 @@ public class DataBuffer implements Serializable {
 
     //Append a value to the buffer.
     public void append(double value, boolean notify) {
+        if (isStatic && !untouched)
+            return;
+
         untouched = false;
         double last = this.value;
         this.value = value; //Update last value
