@@ -27,8 +27,8 @@ public class DataBuffer implements Serializable {
     public int size; //The target size
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
-    public boolean untouched = true;
     public Double [] init = new Double[0];
+    public boolean staticAndSet = false;
 
     //Analysis modules and graphs can register to receive notifications if a buffer changes.
     public Set<BufferNotification> updateListeners = new HashSet<>();
@@ -112,11 +112,9 @@ public class DataBuffer implements Serializable {
     }
 
     //Append a value to the buffer.
-    public void append(double value, boolean notify) {
-        if (isStatic && !untouched)
+    private void append(double value, boolean notify) {
+        if (staticAndSet)
             return;
-
-        untouched = false;
         double last = this.value;
         this.value = value; //Update last value
         if (this.size > 0 && buffer.size()+1 > this.size) { //If the buffer becomes larger than the target size, remove the first item (queue!)
@@ -227,7 +225,7 @@ public class DataBuffer implements Serializable {
     //Append a short-array with [count] entries. This will be scaled to [-1:+1] and is used for audio data
     public void append(short value[], int count) {
         for (int i = 0; i < count; i++)
-            append((double)value[i]/(double)Short.MAX_VALUE); //Normalize to [-1:+1] and append
+            append((double)value[i]/(double)Short.MAX_VALUE, true); //Normalize to [-1:+1] and append
         notifyListeners(false, false);
     }
 
@@ -240,16 +238,18 @@ public class DataBuffer implements Serializable {
     public void setInit(Double[] init) {
         this.init = init;
         this.append(init, init.length, false);
+        if (init.length > 0)
+            markSet();
     }
 
     //Delete all data and set last item to NaN (if not static)
     public void clear(boolean reset, boolean notify) {
-        if (isStatic)
-            return;
-        if (reset)
-            untouched = true;
-        else
-            untouched = false;
+        if (isStatic) {
+            if (reset)
+                staticAndSet = false;
+            else
+                return;
+        }
         buffer.clear();
         value = Double.NaN;
         if (floatCopy != null) {
@@ -287,6 +287,11 @@ public class DataBuffer implements Serializable {
 
     public void clear(boolean reset) {
         clear(reset, true);
+    }
+
+    public void markSet() {
+        if (isStatic)
+            staticAndSet = true;
     }
 
     //Retrieve the iterator of the BlockingQueue

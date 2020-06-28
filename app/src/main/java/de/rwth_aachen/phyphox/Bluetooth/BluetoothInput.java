@@ -319,10 +319,12 @@ public class BluetoothInput extends Bluetooth {
         try {
             for (Characteristic c : characteristics) {
                 this.data.get(c.index).append(outputs[characteristics.indexOf(c)]);
+                this.data.get(c.index).markSet();
             }
             // append time to buffer if extra=time is set
             if (saveTime.containsKey(characteristic)) {
                 this.data.get(saveTime.get(characteristic)).append((t - t0) / 1e9);
+                this.data.get(saveTime.get(characteristic)).markSet();
             }
         } finally {
             dataLock.unlock();
@@ -354,11 +356,13 @@ public class BluetoothInput extends Bluetooth {
             for (ArrayList<Characteristic> al : mapping.values()) {
                 for (Characteristic c : al) {
                     data.get(c.index).append(outputs.get(c.index));
+                    data.get(c.index).markSet();
                 }
             }
             // append time to buffers
             for (Integer i : saveTime.values()) {
                 data.get(i).append((t - t0) / 1e9);
+                data.get(i).markSet();
             }
         } finally {
             dataLock.unlock();

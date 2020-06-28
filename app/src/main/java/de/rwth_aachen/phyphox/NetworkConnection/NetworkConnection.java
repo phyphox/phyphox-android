@@ -325,6 +325,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                 if (item.getValue().clear)
                     item.getValue().buffer.clear(false);
                 item.getValue().buffer.append(data, data.length);
+                item.getValue().buffer.markSet();
             } catch (NetworkConversion.ConversionException e) {
                 displayErrorMessage(e.getMessage());
             }

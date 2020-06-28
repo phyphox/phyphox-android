@@ -61,4 +61,8 @@ public class DataOutput implements Serializable {
     public int size() {
         return buffer.size;
     }
+
+    public void markSet() {
+        buffer.markSet();
+    }
 }

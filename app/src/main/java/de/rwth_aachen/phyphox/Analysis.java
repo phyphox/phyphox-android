@@ -148,10 +148,7 @@ public class Analysis {
         protected Vector<DataOutput> outputs; //The keys of outputBuffers
         protected PhyphoxExperiment experiment; //experiment reference to access buffers
         protected boolean isStatic = false; //If a module is defined as static, it will only be executed once. This is used to save performance if data does not change
-        protected boolean deterministic = true;
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
-
-        protected boolean needsUpdate = true;
 
         protected boolean useArray = false;
         protected boolean clearInModule = false;
@@ -190,12 +187,11 @@ public class Analysis {
             if (reset) {
                 executed = false;
             }
-            needsUpdate = true;
         }
 
         //Wrapper to update the module only if it is not static or has never been executed and to clear the buffer if required
         protected boolean updateIfNotStatic() {
-            if (needsUpdate && !(isStatic && executed)) {
+            if (!(isStatic && executed)) {
 //                long updateStart = System.nanoTime();
 
                 experiment.dataLock.lock();
@@ -234,8 +230,6 @@ public class Analysis {
 
 
                 update();
-                if (deterministic && experiment.optimization)
-                    needsUpdate = false;
 
 //                long time = System.nanoTime() - updateStart;
 //                if (time > 1e6)
@@ -260,6 +254,11 @@ public class Analysis {
                         Log.d("AnalysisDebug", output.buffer.name + " => " + output.getValue() + " (length " + output.getFilledSize() + ")");
 
 */
+                for (int i = 0; i < outputs.size(); i++) {
+                    if (outputs.get(i) != null) {
+                        outputs.get(i).markSet();
+                    }
+                }
                 executed = true;
 
             }
@@ -277,7 +276,6 @@ public class Analysis {
 
         protected timerAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
             super(experiment, inputs, outputs);
-            deterministic = false;
         }
 
         @Override

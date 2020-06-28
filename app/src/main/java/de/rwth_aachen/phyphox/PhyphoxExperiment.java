@@ -78,7 +78,6 @@ public class PhyphoxExperiment implements Serializable {
     long analysisTime; //This variable holds the system time of the moment the current analysis process started.
     long firstAnalysisTime = 0; //This variable holds the system time of the moment the first analysis process started.
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
-    boolean optimization = false; //Modules are only executed if inputs or outputs have changed. Default to false because in some cases this breaks the logic of the experiment. (Example: If the currect data of sources at different acquisition rates should be appended periodically (for example with a timer module), not alle append modules will be executed for slow changing values as both input and output my be unchanged.)
     boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
     boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
