@@ -73,6 +73,7 @@ public class GraphView extends View {
     private String unitX = null; //Label for the x-axis
     private String unitY = null; //Label for the y-axis
     private String unitZ = null; //Label for the y-axis
+    private String unitYX = null; //Unit for the slope, i.e. y/x
     public boolean logX = false; //logarithmic scale for the x-axis?
     public boolean logY = false; //logarithmic scale for the y-axis?
     public boolean logZ = false; //logarithmic scale for the y-axis?
@@ -749,6 +750,10 @@ public class GraphView extends View {
         return unitZ;
     }
 
+    public String getUnitYX() {
+        return unitYX;
+    }
+
     public String getLabelAndUnitX() {
         if (unitX != null && !unitX.isEmpty())
             return labelX +  " (" + unitX + ")";
@@ -771,13 +776,14 @@ public class GraphView extends View {
     }
 
     //Interface to set axis labels
-    public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ) {
+    public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ, String unitYX) {
         this.labelX = labelX;
         this.labelY = labelY;
         this.labelZ = labelZ;
         this.unitX = unitX;
         this.unitY = unitY;
         this.unitZ = unitZ;
+        this.unitYX = unitYX;
     }
 
     //Interface to configure logarithmic scales

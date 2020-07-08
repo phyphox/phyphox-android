@@ -1282,6 +1282,7 @@ public abstract class PhyphoxFile {
                     String unitX = getTranslatedAttribute("unitX");
                     String unitY = getTranslatedAttribute("unitY");
                     String unitZ = getTranslatedAttribute("unitZ");
+                    String unitYX = getTranslatedAttribute("unitYperX");
 
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
@@ -1388,7 +1389,7 @@ public abstract class PhyphoxFile {
                     ge.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
-                    ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);  //x- and y- label and units
+                    ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     if (!globalColor) {

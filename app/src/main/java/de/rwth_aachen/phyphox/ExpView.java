@@ -1024,6 +1024,7 @@ public class ExpView implements Serializable{
         private String unitX = null; //Label for the x-axis
         private String unitY = null; //Label for the y-axis
         private String unitZ = null; //Label for the z-axis
+        private String unitYX = null; //Unit for slope (i.e. y/x)
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
@@ -1170,15 +1171,16 @@ public class ExpView implements Serializable{
         }
 
         //Interface to set the axis labels.
-        protected void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ) {
+        protected void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ, String unitYX) {
             this.labelX = labelX;
             this.labelY = labelY;
             this.labelZ = labelZ;
             this.unitX = unitX;
             this.unitY = unitY;
             this.unitZ = unitZ;
+            this.unitYX = unitYX;
             if (gv != null)
-                gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);
+                gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
         }
 
         //Interface to set log scales
@@ -1275,7 +1277,7 @@ public class ExpView implements Serializable{
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
-            gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);
+            gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
             gv.setLogScale(logX, logY, logZ);
             interactiveGV.allowLogX = logX;
             interactiveGV.allowLogY = logY;

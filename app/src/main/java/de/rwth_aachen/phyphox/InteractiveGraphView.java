@@ -499,9 +499,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             sb.append(getResources().getString(R.string.graph_fit_label));
             sb.append("\na = ");
             sb.append((float)a);
-            sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
-            sb.append(" / ");
-            sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+            if (graphView.getUnitYX() != null)
+                sb.append(graphView.getUnitYX());
+            else {
+                sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+                sb.append(" / ");
+                sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+            }
             sb.append("\nb = ");
             sb.append((float)b);
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
@@ -544,9 +548,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             float dx = marker[0].dataX - marker[1].dataX;
             if (dx != 0) {
                 sb.append((marker[0].dataY - marker[1].dataY) / (marker[0].dataX - marker[1].dataX));
-                sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
-                sb.append(" / ");
-                sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+                if (graphView.getUnitYX() != null)
+                    sb.append(graphView.getUnitYX());
+                else {
+                    sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+                    sb.append(" / ");
+                    sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+                }
             } else {
                 sb.append("-");
             }
