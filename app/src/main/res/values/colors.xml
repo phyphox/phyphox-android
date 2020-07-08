@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#ff404040</color>
-    <color name="background2">#ff606060</color>
-    <color name="background3">#ff202020</color>
-    <color name="backgroundExp">#ff404040</color>
-    <color name="backgroundExp2">#ff606060</color>
-    <color name="backgroundExp3">#ff202020</color>
+    <color name="background">#ff202020</color>
+    <color name="background2">#ff404040</color>
+    <color name="background3">#ff101010</color>
+    <color name="backgroundExp">#ff202020</color>
+    <color name="backgroundExp2">#ff404040</color>
+    <color name="backgroundExp3">#ff101010</color>
     <color name="backgroundDialog">#ffffffff</color>
     <color name="main">#ffffffff</color>
     <color name="main2">#ffe0e0e0</color>
