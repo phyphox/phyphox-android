@@ -1051,6 +1051,8 @@ public class ExpView implements Serializable{
         double minZ = 0.;
         double maxZ = 0.;
 
+        GraphView.ZoomState zoomState = null;
+
         final String warningText;
 
         //Quite usual constructor...
@@ -1235,6 +1237,10 @@ public class ExpView implements Serializable{
             //Create the graphView
             interactiveGV = new InteractiveGraphView(c);
             gv = interactiveGV.graphView;
+            if (zoomState != null)
+                gv.zoomState = zoomState;
+            else
+                zoomState = gv.zoomState;
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -1725,40 +1731,40 @@ public class ExpView implements Serializable{
         public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
             if (unit != null) {
                 if (unitX.equals(unit)) {
-                    gv.zoomMinX = min;
-                    gv.zoomMaxX = max;
-                    gv.zoomFollows = follow;
+                    zoomState.minX = min;
+                    zoomState.maxX = max;
+                    zoomState.follows = follow;
                 }
                 if (unitY.equals(unit)) {
-                    gv.zoomMinY = min;
-                    gv.zoomMaxY = max;
+                    zoomState.minY = min;
+                    zoomState.maxY = max;
                 }
             } else if (buffer != null) {
                 for (int i = 0; i < inputs.size(); i++) {
                     if (inputs.get(i).equals(buffer)) {
                         if (i % 2 == 1) {
-                            gv.zoomMinX = min;
-                            gv.zoomMaxX = max;
-                            gv.zoomFollows = follow;
+                            zoomState.minX = min;
+                            zoomState.maxX = max;
+                            zoomState.follows = follow;
                         } else {
-                            gv.zoomMinY = min;
-                            gv.zoomMaxY = max;
+                            zoomState.minY = min;
+                            zoomState.maxY = max;
                         }
                     }
                 }
             } else {
                 if (!yAxis) {
-                    gv.zoomMinX = min;
-                    gv.zoomMaxX = max;
-                    gv.zoomFollows = follow;
+                    zoomState.minX = min;
+                    zoomState.maxX = max;
+                    zoomState.follows = follow;
                 } else {
-                    gv.zoomMinY = min;
-                    gv.zoomMaxY = max;
+                    zoomState.minY = min;
+                    zoomState.maxY = max;
                 }
             }
+            gv.zoomState = zoomState;
             gv.invalidate();
         }
-
     }
 
     //svgElement shows an svg image, optionally, parts of its source code can be replaced by measured values.
