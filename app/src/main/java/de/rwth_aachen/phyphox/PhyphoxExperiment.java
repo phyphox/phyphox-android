@@ -144,24 +144,15 @@ public class PhyphoxExperiment implements Serializable {
             return;
         if (dataLock.tryLock()) {
             try {
-                for (DataBuffer buffer : dataBuffers) { //Compare each databuffer name...
-                    for (ExpView ev : experimentViews) {
-                            for (ExpView.expViewElement eve : ev.elements) { //...to each expViewElement
-                                try {
-                                    if (eve.onMayWriteToBuffers()) //The element may now write to its buffers if it wants to do it on its own...
-                                        newUserInput = true;
-                                    if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
-                                        Double v = eve.getValue(); //...get the value
-                                        if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
-                                            buffer.append(v);
-                                            newUserInput = true;
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
-                                }
+                for (ExpView ev : experimentViews) {
+                        for (ExpView.expViewElement eve : ev.elements) {
+                            try {
+                                if (eve.onMayWriteToBuffers(this)) //The element may now write to its buffers if it wants to do it on its own...
+                                    newUserInput = true;
+                            } catch (Exception e) {
+                                Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                             }
-                    }
+                        }
                 }
             } finally {
                 dataLock.unlock();

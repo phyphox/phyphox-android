@@ -10,6 +10,7 @@ import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -173,7 +174,7 @@ public class ExpView implements Serializable{
         }
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
-        protected boolean onMayWriteToBuffers() {
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
             return false;
         }
 
@@ -628,6 +629,8 @@ public class ExpView implements Serializable{
         private Double max = Double.POSITIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
+        private boolean triggered = false;
+
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
@@ -774,6 +777,7 @@ public class ExpView implements Serializable{
                     focused = hasFocus;
                     if (!hasFocus) {
                         setValue(getValue()); //Write back the value actually used...
+                        triggered = true;
                     }
                 }
             });
@@ -843,6 +847,17 @@ public class ExpView implements Serializable{
                 if (et != null)
                     et.setText(String.valueOf(currentValue*factor));
             }
+        }
+
+        @Override
+        //If triggered, write the data to the output buffers
+        //Always return zero as the analysis process does not receive the values directly
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if (!triggered)
+                return false;
+            triggered = false;
+            experiment.getBuffer(inputs.get(0)).append(getValue());
+            return true;
         }
 
         @Override
@@ -963,7 +978,7 @@ public class ExpView implements Serializable{
         @Override
         //If triggered, write the data to the output buffers
         //Always return zero as the analysis process does not receive the values directly
-        protected boolean onMayWriteToBuffers() {
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
             if (!triggered)
                 return false;
             triggered = false;
