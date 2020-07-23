@@ -69,7 +69,7 @@ public class PhyphoxExperiment implements Serializable {
     public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
     public final Vector<DataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
-    public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
+    public Vector<Analysis.AnalysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
     public Lock dataLock = new ReentrantLock();
 
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
@@ -81,6 +81,8 @@ public class PhyphoxExperiment implements Serializable {
     boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
     boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
+
+    int cycle = 0; //Keeps track of the current cycle for the cycles attribute of analysis modules
 
     boolean timedRun = false; //Timed run enabled?
     double timedRunStartDelay = 3.; //Start delay for timed runs
@@ -236,18 +238,18 @@ public class PhyphoxExperiment implements Serializable {
         }
         newUserInput = false;
 
+        if (!measuring)
+            cycle = 0;
         dataLock.lock();
         analysisTime = System.currentTimeMillis();
         if (firstAnalysisTime == 0)
             firstAnalysisTime = analysisTime;
         //Call all the analysis modules and let them do their work.
         try {
-            for (Analysis.analysisModule mod : analysis) {
+            for (Analysis.AnalysisModule mod : analysis) {
                 try {
                     Thread.yield();
-                    if (!mod.updateIfNotStatic()) { //This only returns false if the module found its inputs to be uninitialized, in which case we abort the rest... (Typical example: no audio recorded yet)
-//                        break; //Nope, let's not break... This should not be an issue anywhere but may prevent resets from a button to show up when experiment is stopped.
-                    }
+                    mod.updateIfNotStatic(cycle);
                 } catch (Exception e) {
                     Log.e("processAnalysis", "Unhandled exception in analysis module " + mod.toString() + ".", e);
                 }
@@ -255,6 +257,7 @@ public class PhyphoxExperiment implements Serializable {
         } finally {
             dataLock.unlock();
         }
+        cycle++;
 
         //Play audio
         if (measuring && audioOutput != null) {

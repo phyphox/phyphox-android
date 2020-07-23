@@ -1886,6 +1886,40 @@ public abstract class PhyphoxFile {
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
 
+            Vector<Analysis.AnalysisModule.CycleRange> cycles = new Vector<>();
+            String cyclesStr = getStringAttribute("cycles");
+            if (cyclesStr != null) {
+                for (String cycleStr : cyclesStr.split(" ")) {
+                    String[] cycleParts = cycleStr.trim().split("-", 3);
+                    if (cycleParts.length == 1) {
+                        try {
+                            int value = Integer.parseInt(cycleParts[0]);
+                            cycles.add(new Analysis.AnalysisModule.CycleRange(value, value));
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Invalid cycles attribute "+cyclesStr+".", xpp.getLineNumber());
+                        }
+                    } else if (cycleParts.length == 2) {
+                        try {
+                            int start, stop;
+                            if (cycleParts[0].length() == 0)
+                                start = -1;
+                            else
+                                start = Integer.parseInt(cycleParts[0]);
+                            if (cycleParts[1].length() == 0)
+                                stop = -1;
+                            else
+                                stop = Integer.parseInt(cycleParts[1]);
+                            cycles.add(new Analysis.AnalysisModule.CycleRange(start, stop));
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Invalid cycles attribute "+cyclesStr+".", xpp.getLineNumber());
+                        }
+                    } else {
+                        throw new phyphoxFileException("Invalid cycles attribute "+cyclesStr+".", xpp.getLineNumber());
+                    }
+                }
+            }
+            //The cycles string is simply set after the analysis module is instantiated below
+
             Vector<DataInput> inputs = new Vector<>(); //Will hold the inputs
             Vector<DataOutput> outputs = new Vector<>(); //Will hold the output buffers
 
@@ -2623,6 +2657,7 @@ public abstract class PhyphoxFile {
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
+            experiment.analysis.lastElement().setCycles(cycles);
         }
 
     }
