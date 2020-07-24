@@ -144,6 +144,39 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     PopupWindow popupWindow = null;
 
+    private void doLeaveExperiment(Activity activity) {
+        Intent upIntent = NavUtils.getParentActivityIntent(activity);
+        if (NavUtils.shouldUpRecreateTask(activity, upIntent)) {
+            TaskStackBuilder.create(activity)
+                    .addNextIntent(upIntent)
+                    .startActivities();
+            finish();
+        } else {
+            NavUtils.navigateUpTo(activity, upIntent);
+        }
+    }
+
+    private void leaveExperiment(Activity activity) {
+        if (experiment.analysisTime - experiment.firstAnalysisTime > 10000) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(res.getString(R.string.leave_experiment_question))
+                    .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            doLeaveExperiment(activity);
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        } else {
+            doLeaveExperiment(activity);
+        }
+    }
+
     @Override
     public void onBackPressed() {
         if (adapter != null && pager != null) {
@@ -153,7 +186,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 return;
             }
         }
-        super.onBackPressed();
+        leaveExperiment(this);
+        //super.onBackPressed();
     }
 
     @Override
@@ -827,15 +861,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Home-button. Back to the Experiment List
         if (id == android.R.id.home) {
-            Intent upIntent = NavUtils.getParentActivityIntent(this);
-            if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-                TaskStackBuilder.create(this)
-                        .addNextIntent(upIntent)
-                        .startActivities();
-                finish();
-            } else {
-                NavUtils.navigateUpTo(this, upIntent);
-            }
+            leaveExperiment(this);
             return true;
         }
 
