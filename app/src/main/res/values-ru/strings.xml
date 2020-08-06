@@ -274,4 +274,8 @@
     <string name="networkPrivacyDeviceInfo">Подробная информация о модели устройства и/или версии phyphox.</string>
     <string name="networkPrivacySensorInfo">Технические подробности о следующих датчиках:</string>
 
-</resources>
+<string name="sensorAttitude">Позиция</string>
+    <string name="leave_experiment">Покинуть эксперимент</string>
+    <string name="leave_experiment_question">Покинуть эксперимент и удалить измерения?</string>
+    <string name="leave">Покинуть</string>
+    </resources>
