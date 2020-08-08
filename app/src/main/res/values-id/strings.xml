@@ -174,4 +174,6 @@
     <string name="networkPrivacyDeviceInfo">Informasi detil tentang hp anda dan/atau versi phyphox.</string>
     <string name="networkPrivacySensorInfo">Detil teknis sensor berikut:</string>
 
-</resources>
+<string name="leave_experiment">Hentikan eksperimen</string>
+    <string name="leave_experiment_question">Hentikan eksperimen dan data akan hilang?</string>
+    </resources>
