@@ -139,7 +139,7 @@ public class PhyphoxExperiment implements Serializable {
     }
 
     //This function gets called in the main loop and takes care of any inputElements in the current experiment view
-    public void handleInputViews(int currentView, boolean measuring) {
+    public void handleInputViews(boolean measuring) {
         if (!loaded)
             return;
         if (dataLock.tryLock()) {

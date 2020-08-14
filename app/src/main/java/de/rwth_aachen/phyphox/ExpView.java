@@ -107,6 +107,9 @@ public class ExpView implements Serializable{
                         experiment.getBuffer(buffer).register(this);
                 }
             }
+            if (valueOutput != null) {
+                experiment.getBuffer(valueOutput).register(this);
+            }
             needsUpdate = true;
         }
 
@@ -629,7 +632,7 @@ public class ExpView implements Serializable{
         private Double max = Double.POSITIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
-        private boolean triggered = false;
+        private boolean triggered = true;
 
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -867,6 +870,11 @@ public class ExpView implements Serializable{
             //This ensures, that the old value is restored if the view has to be created after the views have been switched.
             double v = experiment.getBuffer(inputs.get(0)).value;
             setValue(v);
+        }
+
+        @Override
+        protected void clear() {
+            triggered = true;
         }
 
         @Override

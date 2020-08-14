@@ -1369,7 +1369,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 try {
                     //Get values from input views only if there isn't fresh data from the remote server which might get overridden
                     if (!remoteInput) {
-                        experiment.handleInputViews(tabLayout.getSelectedTabPosition(), measuring);
+                        experiment.handleInputViews(measuring);
                     }
                     //Update all the views currently visible
                     if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
