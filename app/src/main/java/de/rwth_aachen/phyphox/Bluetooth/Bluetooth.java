@@ -58,7 +58,7 @@ public class Bluetooth implements Serializable {
     public final static UUID baseUUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");
     public final static UUID phyphoxServiceUUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a");
     public final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
-
+    public final static UUID phyphoxExperimentControlCharacteristicUUID = UUID.fromString("cddf0003-30f7-4671-8b43-5e40ba53514a");
 
     transient private static BluetoothAdapter btAdapter;
     public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();

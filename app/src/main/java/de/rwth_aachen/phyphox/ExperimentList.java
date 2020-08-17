@@ -106,6 +106,8 @@ import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 
+import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
+
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
 
@@ -1138,7 +1140,21 @@ public class ExperimentList extends AppCompatActivity {
         currentBluetoothData = null;
         currentBluetoothDataSize = 0;
         currentBluetoothDataIndex = 0;
+
         final BluetoothGatt gatt = device.connectGatt(this, false, new BluetoothGattCallback() {
+
+            private void disconnect(final BluetoothGatt gatt) {
+                //If phyphoxExperimentControlCharacteristicUUID is available, we can tell the device that we are no longer expecting the transfer by writing 0
+                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                if (phyphoxService != null) {
+                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
+                    if (experimentControlCharacteristic != null) {
+                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
+                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                    }
+                }
+                gatt.disconnect();
+            }
 
             BluetoothGattDescriptor descriptor = null;
 
@@ -1192,10 +1208,18 @@ public class ExperimentList extends AppCompatActivity {
 
                 descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 gatt.writeDescriptor(descriptor);
+
+                //If phyphoxExperimentControlCharacteristicUUID is also present, the device expects us to initiate transfer by setting it to 1. This is a work-around for BLE libraries that cannot react to subscriptions
+                BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
+                if (experimentControlCharacteristic != null) {
+                    experimentControlCharacteristic.setValue(1, FORMAT_UINT8, 0);
+                    gatt.writeCharacteristic(experimentControlCharacteristic);
+                }
             }
 
             @Override
             public void onCharacteristicChanged(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+
                 if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
                     return;
                 byte[] data = characteristic.getValue();
@@ -1206,7 +1230,7 @@ public class ExperimentList extends AppCompatActivity {
                             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                             gatt.writeDescriptor(descriptor);
                         }
-                        gatt.disconnect();
+                        disconnect(gatt);
                         showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid header)", device);
                     }
                     currentBluetoothDataSize = 0;
@@ -1241,7 +1265,7 @@ public class ExperimentList extends AppCompatActivity {
                                         descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                                         gatt.writeDescriptor(descriptor);
                                     }
-                                    gatt.disconnect();
+                                    disconnect(gatt);
                                 }
                             });
                             progress.setProgress(0);
@@ -1266,7 +1290,7 @@ public class ExperimentList extends AppCompatActivity {
                             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                             gatt.writeDescriptor(descriptor);
                         }
-                        gatt.disconnect();
+                        disconnect(gatt);
 
                         /*
                         StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
@@ -1357,7 +1381,7 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
-                    gatt.disconnect();
+                    disconnect(gatt);
                     showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write)", device);
                 }
             }
@@ -1366,6 +1390,14 @@ public class ExperimentList extends AppCompatActivity {
         progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true, true, new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialogInterface) {
+                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                if (phyphoxService != null) {
+                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
+                    if (experimentControlCharacteristic != null) {
+                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
+                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                    }
+                }
                 gatt.disconnect();
                 progress.dismiss();
             }
@@ -1786,6 +1818,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
         String textResult;
         if (scanResult != null && (textResult = scanResult.getContents()) != null) {
