@@ -157,7 +157,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     private void leaveExperiment(Activity activity) {
-        if (experiment.analysisTime - experiment.firstAnalysisTime > 10000) {
+        if (experiment != null && experiment.analysisTime - experiment.firstAnalysisTime > 10000) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.leave_experiment_question))
                     .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
