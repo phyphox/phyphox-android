@@ -453,7 +453,7 @@ public class ExpView implements Serializable{
 
             sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
             for (Mapping map : mappings) {
-                String str = map.str.replace("<","&lt;").replace(">","&gt;");
+                String str = map.str.replace("<","&lt;").replace(">","&gt;").replace("\"","\\\"");
                 if (!map.max.isInfinite() && !map.min.isInfinite()) {
                     sb.append("else if (x >= " + map.min + " && x <= " + map.max + ") {v = \"" + str + "\";}");
                 } else if (!map.max.isInfinite()) {
