@@ -974,6 +974,8 @@ public class ExpView implements Serializable{
         }
 
         public void requestFinished(NetworkService.ServiceResult result) {
+            if (parent == null)
+                return;
             parent.getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
