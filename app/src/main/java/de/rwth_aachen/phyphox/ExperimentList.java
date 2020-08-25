@@ -887,6 +887,8 @@ public class ExperimentList extends AppCompatActivity {
             });
 
             for (File file : files) {
+                if (file.isDirectory())
+                    continue;
                 //Load details for each experiment
                 InputStream input = openFileInput(file.getName());
                 loadExperimentInfo(input, file.getName(), false, false, categories, null, null);
