@@ -1210,13 +1210,6 @@ public class ExperimentList extends AppCompatActivity {
 
                 descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 gatt.writeDescriptor(descriptor);
-
-                //If phyphoxExperimentControlCharacteristicUUID is also present, the device expects us to initiate transfer by setting it to 1. This is a work-around for BLE libraries that cannot react to subscriptions
-                BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
-                if (experimentControlCharacteristic != null) {
-                    experimentControlCharacteristic.setValue(1, FORMAT_UINT8, 0);
-                    gatt.writeCharacteristic(experimentControlCharacteristic);
-                }
             }
 
             @Override
@@ -1385,6 +1378,25 @@ public class ExperimentList extends AppCompatActivity {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     disconnect(gatt);
                     showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write)", device);
+                }
+            }
+
+            @Override
+            public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    disconnect(gatt);
+                    showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write descriptor)", device);
+                    return;
+                }
+
+                //If phyphoxExperimentControlCharacteristicUUID is also present, the device expects us to initiate transfer by setting it to 1. This is a work-around for BLE libraries that cannot react to subscriptions
+                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                if (phyphoxService != null) {
+                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
+                    if (experimentControlCharacteristic != null) {
+                        experimentControlCharacteristic.setValue(1, FORMAT_UINT8, 0);
+                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                    }
                 }
             }
         });
