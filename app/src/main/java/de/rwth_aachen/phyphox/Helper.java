@@ -189,14 +189,6 @@ public abstract class Helper {
         return found;
     }
 
-    public static boolean experimentInCollection(byte[] source, Activity act) {
-        CRC32 crc32 = new CRC32();
-        crc32.update(source);
-        long refCRC32 = crc32.getValue();
-
-        return experimentInCollection(refCRC32, act);
-    }
-
     public static boolean experimentInCollection(File file, Activity act) {
         CRC32 crc32 = new CRC32();
         try {

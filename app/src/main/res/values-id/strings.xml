@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources><string name="app_name">phyphox</string>
+    <string name="action_settings">Pengaturan</string>
+    <string name="title_activity_experiment">phyphox</string>
+
+    <string name="graph_tools_pan_and_zoom">Geser dan perbesar</string>
+    <string name="graph_tools_pick">Pilih data</string>
+    <string name="graph_tools_more">Lebih lanjut</string>
+    <string name="graph_tools_reset">Ukuran awal</string>
+    <string name="graph_tools_follow">Tampilkan data baru</string>
+    <string name="graph_tools_linear_fit">Pendekatan garis</string>
+    <string name="graph_tools_export">Ekspor data</string>
+    <string name="graph_tools_log_x">Skala log x</string>
+    <string name="graph_tools_log_y">Skala log y</string>
+
+    <string name="graph_point_label">Titik</string>
+    <string name="graph_slope_label">Kemiringan</string>
+    <string name="graph_difference_label">Beda</string>
+    <string name="graph_fit_label">Pendekatan garis: y = a x + b</string>
+
+    <string name="applyZoomTitle">Perbesar</string>
+    <string name="applyZoomExplanation">Anda dapat memilih tampilan yang diinginkan, setelah menu interaktif ini ditutup.</string>
+    <string name="applyZoomAdvanced">Pilihan lanjutan</string>
+    <string name="applyZoomApply">Diterapkan pada…</string>
+
+    <string name="applyZoomReset">Reset ke awal</string>
+    <string name="applyZoomKeep">Tetap sesuai pilihan</string>
+    <string name="applyZoomFollow">Tetap dan tampilkan data baru</string>
+
+    <string name="applyZoomThis">Hanya grafik ini</string>
+    <string name="applyZoomSameVariable">Grafik lain: Variabel sama</string>
+    <string name="applyZoomSameUnit">Grafik lain: Satuan sama</string>
+    <string name="applyZoomSameAxis">Grafik lain: Sumbu sama</string>
+
+    <string name="newExperiment">Tambah percobaan</string>
+
+    <string name="newExperimentSimple">Tambah percobaan sederhana</string>
+    <string name="newExperimentPhyphoxInfo">Untuk membuat percobaan lanjutan, termasuk analisa data dan berbagi dengan rekan kerja, siswa dan teman, kunjungi phyphox.org, termasuk.</string>
+    <string name="newExperimentInputTitle">Judul</string>
+    <string name="newExperimentInputBufferSize">Ukuran bufer (jumlah nilai yang direkam)</string>
+    <string name="newExperimentInputRate">Kecepatan ukur ( dalam Hz, 0 = secepat mungkin)</string>
+    <string name="newExperimentInputSensors">Sensor yang aktif</string>
+
+    <string name="newExperimentBluetooth">Tambah percobaan dengan alat Bluetooth</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth tidak ditemukan</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Baca dari alat</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Percobaan phyphox tersedia pada alat. Pilih baca dari alat untuk menggunakan.</string>
+
+    <string name="newExperimentQR">Tambah percobaan dengan QR code</string>
+
+    <string name="newExperimentQRscan">Baca QR code percobaan phyphox.</string>
+    <string name="newExperimentQRErrorTitle">Gagal baca QR code.</string>
+    <string name="newExperimentQRNoExperiment">Tidak ditemukan QR code untuk percobaan phyphox.</string>
+    <string name="newExperimentQRcrcMismatch">QR code yang anda baca tidak cocok dengan sebelumnya. Pastikan membaca QR code dari percobaan yang sama.</string>
+    <string name="newExperimentQRCodesMissing1">QR code ini merupakan bagian dari</string>
+    <string name="newExperimentQRCodesMissing2">kode. Tekan lanjut untuk membaca kode selanjutnya. Kode masih kurang:</string>
+    <string name="newExperimentQRBadCRC">Checksum salah. Artinya QR code salah atau pembacaan gagal.</string>
+
+    <string name="newExperimentBTReadErrorTitle">Percobaan Bluetooth gagal.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Data percobaan ada yang hilang.</string>
+
+    <string name="generalErrorDialog">Terjadi kesalahan.</string>
+
+    <string name="help">Informasi dan bantuan</string>
+    <string name="experimentsPhyphoxOrg">Petunjuk dan ide percobaan</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Yang sering ditanyakan</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Petunjuk akses jarak jauh</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationInfo">Bahasa</string>
+    <string name="translationText">Phyphox akan menggunakan bahasa pilihan anda yang tersedia. Untuk mengubah pilihan, pada Android pilih \"pengaturan\". Untuk melihat pilihan bahasa yang tersedia dan bagaimana anda dapat membantu, pilih \"kunjungi website\".</string>
+    <string name="translationToSettings">Pengaturan</string>
+    <string name="translationToWebsite">Kunjungi website</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#id</string>
+
+    <string name="deviceInfo">Informasi alat</string>
+    <string name="copyToClipboard">Rekam ke clipboard</string>
+    <string name="deviceInfoCopied">Informasi alat sudah terekam pada clipboard.</string>
+
+    <string name="warning">Perhatikan</string>
+    <string name="donotshowagain">Jangan tampilkan lagi</string>
+    <string name="damageWarning">Hati-hati dengan hp anda agar tidak rusak. Hindari jatuh ke permukaan yang keras dan hindari magnet yang sangat kuat. Pembuat phyphox tidak bertanggung jawab atas kerusakan hp anda.</string>
+
+    <string name="info">Informasi</string>
+    <string name="credits">Penghargaan</string>
+    <string name="creditsRWTH">phyphox® dibuat di the 2nd Institute of Physics at the RWTH Aachen University.</string>
+    <string name="creditsNames">Konsep dan pengembangan:
+\n Dr. Sebastian Staacks
+\n Konsep:
+\n Prof. Christoph Stampfer
+\n Program:
+\n Dominik Dorsel
+\n Jonas Gessner
+\n Camilla Lummerzheim</string>
+    <string name="gpl">Phyphox® adalah software open source dirilis sesuai dengan GNU General Public Licence. Untuk informasi selanjutnya dan mengakses program kunjungi http://phyphox.org. \"phyphox\" dan \"RWTH Aachen\" dipatenkan.</string>
+    <string name="creditsLibs">"Web-interface untuk akses jarak jauh menggunakan JavaScript library \"Chart.js\" (http://chartjs.org), merupakan hak cipta MIT. Untuk fourier transform, digunakan FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, yang tersedia sesuai GNU General Public Licence (version 2 or later). Data ketinggian GPS dikonversi dari WGS84 ellipsoid ke EGM84 geoid menggunakan data EGM84  (dengan resolusi 30\') dan menggunakan GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence)."</string>
+    <string name="sensorLinearAcceleration">Percepatan linear</string>
+    <string name="sensorLight">Cahaya</string>
+    <string name="sensorGyroscope">Giroskop</string>
+    <string name="sensorAccelerometer">Akselerometer</string>
+    <string name="sensorMagneticField">Medan magnet</string>
+    <string name="sensorPressure">Tekanan</string>
+    <string name="sensorTemperature">Temperatur</string>
+    <string name="sensorHumidity">Kelembaban</string>
+    <string name="sensorProximity">Kedekatan</string>
+    <string name="sensorAttitude">Ketinggian</string>
+    <string name="sensorVendor">Khusus merk tertentu</string>
+
+    <string name="vendorSensorTitle">Sensor merk khusus</string>
+    <string name="vendorSensorWarning1">Sensor</string>
+    <string name="vendorSensorWarning2">tipe sensor tidak sesuai. Sepertinya merk khusus tertentu dan kami hanya dapat menebaknya dari nama, kemungkinan tidak bekerja sesuai harapan.</string>
+
+    <string name="location">Lokasi</string>
+
+    <string name="sensorNotAvailableWarningTitle">Sensor tidak ada.</string>
+    <string name="sensorNotAvailableWarningText1">Sensor</string>
+    <string name="sensorNotAvailableWarningText2">tidak tersedia. Biasanya berarti, hp anda tidak memiliki sensor ini.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Informasi selanjutnya</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+
+    <string name="ok">Bagus</string>
+    <string name="tryagain">Coba lagi</string>
+    <string name="doContinue">Lanjutkan</string>
+    <string name="close">Tutup</string>
+    <string name="next">Berikut</string>
+    <string name="cancel">Batal</string>
+    <string name="unknown">tidak dikenal</string>
+
+    <string name="rename">Ganti nama</string>
+    <string name="delete">Hapus</string>
+    <string name="confirmDelete">Anda ingin menghapus percobaan ini?</string>
+    <string name="confirmDeleteTitle">Yakin dihapus?</string>
+
+    <string name="stop">Berhenti</string>
+    <string name="start">Mulai</string>
+    <string name="clear_data">Hapus data</string>
+    <string name="clear_data_question">Hapus rekaman data?</string>
+    <string name="clear">Hapus</string>
+    <string name="timed_stop">Hentikan</string>
+    <string name="timed_start">Mulai</string>
+
+    <string name="loadingTitle">Sedang membaca</string>
+    <string name="loadingText">Membaca percobaan…</string>
+    <string name="loadingBluetoothConnectionText">Menghubungi alat Bluetooth…</string>
+
+    <string name="timedRunDialogTitle">Jalan berdasarkan waktu</string>
+    <string name="timedRunStartDelay">Tunggu (detik)</string>
+    <string name="timedRunStopDelay">Waktu percobaan (detik)</string>
+    <string name="enableTimedRun">Jalankan berdasarkan waktu</string>
+
+    <string name="export">Ekspor data</string>
+    <string name="export_empty">Percobaan ini tidak menyediakan data untuk diekspor. Jika ini keliru, periksa QR code atau file konfigurasi.</string>
+    <string name="export_subject">Data dari phyphox</string>
+    <string name="export_pick_share">Pilih cara ekspor</string>
+
+    <string name="share">Bagikan screenshot</string>
+    <string name="share_subject">Screenshot dari phyphox</string>
+    <string name="share_pick_share">Pilih cara berbagi</string>
+
+    <string name="remoteServer">Ijinkan akses jarak jauh</string>
+    <string name="remoteServerWarning">Anda mengaktifkan akses jarak jauh untuk mengambil data. Lakukan hanya menggunakan jaringan yang aman! Akses langsung antar alat mungkin tidak dapat dilakukan pada jaringan di perusahaan atau perguruan tinggi.
+\n
+\nGunakan hotspot pada hp (tether) untuk keamanan dan kelancaran.
+\n
+\nAnda dapat melakukan pengukuran dari browser pada jaringan yang sama setelah menekan jalankan.</string>
+    <string name="remoteServerWarningTitle">Peringatan keamanan!</string>
+    <string name="remoteServerNoNetwork">Pertama anda harus mengaktifkan koneksi wifi. Aktifkan Wifi dan aktifkan hotspot.</string>
+    <string name="remoteServerActive">Akses jarak jauh aktif. Percobaan dapat diakses dari URL:
+\n%1$s</string>
+    <string name="hotspotSettings">Pengaturan hotspot</string>
+
+    <string name="networkPrivacySensorLocation">Data lokasi (GPS atau yang lain).</string>
+    <string name="networkPrivacyDeviceInfo">Informasi detil tentang hp anda dan/atau versi phyphox.</string>
+    <string name="networkPrivacySensorInfo">Detil teknis sensor berikut:</string>
+
+<string name="leave_experiment">Hentikan eksperimen</string>
+    <string name="leave_experiment_question">Hentikan eksperimen dan data akan hilang?</string>
+    </resources>

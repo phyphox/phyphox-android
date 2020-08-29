@@ -13,7 +13,6 @@ import android.media.AudioRecord;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.util.ArrayMap;
 import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
@@ -45,6 +44,7 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
@@ -60,9 +60,9 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
-public abstract class phyphoxFile {
+public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.9";
+    public final static String phyphoxFileVersion = "1.10";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -92,21 +92,26 @@ public abstract class phyphoxFile {
         InputStream inputStream = null; //the input stream or null on error
         byte source[] = null;           //A copy of the input for non-local sources
         String errorMessage = "";       //Error message that can be displayed to the user
+        long crc32;
     }
 
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
     public static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
+        CRC32 crc32 = new CRC32();
+
         int n;
         byte[] buffer = new byte[1024];
         while ((n = stream.inputStream.read(buffer, 0, 1024)) != -1) {
             os.write(buffer, 0, n);
+            crc32.update(buffer, 0, n);
         }
+
         os.flush();
         stream.source = os.toByteArray();
         stream.inputStream = new ByteArrayInputStream(stream.source);
-
+        stream.crc32 = crc32.getValue();
     }
 
     //Helper function to open an inputStream from various intents
@@ -233,10 +238,12 @@ public abstract class phyphoxFile {
         private String tag; //The tag of the block that should be handled by this parser
         private int rootDepth; //The depth of the base of the block handled by this parser
         protected XmlPullParser xpp; //The pull parser used handed to this parser
-        protected phyphoxExperiment experiment; //The experiment to be loaded
+        protected PhyphoxExperiment experiment; //The experiment to be loaded
+
+        private boolean textAdvanced;
 
         //The constructor takes the tag, and the experiment to fill
-        xmlBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        xmlBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             this.xpp = xpp;
             this.experiment = experiment;
             this.parent = parent;
@@ -245,6 +252,7 @@ public abstract class phyphoxFile {
         //Helper to receive the text block of a tag
         protected String getText() throws XmlPullParserException, IOException {
             String text = xpp.nextText();
+            textAdvanced = true;
             if (text != null)
                 return text.trim();
             else
@@ -320,6 +328,7 @@ public abstract class phyphoxFile {
             //Loop until we leave the block again. So unless the depth matches root level and we see
             //our tag as an end tag, we should continue
             while (xpp.getDepth() != rootDepth || eventType != XmlPullParser.END_TAG || !xpp.getName().equalsIgnoreCase(tag)) {
+                textAdvanced = false;
                 switch (eventType) {
                     case XmlPullParser.END_DOCUMENT: //We should not reach the end of the document wthin this block
                         throw new phyphoxFileException("Unexpected end of document.", xpp.getLineNumber());
@@ -330,10 +339,107 @@ public abstract class phyphoxFile {
                         processEndTag(xpp.getName());
                         break;
                 }
-                eventType = xpp.next();
+                if (!textAdvanced)
+                    eventType = xpp.next();
+                else
+                    eventType = xpp.getEventType();
             }
 
             done();
+        }
+    }
+
+    //Blockparser for AudioOutput plugin section
+    private static class AudioOutputPluginBlockParser extends xmlBlockParser {
+        AudioOutput audioOutput;
+        AudioOutput.AudioOutputPlugin currentPlugin = null;
+        int level = 0;
+
+        AudioOutputPluginBlockParser (XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, AudioOutput audioOutput) {
+            super(xpp, experiment, parent);
+            this.audioOutput = audioOutput;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            level++;
+            switch (tag.toLowerCase()) {
+                case "input": {
+                    String parameter = getStringAttribute("parameter");
+
+                    DataInput input;
+                    String type = getStringAttribute("type");
+                    if (type == null)
+                        type = "buffer";
+
+                    if (type.equals("buffer")) {
+                        String bufferName = getText();
+                        DataBuffer buffer = experiment.getBuffer(bufferName);
+                        if (buffer == null) {
+                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                        }
+                        input = new DataInput(buffer, false);
+                    } else if (type.equals("value")) {
+                        double value;
+                        try {
+                            value = Double.valueOf(getText());
+                        } catch (NumberFormatException e) {
+                            throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
+                        }
+                        input = new DataInput(value);
+                    } else {
+                        throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
+                    }
+                    if (level == 1) {
+                        //Direct input
+                        currentPlugin = audioOutput.new AudioOutputPluginDirect(input);
+                    } else if (level == 2) {
+                        //Parameter
+                        if (currentPlugin != null) {
+                            if (parameter == null)
+                                throw new phyphoxFileException("Parameter attribute required for this plugin.", xpp.getLineNumber());
+
+                            if (!currentPlugin.setParameter(parameter, input))
+                                throw new phyphoxFileException("Parameter \""+parameter+"\" not supported by this plugin.", xpp.getLineNumber());
+                        } else {
+                            throw new phyphoxFileException("Unexpected input tag. No related audio plugin.", xpp.getLineNumber());
+                        }
+                    } else {
+                        throw new phyphoxFileException("Unexpected input tag.", xpp.getLineNumber());
+                    }
+                    break;
+                }
+                case "tone": {
+                    if (level == 1) {
+                        //Tone plugin
+                        currentPlugin = audioOutput.new AudioOutputPluginTone();
+                    } else {
+                        throw new phyphoxFileException("Unexpected tone tag.", xpp.getLineNumber());
+                    }
+                    break;
+                }
+                case "noise": {
+                    if (level == 1) {
+                        //Noise plugin
+                        currentPlugin = audioOutput.new AudioOutputPluginNoise();
+                    } else {
+                        throw new phyphoxFileException("Unexpected noise tag.", xpp.getLineNumber());
+                    }
+                    break;
+                }
+                default: {
+                    throw new phyphoxFileException("Unexpected tag \"" + tag + "\"", xpp.getLineNumber());
+                }
+            }
+        }
+
+        @Override
+        protected void processEndTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            level--;
+            if (level == 0 && currentPlugin != null) {
+                audioOutput.attachPlugin(currentPlugin);
+                currentPlugin = null;
+            }
         }
     }
 
@@ -343,12 +449,12 @@ public abstract class phyphoxFile {
         protected static Class conversionsInput = (new ConversionsInput()).getClass();
         protected static Class conversionsOutput = (new ConversionsOutput()).getClass();
         protected static Class conversionsConfig = (new ConversionsConfig()).getClass();
-        Vector<dataOutput> outputList;
-        Vector<dataInput> inputList;
+        Vector<DataOutput> outputList;
+        Vector<DataInput> inputList;
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
         HashSet<UUID> characteristicsWithExtraTime; // uuids of all characteristics that have extra=time to make sure they can't have it twice
 
-        bluetoothIoBlockParser (XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataOutput> outputList, Vector<dataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
+        bluetoothIoBlockParser (XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataOutput> outputList, Vector<DataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
             super(xpp, experiment, parent);
             this.outputList = outputList;
             this.inputList = inputList;
@@ -395,7 +501,7 @@ public abstract class phyphoxFile {
                                 constructor.setAccessible(true);
                                 outputConversionFunction = (ConversionsOutput.OutputConversion) constructor.newInstance(xpp);
                             } catch (Exception e) {
-                                Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{dataBuffer.class});
+                                Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{DataBuffer.class});
                                 outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
                             }
                         } catch (Exception e) {
@@ -408,12 +514,12 @@ public abstract class phyphoxFile {
 
                     // check if buffer exists
                     String bufferName = getText();
-                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    DataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null) {
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                     }
 
-                    inputList.add(new dataInput(buffer, false));
+                    inputList.add(new DataInput(buffer, false));
 
                     // add data to characteristics
                     characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
@@ -465,12 +571,12 @@ public abstract class phyphoxFile {
 
                     // check if buffer exists
                     String bufferName = getText();
-                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    DataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null) {
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                     }
 
-                    outputList.add(new dataOutput(buffer, false));
+                    outputList.add(new DataOutput(buffer, false));
 
                     // add data to characteristics
                     characteristics.add(new Bluetooth.InputData(uuid, extraTime, outputList.size()-1, inputConversionFunction));
@@ -535,17 +641,17 @@ public abstract class phyphoxFile {
         }
         Vector<AdditionalTag> additionalTags;
 
-        Vector<dataInput> inputList;
-        Vector<dataOutput> outputList;
+        Vector<DataInput> inputList;
+        Vector<DataOutput> outputList;
         ioMapping[] inputMapping;
         ioMapping[] outputMapping;
         String mappingAttribute;
 
-        ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
+        ioBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataInput> inputList, Vector<DataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
             this(xpp, experiment, parent, inputList, outputList, inputMapping, outputMapping, mappingAttribute, null);
         }
 
-        ioBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Vector<dataInput> inputList, Vector<dataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute, Vector<AdditionalTag> additionalTags) {
+        ioBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataInput> inputList, Vector<DataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute, Vector<AdditionalTag> additionalTags) {
             super(xpp, experiment, parent);
             this.inputList = inputList;
             this.outputList = outputList;
@@ -685,7 +791,7 @@ public abstract class phyphoxFile {
                             } catch (NumberFormatException e) {
                                 throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
                             }
-                            inputList.set(targetIndex, new dataInput(value));
+                            inputList.set(targetIndex, new DataInput(value));
                         } else {
                             throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
                         }
@@ -698,16 +804,16 @@ public abstract class phyphoxFile {
                         String bufferName = getText();
                         if (additionalTags != null)
                             at.content = bufferName;
-                        dataBuffer buffer = experiment.getBuffer(bufferName);
+                        DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                         else {
-                            inputList.set(targetIndex, new dataInput(buffer, clearAfterRead));
+                            inputList.set(targetIndex, new DataInput(buffer, clearAfterRead));
                         }
                     } else if (type.equals("empty")) {
                         //No input, Is this allowed?
                         if (inputMapping[mappingIndex].emptyAllowed) {
-                            inputList.set(targetIndex, new dataInput());
+                            inputList.set(targetIndex, new DataInput());
                         } else {
                             throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
                         }
@@ -794,11 +900,11 @@ public abstract class phyphoxFile {
                     String bufferName = getText();
                     if (additionalTags != null)
                         at.content = bufferName;
-                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    DataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                     else {
-                        outputList.set(targetIndex, new dataOutput(buffer, clearBeforeWrite));
+                        outputList.set(targetIndex, new DataOutput(buffer, clearBeforeWrite));
                     }
                     break;
                 default: //Unknown tag...
@@ -841,7 +947,7 @@ public abstract class phyphoxFile {
     //Blockparser for the root element
     private static class phyphoxBlockParser extends xmlBlockParser {
 
-        phyphoxBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        phyphoxBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -849,7 +955,8 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "title": //The experiment's title (might be replaced by a later translation block)
-                    experiment.title = getText();
+                    experiment.baseTitle = getText();
+                    experiment.title = experiment.baseTitle;
                     break;
                 case "state-title":
                     experiment.stateTitle = getText();
@@ -873,7 +980,8 @@ public abstract class phyphoxFile {
                         experiment.highlightedLinks.put(label, link);
                     break;
                 case "category": //The experiment's category (might be replaced by a later translation block)
-                    experiment.category = getText();
+                    experiment.baseCategory = getText();
+                    experiment.category = experiment.baseCategory;
                     break;
                 case "translations": //A translations block may containing multiple translation-blocks
                     (new translationsBlockParser(xpp, experiment, parent)).process();
@@ -899,8 +1007,10 @@ public abstract class phyphoxFile {
                         else
                             throw new phyphoxFileException("Dynamic sleep buffer " + dynamicSleep + " has not been defined as a buffer.", xpp.getLineNumber());
                     }
-                    experiment.optimization = getBooleanAttribute("optimization", false); //Time between executions
                     experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false); //Only execute when the user changed something?
+                    experiment.timedRun = getBooleanAttribute("timedRun", false);
+                    experiment.timedRunStartDelay = getDoubleAttribute("timedRunStartDelay", 3.0);
+                    experiment.timedRunStopDelay = getDoubleAttribute("timedRunStopDelay", 10.0);
                     (new analysisBlockParser(xpp, experiment, parent)).process();
                     break;
                 case "output": //Holds outputs like the speaker
@@ -918,7 +1028,7 @@ public abstract class phyphoxFile {
     //Blockparser for the translations block
     private static class translationsBlockParser extends xmlBlockParser {
 
-        translationsBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        translationsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -944,7 +1054,7 @@ public abstract class phyphoxFile {
     //Blockparser for a specific translation block
     private static class translationBlockParser extends xmlBlockParser {
 
-        translationBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        translationBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -981,7 +1091,7 @@ public abstract class phyphoxFile {
     //Blockparser for the data-containers block
     private static class dataContainersBlockParser extends xmlBlockParser {
 
-        dataContainersBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        dataContainersBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1001,7 +1111,7 @@ public abstract class phyphoxFile {
                     if (!isValidIdentifier(name))
                         throw new phyphoxFileException("\"" + name + "\" is not a valid name for a data-container.", xpp.getLineNumber());
 
-                    dataBuffer newBuffer = experiment.createBuffer(name, size);
+                    DataBuffer newBuffer = experiment.createBuffer(name, size);
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
@@ -1027,7 +1137,7 @@ public abstract class phyphoxFile {
     //Blockparser for the views block
     private static class viewsBlockParser extends xmlBlockParser {
 
-        viewsBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        viewsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1035,7 +1145,7 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
             switch (tag.toLowerCase()) {
                 case "view": //A view defines an arangement of elements displayed to the user
-                    expView newView = new expView(); //Create a new view
+                    ExpView newView = new ExpView(); //Create a new view
                     newView.name = getTranslatedAttribute("label"); //Fill its name
                     (new viewBlockParser(xpp, experiment, parent, newView)).process(); //And load its elements
                     if (newView.name != null && newView.elements.size() > 0) //We will only add it if it has a name and at least a single view
@@ -1054,7 +1164,7 @@ public abstract class phyphoxFile {
 
     //Blockparser for a single view block
     private static class viewBlockParser extends xmlBlockParser {
-        private expView newView;
+        private ExpView newView;
 
         GraphView.scaleMode parseScaleMode(String attribute) {
             String scaleStr = getStringAttribute(attribute);
@@ -1073,7 +1183,7 @@ public abstract class phyphoxFile {
         }
 
         //The viewBlockParser takes an additional argument, which is the expView instance it should fill
-        viewBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, expView newView) {
+        viewBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, ExpView newView) {
             super(xpp, experiment, parent);
             this.newView = newView;
         }
@@ -1083,8 +1193,8 @@ public abstract class phyphoxFile {
             String label = getTranslatedAttribute("label");
             double factor = getDoubleAttribute("factor", 1.);
             String unit = getTranslatedAttribute("unit");
-            Vector<dataInput> inputs = new Vector<>();
-            Vector<dataOutput> outputs = new Vector<>();
+            Vector<DataInput> inputs = new Vector<>();
+            Vector<DataOutput> outputs = new Vector<>();
             switch (tag.toLowerCase()) {
                 case "value": { //A value element displays a single value to the user
                     int precision = getIntAttribute("precision", 2);
@@ -1101,14 +1211,14 @@ public abstract class phyphoxFile {
 
                     Vector<String> inStrings = new Vector<>();
                     inStrings.add(inputs.get(0).buffer.name);
-                    expView.valueElement ve = newView.new valueElement(label, null, inStrings, parent.getResources()); //Only a value input
+                    ExpView.valueElement ve = newView.new valueElement(label, null, inStrings, parent.getResources()); //Only a value input
                     for (ioBlockParser.AdditionalTag at : ats) {
                         if (at.name.equals("input"))
                             continue;
                         if (!at.name.equals("map")) {
                             throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
                         }
-                        expView.valueElement.Mapping map = ve.new Mapping(translate(at.content));
+                        ExpView.valueElement.Mapping map = ve.new Mapping(translate(at.content));
                         if (at.attributes.containsKey("min")) {
                             try {
                                 map.min = Double.valueOf(at.attributes.get("min"));
@@ -1146,14 +1256,14 @@ public abstract class phyphoxFile {
                         gravity = Gravity.CENTER;
                     float size = (float)getDoubleAttribute("size", 1.0);
 
-                    expView.infoElement infoe = newView.new infoElement(label, null, null, parent.getResources()); //No inputs, just the label and resources
+                    ExpView.infoElement infoe = newView.new infoElement(label, null, null, parent.getResources()); //No inputs, just the label and resources
                     infoe.setColor(color);
                     infoe.setFormatting(bold, italic, gravity, size);
                     newView.elements.add(infoe);
                     break;
                 }
                 case "separator": //An info element just shows some text
-                    expView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
+                    ExpView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
                     int c = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
                     float height = (float)getDoubleAttribute("height", 0.1);
                     separatore.setColor(c);
@@ -1172,6 +1282,7 @@ public abstract class phyphoxFile {
                     String unitX = getTranslatedAttribute("unitX");
                     String unitY = getTranslatedAttribute("unitY");
                     String unitZ = getTranslatedAttribute("unitZ");
+                    String unitYX = getTranslatedAttribute("unitYperX");
 
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
@@ -1262,7 +1373,7 @@ public abstract class phyphoxFile {
                         }
                     }
 
-                    expView.graphElement ge = newView.new graphElement(label, null, inStrings, parent.getResources()); //Two array inputs
+                    ExpView.graphElement ge = newView.new graphElement(label, null, inStrings, parent.getResources()); //Two array inputs
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
 
 
@@ -1278,7 +1389,7 @@ public abstract class phyphoxFile {
                     ge.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
-                    ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ);  //x- and y- label and units
+                    ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     if (!globalColor) {
@@ -1353,7 +1464,7 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
-                    expView.editElement ie = newView.new editElement(label, outputs.get(0).buffer.name, null, parent.getResources()); //Ouput only
+                    ExpView.editElement ie = newView.new editElement(label, outputs.get(0).buffer.name, null, parent.getResources()); //Ouput only
                     ie.setUnit(unit); //A unit displayed next to the input box
                     ie.setFactor(factor); //A scaling factor. Mostly for matching units
                     ie.setSigned(signed); //May the entered number be negative?
@@ -1374,7 +1485,7 @@ public abstract class phyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, null, ats)).process(); //Load inputs and outputs
 
-                    expView.buttonElement be = newView.new buttonElement(label, null, null, parent.getResources()); //This one is user-event driven and does not regularly read or write values
+                    ExpView.buttonElement be = newView.new buttonElement(label, null, null, parent.getResources()); //This one is user-event driven and does not regularly read or write values
                     be.setIO(inputs, outputs);
                     Vector<String> triggers = new Vector<>();
                     for (ioBlockParser.AdditionalTag at : ats) {
@@ -1400,10 +1511,10 @@ public abstract class phyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
 
                     Vector<String> inStrings = new Vector<>();
-                    for (dataInput input : inputs)
+                    for (DataInput input : inputs)
                         inStrings.add(input.buffer.name);
 
-                    expView.svgElement svge = newView.new svgElement(null, null, inStrings, parent.getResources()); //No inputs, just the label and resources
+                    ExpView.svgElement svge = newView.new svgElement(null, null, inStrings, parent.getResources()); //No inputs, just the label and resources
 
                     String svgCode = null;
                     for (ioBlockParser.AdditionalTag at : ats) {
@@ -1435,7 +1546,7 @@ public abstract class phyphoxFile {
     //Blockparser for the input block
     private static class inputBlockParser extends xmlBlockParser {
 
-        inputBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        inputBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1458,14 +1569,14 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "abs"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "accuracy"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                     };
-                    Vector<dataOutput> outputs = new Vector<>();
+                    Vector<DataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new sensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
+                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
-                    } catch (sensorInput.SensorException e) {
+                    } catch (SensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
                     }
 
@@ -1498,7 +1609,7 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "status"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "satellites"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                     };
-                    Vector<dataOutput> outputs = new Vector<>();
+                    Vector<DataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     experiment.gpsIn = new GpsInput(outputs, experiment.dataLock);
@@ -1524,7 +1635,7 @@ public abstract class phyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "rate"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                     };
-                    Vector<dataOutput> outputs = new Vector<>();
+                    Vector<DataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     experiment.micOutput = outputs.get(0).buffer.name;
@@ -1595,7 +1706,7 @@ public abstract class phyphoxFile {
                             boolean subscribeOnStart = getBooleanAttribute("subscribeOnStart", false);
                             int mtu = getIntAttribute("mtu", 0);
 
-                            Vector<dataOutput> outputs = new Vector<>();
+                            Vector<DataOutput> outputs = new Vector<>();
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
@@ -1619,7 +1730,7 @@ public abstract class phyphoxFile {
     //Blockparser for the network block
     private static class networkBlockParser extends xmlBlockParser {
 
-        networkBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        networkBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1665,13 +1776,17 @@ public abstract class phyphoxFile {
                     NetworkConversion.Conversion conversion = null;
                     if (conversionStr != null) {
                         switch (conversionStr) {
+                            case "none":
+                                conversion = new NetworkConversion.None();
+                                break;
                             case "json":
                                 conversion = new NetworkConversion.Json();
                                 break;
                             default:
                                 throw new phyphoxFileException("Unknown conversion "+conversionStr, xpp.getLineNumber());
                         }
-                    }
+                    } else
+                        conversion = new NetworkConversion.None();
 
                     Map<String, NetworkConnection.NetworkSendableData> send = new HashMap<>();
                     Map<String, NetworkConnection.NetworkReceivableData> receive = new HashMap<>();
@@ -1694,7 +1809,7 @@ public abstract class phyphoxFile {
         Map<String, NetworkConnection.NetworkSendableData> send;
         Map<String, NetworkConnection.NetworkReceivableData> receive;
 
-        networkConnectionBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, Map<String, NetworkConnection.NetworkSendableData> send, Map<String, NetworkConnection.NetworkReceivableData> receive) {
+        networkConnectionBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Map<String, NetworkConnection.NetworkSendableData> send, Map<String, NetworkConnection.NetworkReceivableData> receive) {
             super(xpp, experiment, parent);
             this.send = send;
             this.receive = receive;
@@ -1710,13 +1825,19 @@ public abstract class phyphoxFile {
                     if (id == null)
                         throw new phyphoxFileException("Missing id in send element.", xpp.getLineNumber());
 
+                    String datatype = getStringAttribute("datatype");
+
                     String type = getStringAttribute("type");
                     if (type == null || type.equals("buffer")) {
                         String bufferName = getText();
-                        dataBuffer buffer = experiment.getBuffer(bufferName);
+                        DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                         sendable = new NetworkConnection.NetworkSendableData(buffer);
+                        if (datatype != null) {
+                            sendable.additionalAttributes = new HashMap<>();
+                            sendable.additionalAttributes.put("datatype", datatype);
+                        }
                     } else if (type.equals("meta")) {
                         String metaName = getText();
                         try {
@@ -1740,7 +1861,7 @@ public abstract class phyphoxFile {
                     boolean clear = getBooleanAttribute("clear", false);
 
                     String bufferName = getText();
-                    dataBuffer buffer = experiment.getBuffer(bufferName);
+                    DataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                     receivable = new NetworkConnection.NetworkReceivableData(buffer, clear);
@@ -1758,15 +1879,49 @@ public abstract class phyphoxFile {
     //Blockparser for the analysis block
     private static class analysisBlockParser extends xmlBlockParser {
 
-        analysisBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        analysisBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
 
-            Vector<dataInput> inputs = new Vector<>(); //Will hold the inputs
-            Vector<dataOutput> outputs = new Vector<>(); //Will hold the output buffers
+            Vector<Analysis.AnalysisModule.CycleRange> cycles = new Vector<>();
+            String cyclesStr = getStringAttribute("cycles");
+            if (cyclesStr != null) {
+                for (String cycleStr : cyclesStr.split(" ")) {
+                    String[] cycleParts = cycleStr.trim().split("-", 3);
+                    if (cycleParts.length == 1) {
+                        try {
+                            int value = Integer.parseInt(cycleParts[0]);
+                            cycles.add(new Analysis.AnalysisModule.CycleRange(value, value));
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Invalid cycles attribute "+cyclesStr+".", xpp.getLineNumber());
+                        }
+                    } else if (cycleParts.length == 2) {
+                        try {
+                            int start, stop;
+                            if (cycleParts[0].length() == 0)
+                                start = -1;
+                            else
+                                start = Integer.parseInt(cycleParts[0]);
+                            if (cycleParts[1].length() == 0)
+                                stop = -1;
+                            else
+                                stop = Integer.parseInt(cycleParts[1]);
+                            cycles.add(new Analysis.AnalysisModule.CycleRange(start, stop));
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Invalid cycles attribute "+cyclesStr+".", xpp.getLineNumber());
+                        }
+                    } else {
+                        throw new phyphoxFileException("Invalid cycles attribute "+cyclesStr+".", xpp.getLineNumber());
+                    }
+                }
+            }
+            //The cycles string is simply set after the analysis module is instantiated below
+
+            Vector<DataInput> inputs = new Vector<>(); //Will hold the inputs
+            Vector<DataOutput> outputs = new Vector<>(); //Will hold the output buffers
 
             switch (tag.toLowerCase()) {
                 case "timer": { //Start-time of analysis
@@ -2367,6 +2522,54 @@ public abstract class phyphoxFile {
                         gsAM.setSigma(sigma);
                     experiment.analysis.add(gsAM);
                 } break;
+                case "loess": { //Smooth data with LOESS
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "d"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "yi0"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{name = "yi1"; asRequired = true; minCount = 0; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{name = "yi2"; asRequired = true; minCount = 0; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.loessAM(experiment, inputs, outputs));
+                } break;
+                case "interpolate": { //Smooth data with LOESS
+                    String interpolationMethodStr = getStringAttribute("method");
+                    if (interpolationMethodStr == null)
+                        interpolationMethodStr = "linear";
+
+                    Analysis.interpolateAM.InterpolationMethod method = Analysis.interpolateAM.InterpolationMethod.linear;
+
+                    switch (interpolationMethodStr) {
+                        case "previous":   method = Analysis.interpolateAM.InterpolationMethod.previous;
+                            break;
+                        case "next":   method = Analysis.interpolateAM.InterpolationMethod.next;
+                            break;
+                        case "nearest":   method = Analysis.interpolateAM.InterpolationMethod.nearest;
+                            break;
+                        case "linear":   method = Analysis.interpolateAM.InterpolationMethod.linear;
+                            break;
+                        default:        throw new phyphoxFileException("Unknown interpolation methode " + interpolationMethodStr, xpp.getLineNumber());
+                    }
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.interpolateAM(experiment, inputs, outputs, method));
+                } break;
                 case "match": { //Arbitrary inputs and outputs, for each input[n] a min[n] and max[n] can be defined. The module filters the inputs in parallel and returns only those sets that match the filters
 
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -2408,6 +2611,20 @@ public abstract class phyphoxFile {
 
                     experiment.analysis.add(new Analysis.subrangeAM(experiment, inputs, outputs));
                 } break;
+                case "sort": {
+
+                    boolean descending= getBooleanAttribute("descending", false);
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.sortAM(experiment, inputs, outputs, descending));
+                } break;
                 case "ramp": { //Create a linear ramp (great for creating time-bases)
 
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -2440,6 +2657,7 @@ public abstract class phyphoxFile {
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
+            experiment.analysis.lastElement().setCycles(cycles);
         }
 
     }
@@ -2447,7 +2665,7 @@ public abstract class phyphoxFile {
     //Blockparser for the output block
     private static class outputBlockParser extends xmlBlockParser {
 
-        outputBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        outputBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -2455,32 +2673,14 @@ public abstract class phyphoxFile {
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
                 case "audio": { //Audio output, aka speaker
-                    experiment.audioLoop = getBooleanAttribute("loop", false); //Loop the output?
-                    experiment.audioRate = getIntAttribute("rate", 48000); //Sample frequency
-
-                    //Allowed input/output configuration
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{
-                                name = "in";
-                                asRequired = false;
-                                minCount = 1;
-                                maxCount = 1;
-                                valueAllowed = false;
-                            }}
-                    };
-                    Vector<dataInput> inputs = new Vector<>();
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null)).process(); //Load inputs and outputs
-
-                    experiment.audioSource = inputs.get(0).buffer.name;
-                    experiment.audioBufferSize = inputs.get(0).buffer.size;
-
-                    //To avoid to short audio loops, we will write the audio data multiple times
-                    // until we reached at least one second. In the worst case (one sample less than
-                    // one second) we will have data for just short of 2 seconds.
-                    if (experiment.audioLoop && experiment.audioBufferSize < 2 * experiment.audioRate)
-                        experiment.audioBufferSize = 2 * experiment.audioRate;
-
+                    boolean loop = getBooleanAttribute("loop", false); //Loop the output?
+                    int rate = getIntAttribute("rate", 48000); //Sample frequency
+                    boolean normalize = getBooleanAttribute("normalize", false); //Normalize amplitude of all inputs
+                    AudioOutput audioOutput = new AudioOutput(loop, rate, normalize);
+                    (new AudioOutputPluginBlockParser(xpp, experiment, parent, audioOutput)).process();
+                    experiment.audioOutput = audioOutput;
                     break;
+
                 }
                 case "bluetooth": { //A bluetooth output
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
@@ -2501,7 +2701,7 @@ public abstract class phyphoxFile {
                         Boolean autoConnect = getBooleanAttribute("autoConnect", false);
                         int mtu = getIntAttribute("mtu", 0);
 
-                        Vector<dataInput> inputs = new Vector<>();
+                        Vector<DataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                         (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
                         BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, autoConnect, parent, parent, inputs, characteristics);
@@ -2521,7 +2721,7 @@ public abstract class phyphoxFile {
     //Blockparser for the export block
     private static class exportBlockParser extends xmlBlockParser {
 
-        exportBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent) {
+        exportBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
             super(xpp, experiment, parent);
         }
 
@@ -2549,7 +2749,7 @@ public abstract class phyphoxFile {
         private DataExport.ExportSet set;
 
         //This constructor takes an additional argument: The export set to be filled
-        setBlockParser(XmlPullParser xpp, phyphoxExperiment experiment, Experiment parent, DataExport.ExportSet set) {
+        setBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, DataExport.ExportSet set) {
             super(xpp, experiment, parent);
             this.set = set;
         }
@@ -2574,7 +2774,7 @@ public abstract class phyphoxFile {
 
     //This AsyncTask will load a phyphoxExperiment from an intent and return it by passing it to
     //onExperimentLoaded of the activity given in the constructor.
-    protected static class loadXMLAsyncTask extends AsyncTask<String, Void, phyphoxExperiment> {
+    protected static class loadXMLAsyncTask extends AsyncTask<String, Void, PhyphoxExperiment> {
         private Intent intent;
         private WeakReference<Experiment> parent;
 
@@ -2584,9 +2784,9 @@ public abstract class phyphoxFile {
         }
 
         //Load the file from the intent
-        protected phyphoxExperiment doInBackground(String... params) {
+        protected PhyphoxExperiment doInBackground(String... params) {
             //New experiment
-            phyphoxExperiment experiment = new phyphoxExperiment();
+            PhyphoxExperiment experiment = new PhyphoxExperiment();
 
             //Open the input stream (see above)
             PhyphoxStream input = openXMLInputStream(intent, parent.get());
@@ -2597,6 +2797,7 @@ public abstract class phyphoxFile {
 
             experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
             experiment.source = input.source;
+            experiment.crc32 = input.crc32;
 
             try {
                 //Setup the pull parser
@@ -2670,7 +2871,7 @@ public abstract class phyphoxFile {
 
         @Override
         //Call the parent callback when we are done.
-        protected void onPostExecute(phyphoxExperiment experiment) {
+        protected void onPostExecute(PhyphoxExperiment experiment) {
             parent.get().onExperimentLoaded(experiment);
         }
     }
@@ -2695,7 +2896,7 @@ public abstract class phyphoxFile {
                 input = new ByteArrayInputStream(parent.get().experiment.source);
             } else {
                 //If not, open the remote source, but usually this should not happen...
-                phyphoxFile.PhyphoxStream ps = phyphoxFile.openXMLInputStream(intent, parent.get());
+                PhyphoxFile.PhyphoxStream ps = PhyphoxFile.openXMLInputStream(intent, parent.get());
                 input = ps.inputStream;
             }
             if (input == null)

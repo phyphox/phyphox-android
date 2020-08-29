@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import de.rwth_aachen.phyphox.R;
-import de.rwth_aachen.phyphox.dataOutput;
-import de.rwth_aachen.phyphox.phyphoxFile;
+import de.rwth_aachen.phyphox.DataOutput;
+import de.rwth_aachen.phyphox.PhyphoxFile;
 
 
 /**
@@ -57,7 +57,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * Data-buffers
      */
-    private Vector<dataOutput> data = new Vector<>();
+    private Vector<DataOutput> data = new Vector<>();
 
     private Lock dataLock;
 
@@ -81,10 +81,10 @@ public class BluetoothInput extends Bluetooth {
      * @param lock             lock to write data to the buffers
      * @param context          context
      * @param characteristics  list of all characteristics the object should be able to operate on
-     * @throws phyphoxFile.phyphoxFileException if the value for rate is invalid.
+     * @throws PhyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, boolean autoConnect, double rate, boolean subscribeOnStart, Vector<dataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
-            throws phyphoxFile.phyphoxFileException {
+    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, boolean autoConnect, double rate, boolean subscribeOnStart, Vector<DataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
+            throws PhyphoxFile.phyphoxFileException {
 
         super(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics);
 
@@ -92,7 +92,7 @@ public class BluetoothInput extends Bluetooth {
         this.subscribeOnStart = subscribeOnStart;
 
         if (mode.equals("poll") && rate < 0) {
-            throw new phyphoxFile.phyphoxFileException(context.getResources().getString(R.string.bt_exception_rate));
+            throw new PhyphoxFile.phyphoxFileException(context.getResources().getString(R.string.bt_exception_rate));
         }
 
         this.dataLock = lock;
@@ -106,6 +106,16 @@ public class BluetoothInput extends Bluetooth {
     }
 
     private void subscribeToNotifications() throws BluetoothException {
+        if (mode.equals("notification")) {
+            // turn on characteristic notification for each characteristic
+            for (BluetoothGattCharacteristic c : mapping.keySet()) {
+                boolean result = btGatt.setCharacteristicNotification(c, true);
+                if (!result) {
+                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
+                }
+            }
+        }
+
         for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
             if (descriptor != null) {
@@ -146,6 +156,8 @@ public class BluetoothInput extends Bluetooth {
                 result = cdl.await(2, TimeUnit.SECONDS); // short timeout to not let the user wait when closing an experiment
             } catch (InterruptedException e) {
             }
+
+            result = btGatt.setCharacteristicNotification(characteristic, false);
         }
     }
 
@@ -197,40 +209,26 @@ public class BluetoothInput extends Bluetooth {
             this.t0 = 0; //Reset t0. This will be set by the first sensor event
         }
 
-        switch (mode) {
-            case "poll": {
-                final Runnable readData = new Runnable() {
-                    @Override
-                    public void run() {
-                        // read data from all characteristics
-                        for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                            add(new ReadCommand(btGatt, c));
-                        }
-                        mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
+        if (mode.equals("poll")) {
+            final Runnable readData = new Runnable() {
+                @Override
+                public void run() {
+                    // read data from all characteristics
+                    for (BluetoothGattCharacteristic c : mapping.keySet()) {
+                        add(new ReadCommand(btGatt, c));
                     }
-                };
-                mainHandler.post(readData);
-                break;
-            }
-            case "notification":
-            case "indication": {
-                // turn on characteristic notification for each characteristic
-                for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    boolean result = btGatt.setCharacteristicNotification(c, true);
-                    if (!result) {
-                        throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
-                    }
+                    mainHandler.postDelayed(this, period / 1000000l); // poll data again after the period is over
                 }
-                break;
-            }
+            };
+            mainHandler.post(readData);
         }
+
+        super.start();
 
         // enable descriptor for notification
         if (subscribeOnStart && (mode.equals("notification") || mode.equals("indication"))) {
             subscribeToNotifications();
         }
-
-        super.start();
     }
 
 
@@ -239,27 +237,18 @@ public class BluetoothInput extends Bluetooth {
      */
     @Override
     public void stop() {
-        super.stop();
 
         if (subscribeOnStart && mode.equals("notification")) {
             unsubscribeFromNotifications();
         }
 
-        switch (mode) {
-            case "poll": {
-                if (mainHandler != null) {
-                    mainHandler.removeCallbacksAndMessages(null);
-                }
-                break;
-            }
-            case "notification":
-            case "indication": {
-                for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                    boolean result = btGatt.setCharacteristicNotification(c, false);
-                }
-                break;
+        if (mode.equals("poll")) {
+            if (mainHandler != null) {
+                mainHandler.removeCallbacksAndMessages(null);
             }
         }
+
+        super.stop();
     }
 
     /**
@@ -302,6 +291,9 @@ public class BluetoothInput extends Bluetooth {
      */
     @Override
     protected void retrieveData(byte[] data, BluetoothGattCharacteristic characteristic) {
+        if (!isRunning)
+            return; //Experiment has not started yet. Discard early events.
+
         ArrayList<Characteristic> characteristics = mapping.get(characteristic);
         long t = System.nanoTime();
         // set t0 if it is not yet set
@@ -310,7 +302,7 @@ public class BluetoothInput extends Bluetooth {
             // find the last time data was retrieved
             double max = 0;
             for (Integer i : saveTime.values()) {
-                dataOutput dataOutput = this.data.get(i);
+                DataOutput dataOutput = this.data.get(i);
                 if (dataOutput != null && dataOutput.getFilledSize() > 0 && dataOutput.getValue() > max) {
                     max = dataOutput.getValue();
                 }
@@ -327,10 +319,12 @@ public class BluetoothInput extends Bluetooth {
         try {
             for (Characteristic c : characteristics) {
                 this.data.get(c.index).append(outputs[characteristics.indexOf(c)]);
+                this.data.get(c.index).markSet();
             }
             // append time to buffer if extra=time is set
             if (saveTime.containsKey(characteristic)) {
                 this.data.get(saveTime.get(characteristic)).append((t - t0) / 1e9);
+                this.data.get(saveTime.get(characteristic)).markSet();
             }
         } finally {
             dataLock.unlock();
@@ -348,7 +342,7 @@ public class BluetoothInput extends Bluetooth {
         if (t0 == 0) {
             t0 = t;
             for (Integer i : saveTime.values()) {
-                dataOutput dataOutput = data.get(i);
+                DataOutput dataOutput = data.get(i);
                 if (dataOutput != null && dataOutput.getFilledSize() > 0) {
                     t0 -= dataOutput.getValue() * 1e9;
                     break;
@@ -362,11 +356,13 @@ public class BluetoothInput extends Bluetooth {
             for (ArrayList<Characteristic> al : mapping.values()) {
                 for (Characteristic c : al) {
                     data.get(c.index).append(outputs.get(c.index));
+                    data.get(c.index).markSet();
                 }
             }
             // append time to buffers
             for (Integer i : saveTime.values()) {
                 data.get(i).append((t - t0) / 1e9);
+                data.get(i).markSet();
             }
         } finally {
             dataLock.unlock();

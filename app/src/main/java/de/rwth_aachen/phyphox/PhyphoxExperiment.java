@@ -4,9 +4,7 @@ import android.app.Activity;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.util.Log;
@@ -48,46 +46,50 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
-public class phyphoxExperiment implements Serializable {
+public class PhyphoxExperiment implements Serializable {
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
+    long crc32 = 0;
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment
+    String baseTitle = ""; //The title of this experiment without translations
     String stateTitle = ""; //The title of this experiment
     String category = ""; //The category of this experiment
+    String baseCategory = ""; //The category of this experiment without translations
     String icon = ""; //The icon. This is either a base64-encoded drawable (typically png) or (if its length is 3 or less characters) it is a short form which should be used in a simple generated logo (like "gyr" for gyroscope). (The experiment list will use the first three characters of the title if this is completely empty)
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment
     public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
     public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
-    public Vector<expView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
+    public Vector<ExpView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public SensorInputTimeReference sensorInputTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
-    public Vector<sensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
+    public Vector<SensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
     public GpsInput gpsIn = null;
     public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
     public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
-    public final Vector<dataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
+    public final Vector<DataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
-    public Vector<Analysis.analysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
+    public Vector<Analysis.AnalysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
     public Lock dataLock = new ReentrantLock();
 
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
-    dataBuffer analysisDynamicSleep = null;
+    DataBuffer analysisDynamicSleep = null;
     long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
     long analysisTime; //This variable holds the system time of the moment the current analysis process started.
     long firstAnalysisTime = 0; //This variable holds the system time of the moment the first analysis process started.
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
-    boolean optimization = false; //Modules are only executed if inputs or outputs have changed. Default to false because in some cases this breaks the logic of the experiment. (Example: If the currect data of sources at different acquisition rates should be appended periodically (for example with a timer module), not alle append modules will be executed for slow changing values as both input and output my be unchanged.)
     boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
     boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
 
-    //Parameters for audio playback
-    transient AudioTrack audioTrack = null; //Instance of AudioTrack class for playback. Not used if null
-    String audioSource; //The key name of the buffer which holds the data that should be played back through the speaker.
-    int audioRate = 48000; //The playback rate (in Hz)
-    int audioBufferSize = 0; //The size of the audio buffer
-    boolean audioLoop = false; //Loop the track?
+    int cycle = 0; //Keeps track of the current cycle for the cycles attribute of analysis modules
+
+    boolean timedRun = false; //Timed run enabled?
+    double timedRunStartDelay = 3.; //Start delay for timed runs
+    double timedRunStopDelay = 10.; //Stop delay for timed runs
+
+    //Audio output is handled in its own class, which will be instantiated by the file parser if required
+    public AudioOutput audioOutput = null;
 
     //Parameters for audio record
     transient AudioRecord audioRecord = null; //Instance of AudioRecord. Not used if null.
@@ -103,24 +105,24 @@ public class phyphoxExperiment implements Serializable {
     public DataExport exporter; //An instance of the DataExport class for exporting functionality (see DataExport.java)
 
     //The constructor will just instantiate the DataExport. Everything else will be set directly by the phyphoxFile loading function (see phyphoxFile.java)
-    phyphoxExperiment() {
+    PhyphoxExperiment() {
         exporter = new DataExport(this);
         sensorInputTimeReference = new SensorInputTimeReference();
     }
 
     //Create a new buffer
-    public dataBuffer createBuffer(String key, int size) {
+    public DataBuffer createBuffer(String key, int size) {
         if (key == null)
             return null;
 
-        dataBuffer output = new dataBuffer(key, size);
+        DataBuffer output = new DataBuffer(key, size);
         dataBuffers.add(output);
         dataMap.put(key, dataBuffers.size() - 1);
         return output;
     }
 
     //Helper function to get a dataBuffer by its key name
-    public dataBuffer getBuffer(String key) {
+    public DataBuffer getBuffer(String key) {
         Integer index = this.dataMap.get(key);
         //Some sanity checks. To make this function more fail-safe
         if (index == null)
@@ -137,29 +139,20 @@ public class phyphoxExperiment implements Serializable {
     }
 
     //This function gets called in the main loop and takes care of any inputElements in the current experiment view
-    public void handleInputViews(int currentView, boolean measuring) {
+    public void handleInputViews(boolean measuring) {
         if (!loaded)
             return;
         if (dataLock.tryLock()) {
             try {
-                for (dataBuffer buffer : dataBuffers) { //Compare each databuffer name...
-                    for (expView ev : experimentViews) {
-                            for (expView.expViewElement eve : ev.elements) { //...to each expViewElement
-                                try {
-                                    if (eve.onMayWriteToBuffers()) //The element may now write to its buffers if it wants to do it on its own...
-                                        newUserInput = true;
-                                    if (eve.getValueOutput() != null && eve.getValueOutput().equals(buffer.name)) { //if the buffer matches the expView's output buffer...
-                                        Double v = eve.getValue(); //...get the value
-                                        if (!Double.isNaN(v) && buffer.value != v) { //Only send it to the buffer if it is valid and a new value
-                                            buffer.append(v);
-                                            newUserInput = true;
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
-                                }
+                for (ExpView ev : experimentViews) {
+                        for (ExpView.expViewElement eve : ev.elements) {
+                            try {
+                                if (eve.onMayWriteToBuffers(this)) //The element may now write to its buffers if it wants to do it on its own...
+                                    newUserInput = true;
+                            } catch (Exception e) {
+                                Log.e("handleInputViews", "Unhandled exception in view module (input) " + eve.toString() + " while sending data.", e);
                             }
-                    }
+                        }
                 }
             } finally {
                 dataLock.unlock();
@@ -187,10 +180,10 @@ public class phyphoxExperiment implements Serializable {
 
         //Get the data from the audio recording if used
         if (audioRecord != null && measuring) {
-            dataBuffer sampleRateBuffer = null;
+            DataBuffer sampleRateBuffer = null;
             if (!micRateOutput.isEmpty())
                 sampleRateBuffer = getBuffer(micRateOutput);
-            dataBuffer recording = getBuffer(micOutput);
+            DataBuffer recording = getBuffer(micOutput);
             final int readBufferSize = Math.max(Math.min(recording.size, 4800),minBufferSize); //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
             int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
@@ -236,18 +229,18 @@ public class phyphoxExperiment implements Serializable {
         }
         newUserInput = false;
 
+        if (!measuring)
+            cycle = 0;
         dataLock.lock();
         analysisTime = System.currentTimeMillis();
         if (firstAnalysisTime == 0)
             firstAnalysisTime = analysisTime;
         //Call all the analysis modules and let them do their work.
         try {
-            for (Analysis.analysisModule mod : analysis) {
+            for (Analysis.AnalysisModule mod : analysis) {
                 try {
                     Thread.yield();
-                    if (!mod.updateIfNotStatic()) { //This only returns false if the module found its inputs to be uninitialized, in which case we abort the rest... (Typical example: no audio recorded yet)
-//                        break; //Nope, let's not break... This should not be an issue anywhere but may prevent resets from a button to show up when experiment is stopped.
-                    }
+                    mod.updateIfNotStatic(cycle);
                 } catch (Exception e) {
                     Log.e("processAnalysis", "Unhandled exception in analysis module " + mod.toString() + ".", e);
                 }
@@ -255,58 +248,11 @@ public class phyphoxExperiment implements Serializable {
         } finally {
             dataLock.unlock();
         }
+        cycle++;
 
-        //Send the results to audio playback if used
-        if (audioTrack != null && measuring) {
-            if (!(audioTrack.getState() == AudioTrack.STATE_INITIALIZED && getBuffer(audioSource).isStatic)) {
-                //If the data is not static, or the audio track not yet initialized, we have to push our data to the audioTrack
-
-                if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED)
-                    audioTrack.pause(); //Stop the playback first
-
-
-                //Get the data to output
-                short[] data = getBuffer(audioSource).getShortArray();
-                if (data.length > 0) {
-                    int result; //Will hold the write result to log errors
-                    int loopedBufferSize = 0;
-
-                    if (audioLoop) {
-                        //In case of loops we want to repeat the data buffer. However, some
-                        //  implementations do not allow short loops. So as a workaround we increase
-                        //  the size of the audio buffer to at least 1 second and make it a multiple
-                        //  size of the samples that we have to loop. The samples will be written
-                        //  to this buffer multiple times. This way the device will accept the loop.
-                        loopedBufferSize = data.length;
-                        if (loopedBufferSize < audioRate) {
-                            loopedBufferSize = (audioRate / data.length + 1) * data.length;
-                        }
-                        short[] filledBuffer = new short[loopedBufferSize];
-                        for (int i = 0; i < loopedBufferSize; i++)
-                            filledBuffer[i] = data[i % data.length];
-                        result = audioTrack.write(filledBuffer, 0, loopedBufferSize);
-                    } else //Usually, just write the small buffer...
-                        result = audioTrack.write(data, 0, data.length);
-
-                    if (result <= 0)
-                        Log.e("processAnalysis", "Unexpected audio write result: " + result + " written.");
-
-                    audioTrack.reloadStaticData();
-                    audioTrack.setPlaybackHeadPosition(0);
-                    if (audioLoop) //If looping is enabled, loop from the end of the data
-                        audioTrack.setLoopPoints(0, loopedBufferSize, -1);
-                }
-            } else { //If the data is static and already loaded, we just have to rewind...
-                if (!audioLoop) { //We only want to play again since we are not looping
-                    audioTrack.stop();
-                    audioTrack.reloadStaticData();
-                }
-            }
-        }
-
-        //Restart if used.
-        if (measuring && audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
-            audioTrack.play();
+        //Play audio
+        if (measuring && audioOutput != null) {
+            audioOutput.play();
         }
 
         if (measuring && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -342,8 +288,8 @@ public class phyphoxExperiment implements Serializable {
         try {
             if (dataLock.tryLock(10, TimeUnit.MILLISECONDS)) {
                 try {
-                    for (expView experimentView : experimentViews) {
-                        for (expView.expViewElement eve : experimentView.elements) {
+                    for (ExpView experimentView : experimentViews) {
+                        for (ExpView.expViewElement eve : experimentView.elements) {
                             eve.onMayReadFromBuffers(this); //Notify each view, that it should update from the buffers
                         }
                     }
@@ -358,7 +304,7 @@ public class phyphoxExperiment implements Serializable {
 
         newData = false;
         //Finally call dataComplete on every view to notify them that the data has been sent - heavy operation can now be done by the views while the buffers have been unlocked again
-        for (expView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
+        for (ExpView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
             try {
                 eve.dataComplete();
             } catch (Exception e) {
@@ -376,11 +322,11 @@ public class phyphoxExperiment implements Serializable {
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
             audioRecord.stop();
         //Playback
-        if (audioTrack != null && audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
-            audioTrack.pause();
+        if (audioOutput != null) {
+            audioOutput.stop();
         }
         //Sensors
-        for (sensorInput sensor : inputSensors)
+        for (SensorInput sensor : inputSensors)
             sensor.stop();
 
         if (gpsIn != null)
@@ -411,11 +357,16 @@ public class phyphoxExperiment implements Serializable {
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
         sensorInputTimeReference.reset();
-        for (sensorInput sensor : inputSensors)
+        for (SensorInput sensor : inputSensors)
             sensor.start();
 
         if (gpsIn != null)
             gpsIn.start();
+
+        //Playback
+        if (audioOutput != null) {
+            audioOutput.start();
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             for (BluetoothInput bti : bluetoothInputs) {
@@ -442,20 +393,16 @@ public class phyphoxExperiment implements Serializable {
             updateViews(i, true);
         }
 
-        //Create the audioTrack instance
-        if (audioSource != null) {
-            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, audioRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, 2 * audioBufferSize, AudioTrack.MODE_STATIC);
-            if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
-                throw new Exception("Could not initialize audio. (" + audioTrack.getState() + ")");
-            }
-        }
+        //Initialize audio output
+        if (audioOutput != null)
+            audioOutput.init();
 
         //Create audioTrack instance
         if (micBufferSize > 0)
             audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize * 2);
 
         //Reconnect sensors
-        for (sensorInput si : inputSensors) {
+        for (SensorInput si : inputSensors) {
             si.attachSensorManager(sensorManager);
         }
 
@@ -522,7 +469,7 @@ public class phyphoxExperiment implements Serializable {
             if (!buffers.item(i).getNodeName().equals("container"))
                 continue;
 
-            dataBuffer buffer = getBuffer(buffers.item(i).getTextContent());
+            DataBuffer buffer = getBuffer(buffers.item(i).getTextContent());
             if (buffer == null)
                 continue;
 

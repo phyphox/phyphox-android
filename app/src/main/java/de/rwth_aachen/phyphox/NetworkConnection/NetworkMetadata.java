@@ -13,8 +13,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import java.util.UUID;
 
 import de.rwth_aachen.phyphox.ExperimentList;
-import de.rwth_aachen.phyphox.phyphoxFile;
-import de.rwth_aachen.phyphox.sensorInput;
+import de.rwth_aachen.phyphox.PhyphoxFile;
+import de.rwth_aachen.phyphox.SensorInput;
 
 import static android.content.Context.SENSOR_SERVICE;
 
@@ -30,7 +30,7 @@ public class NetworkMetadata {
 
     Metadata metadata;
     SensorMetadata sensorMetadata = null;
-    sensorInput.SensorName sensor = null;
+    SensorInput.SensorName sensor = null;
 
     String resultBuffer;
 
@@ -40,7 +40,7 @@ public class NetworkMetadata {
             resultBuffer = getBuffered(ctx);
             return;
         } catch (IllegalArgumentException e) {
-            for (sensorInput.SensorName sensor : sensorInput.SensorName.values()) {
+            for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
                 if (identifier.startsWith(sensor.name())) {
                     sensorMetadata = SensorMetadata.valueOf(identifier.substring(sensor.name().length()));
                     metadata = Metadata.sensorMetadata;
@@ -86,7 +86,7 @@ public class NetworkMetadata {
             }
 
             case fileFormat:
-                return phyphoxFile.phyphoxFileVersion;
+                return PhyphoxFile.phyphoxFileVersion;
 
             case deviceModel:
                 return Build.MODEL;
@@ -115,7 +115,7 @@ public class NetworkMetadata {
             case sensorMetadata:
                 SensorManager sensorManager = (SensorManager) ctx.getSystemService(SENSOR_SERVICE);
                 try {
-                    sensorInput testSensor = new sensorInput(sensor.name(), true, 0, false, null, null, null);
+                    SensorInput testSensor = new SensorInput(sensor.name(), true, 0, false, null, null, null);
                     testSensor.attachSensorManager(sensorManager);
                     if (testSensor.sensor == null)
                         return null;
@@ -140,7 +140,7 @@ public class NetworkMetadata {
                         case Version:
                             return String.valueOf(testSensor.sensor.getVersion());
                     }
-                } catch (sensorInput.SensorException e) {
+                } catch (SensorInput.SensorException e) {
                     return null;
                 }
         }

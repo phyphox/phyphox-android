@@ -249,4 +249,7 @@
     <string name="networkPrivacyDeviceInfo">Genaue Informationen zu dem Modell deines Geräts und/oder zur Version von phyphox.</string>
     <string name="networkPrivacySensorInfo">Technische Details zu den folgenden Sensoren:</string>
 
-</resources>
+<string name="leave_experiment">Experiment verlassen</string>
+    <string name="leave_experiment_question">Experiment verlassen und aufgezeichnete Daten verwerfen?</string>
+    <string name="leave">Verlassen</string>
+    </resources>

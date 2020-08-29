@@ -78,7 +78,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     final int markerMax = 2;
     Marker marker[] = new Marker[markerMax];
-    PopupWindow popupWindowInfo = null;
+    public PopupWindow popupWindowInfo = null;
     TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
 
@@ -118,7 +118,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     case R.id.graph_tools_more:
                         PopupMenu popup = new PopupMenu(getContext(), findViewById(R.id.graph_tools_more));
                         popup.getMenuInflater().inflate(R.menu.graph_tools_menu, popup.getMenu());
-                        popup.getMenu().findItem(R.id.graph_tools_follow).setChecked(graphView.zoomFollows);
+                        popup.getMenu().findItem(R.id.graph_tools_follow).setChecked(graphView.zoomState.follows);
                         popup.getMenu().findItem(R.id.graph_tools_follow).setVisible(graphView.graphSetup.incrementalX);
                         popup.getMenu().findItem(R.id.graph_tools_export).setVisible(dataExport != null);
                         popup.getMenu().findItem(R.id.graph_tools_log_x).setVisible(allowLogX);
@@ -142,21 +142,21 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                         updateInfo();
                                         break;
                                     case R.id.graph_tools_reset:
-                                        graphView.zoomFollows = false;
-                                        graphView.zoomMinX = Double.NaN;
-                                        graphView.zoomMaxX = Double.NaN;
-                                        graphView.zoomMinY = Double.NaN;
-                                        graphView.zoomMaxY = Double.NaN;
-                                        graphView.zoomMinZ = Double.NaN;
-                                        graphView.zoomMaxZ = Double.NaN;
+                                        graphView.zoomState.follows = false;
+                                        graphView.zoomState.minX = Double.NaN;
+                                        graphView.zoomState.maxX = Double.NaN;
+                                        graphView.zoomState.minY = Double.NaN;
+                                        graphView.zoomState.maxY = Double.NaN;
+                                        graphView.zoomState.minZ = Double.NaN;
+                                        graphView.zoomState.maxZ = Double.NaN;
                                         graphView.invalidate();
                                         break;
                                     case R.id.graph_tools_follow:
-                                        if (Double.isNaN(graphView.zoomMinX) || Double.isNaN(graphView.zoomMaxX)) {
-                                            graphView.zoomMinX = graphView.minX;
-                                            graphView.zoomMaxX = graphView.maxX;
+                                        if (Double.isNaN(graphView.zoomState.minX) || Double.isNaN(graphView.zoomState.maxX)) {
+                                            graphView.zoomState.minX = graphView.minX;
+                                            graphView.zoomState.maxX = graphView.maxX;
                                         }
-                                        graphView.zoomFollows = !graphView.zoomFollows;
+                                        graphView.zoomState.follows = !graphView.zoomState.follows;
                                         graphView.invalidate();
                                         break;
                                     case R.id.graph_tools_export:
@@ -226,8 +226,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         super.onLayout(changed, left, top, right, bottom);
     }
 
-    public void leaveDialog(final expViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
-        if (Double.isNaN(graphView.zoomMinX) && Double.isNaN(graphView.zoomMinY) && Double.isNaN(graphView.zoomMaxX) && Double.isNaN(graphView.zoomMaxY) && Double.isNaN(graphView.zoomMaxZ) && Double.isNaN(graphView.zoomMaxZ)) {
+    public void leaveDialog(final ExpViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
+        if (Double.isNaN(graphView.zoomState.minX) && Double.isNaN(graphView.zoomState.minY) && Double.isNaN(graphView.zoomState.maxX) && Double.isNaN(graphView.zoomState.maxY) && Double.isNaN(graphView.zoomState.maxZ) && Double.isNaN(graphView.zoomState.maxZ)) {
             parent.leaveExclusive();
             return;
         }
@@ -290,22 +290,22 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             rbReset.setChecked(true);
         }
 
-        if (graphView.zoomFollows && graphView.graphSetup.incrementalX && !Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
+        if (graphView.zoomState.follows && graphView.graphSetup.incrementalX && !Double.isNaN(graphView.zoomState.minX) && !Double.isNaN(graphView.zoomState.maxX)) {
             rbFollowX.setChecked(true);
-        } else if (!Double.isNaN(graphView.zoomMinX) && !Double.isNaN(graphView.zoomMaxX)) {
+        } else if (!Double.isNaN(graphView.zoomState.minX) && !Double.isNaN(graphView.zoomState.maxX)) {
             rbKeepX.setChecked(true);
         } else {
             rbResetX.setChecked(true);
         }
 
-        if (!Double.isNaN(graphView.zoomMinY) && !Double.isNaN(graphView.zoomMaxY)) {
+        if (!Double.isNaN(graphView.zoomState.minY) && !Double.isNaN(graphView.zoomState.maxY)) {
             rbKeepY.setChecked(true);
         } else {
             rbResetY.setChecked(true);
         }
 
         if (zShown) {
-            if (!Double.isNaN(graphView.zoomMinZ) && !Double.isNaN(graphView.zoomMaxZ)) {
+            if (!Double.isNaN(graphView.zoomState.minZ) && !Double.isNaN(graphView.zoomState.maxZ)) {
                 rbKeepZ.setChecked(true);
             } else {
                 rbResetZ.setChecked(true);
@@ -323,21 +323,21 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         minX = Double.NaN;
                         maxX = Double.NaN;
                     } else {
-                        minX = graphView.zoomMinX;
-                        maxX = graphView.zoomMaxX;
+                        minX = graphView.zoomState.minX;
+                        maxX = graphView.zoomState.maxX;
                     }
                     if ((simple && rbReset.isChecked()) || (!simple && rbResetY.isChecked())) {
                         minY = Double.NaN;
                         maxY = Double.NaN;
                     } else {
-                        minY = graphView.zoomMinY;
-                        maxY = graphView.zoomMaxY;
+                        minY = graphView.zoomState.minY;
+                        maxY = graphView.zoomState.maxY;
                     }
-                    graphView.zoomMinX = minX;
-                    graphView.zoomMaxX = maxX;
-                    graphView.zoomMinY = minY;
-                    graphView.zoomMaxY = maxY;
-                    graphView.zoomFollows = (simple && graphView.zoomFollows) || (!simple && rbFollowX.isChecked());
+                    graphView.zoomState.minX = minX;
+                    graphView.zoomState.maxX = maxX;
+                    graphView.zoomState.minY = minY;
+                    graphView.zoomState.maxY = maxY;
+                    graphView.zoomState.follows = (simple && graphView.zoomState.follows) || (!simple && rbFollowX.isChecked());
 
                     if (!simple) {
 
@@ -371,11 +371,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                             minZ = Double.NaN;
                             maxZ = Double.NaN;
                         } else {
-                            minZ = graphView.zoomMinZ;
-                            maxZ = graphView.zoomMaxZ;
+                            minZ = graphView.zoomState.minZ;
+                            maxZ = graphView.zoomState.maxZ;
                         }
-                        graphView.zoomMinZ = minZ;
-                        graphView.zoomMaxZ = maxZ;
+                        graphView.zoomState.minZ = minZ;
+                        graphView.zoomState.maxZ = maxZ;
                     }
 
                     parent.leaveExclusive();
@@ -499,9 +499,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             sb.append(getResources().getString(R.string.graph_fit_label));
             sb.append("\na = ");
             sb.append((float)a);
-            sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
-            sb.append(" / ");
-            sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+            if (graphView.getUnitYX() != null)
+                sb.append(graphView.getUnitYX());
+            else {
+                sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+                sb.append(" / ");
+                sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+            }
             sb.append("\nb = ");
             sb.append((float)b);
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
@@ -544,9 +548,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             float dx = marker[0].dataX - marker[1].dataX;
             if (dx != 0) {
                 sb.append((marker[0].dataY - marker[1].dataY) / (marker[0].dataX - marker[1].dataX));
-                sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
-                sb.append(" / ");
-                sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+                if (graphView.getUnitYX() != null)
+                    sb.append(graphView.getUnitYX());
+                else {
+                    sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
+                    sb.append(" / ");
+                    sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
+                }
             } else {
                 sb.append("-");
             }

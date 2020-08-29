@@ -6,11 +6,11 @@ import java.util.Iterator;
 //dataInput wraps all data-containers (currently only dataBuffer) and constant values as possible
 // inputs. This allows analysis modules to access constant values as if they were buffers.
 
-public class dataInput implements Serializable {
+public class DataInput implements Serializable {
     boolean isBuffer = false;
     boolean isEmpty = false;
     double value = Double.NaN;
-    public dataBuffer buffer = null;
+    public DataBuffer buffer = null;
     boolean clearAfterRead = true;
 
     //Get value
@@ -22,7 +22,7 @@ public class dataInput implements Serializable {
     }
 
     //Constructor if this should contain a buffer
-    protected dataInput(dataBuffer buffer, boolean clear) {
+    protected DataInput(DataBuffer buffer, boolean clear) {
         this.clearAfterRead = clear;
         isBuffer = true;
         this.isEmpty = false;
@@ -30,13 +30,13 @@ public class dataInput implements Serializable {
     }
 
     //Constructor if this should contain a constant value
-    protected dataInput(double value) {
+    protected DataInput(double value) {
         isBuffer = false;
         this.isEmpty = false;
         this.value = value;
     }
 
-    protected dataInput() {
+    protected DataInput() {
         this.isBuffer = false;
         this.isEmpty = true;
     }
@@ -94,13 +94,13 @@ public class dataInput implements Serializable {
         clear(reset, true);
     }
 
-    protected dataInput copy() {
+    protected DataInput copy() {
         if (this.isBuffer) {
-            return new dataInput(this.buffer.copy(), this.clearAfterRead);
+            return new DataInput(this.buffer.copy(), this.clearAfterRead);
         } else if (isEmpty) {
-            return new dataInput();
+            return new DataInput();
         } else {
-            return new dataInput(this.value);
+            return new DataInput(this.value);
         }
     }
 }

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="action_settings">Ajustes</string>
+<resources><string name="action_settings">Ajustaments</string>
     <string name="newExperiment">Añadir experimentos</string>
     <string name="newExperimentPhyphoxInfo">Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y compártelos con colegas, estudiantes y amigos.</string>
     <string name="newExperimentInputTitle">Título</string>
@@ -115,24 +115,24 @@
 \n%1$s</string>
     <string name="hotspotSettings">Ajustes de Punto de Acceso</string>
 
-    <string name="graph_tools_pan_and_zoom">Panorámica y zoom</string>
-    <string name="graph_tools_pick">Seleccionar datos</string>
-    <string name="graph_tools_more">Más herramientas</string>
-    <string name="graph_tools_reset">Restablecer zoom</string>
-    <string name="graph_tools_follow">Seguir nuevos datos</string>
-    <string name="graph_tools_linear_fit">Ajuste lineal</string>
-    <string name="graph_tools_export">Exportar datos</string>
-    <string name="graph_tools_log_x">Eje x logarítmico</string>
-    <string name="graph_tools_log_y">Eje y logarítmico</string>
+    <string name="graph_tools_pan_and_zoom">Panoràmica i zoom</string>
+    <string name="graph_tools_pick">Seleccionar dades</string>
+    <string name="graph_tools_more">Més eines</string>
+    <string name="graph_tools_reset">Restablir zoom</string>
+    <string name="graph_tools_follow">Seguir noves dades</string>
+    <string name="graph_tools_linear_fit">Ajustament linial</string>
+    <string name="graph_tools_export">Exportar dades</string>
+    <string name="graph_tools_log_x">Eix x logarítmic</string>
+    <string name="graph_tools_log_y">Eix y logarítmic</string>
 
-    <string name="graph_point_label">Punto</string>
-    <string name="graph_slope_label">Pendiente</string>
-    <string name="graph_difference_label">Diferencia</string>
-    <string name="graph_fit_label">Ajuste lineal: y = a x + b</string>
+    <string name="graph_point_label">Punt</string>
+    <string name="graph_slope_label">Pendent</string>
+    <string name="graph_difference_label">Diferència</string>
+    <string name="graph_fit_label">Ajustament linial: y = a x + b</string>
 
     <string name="applyZoomTitle">Aplicar zoom</string>
-    <string name="applyZoomExplanation">Ya que estás cerrando el modo interactivo de este gráfico, puedes seleccionar si deseas mantener su zoom.</string>
-    <string name="applyZoomAdvanced">Opciones avanzadas</string>
+    <string name="applyZoomExplanation">Donat que estàs tancant el mode interactiu, pots seleccionar si vols mantenir el zom</string>
+    <string name="applyZoomAdvanced">Opcions avançades</string>
     <string name="applyZoomApply">Aplicar a…</string>
 
     <string name="applyZoomReset">Restablecer a los predeterminados</string>

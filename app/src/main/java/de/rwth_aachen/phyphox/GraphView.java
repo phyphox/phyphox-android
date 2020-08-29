@@ -49,9 +49,9 @@ public class GraphView extends View {
     private int pickedPointIndex[] = new int[maxPicked];
     private int pickedPointGraphIndex[] = new int[maxPicked];
 
-    private floatBufferRepresentation[] graphX; //The x data to be displayed
+    private FloatBufferRepresentation[] graphX; //The x data to be displayed
     private double[] histMinX, histMaxX;
-    private floatBufferRepresentation[] graphY; //The y data to be displayed
+    private FloatBufferRepresentation[] graphY; //The y data to be displayed
     private double[] histMinY, histMaxY;
     private double histMinZ, histMaxZ;
 
@@ -73,6 +73,7 @@ public class GraphView extends View {
     private String unitX = null; //Label for the x-axis
     private String unitY = null; //Label for the y-axis
     private String unitZ = null; //Label for the y-axis
+    private String unitYX = null; //Unit for the slope, i.e. y/x
     public boolean logX = false; //logarithmic scale for the x-axis?
     public boolean logY = false; //logarithmic scale for the y-axis?
     public boolean logZ = false; //logarithmic scale for the y-axis?
@@ -104,13 +105,17 @@ public class GraphView extends View {
     double maxZ = 0.;
 
     private TouchMode touchMode = TouchMode.off;
-    double zoomMinX = Double.NaN;
-    double zoomMaxX = Double.NaN;
-    double zoomMinY = Double.NaN;
-    double zoomMaxY = Double.NaN;
-    double zoomMinZ = Double.NaN;
-    double zoomMaxZ = Double.NaN;
-    boolean zoomFollows = false;
+    public class ZoomState {
+        double minX = Double.NaN;
+        double maxX = Double.NaN;
+        double minY = Double.NaN;
+        double maxY = Double.NaN;
+        double minZ = Double.NaN;
+        double maxZ = Double.NaN;
+        boolean follows = false;
+    }
+
+    public ZoomState zoomState = new ZoomState();
 
     Paint paint; //Anti-Aliased paint used all over this class
 
@@ -149,7 +154,7 @@ public class GraphView extends View {
 
             if (scaleXStart > graphSetup.plotBoundL && scaleXStart < graphSetup.plotBoundL + graphSetup.plotBoundW && scaleYStart > graphSetup.plotBoundT && scaleYStart < graphSetup.plotBoundT + graphSetup.plotBoundH) {
                 gestureOnZScale = false;
-                zoomFollows = false;
+                zoomState.follows = false;
             } else if (scaleXStart > graphSetup.zaBoundL && scaleXStart < graphSetup.zaBoundL + graphSetup.zaBoundW && scaleYStart > graphSetup.zaBoundT && scaleYStart < graphSetup.zaBoundT + 2*graphSetup.zaBoundH)
                 gestureOnZScale = true;
             else
@@ -159,16 +164,16 @@ public class GraphView extends View {
             scaleYStartSpan = Math.abs(scaleGestureDetector.getCurrentSpanY());
 
 
-            final double cminY = Double.isNaN(zoomMinY) ? minY : zoomMinY;
-            final double cmaxY = Double.isNaN(zoomMaxY) ? maxY : zoomMaxY;
+            final double cminY = Double.isNaN(zoomState.minY) ? minY : zoomState.minY;
+            final double cmaxY = Double.isNaN(zoomState.maxY) ? maxY : zoomState.maxY;
             final double cminX;
             final double cmaxX;
             if (gestureOnZScale) {
-                cminX = Double.isNaN(zoomMinZ) ? minZ : zoomMinZ;
-                cmaxX = Double.isNaN(zoomMaxZ) ? maxZ : zoomMaxZ;
+                cminX = Double.isNaN(zoomState.minZ) ? minZ : zoomState.minZ;
+                cmaxX = Double.isNaN(zoomState.maxZ) ? maxZ : zoomState.maxZ;
             } else {
-                cminX = Double.isNaN(zoomMinX) ? minX : zoomMinX;
-                cmaxX = Double.isNaN(zoomMaxX) ? maxX : zoomMaxX;
+                cminX = Double.isNaN(zoomState.minX) ? minX : zoomState.minX;
+                cmaxX = Double.isNaN(zoomState.maxX) ? maxX : zoomState.maxX;
             }
 
 
@@ -212,13 +217,13 @@ public class GraphView extends View {
                 scaleY = 20;
 
             if (gestureOnZScale) {
-                zoomMinZ = viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX);
-                zoomMaxZ = viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX);
+                zoomState.minZ = viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX);
+                zoomState.maxZ = viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX);
             } else {
-                zoomMinX = viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX);
-                zoomMinY = viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMin)) / scaleY + scaleYStart - focusY);
-                zoomMaxX = viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX);
-                zoomMaxY = viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMax)) / scaleY + scaleYStart - focusY);
+                zoomState.minX = viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX);
+                zoomState.minY = viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMin)) / scaleY + scaleYStart - focusY);
+                zoomState.maxX = viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX);
+                zoomState.maxY = viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMax)) / scaleY + scaleYStart - focusY);
             }
 
             invalidate();
@@ -423,7 +428,7 @@ public class GraphView extends View {
         if (!processingGesture) {
             if (x > graphSetup.plotBoundL && x < graphSetup.plotBoundL + graphSetup.plotBoundW && y > graphSetup.plotBoundT && y < graphSetup.plotBoundT + graphSetup.plotBoundH) {
                 gestureOnZScale = false;
-                zoomFollows = false;
+                zoomState.follows = false;
             } else if (x > graphSetup.zaBoundL && x < graphSetup.zaBoundL + graphSetup.zaBoundW && y > graphSetup.zaBoundT && y < graphSetup.zaBoundT + 2 * graphSetup.zaBoundH)
                 gestureOnZScale = true;
             else
@@ -453,24 +458,24 @@ public class GraphView extends View {
 
                 if (Double.isNaN(panXOrigin)) {
                     if (gestureOnZScale) {
-                        panXOrigin = Double.isNaN(zoomMinZ) ? minZ : zoomMinZ;
-                        panWOrigin = (Double.isNaN(zoomMaxZ) ? maxZ : zoomMaxZ) - (Double.isNaN(zoomMinZ) ? minZ : zoomMinZ);
+                        panXOrigin = Double.isNaN(zoomState.minZ) ? minZ : zoomState.minZ;
+                        panWOrigin = (Double.isNaN(zoomState.maxZ) ? maxZ : zoomState.maxZ) - (Double.isNaN(zoomState.minZ) ? minZ : zoomState.minZ);
                     } else {
-                        panXOrigin = Double.isNaN(zoomMinX) ? minX : zoomMinX;
-                        panYOrigin = Double.isNaN(zoomMinY) ? minY : zoomMinY;
-                        panWOrigin = (Double.isNaN(zoomMaxX) ? maxX : zoomMaxX) - (Double.isNaN(zoomMinX) ? minX : zoomMinX);
-                        panHOrigin = (Double.isNaN(zoomMaxY) ? maxY : zoomMaxY) - (Double.isNaN(zoomMinY) ? minY : zoomMinY);
+                        panXOrigin = Double.isNaN(zoomState.minX) ? minX : zoomState.minX;
+                        panYOrigin = Double.isNaN(zoomState.minY) ? minY : zoomState.minY;
+                        panWOrigin = (Double.isNaN(zoomState.maxX) ? maxX : zoomState.maxX) - (Double.isNaN(zoomState.minX) ? minX : zoomState.minX);
+                        panHOrigin = (Double.isNaN(zoomState.maxY) ? maxY : zoomState.maxY) - (Double.isNaN(zoomState.minY) ? minY : zoomState.minY);
                     }
                 }
 
                 if (gestureOnZScale) {
-                    zoomMinZ = viewXToDataZ(dataZToViewX(panXOrigin) - dx);
-                    zoomMaxZ = viewXToDataZ(dataZToViewX(panXOrigin + panWOrigin) - dx);
+                    zoomState.minZ = viewXToDataZ(dataZToViewX(panXOrigin) - dx);
+                    zoomState.maxZ = viewXToDataZ(dataZToViewX(panXOrigin + panWOrigin) - dx);
                 } else {
-                    zoomMinX = viewXToDataX(dataXToViewX(panXOrigin) - dx);
-                    zoomMinY = viewYToDataY(dataYToViewY(panYOrigin) - dy);
-                    zoomMaxX = viewXToDataX(dataXToViewX(panXOrigin + panWOrigin) - dx);
-                    zoomMaxY = viewYToDataY(dataYToViewY(panYOrigin + panHOrigin) - dy);
+                    zoomState.minX = viewXToDataX(dataXToViewX(panXOrigin) - dx);
+                    zoomState.minY = viewYToDataY(dataYToViewY(panYOrigin) - dy);
+                    zoomState.maxX = viewXToDataX(dataXToViewX(panXOrigin + panWOrigin) - dx);
+                    zoomState.maxY = viewYToDataY(dataYToViewY(panYOrigin + panHOrigin) - dy);
                 }
 
                 invalidate();
@@ -565,8 +570,8 @@ public class GraphView extends View {
 
     public void setCurves(int n) {
         nCurves = n;
-        graphX = new floatBufferRepresentation[n];
-        graphY = new floatBufferRepresentation[n];
+        graphX = new FloatBufferRepresentation[n];
+        graphY = new FloatBufferRepresentation[n];
         histMinX = new double[n];
         histMaxX = new double[n];
         histMinY = new double[n];
@@ -662,17 +667,17 @@ public class GraphView extends View {
         if (scaleMaxZ == scaleMode.auto || (scaleMaxZ == scaleMode.extend && maxZ < dataMaxZ))
             maxZ = dataMaxZ;
 
-        if (!Double.isNaN(zoomMinX) && !Double.isNaN(zoomMaxX)) {
-            if (zoomFollows) {
-                double w = zoomMaxX - zoomMinX;
-                zoomMinX = dataMaxX - w;
-                zoomMaxX = dataMaxX;
+        if (!Double.isNaN(zoomState.minX) && !Double.isNaN(zoomState.maxX)) {
+            if (zoomState.follows) {
+                double w = zoomState.maxX - zoomState.minX;
+                zoomState.minX = dataMaxX - w;
+                zoomState.maxX = dataMaxX;
             }
         }
     }
 
     //Add a new graph and (if enabled) push the old graphs back into history
-    public void addGraphData(floatBufferRepresentation[] graphY, double minY, double maxY, floatBufferRepresentation[] graphX, double minX, double maxX, double minZ, double maxZ) {
+    public void addGraphData(FloatBufferRepresentation[] graphY, double minY, double maxY, FloatBufferRepresentation[] graphX, double minX, double maxX, double minZ, double maxZ) {
         if (graphY == null || graphX == null || graphX[0] == null || graphY[0] == null)
             return;
 
@@ -715,7 +720,7 @@ public class GraphView extends View {
     }
 
     //This overloads addGraphData to take pure y-data without x data
-    public void addGraphData(floatBufferRepresentation[] graphY, double min, double max) {
+    public void addGraphData(FloatBufferRepresentation[] graphY, double min, double max) {
         if (graphY == null || graphY[0] == null)
             return;
         //Create standard x data with indices
@@ -728,10 +733,10 @@ public class GraphView extends View {
         for (int i = 0; i < graphY[0].size; i++)
             data.put((float)i);
 
-        floatBufferRepresentation[] graphX = new floatBufferRepresentation[graphY.length];
+        FloatBufferRepresentation[] graphX = new FloatBufferRepresentation[graphY.length];
         for (int i = 0; i < graphY.length; i++)
             graphX[i] = null;
-        graphX[0] = new floatBufferRepresentation(data, 0, graphY[0].size);
+        graphX[0] = new FloatBufferRepresentation(data, 0, graphY[0].size);
 
         //Call the full addGraphData with the artificial x data
         addGraphData(graphY, min, max, graphX, 0, graphY[0].size-1, Double.NaN, Double.NaN);
@@ -747,6 +752,10 @@ public class GraphView extends View {
 
     public String getUnitZ() {
         return unitZ;
+    }
+
+    public String getUnitYX() {
+        return unitYX;
     }
 
     public String getLabelAndUnitX() {
@@ -771,13 +780,14 @@ public class GraphView extends View {
     }
 
     //Interface to set axis labels
-    public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ) {
+    public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ, String unitYX) {
         this.labelX = labelX;
         this.labelY = labelY;
         this.labelZ = labelZ;
         this.unitX = unitX;
         this.unitY = unitY;
         this.unitZ = unitZ;
+        this.unitYX = unitYX;
     }
 
     //Interface to configure logarithmic scales
@@ -940,12 +950,12 @@ public class GraphView extends View {
         paint.setAlpha(255);
         paint.setStyle(Paint.Style.FILL);
 
-        double workingMinX = Double.isNaN(zoomMinX) ? minX : zoomMinX;
-        double workingMaxX = Double.isNaN(zoomMaxX) ? maxX : zoomMaxX;
-        double workingMinY = Double.isNaN(zoomMinY) ? minY : zoomMinY;
-        double workingMaxY = Double.isNaN(zoomMaxY) ? maxY : zoomMaxY;
-        double workingMinZ = Double.isNaN(zoomMinZ) ? minZ : zoomMinZ;
-        double workingMaxZ = Double.isNaN(zoomMaxZ) ? maxZ : zoomMaxZ;;
+        double workingMinX = Double.isNaN(zoomState.minX) ? minX : zoomState.minX;
+        double workingMaxX = Double.isNaN(zoomState.maxX) ? maxX : zoomState.maxX;
+        double workingMinY = Double.isNaN(zoomState.minY) ? minY : zoomState.minY;
+        double workingMaxY = Double.isNaN(zoomState.maxY) ? maxY : zoomState.maxY;
+        double workingMinZ = Double.isNaN(zoomState.minZ) ? minZ : zoomState.minZ;
+        double workingMaxZ = Double.isNaN(zoomState.maxZ) ? maxZ : zoomState.maxZ;;
 
         //Do we need a zscale?
         boolean zScale = false;
@@ -999,7 +1009,13 @@ public class GraphView extends View {
         int graphL = 0;
         int graphT = 0;
         for (double tic : yTics) {
-            double tw = paint.measureText(String.format("%."+yPrecision+"g", tic))+res.getDimension(R.dimen.graph_font)/2.;
+            double tw;
+            try {
+                tw = paint.measureText(String.format("%." + yPrecision + "g", tic)) + res.getDimension(R.dimen.graph_font) / 2.;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                tw = paint.measureText(String.format("%." + yPrecision + "f", tic)) + res.getDimension(R.dimen.graph_font) / 2.;
+            }
             if (tw > graphL)
                 graphL = (int)Math.ceil(tw);
         }
@@ -1031,14 +1047,24 @@ public class GraphView extends View {
             if (tic < workingMinX || tic > workingMaxX)
                 continue;
             double x = dataXToViewX(tic);
-            canvas.drawText(String.format("%."+xPrecision+"g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            try {
+                canvas.drawText(String.format("%."+xPrecision+"g", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                canvas.drawText(String.format("%."+xPrecision+"f", tic), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            }
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (double tic : yTics) {
             if (tic < workingMinY || tic > workingMaxY)
                 continue;
             double y = dataYToViewY(tic);
-            canvas.drawText(String.format("%."+yPrecision+"g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            try {
+                canvas.drawText(String.format("%."+yPrecision+"g", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                canvas.drawText(String.format("%."+yPrecision+"f", tic), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            }
         }
         if (zScale) {
             paint.setTextAlign(Paint.Align.CENTER);
@@ -1046,7 +1072,12 @@ public class GraphView extends View {
                 if (tic < workingMinZ || tic > workingMaxZ)
                     continue;
                 double x = dataZToViewX(tic);
-                canvas.drawText(String.format("%."+zPrecision+"g", tic), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                try {
+                    canvas.drawText(String.format("%."+zPrecision+"g", tic), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                    canvas.drawText(String.format("%."+zPrecision+"f", tic), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                }
             }
         }
 

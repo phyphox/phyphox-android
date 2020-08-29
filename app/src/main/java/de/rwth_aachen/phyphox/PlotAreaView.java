@@ -49,7 +49,7 @@ class CurveData {
     int n;
     GraphView.Style style;
     float color[] = new float[4];
-    transient floatBufferRepresentation fbX, fbY;
+    transient FloatBufferRepresentation fbX, fbY;
 }
 
 class GraphSetup {
@@ -181,7 +181,7 @@ class GraphSetup {
             Matrix.orthoM(positionMatrix, 0, l, r, b, t, -1, 1);
     }
 
-    public void setData(floatBufferRepresentation x[], floatBufferRepresentation y[], int n, GraphView.Style style[], int mapWidth[], PlotRenderer plotRenderer) {
+    public void setData(FloatBufferRepresentation x[], FloatBufferRepresentation y[], int n, GraphView.Style style[], int mapWidth[], PlotRenderer plotRenderer) {
         for (int i = 0; i < n; i++) {
             if (dataSets.size() <= i) {
                 CurveData newData = new CurveData();

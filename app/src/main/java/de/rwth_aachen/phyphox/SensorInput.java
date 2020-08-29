@@ -13,21 +13,22 @@ import java.util.concurrent.locks.Lock;
 
 //The sensorInput class encapsulates a sensor, maps their name from the phyphox-file format to
 //  the android identifiers and handles their output, which is written to the dataBuffers
-public class sensorInput implements SensorEventListener, Serializable {
+public class SensorInput implements SensorEventListener, Serializable {
 
     public int type; //Sensor type (Android identifier)
+    public SensorName sensorName; //Sensor name (phyphox identifier)
     public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     private SensorInputTimeReference sensorInputTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
 
     public boolean ignoreUnavailable = false;
 
-    public dataBuffer dataX; //Data-buffer for x
-    public dataBuffer dataY; //Data-buffer for y (3D sensors only)
-    public dataBuffer dataZ; //Data-buffer for z (3D sensors only)
-    public dataBuffer dataT; //Data-buffer for t
-    public dataBuffer dataAbs; //Data-buffer for absolute value
-    public dataBuffer dataAccuracy; //Data-buffer for absolute value
+    public DataBuffer dataX; //Data-buffer for x
+    public DataBuffer dataY; //Data-buffer for y (3D sensors only)
+    public DataBuffer dataZ; //Data-buffer for z (3D sensors only)
+    public DataBuffer dataT; //Data-buffer for t
+    public DataBuffer dataAbs; //Data-buffer for absolute value
+    public DataBuffer dataAccuracy; //Data-buffer for absolute value
     transient private SensorManager sensorManager; //Hold the sensor manager
 
     private long lastReading; //Remember the time of the last reading to fullfill the rate
@@ -75,7 +76,7 @@ public class sensorInput implements SensorEventListener, Serializable {
         }
     }
 
-    private sensorInput(boolean ignoreUnavailable, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
+    private SensorInput(boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
         this.dataLock = lock;
         this.sensorInputTimeReference = sensorInputTimeReference;
 
@@ -109,20 +110,23 @@ public class sensorInput implements SensorEventListener, Serializable {
 
     //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
     // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    public sensorInput(SensorName type, boolean ignoreUnavailable, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
+    public SensorInput(SensorName type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
         this(ignoreUnavailable, rate, average, buffers, lock, sensorInputTimeReference);
 
         this.type = resolveSensorName(type);
+        this.sensorName = type;
         if (this.type < 0)
             throw new SensorException("Unknown sensor.");
     }
 
-    public sensorInput(String type, boolean ignoreUnavailable, double rate, boolean average, Vector<dataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
+    public SensorInput(String type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
         this(ignoreUnavailable, rate, average, buffers, lock, sensorInputTimeReference);
 
         this.type = resolveSensorString(type);
         if (this.type < 0)
             throw new SensorException("Unknown sensor.");
+
+        this.sensorName = SensorName.valueOf(type);
     }
 
     private Sensor findSensor() {
@@ -137,13 +141,19 @@ public class sensorInput implements SensorEventListener, Serializable {
                     continue;
                 String name = s.getName().toLowerCase();
                 if (type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
-                    if (name.contains("temperature") || name.contains("thermo")) {
+                    if (name.toLowerCase().contains("temperature") || name.toLowerCase().contains("thermo")) {
                         sensor = s;
                         break;
                     }
                 }
                 if (type == Sensor.TYPE_RELATIVE_HUMIDITY) {
-                    if (name.contains("humidity")) {
+                    if (name.toLowerCase().contains("humidity")) {
+                        sensor = s;
+                        break;
+                    }
+                }
+                if (type == Sensor.TYPE_PRESSURE) {
+                    if (name.toLowerCase().contains("pressure")) {
                         sensor = s;
                         break;
                     }
@@ -202,7 +212,7 @@ public class sensorInput implements SensorEventListener, Serializable {
     }
 
     public int getDescriptionRes() {
-        return sensorInput.getDescriptionRes(type);
+        return SensorInput.getDescriptionRes(type);
     }
 
     public static String getUnit(int type) {
@@ -294,7 +304,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                 avgX += event.values[0];
                 if (event.values.length > 1) {
                     avgY += event.values[1];
-                    avgZ += event.values[2];
+                    if (event.values.length > 2)
+                        avgZ += event.values[2];
                 }
 
                 avgAccuracy = Math.min(accuracy, avgAccuracy);
@@ -304,7 +315,8 @@ public class sensorInput implements SensorEventListener, Serializable {
                 avgX = event.values[0];
                 if (event.values.length > 1) {
                     avgY = event.values[1];
-                    avgZ = event.values[2];
+                    if (event.values.length > 2)
+                        avgZ = event.values[2];
                 }
                 avgAccuracy = accuracy;
                 aquisitions = 1;
