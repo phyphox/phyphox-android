@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+        <item android:id="@+id/experiment_item_share"
+            android:title="@string/save_state_share"
+            android:orderInCategory="1" />
         <item android:id="@+id/experiment_item_rename"
             android:title="@string/rename"
-            android:orderInCategory="1" />
+            android:orderInCategory="2" />
         <item android:id="@+id/experiment_item_delete"
             android:title="@string/delete"
-            android:orderInCategory="2" />
+            android:orderInCategory="3" />
 </menu>

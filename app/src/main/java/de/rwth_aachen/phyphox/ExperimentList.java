@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -68,7 +69,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.caverock.androidsvg.SVG;
 import com.caverock.androidsvg.SVGParseException;
@@ -87,11 +90,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -327,6 +332,27 @@ public class ExperimentList extends AppCompatActivity {
                             @Override
                             public boolean onMenuItemClick(MenuItem menuItem) {
                                 switch (menuItem.getItemId()) {
+                                    case R.id.experiment_item_share: {
+                                        File file = new File(getFilesDir(), "/"+xmlFiles.get(position));
+
+                                        final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                                        final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
+                                                .setType("application/octet-stream") //mime type from the export filter
+                                                .setSubject(getString(R.string.save_state_subject))
+                                                .setStream(uri)
+                                                .getIntent()
+                                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                                        List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                                        for (ResolveInfo ri : resInfoList) {
+                                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        }
+
+                                        //Execute this intent
+                                        startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
+                                        return true;
+                                    }
                                     case R.id.experiment_item_delete: {
                                         //Create dialog to ask the user if he REALLY wants to delete...
                                         AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
@@ -606,6 +632,13 @@ public class ExperimentList extends AppCompatActivity {
         return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
     }
 
+    private void addInvalidExperiment(String xmlFile, String message, boolean isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        Log.e("list:loadExperiment", message);
+        if (categories != null)
+            addExperiment(xmlFile, getString(R.string.unknown), 0xffff0000, new TextIcon("!", this), message, xmlFile, isTemp, isAsset, -1, categories);
+    }
+
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
     private void loadExperimentInfo(InputStream input, String experimentXML, boolean isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories, HashMap<String, Vector<String>> bluetoothDeviceNameList, HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList) {
         XmlPullParser xpp;
@@ -827,13 +860,13 @@ public class ExperimentList extends AppCompatActivity {
 
             //Sanity check: We need a title!
             if (title.equals("")) {
-                Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a title.", Toast.LENGTH_LONG).show();
+                addInvalidExperiment(experimentXML,  "Invalid: \" + experimentXML + \" misses a title.", isTemp, isAsset, categories);
                 return;
             }
 
             //Sanity check: We need a category!
             if (category.equals("")) {
-                Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a category.", Toast.LENGTH_LONG).show();
+                addInvalidExperiment(experimentXML,  "Invalid: \" + experimentXML + \" misses a category.", isTemp, isAsset, categories);
                 return;
             }
 
@@ -854,11 +887,9 @@ public class ExperimentList extends AppCompatActivity {
                 addExperiment(title, category, color, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
-            Toast.makeText(this, "Error loading " + experimentXML + " (XML Exception)", Toast.LENGTH_LONG).show();
-            Log.e("list:loadExperiment", "Error loading " + experimentXML + " (XML Exception)", e);
+            addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (XML Exception)", isTemp, isAsset, categories);
         } catch (IOException e) { //IOException... Abort and notify user.
-            Toast.makeText(this, "Error loading " + experimentXML + " (IOException)", Toast.LENGTH_LONG).show();
-            Log.e("list:loadExperiment", "Error loading " + experimentXML + " (IOException)", e);
+            addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (IOException)", isTemp, isAsset, categories);
         }
     }
 
