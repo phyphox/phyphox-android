@@ -197,7 +197,6 @@ public abstract class PhyphoxFile {
                 Uri uri = intent.getData();
                 try {
                     URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
-                    Log.d("TEST", url.toString());
                     phyphoxStream.inputStream = url.openStream();
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {

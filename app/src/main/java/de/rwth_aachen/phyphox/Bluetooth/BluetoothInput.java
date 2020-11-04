@@ -106,13 +106,11 @@ public class BluetoothInput extends Bluetooth {
     }
 
     private void subscribeToNotifications() throws BluetoothException {
-        if (mode.equals("notification")) {
-            // turn on characteristic notification for each characteristic
-            for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                boolean result = btGatt.setCharacteristicNotification(c, true);
-                if (!result) {
-                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
-                }
+        // turn on characteristic notification for each characteristic
+        for (BluetoothGattCharacteristic c : mapping.keySet()) {
+            boolean result = btGatt.setCharacteristicNotification(c, true);
+            if (!result) {
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
             }
         }
 
