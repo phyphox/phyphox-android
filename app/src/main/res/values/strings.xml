@@ -141,6 +141,26 @@ NOTICES FOR JCOMMANDER<br />
 Copyright 2010 Cedric Beust cedric@beust.com
 ]]>
     </string>
+    <string name="creditsPahoMQTT" translatable="false">
+        <![CDATA[
+        <b>Eclipse Paho MQTT</b><br />
+        MQTT communication uses the Eclipse Paho MQTT library (https://www.eclipse.org/paho), licenced under the Eclipse Distribution Licence 1.0 (please see the webpage for details on the licence and contributors). <br />
+        <br />
+Eclipse Distribution License - v 1.0<br />
+<br />
+Copyright (c) 2007, Eclipse Foundation, Inc. and its licensors.<br />
+<br />
+All rights reserved.<br />
+<br />
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:<br />
+<br />
+    Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.<br />
+    Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.<br />
+    Neither the name of the Eclipse Foundation, Inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.<br />
+<br />
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<br />
+]]>
+    </string>
 
     <string name="sensorLinearAcceleration">Linear Acceleration</string>
     <string name="sensorLight">Light</string>

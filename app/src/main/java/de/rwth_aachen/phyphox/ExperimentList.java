@@ -2030,6 +2030,8 @@ public class ExperimentList extends AppCompatActivity {
                                 tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
                                 TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
                                 tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
+                                TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
+                                tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
 
                                 //Finish alertDialog builder
                                 credits.setView(creditLayout);
