@@ -517,9 +517,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     public void connectNetworkConnections() {
         for (NetworkConnection networkConnection : experiment.networkConnections) {
-            if (networkConnection.specificAddress == null)
+            if (networkConnection.specificAddress == null) {
                 networkConnection.connect(this);
-            return;
+                return;
+            }
         }
         connectBluetoothDevices(false, false);
     }

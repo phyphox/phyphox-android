@@ -295,6 +295,7 @@ public class NetworkService {
                                 @Override
                                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
                                     subscribed = false;
+                                    Log.e("MQTT", "Connection failure: " + exception.getMessage());
                                 }
                             });
 
@@ -308,6 +309,7 @@ public class NetworkService {
                 public void connectionLost(Throwable cause) {
                     connected = false;
                     subscribed = false;
+                    Log.e("MQTT", "Connection lost: " + cause.getMessage());
                 }
 
                 @Override
