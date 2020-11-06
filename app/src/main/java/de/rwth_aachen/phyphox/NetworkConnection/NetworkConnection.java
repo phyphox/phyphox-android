@@ -301,7 +301,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                 displayErrorMessage("Network error: The connection timed out.");
                 break;
             case success:
-                byte[] data = service.getResults();
+                byte[][] data = service.getResults();
                 if (data != null) {
                     try {
                         conversion.prepare(data);
