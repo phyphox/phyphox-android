@@ -271,10 +271,19 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "attribute float positionY;" +
 
             "varying vec4 v_color;" +
+            "varying float invalid;" +
 
             "float posX, posY;" +
 
+            " bool isinvalid( float val ) {" +
+            "    return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;" +
+            "}" +
+
             "void main () {" +
+            "   if (isinvalid(positionX) || isinvalid(positionY))" +
+            "       invalid = 1.0;" +
+            "   else" +
+            "       invalid = 0.0;" +
             "   v_color = in_color;" +
             "   if (logXY == 1 || logXY == 3)" +
             "       posX = log(positionX);" +
@@ -290,10 +299,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     final String fragmentShader =
             "precision mediump float;" +
-
+            "varying float invalid;" +
             "varying vec4 v_color;" +
 
             "void main () {" +
+            "   if (invalid > 0.0)" +
+            "       discard;" +
             "   gl_FragColor = v_color;" +
             "}";
 
