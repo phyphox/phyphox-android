@@ -138,10 +138,10 @@ public abstract class PhyphoxFile {
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
                     }
-                } else if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false)) {
+                } else if (intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP) != null) {
                     //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
                     try {
-                        File tempDir = new File(parent.getFilesDir(), "temp");
+                        File tempDir = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP));
                         phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
