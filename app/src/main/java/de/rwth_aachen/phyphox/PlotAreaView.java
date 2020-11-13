@@ -276,13 +276,16 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "float posX, posY;" +
 
             " bool isinvalid( float val ) {" +
-            "    return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;" +
+            "    return val < -3.3e38;" + //see getFloatBuffer(...) in DataBuffer.java for explanation
             "}" +
 
             "void main () {" +
-            "   if (isinvalid(positionX) || isinvalid(positionY))" +
-            "       invalid = 1.0;" +
-            "   else" +
+            "   if (isinvalid(positionX) || isinvalid(positionY)) {" + //There is a NaN or +/-Inf in any of the
+            "       invalid = 1.0;" +                                  //Mark invalid for fragment shader (only works for line to this point if the value is interpolated (i.e. not on the HTC One X)
+            "       gl_Position = vec4(0.0/0.0, -1.0/0.0, 1.0/0.0, 0.0/0.0);" +  //Break calculation by setting positions to NaN/Inf, skips rendering this line on most devices
+            "       gl_PointSize = 0.0;" +                             //Set point size to zero to skip if all else fails (hopefully)
+            "       return;" +
+            "   } else" +
             "       invalid = 0.0;" +
             "   v_color = in_color;" +
             "   if (logXY == 1 || logXY == 3)" +
