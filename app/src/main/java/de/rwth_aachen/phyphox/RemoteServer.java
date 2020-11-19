@@ -370,7 +370,7 @@ public class RemoteServer extends Thread {
                     InetAddress inetAddress = enumInetAddress.nextElement();
 
                     //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
-                    if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address && !filterMobile.equals(inetAddress)) {
+                    if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address && !inetAddress.equals(filterMobile)) {
                         ret += "http://" + inetAddress.getHostAddress() + ":" + HttpServerPORT + "\n";
                     }
 
