@@ -2875,6 +2875,10 @@ public abstract class PhyphoxFile {
             } catch (IOException e) { //Catch IO errors
                 experiment.message = "Unhandled IO error while loading this experiment: " + e.getMessage();
                 return experiment;
+            } catch (RuntimeException e) { //Those are a thing, too... For example, for some reason an undefined xml prefix throws a RuntimeException.
+                experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
+                return experiment;
+
             }
 
             //Sanity check: If the experiment did not define any views, we cannot use it
