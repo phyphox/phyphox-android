@@ -62,7 +62,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.10";
+    public final static String phyphoxFileVersion = "1.11";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -138,10 +138,10 @@ public abstract class PhyphoxFile {
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
                     }
-                } else if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false)) {
+                } else if (intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP) != null) {
                     //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
                     try {
-                        File tempDir = new File(parent.getFilesDir(), "temp");
+                        File tempDir = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP));
                         phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e) {
@@ -196,13 +196,13 @@ public abstract class PhyphoxFile {
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
                 try {
-                    URL url = new URL("https", uri.getHost(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
+                    URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                     phyphoxStream.inputStream = url.openStream();
                     remoteInputToMemory(phyphoxStream);
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
-                        URL url = new URL("http", uri.getHost(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
+                        URL url = new URL("http", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                         phyphoxStream.inputStream = url.openStream();
                         remoteInputToMemory(phyphoxStream);
                     } catch (Exception e2) {
@@ -1767,6 +1767,23 @@ public abstract class PhyphoxFile {
                             case "http/post":
                                 service = new NetworkService.HttpPost();
                                 break;
+                            case "mqtt/csv": {
+                                    String receiveTopicStr = getStringAttribute("receiveTopic");
+                                    if (receiveTopicStr == null)
+                                        receiveTopicStr = "";
+                                    service = new NetworkService.MqttCsv(receiveTopicStr, parent.getApplicationContext());
+                                }
+                                break;
+                            case "mqtt/json": {
+                                    String receiveTopicStr = getStringAttribute("receiveTopic");
+                                    String sendTopicStr = getStringAttribute("sendTopic");
+                                    if (receiveTopicStr == null)
+                                        receiveTopicStr = "";
+                                    if (sendTopicStr == null || sendTopicStr.isEmpty())
+                                        throw new phyphoxFileException("sendTopic must be set for the mqtt/json service. Use mqtt/csv if you do not intent to send anything.", xpp.getLineNumber());
+                                    service = new NetworkService.MqttJson(receiveTopicStr, sendTopicStr, parent.getApplicationContext());
+                                }
+                                break;
                             default:
                                 throw new phyphoxFileException("Unknown service "+serviceStr, xpp.getLineNumber());
                         }
@@ -1778,6 +1795,9 @@ public abstract class PhyphoxFile {
                         switch (conversionStr) {
                             case "none":
                                 conversion = new NetworkConversion.None();
+                                break;
+                            case "csv":
+                                conversion = new NetworkConversion.Csv();
                                 break;
                             case "json":
                                 conversion = new NetworkConversion.Json();
@@ -1856,7 +1876,7 @@ public abstract class PhyphoxFile {
 
                     String id = getStringAttribute("id");
                     if (id == null)
-                        throw new phyphoxFileException("Missing id in send element.", xpp.getLineNumber());
+                        throw new phyphoxFileException("Missing id in receive element.", xpp.getLineNumber());
 
                     boolean clear = getBooleanAttribute("clear", false);
 
@@ -2855,6 +2875,10 @@ public abstract class PhyphoxFile {
             } catch (IOException e) { //Catch IO errors
                 experiment.message = "Unhandled IO error while loading this experiment: " + e.getMessage();
                 return experiment;
+            } catch (RuntimeException e) { //Those are a thing, too... For example, for some reason an undefined xml prefix throws a RuntimeException.
+                experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
+                return experiment;
+
             }
 
             //Sanity check: If the experiment did not define any views, we cannot use it

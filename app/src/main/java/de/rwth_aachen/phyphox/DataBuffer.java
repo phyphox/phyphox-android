@@ -316,7 +316,24 @@ public class DataBuffer implements Serializable {
             Iterator it = getIterator();
             int i = 0;
             while (it.hasNext() && i < n) {
-                data.put((float) (double) it.next());
+                double x = (double) it.next();
+                if ((Double.isNaN(x) || Double.isInfinite(x)))
+                    data.put(-3.4e38f);
+                else
+                    data.put((float) x);
+                //This is a bit hacky, but should work in any reasonable situation. Some OpenGL ES
+                // implementations (HTC One X, some Samsungs, ...) seem to not properly handle NaN,
+                // which makes it impossible to detect invalid data points in the vertex and/or
+                // fragment shader. The behavior seems to be unspecified with some devices
+                // interpreting NaN as zero (Samsung?) and some devices failing all subsequent
+                // calculations ans eventually interpreting the resulting NaN as zero (HTC One X
+                // draws a line to the canvas zero coordinate.
+                // The value 3.4e38f is close to the smallest possible number represented by a
+                // float32 (I do not dare to use the exact minimum as it might be altered by
+                // rounding or shader optimization), so it should not occur by accident in any
+                // reasonable use case and we use it to tag invalid values. The vertex shader will
+                // simply check for values below -3.3e38f and mark them for the fragment shader to
+                // be discarded.
                 i++;
             }
             floatCopy = new FloatBufferRepresentation(data, 0, n);

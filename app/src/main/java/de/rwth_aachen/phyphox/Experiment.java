@@ -517,9 +517,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     public void connectNetworkConnections() {
         for (NetworkConnection networkConnection : experiment.networkConnections) {
-            if (networkConnection.specificAddress == null)
+            if (networkConnection.specificAddress == null) {
                 networkConnection.connect(this);
-            return;
+                return;
+            }
         }
         connectBluetoothDevices(false, false);
     }
@@ -1572,7 +1573,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         remote.start();
 
         //Announce this to the user as there are security concerns.
-        final String addressList = RemoteServer.getAddresses().replaceAll("\\s+$", "");
+        final String addressList = RemoteServer.getAddresses(getBaseContext()).replaceAll("\\s+$", "");
         if (addressList.isEmpty())
             announcer.setText(res.getString(R.string.remoteServerNoNetwork));
         else
