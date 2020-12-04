@@ -5,7 +5,13 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.LinkAddress;
+import android.net.LinkProperties;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 
@@ -51,6 +57,7 @@ import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -332,8 +339,28 @@ public class RemoteServer extends Thread {
     }
 
     //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
-    public static String getAddresses() {
+    public static String getAddresses(Context context) {
         String ret = "";
+        Inet4Address filterMobile = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            Network networks[] = connectivityManager.getAllNetworks();
+            for (Network network : networks) {
+                NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+                if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                    continue;
+                }
+                LinkProperties properties = connectivityManager.getLinkProperties(network);
+                Iterator<LinkAddress> iterator = properties.getLinkAddresses().iterator();
+                while (iterator.hasNext()) {
+                    LinkAddress address = iterator.next();
+                    if (address.getAddress() instanceof Inet4Address) {
+                        filterMobile = (Inet4Address) address.getAddress();
+                        break;
+                    }
+                }
+            }
+        }
         try {
             Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
             while (enumNetworkInterfaces.hasMoreElements()) { //For each network interface
@@ -343,7 +370,7 @@ public class RemoteServer extends Thread {
                     InetAddress inetAddress = enumInetAddress.nextElement();
 
                     //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
-                    if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                    if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address && !inetAddress.equals(filterMobile)) {
                         ret += "http://" + inetAddress.getHostAddress() + ":" + HttpServerPORT + "\n";
                     }
 

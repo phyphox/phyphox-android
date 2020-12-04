@@ -92,6 +92,17 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
                 android:layout_marginTop="@dimen/lib_margin" />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/creditsPahoMQTT"
+                android:id="@+id/creditsPahoMQTT"
+                android:textSize="@dimen/credit_font"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="@dimen/lib_margin" />
         </LinearLayout>
     </ScrollView>
 

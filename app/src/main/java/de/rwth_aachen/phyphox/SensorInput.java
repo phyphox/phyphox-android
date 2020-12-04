@@ -304,7 +304,8 @@ public class SensorInput implements SensorEventListener, Serializable {
                 avgX += event.values[0];
                 if (event.values.length > 1) {
                     avgY += event.values[1];
-                    avgZ += event.values[2];
+                    if (event.values.length > 2)
+                        avgZ += event.values[2];
                 }
 
                 avgAccuracy = Math.min(accuracy, avgAccuracy);
@@ -314,7 +315,8 @@ public class SensorInput implements SensorEventListener, Serializable {
                 avgX = event.values[0];
                 if (event.values.length > 1) {
                     avgY = event.values[1];
-                    avgZ = event.values[2];
+                    if (event.values.length > 2)
+                        avgZ = event.values[2];
                 }
                 avgAccuracy = accuracy;
                 aquisitions = 1;

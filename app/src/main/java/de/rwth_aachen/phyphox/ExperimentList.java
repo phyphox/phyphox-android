@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -68,7 +69,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.caverock.androidsvg.SVG;
 import com.caverock.androidsvg.SVGParseException;
@@ -79,19 +82,23 @@ import com.google.zxing.integration.android.IntentResult;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -106,6 +113,8 @@ import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 
+import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
+
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
 
@@ -113,7 +122,7 @@ public class ExperimentList extends AppCompatActivity {
 
     //Strings which define extra information for intents starting an experiment from local files
     public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
-    public final static String EXPERIMENT_ISTEMP= "com.dicon.phyphox.EXPERIMENT_ISTEMP";
+    public final static String EXPERIMENT_ISTEMP = "com.dicon.phyphox.EXPERIMENT_ISTEMP";
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
     public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
     public final static String EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS= "com.dicon.phyphox.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS";
@@ -155,7 +164,7 @@ public class ExperimentList extends AppCompatActivity {
         Vector<String> titles = new Vector<>(); //List of titles for each experiment
         Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
         Vector<String> xmlFiles = new Vector<>(); //List of xmlFile name for each experiment (has to be provided in the intent if the user wants to load this)
-        Vector<Boolean> isTemp = new Vector<>(); //List of booleans for each experiment, which track whether the file is a temporary file
+        Vector<String> isTemp = new Vector<>(); //List of booleans for each experiment, which track whether the file is a temporary file
         Vector<Boolean> isAsset = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
         Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
 
@@ -211,7 +220,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
+        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -306,7 +315,7 @@ public class ExperimentList extends AppCompatActivity {
             }
 
             //Handle the menubutton. Set it visible only for non-assets
-            if (isTemp.get(position) || isAsset.get(position))
+            if (isTemp.get(position) != null || isAsset.get(position))
                 holder.menuBtn.setVisibility(ImageView.GONE); //Asset - no menu button
             else {
                 //No asset. Menu button visible and it needs an onClickListener
@@ -325,6 +334,27 @@ public class ExperimentList extends AppCompatActivity {
                             @Override
                             public boolean onMenuItemClick(MenuItem menuItem) {
                                 switch (menuItem.getItemId()) {
+                                    case R.id.experiment_item_share: {
+                                        File file = new File(getFilesDir(), "/"+xmlFiles.get(position));
+
+                                        final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                                        final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
+                                                .setType("application/octet-stream") //mime type from the export filter
+                                                .setSubject(getString(R.string.save_state_subject))
+                                                .setStream(uri)
+                                                .getIntent()
+                                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                                        List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                                        for (ResolveInfo ri : resInfoList) {
+                                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        }
+
+                                        //Execute this intent
+                                        startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
+                                        return true;
+                                    }
                                     case R.id.experiment_item_delete: {
                                         //Create dialog to ask the user if he REALLY wants to delete...
                                         AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
@@ -533,7 +563,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
-        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor) {
+        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor) {
             experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor);
             Integer n = colorCount.get(color);
             if (n == null)
@@ -584,7 +614,7 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, int color, Drawable image, String description, String xmlFile, boolean isTemp, boolean isAsset, Integer unavailableSensor, Vector<ExperimentsInCategory> categories) {
+    private void addExperiment(String exp, String cat, int color, Drawable image, String description, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, Vector<ExperimentsInCategory> categories) {
         //Check all categories for the category of the new experiment
         for (ExperimentsInCategory icat : categories) {
             if (icat.hasName(cat)) {
@@ -604,8 +634,15 @@ public class ExperimentList extends AppCompatActivity {
         return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
     }
 
+    private void addInvalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        Log.e("list:loadExperiment", message);
+        if (categories != null)
+            addExperiment(xmlFile, getString(R.string.unknown), 0xffff0000, new TextIcon("!", this), message, xmlFile, isTemp, isAsset, -1, categories);
+    }
+
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
-    private void loadExperimentInfo(InputStream input, String experimentXML, boolean isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories, HashMap<String, Vector<String>> bluetoothDeviceNameList, HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList) {
+    private void loadExperimentInfo(InputStream input, String experimentXML, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories, HashMap<String, Vector<String>> bluetoothDeviceNameList, HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList) {
         XmlPullParser xpp;
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             //Prepare the PullParser
@@ -825,13 +862,13 @@ public class ExperimentList extends AppCompatActivity {
 
             //Sanity check: We need a title!
             if (title.equals("")) {
-                Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a title.", Toast.LENGTH_LONG).show();
+                addInvalidExperiment(experimentXML,  "Invalid: \" + experimentXML + \" misses a title.", isTemp, isAsset, categories);
                 return;
             }
 
             //Sanity check: We need a category!
             if (category.equals("")) {
-                Toast.makeText(this, "Cannot add " + experimentXML + " as it misses a category.", Toast.LENGTH_LONG).show();
+                addInvalidExperiment(experimentXML,  "Invalid: \" + experimentXML + \" misses a category.", isTemp, isAsset, categories);
                 return;
             }
 
@@ -852,11 +889,9 @@ public class ExperimentList extends AppCompatActivity {
                 addExperiment(title, category, color, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
-            Toast.makeText(this, "Error loading " + experimentXML + " (XML Exception)", Toast.LENGTH_LONG).show();
-            Log.e("list:loadExperiment", "Error loading " + experimentXML + " (XML Exception)", e);
+            addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (XML Exception)", isTemp, isAsset, categories);
         } catch (IOException e) { //IOException... Abort and notify user.
-            Toast.makeText(this, "Error loading " + experimentXML + " (IOException)", Toast.LENGTH_LONG).show();
-            Log.e("list:loadExperiment", "Error loading " + experimentXML + " (IOException)", e);
+            addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (IOException)", isTemp, isAsset, categories);
         }
     }
 
@@ -885,9 +920,11 @@ public class ExperimentList extends AppCompatActivity {
             });
 
             for (File file : files) {
+                if (file.isDirectory())
+                    continue;
                 //Load details for each experiment
                 InputStream input = openFileInput(file.getName());
-                loadExperimentInfo(input, file.getName(), false, false, categories, null, null);
+                loadExperimentInfo(input, file.getName(), null, false, categories, null, null);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list. " + e.toString(), Toast.LENGTH_LONG).show();
@@ -902,7 +939,7 @@ public class ExperimentList extends AppCompatActivity {
                 if (!experimentXML.endsWith(".phyphox"))
                     continue;
                 InputStream input = assetManager.open("experiments/" + experimentXML);
-                loadExperimentInfo(input, experimentXML, false,true, categories, null, null);
+                loadExperimentInfo(input, experimentXML, null,true, categories, null, null);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list. " + e.toString(), Toast.LENGTH_LONG).show();
@@ -921,7 +958,7 @@ public class ExperimentList extends AppCompatActivity {
             for (String experimentXML : experimentXMLs) {
                 //Load details for each experiment
                 InputStream input = assetManager.open("experiments/bluetooth/" + experimentXML);
-                loadExperimentInfo(input, experimentXML, false,true, null, bluetoothDeviceNameList, bluetoothDeviceUUIDList);
+                loadExperimentInfo(input, experimentXML, null,true, null, bluetoothDeviceNameList, bluetoothDeviceUUIDList);
             }
         } catch (IOException e) {
             Toast.makeText(this, "Error: Could not load internal experiment list.", Toast.LENGTH_LONG).show();
@@ -936,6 +973,92 @@ public class ExperimentList extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadExperimentList();
+    }
+
+    //This asyncTask extracts a zip file to a temporary directory
+    //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
+    protected static class handleCopyIntent extends AsyncTask<String, Void, String> {
+        private Intent intent; //The intent to read from
+        private WeakReference<ExperimentList> parent;
+        private File file = null;
+
+        //The constructor takes the intent to copy from and the parent activity to call back when finished.
+        handleCopyIntent(Intent intent, ExperimentList parent) {
+            this.intent = intent;
+            this.parent = new WeakReference<ExperimentList>(parent);
+        }
+
+        //Copying is done on a second thread...
+        protected String doInBackground(String... params) {
+            PhyphoxFile.PhyphoxStream phyphoxStream = PhyphoxFile.openXMLInputStream(intent, parent.get());
+            if (!phyphoxStream.errorMessage.isEmpty()) {
+                return phyphoxStream.errorMessage;
+            }
+
+            //Copy the input stream to a random file name
+            try {
+                //Prepare temporary directory
+                File tempPath = new File(parent.get().getFilesDir(), "temp");
+                if (!tempPath.exists()) {
+                    if (!tempPath.mkdirs())
+                        return "Could not create temporary directory to store temporary file.";
+                }
+                String[] files = tempPath.list();
+                for (String file : files) {
+                    if (!(new File(tempPath, file).delete()))
+                        return "Could not clear temporary directory for temporary file.";
+                }
+
+                //Copy the input stream to a random file name
+                try {
+                    file = new File(tempPath, UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"); //Random file name
+                    FileOutputStream output = new FileOutputStream(file);
+                    byte[] buffer = new byte[1024];
+                    int count;
+                    while ((count = phyphoxStream.inputStream.read(buffer)) != -1)
+                        output.write(buffer, 0, count);
+                    output.close();
+                    phyphoxStream.inputStream.close();
+                } catch (Exception e) {
+                    file = null;
+                    return "Error during file transfer: " + e.getMessage();
+                }
+            } catch (Exception e) {
+                file = null;
+                return "Error loading file: " + e.getMessage();
+            }
+
+            return "";
+        }
+
+        @Override
+        //Call the parent callback when we are done.
+        protected void onPostExecute(String result) {
+            if (!result.isEmpty()) {
+                parent.get().showError(result);
+                return;
+            }
+
+            if (file == null) {
+                parent.get().showError("File is null.");
+                return;
+            }
+
+            //Create an intent for this file
+            Intent intent = new Intent(parent.get(), Experiment.class);
+            intent.setData(Uri.fromFile(file));
+            intent.putExtra(EXPERIMENT_ISTEMP, "temp");
+            intent.setAction(Intent.ACTION_VIEW);
+
+            //Open the file
+            parent.get().handleIntent(intent);
+        }
+    }
+
+    void showError(String error) {
+        if (progress != null)
+            progress.dismiss();
+        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }
 
     //This asyncTask extracts a zip file to a temporary directory
@@ -967,7 +1090,7 @@ public class ExperimentList extends AppCompatActivity {
             //Copy the input stream to a random file name
             try {
                 //Prepare temporary directory
-                File tempPath = new File(parent.get().getFilesDir(), "temp");
+                File tempPath = new File(parent.get().getFilesDir(), "temp_zip");
                 if (!tempPath.exists()) {
                     if (!tempPath.mkdirs())
                         return "Could not create temporary directory to extract zip file.";
@@ -1015,7 +1138,7 @@ public class ExperimentList extends AppCompatActivity {
         if (progress != null)
             progress.dismiss();
         if (result.isEmpty()) {
-            File tempPath = new File(getFilesDir(), "temp");
+            File tempPath = new File(getFilesDir(), "temp_zip");
             final File[] files = tempPath.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String filename) {
@@ -1076,7 +1199,7 @@ public class ExperimentList extends AppCompatActivity {
                     //Load details for each experiment
                     try {
                         InputStream input = new FileInputStream(file);
-                        loadExperimentInfo(input, file.getName(), true, false, zipExperiments, null, null);
+                        loadExperimentInfo(input, file.getName(), "temp_zip", false, zipExperiments, null, null);
                         input.close();
                     } catch (IOException e) {
                         Log.e("zip", e.getMessage());
@@ -1138,7 +1261,21 @@ public class ExperimentList extends AppCompatActivity {
         currentBluetoothData = null;
         currentBluetoothDataSize = 0;
         currentBluetoothDataIndex = 0;
+
         final BluetoothGatt gatt = device.connectGatt(this, false, new BluetoothGattCallback() {
+
+            private void disconnect(final BluetoothGatt gatt) {
+                //If phyphoxExperimentControlCharacteristicUUID is available, we can tell the device that we are no longer expecting the transfer by writing 0
+                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                if (phyphoxService != null) {
+                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
+                    if (experimentControlCharacteristic != null) {
+                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
+                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                    }
+                }
+                gatt.disconnect();
+            }
 
             BluetoothGattDescriptor descriptor = null;
 
@@ -1196,6 +1333,7 @@ public class ExperimentList extends AppCompatActivity {
 
             @Override
             public void onCharacteristicChanged(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+
                 if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
                     return;
                 byte[] data = characteristic.getValue();
@@ -1206,7 +1344,7 @@ public class ExperimentList extends AppCompatActivity {
                             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                             gatt.writeDescriptor(descriptor);
                         }
-                        gatt.disconnect();
+                        disconnect(gatt);
                         showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid header)", device);
                     }
                     currentBluetoothDataSize = 0;
@@ -1241,7 +1379,7 @@ public class ExperimentList extends AppCompatActivity {
                                         descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                                         gatt.writeDescriptor(descriptor);
                                     }
-                                    gatt.disconnect();
+                                    disconnect(gatt);
                                 }
                             });
                             progress.setProgress(0);
@@ -1266,7 +1404,7 @@ public class ExperimentList extends AppCompatActivity {
                             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                             gatt.writeDescriptor(descriptor);
                         }
-                        gatt.disconnect();
+                        disconnect(gatt);
 
                         /*
                         StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
@@ -1357,8 +1495,27 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
-                    gatt.disconnect();
+                    disconnect(gatt);
                     showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write)", device);
+                }
+            }
+
+            @Override
+            public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    disconnect(gatt);
+                    showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write descriptor)", device);
+                    return;
+                }
+
+                //If phyphoxExperimentControlCharacteristicUUID is also present, the device expects us to initiate transfer by setting it to 1. This is a work-around for BLE libraries that cannot react to subscriptions
+                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                if (phyphoxService != null) {
+                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
+                    if (experimentControlCharacteristic != null) {
+                        experimentControlCharacteristic.setValue(1, FORMAT_UINT8, 0);
+                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                    }
                 }
             }
         });
@@ -1366,6 +1523,14 @@ public class ExperimentList extends AppCompatActivity {
         progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true, true, new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialogInterface) {
+                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
+                if (phyphoxService != null) {
+                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
+                    if (experimentControlCharacteristic != null) {
+                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
+                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                    }
+                }
                 gatt.disconnect();
                 progress.dismiss();
             }
@@ -1469,7 +1634,7 @@ public class ExperimentList extends AppCompatActivity {
             //Load details for each experiment
             try {
                 InputStream input = assetManager.open("experiments/bluetooth/"+file);
-                loadExperimentInfo(input, "bluetooth/"+file, true, true, bluetoothExperiments, null, null);
+                loadExperimentInfo(input, "bluetooth/"+file, "bluetooth", true, bluetoothExperiments, null, null);
                 input.close();
             } catch (IOException e) {
                 Log.e("bluetooth", e.getMessage());
@@ -1489,11 +1654,16 @@ public class ExperimentList extends AppCompatActivity {
 
 
     protected void handleIntent(Intent intent) {
+
+
+        if (progress != null)
+            progress.dismiss();
+
         String scheme = intent.getScheme();
         if (scheme == null)
             return;
         boolean isZip = false;
-        if (scheme.equals(ContentResolver.SCHEME_FILE) || scheme.equals("phyphox")) {
+        if (scheme.equals(ContentResolver.SCHEME_FILE)) {
             if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 //Android 6.0: No permission? Request it!
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
@@ -1501,20 +1671,38 @@ public class ExperimentList extends AppCompatActivity {
                 return;
             }
             Uri uri = intent.getData();
-            isZip = (uri != null && intent.getData().getPath().endsWith(".zip"));
-        } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
-            String type = intent.getType();
-            isZip = type != null && type.equals("application/zip");
-        }
-        if (!isZip) {
-            //This is just a single experiment - Start the Experiment activity and let it handle the intent
-            Intent forwardedIntent = new Intent(intent);
-            forwardedIntent.setClass(this, Experiment.class);
-            this.startActivity(forwardedIntent);
-        } else {
-            //We got a zip-file. Let's see what's inside...
+
+            byte[] data = new byte[4];
+            InputStream is;
+            try {
+                is = this.getContentResolver().openInputStream(uri);
+                if (is.read(data, 0, 4) < 4) {
+                    Toast.makeText(this, "Error: File truncated.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+            } catch (FileNotFoundException e) {
+                Toast.makeText(this, "Error: File not found.", Toast.LENGTH_LONG).show();
+                return;
+            } catch (IOException e) {
+                Toast.makeText(this, "Error: IOException.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            isZip = (data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04);
+
+            if (!isZip) {
+                //This is just a single experiment - Start the Experiment activity and let it handle the intent
+                Intent forwardedIntent = new Intent(intent);
+                forwardedIntent.setClass(this, Experiment.class);
+                this.startActivity(forwardedIntent);
+            } else {
+                //We got a zip-file. Let's see what's inside...
+                progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+                new handleZipIntent(intent, this).execute();
+            }
+        } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-            new handleZipIntent(intent, this).execute();
+            new handleCopyIntent(intent, this).execute();
         }
     }
 
@@ -1786,6 +1974,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
         String textResult;
         if (scanResult != null && (textResult = scanResult.getContents()) != null) {
@@ -1952,6 +2141,8 @@ public class ExperimentList extends AppCompatActivity {
                                 tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
                                 TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
                                 tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
+                                TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
+                                tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
 
                                 //Finish alertDialog builder
                                 credits.setView(creditLayout);
@@ -2609,7 +2800,6 @@ public class ExperimentList extends AppCompatActivity {
                     //Create an intent for this new file
                     Intent intent = new Intent(c, Experiment.class);
                     intent.putExtra(EXPERIMENT_XML, file);
-                    intent.putExtra(EXPERIMENT_ISTEMP, false);
                     intent.putExtra(EXPERIMENT_ISASSET, false);
                     intent.setAction(Intent.ACTION_VIEW);
 

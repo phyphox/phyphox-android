@@ -107,6 +107,9 @@ public class ExpView implements Serializable{
                         experiment.getBuffer(buffer).register(this);
                 }
             }
+            if (valueOutput != null) {
+                experiment.getBuffer(valueOutput).register(this);
+            }
             needsUpdate = true;
         }
 
@@ -450,7 +453,7 @@ public class ExpView implements Serializable{
 
             sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
             for (Mapping map : mappings) {
-                String str = map.str.replace("<","&lt;").replace(">","&gt;");
+                String str = map.str.replace("<","&lt;").replace(">","&gt;").replace("\"","\\\"");
                 if (!map.max.isInfinite() && !map.min.isInfinite()) {
                     sb.append("else if (x >= " + map.min + " && x <= " + map.max + ") {v = \"" + str + "\";}");
                 } else if (!map.max.isInfinite()) {
@@ -629,7 +632,7 @@ public class ExpView implements Serializable{
         private Double max = Double.POSITIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
-        private boolean triggered = false;
+        private boolean triggered = true;
 
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -870,6 +873,11 @@ public class ExpView implements Serializable{
         }
 
         @Override
+        protected void clear() {
+            triggered = true;
+        }
+
+        @Override
         //The javascript function which updates the content of the input as it is updated on the phone
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
@@ -966,6 +974,8 @@ public class ExpView implements Serializable{
         }
 
         public void requestFinished(NetworkService.ServiceResult result) {
+            if (parent == null)
+                return;
             parent.getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

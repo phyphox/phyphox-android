@@ -157,7 +157,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     private void leaveExperiment(Activity activity) {
-        if (experiment.analysisTime - experiment.firstAnalysisTime > 10000) {
+        if (experiment != null && experiment.analysisTime - experiment.firstAnalysisTime > 10000) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.leave_experiment_question))
                     .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
@@ -517,9 +517,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     public void connectNetworkConnections() {
         for (NetworkConnection networkConnection : experiment.networkConnections) {
-            if (networkConnection.specificAddress == null)
+            if (networkConnection.specificAddress == null) {
                 networkConnection.connect(this);
-            return;
+                return;
+            }
         }
         connectBluetoothDevices(false, false);
     }
@@ -1369,7 +1370,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 try {
                     //Get values from input views only if there isn't fresh data from the remote server which might get overridden
                     if (!remoteInput) {
-                        experiment.handleInputViews(tabLayout.getSelectedTabPosition(), measuring);
+                        experiment.handleInputViews(measuring);
                     }
                     //Update all the views currently visible
                     if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
@@ -1572,7 +1573,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         remote.start();
 
         //Announce this to the user as there are security concerns.
-        final String addressList = RemoteServer.getAddresses().replaceAll("\\s+$", "");
+        final String addressList = RemoteServer.getAddresses(getBaseContext()).replaceAll("\\s+$", "");
         if (addressList.isEmpty())
             announcer.setText(res.getString(R.string.remoteServerNoNetwork));
         else

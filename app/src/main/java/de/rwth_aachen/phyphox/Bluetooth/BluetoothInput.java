@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
@@ -106,23 +107,27 @@ public class BluetoothInput extends Bluetooth {
     }
 
     private void subscribeToNotifications() throws BluetoothException {
-        if (mode.equals("notification")) {
-            // turn on characteristic notification for each characteristic
-            for (BluetoothGattCharacteristic c : mapping.keySet()) {
-                boolean result = btGatt.setCharacteristicNotification(c, true);
-                if (!result) {
-                    throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
-                }
+        // turn on characteristic notification for each characteristic
+        for (BluetoothGattCharacteristic c : mapping.keySet()) {
+            boolean result = btGatt.setCharacteristicNotification(c, true);
+            if (!result) {
+                throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notification) + " " + c.getUuid().toString() + " " + context.getResources().getString(R.string.bt_exception_notification_enable), this);
             }
         }
 
         for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CONFIG_DESCRIPTOR);
             if (descriptor != null) {
-                if (mode.equals("notification"))
+                int properties = characteristic.getProperties();
+                if ((properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0)
                     descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                else
+                else if ((properties & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0)
                     descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                else {
+                    Log.e("BLE", "Characteristic properties neither support notify nor indicate. Trying notify anyways.");
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                }
+
                 cdl = new CancellableLatch(1);
                 add(new WriteDescriptorCommand(btGatt, descriptor));
                 boolean result = false;
@@ -190,7 +195,7 @@ public class BluetoothInput extends Bluetooth {
     @Override
     public void closeConnection() {
         // disable descriptor for notification
-        if (!subscribeOnStart && mode.equals("notification")) {
+        if (!subscribeOnStart && (mode.equals("notification") || mode.equals("indication"))) {
             unsubscribeFromNotifications();
         }
         super.closeConnection(); // close connection
@@ -238,7 +243,7 @@ public class BluetoothInput extends Bluetooth {
     @Override
     public void stop() {
 
-        if (subscribeOnStart && mode.equals("notification")) {
+        if (subscribeOnStart && (mode.equals("notification") || mode.equals("indication"))) {
             unsubscribeFromNotifications();
         }
 

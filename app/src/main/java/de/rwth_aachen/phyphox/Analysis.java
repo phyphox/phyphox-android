@@ -2038,7 +2038,7 @@ public class Analysis {
                             norm += gauss[j + calcWidth];
                     }
                 }
-                if (i < calcWidth || i > y.length-calcWidth)
+                if (i < calcWidth || i > y.length-calcWidth - 1)
                     sum /= norm;
                 outputs.get(0).append(sum); //Append the result to the output buffer
             }
