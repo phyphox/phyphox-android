@@ -38,7 +38,7 @@ public class AudioOutput {
             if (input == null)
                 return;
             Double[] data = input.getArray();
-            if (data == null)
+            if (data == null || data.length == 0)
                 return;
 
             if (loop) {
