@@ -19,6 +19,7 @@ import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.DataOutput;
 import de.rwth_aachen.phyphox.PhyphoxFile;
@@ -53,7 +54,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * Start time of the measurement or last measurement before a break to allow timestamps relative to the beginning of a measurement
      */
-    private long t0 = 0;
+    private ExperimentTimeReference experimentTimeReference;
 
     /**
      * Data-buffers
@@ -84,7 +85,7 @@ public class BluetoothInput extends Bluetooth {
      * @param characteristics  list of all characteristics the object should be able to operate on
      * @throws PhyphoxFile.phyphoxFileException if the value for rate is invalid.
      */
-    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, boolean autoConnect, double rate, boolean subscribeOnStart, Vector<DataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics)
+    public BluetoothInput(String idString, String deviceName, String deviceAddress, String mode, UUID uuidFilter, boolean autoConnect, double rate, boolean subscribeOnStart, Vector<DataOutput> buffers, Lock lock, Activity activity, Context context, Vector<CharacteristicData> characteristics, ExperimentTimeReference experimentTimeReference)
             throws PhyphoxFile.phyphoxFileException {
 
         super(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics);
@@ -102,6 +103,8 @@ public class BluetoothInput extends Bluetooth {
             this.period = 0; // as fast as possible
         else
             this.period = (long) ((1 / rate) * 1e9); //period in ns
+
+        this.experimentTimeReference = experimentTimeReference;
 
         this.data = buffers;
     }
@@ -210,9 +213,6 @@ public class BluetoothInput extends Bluetooth {
     @Override
     public void start() throws BluetoothException {
         outputs = new HashMap<>();
-        if (!isRunning) { // don't reset t0 if the experiment is already running and bluetooth just paused because connection errors
-            this.t0 = 0; //Reset t0. This will be set by the first sensor event
-        }
 
         if (mode.equals("poll")) {
             final Runnable readData = new Runnable() {
@@ -300,20 +300,8 @@ public class BluetoothInput extends Bluetooth {
             return; //Experiment has not started yet. Discard early events.
 
         ArrayList<Characteristic> characteristics = mapping.get(characteristic);
-        long t = System.nanoTime();
-        // set t0 if it is not yet set
-        if (t0 == 0) {
-            t0 = t;
-            // find the last time data was retrieved
-            double max = 0;
-            for (Integer i : saveTime.values()) {
-                DataOutput dataOutput = this.data.get(i);
-                if (dataOutput != null && dataOutput.getFilledSize() > 0 && dataOutput.getValue() > max) {
-                    max = dataOutput.getValue();
-                }
-            }
-            t0 -= max * 1e9;
-        }
+        double t = experimentTimeReference.getExperimentTime();
+
         double[] outputs = new double[characteristics.size()];
         for (Characteristic c : characteristics) {
             outputs[characteristics.indexOf(c)] = convertData(data, c.inputConversionFunction);
@@ -328,7 +316,7 @@ public class BluetoothInput extends Bluetooth {
             }
             // append time to buffer if extra=time is set
             if (saveTime.containsKey(characteristic)) {
-                this.data.get(saveTime.get(characteristic)).append((t - t0) / 1e9);
+                this.data.get(saveTime.get(characteristic)).append(t);
                 this.data.get(saveTime.get(characteristic)).markSet();
             }
         } finally {
@@ -341,19 +329,7 @@ public class BluetoothInput extends Bluetooth {
      * Write data from all Characteristics to the buffers (mode "poll").
      */
     private void retrieveData() {
-        long t = System.nanoTime();
-
-        // set t0 if it is not yet set
-        if (t0 == 0) {
-            t0 = t;
-            for (Integer i : saveTime.values()) {
-                DataOutput dataOutput = data.get(i);
-                if (dataOutput != null && dataOutput.getFilledSize() > 0) {
-                    t0 -= dataOutput.getValue() * 1e9;
-                    break;
-                }
-            }
-        }
+        double t = experimentTimeReference.getExperimentTime();
 
         //Append the data to available buffers
         dataLock.lock();
@@ -366,7 +342,7 @@ public class BluetoothInput extends Bluetooth {
             }
             // append time to buffers
             for (Integer i : saveTime.values()) {
-                data.get(i).append((t - t0) / 1e9);
+                data.get(i).append(t);
                 data.get(i).markSet();
             }
         } finally {

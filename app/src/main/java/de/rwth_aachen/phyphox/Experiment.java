@@ -157,7 +157,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     private void leaveExperiment(Activity activity) {
-        if (experiment != null && experiment.analysisTime - experiment.firstAnalysisTime > 10000) {
+        if (experiment != null && experiment.analysisTime > 10.0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.leave_experiment_question))
                     .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
@@ -1545,11 +1545,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         } finally {
             experiment.dataLock.unlock();
         }
+        experiment.experimentTimeReference.reset();
         experiment.newData = true;
         experiment.newUserInput = true;
         if (remote != null && serverEnabled)
             remote.forceFullUpdate = true;
-        experiment.firstAnalysisTime = 0;
     }
 
     //Start the remote server (see remoteServer class)

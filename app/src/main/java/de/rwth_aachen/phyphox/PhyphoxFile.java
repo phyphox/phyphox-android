@@ -1574,7 +1574,7 @@ public abstract class PhyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
+                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (SensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
@@ -1612,7 +1612,7 @@ public abstract class PhyphoxFile {
                     Vector<DataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
-                    experiment.gpsIn = new GpsInput(outputs, experiment.dataLock);
+                    experiment.gpsIn = new GpsInput(outputs, experiment.dataLock, experiment.experimentTimeReference);
                     experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
 
                     if (!GpsInput.isAvailable(parent)) {
@@ -1710,7 +1710,7 @@ public abstract class PhyphoxFile {
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
-                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
+                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics, experiment.experimentTimeReference);
                                 if (mtu > 0)
                                     b.requestMTU = mtu;
                                 experiment.bluetoothInputs.add(b);

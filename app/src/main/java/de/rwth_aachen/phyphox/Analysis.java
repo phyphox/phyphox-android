@@ -310,7 +310,7 @@ public class Analysis {
 
         @Override
         protected void update() {
-            outputs.get(0).append((experiment.analysisTime - experiment.firstAnalysisTime)/1000.);
+            outputs.get(0).append(experiment.analysisTime);
         }
     }
 
