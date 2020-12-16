@@ -216,7 +216,7 @@
 
         </GridLayout>
 
-        <Switch
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/applyZoomAdvanced"
             android:text="@string/applyZoomAdvanced"
             android:layout_marginTop="@dimen/activity_vertical_margin"

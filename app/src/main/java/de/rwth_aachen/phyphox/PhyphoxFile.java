@@ -55,14 +55,13 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConversion;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkDiscovery;
-import de.rwth_aachen.phyphox.NetworkConnection.NetworkMetadata;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.11";
+    public final static String phyphoxFileVersion = "1.12";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -989,6 +988,9 @@ public abstract class PhyphoxFile {
                 case "data-containers": //The data-containers block defines all buffers used in this experiment
                     (new dataContainersBlockParser(xpp, experiment, parent)).process();
                     break;
+                case "events": //The events block stores events and their timestamps
+                    (new eventsBlockParser(xpp, experiment, parent)).process();
+                    break;
                 case "views": //A Views block may contain multiple view-blocks
                     (new viewsBlockParser(xpp, experiment, parent)).process();
                     break;
@@ -1111,7 +1113,7 @@ public abstract class PhyphoxFile {
                     if (!isValidIdentifier(name))
                         throw new phyphoxFileException("\"" + name + "\" is not a valid name for a data-container.", xpp.getLineNumber());
 
-                    DataBuffer newBuffer = experiment.createBuffer(name, size);
+                    DataBuffer newBuffer = experiment.createBuffer(name, size, experiment.experimentTimeReference);
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
@@ -1130,6 +1132,38 @@ public abstract class PhyphoxFile {
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
+        }
+
+    }
+
+    //Blockparser for the events block
+    private static class eventsBlockParser extends xmlBlockParser {
+
+        eventsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+            super(xpp, experiment, parent);
+        }
+
+        @Override
+        protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
+            ExperimentTimeReference.TimeMappingEvent event;
+            switch (tag.toLowerCase()) {
+                case "start":
+                    event = ExperimentTimeReference.TimeMappingEvent.START;
+                    break;
+                case "pause":
+                    event = ExperimentTimeReference.TimeMappingEvent.PAUSE;
+                    break;
+                default: //Unknown tag
+                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+            }
+            Double experimentTime = getDoubleAttribute("experimentTime", -1.0);
+            String systemTimeStr = getStringAttribute("systemTime");
+            if (systemTimeStr == null)
+                throw new phyphoxFileException("An event requires both, an experiment time and a system time.", xpp.getLineNumber());
+            Long systemTime = Long.parseLong(systemTimeStr);
+            if (experimentTime < 0 || systemTime < 0)
+                throw new phyphoxFileException("An event requires both, an experiment time and a system time.", xpp.getLineNumber());
+            experiment.experimentTimeReference.timeMappings.add(experiment.experimentTimeReference.new TimeMapping(event, experimentTime, 0, systemTime));
         }
 
     }
@@ -1315,6 +1349,9 @@ public abstract class PhyphoxFile {
                             }
                         }
                     }
+                    boolean timeOnX = getBooleanAttribute("timeOnX", false);
+                    boolean timeOnY = getBooleanAttribute("timeOnY", false);
+                    boolean systemTime = getBooleanAttribute("systemTime", false);
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
@@ -1390,6 +1427,7 @@ public abstract class PhyphoxFile {
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
+                    ge.setTimeAxes(timeOnX, timeOnY, systemTime);
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     if (!globalColor) {
@@ -1861,10 +1899,12 @@ public abstract class PhyphoxFile {
                     } else if (type.equals("meta")) {
                         String metaName = getText();
                         try {
-                            sendable = new NetworkConnection.NetworkSendableData(new NetworkMetadata(metaName, parent));
+                            sendable = new NetworkConnection.NetworkSendableData(new Metadata(metaName, parent));
                         } catch (IllegalArgumentException e) {
                             throw new phyphoxFileException("Unknown meta data \"" + metaName + "\".", xpp.getLineNumber());
                         }
+                    } else if (type.equals("time")) {
+                        sendable = new NetworkConnection.NetworkSendableData(experiment.experimentTimeReference);
                     } else {
                         throw new phyphoxFileException("Unknown type \"" + type + "\".", xpp.getLineNumber());
                     }

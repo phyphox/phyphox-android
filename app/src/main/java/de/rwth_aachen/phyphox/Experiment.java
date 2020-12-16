@@ -1009,6 +1009,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 }
                             } catch (Exception e) {
                                 Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                Log.e("updateData", "Unhandled exception.", e);
                                 return;
                             }
                             Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
@@ -1030,6 +1031,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 }
                             } catch (Exception e) {
                                 Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                Log.e("updateData", "Unhandled exception.", e);
                                 return;
                             }
 
@@ -1047,8 +1049,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             }
 
+
+                            //Create chooser
+                            Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                            //And finally grant permissions again for any activities created by the chooser
+                            resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                            for (ResolveInfo ri : resInfoList) {
+                                if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                                ))
+                                    continue;
+                                grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            }
                             //Execute this intent
-                            startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
+                            startActivity(chooser);
                         }
                     })
                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -1129,7 +1142,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
 
-                startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
+                //Create chooser
+                Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                //And finally grant permissions again for any activities created by the chooser
+                resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                for (ResolveInfo ri : resInfoList) {
+                    if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                    ))
+                        continue;
+                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+                //Execute this intent
+                startActivity(chooser);
             } catch (Exception e) {
                 Log.e("action_share", "Unhandled exception", e);
             }

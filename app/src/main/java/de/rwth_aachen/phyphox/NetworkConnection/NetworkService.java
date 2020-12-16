@@ -25,10 +25,15 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+
+import de.rwth_aachen.phyphox.ExperimentTimeReference;
 
 public class NetworkService {
 
@@ -90,6 +95,10 @@ public class NetworkService {
 
         @Override
         protected HttpTaskResult doInBackground(HttpTaskParameters... params) {
+            DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+            longformat.applyPattern("############0.000");
+            longformat.setGroupingUsed(false);
+
             parameters = params[0];
 
             try {
@@ -98,10 +107,12 @@ public class NetworkService {
                 if (!parameters.usePost) {
                     for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : parameters.send.entrySet()) {
                         String value = "";
-                        if (item.getValue().metadata != null)
+                        if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
                             value = item.getValue().metadata.get(parameters.address);
-                        else if (item.getValue().buffer != null)
+                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER)
                             value = String.valueOf(item.getValue().buffer.value);
+                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME)
+                            value = String.valueOf(longformat.format(System.currentTimeMillis()/1000.0));
                         uri = uri.buildUpon().appendQueryParameter(item.getKey(), value).build();
                     }
                 }
@@ -118,9 +129,9 @@ public class NetworkService {
 
                     JSONObject json = new JSONObject();
                     for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : parameters.send.entrySet()) {
-                        if (item.getValue().metadata != null)
+                        if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
                             json.put(item.getKey(), item.getValue().metadata.get(parameters.address));
-                        else if (item.getValue().buffer != null) {
+                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER) {
                             String datatype = item.getValue().additionalAttributes != null ? item.getValue().additionalAttributes.get("datatype") : null;
                             if (datatype != null && datatype.equals("number")) {
                                 double v = item.getValue().buffer.value;
@@ -138,6 +149,19 @@ public class NetworkService {
                                 }
                                 json.put(item.getKey(), jsonArray);
                             }
+                        } else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME) {
+                            JSONObject timeInfo = new JSONObject();
+                            timeInfo.put("now", System.currentTimeMillis()/1000.0);
+                            JSONArray events = new JSONArray();
+                            for (ExperimentTimeReference.TimeMapping timeMapping : item.getValue().timeReference.timeMappings) {
+                                JSONObject eventJson = new JSONObject();
+                                eventJson.put("event", timeMapping.event.name());
+                                eventJson.put("experimentTime", timeMapping.experimentTime);
+                                eventJson.put("systemTime", timeMapping.systemTime/1000.);
+                                events.put(eventJson);
+                            }
+                            timeInfo.put("events", events);
+                            json.put(item.getKey(), timeInfo);
                         }
                     }
 
@@ -373,6 +397,10 @@ public class NetworkService {
         }
 
         public void execute(Map<String, NetworkConnection.NetworkSendableData> send, List<RequestCallback> requestCallbacks) {
+            DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+            longformat.applyPattern("############0.000");
+            longformat.setGroupingUsed(false);
+
             ServiceResult result;
             if (!connected) {
                 result = new ServiceResult(ResultEnum.noConnection, null);
@@ -382,9 +410,9 @@ public class NetworkService {
                 try {
                     for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : send.entrySet()) {
                         String payload;
-                        if (item.getValue().metadata != null)
+                        if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
                             payload = item.getValue().metadata.get(address);
-                        else if (item.getValue().buffer != null) {
+                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER) {
                             String datatype = item.getValue().additionalAttributes != null ? item.getValue().additionalAttributes.get("datatype") : null;
                             if (datatype != null && datatype.equals("number")) {
                                 if (item.getValue().buffer.getFilledSize() == 0)
@@ -409,7 +437,9 @@ public class NetworkService {
                                 }
                                 payload = sb.toString();
                             }
-                        } else
+                        } else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME)
+                            payload = String.valueOf(longformat.format(System.currentTimeMillis()/1000.0));
+                        else
                             continue;
                         MqttMessage message = new MqttMessage();
                         message.setPayload(payload.getBytes());
@@ -440,6 +470,7 @@ public class NetworkService {
         }
 
         public void execute(Map<String, NetworkConnection.NetworkSendableData> send, List<RequestCallback> requestCallbacks) {
+
             ServiceResult result;
             if (!connected) {
                 result = new ServiceResult(ResultEnum.noConnection, null);
@@ -449,9 +480,9 @@ public class NetworkService {
                 try {
                     JSONObject json = new JSONObject();
                     for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : send.entrySet()) {
-                        if (item.getValue().metadata != null)
+                        if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
                             json.put(item.getKey(), item.getValue().metadata.get(address));
-                        else if (item.getValue().buffer != null) {
+                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER) {
                             String datatype = item.getValue().additionalAttributes != null ? item.getValue().additionalAttributes.get("datatype") : null;
                             if (datatype != null && datatype.equals("number")) {
                                 double v = item.getValue().buffer.value;
@@ -469,6 +500,19 @@ public class NetworkService {
                                 }
                                 json.put(item.getKey(), jsonArray);
                             }
+                        } else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME) {
+                            JSONObject timeInfo = new JSONObject();
+                            timeInfo.put("now", System.currentTimeMillis()/1000.0);
+                            JSONArray events = new JSONArray();
+                            for (ExperimentTimeReference.TimeMapping timeMapping : item.getValue().timeReference.timeMappings) {
+                                JSONObject eventJson = new JSONObject();
+                                eventJson.put("event", timeMapping.event.name());
+                                eventJson.put("experimentTime", timeMapping.experimentTime);
+                                eventJson.put("systemTime", timeMapping.systemTime/1000.);
+                                events.put(eventJson);
+                            }
+                            timeInfo.put("events", events);
+                            json.put(item.getKey(), timeInfo);
                         }
                     }
 

@@ -46,7 +46,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
-public class PhyphoxExperiment implements Serializable {
+public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.Listener {
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
@@ -106,15 +106,23 @@ public class PhyphoxExperiment implements Serializable {
     //The constructor will just instantiate the DataExport. Everything else will be set directly by the phyphoxFile loading function (see phyphoxFile.java)
     PhyphoxExperiment() {
         exporter = new DataExport(this);
-        experimentTimeReference = new ExperimentTimeReference();
+        experimentTimeReference = new ExperimentTimeReference(this);
+    }
+
+    public void onExperimentTimeReferenceUpdated(ExperimentTimeReference experimentTimeReference) {
+        for (ExpView ev : experimentViews) {
+            for (ExpView.expViewElement eve : ev.elements) {
+                eve.onTimeReferenceUpdate(experimentTimeReference);
+            }
+        }
     }
 
     //Create a new buffer
-    public DataBuffer createBuffer(String key, int size) {
+    public DataBuffer createBuffer(String key, int size, ExperimentTimeReference experimentTimeReference) {
         if (key == null)
             return null;
 
-        DataBuffer output = new DataBuffer(key, size);
+        DataBuffer output = new DataBuffer(key, size, experimentTimeReference);
         dataBuffers.add(output);
         dataMap.put(key, dataBuffers.size() - 1);
         return output;
@@ -317,7 +325,7 @@ public class PhyphoxExperiment implements Serializable {
         if (!loaded)
             return;
 
-        experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.EXPERIMENT_PAUSE);
+        experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
         lastAnalysis = 0.0;
 
         //Recording
@@ -353,7 +361,7 @@ public class PhyphoxExperiment implements Serializable {
         if (!loaded)
             return;
 
-        experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.EXPERIMENT_START);
+        experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.START);
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
 
@@ -439,9 +447,8 @@ public class PhyphoxExperiment implements Serializable {
 
         NodeList children = root.getChildNodes();
         for (int i = 0; i < children.getLength(); i++)
-            if (children.item(i).getNodeName().equals("state-title") || children.item(i).getNodeName().equals("color"))
+            if (children.item(i).getNodeName().equals("state-title") || children.item(i).getNodeName().equals("color") || children.item(i).getNodeName().equals("events") )
                 root.removeChild(children.item(i));
-
 
         Element customTitleEl = doc.createElement("state-title");
         customTitleEl.setTextContent(customTitle);
@@ -451,6 +458,15 @@ public class PhyphoxExperiment implements Serializable {
         colorEl.setTextContent("blue");
         root.appendChild(colorEl);
 
+        Element eventsEl = doc.createElement("events");
+        for (ExperimentTimeReference.TimeMapping event : experimentTimeReference.timeMappings) {
+
+            Element eventEl = doc.createElement(event.event.name().toLowerCase());
+            eventEl.setAttribute("experimentTime", event.experimentTime.toString());
+            eventEl.setAttribute("systemTime", Long.toString(event.systemTime));
+            eventsEl.appendChild(eventEl);
+        }
+        root.appendChild(eventsEl);
 
         NodeList containers = root.getElementsByTagName("data-containers");
         if (containers.getLength() != 1)

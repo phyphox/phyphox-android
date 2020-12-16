@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.NetworkConnection;
+package de.rwth_aachen.phyphox;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,32 +18,32 @@ import de.rwth_aachen.phyphox.SensorInput;
 
 import static android.content.Context.SENSOR_SERVICE;
 
-public class NetworkMetadata {
+public class Metadata {
 
-    enum SensorMetadata {
+    public enum SensorMetadata {
         Name, Vendor, Range, Resolution, MinDelay, MaxDelay, Power, Version
     }
 
-    enum Metadata {
+    public enum DeviceMetadata {
         uniqueID, version, build, fileFormat, deviceModel, deviceBrand, deviceBoard, deviceManufacturer, deviceBaseOS, deviceCodename, deviceRelease, sensorMetadata
     }
 
-    Metadata metadata;
-    SensorMetadata sensorMetadata = null;
-    SensorInput.SensorName sensor = null;
+    public DeviceMetadata metadata;
+    public SensorMetadata sensorMetadata = null;
+    public SensorInput.SensorName sensor = null;
 
     String resultBuffer;
 
-    public NetworkMetadata(String identifier, Context ctx) throws IllegalArgumentException {
+    public Metadata(String identifier, Context ctx) throws IllegalArgumentException {
         try {
-            metadata = Metadata.valueOf(identifier);
+            metadata = DeviceMetadata.valueOf(identifier);
             resultBuffer = getBuffered(ctx);
             return;
         } catch (IllegalArgumentException e) {
             for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
                 if (identifier.startsWith(sensor.name())) {
                     sensorMetadata = SensorMetadata.valueOf(identifier.substring(sensor.name().length()));
-                    metadata = Metadata.sensorMetadata;
+                    metadata = DeviceMetadata.sensorMetadata;
                     this.sensor = sensor;
                     resultBuffer = getBuffered(ctx);
                     return;
@@ -148,7 +148,7 @@ public class NetworkMetadata {
     }
 
     public String get(String hash) {
-        if (metadata == Metadata.uniqueID) {
+        if (metadata == DeviceMetadata.uniqueID) {
             return new String(Hex.encodeHex(DigestUtils.md5(resultBuffer + hash)));
         } else {
             return resultBuffer;
