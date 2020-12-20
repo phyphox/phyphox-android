@@ -2500,7 +2500,9 @@ public class Analysis {
 
             for (int i = 0; i < n; i++) {
                 for (int out = 0; out < outputs.size() && out < inputArrays.size(); out++) {
-                    outputs.get(out).append(inputArrays.get(out)[indexArray[i]]);
+                    Double[] inputArray = inputArrays.get(out);
+                    int index = indexArray[i];
+                    outputs.get(out).append(index < inputArray.length ? inputArray[index] : Double.NaN);
                 }
             }
 
