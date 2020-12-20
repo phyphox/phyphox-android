@@ -195,7 +195,7 @@ public class DataExport implements Serializable {
                         ZipEntry entry;
                         entry = new ZipEntry("meta/device.csv");
                         zstream.putNextEntry(entry);
-                        zstream.write(("property"+separator+"value\n").getBytes());
+                        zstream.write(("\"property\""+separator+"\"value\"\n").getBytes());
 
                         StringBuilder data = new StringBuilder();
                         for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
@@ -217,7 +217,7 @@ public class DataExport implements Serializable {
 
                         entry = new ZipEntry("meta/time.csv");
                         zstream.putNextEntry(entry);
-                        zstream.write(("event"+separator+"experiment time"+separator+"system time"+separator+"system time text\n").getBytes());
+                        zstream.write(("\"event\""+separator+"\"experiment time\""+separator+"\"system time\""+separator+"\"system time text\"\n").getBytes());
 
                         DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
                         longformat.applyPattern("############0.000");

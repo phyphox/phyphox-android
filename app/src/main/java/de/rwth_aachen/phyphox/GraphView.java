@@ -1037,7 +1037,7 @@ public class GraphView extends View {
         return tics; //Done
     }
 
-    private String formatTic(double value, double min, double max, int precision, boolean isTime, double systemTimeOffset) {
+    private String formatTic(double value, int precision, boolean isTime, double systemTimeOffset) {
         if (isTime && systemTimeOffset > 0) {
             double alignedOffset = systemTimeOffset + TimeZone.getDefault().getRawOffset()/1000.0;
             if (Math.abs(Math.round(value + alignedOffset) % (24*60*60)) < 0.0001) //If the time stamp is on 00:00:00, we show the date instead
@@ -1215,7 +1215,7 @@ public class GraphView extends View {
         int graphL = 0;
         int graphT = 0;
         for (double tic : yTics) {
-            double tw = paint.measureText(formatTic(tic, workingMinY, workingMaxY, yPrecision, timeOnY, systemTimeOffsetY)) + res.getDimension(R.dimen.graph_font) / 2.;
+            double tw = paint.measureText(formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY)) + res.getDimension(R.dimen.graph_font) / 2.;
             if (tw > graphL)
                 graphL = (int)Math.ceil(tw);
         }
@@ -1248,14 +1248,14 @@ public class GraphView extends View {
             if (tic < workingMinX || tic > workingMaxX)
                 continue;
             double x = dataXToViewX(tic);
-            canvas.drawText(formatTic(tic, workingMinX, workingMaxX, xPrecision, timeOnX, systemTimeOffsetX), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            canvas.drawText(formatTic(tic, xPrecision, timeOnX, systemTimeOffsetX), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (double tic : yTics) {
             if (tic < workingMinY || tic > workingMaxY)
                 continue;
             double y = dataYToViewY(tic);
-            canvas.drawText(formatTic(tic, workingMinY, workingMaxY, yPrecision, timeOnY, systemTimeOffsetY), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            canvas.drawText(formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
         }
         if (zScale) {
             paint.setTextAlign(Paint.Align.CENTER);
@@ -1263,7 +1263,7 @@ public class GraphView extends View {
                 if (tic < workingMinZ || tic > workingMaxZ)
                     continue;
                 double x = dataZToViewX(tic);
-                canvas.drawText(formatTic(tic, workingMinZ, workingMaxZ, zPrecision, false, 0), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                canvas.drawText(formatTic(tic, zPrecision, false, 0), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
             }
         }
 
