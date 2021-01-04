@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
@@ -850,8 +851,12 @@ public class ExpView implements Serializable{
                     currentValue = defaultValue;
                 else
                     currentValue = v;
-                if (et != null)
-                    et.setText(String.valueOf(currentValue*factor));
+                if (et != null) {
+                    if (decimal)
+                        et.setText(String.valueOf(currentValue * factor));
+                    else
+                        et.setText(String.format(Locale.US, "%.0f", currentValue * factor));
+                }
             }
         }
 
