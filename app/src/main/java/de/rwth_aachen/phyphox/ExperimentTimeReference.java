@@ -101,9 +101,22 @@ public class ExperimentTimeReference {
         return getExperimentTimeFromEvent(eventTime);
     }
 
+    public double getLinearTime() {
+        if (timeMappings.isEmpty())
+            return 0.0;
+        return (System.currentTimeMillis() - timeMappings.get(0).systemTime) * 0.001;
+    }
+
     public int getReferenceIndexFromExperimentTime(double t) {
         int i = 0;
         while (timeMappings.size() > i+1 && timeMappings.get(i+1).experimentTime <= t)
+            i++;
+        return i;
+    }
+
+    public int getReferenceIndexFromSystemTime(long t) {
+        int i = 0;
+        while (timeMappings.size() > i+1 && timeMappings.get(i+1).systemTime <= t)
             i++;
         return i;
     }
@@ -112,6 +125,12 @@ public class ExperimentTimeReference {
         if (timeMappings.isEmpty())
             return 0;
         return timeMappings.get(i).systemTime;
+    }
+
+    public boolean getPausedByIndex(int i) {
+        if (timeMappings.isEmpty())
+            return true;
+        return timeMappings.get(i).event == TimeMappingEvent.PAUSE;
     }
 
     public double getExperimentTimeReferenceByIndex(int i) {

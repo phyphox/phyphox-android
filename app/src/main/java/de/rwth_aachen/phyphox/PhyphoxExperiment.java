@@ -75,7 +75,8 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     DataBuffer analysisDynamicSleep = null;
     double lastAnalysis = 0.0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
-    double analysisTime; //This variable holds the system time of the moment the current analysis process started.
+    double analysisTime; //This variable holds the experiment time of the moment the current analysis process started.
+    double analysisLinearTime; //Same with the current system time
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
     boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
@@ -240,6 +241,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             cycle = 0;
         dataLock.lock();
         analysisTime = experimentTimeReference.getExperimentTime();
+        analysisLinearTime = experimentTimeReference.getLinearTime();
 
         //Call all the analysis modules and let them do their work.
         try {

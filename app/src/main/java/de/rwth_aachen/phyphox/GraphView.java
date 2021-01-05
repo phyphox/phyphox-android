@@ -89,6 +89,7 @@ public class GraphView extends View {
     public boolean timeOnX = false; //x-axis is time axis?
     public boolean timeOnY = false; //y-axis is time axis?
     public boolean absoluteTime = false; //Use system time on time axis instead of experiment time
+    public boolean linearTime = false; //Time data is given in seconds since 1970, ignoring pauses (in constrast to experiment time)
     public boolean logX = false; //logarithmic scale for the x-axis?
     public boolean logY = false; //logarithmic scale for the y-axis?
     public boolean logZ = false; //logarithmic scale for the y-axis?
@@ -686,10 +687,15 @@ public class GraphView extends View {
         if (!Double.isInfinite(histMaxZ))
             dataMaxZ = histMaxZ;
 
-        if (timeOnX && absoluteTime && graphSetup.systemTimeReferenceGap.size() > 0)
+        if (timeOnX && absoluteTime && !linearTime && graphSetup.systemTimeReferenceGap.size() > 0)
             dataMaxX += graphSetup.systemTimeReferenceGap.get(graphSetup.systemTimeReferenceGap.size()-1);
-        if (timeOnY && absoluteTime && graphSetup.systemTimeReferenceGap.size() > 0)
+        if (timeOnY && absoluteTime && !linearTime && graphSetup.systemTimeReferenceGap.size() > 0)
             dataMaxY += graphSetup.systemTimeReferenceGap.get(graphSetup.systemTimeReferenceGap.size()-1);
+
+        if (timeOnX && !absoluteTime && linearTime && graphSetup.systemTimeReferenceGap.size() > 0)
+            dataMaxX -= graphSetup.systemTimeReferenceGap.get(graphSetup.systemTimeReferenceGap.size()-1);
+        if (timeOnY && !absoluteTime && linearTime && graphSetup.systemTimeReferenceGap.size() > 0)
+            dataMaxY -= graphSetup.systemTimeReferenceGap.get(graphSetup.systemTimeReferenceGap.size()-1);
 
         if (scaleMinX == scaleMode.auto || (scaleMinX == scaleMode.extend && minX > dataMinX))
             minX = dataMinX;
@@ -869,6 +875,14 @@ public class GraphView extends View {
             return;
         this.absoluteTime = absoluteTime;
         graphSetup.absoluteTime = absoluteTime;
+        this.rescale();
+        this.invalidate();
+    }
+
+    //Interface to switch the internal time data to a timestamp since 1970
+    public void setLinearTime(boolean linearTime) {
+        this.linearTime = linearTime;
+        graphSetup.linearTime = linearTime;
         this.rescale();
         this.invalidate();
     }
@@ -1097,21 +1111,31 @@ public class GraphView extends View {
     }
 
     private double offsetFromExperimentTime(double v) {
-        if (absoluteTime) {
+        if (absoluteTime && !linearTime) {
             int i = 0;
             while (i + 1 < graphSetup.trStarts.size() && graphSetup.trStarts.get(i + 1) < v)
                 i++;
             return graphSetup.systemTimeReferenceGap.get(i);
+        } else if (linearTime && !absoluteTime) {
+            int i = 0;
+            while (i + 1 < graphSetup.trStarts.size() && graphSetup.trStarts.get(i + 1) + graphSetup.systemTimeReferenceGap.get(i+1) < v)
+                i++;
+            return -graphSetup.systemTimeReferenceGap.get(i);
         }
         return 0.0;
     }
 
     private double offsetFromSystemTime(double v) {
-        if (absoluteTime) {
+        if (absoluteTime && !linearTime) {
             int i = 0;
             while (i + 1 < graphSetup.trStarts.size() && i + 1 < graphSetup.systemTimeReferenceGap.size() && graphSetup.trStarts.get(i + 1) + graphSetup.systemTimeReferenceGap.get(i + 1) < v)
                 i++;
             return graphSetup.systemTimeReferenceGap.get(i);
+        } else if (linearTime && !absoluteTime) {
+            int i = 0;
+            while (i + 1 < graphSetup.trStarts.size() && i + 1 < graphSetup.systemTimeReferenceGap.size() && graphSetup.trStarts.get(i + 1) < v)
+                i++;
+            return -graphSetup.systemTimeReferenceGap.get(i);
         }
         return 0.0;
     }
@@ -1162,13 +1186,13 @@ public class GraphView extends View {
         }
 
         //Time axis should auto-extend to the actually measured time range
-        if (timeOnX && Double.isNaN(zoomState.minX) && Double.isNaN(zoomState.maxX) && scaleMinX == scaleMode.auto && scaleMaxX == scaleMode.auto) {
+        if (timeOnX && !linearTime && Double.isNaN(zoomState.minX) && Double.isNaN(zoomState.maxX) && scaleMinX == scaleMode.auto && scaleMaxX == scaleMode.auto) {
             if (graphSetup.trStarts != null && graphSetup.trStarts.size() > 0 && graphSetup.trStarts.get(0) < workingMinX)
                 workingMinX = graphSetup.trStarts.get(0);
             if (graphSetup.trStops != null && graphSetup.trStops.size() > 0 && graphSetup.trStops.get(graphSetup.trStops.size()-1) > workingMaxX)
                 workingMaxX = graphSetup.trStops.get(graphSetup.trStops.size()-1);
         }
-        if (timeOnY && Double.isNaN(zoomState.minY) && Double.isNaN(zoomState.maxY) && scaleMinY == scaleMode.auto && scaleMaxY == scaleMode.auto) {
+        if (timeOnY && !linearTime && Double.isNaN(zoomState.minY) && Double.isNaN(zoomState.maxY) && scaleMinY == scaleMode.auto && scaleMaxY == scaleMode.auto) {
             if (graphSetup.trStarts != null && graphSetup.trStarts.size() > 0 && graphSetup.trStarts.get(0) < workingMinY)
                 workingMinY = graphSetup.trStarts.get(0);
             if (graphSetup.trStops != null && graphSetup.trStops.size() > 0 && graphSetup.trStops.get(graphSetup.trStops.size()-1) > workingMaxY)

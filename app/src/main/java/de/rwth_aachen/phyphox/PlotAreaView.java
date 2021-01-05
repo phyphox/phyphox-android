@@ -86,6 +86,7 @@ class GraphSetup {
     public boolean timeOnX = false;
     public boolean timeOnY = false;
     public boolean absoluteTime = false;
+    public boolean linearTime = false;
 
     GraphSetup() {
         plotBoundL = 0;
@@ -839,14 +840,25 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         if (graphSetup.timeOnX && lastValidXTimeReference != null && lastValidXTimeReference.size() > 0) {
             for (ExperimentTimeReferenceSet timeReference : lastValidXTimeReference) {
-                if (graphSetup.absoluteTime)
+                if (graphSetup.absoluteTime && !graphSetup.linearTime)
                     GLES20.glUniform1f(offsetXHandle, (float)((timeReference.systemTime - lastValidXTimeReference.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                else if (!graphSetup.absoluteTime && graphSetup.linearTime) {
+                    if (timeReference.isPaused)
+                        continue;
+                    GLES20.glUniform1f(offsetXHandle, -(float)((timeReference.systemTime - lastValidXTimeReference.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                }
                 GLES20.glDrawArrays(geometry, verticesPerValue*timeReference.index, Math.min(verticesPerValue*timeReference.count, dataSet.n-verticesPerValue*timeReference.index));
             }
         } else if (graphSetup.timeOnY && dataSet.timeReferencesY != null && dataSet.timeReferencesY.size() > 0) {
             for (ExperimentTimeReferenceSet timeReference : dataSet.timeReferencesY) {
-                if (graphSetup.absoluteTime)
+                if (graphSetup.absoluteTime && !graphSetup.linearTime)
                     GLES20.glUniform1f(offsetYHandle, (float)((timeReference.systemTime - dataSet.timeReferencesY.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                else if (!graphSetup.absoluteTime && graphSetup.linearTime) {
+                    if (timeReference.isPaused)
+                        continue;
+                    GLES20.glUniform1f(offsetYHandle, -(float)((timeReference.systemTime - dataSet.timeReferencesY.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                }
+
                 GLES20.glDrawArrays(geometry, verticesPerValue*timeReference.index, Math.min(verticesPerValue*timeReference.count, dataSet.n-verticesPerValue*timeReference.index));
             }
         } else {

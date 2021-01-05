@@ -225,10 +225,10 @@ public class DataBuffer implements Serializable {
                     if (lastSet.referenceIndex == referenceIndex) {
                         lastSet.count++;
                     } else {
-                        experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastSet.index + lastSet.count, 1, experimentTimeReference.getExperimentTimeReferenceByIndex(referenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(referenceIndex), referenceIndex));
+                        experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastSet.index + lastSet.count, 1, experimentTimeReference.getExperimentTimeReferenceByIndex(referenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(referenceIndex), referenceIndex, experimentTimeReference.getPausedByIndex(referenceIndex)));
                     }
                 } else {
-                    experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(0, 1, experimentTimeReference.getExperimentTimeReferenceByIndex(referenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(referenceIndex), referenceIndex));
+                    experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(0, 1, experimentTimeReference.getExperimentTimeReferenceByIndex(referenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(referenceIndex), referenceIndex, experimentTimeReference.getPausedByIndex(referenceIndex)));
                 }
             }
         }
@@ -428,7 +428,7 @@ public class DataBuffer implements Serializable {
         return floatCopyBarValue;
     }
 
-    public List<ExperimentTimeReferenceSet> getExperimentTimeReferenceSets() {
+    public List<ExperimentTimeReferenceSet> getExperimentTimeReferenceSets(boolean isLinearTime) {
         if (buffer.size() <= 0)
             return new ArrayList<>();
 
@@ -440,17 +440,17 @@ public class DataBuffer implements Serializable {
             int i = 0;
             while (it.hasNext()) {
                 double value = (double)it.next();
-                int referenceIndex = experimentTimeReference.getReferenceIndexFromExperimentTime(value);
+                int referenceIndex = isLinearTime ? experimentTimeReference.getReferenceIndexFromSystemTime((long)(value * 1000)) : experimentTimeReference.getReferenceIndexFromExperimentTime(value);
                 if (lastReferenceIndex < 0)
                     lastReferenceIndex = referenceIndex;
                 else if (lastReferenceIndex != referenceIndex) {
-                    experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastchange, i-lastchange, experimentTimeReference.getExperimentTimeReferenceByIndex(lastReferenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(lastReferenceIndex), lastReferenceIndex));
+                    experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastchange, i-lastchange, experimentTimeReference.getExperimentTimeReferenceByIndex(lastReferenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(lastReferenceIndex), lastReferenceIndex, experimentTimeReference.getPausedByIndex(lastReferenceIndex)));
                     lastchange = i;
                     lastReferenceIndex = referenceIndex;
                 }
                 i++;
             }
-            experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastchange, i-lastchange, experimentTimeReference.getExperimentTimeReferenceByIndex(lastReferenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(lastReferenceIndex), lastReferenceIndex));
+            experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastchange, i-lastchange, experimentTimeReference.getExperimentTimeReferenceByIndex(lastReferenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(lastReferenceIndex), lastReferenceIndex, experimentTimeReference.getPausedByIndex(lastReferenceIndex)));
         }
         return experimentTimeReferenceSets;
     }
@@ -546,12 +546,14 @@ class ExperimentTimeReferenceSet {
     int referenceIndex;
     double experimentTime;
     long systemTime;
+    boolean isPaused;
 
-    ExperimentTimeReferenceSet(int index, int count, double experimentTime, long systemTime, int referenceIndex) {
+    ExperimentTimeReferenceSet(int index, int count, double experimentTime, long systemTime, int referenceIndex, boolean isPaused) {
         this.index = index;
         this.count = count;
         this.experimentTime = experimentTime;
         this.systemTime = systemTime;
         this.referenceIndex = referenceIndex;
+        this.isPaused = isPaused;
     }
 }

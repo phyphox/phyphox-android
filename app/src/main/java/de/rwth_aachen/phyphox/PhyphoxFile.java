@@ -1352,6 +1352,7 @@ public abstract class PhyphoxFile {
                     boolean timeOnX = getBooleanAttribute("timeOnX", false);
                     boolean timeOnY = getBooleanAttribute("timeOnY", false);
                     boolean systemTime = getBooleanAttribute("systemTime", false);
+                    boolean linearTime = getBooleanAttribute("linearTime", false);
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
@@ -1427,7 +1428,7 @@ public abstract class PhyphoxFile {
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
-                    ge.setTimeAxes(timeOnX, timeOnY, systemTime);
+                    ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime);
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     if (!globalColor) {
@@ -1986,16 +1987,19 @@ public abstract class PhyphoxFile {
             switch (tag.toLowerCase()) {
                 case "timer": { //Start-time of analysis
 
+                    boolean linearTime = getBooleanAttribute("linearTime", false);
+
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "offset1970"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs, linearTime));
                 } break;
                 case "formula": {
                     String formula = getStringAttribute("formula");

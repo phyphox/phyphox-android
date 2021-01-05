@@ -1064,6 +1064,7 @@ public class ExpView implements Serializable{
         private boolean timeOnX = false; //x-axis is time axis?
         private boolean timeOnY = false; //y-axis is time axis?
         private boolean absoluteTime = false; //Use system time as default?
+        private boolean linearTime = false; //time data is not given in experiment time (which pauses with the experiment) but as seconds since 1970 (ignoring pauses)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
         private boolean logZ = false; //logarithmic scale for the z-axis?
@@ -1225,10 +1226,11 @@ public class ExpView implements Serializable{
                 gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
         }
 
-        protected void setTimeAxes(boolean timeOnX, boolean timeOnY, boolean absoluteTime) {
+        protected void setTimeAxes(boolean timeOnX, boolean timeOnY, boolean absoluteTime, boolean linearTime) {
             this.timeOnX = timeOnX;
             this.timeOnY = timeOnY;
             this.absoluteTime = absoluteTime;
+            this.linearTime = linearTime;
         }
 
         //Interface to set log scales
@@ -1334,6 +1336,7 @@ public class ExpView implements Serializable{
             gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
             gv.setTimeAxes(timeOnX, timeOnY);
             gv.setAbsoluteTime(absoluteTime);
+            gv.setLinearTime(linearTime);
             gv.setLogScale(logX, logY, logZ);
             interactiveGV.allowLogX = logX;
             interactiveGV.allowLogY = logY;
@@ -1395,7 +1398,7 @@ public class ExpView implements Serializable{
                     DataBuffer x = experiment.getBuffer(inputs.get(i+1));
                     if (x != null) {
                         if (timeOnX)
-                            timeReferencesX[i/2] = x.getExperimentTimeReferenceSets();
+                            timeReferencesX[i/2] = x.getExperimentTimeReferenceSets(linearTime);
                         if (style.get(i/2) == GraphView.Style.hbars)
                             dataX[i/2] = x.getFloatBufferBarValue();
                         else if (style.get(i/2) == GraphView.Style.vbars)
@@ -1419,7 +1422,7 @@ public class ExpView implements Serializable{
                 DataBuffer y = experiment.getBuffer(inputs.get(i));
                 if (y != null) {
                     if (timeOnY)
-                        timeReferencesY[i/2] = y.getExperimentTimeReferenceSets();
+                        timeReferencesY[i/2] = y.getExperimentTimeReferenceSets(linearTime);
                     if (style.get(i/2) == GraphView.Style.hbars)
                         dataY[i/2] = y.getFloatBufferBarAxis(lineWidth.get(i/2));
                     else if (style.get(i/2) == GraphView.Style.vbars)
