@@ -114,10 +114,11 @@ public class ExperimentTimeReference {
         return i;
     }
 
-    public int getReferenceIndexFromSystemTime(long t) {
+    public int getReferenceIndexFromLinearTime(double t) {
         int i = 0;
-        while (timeMappings.size() > i+1 && timeMappings.get(i+1).systemTime <= t)
+        while (timeMappings.size() > i+1 && (timeMappings.get(i+1).systemTime - timeMappings.get(0).systemTime) * 0.001 <= t) {
             i++;
+        }
         return i;
     }
 

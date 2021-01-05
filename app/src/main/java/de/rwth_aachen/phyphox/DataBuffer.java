@@ -44,6 +44,7 @@ public class DataBuffer implements Serializable {
     transient private List<ExperimentTimeReferenceSet> experimentTimeReferenceSets = null;
     transient public final Object experimentTimeReferenceSetsLock = new Object();
     ExperimentTimeReference experimentTimeReference;
+    boolean linearTime = false;
     private double lineWidth = 1.0; //Used to calculate the right geometry of bar charts
 
     private int floatCopyCapacity = 0;
@@ -219,7 +220,7 @@ public class DataBuffer implements Serializable {
         }
         if (experimentTimeReferenceSets != null) {
             synchronized (experimentTimeReferenceSetsLock) {
-                int referenceIndex = experimentTimeReference.getReferenceIndexFromExperimentTime(value);
+                int referenceIndex = linearTime ? experimentTimeReference.getReferenceIndexFromLinearTime(value) : experimentTimeReference.getReferenceIndexFromExperimentTime(value);
                 if (experimentTimeReferenceSets.size() > 0) {
                     ExperimentTimeReferenceSet lastSet = experimentTimeReferenceSets.get(experimentTimeReferenceSets.size()-1);
                     if (lastSet.referenceIndex == referenceIndex) {
@@ -432,6 +433,13 @@ public class DataBuffer implements Serializable {
         if (buffer.size() <= 0)
             return new ArrayList<>();
 
+        if (isLinearTime != linearTime) {
+            linearTime = isLinearTime;
+            synchronized (experimentTimeReferenceSetsLock) {
+                experimentTimeReferenceSets = null;
+            }
+        }
+
         if (experimentTimeReferenceSets == null) {
             experimentTimeReferenceSets = new ArrayList<>();
             Iterator it = getIterator();
@@ -440,7 +448,7 @@ public class DataBuffer implements Serializable {
             int i = 0;
             while (it.hasNext()) {
                 double value = (double)it.next();
-                int referenceIndex = isLinearTime ? experimentTimeReference.getReferenceIndexFromSystemTime((long)(value * 1000)) : experimentTimeReference.getReferenceIndexFromExperimentTime(value);
+                int referenceIndex = isLinearTime ? experimentTimeReference.getReferenceIndexFromLinearTime(value) : experimentTimeReference.getReferenceIndexFromExperimentTime(value);
                 if (lastReferenceIndex < 0)
                     lastReferenceIndex = referenceIndex;
                 else if (lastReferenceIndex != referenceIndex) {
