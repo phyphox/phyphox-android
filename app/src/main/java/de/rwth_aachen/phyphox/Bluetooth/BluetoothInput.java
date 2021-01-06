@@ -13,6 +13,7 @@ import androidx.annotation.RequiresApi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
@@ -66,7 +67,7 @@ public class BluetoothInput extends Bluetooth {
     /**
      * Used to store data in mode "poll" before it will be retrieved all together
      */
-    protected HashMap<Integer, Double> outputs;
+    protected HashMap<Integer, List<Double>> outputs;
 
     /**
      * Create a new BluetoothInput.
@@ -275,9 +276,8 @@ public class BluetoothInput extends Bluetooth {
                 }
                 // convert data and add it to outputs if it was read successfully, else write NaN
                 if (data != null) {
-                    outputs.put(c.index, convertData(data, c.inputConversionFunction));
-                } else {
-                    outputs.put(c.index, Double.NaN);
+                    List<Double> values = convertData(data, c.inputConversionFunction);
+                    outputs.put(c.index, values);
                 }
             }
             // call retrieveData if data from every characteristic is received
@@ -302,7 +302,7 @@ public class BluetoothInput extends Bluetooth {
         ArrayList<Characteristic> characteristics = mapping.get(characteristic);
         double t = experimentTimeReference.getExperimentTime();
 
-        double[] outputs = new double[characteristics.size()];
+        List<Double>[] outputs = new ArrayList[characteristics.size()];
         for (Characteristic c : characteristics) {
             outputs[characteristics.indexOf(c)] = convertData(data, c.inputConversionFunction);
         }
@@ -311,7 +311,8 @@ public class BluetoothInput extends Bluetooth {
         dataLock.lock();
         try {
             for (Characteristic c : characteristics) {
-                this.data.get(c.index).append(outputs[characteristics.indexOf(c)]);
+                for (Double v: outputs[characteristics.indexOf(c)])
+                    this.data.get(c.index).append(v);
                 this.data.get(c.index).markSet();
             }
             // append time to buffer if extra=time is set
@@ -336,7 +337,8 @@ public class BluetoothInput extends Bluetooth {
         try {
             for (ArrayList<Characteristic> al : mapping.values()) {
                 for (Characteristic c : al) {
-                    data.get(c.index).append(outputs.get(c.index));
+                    for (Double v: outputs.get(c.index))
+                        data.get(c.index).append(v);
                     data.get(c.index).markSet();
                 }
             }
@@ -360,11 +362,11 @@ public class BluetoothInput extends Bluetooth {
      * @param conversionFunction InputConversion instance to convert data (from ConversionsInput)
      * @return the converted value
      */
-    private double convertData(byte[] data, ConversionsInput.InputConversion conversionFunction) {
+    private List<Double> convertData(byte[] data, ConversionsInput.InputConversion conversionFunction) {
         try {
             return conversionFunction.convert(data);
         } catch (Exception e) {
-            return Double.NaN; // return NaN if value could not be converted
+            return new ArrayList<>(); // return NaN if value could not be converted
         }
     }
 
