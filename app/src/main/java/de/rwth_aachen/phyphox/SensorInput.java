@@ -5,6 +5,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
+import android.util.Log;
 
 import java.io.Serializable;
 import java.security.InvalidParameterException;
@@ -19,7 +20,8 @@ public class SensorInput implements SensorEventListener, Serializable {
     public SensorName sensorName; //Sensor name (phyphox identifier)
     public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
-    private ExperimentTimeReference experimentTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+    private final ExperimentTimeReference experimentTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+    public double fixDeviceTimeOffset = 0.0; //Some devices show a negative offset on the time events of the sensors. This seems to mostly affect sensors that report onChange. Our strategy is that sensor events with -10s < t < 0s are simply corrected to t=0 (old sensor events in the queue are still valid), but sensor events with t < -10s indicate a systematic problem on the device and are used to calculate this variable which will be used to also correct all subsequent readings.
 
     public boolean ignoreUnavailable = false;
 
@@ -334,8 +336,19 @@ public class SensorInput implements SensorEventListener, Serializable {
                         dataY.append(avgY / aquisitions);
                     if (dataZ != null)
                         dataZ.append(avgZ / aquisitions);
-                    if (dataT != null)
-                        dataT.append(experimentTimeReference.getExperimentTimeFromEvent(event.timestamp));
+                    if (dataT != null) {
+                        double t = experimentTimeReference.getExperimentTimeFromEvent(event.timestamp);
+                        if (t < -10 && fixDeviceTimeOffset == 0.0) {
+                            Log.w("SensorInput", "Unrealistic time offset detected. Applying adjustment of " + -t + "s.");
+                            fixDeviceTimeOffset = -t;
+                        }
+                        t += fixDeviceTimeOffset;
+                        if (t < 0.0) {
+                            Log.w("SensorInput", this.sensorName + ": Adjusted one timestamp from t = " + t + "s to t = 0s.");
+                            t = 0.0;
+                        }
+                        dataT.append(t);
+                    }
                     if (dataAbs != null)
                         if (type == Sensor.TYPE_ROTATION_VECTOR)
                             dataAbs.append(Math.sqrt(aquisitions*aquisitions-avgX*avgX-avgY*avgY-avgZ*avgZ) / aquisitions);

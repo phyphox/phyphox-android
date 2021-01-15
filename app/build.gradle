@@ -9,9 +9,9 @@ android {
         minSdkVersion 14
         targetSdkVersion 30
 
-        versionName "1.1.8-beta1"
+        versionName "1.1.8-beta2"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1010801 //1.01.07-00
+        versionCode 1010802 //1.01.08-02
 
         resConfigs "en", "cs", "de", "el", "es", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "tr", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
