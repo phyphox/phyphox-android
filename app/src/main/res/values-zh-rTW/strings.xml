@@ -1,16 +1,15 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="action_settings">設定</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_settings">設定</string>
     <string name="translationInfo">語言</string>
     <string name="app_name">手機物理實作</string>
     <string name="title_activity_experiment">手機物理實作</string>
-
     <string name="newExperiment">新建實驗</string>
     <string name="newExperimentPhyphoxInfo">參考phyphox.org網站資訊，創建更好的手機物理實作實驗，包括數據分析，可與同事，學生和朋友分享。</string>
     <string name="newExperimentInputTitle">標題</string>
     <string name="newExperimentInputBufferSize">緩衝區大小(以數字表示取樣數)</string>
     <string name="newExperimentInputRate">感應器感應速率(單位赫茲，0代表最快)</string>
     <string name="newExperimentInputSensors">選擇感應器</string>
-
     <string name="help">協助訊息</string>
     <string name="experimentsPhyphoxOrg">實驗設計與說明</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -22,11 +21,9 @@
     <string name="translationToSettings">設定</string>
     <string name="translationToWebsite">拜訪網站</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#zh_Hant</string>
-
     <string name="warning">警示</string>
     <string name="donotshowagain">不要再顯示</string>
     <string name="damageWarning">使用phyphox實作時，請注意不要損壞手機。 尤其特別注意要避免將手機掉落在堅硬的表面上，並且不要將其暴露在過強的電磁場中。 phyphox的作者對於您手機的任何損壞概不負責。</string>
-
     <string name="info">訊息</string>
     <string name="credits">創立團隊</string>
     <string name="creditsRWTH">phyphox是由亞琛工業大學第二物理學院所開發。</string>
@@ -48,25 +45,20 @@
     <string name="sensorTemperature">溫度計</string>
     <string name="sensorHumidity">濕度計</string>
     <string name="sensorProximity">距離檢測計</string>
-
     <string name="location">GPS偵測器</string>
-
     <string name="sensorNotAvailableWarningTitle">感應器無法使用。</string>
     <string name="sensorNotAvailableWarningText1">感應裝置</string>
     <string name="sensorNotAvailableWarningText2">不可用。 通常表示您的設備沒有這種類型的感應器。</string>
     <string name="sensorNotAvailableWarningMoreInfo">更多資訊</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="ok">確認</string>
     <string name="close">關閉</string>
     <string name="next">下一步</string>
     <string name="cancel">取消</string>
     <string name="unknown">未知的</string>
-
     <string name="delete">刪除</string>
     <string name="confirmDelete">你想從你的收存中刪除這個實驗嗎？</string>
     <string name="confirmDeleteTitle">確認刪除嗎？</string>
-
     <string name="stop">停止</string>
     <string name="start">開始</string>
     <string name="clear_data">清除數據</string>
@@ -74,36 +66,27 @@
     <string name="clear">清除</string>
     <string name="timed_stop">停止定時運行</string>
     <string name="timed_start">開始定時運行</string>
-
     <string name="loadingTitle">載入</string>
     <string name="loadingText">載入實驗中.…</string>
-
     <string name="experimentinfo_hint">查看與此手機實作相關資訊，以了解該如何使用。</string>
-
-<string name="export">匯出數據</string>
+    <string name="export">匯出數據</string>
     <string name="pick_exportFormat">選擇數據格式</string>
-
     <string name="timedRunStopDelay">實驗長短(秒)</string>
     <string name="export_subject">手機物理實作的數據</string>
     <string name="export_pick_share">選擇輸出模式</string>
-
     <string name="share">分享螢幕截圖</string>
     <string name="share_subject">手機物理實作的螢幕截圖</string>
     <string name="share_pick_share">選擇分享模式</string>
-
     <string name="remoteServer">允許遠端存取</string>
     <string name="remoteServerWarningTitle">安全性警告 !</string>
     <string name="remoteServerActive">遠端存取已啟用。從下列網址存取實驗 ：
 \n%1$s</string>
     <string name="hotspotSettings">熱點設定</string>
-
     <string name="calibrated_magnetometer">使用已校準的磁力計</string>
-
     <string name="switchToPhoneLayout">視圖：窄</string>
     <string name="switchColumns1">視圖：1 欄</string>
     <string name="switchColumns2">視圖：2 欄</string>
     <string name="switchColumns3">觀看模式：3 欄</string>
-
     <string name="show_description">實驗資訊</string>
     <string name="save_locally">增加實驗到珍藏集</string>
     <string name="save_locally_done">實驗已成功加入珍藏集</string>
@@ -118,22 +101,17 @@
     <string name="save_state_subject">手機物理實作的實驗狀態</string>
     <string name="save_state_default_title">測量</string>
     <string name="save_state_success">狀態已存入珍藏集</string>
-
     <string name="pick_exportSets">匯出挑選的數據組</string>
     <string name="noDrawableData">無可繪製的數據</string>
-
     <string name="timedRunDialogTitle">時程設定</string>
     <string name="timedRunStartDelay">延遲啟動(秒)</string>
     <string name="timedRun">時程設定</string>
-
     <string name="remoteServerWarning">你即將啟用遠端存取到已取得的數據。你應該在信任的網路中做這個動作!另外，在許多公司或大學的網路中，裝置間的直接存取可能無法執行。
 \n為了安全性及最佳性能，你應該經由共享選項(移動熱點)連結到裝置。
 \n按下OK後，你可以從同個網域的任何瀏覽器存取你的實驗。</string>
     <string name="categoryNewExperiment">自訂實驗</string>
     <string name="categoryRawSensor">原始感測器</string>
-
     <string name="enableTimedRun">執行時域區間測量</string>
-
     <string name="graph_tools_pan_and_zoom">平移與縮放</string>
     <string name="graph_tools_pick">選取數據</string>
     <string name="graph_tools_more">更多功能</string>
@@ -143,34 +121,27 @@
     <string name="graph_tools_export">匯出數據集</string>
     <string name="graph_tools_log_x">x軸(取對數)</string>
     <string name="graph_tools_log_y">y軸(取對數)</string>
-
     <string name="graph_point_label">點</string>
     <string name="graph_slope_label">斜率</string>
     <string name="graph_difference_label">差值</string>
     <string name="graph_fit_label">線性擬合：y=ax+b</string>
-
     <string name="applyZoomTitle">套用此大小設定</string>
     <string name="applyZoomExplanation">當關閉該圖形的互動模式時，您可以選擇是否維持您的縮放。</string>
     <string name="applyZoomAdvanced">進階選項</string>
-    <string name="applyZoomApply">套用此…</string>
-
-    <string name="applyZoomReset">套用成默認值</string>
-    <string name="applyZoomKeep">維持您目前的設定</string>
-    <string name="applyZoomFollow">畫面保持並跟蹤新數據</string>
-
+    <string name="applyZoomApply">套用至…</string>
+    <string name="applyZoomReset">套用預設值</string>
+    <string name="applyZoomKeep">維持目前的設定</string>
+    <string name="applyZoomFollow">保持畫面並追蹤新數據</string>
     <string name="applyZoomThis">只有這個圖形</string>
     <string name="applyZoomSameVariable">其他圖表：相同變量</string>
     <string name="applyZoomSameUnit">其他圖表：相同單位</string>
     <string name="applyZoomSameAxis">其他圖表：相同座標</string>
-
     <string name="newExperimentSimple">新建簡易實驗</string>
     <string name="newExperimentBluetooth">新建藍芽設備實驗</string>
     <string name="newExperimentBluetoothErrorTitle">藍牙掃描錯誤</string>
     <string name="newExperimentBluetoothLoadFromDevice">從設備加載</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">此設備提供自己的手機物理實作實驗。選擇從設備加載即可打開。</string>
-
     <string name="newExperimentQR">從二維碼增加實驗</string>
-
     <string name="newExperimentQRscan">掃描含有手機物理實作實驗的二維碼。</string>
     <string name="newExperimentQRErrorTitle">二維碼錯誤。</string>
     <string name="newExperimentQRNoExperiment">此二維碼不含相應的手機物理實作實驗。</string>
@@ -178,24 +149,18 @@
     <string name="newExperimentQRCodesMissing1">你剛掃描的二維碼是一組二維碼的一部分</string>
     <string name="newExperimentQRCodesMissing2">請按繼續來掃描剩下的二維碼。還缺少一些碼數：</string>
     <string name="newExperimentQRBadCRC">無效校驗碼。這意味二維碼損壞或者掃描時出現了問題。</string>
-
     <string name="newExperimentBTReadErrorTitle">藍牙實驗錯誤</string>
     <string name="newExperimentBTReadErrorCorrupted">傳送的實驗數據已經損毀。</string>
-
     <string name="generalErrorDialog">發生錯誤。</string>
-
     <string name="deviceInfo">設備(手機)資訊</string>
     <string name="copyToClipboard">複製到剪貼板</string>
     <string name="deviceInfoCopied">此設備的規格已經複製到剪貼板。</string>
-
     <string name="gpl">Phyphox® 是由 GNU General Public Licence 所發行的開源軟體，請上 http://phyphox.org 以取得開源碼以及更多資訊。請注意，phyphox 以及 RWTH Aachen 已經註冊商標。</string>
     <string name="sensorAttitude">高度</string>
     <string name="sensorVendor">特定供應商</string>
-
     <string name="vendorSensorTitle">特定供應商的感應器</string>
     <string name="vendorSensorWarning1">產應器</string>
     <string name="vendorSensorWarning2">未匯報正確的感應器類型。它可能是供應商特定的，我們只能從名字猜測其類型。因此，它可能不會如預期那樣工作。</string>
-
     <string name="tryagain">再試一次</string>
     <string name="doContinue">繼續</string>
     <string name="rename">重新命名</string>
@@ -203,37 +168,27 @@
     <string name="leave_experiment_question">離開實驗並且捨棄數據</string>
     <string name="leave">離開實驗</string>
     <string name="loadingBluetoothConnectionText">連接藍芽設施</string>
-
     <string name="export_empty">此實驗配置未定義要導出的任何數據。 如果是這個錯誤，請查看QRcode或配置文件的來源。</string>
     <string name="remoteServerNoNetwork">您需要先與設備用Wifi連接。 請啟用Wifi或創建一個網路熱點。</string>
     <string name="remoteColorMapWarning">遠程端口的顏色圖只是近似值，與app內置圖不同，目前它無法處理非等距數據或x、y軸上的對數縮放。因此，不同時間間隔的數據可能會出現在錯誤的位置上 。</string>
-
     <string name="force_gnss">僅使用衛星定位</string>
-
     <string name="toggleBrightMode">明亮模式</string>
     <string name="fontSize">字體大小</string>
-
     <string name="open_zip_title">打開一組實驗</string>
     <string name="open_zip_dialog_instructions">該來源包含多個實驗。 您可以選擇一個將其打開並將其保存到珍藏集中，也可以從下面選擇全部，並保存到收藏夾中。</string>
     <string name="open_save_all">全部儲存</string>
-
     <string name="open_bluetooth_assets_title">針對藍牙感測器的實驗</string>
     <string name="open_bluetooth_assets">以下實驗適用於您手機上的物理實作app。 您可以打開並使用它們，也可以將它們全部添加到珍藏集中，並從主選單輕鬆選擇它們。</string>
-
     <string name="start_hint">點觸三角圖標以開始實驗</string>
-
     <string name="bluetooth">低功耗藍牙</string>
     <string name="bt_android_version">低於安卓4.3的系統不支持低功耗藍牙。</string>
-
     <string name="bt_pick_device">請選擇一個設備</string>
     <string name="bt_scanning_generic">掃描藍芽設備中..…</string>
     <string name="bt_scanning_specific1">正在掃描以下藍牙裝置</string>
     <string name="bt_scanning_specific2">掃描的設備名稱為...…</string>
-    <string name="bt_device_not_supported">沒有匹配的實驗</string>
-
+    <string name="bt_device_not_supported">沒有可用的實驗。</string>
     <string name="bt_location_explanation">Android需要一個藍牙掃描的定位許可來獲取位置信息。現在我們將請求這些權限。您需要授權來掃描藍牙設備。</string>
     <string name="bt_location_service_explanation">除了獲得位置信息的權限外，Android還要求啟用位置服務以進行藍牙掃描，因為結果可用於導出位置信息。 我們會將您重定向到您的系統設置。</string>
-
     <string name="bt_exception_uuid">具有UUID的特徵</string>
     <string name="bt_exception_uuid2">沒有找到</string>
     <string name="bt_exception_disabled">藍牙已關閉，請開啟藍牙並在連接一次。</string>
@@ -254,17 +209,14 @@
     <string name="bt_exception_no_connection">無法與藍牙設備連線，實驗無法開始。</string>
     <string name="bt_exception_disconnected">藍芽設備已斷線。</string>
     <string name="bt_default_error_message">藍芽設備發生錯誤。</string>
-
     <string name="bt_error_writing">寫入UUID的規格時發生錯誤</string>
     <string name="bt_error_reading">讀取UUID的規格時發生錯誤</string>
     <string name="bt_error_discovering">尋找藍芽設備的服務時發生錯誤</string>
     <string name="bt_fail_reading">讀取操作不成功。</string>
     <string name="bt_fail_writing">寫入操作不成功。</string>
-
     <string name="bt_more_info_link_text">如果您的手機不支援這個設備，請在我們的網站上選擇“更多信息”以了解有關手機物理實作中的彈性藍牙低功耗信息。</string>
     <string name="bt_more_info_link_button">更多訊息</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
     <string name="networkPrivacyWarning">隱私權警告</string>
     <string name="networkVisitPrivacyURL">隱私權條款</string>
     <string name="networkPrivacyInfo">此實驗需連接到網絡，這意味著可以將實驗數據傳輸到網絡服務。 您可以通過點擊下面的隱私權政策按鈕找到更多詳細信息，頁面將轉跳到該實驗創建者提供的網站，您可以在裡面找到相關的隱私權政策。 如果網絡服務不是本地設備，則應注意，如果您開始此實驗，phyphox可能會傳輸以下信息：</string>
@@ -274,5 +226,4 @@
     <string name="networkPrivacySensorLocation">位置數據（GPS數據或類似數據）。</string>
     <string name="networkPrivacyDeviceInfo">有關您的手機型號或手機物理實作版本的詳細信息。</string>
     <string name="networkPrivacySensorInfo">有關以下感應器的技術細節：</string>
-
 </resources>
