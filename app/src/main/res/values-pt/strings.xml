@@ -1,14 +1,13 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Configurações</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="newExperiment">Adicionar experimento</string>
     <string name="newExperimentPhyphoxInfo">Visite phyphox.org para criar outros experimentos incluindo análise de dados e compartilha-los com seus colegas, alunos e amigos.</string>
     <string name="newExperimentInputTitle">Título</string>
     <string name="newExperimentInputRate">Taxa de leitura do sensor (em Hz, 0 = mais rápido possível)</string>
     <string name="newExperimentInputSensors">Sensores ativos</string>
-
     <string name="help">Ajuda e informações</string>
     <string name="experimentsPhyphoxOrg">Ideias de experimentos e instruções</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -21,10 +20,8 @@
     <string name="translationToSettings">Configurações</string>
     <string name="donotshowagain">Não mostrar novamente</string>
     <string name="experimentinfo_hint">Veja informações sobre o experimento para aprender como usá-lo.</string>
-
-<string name="translationToWebsite">Visitar website (em inglês)</string>
+    <string name="translationToWebsite">Visitar website (em inglês)</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#pt</string>
-
     <string name="info">Informações</string>
     <string name="creditsRWTH">phyphox foi criado no 2º Instituto de Física da Universidade RWTH Aachen.</string>
     <string name="creditsNames">Desenvolvimento e Conceito:
@@ -45,20 +42,16 @@
     <string name="sensorTemperature">Temperatura</string>
     <string name="sensorHumidity">Umidade</string>
     <string name="sensorProximity">Proximidade</string>
-
     <string name="location">Localização</string>
-
     <string name="sensorNotAvailableWarningTitle">Sensor não disponível.</string>
     <string name="sensorNotAvailableWarningText1">O sensor</string>
     <string name="sensorNotAvailableWarningText2">não está disponível. Normalmente isto significa que seu dispositivo não possue este tipo de sensor.</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="ok">OK</string>
     <string name="close">Fechar</string>
     <string name="next">Próximo</string>
     <string name="cancel">Cancelar</string>
     <string name="unknown">desconhecido</string>
-
     <string name="sensorNotAvailableWarningMoreInfo">Mais informações</string>
     <string name="delete">Apagar</string>
     <string name="confirmDelete">Você deseja eliminar este experimento da sua coleção?</string>
@@ -69,31 +62,24 @@
     <string name="clear">Limpar</string>
     <string name="loadingTitle">Carregando</string>
     <string name="loadingText">Carregando experimento…</string>
-
     <string name="timedRunStartDelay">Atraso inicial (s)</string>
     <string name="timedRunStopDelay">Duração do experimento (s)</string>
     <string name="export">Exportar Dados</string>
     <string name="export_subject">Dados do phyphox</string>
     <string name="export_pick_share">Escolha um método para exportar</string>
-
     <string name="share">Compartilhar captura da tela</string>
     <string name="share_subject">Captura da tela do phyphox</string>
     <string name="share_pick_share">Escolha como compartilhar</string>
-
     <string name="remoteServer">Permitir acesso remoto</string>
     <string name="hotspotSettings">Configurações do ponto de acesso</string>
-
     <string name="newExperimentInputBufferSize">Tamanho do buffer (número de valores guardados)</string>
     <string name="warning">Aviso</string>
     <string name="damageWarning">Tome cuidado para não danificar o seu telefone durante os experimentos. Tenha muita atenção para evitar deixar cair sobre superfícies duras e não expor a campos magnéticos fortes. Os autores de phyphox não são responsáveis por qualquer dano ao seu telefone.</string>
-
     <string name="credits">Créditos</string>
     <string name="timed_stop">Parar medida temporizada</string>
     <string name="timed_start">Começar medida temporizada</string>
-
     <string name="timedRunDialogTitle">Medida temporizada</string>
     <string name="enableTimedRun">Usar um temporizador para fazer a medida</string>
-
     <string name="remoteServerWarning">Você está para iniciar o acesso remoto dos dados adquiridos. Faça isso apenas numa rede confiável! Algumas redes de empresas ou universidades podem não permitir o acesso direto entre os dispositivos. 
 \n 
 \nPara uma melhor performance e segurança, conecte o dispositivo através de uma opção de vínculo (ponto de acesso móvel). 
@@ -103,7 +89,6 @@
     <string name="remoteServerActive">Acesso remoto ativado. Acesse este experimento na seguinte URL:
 \n%1$s</string>
     <string name="calibrated_magnetometer">Usar magnetômetro calibrado</string>
-
     <string name="show_description">Inform. do experimento</string>
     <string name="save_locally">Adicionar à coleção de experimentos</string>
     <string name="save_locally_done">Experimento adicionado à coleção com sucesso.</string>
@@ -118,23 +103,16 @@
     <string name="save_state_subject">Estado do experimento para phyphox</string>
     <string name="save_state_default_title">Medidas</string>
     <string name="save_state_success">Medidas foram salvas na colecão.</string>
-
     <string name="timedRun">Medida temporizada</string>
-
     <string name="pick_exportSets">Escolha o conjunto de dados para exportar.</string>
     <string name="pick_exportFormat">Escolha o formato dos dados.</string>
-
     <string name="noDrawableData">Dados não disponíveis para visualização.</string>
-
     <string name="categoryNewExperiment">Experimentos simples personalizados</string>
     <string name="categoryRawSensor">Sensores</string>
-
     <string name="confirmDeleteTitle">Confirmar a eliminação?</string>
-
     <string name="switchColumns1">Visão: 1 coluna</string>
     <string name="switchColumns2">Visão: 2 colunas</string>
     <string name="switchColumns3">Visão: 3 colunas</string>
-
     <string name="switchToPhoneLayout">Visão: Estreito</string>
     <string name="graph_tools_pan_and_zoom">Girar e zoom</string>
     <string name="graph_tools_pick">Escolher dados</string>
@@ -145,34 +123,27 @@
     <string name="graph_tools_export">Exportar estes dados</string>
     <string name="graph_tools_log_x">Eixo X logarítmico</string>
     <string name="graph_tools_log_y">Eixo Y logarítmico</string>
-
     <string name="graph_point_label">Ponto</string>
     <string name="graph_slope_label">Inclinação</string>
     <string name="graph_difference_label">Diferença</string>
     <string name="graph_fit_label">Ajuste Linear: y = a x + b</string>
-
     <string name="applyZoomTitle">Aplicar zoom</string>
     <string name="applyZoomExplanation">Como você está fechando o modo interativo deste gráfico, você pode selecionar se você quer manter o zoom.</string>
     <string name="applyZoomAdvanced">Opções avançadas</string>
     <string name="applyZoomApply">Aplicar a…</string>
-
     <string name="applyZoomReset">Voltar ao padrão</string>
     <string name="applyZoomKeep">Manter como selecionado</string>
     <string name="applyZoomFollow">Manter e seguir novo dado</string>
-
     <string name="applyZoomThis">Somente este gráfico</string>
     <string name="applyZoomSameVariable">Outros gráficos: Mesma variável</string>
     <string name="applyZoomSameUnit">Outros gráficos: Mesma unidade</string>
     <string name="applyZoomSameAxis">Outros gráficos: Mesmos eixos</string>
-
     <string name="newExperimentSimple">Adicionar experimento simples</string>
     <string name="newExperimentBluetooth">Adicionar experimento para o dispositivo Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Erro escaneando Bluetooth</string>
     <string name="newExperimentBluetoothLoadFromDevice">Carregado do dispositivo</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Este dispositivo fornece seu próprio experimento de phyphox. Selecione carregar do dispositivo para abri-lo.</string>
-
     <string name="newExperimentQR">Adicionar experimento com código QR</string>
-
     <string name="newExperimentQRscan">Escaneie um código QR que contém um experimento phyphox.</string>
     <string name="newExperimentQRErrorTitle">Erro no código QR.</string>
     <string name="newExperimentQRNoExperiment">Não foi possível encontrar um código QR que contém um experimento phyphox.</string>
@@ -180,55 +151,39 @@
     <string name="newExperimentQRCodesMissing1">O código QR que você acabou de escanear faz parte de um conjunto de</string>
     <string name="newExperimentQRCodesMissing2">códigos. Por favor, clique continue para escanear os códigos restantes. Códigos ainda faltando:</string>
     <string name="newExperimentQRBadCRC">Checksum inválido. Isto significa que ou o código QR é ruim ou algo deu errado durante o escaneamento.</string>
-
     <string name="newExperimentBTReadErrorTitle">Erro no experimento Bluetooth.</string>
     <string name="newExperimentBTReadErrorCorrupted">O dado transmitido pelo experimento está corrompido.</string>
-
     <string name="generalErrorDialog">Ocorreu um erro.</string>
-
     <string name="deviceInfo">Informações do aparelho</string>
     <string name="copyToClipboard">Copiar para o clipboard</string>
     <string name="deviceInfoCopied">As informações do aparelho foram copiadas para o clipboard.</string>
-
     <string name="gpl">Phyphox é um programa de código aberto e liberado sob a licença GNU General Public License. Por favor, visite http://phyphox.org para mais informações e para ter acesso ao código. O nome \"phyphox\" e \"RWTH Aachen\" são marcas registradas.</string>
     <string name="sensorVendor">Fornecedor específico</string>
-
     <string name="vendorSensorTitle">Sensor específico do fornecedor</string>
     <string name="vendorSensorWarning1">O sensor</string>
     <string name="vendorSensorWarning2">não informa o tipo de sensor correto. Parece ser específico do fornecedor e só podemos adivinhar o seu tipo a partir do seu nome. Portanto, pode não funcionar conforme o esperado.</string>
-
     <string name="tryagain">Tentar novamente</string>
-    <string name="doContinue">Continue</string>
+    <string name="doContinue">Continuar</string>
     <string name="rename">Renomear</string>
-    <string name="loadingBluetoothConnectionText">Conectado ao dispositivo Bluetooth…</string>
-
+    <string name="loadingBluetoothConnectionText">Conectando ao dispositivo Bluetooth…</string>
     <string name="remoteServerNoNetwork">Você precisa configurar uma conexão WIFI para o dispositivo remoto primeiro. Por favor, habilite o WIFI ou crie um ponto de acesso móvel.</string>
     <string name="remoteColorMapWarning">A cor do gráfico na interface remora é apenas uma aproximação. Em contraste com o gráfico no aplicativo, no momento ele não pode manipular dados não equidistantes ou escala logarítmica nos eixos x e y. Assim, os dados em intervalos variados podem aparecer no local errado.</string>
-
     <string name="force_gnss">Apenas localização por satélite</string>
-
     <string name="fontSize">Tamanho da fonte</string>
-
     <string name="open_zip_title">Abrindo um conjunto de experimentos</string>
     <string name="open_zip_dialog_instructions">Este recurso contém múltiplos experimentos. Você pode escolher um para abrir e opcionalmente salvar na sua coleção ou usar o botão abaixo para salvá-los todos na sua coleção de uma única vez.</string>
     <string name="open_save_all">Salvar tudo</string>
-
     <string name="open_bluetooth_assets_title">Experimentos para dispositivos Bluetooth</string>
     <string name="open_bluetooth_assets">Os seguintes experimentos para o seu aparelho estão disponíveis no phyphox. Você pode apenas abrir e usá-lo ou adicioná-los todos a sua coleção para facilmente acessá-los no menu principal.</string>
-
     <string name="start_hint">Toque no triângulo para iniciar o experimento.</string>
-
     <string name="bluetooth">Bluetooth Low Energy</string>
     <string name="bt_android_version">Bluetooth Low Energy não é suportado nas versões Android anteriores a 4.3.</string>
-
     <string name="bt_pick_device">Por favor selecione um dispositivo.</string>
     <string name="bt_scanning_generic">Escaneando por dispositivos Bluetooth…</string>
     <string name="bt_scanning_specific1">Escaneando por dispositivos Bluetooth com</string>
     <string name="bt_scanning_specific2">em seu nome…</string>
     <string name="bt_device_not_supported">Nenhum experimento disponível.</string>
-
     <string name="bt_location_explanation">O Android requer uma permissão de localização para escanear Bluetooth, pois o resultado pode ser usado para derivar informações de localização. Agora solicitaremos essas permissões. Você precisa concedê-los para fazer um escaneamento Bluetooth.</string>
-
     <string name="bt_exception_uuid">Característica com o UUID</string>
     <string name="bt_exception_uuid2">não encontrado.</string>
     <string name="bt_exception_disabled">Bluetooth está desabilitado. Por favor habilite o bluetooth e tente novamente.</string>
@@ -249,15 +204,12 @@
     <string name="bt_exception_no_connection">O dispositivo Bluetooth não está conectado. O experimento não pode ser iniciado.</string>
     <string name="bt_exception_disconnected">O dispositivo Bluetooth foi desconectado.</string>
     <string name="bt_default_error_message">Tem um erro com o dispositivo Bluetooth.</string>
-
     <string name="bt_error_writing">Erro enquanto escrevendo característica com o UUID</string>
     <string name="bt_error_reading">Erro enquanto lendo característica com o UUID</string>
     <string name="bt_error_discovering">Erro enquanto descobrindo os serviços de dispositivos bluetooth.</string>
     <string name="bt_fail_reading">A operação de leitura não foi bem sucedida.</string>
     <string name="bt_fail_writing">A operação de escrita não foi bem sucedida.</string>
-
     <string name="bt_more_info_link_text">Se o seu dispositivo não é suportado, vá em \"Mais informações\" para saber mais sobre o suporte flexível do Bluetooth Low Energy no phyphox em nosso site.</string>
     <string name="bt_more_info_link_button">Mais informações</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
 </resources>
