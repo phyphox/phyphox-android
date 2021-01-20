@@ -1,2 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">phyphox</string>
+    <string name="action_settings">Tənzimləmələr</string>
+    <string name="title_activity_experiment">phyphox</string>
+    <string name="graph_tools_pan_and_zoom">Sürüşdür və miqyası dəyişdir</string>
+    <string name="graph_tools_pick">verilənləri seç</string>
+    <string name="graph_tools_more">Əlavə alətlər</string>
+    <string name="graph_tools_reset">İlkin miqyasın bərpası</string>
+    <string name="graph_tools_follow">Yeni verilənləri daxil et</string>
+    <string name="graph_tools_linear_fit">Xətti reqressiya</string>
+    <string name="graph_tools_export">Verilənləri xaricə köçür</string>
+    <string name="graph_tools_log_x">Loqarifmik x oxu</string>
+    <string name="graph_tools_log_y">Loqarifmik y oxu</string>
+    <string name="graph_point_label">Nöqtə</string>
+    <string name="graph_slope_label">Xəttin meyli</string>
+    <string name="graph_difference_label">Fərq</string>
+    <string name="graph_fit_label">Xətti reqressiya: y = a x + b</string>
+    <string name="applyZoomTitle">Miqyası dəyiş</string>
+    <string name="applyZoomExplanation">Əgər istəsəz, qrafikin interaktiv rejimini bağladıqda seçdiyiniz miqyasın saxlanılmasını seçə bilərsiniz.</string>
+    <string name="applyZoomAdvanced">Təkmilləşmiş seçimlər</string>
+    <string name="applyZoomApply">Buna tətbiq edin …</string>
+</resources>
