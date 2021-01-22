@@ -20,4 +20,18 @@
     <string name="applyZoomExplanation">Əgər istəsəz, qrafikin interaktiv rejimini bağladıqda seçdiyiniz miqyasın saxlanılmasını seçə bilərsiniz.</string>
     <string name="applyZoomAdvanced">Təkmilləşmiş seçimlər</string>
     <string name="applyZoomApply">Buna tətbiq edin …</string>
+    <string name="applyZoomReset">Əvvəlcədən seçilmiş bir seçimə qaytarın</string>
+    <string name="applyZoomKeep">Seçimi saxla</string>
+    <string name="applyZoomThis">Sadəcə bu qrafik</string>
+    <string name="applyZoomSameVariable">Digər qrafiklər: Eyni dəyişənlər</string>
+    <string name="applyZoomSameUnit">Digər qrafiklər: Eyni vahidlər</string>
+    <string name="applyZoomSameAxis">Digər qrafiklər: Eyni ox</string>
+    <string name="newExperiment">Təcrübələri əlavə et</string>
+    <string name="newExperimentSimple">Sadə təcrübə əlavə et</string>
+    <string name="newExperimentPhyphoxInfo">Verilənlərin təhlili də daxil olmaqla daha mürəkkəb təcrübələr aparmaq üçün phyphox.org saytını ziyarət edin və onları həmkarlarınız, tələbələriniz və dostlarınız ilə paylaşın.</string>
+    <string name="newExperimentInputTitle">Başlıq</string>
+    <string name="newExperimentInputBufferSize">Buffer ölçüsü (saxlanılacaq dəyərlərin sayı)</string>
+    <string name="newExperimentInputRate">Sensorun tezliyi (Hz-lə, 0 = mümkün qədər sürətli)</string>
+    <string name="newExperimentInputSensors">Aktiv sensorlar</string>
+    <string name="newExperimentBluetooth">Bluetooth cihazı üçün təcrübə əlavə et</string>
 </resources>
