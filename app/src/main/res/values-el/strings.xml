@@ -1,15 +1,14 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Ρυθμίσεις</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="newExperiment">Προσθήκη πειράματος</string>
     <string name="newExperimentPhyphoxInfo">Επισκεφθείτε την σελίδα phyphox.org για να δημιουργήσετε πιο σύνθετα πειράματα που περιλαμβάνουν ανάλυση δεδομένων και μοιραστείτε τα με συναδέλφους, μαθητές και φίλους.</string>
     <string name="newExperimentInputTitle">Τίτλος</string>
     <string name="newExperimentInputBufferSize">Μέγεθος buffer (πλήθος τιμών για αποθήκευση)</string>
     <string name="newExperimentInputRate">Ρυθμός Αισθητήρα (σε Hz, 0= όσο γρηγορότερα γίνεται)</string>
     <string name="newExperimentInputSensors">Ενεργοί αισθητήρες</string>
-
     <string name="help">Βοήθεια και πληροφορίες</string>
     <string name="experimentsPhyphoxOrg">Ιδέες για πειράματα και οδηγίες</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -22,11 +21,9 @@
     <string name="translationToSettings">Ρυθμίσεις</string>
     <string name="translationToWebsite">Ιστοσελίδα</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#el</string>
-
     <string name="warning">Προειδοποίηση</string>
     <string name="donotshowagain">Να μην προβληθεί ξανά</string>
     <string name="damageWarning">Προσέξτε να μην προκαλέσετε ζημιά στο κινητό σας κατά τη διάρκεια του πειράματος. Δώστε ιδιαίτερη προσοχή ώστε να μην χτυπήσει σε σκληρές επιφάνειες και αποφύγετε την έκθεσή του σε ισχυρά μαγνητικά πεδία. Οι δημιουργοί του phyphox δεν είναι υπεύθυνοι για τυχόν ζημιές στο κινητό σας.</string>
-
     <string name="info">Πληροφορίες</string>
     <string name="credits">Μνεία</string>
     <string name="creditsRWTH">Η εφαρμογή phyphox® δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.</string>
@@ -38,7 +35,7 @@
 \n Dominik Dorsel
 \n Jonas Gessner
 \n Camilla Lummerzheim</string>
-    <string name="creditsLibs">"Το  web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84  χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το  GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence)"</string>
+    <string name="creditsLibs">Το web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84 χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
     <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
     <string name="sensorLight">Φως</string>
     <string name="sensorGyroscope">Γυροσκόπιο</string>
@@ -48,25 +45,20 @@
     <string name="sensorTemperature">Θερμοκρασία</string>
     <string name="sensorHumidity">Υγρασία</string>
     <string name="sensorProximity">Εγγύτητα</string>
-
     <string name="location">Θέση</string>
-
     <string name="sensorNotAvailableWarningTitle">Μη διαθέσιμος αισθητήρας.</string>
     <string name="sensorNotAvailableWarningText1">Ο αισθητήρας</string>
-    <string name="sensorNotAvailableWarningText2">"δεν είναι διαθέσιμος. Συνήθως αυτό σημαίνει ότι η συσκευή σας  δε διαθέτει αισθητήρα αυτού του τύπου."</string>
+    <string name="sensorNotAvailableWarningText2">δεν είναι διαθέσιμος. Συνήθως αυτό σημαίνει ότι η συσκευή σας δε διαθέτει αισθητήρα αυτού του τύπου.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Περισσότερες πληροφορίες</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="ok">OK</string>
     <string name="close">Κλείσιμο</string>
     <string name="next">Επόμενο</string>
     <string name="cancel">Ακύρωση</string>
     <string name="unknown">άγνωστο</string>
-
     <string name="delete">Διαγραφή</string>
     <string name="confirmDelete">Θέλετε να διαγράψετε αυτό το πείραμα από τη συλλογή σας;</string>
     <string name="confirmDeleteTitle">Επιβεβαίωση διαγραφής;</string>
-
     <string name="stop">Τερματισμός</string>
     <string name="start">Εκκίνηση</string>
     <string name="clear_data">Διαγραφή δεδομένων</string>
@@ -74,23 +66,18 @@
     <string name="clear">Διαγραφή</string>
     <string name="timed_stop">Τερματισμός χρονομετρημένης εκτέλεσης</string>
     <string name="timed_start">Εκκίνηση χρονομετρημένης εκτέλεσης</string>
-
     <string name="loadingTitle">Φόρτωση</string>
     <string name="loadingText">Φόρτωση πειράματος …</string>
-
     <string name="timedRunDialogTitle">Χρονομετρημένη εκτέλεση</string>
     <string name="timedRunStartDelay">Καθυστέρηση εκκίνησης (s)</string>
     <string name="timedRunStopDelay">Διάρκεια πειράματος (s)</string>
     <string name="enableTimedRun">Χρονομετρημένη εκτέλεση</string>
-
     <string name="export">Εξαγωγή δεδομένων</string>
     <string name="export_subject">Δεδομένα από phyphox</string>
     <string name="export_pick_share">Επιλογή του τρόπου εξαγωγής</string>
-
     <string name="share">Διαμοιρασμός εικόνας οθόνης</string>
     <string name="share_subject">Screenshot του phyphox</string>
     <string name="share_pick_share">Επιλογή του τρόπου διαμοιρασμού</string>
-
     <string name="remoteServer">Απομακρυσμένη πρόσβαση</string>
     <string name="remoteServerWarning">Πρόκειται να επιτρέψετε απομακρυσμένη πρόσβαση στην λήψη δεδομένων. Αυτό θα πρέπει να επιτρέπεται μόνο σε έμπιστο δίκτυο! Επίσης σημειώστε ότι η απευθείας πρόσβαση ανάμεσα σε συσκευές μπορεί να μην είναι δυνατή σε πολλά εταιρικά ή πανεπιστημιακά δίκτυα
 \n
@@ -101,12 +88,10 @@
     <string name="remoteServerActive">Ενεργοποιήθηκε απομακρυσμένη πρόσβαση. Εκτελέστε το πείραμα από την παρακάτω διεύθυνση:
 \n%1$s</string>
     <string name="hotspotSettings">Ρυθμίσεις Hotspot</string>
-
     <string name="switchToPhoneLayout">Όψη: περιορισμένη</string>
     <string name="switchColumns1">Όψη: 1 στήλη</string>
     <string name="switchColumns2">Όψη: 2 στήλες</string>
     <string name="switchColumns3">Όψη: 3 στήλες</string>
-
     <string name="show_description">Πληροφορίες πειράματος</string>
     <string name="save_locally">Προσθήκη πειράματος στη συλλογή</string>
     <string name="save_locally_done">Το πείραμα προστέθηκε με επιτυχία στη συλλογή.</string>
@@ -121,20 +106,13 @@
     <string name="save_state_subject">Κατάσταση πειράματος για phyphox</string>
     <string name="save_state_default_title">Μέτρηση</string>
     <string name="save_state_success">Η κατάσταση αποθηκεύτηκε στη συλλογή σας.</string>
-
     <string name="timedRun">Χρονομετρημένη εκτέλεση</string>
-
     <string name="pick_exportSets">Επιλέξτε τα σύνολα δεδομένων για εξαγωγή.</string>
     <string name="pick_exportFormat">Επλέξτε το format των δεδομένων.</string>
-
     <string name="noDrawableData">Μη απεικονίσιμα δεδομένα.</string>
-
     <string name="categoryRawSensor">Αισθητήρες</string>
-
     <string name="experimentinfo_hint">Διαβάστε τις πληροφορίες του πειράματος για να μάθετε τη χρήση του.</string>
-
-<string name="calibrated_magnetometer">Χρήση βαθμονομημένου μαγνητόμετρου</string>
-
+    <string name="calibrated_magnetometer">Χρήση βαθμονομημένου μαγνητόμετρου</string>
     <string name="categoryNewExperiment">Απλά πειράματα χρήστη</string>
     <string name="graph_tools_pan_and_zoom">Μετακίνηση και μεγέθυνση</string>
     <string name="graph_tools_pick">Επιλογή δεδομένων</string>
@@ -145,34 +123,27 @@
     <string name="graph_tools_export">Εξαγωγή δεδομένων</string>
     <string name="graph_tools_log_x">Λογαριθμικός x άξονας</string>
     <string name="graph_tools_log_y">Λογαριθμικός άξονας y</string>
-
     <string name="graph_point_label">Σημείο</string>
     <string name="graph_slope_label">Κλίση</string>
     <string name="graph_difference_label">Διαφορά</string>
     <string name="graph_fit_label">Γραμμική παλινδρόμηση: y = a x + b</string>
-
     <string name="applyZoomTitle">Εφαρμογή μεγέθυνσης</string>
     <string name="applyZoomExplanation">Κλείνοντας τη διαδραστική λειτoυργία του γραφήματος μπορείτε να επιλέξετε αν θέλετε να διατηρήσετε το zoom.</string>
     <string name="applyZoomAdvanced">Επιλογές για προχωρημένους</string>
     <string name="applyZoomApply">Εφαρμογή σε…</string>
-
     <string name="applyZoomReset">Επαναφορά</string>
     <string name="applyZoomKeep">Διατήρηση επιλογής</string>
     <string name="applyZoomFollow">Διατήρηση και παρακολούθηση νέων δεδομένων</string>
-
     <string name="applyZoomThis">Μόνο αυτό το γράφημα</string>
     <string name="applyZoomSameVariable">Άλλα γραφήματα: ίδια μεταβλητή</string>
     <string name="applyZoomSameUnit">Άλλα γραφήματα: ίδια μονάδα</string>
     <string name="applyZoomSameAxis">Άλλα γραφήματα: ίδιος άξονας</string>
-
     <string name="newExperimentSimple">Προσθήκη απλού πειράματος</string>
     <string name="newExperimentBluetooth">Προσθήκη πειράματος για συσκευή Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Σφάλμα ανίχνευσης Bluetooth</string>
     <string name="newExperimentBluetoothLoadFromDevice">Φόρτωση από συσκευή</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Η συσκευή παρέχει το δικό της πείραμα phyphox. Επιλέξτε φόρτωση από συσκευή για να το ανοίξετε.</string>
-
     <string name="newExperimentQR">Προσθήκη πειράματος μέσω κωδικού QR</string>
-
     <string name="newExperimentQRscan">Σκανάρετε τον κωδικό QR που περιέχει πείραμα phyphox.</string>
     <string name="newExperimentQRErrorTitle">Σφάλμα στον κωδικό QR.</string>
     <string name="newExperimentQRNoExperiment">Δεν μπορεί να βρεθεί κωδικός QR που περιέχει κάποιο πείραμα phyphox.</string>
@@ -180,55 +151,39 @@
     <string name="newExperimentQRCodesMissing1">Ο κωδικός QR που σκανάρατε είναι μέρος μιας ομάδας</string>
     <string name="newExperimentQRCodesMissing2">κωδικών. Πατήστε συνέχεια για να σκανάρετε τους υπόλοιπους κωδικούς. Κωδικοί που απομένουν ακόμη:</string>
     <string name="newExperimentQRBadCRC">Άκυρο άθροισμα ελέγχου. Αυτό σημαίνει είτε εσφαλμένος κωδικός QR είτε ότι συνέβη κάποιο σφάλμα κατά το σκανάρισμα.</string>
-
     <string name="newExperimentBTReadErrorTitle">Λανθασμένο πείραμα Bluetooth.</string>
     <string name="newExperimentBTReadErrorCorrupted">Tα πειραματικά δεδομένα που παραλήφθηκαν ήταν κατεστραμμένα.</string>
-
     <string name="generalErrorDialog">Συνέβη κάποιο λάθος.</string>
-
     <string name="deviceInfo">Πληροφορίες συσκευής</string>
     <string name="copyToClipboard">Αντιγραφή στο πρόχειρο</string>
     <string name="deviceInfoCopied">Οι πληροφορίες της συσκευής αντιστράφηκαν στο πρόχειρο.</string>
-
     <string name="gpl">Το phyphox® είναι λογισμικό ανοιχτού κώδικα που δημοσιεύτηκε κάτω από την άδεια GNU General Public Licence. Παρακαλώ επισκεφτείτε τη σελίδα http://phyphοx.org για παραπάνω πληροφορίες καθώς και για να αποκτήσετε πρόσβαση στον κώδικά του. Όμως τα ονόματα \"phyphox\" και \"RWTH Aachen\" είναι καταχωρημένα εμπορικά σήματα.</string>
     <string name="sensorVendor">Καθοριζόμενος από τον προμηθευτή</string>
-
     <string name="vendorSensorTitle">Αισθητήρας καθοριζόμενος από τον προμηθευτή</string>
     <string name="vendorSensorWarning1">Ο αισθητήρας</string>
     <string name="vendorSensorWarning2">δεν αναφέρει το σωστό τύπο. Φαίνεται ότι είναι καθορισμένος από τον προμηθευτή και μπορούμε μόνο να εικάσουμε τον τύπο του από το όνομά του. Συνεπώς, είναι πιθανό να μην λειτουργήσει κατά το αναμενόμενο.</string>
-
     <string name="tryagain">Δοκιμάστε ξανά</string>
     <string name="doContinue">Συνέχεια</string>
     <string name="rename">Μετονομασία</string>
     <string name="loadingBluetoothConnectionText">Σύνδεση με συσκευή Bluetooth…</string>
-
     <string name="remoteServerNoNetwork">Αρχικά θα πρέπει να δημιουργήσετε μια σύνδεση Wifi με την κινητή συσκευή. Παρακαλώ ενεργοποιήστε το Wifi ή δημιουργήστε ένα hotspot.</string>
     <string name="remoteColorMapWarning">To χρωματικό γράφημα στην απομακρυσμένη διεπαφή είναι μόνο μια προσέγγιση. Σε αντίθεση με το ενσωματωμένο στην εφαρμογή γράφημα, για την ώρα, δεν μπορεί να διαχειριστεί μη ισαπέχουσες τιμές ή λογαριθμικές κλίμακες στους άξονες x και y. Συνεπώς τα δεδομένα σε μεταβαλλόμενα διαστήματα μπορεί να εμφανίζονται σε λάθος θέση.</string>
-
     <string name="force_gnss">Θέση μόνο από δορυφόρο</string>
-
     <string name="fontSize">Μέγεθος γραμματοσειράς</string>
-
     <string name="open_zip_title">Άνοιγμα ομάδας πειραμάτων</string>
-    <string name="open_zip_dialog_instructions">"Αυτή η πηγή περιέχει πολλά πειράματα. Μπορείτε  να επιλέξετε είτε να ανοίξετε ένα και αν θέλετε να το αποθηκεύσετε στη συλλογή σας είτε χρησιμοποιώντας το επόμενο κουμπί να τα αποθηκεύσετε όλα στη συλλογή σας απευθείας."</string>
+    <string name="open_zip_dialog_instructions">Αυτή η πηγή περιέχει πολλά πειράματα. Μπορείτε να επιλέξετε είτε να ανοίξετε ένα και αν θέλετε να το αποθηκεύσετε στη συλλογή σας είτε χρησιμοποιώντας το επόμενο κουμπί να τα αποθηκεύσετε όλα στη συλλογή σας απευθείας.</string>
     <string name="open_save_all">Αποθήκευση όλων</string>
-
     <string name="open_bluetooth_assets_title">Πειράματα για συσκευή Bluetooth</string>
     <string name="open_bluetooth_assets">Τα επόμενα πειράματα για τη συσκευή σας είναι διαθέσιμα από το phyphox. Μπορείτε είτε απλά να τα ανοίξετε και να τα χρησιμοποιήσετε είτε να τα προσθέσετε όλα στη συλλογή σας ώστε να έχετε εύκολη πρόσβαση σ\' αυτά από το κυρίως μενού.</string>
-
     <string name="start_hint">Πατήστε το τρίγωνο για να ξεκινήσετε το πείραμα.</string>
-
     <string name="bluetooth">Bluetooth χαμηλής ενέργειας</string>
     <string name="bt_android_version">Το Bluetooth χαμηλής ενέργειας δεν υποστηρίζεται στις εκδόσεις του Android που είναι προγενέστερες από την 4.3.</string>
-
     <string name="bt_pick_device">Παρακαλώ επιλέξτε συσκευή.</string>
     <string name="bt_scanning_generic">Ανίχνευση για συσκευές Bluetooth…</string>
     <string name="bt_scanning_specific1">Ανίχνευση για συσκευές Βluetooth με</string>
     <string name="bt_scanning_specific2">στο όνομά τους…</string>
     <string name="bt_device_not_supported">Κανένα διαθέσιμο πείραμα.</string>
-
     <string name="bt_location_explanation">Το Android απαιτεί άδεια της τοποθεσίας για την ανίχνευση Bluetooth καθώς το αποτέλεσμα μπορεί να χρησιμοποιηθεί για να εξαχθούν πληροφορίες για την τοποθεσία. Ζητούμε τώρα αυτές τις άδειες. Πρέπει να τις εκχωρήσετε ώστε να εκτελέσετε μια ανίχνευση Bluetooth.</string>
-
     <string name="bt_exception_uuid">Χαρακτηριστικό με UUID</string>
     <string name="bt_exception_uuid2">δεν βρέθηκε.</string>
     <string name="bt_exception_disabled">Το Bluetooth είναι απενεργοποιημένο. Παρακαλώ ενεργοποιήστε το Bluetooth και δοκιμάστε ξανά.</string>
@@ -249,25 +204,28 @@
     <string name="bt_exception_no_connection">Η συσκευή Bluetooth δεν συνδέθηκε. Το πείραμα δεν μπορεί να ξεκινήσει.</string>
     <string name="bt_exception_disconnected">Η συσκευή Bluetooth έχει αποσυνδεθεί.</string>
     <string name="bt_default_error_message">Υπάρχει σφάλμα με τη συσκευή Bluetooth.</string>
-
     <string name="bt_error_writing">Σφάλμα κατά την εγγραφή χαρακτηριστικού με UUID</string>
     <string name="bt_error_reading">Σφάλμα κατά την ανάγνωση χαρακτηριστικού με UUID</string>
     <string name="bt_error_discovering">Σφάλμα κατά την αναγνώριση των υπηρεσιών της συσκευής bluetooth.</string>
     <string name="bt_fail_reading">Η διαδικασία ανάγνωσης δεν ήταν επιτυχής.</string>
     <string name="bt_fail_writing">Η διαδικασία εγγραφής δεν ήταν επιτυχής.</string>
-
     <string name="bt_more_info_link_text">Αν η συσκευή σας δεν υποστηρίζεται, επιλέξτε \"περισσότερες πληροφορίες\" για να μάθετε περισσότερα σχετικά με την ευέλικτη υποστήριξη του phyphox στο Bluetooth Low Energy.</string>
     <string name="bt_more_info_link_button">Περισσότερες πληροφορίες</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
-<string name="networkPrivacyWarning">Προειδοποίηση Απορρήτου</string>
+    <string name="networkPrivacyWarning">Προειδοποίηση Απορρήτου</string>
     <string name="networkVisitPrivacyURL">Πολιτική Απορρήτου</string>
-    <string name="networkPrivacyInfo">"Το πείραμα αυτό χρησιμοποιεί μια σύνδεση δικτύου, το οποίο σημαίνει ότι δεδομένα μπορεί να μεταδίδονται σε μια δικτυακή υπηρεσία. Μπορείτε να βρείτε περισσότερες λεπτομέρειες πατώντας το πλήκτρο Πολιτικής Απορρήτου το οποίο θα σας μεταφέρει σε μια ιστοσελίδα με την πολιτική απορρήτου, που παρέχει ο δημιουργός του προγράμματος.  Αν η υπηρεσία δικτύου δεν είναι μια τοπική συσκευή, πρέπει να γνωρίζετε ότι το phyphox ενδέχεται να μεταδώσει τις παρακάτω πληροφορίες με την εκκίνηση του πειράματος:"</string>
+    <string name="networkPrivacyInfo">Το πείραμα αυτό χρησιμοποιεί μια σύνδεση δικτύου, το οποίο σημαίνει ότι δεδομένα μπορεί να μεταδίδονται σε μια δικτυακή υπηρεσία. Μπορείτε να βρείτε περισσότερες λεπτομέρειες πατώντας το πλήκτρο Πολιτικής Απορρήτου το οποίο θα σας μεταφέρει σε μια ιστοσελίδα με την πολιτική απορρήτου, που παρέχει ο δημιουργός του προγράμματος. Αν η υπηρεσία δικτύου δεν είναι μια τοπική συσκευή, πρέπει να γνωρίζετε ότι το phyphox ενδέχεται να μεταδώσει τις παρακάτω πληροφορίες με την εκκίνηση του πειράματος:</string>
     <string name="networkPrivacyUniqueID">Ένα αναγνωριστικό που είναι μοναδικό για αυτή τη συσκευή και τη συσκευή δικτύου, το οποίο χρησιμοποιείται για την αντιστοίχηση των δεδομένων που στέλνονται από τη συσκευή.</string>
     <string name="networkPrivacySensorData">Δεδομένα απο τους παρακάτω αισθητήρες:</string>
     <string name="networkPrivacySensorMicrophone">Εγγραφές ή δεδομένα προερχόμενα από εγγραφές του μικροφώνου.</string>
     <string name="networkPrivacySensorLocation">Δεδομένα τοποθεσίας (δεδομένα GPS ή παραπλήσια).</string>
     <string name="networkPrivacyDeviceInfo">Αναλυτικές πληροφορίες που αφορούν το μοντέλο της συσκευής και/ή την έκδοση του phyhox.</string>
     <string name="networkPrivacySensorInfo">Τεχνικές λεπτομέρειες σχετικά με τους ακόλουθους αισθητήρες:</string>
-
+    <string name="sensorAttitude">Προσανατολισμός</string>
+    <string name="leave_experiment">Αποχώρηση</string>
+    <string name="leave_experiment_question">Αποχώρηση και διαγραφή καταγεγραμμένων δεδομένων;</string>
+    <string name="leave">Αποχώρηση</string>
+    <string name="export_empty">Στην διαμόρφωση αυτού του πειράματος δεν καθορίζονται δεδομένα προς εξαγωγή. Αν πρόκειται για λάθος, παρακαλούμε επικοινωνήστε με τον πάροχο του QR code ή του αρχείου διαμόρφωσης.</string>
+    <string name="toggleBrightMode">Διαμόρφωση έντονου φωτισμού</string>
+    <string name="bt_location_service_explanation">Εκτός της άδειας για την απόκτηση πληροφοριών θέσης, το Android για τις αναζητήσεις Bluetooth, απαιτεί να είναι ενεργοποιημένες και οι υπηρεσίες εντοπισμού θέσης καθώς το αποτέλεσμα της αναζήτησης θα μπορούσε χρησιμοποιηθεί για να εξαχθούν πληροφορίες για τη θέση. Θα σας ανακατευθύνουμε προς τις ρυθμίσεις συστήματος.</string>
 </resources>
