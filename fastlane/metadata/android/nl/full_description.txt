@@ -1,0 +1,39 @@
+Wist je dat je een 3D-magnetometer draagt? Dat u uw telefoon als een slinger kunt gebruiken om de lokale zwaarteveldsterkte van de aarde te meten? Dat je van je smartphone een sonar kunt maken?
+
+phyphox geeft je toegang tot de sensoren van je smartphone , hetzij direct, hetzij via kant-en-klare experimenten die je data analyseren en waarmee je onbewerkte data samen met de resultaten kunt exporteren voor verdere analyse. U kunt zelfs uw eigen experimenten naar phyphox.org uploaden en deze met collega's, studenten en vrienden delen.
+
+Mogelijke functies:
+- Een selectie van vooraf opgezette experimenten. Druk gewoon op play om te starten.
+- Exporteer uw gegevens naar veelgebruikte bestandsindelingen
+- Beheer op afstand uw experiment via een webinterface vanaf elke pc in hetzelfde netwerk als uw smartphone. U hoeft niets op die pc's te installeren - u hebt alleen een moderne webbrowser nodig.
+- Creëer met behulp van onze web-editor (http://phyphox.org/editor) uw eigen experimenten door meting via een gekozen sensor, analysestappen te bepalen en views te maken als interface. De analyse kan bestaan uit het toevoegen van slechts twee waarden of het gebruik van geavanceerde methoden zoals Fourier-transformaties en crosscorrelatie. We bieden een hele toolbox met analysefuncties.
+
+Ondersteunde sensoren:
+- Accelerometer
+- Magnetometer
+- Gyroscoop
+- Lichtintensiteit
+- Druk
+- Microfoon
+- Nabijsheidsensor
+- GPS
+*sommige sensoren zitten niet op elke smartphone.
+
+Export formaten
+- CSV (Comma separated values)
+- CSV (Tab-separated values)
+- Excel
+(als u andere bestandsformaten wenst, laat het ons weten)
+
+Deze app werd ontwikkeld aan het Instituut voor Fysica van de RWTH Aachen University.
+
+
+Uitleg voor de gevraagde toestemmingen
+
+Als je Android 6.0 of hoger hebt, worden sommige toestemmingen alleen gevraagd als dat nodig is.
+
+Internet: hiermee krijgt u phyphox-netwerktoegang, die nodig is om experimenten van online bronnen te laden of wanneer u de externe toegang gebruikt. Beide worden alleen gedaan op verzoek van de gebruiker en er worden geen andere gegevens verzonden.
+Bluetooth: wordt gebruikt voor toegang tot externe sensoren.
+Externe opslag lezen: dit kan nodig zijn bij het openen van een experiment dat op de smartphone is opgeslagen.
+Audio opnemen: vereist om de microfoon in experimenten te gebruiken.
+Locatie: wordt gebruikt voor toegang tot GPS voor locatiegebaseerde experimenten.
