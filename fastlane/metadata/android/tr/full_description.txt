@@ -1,0 +1,42 @@
+3 boyutlu bir manyetometre taşıdığınızı biliyor muydunuz? Peki ya telefonunuzu bir sarkaç olarak kullanarak Dünya'nın yerçekimi ivmesini ölçebileceğinizi? Ya da telefonunuzu bir sonar cihazına dönüştürebileceğinizi?
+
+Phyphox, telefonunuzun sensörlerine direkt olarak veya verilerinizi analiz edip ham verileri daha ayrıntılı incelemeniz için sonuçlarla birlikte dışa aktarmanıza izin veren hazır deneyler aracılığıyla erişmenizi sağlar. Hatta kendi deneylerinizi phyphox.org'da tanımlayıp meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşabilirsiniz.
+
+Seçilen Özellikler:
+- Ön tanımlı deneylerden oluşan seçim. Başlamak için sadece başlat tuşuna basın.
+- Verilerinizi yaygın olarak kullanılan dosya formatlarıyla dışa aktarın.
+- Deneylerinizi, telefonunuzla aynı ağdaki herhangi bir bilgisayardan bir web arayüzüne girerek uzaktan kontrol edin. Bu bilgisayarlara herhangi bir şey yüklemenize gerek yok. Tek ihtiyacınız olan modern bir web tarayıcısı.
+- Web editörümüzü (http://phyphox.org/editor) kullanarak sensör girdilerini seçerek, analiz adımlarını tanımlayarak ve arayüz için görüntüler oluşturarak kendi deneylerinizi tanımlayın. Analiz sadece iki değer eklemek veya Fourier dönüşümleri ve çapraz korelasyon gibi gelişmiş yöntemler kullanmaktan oluşabilir. Analiz fonksiyonlarının araçlarını eksiksiz olarak sunuyoruz.
+
+Desteklenen Sensörler:
+- İvmeölçer
+- Manyetometre
+- Jiroskop
+- Işık şiddeti
+- Basınç Sensörü
+- Mikrofon
+- Yakınlık Sensörü
+- GPS
+*bazı sensörler her cihazda bulunmayabilir.
+
+Dışa aktarma biçimleri
+- CSV (Virgülle ayrılmış değerler)
+- CSV (Sekmeyle ayrılmış değerler)
+- Excel
+(başka biçimlere ihtiyacınız varsa, lütfen bize bildirin)
+
+
+Bu uygulama RWTH Aachen Üniversitesi'nde 2. Fizik A Enstitüsü'nde geliştirilmiştir.
+
+--
+
+İstenen izinler için açıklama
+
+Android 6.0 veya daha yeni bir sürüme sahipseniz, bazı izinler yalnızca gerektiğinde istenir.
+
+İnternet: Çevrimiçi kaynaklardan veya uzaktan erişimi kullanırken deneyler yüklemek için gerekli olan phyphox ağ erişimini sağlar. Her ikisi de sadece kullanıcı tarafından talep edildiğinde yapılır ve başka hiçbir veri iletilmez.
+Bluetooth: Harici sensörlere erişmek için kullanılır.
+Harici depolamayı oku: Cihazda depolanmış bir deneyi açarken gerekli olabilir.
+Ses kayıt: Mikrofonlu deneylerde kullanmak için gereklidir.
+Konum: Konum tabanlı deneylerde için GPS'ye erişmek için kullanılır.
+Kamera: Harici deney konfigürasyonları için QR kodlarını taramak için kullanılır.

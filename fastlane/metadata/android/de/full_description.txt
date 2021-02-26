@@ -1,0 +1,42 @@
+Wusstest du, dass du stets ein 3D-Magnetometer mit dir herumträgst? Dass dein Smartphone als Pendel die lokale Erdbeschleunigung messen kann? Dass man dein Smartphone als Sonar nutzen kann?
+
+phyphox ermöglicht den Zugriff auf die Sensoren Ihres Smartphone oder Tablets, entweder direkt oder durch sofort einsatzbereite Experimente mit eingebauter Datenauswertung und Export-Funktion. Du kannst sogar eigene Experimente mit eigenen Datenanalysen auf phyphox.org entwickeln und diese mit Kollegen, Schülern und Freunden teilen.
+
+Feature-Auswahl:
+- Vordefinierte Beispiel-Experimente. Einfach Start klicken und los geht\'s!
+- Exportiere deine Daten in vielen gängigen Formaten
+- Steure dein Experiment von einem PC im gleichen Netzwerk fern. Dazu musst du nichts installieren, sondern brauchst lediglich einen aktuellen Browser.
+- Eigene Experimente können aus Sensor-Eingängen, mathematischen Operationen und Darstellungsmodulen in unserem Web-Editor (http://phyphox.org/editor) zusammengesetzt werden. Egal, ob nur zwei Werte addiert werden sollen oder du fortgeschrittene Funktionen wie Fourier-Transformation oder Kreuzkorrelation benötigst.
+
+Unterstützte Sensoren
+- Beschleunigungssensor
+- Magnetometer
+- Gyroskop
+- Licht-Sensor
+- Druck
+- Näherungssensor
+- Mikrofon
+- GPS
+*manche Sensoren sind nicht auf jedem Gerät verfügbar.
+
+Export Formate
+- CSV (durch Komma getrennte Werte)
+- CSV (durch Tabulator getrennte Werte)
+- Excel
+(wenn du weitere Formate benötigst, lass es uns wissen)
+
+
+Diese App wurde am 2. Physikalischen Institut A der RWTH Aachen University entwickelt.
+
+--
+
+Erklärung der angeforderten Zugriffsrechte
+
+Wenn du Android 6.0 oder neuer verwendest, wird nach manchen Berechtigungen nur bei Bedarf gefragt.
+
+Internet: Dies erlaubt Zugriff auf das Netzwerk, welcher benötigt wird, wenn ein Experiment aus einer Internet-Quelle geladen werden soll und für den Fernzugriff. Beides passiert nur auf Wunsch des Users und es werden keine anderen Daten übertragen.
+Bluetooth: Wird für den Zugriff auf externe Sensoren genutzt.
+Read external storage: Dies kann nötig sein, wenn ein externes Experiment auf dem Gerät geöffnet werden soll.
+Record audio: Nötig um das Mikrofon im Experiment zu verwenden.
+Location: Benötigt für den Zugriff auf GPS-Daten für entsprechende ortsabhängige Experimente.
+Kamera: Scan von QR-Codes um externe Experimentkonfigurationen zu laden.

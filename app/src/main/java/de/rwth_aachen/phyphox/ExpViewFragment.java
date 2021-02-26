@@ -26,11 +26,11 @@ public class ExpViewFragment extends Fragment {
     }
 
     //Apply zoom to all graphs on the current page.
-    public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
+    public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis, boolean absoluteTime) {
         for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
             if (element.getClass() == ExpView.graphElement.class) {
                 ExpView.graphElement ge = (ExpView.graphElement)element;
-                ge.applyZoom(min, max, follow, unit, buffer, yAxis);
+                ge.applyZoom(min, max, follow, unit, buffer, yAxis, absoluteTime);
             }
         }
     }

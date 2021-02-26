@@ -46,7 +46,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
-public class PhyphoxExperiment implements Serializable {
+public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.Listener {
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
@@ -62,7 +62,7 @@ public class PhyphoxExperiment implements Serializable {
     public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
     public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
     public Vector<ExpView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
-    public SensorInputTimeReference sensorInputTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
+    public ExperimentTimeReference experimentTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<SensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
     public GpsInput gpsIn = null;
     public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
@@ -74,9 +74,9 @@ public class PhyphoxExperiment implements Serializable {
 
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     DataBuffer analysisDynamicSleep = null;
-    long lastAnalysis = 0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
-    long analysisTime; //This variable holds the system time of the moment the current analysis process started.
-    long firstAnalysisTime = 0; //This variable holds the system time of the moment the first analysis process started.
+    double lastAnalysis = 0.0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
+    double analysisTime; //This variable holds the experiment time of the moment the current analysis process started.
+    double analysisLinearTime; //Same with the current system time
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
     boolean newUserInput = true; //Will be set to true if the user changed any values
     boolean newData = true; //Will be set to true if we have fresh data to present
@@ -107,15 +107,23 @@ public class PhyphoxExperiment implements Serializable {
     //The constructor will just instantiate the DataExport. Everything else will be set directly by the phyphoxFile loading function (see phyphoxFile.java)
     PhyphoxExperiment() {
         exporter = new DataExport(this);
-        sensorInputTimeReference = new SensorInputTimeReference();
+        experimentTimeReference = new ExperimentTimeReference(this);
+    }
+
+    public void onExperimentTimeReferenceUpdated(ExperimentTimeReference experimentTimeReference) {
+        for (ExpView ev : experimentViews) {
+            for (ExpView.expViewElement eve : ev.elements) {
+                eve.onTimeReferenceUpdate(experimentTimeReference);
+            }
+        }
     }
 
     //Create a new buffer
-    public DataBuffer createBuffer(String key, int size) {
+    public DataBuffer createBuffer(String key, int size, ExperimentTimeReference experimentTimeReference) {
         if (key == null)
             return null;
 
-        DataBuffer output = new DataBuffer(key, size);
+        DataBuffer output = new DataBuffer(key, size, experimentTimeReference);
         dataBuffers.add(output);
         dataMap.put(key, dataBuffers.size() - 1);
         return output;
@@ -223,7 +231,7 @@ public class PhyphoxExperiment implements Serializable {
             if (!newUserInput) {
                 return; //No new input. Nothing to do.
             }
-        } else if (System.currentTimeMillis() - lastAnalysis <= sleep * 1000) {
+        } else if (experimentTimeReference.getExperimentTime() - lastAnalysis <= sleep) {
             //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
             return; //Too soon. Nothing to do
         }
@@ -232,9 +240,9 @@ public class PhyphoxExperiment implements Serializable {
         if (!measuring)
             cycle = 0;
         dataLock.lock();
-        analysisTime = System.currentTimeMillis();
-        if (firstAnalysisTime == 0)
-            firstAnalysisTime = analysisTime;
+        analysisTime = experimentTimeReference.getExperimentTime();
+        analysisLinearTime = experimentTimeReference.getLinearTime();
+
         //Call all the analysis modules and let them do their work.
         try {
             for (Analysis.AnalysisModule mod : analysis) {
@@ -275,7 +283,7 @@ public class PhyphoxExperiment implements Serializable {
 
         recordingUsed = true;
         newData = true; //We have fresh data to present.
-        lastAnalysis = System.currentTimeMillis(); //Remember when we were done this time
+        lastAnalysis = experimentTimeReference.getExperimentTime(); //Remember when we were done this time
     }
 
     //called by the main loop after everything is processed. Here we have to send all the analysis results to the appropriate views
@@ -318,6 +326,10 @@ public class PhyphoxExperiment implements Serializable {
     public void stopAllIO() {
         if (!loaded)
             return;
+
+        experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
+        lastAnalysis = 0.0;
+
         //Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
             audioRecord.stop();
@@ -351,12 +363,10 @@ public class PhyphoxExperiment implements Serializable {
         if (!loaded)
             return;
 
-        //If we start IO and the data has not been reset, we want to set the first analysis time to now, offset by the duration of the last measurement period
-        if (firstAnalysisTime != 0)
-            firstAnalysisTime = System.currentTimeMillis() - (analysisTime-firstAnalysisTime);
+        experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.START);
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
-        sensorInputTimeReference.reset();
+
         for (SensorInput sensor : inputSensors)
             sensor.start();
 
@@ -439,9 +449,8 @@ public class PhyphoxExperiment implements Serializable {
 
         NodeList children = root.getChildNodes();
         for (int i = 0; i < children.getLength(); i++)
-            if (children.item(i).getNodeName().equals("state-title") || children.item(i).getNodeName().equals("color"))
+            if (children.item(i).getNodeName().equals("state-title") || children.item(i).getNodeName().equals("color") || children.item(i).getNodeName().equals("events") )
                 root.removeChild(children.item(i));
-
 
         Element customTitleEl = doc.createElement("state-title");
         customTitleEl.setTextContent(customTitle);
@@ -451,6 +460,15 @@ public class PhyphoxExperiment implements Serializable {
         colorEl.setTextContent("blue");
         root.appendChild(colorEl);
 
+        Element eventsEl = doc.createElement("events");
+        for (ExperimentTimeReference.TimeMapping event : experimentTimeReference.timeMappings) {
+
+            Element eventEl = doc.createElement(event.event.name().toLowerCase());
+            eventEl.setAttribute("experimentTime", event.experimentTime.toString());
+            eventEl.setAttribute("systemTime", Long.toString(event.systemTime));
+            eventsEl.appendChild(eventEl);
+        }
+        root.appendChild(eventsEl);
 
         NodeList containers = root.getElementsByTagName("data-containers");
         if (containers.getLength() != 1)

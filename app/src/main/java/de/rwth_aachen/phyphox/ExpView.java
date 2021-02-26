@@ -10,7 +10,6 @@ import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -28,6 +27,7 @@ import androidx.core.content.ContextCompat;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
@@ -183,6 +183,10 @@ public class ExpView implements Serializable{
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+        }
+
+        //This is called when the time reference for the experiment has been updated (i.e. start or stop)
+        protected void onTimeReferenceUpdate(ExperimentTimeReference experimentTimeReference) {
         }
 
         //This is called when the element should be triggered (i.e. button press triggered by the remote interface)
@@ -847,8 +851,12 @@ public class ExpView implements Serializable{
                     currentValue = defaultValue;
                 else
                     currentValue = v;
-                if (et != null)
-                    et.setText(String.valueOf(currentValue*factor));
+                if (et != null) {
+                    if (decimal)
+                        et.setText(String.valueOf(currentValue * factor));
+                    else
+                        et.setText(String.format(Locale.US, "%.0f", currentValue * factor));
+                }
             }
         }
 
@@ -1033,6 +1041,8 @@ public class ExpView implements Serializable{
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
         transient private FloatBufferRepresentation[] dataX; //The x data to be displayed
         transient private FloatBufferRepresentation[] dataY; //The y data to be displayed
+        transient private List<ExperimentTimeReferenceSet>[] timeReferencesX;
+        transient private List<ExperimentTimeReferenceSet>[] timeReferencesY;
         private double dataMinX, dataMaxX, dataMinY, dataMaxY, dataMinZ, dataMaxZ;
 
         private boolean isExclusive = false;
@@ -1051,6 +1061,10 @@ public class ExpView implements Serializable{
         private String unitZ = null; //Label for the z-axis
         private String unitYX = null; //Unit for slope (i.e. y/x)
         private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
+        private boolean timeOnX = false; //x-axis is time axis?
+        private boolean timeOnY = false; //y-axis is time axis?
+        private boolean absoluteTime = false; //Use system time as default?
+        private boolean linearTime = false; //time data is not given in experiment time (which pauses with the experiment) but as seconds since 1970 (ignoring pauses)
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
         private boolean logZ = false; //logarithmic scale for the z-axis?
@@ -1098,6 +1112,8 @@ public class ExpView implements Serializable{
                 mapWidth.add(0);
                 dataX = new FloatBufferRepresentation[nCurves];
                 dataY = new FloatBufferRepresentation[nCurves];
+                timeReferencesX =  new ArrayList[nCurves];
+                timeReferencesY =  new ArrayList[nCurves];
             }
 
             warningText = res.getString(R.string.remoteColorMapWarning).replace("'", "\\'");
@@ -1210,6 +1226,13 @@ public class ExpView implements Serializable{
                 gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
         }
 
+        protected void setTimeAxes(boolean timeOnX, boolean timeOnY, boolean absoluteTime, boolean linearTime) {
+            this.timeOnX = timeOnX;
+            this.timeOnY = timeOnY;
+            this.absoluteTime = absoluteTime;
+            this.linearTime = linearTime;
+        }
+
         //Interface to set log scales
         protected void setLogScale(boolean logX, boolean logY, boolean logZ) {
             this.logX = logX;
@@ -1272,7 +1295,7 @@ public class ExpView implements Serializable{
             interactiveGV.setLayoutParams(lp);
             interactiveGV.setLabel(this.label);
 
-            if (act != null && act instanceof Experiment) {
+            if (act instanceof Experiment) {
                 DataExport dataExport = new DataExport(experiment);
 
                 DataExport.ExportSet set = dataExport.new ExportSet(this.label);
@@ -1289,6 +1312,8 @@ public class ExpView implements Serializable{
 
                 interactiveGV.assignDataExporter(dataExport);
             }
+
+            setTimeReferences(experiment.experimentTimeReference);
 
             //Send our parameters to the graphView isntance
             if (historyLength > 1)
@@ -1309,6 +1334,9 @@ public class ExpView implements Serializable{
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
             gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
+            gv.setTimeAxes(timeOnX, timeOnY);
+            gv.setAbsoluteTime(absoluteTime);
+            gv.setLinearTime(linearTime);
             gv.setLogScale(logX, logY, logZ);
             interactiveGV.allowLogX = logX;
             interactiveGV.allowLogY = logY;
@@ -1369,6 +1397,8 @@ public class ExpView implements Serializable{
                 if (inputs.size() > i+1) {
                     DataBuffer x = experiment.getBuffer(inputs.get(i+1));
                     if (x != null) {
+                        if (timeOnX)
+                            timeReferencesX[i/2] = x.getExperimentTimeReferenceSets(linearTime);
                         if (style.get(i/2) == GraphView.Style.hbars)
                             dataX[i/2] = x.getFloatBufferBarValue();
                         else if (style.get(i/2) == GraphView.Style.vbars)
@@ -1391,6 +1421,8 @@ public class ExpView implements Serializable{
 
                 DataBuffer y = experiment.getBuffer(inputs.get(i));
                 if (y != null) {
+                    if (timeOnY)
+                        timeReferencesY[i/2] = y.getExperimentTimeReferenceSets(linearTime);
                     if (style.get(i/2) == GraphView.Style.hbars)
                         dataY[i/2] = y.getFloatBufferBarAxis(lineWidth.get(i/2));
                     else if (style.get(i/2) == GraphView.Style.vbars)
@@ -1413,6 +1445,40 @@ public class ExpView implements Serializable{
                     dataY[i/2] = null;
                 }
             }
+        }
+
+        private void setTimeReferences(ExperimentTimeReference experimentTimeReference) {
+            if (gv != null) {
+                List<Double> starts = new ArrayList<>();
+                List<Double> stops = new ArrayList<>();
+                double trStop = Double.NaN;
+                long trStopSystemTime = 0;
+                List<Double> systemTimeReferenceGap = new ArrayList<>();
+                long totalTimeReferenceGap = 0;
+                for (ExperimentTimeReference.TimeMapping tm : experimentTimeReference.timeMappings) {
+                    if (tm.event == ExperimentTimeReference.TimeMappingEvent.START) {
+                        starts.add(tm.experimentTime);
+                        stops.add(trStop);
+                        if (!Double.isNaN(trStop))
+                            totalTimeReferenceGap += tm.systemTime - trStopSystemTime;
+                        systemTimeReferenceGap.add(totalTimeReferenceGap*0.001);
+                        trStop = Double.NaN;
+                    } else if (tm.event == ExperimentTimeReference.TimeMappingEvent.PAUSE) {
+                        trStop = tm.experimentTime;
+                        trStopSystemTime = tm.systemTime;
+                    }
+                }
+                if (!Double.isNaN(trStop)) {
+                    starts.add(Double.NaN);
+                    stops.add(trStop);
+                }
+                gv.setTimeRanges(starts, stops, systemTimeReferenceGap);
+            }
+        }
+
+        @Override
+        protected void onTimeReferenceUpdate(ExperimentTimeReference experimentTimeReference) {
+            setTimeReferences(experimentTimeReference);
         }
 
         @Override
@@ -1443,7 +1509,7 @@ public class ExpView implements Serializable{
                 return;
             if (dataY[0] != null) {
                 if (dataX[0] != null) {
-                    gv.addGraphData(dataY, dataMinY, dataMaxY, dataX, dataMinX, dataMaxX, dataMinZ, dataMaxZ);
+                    gv.addGraphData(dataY, dataMinY, dataMaxY, dataX, dataMinX, dataMaxX, dataMinZ, dataMaxZ, timeReferencesX, timeReferencesY);
                     dataX[0] = null;
                 } else
                     gv.addGraphData(dataY, dataMinY, dataMaxY);
@@ -1753,27 +1819,35 @@ public class ExpView implements Serializable{
         //If unit AND buffer are null, the zoom is applied to the same axis on all graphs
         //If unit is set, it is applied to all axes with the same unit on all graphs
         //If buffer is set, it is applied to all axes with the same buffer on all graphs
-        public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis) {
+        public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis, boolean absoluteTime) {
             if (unit != null) {
                 if (unitX.equals(unit)) {
                     zoomState.minX = min;
                     zoomState.maxX = max;
                     zoomState.follows = follow;
+                    if (timeOnX)
+                        gv.setAbsoluteTime(absoluteTime);
                 }
                 if (unitY.equals(unit)) {
                     zoomState.minY = min;
                     zoomState.maxY = max;
+                    if (timeOnY)
+                        gv.setAbsoluteTime(absoluteTime);
                 }
             } else if (buffer != null) {
                 for (int i = 0; i < inputs.size(); i++) {
-                    if (inputs.get(i).equals(buffer)) {
+                    if (inputs.get(i) != null && inputs.get(i).equals(buffer)) {
                         if (i % 2 == 1) {
                             zoomState.minX = min;
                             zoomState.maxX = max;
                             zoomState.follows = follow;
+                            if (timeOnX)
+                                gv.setAbsoluteTime(absoluteTime);
                         } else {
                             zoomState.minY = min;
                             zoomState.maxY = max;
+                            if (timeOnY)
+                                gv.setAbsoluteTime(absoluteTime);
                         }
                     }
                 }
@@ -1782,9 +1856,13 @@ public class ExpView implements Serializable{
                     zoomState.minX = min;
                     zoomState.maxX = max;
                     zoomState.follows = follow;
+                    if (timeOnX)
+                        gv.setAbsoluteTime(absoluteTime);
                 } else {
                     zoomState.minY = min;
                     zoomState.maxY = max;
+                    if (timeOnY)
+                        gv.setAbsoluteTime(absoluteTime);
                 }
             }
             gv.zoomState = zoomState;

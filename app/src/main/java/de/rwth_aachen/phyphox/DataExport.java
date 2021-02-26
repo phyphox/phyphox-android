@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -19,10 +20,12 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -98,7 +101,7 @@ public class DataExport implements Serializable {
         }
 
         protected abstract String getName(); //Returns the name or description of the format
-        protected abstract File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic); //The actual export routine, which returns a datafile
+        protected abstract File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx); //The actual export routine, which returns a datafile
         protected abstract String getType(boolean minimalistic); //Returns the mime-type of the exported file.
         protected abstract String getFilename(boolean minimalistic); //Returns a default file name for the exported file
     }
@@ -129,7 +132,7 @@ public class DataExport implements Serializable {
         }
 
         @Override
-        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic) {
+        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx) {
             File file = new File(exportPath, "/"+getFilename(minimalistic)); // Create a file with default filename in the given path
 
             DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
@@ -187,6 +190,51 @@ public class DataExport implements Serializable {
                         if (!minimalistic)
                             zstream.closeEntry(); //This dataset is complete. Close its file within the zip
                     }
+                    //Add meta data in a separate folder
+                    if (!minimalistic) {
+                        ZipEntry entry;
+                        entry = new ZipEntry("meta/device.csv");
+                        zstream.putNextEntry(entry);
+                        zstream.write(("\"property\""+separator+"\"value\"\n").getBytes());
+
+                        StringBuilder data = new StringBuilder();
+                        for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
+                            if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID)
+                                continue;
+                            String identifier = deviceMetadata.toString();
+                            data.append("\"").append(identifier).append("\"").append(separator);
+                            data.append("\"").append(new Metadata(identifier, ctx).get("")).append("\"").append("\n");
+                        }
+                        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                            for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
+                                String identifier = sensorMetadata.toString();
+                                data.append("\"").append(sensor.name()).append(" ").append(identifier).append("\"").append(separator);
+                                data.append("\"").append(new Metadata(sensor.name()+identifier, ctx).get("")).append("\"").append("\n");
+                            }
+                        }
+                        zstream.write(data.toString().getBytes()); //Write to zip-file
+                        zstream.closeEntry();
+
+                        entry = new ZipEntry("meta/time.csv");
+                        zstream.putNextEntry(entry);
+                        zstream.write(("\"event\""+separator+"\"experiment time\""+separator+"\"system time\""+separator+"\"system time text\"\n").getBytes());
+
+                        DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+                        longformat.applyPattern("############0.000");
+                        longformat.setDecimalFormatSymbols(dfs);
+                        longformat.setGroupingUsed(false);
+
+                        data = new StringBuilder();
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+                        for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+                            data.append("\"").append(timeMapping.event.name()).append("\"").append(separator);
+                            data.append(format.format(timeMapping.experimentTime)).append(separator);
+                            data.append(longformat.format(timeMapping.systemTime/1000.)).append(separator);
+                            data.append("\"").append(dateFormat.format(timeMapping.systemTime)).append("\"").append("\n");
+                        }
+                        zstream.write(data.toString().getBytes()); //Write to zip-file
+                        zstream.closeEntry();
+                    }
                 } catch (Exception e) {
                     //This could be done better. Any error during CSV/ZIP compiling ends up here
                     Log.e("csvExport", "Unhandled exception during write.", e);
@@ -232,20 +280,20 @@ public class DataExport implements Serializable {
         }
 
         @Override
-        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic) {
+        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx) {
+            File file = new File(exportPath, "/"+getFilename(minimalistic)); //Create file with default filename
+
             //New excel workbook
             Workbook wb = new HSSFWorkbook();
-            File file = new File(exportPath, "/"+getFilename(minimalistic)); //Create file with default filename
+            //Create a style (just bold font) for the table header
+            Font font= wb.createFont();
+            font.setBold(true);
+            CellStyle cs = wb.createCellStyle();
+            cs.setFont(font);
 
             try { // A lot can go wrong here. Catch em all...
                 for (ExportSet set : sets) { //For each dataset...
                     Sheet sheet = wb.createSheet(set.name);//..create a new sheet within the Excel document
-
-                    //Create a style (just bold font) for the table header
-                    Font font= wb.createFont();
-                    font.setBold(true);
-                    CellStyle cs = wb.createCellStyle();
-                    cs.setFont(font);
 
                     //Create the header row and fill it
                     Row row = sheet.createRow(0);
@@ -266,18 +314,83 @@ public class DataExport implements Serializable {
                                 c.setCellValue("NaN"); //Nope, no data. Fill NaN into this cell
                         }
                     }
+                }
 
-                    //We now have our Excel document. Let's write it to the file.
-                    FileOutputStream os = null;
-                    try { //Let's catch errors while writing separately
-                        os = new FileOutputStream(file);
-                        wb.write(os);
-                    } catch (Exception e) {
-                        Log.e("excelExport", "Unhandled exception during write.", e);
-                    } finally {
-                        if (os != null)
-                            os.close();
+                if (!minimalistic) {
+                    Sheet sheet;
+                    Row row;
+                    Cell c;
+
+                    sheet = wb.createSheet("Metadata Device");//..create a new sheet within the Excel document
+                    row = sheet.createRow(0);
+                    c = row.createCell(0);
+                    c.setCellValue("proeprty");
+                    c.setCellStyle(cs);
+                    c = row.createCell(1);
+                    c.setCellValue("value");
+                    c.setCellStyle(cs);
+
+                    int i = 1;
+                    StringBuilder data = new StringBuilder();
+                    for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
+                        if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID)
+                            continue;
+                        String identifier = deviceMetadata.toString();
+
+                        row = sheet.createRow(i);
+                        row.createCell(0).setCellValue(identifier);
+                        row.createCell(1).setCellValue(new Metadata(identifier, ctx).get(""));
+                        i++;
                     }
+                    for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                        for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
+                            String identifier = sensorMetadata.toString();
+
+                            row = sheet.createRow(i);
+                            row.createCell(0).setCellValue(sensor.name() + " " + identifier);
+                            row.createCell(1).setCellValue(new Metadata(sensor.name()+identifier, ctx).get(""));
+                            i++;
+                        }
+                    }
+
+                    sheet = wb.createSheet("Metadata Time");//..create a new sheet within the Excel document
+                    row = sheet.createRow(0);
+                    c = row.createCell(0);
+                    c.setCellValue("event");
+                    c.setCellStyle(cs);
+                    c = row.createCell(1);
+                    c.setCellValue("experiment time");
+                    c.setCellStyle(cs);
+                    c = row.createCell(2);
+                    c.setCellValue("system time");
+                    c.setCellStyle(cs);
+                    c = row.createCell(3);
+                    c.setCellValue("system time text");
+                    c.setCellStyle(cs);
+
+                    i = 1;
+                    data = new StringBuilder();
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+                    for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+                        row = sheet.createRow(i);
+                        row.createCell(0).setCellValue(timeMapping.event.name());
+                        row.createCell(1).setCellValue(timeMapping.experimentTime);
+                        row.createCell(2).setCellValue(timeMapping.systemTime / 1000.);
+                        row.createCell(3).setCellValue(dateFormat.format(timeMapping.systemTime));
+                        i++;
+                    }
+                }
+
+                //We now have our Excel document. Let's write it to the file.
+                FileOutputStream os = null;
+                try { //Let's catch errors while writing separately
+                    os = new FileOutputStream(file);
+                    wb.write(os);
+                } catch (Exception e) {
+                    Log.e("excelExport", "Unhandled exception during write.", e);
+                } finally {
+                    if (os != null)
+                        os.close();
                 }
 
             } catch (Exception e) {
@@ -370,7 +483,7 @@ public class DataExport implements Serializable {
                         exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
 
                         //Call the export filter to write the data to a file
-                        File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic);
+                        File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic, c);
 
                         //Use a FileProvider so we can send this file to other apps
                         final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", exportFile);
@@ -414,6 +527,16 @@ public class DataExport implements Serializable {
                         Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
                         chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntentsArray);
 
+                        //And finally grant permissions again for any activities created by the chooser
+                        resInfoList = c.getPackageManager().queryIntentActivities(chooser, 0);
+                        for (ResolveInfo ri : resInfoList) {
+                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                            ))
+                                continue;
+                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+
+
                         //Execute this intent
                         c.startActivity(chooser);
                     }
@@ -442,7 +565,7 @@ public class DataExport implements Serializable {
 
         format.setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
 
-        return format.export(exportSets, cacheDir, minimalistic);
+        return format.export(exportSets, cacheDir, minimalistic, null);
     }
 
 }

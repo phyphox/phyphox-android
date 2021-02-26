@@ -1,0 +1,40 @@
+Czy wiesz, że nosisz przy sobie magnetometr 3D? Czy jesteś świadom, że smatrfon można wykorzystać jako wahadło i zmierzyć lokalną wartość przyspieszenia ziemskiego? Czy zdajesz sobie sprawę z faktu, że smartfon może stać się sonarem?
+
+phyphox umożliwia dostęp do surowych danych rejestrowanych przez wbudowane w smartfon czujniki oraz pozwala korzystać ze specjalnie przygotowanych eksperymentów, w których dane te są analizowane i mogą być wyeksportowane do dalszej obróbki. Można także przygotować własny eksperyment i podzielić się nim z innymi użytkownikami na platformie phyphox.org.
+
+Wybrane aktywności:
+- Wybierz jeden z wielu przygotowanych eksperymentów. Naciśnij Start i odkrywaj nieznane.
+- Wyeksportuj zarejestrowane dane w wybranym formacie obsługiwanym przez inne oprogramowanie.
+- Kontroluj przebieg eksperymentu zdalnie, poprzez interfejs sieciowy, z dowolnego komputera podłączonego do tej samej sieci, co smartfon. Wystarczy odpowiednia przeglądarka www.
+- Zaproponuj własny eksperyment wykorzystujący dane z czujników urządzenia, opisz jak analizować te dane i określ sposób ich wizualizacji w dedykowanym edytorze (http://phyphox.org/editor). Analiza danych może ograniczać się do podstawowych operacji matematycznych takich jak dodawanie, ale może być również bardziej zaawansowana i obejmować analizę Fourier'a lub korelację parametrów. Do tego celu dostępne są różnorodne narzędzia.
+
+Obsługiwane czujniki:
+- Akcelerometr
+- Magnetometr
+- Żyroskop
+- Natężenia światła
+- Barometr
+- Mikrofon
+- Zbliżeniowy
+- GPS
+*niektóre z czujników nie są wbudowane w każdy smartfon.
+
+Formaty eksportowanych danych:
+- CSV (Przecinek jako separator)
+- CSV (Tabulator jako separator)
+- Excel
+(jeśli niezbędne są inne formaty, prosimy o kontakt)
+
+Aplikacja powstała w II Instytucie Fizyki A w RWTH Aachen University.
+
+--
+
+Wyjaśnienie żądanych uprawnień
+
+Jeśli urządzenie pracuje z systemem Android 6.0 lub nowszym dodatkowe uprawnienia będą wymagane jedynie w określonych warunkach.
+
+Internet: Zapewnia aplikacji phyphox dostęp do sieci, który jest wymagany do ładowania eksperymentów z zasobów online lub podczas pracy z użyciem zdalnego dostępu. Obie czynność są wykonywane tylko na żądanie użytkownika i żadne inne dane nie są wówczas przesyłane.
+Bluetooth: Jest wykorzystywany do połączeń z zewnętrznymi czujnikami.
+Pamięci zewnętrznej: Dostęp do pamięci zewnętrzenej może być konieczny podczas otwierania eksperymentu przechowywanego na urządzeniu.
+Zapis dźwięku: Jest niezbędny podczas pracy z eksperymentami wykorzystującymi mikrofon urządzenia.
+Położenie: Wykorzystuje nawigację GPS w eksperymentach związanych z położeniem.

@@ -28,6 +28,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -118,6 +119,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     case R.id.graph_tools_more:
                         PopupMenu popup = new PopupMenu(getContext(), findViewById(R.id.graph_tools_more));
                         popup.getMenuInflater().inflate(R.menu.graph_tools_menu, popup.getMenu());
+                        popup.getMenu().findItem(R.id.graph_tools_system_time).setVisible((graphView.timeOnX || graphView.timeOnY) && graphView.style[0] != GraphView.Style.mapXY);
+                        popup.getMenu().findItem(R.id.graph_tools_system_time).setChecked(graphView.absoluteTime);
                         popup.getMenu().findItem(R.id.graph_tools_follow).setChecked(graphView.zoomState.follows);
                         popup.getMenu().findItem(R.id.graph_tools_follow).setVisible(graphView.graphSetup.incrementalX);
                         popup.getMenu().findItem(R.id.graph_tools_export).setVisible(dataExport != null);
@@ -135,51 +138,47 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             @Override
                             public boolean onMenuItemClick(MenuItem menuItem) {
-                                switch (menuItem.getItemId()) {
-                                    case R.id.graph_tools_linear_fit:
-                                        linearRegression = !linearRegression;
-                                        graphView.resetPicks();
-                                        updateInfo();
-                                        break;
-                                    case R.id.graph_tools_reset:
-                                        graphView.zoomState.follows = false;
-                                        graphView.zoomState.minX = Double.NaN;
-                                        graphView.zoomState.maxX = Double.NaN;
-                                        graphView.zoomState.minY = Double.NaN;
-                                        graphView.zoomState.maxY = Double.NaN;
-                                        graphView.zoomState.minZ = Double.NaN;
-                                        graphView.zoomState.maxZ = Double.NaN;
-                                        graphView.invalidate();
-                                        break;
-                                    case R.id.graph_tools_follow:
-                                        if (Double.isNaN(graphView.zoomState.minX) || Double.isNaN(graphView.zoomState.maxX)) {
-                                            graphView.zoomState.minX = graphView.minX;
-                                            graphView.zoomState.maxX = graphView.maxX;
+                                int id = menuItem.getItemId();
+                                if (id == R.id.graph_tools_linear_fit) {
+                                    linearRegression = !linearRegression;
+                                    graphView.resetPicks();
+                                    updateInfo();
+                                } else if (id == R.id.graph_tools_system_time) {
+                                    graphView.setAbsoluteTime(!graphView.absoluteTime);
+                                    graphView.invalidate();
+                                } else if (id == R.id.graph_tools_reset) {
+                                    graphView.zoomState.follows = false;
+                                    graphView.zoomState.minX = Double.NaN;
+                                    graphView.zoomState.maxX = Double.NaN;
+                                    graphView.zoomState.minY = Double.NaN;
+                                    graphView.zoomState.maxY = Double.NaN;
+                                    graphView.zoomState.minZ = Double.NaN;
+                                    graphView.zoomState.maxZ = Double.NaN;
+                                    graphView.invalidate();
+                                } else if (id == R.id.graph_tools_follow) {
+                                    if (Double.isNaN(graphView.zoomState.minX) || Double.isNaN(graphView.zoomState.maxX)) {
+                                        graphView.zoomState.minX = graphView.minX;
+                                        graphView.zoomState.maxX = graphView.maxX;
+                                    }
+                                    graphView.zoomState.follows = !graphView.zoomState.follows;
+                                    graphView.invalidate();
+                                } else if (id == R.id.graph_tools_export) {
+                                    Context ctx = getContext();
+                                    Activity act = null;
+                                    while (ctx instanceof ContextWrapper) {
+                                        if (ctx instanceof Activity) {
+                                            act = (Activity) ctx;
                                         }
-                                        graphView.zoomState.follows = !graphView.zoomState.follows;
-                                        graphView.invalidate();
-                                        break;
-                                    case R.id.graph_tools_export:
-                                        Context ctx = getContext();
-                                        Activity act = null;
-                                        while (ctx instanceof ContextWrapper) {
-                                            if (ctx instanceof Activity) {
-                                                act = (Activity) ctx;
-                                            }
-                                            ctx = ((ContextWrapper)ctx).getBaseContext();
-                                        }
-                                        if (act == null)
-                                            break;
+                                        ctx = ((ContextWrapper) ctx).getBaseContext();
+                                    }
+                                    if (act != null)
                                         dataExport.export(act, true);
-                                        break;
-                                    case R.id.graph_tools_log_x:
-                                        graphView.setLogScale(!graphView.logX, graphView.logY, graphView.logZ);
-                                        graphView.invalidate();
-                                        break;
-                                    case R.id.graph_tools_log_y:
-                                        graphView.setLogScale(graphView.logX, !graphView.logY, graphView.logZ);
-                                        graphView.invalidate();
-                                        break;
+                                } else if (id == R.id.graph_tools_log_x) {
+                                    graphView.setLogScale(!graphView.logX, graphView.logY, graphView.logZ);
+                                    graphView.invalidate();
+                                } else if (id == R.id.graph_tools_log_y) {
+                                    graphView.setLogScale(graphView.logX, !graphView.logY, graphView.logZ);
+                                    graphView.invalidate();
                                 }
                                 return false;
                             }
@@ -227,7 +226,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     }
 
     public void leaveDialog(final ExpViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
-        if (Double.isNaN(graphView.zoomState.minX) && Double.isNaN(graphView.zoomState.minY) && Double.isNaN(graphView.zoomState.maxX) && Double.isNaN(graphView.zoomState.maxY) && Double.isNaN(graphView.zoomState.maxZ) && Double.isNaN(graphView.zoomState.maxZ)) {
+        if (!graphView.absoluteTime && Double.isNaN(graphView.zoomState.minX) && Double.isNaN(graphView.zoomState.minY) && Double.isNaN(graphView.zoomState.maxX) && Double.isNaN(graphView.zoomState.maxY) && Double.isNaN(graphView.zoomState.maxZ) && Double.isNaN(graphView.zoomState.maxZ)) {
             parent.leaveExclusive();
             return;
         }
@@ -248,7 +247,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final RadioButton rbKeepZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZKeep);
         final Spinner sApplyX = (Spinner) dialogView.findViewById(R.id.applyZoomXApplyTo);
         final Spinner sApplyY = (Spinner) dialogView.findViewById(R.id.applyZoomYApplyTo);
-        final Switch swAdvanced = (Switch) dialogView.findViewById(R.id.applyZoomAdvanced);
+        final SwitchCompat swAdvanced = (SwitchCompat) dialogView.findViewById(R.id.applyZoomAdvanced);
 
         final RadioGroup rgGenericOptions = (RadioGroup) dialogView.findViewById(R.id.applyZoomMode);
         final GridLayout glXOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomX);
@@ -343,25 +342,25 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
                         switch (sApplyX.getSelectedItemPosition()) {
                             case 1:
-                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false);
+                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false, graphView.timeOnX && graphView.absoluteTime);
                                 break;
                             case 2:
-                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false);
+                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false, graphView.timeOnX && graphView.absoluteTime);
                                 break;
                             case 3:
-                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false);
+                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false, graphView.timeOnX && graphView.absoluteTime);
                                 break;
                         }
 
                         switch (sApplyY.getSelectedItemPosition()) {
                             case 1:
-                                parent.applyZoom(minY, maxY, false, null, bufferY, true);
+                                parent.applyZoom(minY, maxY, false, null, bufferY, true, graphView.timeOnY && graphView.absoluteTime);
                                 break;
                             case 2:
-                                parent.applyZoom(minY, maxY, false, unitY, null, true);
+                                parent.applyZoom(minY, maxY, false, unitY, null, true, graphView.timeOnY && graphView.absoluteTime);
                                 break;
                             case 3:
-                                parent.applyZoom(minY, maxY, false, null, null, true);
+                                parent.applyZoom(minY, maxY, false, null, null, true, graphView.timeOnY && graphView.absoluteTime);
                                 break;
                         }
                     }

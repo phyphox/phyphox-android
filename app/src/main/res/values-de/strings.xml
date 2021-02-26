@@ -149,6 +149,7 @@
     <string name="graph_tools_pan_and_zoom">Ziehen/Zoom</string>
     <string name="graph_tools_pick">Punkte wählen</string>
     <string name="graph_tools_more">Mehr Werkzeuge</string>
+    <string name="graph_tools_system_time">In Systemzeit umrechnen</string>
     <string name="graph_tools_reset">Zoom zurücksetzen</string>
     <string name="graph_tools_follow">Neuen Daten folgen</string>
     <string name="graph_tools_linear_fit">Ausgleichsgerade</string>

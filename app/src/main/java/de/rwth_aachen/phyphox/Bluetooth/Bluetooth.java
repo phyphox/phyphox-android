@@ -18,6 +18,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -92,6 +93,7 @@ public class Bluetooth implements Serializable {
      * used for important asynchronous tasks for example connectGatt
      */
     protected CancellableLatch cdl;
+    protected CancellableLatch cdlMtu; //MTU request uses an independent variable as we can get an MTU confirmation without requesting it first and do not want to accidentally cancel the latch of a different command in these cases.
     /**
      * indicates whether the experiment is running or not
      */
@@ -323,6 +325,20 @@ public class Bluetooth implements Serializable {
                 btGatt.close();
             }
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_connection), this);
+        }
+
+        if (requestMTU > 0) {
+            cdlMtu = new CancellableLatch(1);
+            add(new RequestMTUCommand(btGatt, requestMTU));
+            try {
+                // it should not be possible to continue before the MTU has been negotiated
+                // timeout after 5 seconds if the services could not be discovered
+                result = cdlMtu.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+            }
+            if (!result) {
+                throw new BluetoothException("Could not set MTU as requested by the experiment configuration.", this);
+            }
         }
 
         // try discover services once the device is connected
@@ -561,9 +577,6 @@ public class Bluetooth implements Serializable {
             switch (newState) {
                 case BluetoothProfile.STATE_CONNECTED:
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        if (requestMTU > 0) {
-                            add(new RequestMTUCommand(gatt, requestMTU));
-                        }
                         if (isRunning) {
                             try {
                                 start(); // start collecting / sending data again if the experiment is running
@@ -585,6 +598,19 @@ public class Bluetooth implements Serializable {
                     }
                     return;
             }
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt,  int mtu, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS && mtu >= requestMTU) {
+                cdlMtu.countDown();
+            } else {
+                cdlMtu.cancel();
+            }
+            synchronized (isExecuting) {
+                isExecuting = false;
+            }
+            executeNext();
         }
 
         @Override
