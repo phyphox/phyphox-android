@@ -455,6 +455,8 @@ public class RemoteServer extends Thread {
         registry.register("/control", new controlCommandHandler()); //The control command starts and stops measurements
         registry.register("/export", new exportCommandHandler()); //The export command requests a data file containing sets as requested by the paramters
         registry.register("/config", new configCommandHandler()); //The config command requests information on the currently active experiment configuration
+        registry.register("/meta", new metaCommandHandler()); //The meta command requests information on the device
+        registry.register("/time", new timeCommandHandler()); //The meta command requests information on the current time reference
         httpService.setHandlerResolver(registry);
     }
 
@@ -1005,6 +1007,91 @@ public class RemoteServer extends Thread {
 
         }
 
+    }
+
+    //The meta query does not take any parameters
+    //It returns information on the currently used device
+    class metaCommandHandler implements HttpRequestHandler {
+        @Override
+        public void handle(HttpRequest request, HttpResponse response,
+                           HttpContext httpContext) throws HttpException, IOException {
+
+            String result;
+
+            try {
+
+                JSONObject deviceJson = new JSONObject();
+                for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
+                    if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID)
+                        continue;
+                    String identifier = deviceMetadata.toString();
+                    deviceJson.put(identifier, new Metadata(identifier, context).get(""));
+                }
+
+                JSONObject sensorsJson = new JSONObject();
+                for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                    JSONObject sensorJson = new JSONObject();
+                    for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
+                        String identifier = sensorMetadata.toString();
+                        sensorJson.put(identifier, new Metadata(sensor.name()+identifier, context).get(""));
+                    }
+                    sensorsJson.put(sensor.name(), sensorJson);
+                }
+                deviceJson.put("sensors", sensorsJson);
+
+
+                result = deviceJson.toString();
+            } catch (JSONException e) {
+                result = "{\"result\": false}";
+                Log.e("configHandler", "Error: " + e.getMessage());
+            }
+
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
+
+            response.setHeader("Content-Type", "application/json");
+            response.setEntity(entity);
+
+        }
+    }
+
+    //The time query does not take any parameters
+    //It returns a list of time reference points, i.e. start and stop times of the current experiment
+    class timeCommandHandler implements HttpRequestHandler {
+        @Override
+        public void handle(HttpRequest request, HttpResponse response,
+                           HttpContext httpContext) throws HttpException, IOException {
+
+            String result;
+
+            try {
+
+                JSONArray json = new JSONArray();
+                for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+                    JSONObject eventJson = new JSONObject();
+                    eventJson.put("event", timeMapping.event.name());
+                    eventJson.put("experimentTime", timeMapping.experimentTime);
+                    eventJson.put("systemTime", timeMapping.systemTime/1000.);
+                    json.put(eventJson);
+                }
+
+                result = json.toString();
+            } catch (JSONException e) {
+                result = "{\"result\": false}";
+                Log.e("configHandler", "Error: " + e.getMessage());
+            }
+
+            BasicHttpEntity entity = new BasicHttpEntity();
+            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
+
+            response.setHeader("Content-Type", "application/json");
+            response.setEntity(entity);
+
+        }
     }
 
 }

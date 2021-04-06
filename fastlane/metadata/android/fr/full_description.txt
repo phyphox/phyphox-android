@@ -1,0 +1,43 @@
+Saviez-vous que vous possédiez un magnétomètre 3D ? Que vous pouvez utiliser votre téléphone comme un pendule pour mesurer l'accélération gravitationnelle de la terre ? Que vous pouvez transformer votre téléphone en sonar ?
+
+phyphox vous donne accès aux capteurs de votre téléphone, soit directement, soit par le biais d'expériences toutes prêtes qui analysent vos données et vous permettent de les exporter pour une analyse plus poussée. Vous pouvez même créer vos propres expériences sur phyphox.org et les partager avec vos collègues, étudiants et amis.
+
+Caractéristiques principales :
+- Des expériences prédéfinies. Il suffit d'appuyer sur play pour commencer.
+- Exporter vos données dans un large éventail de formats disponibles.
+- Contrôlez votre expérience à distance via une interface web sur un PC connecté sur le même réseau que votre téléphone. Il n'y a rien à installer, tout ce dont vous avez besoin est un navigateur web moderne.
+- Créez vos propres expériences en sélectionnant des entrées de capteurs, en définissant des étapes d'analyse et en créant une interface à l'aide de notre éditeur Web (http://phyphox.org/editor). L'analyse peut consister à additionner simplement deux valeurs ou à utiliser des méthodes avancées comme les transformées de Fourier ou la corrélation croisée. Nous proposons toute une panoplie de fonctions d'analyse.
+
+Capteurs compatibles :
+- Accéléromètre
+- Magnétomètre
+- Gyroscope
+- Intensité lumineuse
+- Pression
+- Microphone
+- Proximité
+- GPS
+*certains capteurs ne sont pas présents sur tous les téléphones.
+
+Formats d'exportation des données
+- CSV (valeurs séparées par des virgules)
+- CSV (valeurs séparées par des tabulations)
+- Excel
+(si vous avez besoin d'autres formats, veuillez nous le faire savoir)
+
+
+Cette application a été développée au 2nd Institut de physique A de l'Université d'Aix-la-Chapelle (2nd Institute of Physics A at the RWTH Aachen University).
+
+--
+
+Explication des permissions demandées
+
+Sur Android 6.0 ou plus récent, certaines permissions ne seront demandées que lorsque vous en aurez besoin.
+
+
+Internet : permet à phyphox d'accéder au réseau, ce qui est nécessaire pour charger des expériences à partir de ressources en ligne ou en cas de contrôle à distance. Dans tous les cas, cet accès ne se fait qu'à la demande de l'utilisateur et aucune autre donnée n'est transmise.
+Bluetooth : éventuellement nécessaire pour accéder à des capteurs externes.
+Accès au stockage externe : éventuellement nécessaire pour ouvrir une expérience enregistrée sur l'appareil.
+Enregistrement audio : nécessaire pour pouvoir utiliser le microphone dans les expériences.
+Localisation : nécessaire pour pouvoir utiliser le GPS dans les expériences.
+Appareil photo: utilisé pour scanner les codes QR pour les configurations d'expériences externes.

@@ -1,0 +1,41 @@
+Da li ste znali da nosite 3D magnetometar? Da možete koristiti svoj telefon kao klatno za merenje Zemljinog gravitacionog ubrzanja? Da možete pretvoriti svoj telefon u sonar?
+
+Phyphox vam daje pristup senzorima vašeg telefona ili direktno ili kroz eksperimente spremne za igru, koji analiziraju vaše podatke i omogućuju vam da izvezete sirove podatke zajedno sa rezultatima za dalju analizu. Možete čak i definisati sopstvene eksperimente na phyphox.org i podeliti ih sa kolegama, studentima i prijateljima.
+
+Moguće opcije:
+- Izbor predefinisanih eksperimenata. Samo pritisnite "pokreni" za početak.
+- Izvezite podatke u širok opseg formata
+- Daljinsko upravljanje eksperimentom putem veb interfejsa sa bilo kog računara na istoj mreži kao i vašeg telefona. Nema potrebe da instalirate ništa na tim računarima - sve što vam je potrebno je internet veb pretraživač.
+- Definišite sopstvene eksperimente tako što ćete izabrati ulaze senzora, definisati korake analize i kreirati prikaze kao interfejs koristeći naš veb-editor (http://phyphox.org/editor). Analiza se može sastojati samo od dodavanja dve vrednosti ili korišćenja naprednih metoda kao što su Furijeove transformacije i unakrsna korelacija. Nudimo kompletan alat za analizu funkcija.
+
+Podržani senzori:
+- Akcelerometar
+- Magnetometar
+- Žiroskop
+- Intenzitet svetlosti
+- Pritisak
+- Mikrofon
+- Blizina
+- GPS
+* Neki senzori nisu prisutni na svakom telefonu.
+
+Izvozni formati
+- CSV (vrednosti razdvojene zarezom)
+- CSV (vrednosti odvojene tabulatorom)
+- Excel
+(ako vam trebaju drugi formati, javite nam se)
+
+
+Ova aplikacija razvijena je na Drugom institutu za fiziku A na Univerzitetu RVTH Aachen.
+
+-
+
+Objašnjenje za tražene dozvole
+
+Ako imate Android 6.0 ili noviji, neke dozvole će se tražiti samo kada je to potrebno.
+
+Internet: Omogućava pristup Phyphox mreži, koji je potreban za učitavanje eksperimenata iz onlajn resursa ili kada se koristi udaljeni pristup. Oba se izvršavaju samo kada to zahteva korisnik i nema drugih podataka.
+Bluetooth: Koristi se za pristup spoljnim senzorima.
+Čitanje eksterne memorije: Ova opcija je možda potrebna prilikom otvaranja eksperimenta koji se čuva na uređaju.
+Snimanje zvuka: Potrebno je koristiti mikrofon u eksperimentima.
+Lokacija: Koristi se za pristup GPS-u za eksperimente zasnovane na lokaciji.

@@ -1,0 +1,40 @@
+Sapevi di avere con te un magnetometro 3D? Sapevi di poter usare il tuo telefono come un pendolo per misurare l' accelerazione gravitazionale della Terra? Che puoi trasformare il tuo telefono in un sonar?
+
+Phyphox ti dà accesso ai sensori del tuo telefono direttamente o attraverso esperimenti guidati che analizzano i tuoi dati e ti permettono di esportarli per future analisi. Puoi anche definire i tuoi esperimenti personali su phyphox.org e condividerli con colleghi, studenti e amici.
+
+Principali caratteristiche:
+- Esperimenti predefiniti. Basta la pressione di un tasto per eseguirli.
+- Esportazione di dati in una varietà di formati
+- Controllo remoto dell'esperimento usando un PC sulla stessa rete sulla quale è registrato il tuo telefono. Non c'è bisogno di installare prodotti di terze parti: tutto quello che ti serve è un browser web aggiornato.
+- Definizione dei propri esperimenti selezionando i sensori da usare, definendo l'analisi dei dati e creando apposite interfacce attraverso il nostro web-editor (http://phyphox.org/editor). Grazie all'ampia disponibilità di strumenti software, l'analisi può essere molto semplice (some la somma di due numeri) o molto complessa (usando metodi come la trasformata di Fourier e le autocorrelazioni).
+
+Principali sensori utilizzabili:
+-Accelerometro
+-Magnetometro
+-Giroscopio 
+-Intensità luminosa
+-Pressione
+-Microfono
+-Prossimità
+-GPS
+*alcuni sensori non sono presenti in tutti i telefoni
+
+Formati esterni:
+-CSV (Comma separated values)
+-CSV (Tab-separated values)
+-Excel
+(se hai bisogno di altri formati, puoi scriverci)
+
+Quest'applicazione è stata sviluppata dal secondo Istituto di Fisica del Politecnico di Aachen
+
+--
+
+Requisiti per l'accesso
+
+Se hai Android 6.0 o superiore, ti sarà chiesto il permesso di usare alcune caratteristiche del tuo smartphone (solo quando se ne ha bisogno).
+
+Internet: concede l' accesso alla rete, richiesto per caricare esperimenti da risorse online o quando si usa l' accesso remoto. 
+Bluetooth: usato per accedere a sensori esterni.
+Lettura della memoria esterna: può rendersi necessario per eseguire esperimenti caricati su questa memoria
+Microfono: richiesto per usare il microfono negli esperimenti.
+Localizzazione: usata per accedere al GPS per esperimenti basati sulla posizione .

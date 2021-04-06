@@ -84,7 +84,7 @@ public class AudioOutput {
 
             int end = samples;
             if (!loop) {
-                int durationEnd = (int)(d * rate);
+                int durationEnd = (int)(d * rate) - index;
                 if (durationEnd < end)
                     end = durationEnd;
             }
@@ -95,6 +95,8 @@ public class AudioOutput {
                 buffer[i] += a * sineLookup[(int)(phase * sineLookupSize) % sineLookupSize];
                 phase += phaseStep;
             }
+            while (phase > 100000.f)
+                phase -= 100000.f; //Once in a while we need to dial back the phase to avoid an overflow, especially when converting this to an integer to calculate the index for the lookup table. The 100000 is rather arbitrary. We do not want it to be too small to avoid unnecessary calculations in the tone generator and it should not be too large to stay well away from the overflow.
         }
     }
 
@@ -124,7 +126,7 @@ public class AudioOutput {
 
             int end = samples;
             if (!loop) {
-                int durationEnd = (int)(d * rate);
+                int durationEnd = (int)(d * rate) - index;
                 if (durationEnd < end)
                     end = durationEnd;
             }

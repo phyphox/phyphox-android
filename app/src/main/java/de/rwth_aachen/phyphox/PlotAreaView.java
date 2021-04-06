@@ -6,12 +6,14 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.List;
 import java.util.Vector;
 
 import javax.microedition.khronos.egl.EGL10;
@@ -50,6 +52,7 @@ class CurveData {
     GraphView.Style style;
     float color[] = new float[4];
     transient FloatBufferRepresentation fbX, fbY;
+    transient List<ExperimentTimeReferenceSet> timeReferencesX, timeReferencesY;
 }
 
 class GraphSetup {
@@ -73,9 +76,17 @@ class GraphSetup {
 
     public Vector<Integer> colorScale = new Vector<>();
 
-    public double xTics[] = null;
-    public double yTics[] = null;
-    public double zTics[] = null;
+    public double[] xTics = null;
+    public double[] yTics = null;
+    public double[] zTics = null;
+
+    public List<Double> trStarts = null;
+    public List<Double> trStops = null;
+    public List<Double> systemTimeReferenceGap = null;
+    public boolean timeOnX = false;
+    public boolean timeOnY = false;
+    public boolean absoluteTime = false;
+    public boolean linearTime = false;
 
     GraphSetup() {
         plotBoundL = 0;
@@ -119,11 +130,18 @@ class GraphSetup {
         zaBoundH = Math.round(h);
     }
 
-    public void setTics(double xTics[], double yTics[], double zTics[], PlotRenderer plotRenderer) {
+    public void setTics(double[] xTics, double[] yTics, double[] zTics, PlotRenderer plotRenderer) {
         this.xTics = xTics;
         this.yTics = yTics;
         this.zTics = zTics;
         plotRenderer.notifyUpdateGrid();
+    }
+
+    public void setTimeRanges(List<Double> starts, List<Double> stops, List<Double> systemTimeReferenceGap, PlotRenderer plotRenderer) {
+        this.trStarts = starts;
+        this.trStops = stops;
+        this.systemTimeReferenceGap = systemTimeReferenceGap;
+        plotRenderer.notifyUpdateTimeRanges();
     }
 
     public void setDataBounds(float minX, float maxX, float minY, float maxY, float minZ, float maxZ) {
@@ -181,7 +199,7 @@ class GraphSetup {
             Matrix.orthoM(positionMatrix, 0, l, r, b, t, -1, 1);
     }
 
-    public void setData(FloatBufferRepresentation x[], FloatBufferRepresentation y[], int n, GraphView.Style style[], int mapWidth[], PlotRenderer plotRenderer) {
+    public void setData(FloatBufferRepresentation[] x, FloatBufferRepresentation[] y, List<ExperimentTimeReferenceSet>[] timeReferencesX, List<ExperimentTimeReferenceSet>[] timeReferencesY, int n, GraphView.Style[] style, int[] mapWidth, PlotRenderer plotRenderer) {
         for (int i = 0; i < n; i++) {
             if (dataSets.size() <= i) {
                 CurveData newData = new CurveData();
@@ -210,6 +228,8 @@ class GraphSetup {
 
             data.fbX = x[i];
             data.fbY = y[i];
+            data.timeReferencesX = timeReferencesX[i];
+            data.timeReferencesY = timeReferencesY[i];
         }
 
         plotRenderer.notifyUpdateBuffers();
@@ -224,6 +244,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     private boolean renderRequested = false;
     private boolean updateBuffers = false;
     private boolean updateGrid = false;
+    private boolean updateTimeRanges = false;
     private SurfaceTexture newSurface = null;
 
     private GraphSetup graphSetup = null;
@@ -231,13 +252,14 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     int h, w;
     int bgColor;
 
-    private int glProgram, gridProgram, mapProgram;
+    private int glProgram, gridProgram, timeRangeProgram, mapProgram;
     private int positionXHandle, positionYHandle;
     private int mapPositionXHandle, mapPositionYHandle, mapPositionZHandle;
     private int colorHandle;
     private int positionMatrixHandle, mapPositionMatrixHandle;
     private int logXYHandle, mapLogXYZHandle, mapColorMapHandle;
     private int sizeHandle;
+    private int offsetYHandle, offsetXHandle;
 
     private int gridPositionHandle;
     private int gridMatrixHandle;
@@ -249,6 +271,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     int vboZScaleY = 0;
     int vboZScaleZ = 0;
     int colorScaleTexture = 0;
+
+    private int timeRangePositionHandle;
+    private int timeRangeMatrixHandle;
+    private int timeRangeAlphaHandle;
+    private int nTimeRanges = 0;
+    int vboTimeRanges = 0;
 
     EGL10 egl;
     EGLDisplay eglDisplay;
@@ -274,6 +302,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "varying float invalid;" +
 
             "float posX, posY;" +
+            "uniform float offsetX;" +
+            "uniform float offsetY;" +
 
             " bool isinvalid( float val ) {" +
             "    return val < -3.3e38;" + //see getFloatBuffer(...) in DataBuffer.java for explanation
@@ -289,13 +319,13 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "       invalid = 0.0;" +
             "   v_color = in_color;" +
             "   if (logXY == 1 || logXY == 3)" +
-            "       posX = log(positionX);" +
+            "       posX = log(positionX + offsetX);" +
             "   else" +
-            "       posX = positionX;" +
+            "       posX = positionX + offsetX;" +
             "   if (logXY >= 2)" +
-            "       posY = log(positionY);" +
+            "       posY = log(positionY + offsetY);" +
             "   else" +
-            "       posY = positionY;" +
+            "       posY = positionY + offsetY;" +
             "   gl_Position = positionMatrix * vec4(posX, posY, 0., 1.);" +
             "   gl_PointSize = size;" +
             "}";
@@ -326,6 +356,24 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "void main () {" +
             "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
             "}";
+
+    final String timeRangeShader =
+            "attribute vec2 position;" +
+                    "uniform mat4 positionMatrix;" +
+
+                    "vec2 pos;" +
+
+                    "void main () {" +
+                    "   pos = vec2(positionMatrix * vec4(position, 0., 1.));" +
+                    "   gl_Position = vec4(pos, 0., 1.);" +
+                    "}";
+
+    final String timeRangeFragmentShader =
+            "uniform float alpha;" +
+
+            "void main () {" +
+                    "   gl_FragColor = vec4(1.0, 0.0, 0.0, alpha);" +
+                    "}";
 
     final String mapShader =
             "uniform mat4 positionMatrix;" +
@@ -396,6 +444,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             renderRequested = true;
             updateBuffers = true;
             updateGrid = true;
+            updateTimeRanges = true;
 
             while (true) {
                 synchronized (lock) {
@@ -454,6 +503,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                 if (updateGrid) {
                     doUpdateGrid();
                     updateGrid = false;
+                }
+
+                if (updateTimeRanges) {
+                    doUpdateTimeRanges();
+                    updateTimeRanges = false;
                 }
 
                 drawFrame();
@@ -609,6 +663,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         colorHandle = GLES20.glGetUniformLocation(glProgram, "in_color");
         logXYHandle = GLES20.glGetUniformLocation(glProgram, "logXY");
         sizeHandle = GLES20.glGetUniformLocation(glProgram, "size");
+        offsetXHandle = GLES20.glGetUniformLocation(glProgram, "offsetX");
+        offsetYHandle = GLES20.glGetUniformLocation(glProgram, "offsetY");
 
         GLES20.glUseProgram(0);
 
@@ -658,6 +714,25 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glUseProgram(0);
 
+        int iTimeRangeShader = loadShader(GLES20.GL_VERTEX_SHADER, timeRangeShader);
+        int iTimeRangeFragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, timeRangeFragmentShader);
+        timeRangeProgram = GLES20.glCreateProgram();
+        GLES20.glAttachShader(timeRangeProgram, iTimeRangeShader);
+        GLES20.glAttachShader(timeRangeProgram, iTimeRangeFragmentShader);
+        GLES20.glLinkProgram(timeRangeProgram);
+
+        GLES20.glUseProgram(timeRangeProgram);
+
+        timeRangePositionHandle = GLES20.glGetAttribLocation(timeRangeProgram, "position");
+        timeRangeMatrixHandle = GLES20.glGetUniformLocation(timeRangeProgram, "positionMatrix");
+
+        timeRangeAlphaHandle = GLES20.glGetUniformLocation(timeRangeProgram, "alpha");
+
+        GLES20.glGenBuffers(1, ref, 0);
+        vboTimeRanges = ref[0];
+
+        GLES20.glUseProgram(0);
+
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
@@ -701,7 +776,30 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
     }
 
-    private void drawCurve(int i, int lastValidX) {
+    private void drawTimeRanges() {
+        //Draw time ranges
+        GLES20.glUseProgram(timeRangeProgram);
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboTimeRanges);
+        GLES20.glEnableVertexAttribArray(timeRangePositionHandle);
+        GLES20.glVertexAttribPointer(timeRangePositionHandle, 2, GLES20.GL_FLOAT, false, 0, 0);
+
+        GLES20.glUniformMatrix4fv(timeRangeMatrixHandle, 1, false, graphSetup.positionMatrix, 0);
+
+        GLES20.glLineWidth(1.f);
+
+        for (int i = 0; i < nTimeRanges; i++) {
+            GLES20.glUniform1f(timeRangeAlphaHandle, 0.2f);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 4*i, 4);
+            GLES20.glUniform1f(timeRangeAlphaHandle, 0.6f);
+            GLES20.glDrawArrays(GLES20.GL_LINES, 4*i, 2);
+            GLES20.glDrawArrays(GLES20.GL_LINES, 4*i+2, 2);
+        }
+
+        GLES20.glDisableVertexAttribArray(timeRangePositionHandle);
+    }
+
+    private void drawCurve(int i, int lastValidX, List<ExperimentTimeReferenceSet> lastValidXTimeReference) {
 
         GLES20.glUseProgram(glProgram);
 
@@ -727,13 +825,44 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glUniform4fv(colorHandle, 1, dataSet.color, 0);
 
+        GLES20.glUniform1f(offsetXHandle, 0.0f);
+        GLES20.glUniform1f(offsetYHandle, 0.0f);
+
+        int geometry = GLES20.GL_LINE_STRIP;
+        int verticesPerValue = 1; //Vertices per data point to align time reference data
         if (graphSetup.style.get(i) == GraphView.Style.dots) {
             GLES20.glUniform1f(sizeHandle, graphSetup.lineWidth.get(i) * 4.f);
-            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, dataSet.n);
+            geometry = GLES20.GL_POINTS;
         } else if (graphSetup.style.get(i) == GraphView.Style.hbars || graphSetup.style.get(i) == GraphView.Style.vbars) {
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, dataSet.n);
+            geometry = GLES20.GL_TRIANGLES;
+            verticesPerValue = 6;
+        }
+
+        if (graphSetup.timeOnX && lastValidXTimeReference != null && lastValidXTimeReference.size() > 0) {
+            for (ExperimentTimeReferenceSet timeReference : lastValidXTimeReference) {
+                if (graphSetup.absoluteTime && !graphSetup.linearTime)
+                    GLES20.glUniform1f(offsetXHandle, (float)((timeReference.systemTime - lastValidXTimeReference.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                else if (!graphSetup.absoluteTime && graphSetup.linearTime) {
+                    if (timeReference.isPaused)
+                        continue;
+                    GLES20.glUniform1f(offsetXHandle, -(float)((timeReference.systemTime - lastValidXTimeReference.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                }
+                GLES20.glDrawArrays(geometry, verticesPerValue*timeReference.index, Math.min(verticesPerValue*timeReference.count, dataSet.n-verticesPerValue*timeReference.index));
+            }
+        } else if (graphSetup.timeOnY && dataSet.timeReferencesY != null && dataSet.timeReferencesY.size() > 0) {
+            for (ExperimentTimeReferenceSet timeReference : dataSet.timeReferencesY) {
+                if (graphSetup.absoluteTime && !graphSetup.linearTime)
+                    GLES20.glUniform1f(offsetYHandle, (float)((timeReference.systemTime - dataSet.timeReferencesY.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                else if (!graphSetup.absoluteTime && graphSetup.linearTime) {
+                    if (timeReference.isPaused)
+                        continue;
+                    GLES20.glUniform1f(offsetYHandle, -(float)((timeReference.systemTime - dataSet.timeReferencesY.get(0).systemTime)*0.001 - timeReference.experimentTime));
+                }
+
+                GLES20.glDrawArrays(geometry, verticesPerValue*timeReference.index, Math.min(verticesPerValue*timeReference.count, dataSet.n-verticesPerValue*timeReference.index));
+            }
         } else {
-            GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, dataSet.n);
+            GLES20.glDrawArrays(geometry, 0, dataSet.n);
         }
 
         GLES20.glDisableVertexAttribArray(positionXHandle);
@@ -825,12 +954,14 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         //Draw graph
 
         int lastValidX = 0;
+        List<ExperimentTimeReferenceSet> lastValidXTimeReference = null;
         for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {
             if (graphSetup.style.get(i) == GraphView.Style.mapXY) {
                 drawMap(i);
             }
         }
 
+        drawTimeRanges();
         drawGrid();
 
         for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {
@@ -838,10 +969,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                 continue;
             }
 
-            if (graphSetup.dataSets.get(i).vboX != 0)
+            if (graphSetup.dataSets.get(i).vboX != 0) {
                 lastValidX = graphSetup.dataSets.get(i).vboX;
+                lastValidXTimeReference = graphSetup.dataSets.get(i).timeReferencesX;
+            }
 
-            drawCurve(i, lastValidX);
+            drawCurve(i, lastValidX, lastValidXTimeReference);
         }
 
         GLES20.glUseProgram(0);
@@ -1018,6 +1151,56 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
     }
 
+    private void doUpdateTimeRanges() {
+        nTimeRanges = 0;
+        if (graphSetup.trStarts == null || graphSetup.trStops == null || graphSetup.trStarts.size() == 0 || graphSetup.trStops.size() == 0)
+            return;
+        if (!(graphSetup.timeOnX || graphSetup.timeOnY))
+            return;
+
+        FloatBuffer timeRangesData = ByteBuffer.allocateDirect(graphSetup.trStarts.size() * 4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        for (int i = 0; i < graphSetup.trStarts.size() && i < graphSetup.trStops.size(); i++) {
+            if (graphSetup.timeOnX) {
+                float x1r = (float) (Double.isNaN(graphSetup.trStops.get(i)) ? graphSetup.minX : (graphSetup.trStops.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i-1) : 0.0)));
+                float x2r = (float) (Double.isNaN(graphSetup.trStarts.get(i)) ? graphSetup.maxX : (graphSetup.trStarts.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i) : 0.0)));
+                float x1 = (float)(graphSetup.logX ? Math.log(x1r) : x1r);
+                float x2 = (float)(graphSetup.logX ? Math.log(x2r) : x2r);
+                float y1 = (float) (graphSetup.logY ? Math.log(graphSetup.minY) : graphSetup.minY);
+                float y2 = (float) (graphSetup.logY ? Math.log(graphSetup.maxY) : graphSetup.maxY);
+                timeRangesData.put(x1);
+                timeRangesData.put(y1);
+                timeRangesData.put(x1);
+                timeRangesData.put(y2);
+                timeRangesData.put(x2);
+                timeRangesData.put(y1);
+                timeRangesData.put(x2);
+                timeRangesData.put(y2);
+                nTimeRanges++;
+            }
+            if (graphSetup.timeOnY) {
+                float x1 = (float) (graphSetup.logX ? Math.log(graphSetup.minX) : graphSetup.minX);
+                float x2 = (float) (graphSetup.logX ? Math.log(graphSetup.maxX) : graphSetup.maxX);
+                float y1r = (float) (Double.isNaN(graphSetup.trStops.get(i)) ? graphSetup.minY : (graphSetup.trStops.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i-1) : 0.0)));
+                float y2r = (float) (Double.isNaN(graphSetup.trStarts.get(i)) ? graphSetup.maxY : (graphSetup.trStarts.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i) : 0.0)));
+                float y1 = (float)(graphSetup.logY ? Math.log(y1r) : y1r);
+                float y2 = (float)(graphSetup.logY ? Math.log(y2r) : y2r);
+                timeRangesData.put(x1);
+                timeRangesData.put(y1);
+                timeRangesData.put(x2);
+                timeRangesData.put(y1);
+                timeRangesData.put(x1);
+                timeRangesData.put(y2);
+                timeRangesData.put(x2);
+                timeRangesData.put(y2);
+                nTimeRanges++;
+            }
+        }
+        timeRangesData.position(0);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboTimeRanges);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, nTimeRanges * 4 * 2 * 4, timeRangesData, GLES20.GL_DYNAMIC_DRAW);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+    }
+
     ////// Careful, all methods below will be called from UI thread /////
 
     public void setGraphSetup(GraphSetup gs) {
@@ -1039,6 +1222,10 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     public void notifyUpdateGrid() {
         updateGrid = true;
+    }
+
+    public void notifyUpdateTimeRanges() {
+        updateTimeRanges = true;
     }
 
     public void halt() {
@@ -1066,6 +1253,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             this.h = height;
             updateBuffers = true;
             updateGrid = true;
+            updateTimeRanges = true;
             lock.notify();
         }
     }

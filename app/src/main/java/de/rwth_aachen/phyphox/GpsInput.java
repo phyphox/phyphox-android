@@ -30,7 +30,7 @@ public class GpsInput implements Serializable {
     public DataBuffer dataSatellites; //Data-buffer for status codes (note filled parallel to the other buffers)
     transient private LocationManager locationManager; //Hold the sensor manager
 
-    public long t0 = 0; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+    private ExperimentTimeReference experimentTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
     public double lastSatBasedLocation;
 
     private Lock dataLock;
@@ -41,8 +41,9 @@ public class GpsInput implements Serializable {
     public boolean forceGNSS = false;
 
     //The constructor
-    protected GpsInput(Vector<DataOutput> buffers, Lock lock) {
+    protected GpsInput(Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) {
         this.dataLock = lock;
+        this.experimentTimeReference = experimentTimeReference;
 
         //Store the buffer references if any
         if (buffers == null)
@@ -88,7 +89,6 @@ public class GpsInput implements Serializable {
 
     //Start the data aquisition by registering a listener for this location manager.
     public void start() {
-        this.t0 = 0; //Reset t0. This will be set by the first sensor event
         lastSatBasedLocation = -100.0; //We did not yet have a GNSS-based location
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
             this.lastStatus = 0;
@@ -151,24 +151,15 @@ public class GpsInput implements Serializable {
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(Location event) {
-        if (t0 == 0) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                t0 = event.getElapsedRealtimeNanos();
-                if (dataT != null && dataT.getFilledSize() > 0)
-                    t0 -= dataT.value * 1e9;
-            } else {
-                t0 = event.getTime(); //Old API does not provide ElapsedRealtimeNanos
-                if (dataT != null && dataT.getFilledSize() > 0)
-                    t0 -= dataT.value * 1e3;
-            }
-        }
-
-        double newT;
+        long inT;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
-            newT = (event.getElapsedRealtimeNanos() - t0) * 1e-9;
+            inT = event.getElapsedRealtimeNanos();
         else
-            newT = (event.getTime() - t0) * 1e-3;
+            inT = event.getTime() * 1000000L;
+
+        double newT = experimentTimeReference.getExperimentTimeFromEvent(inT);
+
         if (dataT != null && newT < dataT.value)
             return;
 

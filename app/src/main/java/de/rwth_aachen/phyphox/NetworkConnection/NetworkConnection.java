@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.rwth_aachen.phyphox.ExperimentTimeReference;
+import de.rwth_aachen.phyphox.Metadata;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.SensorInput;
@@ -32,14 +34,26 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
     }
 
     public static class NetworkSendableData {
+        public enum DataType {
+                BUFFER, METADATA, TIME;
+        }
+
+        DataType type;
         DataBuffer buffer = null;
-        NetworkMetadata metadata = null;
+        Metadata metadata = null;
+        ExperimentTimeReference timeReference = null;
         public Map<String, String> additionalAttributes = null;
         public NetworkSendableData(DataBuffer buffer) {
+            this.type = DataType.BUFFER;
             this.buffer = buffer;
         }
-        public NetworkSendableData(NetworkMetadata metadata) {
+        public NetworkSendableData(Metadata metadata) {
+            this.type = DataType.METADATA;
             this.metadata = metadata;
+        }
+        public NetworkSendableData(ExperimentTimeReference timeReference) {
+            this.type = DataType.TIME;
+            this.timeReference = timeReference;
         }
     }
 
@@ -120,7 +134,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
         Set<String> infoSensorInfoList = new HashSet<>();
 
         for (NetworkSendableData sendable : send.values()) {
-            if (sendable.metadata != null) {
+            if (sendable.type == NetworkSendableData.DataType.METADATA) {
                 switch (sendable.metadata.metadata) {
                     case uniqueID:
                         infoUniqueId = true;
