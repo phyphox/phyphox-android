@@ -351,8 +351,18 @@ public class ExperimentList extends AppCompatActivity {
                                             grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                                         }
 
+                                        //Create chooser
+                                        Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                                        //And finally grant permissions again for any activities created by the chooser
+                                        resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                                        for (ResolveInfo ri : resInfoList) {
+                                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                                            ))
+                                                continue;
+                                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        }
                                         //Execute this intent
-                                        startActivity(Intent.createChooser(intent, getString(R.string.share_pick_share)));
+                                        startActivity(chooser);
                                         return true;
                                     }
                                     case R.id.experiment_item_delete: {
@@ -2112,74 +2122,70 @@ public class ExperimentList extends AppCompatActivity {
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.action_credits:
-                                //Create the credits as an AlertDialog
-                                ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
-                                AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
-                                LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-                                View creditLayout = creditsInflater.inflate(R.layout.credits, null);
+                        if (item.getItemId() == R.id.action_credits) {
+                            //Create the credits as an AlertDialog
+                            ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
+                            AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
+                            LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+                            View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
-                                //Set the credit texts, which require HTML markup
-                                TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
+                            //Set the credit texts, which require HTML markup
+                            TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
 
-                                SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
-                                boolean first = true;
-                                for (String line : res.getString(R.string.creditsNames).split("\\n")) {
-                                    if (first)
-                                        first = false;
-                                    else
-                                        creditsNamesSpannable.append("\n");
-                                    creditsNamesSpannable.append(line.trim());
+                            SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
+                            boolean first = true;
+                            for (String line : res.getString(R.string.creditsNames).split("\\n")) {
+                                if (first)
+                                    first = false;
+                                else
+                                    creditsNamesSpannable.append("\n");
+                                creditsNamesSpannable.append(line.trim());
+                            }
+                            Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
+                            while (matcher.find()) {
+                                creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                            }
+                            tv.setText(creditsNamesSpannable);
+                            TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
+                            tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
+                            TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
+                            tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
+                            TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
+                            tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
+
+                            //Finish alertDialog builder
+                            credits.setView(creditLayout);
+                            credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //Nothing to do. Just close the thing.
                                 }
-                                Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
-                                while (matcher.find()) {
-                                    creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-                                }
-                                tv.setText(creditsNamesSpannable);
-                                TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
-                                tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
-                                TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
-                                tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
-                                TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
-                                tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
+                            });
 
-                                //Finish alertDialog builder
-                                credits.setView(creditLayout);
-                                credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        //Nothing to do. Just close the thing.
-                                    }
-                                });
-
-                                //Present the dialog
-                                credits.show();
-                                return true;
-                            case R.id.action_helpExperiments: {
+                            //Present the dialog
+                            credits.show();
+                            return true;
+                        } else if (item.getItemId() == R.id.action_helpExperiments) {
                                 Uri uri = Uri.parse(res.getString(R.string.experimentsPhyphoxOrgURL));
                                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                                 if (intent.resolveActivity(getPackageManager()) != null) {
                                     startActivity(intent);
                                 }
-                            }
                             return true;
-                            case R.id.action_helpFAQ: {
+                        } else if (item.getItemId() == R.id.action_helpFAQ) {
                                 Uri uri = Uri.parse(res.getString(R.string.faqPhyphoxOrgURL));
                                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                                 if (intent.resolveActivity(getPackageManager()) != null) {
                                     startActivity(intent);
                                 }
-                            }
                             return true;
-                            case R.id.action_helpRemote: {
+                        } else if (item.getItemId() == R.id.action_helpRemote) {
                                 Uri uri = Uri.parse(res.getString(R.string.remotePhyphoxOrgURL));
                                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                                 if (intent.resolveActivity(getPackageManager()) != null) {
                                     startActivity(intent);
                                 }
-                            }
                             return true;
-                            case R.id.action_translationInfo: {
+                        } else if (item.getItemId() == R.id.action_translationInfo) {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
                                 builder.setMessage(res.getString(R.string.translationText))
                                         .setTitle(R.string.translationInfo)
@@ -2209,174 +2215,172 @@ public class ExperimentList extends AppCompatActivity {
                                         });
                                 AlertDialog dialog = builder.create();
                                 dialog.show();
+                                return true;
+                            } else if (item.getItemId() == R.id.action_deviceInfo) {
+                            StringBuilder sb = new StringBuilder();
+
+                            PackageInfo pInfo;
+                            try {
+                                pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
+                            } catch (Exception e) {
+                                pInfo = null;
                             }
-                            return true;
-                            case R.id.action_deviceInfo: {
-                                StringBuilder sb = new StringBuilder();
 
-                                PackageInfo pInfo;
-                                try {
-                                    pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
-                                } catch (Exception e) {
-                                    pInfo = null;
-                                }
+                            sb.append("<b>phyphox</b><br />");
+                            if (pInfo != null) {
+                                sb.append("Version: ");
+                                sb.append(pInfo.versionName);
+                                sb.append("<br />");
+                                sb.append("Build: ");
+                                sb.append(pInfo.versionCode);
+                                sb.append("<br />");
+                            } else {
+                                sb.append("Version: Unknown<br />");
+                                sb.append("Build: Unknown<br />");
+                            }
+                            sb.append("File format: ");
+                            sb.append(PhyphoxFile.phyphoxFileVersion);
+                            sb.append("<br /><br />");
 
-                                sb.append("<b>phyphox</b><br />");
-                                if (pInfo != null) {
-                                    sb.append("Version: ");
-                                    sb.append(pInfo.versionName);
-                                    sb.append("<br />");
-                                    sb.append("Build: ");
-                                    sb.append(pInfo.versionCode);
-                                    sb.append("<br />");
-                                } else {
-                                    sb.append("Version: Unknown<br />");
-                                    sb.append("Build: Unknown<br />");
-                                }
-                                sb.append("File format: ");
-                                sb.append(PhyphoxFile.phyphoxFileVersion);
-                                sb.append("<br /><br />");
-
-                                sb.append("<b>Permissions</b><br />");
-                                if (pInfo != null && pInfo.requestedPermissions != null) {
-                                    for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
-                                        sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
-                                        sb.append(": ");
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                                            sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
-                                        else
-                                            sb.append("API < 16");
-                                        sb.append("<br />");
-                                    }
-                                } else {
-                                    if (pInfo == null)
-                                        sb.append("Unknown<br />");
+                            sb.append("<b>Permissions</b><br />");
+                            if (pInfo != null && pInfo.requestedPermissions != null) {
+                                for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
+                                    sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
+                                    sb.append(": ");
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                                        sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
                                     else
-                                        sb.append("None<br />");
+                                        sb.append("API < 16");
+                                    sb.append("<br />");
                                 }
-                                sb.append("<br />");
-
-                                sb.append("<b>Device</b><br />");
-                                sb.append("Model: ");
-                                sb.append(Build.MODEL);
-                                sb.append("<br />");
-                                sb.append("Brand: ");
-                                sb.append(Build.BRAND);
-                                sb.append("<br />");
-                                sb.append("Board: ");
-                                sb.append(Build.DEVICE);
-                                sb.append("<br />");
-                                sb.append("Manufacturer: ");
-                                sb.append(Build.MANUFACTURER);
-                                sb.append("<br />");
-                                sb.append("ABIS: ");
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                    for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
-                                        if (i > 0)
-                                            sb.append(", ");
-                                        sb.append(Build.SUPPORTED_ABIS[i]);
-                                    }
-                                } else {
-                                    sb.append("API < 21");
-                                }
-                                sb.append("<br />");
-                                sb.append("Base OS: ");
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    sb.append(Build.VERSION.BASE_OS);
-                                } else {
-                                    sb.append("API < 23");
-                                }
-                                sb.append("<br />");
-                                sb.append("Codename: ");
-                                sb.append(Build.VERSION.CODENAME);
-                                sb.append("<br />");
-                                sb.append("Release: ");
-                                sb.append(Build.VERSION.RELEASE);
-                                sb.append("<br />");
-                                sb.append("Patch: ");
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    sb.append(Build.VERSION.SECURITY_PATCH);
-                                } else {
-                                    sb.append("API < 23");
-                                }
-                                sb.append("<br /><br />");
-
-                                sb.append("<b>Sensors</b><br /><br />");
-                                SensorManager sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-                                if (sensorManager == null){
-                                    sb.append("Unkown<br />");
-                                } else {
-                                    for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
-                                        sb.append("<b>");
-                                        sb.append(res.getString(SensorInput.getDescriptionRes(sensor.getType())));
-                                        sb.append("</b> (type ");
-                                        sb.append(sensor.getType());
-                                        sb.append(")");
-                                        sb.append("<br />");
-                                        sb.append("- Name: ");
-                                        sb.append(sensor.getName());
-                                        sb.append("<br />");
-                                        sb.append("- Range: ");
-                                        sb.append(sensor.getMaximumRange());
-                                        sb.append(" ");
-                                        sb.append(SensorInput.getUnit(sensor.getType()));
-                                        sb.append("<br />");
-                                        sb.append("- Resolution: ");
-                                        sb.append(sensor.getResolution());
-                                        sb.append(" ");
-                                        sb.append(SensorInput.getUnit(sensor.getType()));
-                                        sb.append("<br />");
-                                        sb.append("- Min delay: ");
-                                        sb.append(sensor.getMinDelay());
-                                        sb.append(" µs");
-                                        sb.append("<br />");
-                                        sb.append("- Max delay: ");
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                            sb.append(sensor.getMaxDelay());
-                                        } else {
-                                            sb.append("API < 21");
-                                        }
-                                        sb.append(" µs");
-                                        sb.append("<br />");
-                                        sb.append("- Power: ");
-                                        sb.append(sensor.getPower());
-                                        sb.append(" mA");
-                                        sb.append("<br />");
-                                        sb.append("- Vendor: ");
-                                        sb.append(sensor.getVendor());
-                                        sb.append("<br />");
-                                        sb.append("- Version: ");
-                                        sb.append(sensor.getVersion());
-                                        sb.append("<br /><br />");
-                                    }
-                                }
-
-                                final Spanned text = Html.fromHtml(sb.toString());
-                                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
-                                builder.setMessage(text)
-                                        .setTitle(R.string.deviceInfo)
-                                        .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                //Copy the device info to the clipboard and notify the user
-
-                                                ClipboardManager cm = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
-                                                ClipData data = ClipData.newPlainText(res.getString(R.string.deviceInfo), text);
-                                                cm.setPrimaryClip(data);
-
-                                                Toast.makeText(ExperimentList.this, res.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
-                                            }
-                                        })
-                                        .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                //Closed by user. Nothing to do.
-                                            }
-                                        });
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
+                            } else {
+                                if (pInfo == null)
+                                    sb.append("Unknown<br />");
+                                else
+                                    sb.append("None<br />");
                             }
+                            sb.append("<br />");
+
+                            sb.append("<b>Device</b><br />");
+                            sb.append("Model: ");
+                            sb.append(Build.MODEL);
+                            sb.append("<br />");
+                            sb.append("Brand: ");
+                            sb.append(Build.BRAND);
+                            sb.append("<br />");
+                            sb.append("Board: ");
+                            sb.append(Build.DEVICE);
+                            sb.append("<br />");
+                            sb.append("Manufacturer: ");
+                            sb.append(Build.MANUFACTURER);
+                            sb.append("<br />");
+                            sb.append("ABIS: ");
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
+                                    if (i > 0)
+                                        sb.append(", ");
+                                    sb.append(Build.SUPPORTED_ABIS[i]);
+                                }
+                            } else {
+                                sb.append("API < 21");
+                            }
+                            sb.append("<br />");
+                            sb.append("Base OS: ");
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                sb.append(Build.VERSION.BASE_OS);
+                            } else {
+                                sb.append("API < 23");
+                            }
+                            sb.append("<br />");
+                            sb.append("Codename: ");
+                            sb.append(Build.VERSION.CODENAME);
+                            sb.append("<br />");
+                            sb.append("Release: ");
+                            sb.append(Build.VERSION.RELEASE);
+                            sb.append("<br />");
+                            sb.append("Patch: ");
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                sb.append(Build.VERSION.SECURITY_PATCH);
+                            } else {
+                                sb.append("API < 23");
+                            }
+                            sb.append("<br /><br />");
+
+                            sb.append("<b>Sensors</b><br /><br />");
+                            SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+                            if (sensorManager == null) {
+                                sb.append("Unkown<br />");
+                            } else {
+                                for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+                                    sb.append("<b>");
+                                    sb.append(res.getString(SensorInput.getDescriptionRes(sensor.getType())));
+                                    sb.append("</b> (type ");
+                                    sb.append(sensor.getType());
+                                    sb.append(")");
+                                    sb.append("<br />");
+                                    sb.append("- Name: ");
+                                    sb.append(sensor.getName());
+                                    sb.append("<br />");
+                                    sb.append("- Range: ");
+                                    sb.append(sensor.getMaximumRange());
+                                    sb.append(" ");
+                                    sb.append(SensorInput.getUnit(sensor.getType()));
+                                    sb.append("<br />");
+                                    sb.append("- Resolution: ");
+                                    sb.append(sensor.getResolution());
+                                    sb.append(" ");
+                                    sb.append(SensorInput.getUnit(sensor.getType()));
+                                    sb.append("<br />");
+                                    sb.append("- Min delay: ");
+                                    sb.append(sensor.getMinDelay());
+                                    sb.append(" µs");
+                                    sb.append("<br />");
+                                    sb.append("- Max delay: ");
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                        sb.append(sensor.getMaxDelay());
+                                    } else {
+                                        sb.append("API < 21");
+                                    }
+                                    sb.append(" µs");
+                                    sb.append("<br />");
+                                    sb.append("- Power: ");
+                                    sb.append(sensor.getPower());
+                                    sb.append(" mA");
+                                    sb.append("<br />");
+                                    sb.append("- Vendor: ");
+                                    sb.append(sensor.getVendor());
+                                    sb.append("<br />");
+                                    sb.append("- Version: ");
+                                    sb.append(sensor.getVersion());
+                                    sb.append("<br /><br />");
+                                }
+                            }
+
+                            final Spanned text = Html.fromHtml(sb.toString());
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                            builder.setMessage(text)
+                                    .setTitle(R.string.deviceInfo)
+                                    .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            //Copy the device info to the clipboard and notify the user
+
+                                            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                            ClipData data = ClipData.newPlainText(res.getString(R.string.deviceInfo), text);
+                                            cm.setPrimaryClip(data);
+
+                                            Toast.makeText(ExperimentList.this, res.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            //Closed by user. Nothing to do.
+                                        }
+                                    });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
                             return true;
-                            default:
-                                return false;
+                        } else {
+                            return false;
                         }
                     }
                 });
@@ -2648,42 +2652,42 @@ public class ExperimentList extends AppCompatActivity {
                     output.write("<views>".getBytes());
                     if (acc) {
                         output.write("<view label=\"Accelerometer\">".getBytes());
-                        output.write(("<graph label=\"Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accZ</input></graph>").getBytes());
+                        output.write(("<graph label=\"Acceleration X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Acceleration Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Acceleration Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (gyr) {
                         output.write("<view label=\"Gyroscope\">".getBytes());
-                        output.write(("<graph label=\"Gyroscope X\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Gyroscope Y\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Gyroscope Z\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrZ</input></graph>").getBytes());
+                        output.write(("<graph label=\"Gyroscope X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Gyroscope Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Gyroscope Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (hum) {
                         output.write("<view label=\"Humidity\">".getBytes());
-                        output.write(("<graph label=\"Humidity\" labelX=\"t (s)\" labelY=\"Relative Humidity (%)\" partialUpdate=\"true\"><input axis=\"x\">hum_time</input><input axis=\"y\">hum</input></graph>").getBytes());
+                        output.write(("<graph label=\"Humidity\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Relative Humidity (%)\" partialUpdate=\"true\"><input axis=\"x\">hum_time</input><input axis=\"y\">hum</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (light) {
                         output.write("<view label=\"Light\">".getBytes());
-                        output.write(("<graph label=\"Illuminance\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\"><input axis=\"x\">light_time</input><input axis=\"y\">light</input></graph>").getBytes());
+                        output.write(("<graph label=\"Illuminance\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\"><input axis=\"x\">light_time</input><input axis=\"y\">light</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (lin) {
                         output.write("<view label=\"Linear Acceleration\">".getBytes());
-                        output.write(("<graph label=\"Linear Acceleration X\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Y\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Z\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linZ</input></graph>").getBytes());
+                        output.write(("<graph label=\"Linear Acceleration X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Linear Acceleration Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Linear Acceleration Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (loc) {
                         output.write("<view label=\"Location\">".getBytes());
-                        output.write(("<graph label=\"Latitude\" labelX=\"t (s)\" labelY=\"Latitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLat</input></graph>").getBytes());
-                        output.write(("<graph label=\"Longitude\" labelX=\"t (s)\" labelY=\"Longitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLon</input></graph>").getBytes());
-                        output.write(("<graph label=\"Height\" labelX=\"t (s)\" labelY=\"z (m)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locZ</input></graph>").getBytes());
-                        output.write(("<graph label=\"Velocity\" labelX=\"t (s)\" labelY=\"v (m/s)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locV</input></graph>").getBytes());
-                        output.write(("<graph label=\"Direction\" labelX=\"t (s)\" labelY=\"heading (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locDir</input></graph>").getBytes());
+                        output.write(("<graph label=\"Latitude\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Latitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLat</input></graph>").getBytes());
+                        output.write(("<graph label=\"Longitude\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Longitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLon</input></graph>").getBytes());
+                        output.write(("<graph label=\"Height\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"z (m)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locZ</input></graph>").getBytes());
+                        output.write(("<graph label=\"Velocity\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"v (m/s)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locV</input></graph>").getBytes());
+                        output.write(("<graph label=\"Direction\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"heading (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locDir</input></graph>").getBytes());
                         output.write(("<value label=\"Horizontal Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locAccuracy</input></value>").getBytes());
                         output.write(("<value label=\"Vertical Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locZAccuracy</input></value>").getBytes());
                         output.write(("<value label=\"Satellites\" size=\"1\" precision=\"0\"><input>locSatellites</input></value>").getBytes());
@@ -2692,24 +2696,24 @@ public class ExperimentList extends AppCompatActivity {
                     }
                     if (mag) {
                         output.write("<view label=\"Magnetometer\">".getBytes());
-                        output.write(("<graph label=\"Magnetic field X\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Magnetic field Y\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Magnetic field Z\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magZ</input></graph>").getBytes());
+                        output.write(("<graph label=\"Magnetic field X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magX</input></graph>").getBytes());
+                        output.write(("<graph label=\"Magnetic field Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magY</input></graph>").getBytes());
+                        output.write(("<graph label=\"Magnetic field Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magZ</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (pressure) {
                         output.write("<view label=\"Pressure\">".getBytes());
-                        output.write(("<graph label=\"Pressure\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\"><input axis=\"x\">pressure_time</input><input axis=\"y\">pressure</input></graph>").getBytes());
+                        output.write(("<graph label=\"Pressure\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\"><input axis=\"x\">pressure_time</input><input axis=\"y\">pressure</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (prox) {
                         output.write("<view label=\"Proximity\">".getBytes());
-                        output.write(("<graph label=\"Proximity\" labelX=\"t (s)\" labelY=\"Distance (cm)\" partialUpdate=\"true\"><input axis=\"x\">prox_time</input><input axis=\"y\">prox</input></graph>").getBytes());
+                        output.write(("<graph label=\"Proximity\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Distance (cm)\" partialUpdate=\"true\"><input axis=\"x\">prox_time</input><input axis=\"y\">prox</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     if (temp) {
                         output.write("<view label=\"Temperature\">".getBytes());
-                        output.write(("<graph label=\"Temperature\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
+                        output.write(("<graph label=\"Temperature\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
                         output.write("</view>".getBytes());
                     }
                     output.write("</views>".getBytes());
