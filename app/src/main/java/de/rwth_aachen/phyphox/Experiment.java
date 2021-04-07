@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
@@ -296,6 +297,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //If a new permission has been granted, we will just restart the activity to reload the experiment
     //   with the formerly missing permission
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
@@ -583,6 +585,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void showHint(int textRessource, PopupWindow.OnDismissListener dismissListener, final int gravity, final int fromRight) {
         if (popupWindow != null)
             return;
@@ -601,9 +604,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             popupWindow.setElevation(4.0f);
         }
 
-        popupWindow.setOutsideTouchable(true);
-        popupWindow.setTouchable(true);
-        popupWindow.setFocusable(true);
+        popupWindow.setOutsideTouchable(false);
+        popupWindow.setTouchable(false);
+        popupWindow.setFocusable(false);
         LinearLayout ll = (LinearLayout) hintView.findViewById(R.id.hint_root);
 
         ll.setOnTouchListener(new View.OnTouchListener() {
@@ -635,6 +638,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
             }
         });
+    }
+
+    @Override
+    public void onUserInteraction() {
+        if (popupWindow != null)
+            popupWindow.dismiss();
     }
 
     private void showMenuHint() {
@@ -811,7 +820,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return true;
     }
 
+    @Override
     public void onClick(View v) {
+        if (popupWindow != null)
+            popupWindow.dismiss();
         if (v == hintAnimation) {
             if (timedRun) {
                 startTimedMeasurement();

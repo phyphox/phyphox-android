@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.ProgressDialog;
@@ -44,10 +45,13 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
@@ -58,6 +62,7 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -130,6 +135,10 @@ public class ExperimentList extends AppCompatActivity {
     //String constant to identify our preferences
     public static final String PREFS_NAME = "phyphox";
 
+    //Name of support category
+    static final String phyphoxCat = "phyphox.org";
+    static final String phyphoxCatHintRelease = "1.1.9"; //Change this to reactivate the phyphox support category hint on the next update. We set it to the version in which it is supposed to be re-enabled, so we can easily understand its meaning.
+
     //A resource reference for easy access
     private Resources res;
 
@@ -150,6 +159,93 @@ public class ExperimentList extends AppCompatActivity {
     private HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
     private HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>(); //This will collect uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
 
+    PopupWindow popupWindow = null;
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void showSupportHint() {
+        if (popupWindow != null)
+            return;
+        LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
+        View hintView = inflater.inflate(R.layout.support_phyphox_hint, null);
+        TextView text = (TextView)hintView.findViewById(R.id.support_phyphox_hint_text);
+        text.setText(res.getString(R.string.categoryPhyphoxOrgHint));
+        ImageView iv = ((ImageView) hintView.findViewById(R.id.support_phyphox_hint_arrow));
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams)iv.getLayoutParams();
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        iv.setLayoutParams(lp);
+
+        popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        if(Build.VERSION.SDK_INT >= 21){
+            popupWindow.setElevation(4.0f);
+        }
+
+        popupWindow.setOutsideTouchable(false);
+        popupWindow.setTouchable(false);
+        popupWindow.setFocusable(false);
+        LinearLayout ll = (LinearLayout) hintView.findViewById(R.id.support_phyphox_hint_root);
+
+        ll.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (popupWindow != null)
+                    popupWindow.dismiss();
+                return true;
+            }
+        });
+
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                popupWindow = null;
+            }
+        });
+
+
+        final View root = findViewById(R.id.rootExperimentList);
+        root.post(new Runnable() {
+            public void run() {
+                try {
+                    popupWindow.showAtLocation(root, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+                } catch (WindowManager.BadTokenException e) {
+                    Log.e("showHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onUserInteraction() {
+        if (popupWindow != null)
+            popupWindow.dismiss();
+    }
+
+    private void showSupportHintIfRequired() {
+        final SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        String lastSupportHint = settings.getString("lastSupportHint", "");
+        if (lastSupportHint.equals(phyphoxCatHintRelease)) {
+            return;
+        }
+
+        showSupportHint();
+        final boolean disabled = false;
+
+        ReportingScrollView sv = ((ReportingScrollView)findViewById(R.id.experimentScroller));
+        sv.setOnScrollChangedListener(new ReportingScrollView.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged(ReportingScrollView scrollView, int x, int y, int oldx, int oldy) {
+                int bottom = scrollView.getChildAt(scrollView.getChildCount()-1).getBottom();
+                if (y + 10 > bottom - scrollView.getHeight()) {
+                    scrollView.setOnScrollChangedListener(null);
+                    SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+                    SharedPreferences.Editor editor = settings.edit();
+                    editor.putString("lastSupportHint", phyphoxCatHintRelease);
+                    editor.apply();
+                }
+            }
+        });
+    }
+
     //This adapter is used to fill the gridView of the categories in the experiment list.
     //So, this can be considered to be the experiment entries within an category
     private class ExperimentItemAdapter extends BaseAdapter {
@@ -167,6 +263,7 @@ public class ExperimentList extends AppCompatActivity {
         Vector<String> isTemp = new Vector<>(); //List of booleans for each experiment, which track whether the file is a temporary file
         Vector<Boolean> isAsset = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
         Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
+        Vector<String> isLinkList = new Vector<>(); //List of strings for each experiment, which are an URL is it is only a link entry
 
         //The constructor takes the activity reference. That's all.
         public ExperimentItemAdapter(Activity parentActivity, String category) {
@@ -220,7 +317,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor) {
+        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -238,6 +335,7 @@ public class ExperimentList extends AppCompatActivity {
             this.isTemp.insertElementAt(isTemp, i);
             this.isAsset.insertElementAt(isAsset, i);
             unavailableSensorList.insertElementAt(unavailableSensor, i);
+            isLinkList.insertElementAt(isLink, i);
 
             //Notify the adapter that we changed its contents
             this.notifyDataSetChanged();
@@ -261,7 +359,30 @@ public class ExperimentList extends AppCompatActivity {
                 convertView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (unavailableSensorList.get(position) < 0)
+                        if (isLinkList.get(position) != null) {
+                            try {
+                                Uri uri = Uri.parse(isLinkList.get(position));
+                                if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                    if (intent.resolveActivity(getPackageManager()) != null) {
+                                        startActivity(intent);
+                                        return;
+                                    }
+                                }
+                            } catch (Exception e) {
+
+                            }
+                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                            builder.setMessage("This entry is just a link, but its URL is invalid.")
+                                    .setTitle("Invalid URL")
+                                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+
+                                        }
+                                    });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        } else if (unavailableSensorList.get(position) < 0)
                             start(position, v);
                         else {
                             AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
@@ -430,13 +551,13 @@ public class ExperimentList extends AppCompatActivity {
     //The category class wraps all experiment entries and their views of a category, including the
     //grid view and the category headline
     private class ExperimentsInCategory {
-        private Context parentContext; //Needed to create views
-        public String name; //Category name (headline)
-        private LinearLayout catLayout; //This is the base layout of the category, which will contain the headline and the gridView showing all the experiments
-        private TextView categoryHeadline; //The TextView to display the headline
-        private ExpandableHeightGridView experimentSubList; //The gridView holding experiment items. (See implementation below for the custom flavor "ExpandableHeightGridView")
-        private ExperimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
-        private Map<Integer, Integer> colorCount = new HashMap<>();
+        final private Context parentContext; //Needed to create views
+        final public String name; //Category name (headline)
+        final private LinearLayout catLayout; //This is the base layout of the category, which will contain the headline and the gridView showing all the experiments
+        final private TextView categoryHeadline; //The TextView to display the headline
+        final private ExpandableHeightGridView experimentSubList; //The gridView holding experiment items. (See implementation below for the custom flavor "ExpandableHeightGridView")
+        final private ExperimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
+        final private Map<Integer, Integer> colorCount = new HashMap<>();
 
         //ExpandableHeightGridView is derived from the original Android GridView.
         //The structure of our experiment list is such that we want to scroll the entire list, which
@@ -529,7 +650,7 @@ public class ExperimentList extends AppCompatActivity {
                     LinearLayout.LayoutParams.WRAP_CONTENT);
 //            layout.setMargins(context.getDimensionPixelOffset(R.dimen.expElementMargin), 0, context.getDimensionPixelOffset(R.dimen.expElementMargin), context.getDimensionPixelOffset(R.dimen.expElementMargin));
             categoryHeadline.setLayoutParams(layout);
-            categoryHeadline.setText(name);
+            categoryHeadline.setText(name.equals(phyphoxCat) ? res.getString(R.string.categoryPhyphoxOrg) : name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
             categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
             categoryHeadline.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.highlight));
@@ -573,8 +694,8 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
-        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor) {
-            experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor);
+        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
+            experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
             Integer n = colorCount.get(color);
             if (n == null)
                 colorCount.put(color, 1);
@@ -611,9 +732,9 @@ public class ExperimentList extends AppCompatActivity {
                 return -1;
             if (b.name.equals(res.getString(R.string.save_state_category)))
                 return 1;
-            if (a.name.equals("phyphox.org"))
+            if (a.name.equals(phyphoxCat))
                 return 1;
-            if (b.name.equals("phyphox.org"))
+            if (b.name.equals(phyphoxCat))
                 return -1;
             return a.name.toLowerCase().compareTo(b.name.toLowerCase());
         }
@@ -624,18 +745,18 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, int color, Drawable image, String description, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, Vector<ExperimentsInCategory> categories) {
+    private void addExperiment(String exp, String cat, int color, Drawable image, String description, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor,  String isLink, Vector<ExperimentsInCategory> categories) {
         //Check all categories for the category of the new experiment
         for (ExperimentsInCategory icat : categories) {
             if (icat.hasName(cat)) {
                 //Found it. Add the experiment and return
-                icat.addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
+                icat.addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
                 return;
             }
         }
         //Category does not yet exist. Create it and add the experiment
         categories.add(new ExperimentsInCategory(cat, this));
-        categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor);
+        categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
     }
 
     //Decode the experiment icon (base64) and return a bitmap
@@ -648,7 +769,7 @@ public class ExperimentList extends AppCompatActivity {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
         Log.e("list:loadExperiment", message);
         if (categories != null)
-            addExperiment(xmlFile, getString(R.string.unknown), 0xffff0000, new TextIcon("!", this), message, xmlFile, isTemp, isAsset, -1, categories);
+            addExperiment(xmlFile, getString(R.string.unknown), 0xffff0000, new TextIcon("!", this), message, xmlFile, isTemp, isAsset, -1, null, categories);
     }
 
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
@@ -684,6 +805,8 @@ public class ExperimentList extends AppCompatActivity {
             boolean inInput = false;
             boolean inOutput = false;
             Integer unavailableSensor = -1;
+            boolean isLink = false;
+            String link = null;
 
             int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
             while (eventType != XmlPullParser.END_DOCUMENT){ //Go through all tags until the end...
@@ -694,6 +817,9 @@ public class ExperimentList extends AppCompatActivity {
                                 if (phyphoxDepth < 0) { //There should not be a phyphox tag within an phyphox tag, but who cares. Just ignore it if it happens
                                     phyphoxDepth = xpp.getDepth(); //Remember depth of phyphox tag
                                     String globalLocale = xpp.getAttributeValue(null, "locale");
+                                    String isLinkStr = xpp.getAttributeValue(null, "isLink");
+                                    if (isLinkStr != null)
+                                        isLink = isLinkStr.toUpperCase().equals("TRUE");
                                     int thisLaguageRating = Helper.getLanguageRating(res, globalLocale);
                                     if (thisLaguageRating > languageRating)
                                         languageRating = thisLaguageRating;
@@ -762,6 +888,10 @@ public class ExperimentList extends AppCompatActivity {
                             case "category": //This should give us the experiment category
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
                                     category = xpp.nextText().trim();
+                                break;
+                            case "link": //This should give us a link if the experiment is only a dummy entry with a link
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
+                                    link = xpp.nextText().trim();
                                 break;
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
@@ -896,7 +1026,7 @@ public class ExperimentList extends AppCompatActivity {
 
             //We have all the information. Add the experiment.
             if (categories != null)
-                addExperiment(title, category, color, image, description, experimentXML, isTemp, isAsset, unavailableSensor, categories);
+                addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (XML Exception)", isTemp, isAsset, categories);
@@ -1801,6 +1931,7 @@ public class ExperimentList extends AppCompatActivity {
     //If a new permission has been granted, we will just restart the activity to reload the experiment
     //   with the formerly missing permission
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
@@ -2110,7 +2241,9 @@ public class ExperimentList extends AppCompatActivity {
 
         res = getResources(); //Get Resource reference for easy access.
 
-        displayDoNotDamageYourPhone(); //Show the do-not-damage-your-phone-warning
+        if (!displayDoNotDamageYourPhone()) { //Show the do-not-damage-your-phone-warning
+            showSupportHintIfRequired();
+        }
 
         //Set the on-click-listener for the credits
         View.OnClickListener ocl = new View.OnClickListener() {
@@ -2454,7 +2587,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     //Displays a warning message that some experiments might damage the phone
-    private void displayDoNotDamageYourPhone() {
+    private boolean displayDoNotDamageYourPhone() {
         //Use the app theme and create an AlertDialog-builder
         ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.phyphox);
         AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
@@ -2485,8 +2618,13 @@ public class ExperimentList extends AppCompatActivity {
         //Check preferences if the user does not want to see warnings
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         Boolean skipWarning = settings.getBoolean("skipWarning", false);
-        if (!skipWarning)
+        if (!skipWarning) {
             adb.show(); //User did not decide to skip, so show it.
+            return true;
+        } else {
+            return false;
+        }
+
     }
 
     //This displays a rather complex dialog to allow users to set up a simple experiment

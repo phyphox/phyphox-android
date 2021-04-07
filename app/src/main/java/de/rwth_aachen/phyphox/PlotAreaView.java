@@ -353,6 +353,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "}";
 
     final String gridFragmentShader =
+            "precision mediump float;" +
             "void main () {" +
             "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
             "}";
@@ -369,6 +370,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     "}";
 
     final String timeRangeFragmentShader =
+            "precision mediump float;" +
             "uniform float alpha;" +
 
             "void main () {" +
@@ -405,6 +407,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "}";
 
     final String mapFragmentShader =
+            "precision mediump float;" +
             "uniform sampler2D colorMap;" +
             "void main () {" +
             "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
@@ -639,6 +642,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glShaderSource(shader, shaderCode);
         GLES20.glCompileShader(shader);
 
+        int[] compiled = new int[1];
+        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+        if (compiled[0] == 0) {
+            Log.d("PlotRenderer", "Shader error\n" + GLES20.glGetShaderInfoLog(shader));
+            return 0;
+        }
         return shader;
     }
 
@@ -741,7 +750,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     }
 
     public void deinitScene() {
-
     }
 
     private void drawGrid() {

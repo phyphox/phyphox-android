@@ -7,7 +7,8 @@
     android:paddingRight="0dp"
     android:paddingTop="0dp"
     android:paddingBottom="0dp" tools:context=".ExperimentList"
-    android:background="@color/background">
+    android:background="@color/background"
+    android:id="@+id/rootExperimentList">
 
     <RelativeLayout
         android:id="@+id/expListHeader"
@@ -47,7 +48,7 @@
             android:contentDescription="@string/info"/>
     </RelativeLayout>
 
-    <ScrollView
+    <de.rwth_aachen.phyphox.ReportingScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/experimentScroller"
@@ -68,7 +69,7 @@
             android:layout_height="match_parent"
             android:id="@+id/experimentList"
             android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
-    </ScrollView>
+    </de.rwth_aachen.phyphox.ReportingScrollView>
 
     <View
         android:layout_width="match_parent"

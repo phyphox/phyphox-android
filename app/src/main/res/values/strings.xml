@@ -280,6 +280,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
     <string name="categoryNewExperiment">Simple custom experiments</string>
     <string name="categoryRawSensor">Raw Sensors</string>
+    <string name="categoryPhyphoxOrg">Support phyphox</string>
+    <string name="categoryPhyphoxOrgHint">There are new options to support phyphox at the bottom of the list.</string>
 
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
     <string name="start_hint">Touch the triangle to start the experiment.</string>
