@@ -1,8 +1,8 @@
 package de.rwth_aachen.phyphox.NetworkConnection.Mqtt;
 
+import android.content.Context;
 import android.util.Log;
 
-import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
@@ -11,6 +11,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.text.DecimalFormat;
@@ -18,7 +20,6 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Vector;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -27,19 +28,34 @@ import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
-import static android.os.Environment.getExternalStorageDirectory;
 
 public class MqttHelper{
 
+    private static File handelBksFiels(Context context)throws FileNotFoundException{
+        File tempPath = new File(context.getFilesDir(), "temp_zip");
+        final File[] bksFiles = tempPath.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.endsWith(".bks");
+            }
+        });
+        if(bksFiles.length == 1){
+            return bksFiles[0];
+        }else if (bksFiles.length > 1){
+            Log.e("MQTT","BKS File Error: only one bks Fiel can be used. Using: "+ bksFiles[0].getName());
+            return bksFiles[0];
+        }
+        throw new FileNotFoundException("No BKS File");
+    }
+
     public static void tlsSetup(MqttService mqttService,
-                                String bksFilePath,
+                                Context context,
                                 String userName,
                                 String password){
         try {
+            File bksFile = handelBksFiels(context);
             KeyStore trustStore = KeyStore.getInstance("BKS");
-            bksFilePath = getExternalStorageDirectory().getAbsolutePath()+ bksFilePath;
 
-            File bksFile = new File(bksFilePath);
             InputStream input = new FileInputStream(bksFile);
             trustStore.load(input, null);
 

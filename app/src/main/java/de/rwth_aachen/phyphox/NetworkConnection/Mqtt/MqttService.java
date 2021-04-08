@@ -11,7 +11,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -20,7 +20,6 @@ import java.util.Vector;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
-import static android.os.Environment.getExternalStorageDirectory;
 
 public abstract class MqttService extends NetworkService.Service {
     List<byte[]> data = new ArrayList<>();
@@ -32,7 +31,7 @@ public abstract class MqttService extends NetworkService.Service {
     boolean connected = false;
     boolean subscribed = false;
     MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
-    MqttDefaultFilePersistence dataStore;
+    MemoryPersistence dataStore;
     int writeSequence = 0;
     Vector<JSONObject> messageBuffer = new Vector<JSONObject>(600);
     boolean persistence = false;
@@ -126,7 +125,7 @@ public abstract class MqttService extends NetworkService.Service {
     }
 
     protected void setPersistenceSettings(){
-        dataStore = new MqttDefaultFilePersistence(getExternalStorageDirectory().getAbsolutePath()+"/Download/");
+        dataStore = new MemoryPersistence();
         try {
             dataStore.open(clientID,address);
         }catch (Exception ex){
