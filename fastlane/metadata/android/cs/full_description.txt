@@ -1,0 +1,39 @@
+Věděli jste, že sebou nosíte 3D magnetometr. Víte, že můžete použít svůj mobil jako kyvadlo k měření lokálního tíhového zrychlení? Že mmůžete udělat ze svého mobilu sonar. Phyphox vám dává přístup k senzorům vašeho mobilu buď přímo nebo skrze připravené moduly experimentů, které analyzují vaše data a umožňují exportovat jak čístá naměřená data tak vypočtené výsledky pro další analýzu. Můžete dokonce vytvořit své vlastní experimentální moduly na phyphox.org a sdílet je s kolegy, studenty a přáteli. 
+
+Vybrané funkce	:
+- Široký výběr připravených experimentů. Stačí zmáčknout tlačítko a vše běží.
+- Exportování dat v několika běžně používaných formátech.
+- Vzdálený přístup k vašemu experimentu skrze webové rozhraní. Stačí mít PC na stejné lokální síti jako váš mobil. Instalace softwaru na PC není nutná. Vše co potřebujete je moderní internetový prohlížeč.
+- Vytvořte své vlastní experimentální moduly vybráním senzorových vstupů, definováním kroků analýzy dat a vybraním vhodného rozhraní pro jejich zobrazení. To vše pomocí našeho web-editoru (http://phyphox.org/editor) .Nabízíme širokou paletu nástrojů pro analýzu dat od pouhého sčítání hodnot až po pokročilé metody jakými jsou například Fourierova transformace a křížová korelace
+
+Podporované senzory:
+- Akcelerometr
+- Magnetometr
+- Gyroskop
+- Světelný senzor
+- Barometr
+- Mikrofón
+- Senzor přiblížení(Proximity)
+- GPS
+*některé senzory nejsou součástí vybavení všech mobilních zařízení.
+
+Formáty pro export
+- CSV (Hodnoty oddělované čárkou)
+- CSV (Hodnoty oddělované tabulátorem)
+- Excel
+(pokud byste potřebovali jiný formát, tak nám neváhejte napsat)
+
+
+Tato aplikace byla vyvinuta na Druhém Instytutu Fyziky A na  RWTH univerzitě v Aachen.
+
+--
+
+Vysvětlení požadovaných povolení přístupu
+
+Máte- li android verze 6.0 a vyšší, pak budete o některá povolení požádáni až v okamžiku, kdy budou potřeba.
+
+Internet: Toto umožní phyphoxu připojení k síti, které je potřeba pro načítání experimentů uložených online a při použití vzdáleného přístupu. Obojí je prováděno pouze když o to výslovně požáda uživatel a žádná jiná data nejsou vysílána.
+Bluetooth: Používán k přístupu k externím senzorům.
+Přečíst externí úložiště: Toto může být potřeba pro otevření experimentu uloženého na tomto zařízení.
+Záznam audia: Vyžadován pro zpřístupnění mikrofonu jako senzoru.
+Umístění: Umožnuje využití GPS pro experimenty analyzující vaši polohu.

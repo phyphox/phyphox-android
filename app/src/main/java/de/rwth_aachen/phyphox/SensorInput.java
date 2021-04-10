@@ -5,6 +5,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
+import android.util.Log;
 
 import java.io.Serializable;
 import java.security.InvalidParameterException;
@@ -19,7 +20,8 @@ public class SensorInput implements SensorEventListener, Serializable {
     public SensorName sensorName; //Sensor name (phyphox identifier)
     public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
-    private SensorInputTimeReference sensorInputTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+    private final ExperimentTimeReference experimentTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
+    public double fixDeviceTimeOffset = 0.0; //Some devices show a negative offset on the time events of the sensors. This seems to mostly affect sensors that report onChange. Our strategy is that sensor events with -10s < t < 0s are simply corrected to t=0 (old sensor events in the queue are still valid), but sensor events with t < -10s indicate a systematic problem on the device and are used to calculate this variable which will be used to also correct all subsequent readings.
 
     public boolean ignoreUnavailable = false;
 
@@ -76,9 +78,9 @@ public class SensorInput implements SensorEventListener, Serializable {
         }
     }
 
-    private SensorInput(boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
+    private SensorInput(boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
         this.dataLock = lock;
-        this.sensorInputTimeReference = sensorInputTimeReference;
+        this.experimentTimeReference = experimentTimeReference;
 
         if (rate <= 0)
             this.period = 0;
@@ -110,8 +112,8 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
     // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    public SensorInput(SensorName type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
-        this(ignoreUnavailable, rate, average, buffers, lock, sensorInputTimeReference);
+    public SensorInput(SensorName type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
+        this(ignoreUnavailable, rate, average, buffers, lock, experimentTimeReference);
 
         this.type = resolveSensorName(type);
         this.sensorName = type;
@@ -119,8 +121,8 @@ public class SensorInput implements SensorEventListener, Serializable {
             throw new SensorException("Unknown sensor.");
     }
 
-    public SensorInput(String type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, SensorInputTimeReference sensorInputTimeReference) throws SensorException {
-        this(ignoreUnavailable, rate, average, buffers, lock, sensorInputTimeReference);
+    public SensorInput(String type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
+        this(ignoreUnavailable, rate, average, buffers, lock, experimentTimeReference);
 
         this.type = resolveSensorString(type);
         if (this.type < 0)
@@ -328,21 +330,25 @@ public class SensorInput implements SensorEventListener, Serializable {
                 //Append the data to available buffers
                 dataLock.lock();
                 try {
-                    if (!sensorInputTimeReference.isValid()) {
-                        long t0 = event.timestamp;
-                        if (dataT != null && dataT.getFilledSize() > 0)
-                            t0 -= dataT.value * 1e9;
-                        sensorInputTimeReference.set(t0); //Any event sets t0
-                    }
-
                     if (dataX != null)
                         dataX.append(avgX / aquisitions);
                     if (dataY != null)
                         dataY.append(avgY / aquisitions);
                     if (dataZ != null)
                         dataZ.append(avgZ / aquisitions);
-                    if (dataT != null)
-                        dataT.append((event.timestamp - sensorInputTimeReference.get()) * 1e-9); //We want seconds since t0
+                    if (dataT != null) {
+                        double t = experimentTimeReference.getExperimentTimeFromEvent(event.timestamp);
+                        if (t < -10 && fixDeviceTimeOffset == 0.0) {
+                            Log.w("SensorInput", "Unrealistic time offset detected. Applying adjustment of " + -t + "s.");
+                            fixDeviceTimeOffset = -t;
+                        }
+                        t += fixDeviceTimeOffset;
+                        if (t < 0.0) {
+                            Log.w("SensorInput", this.sensorName + ": Adjusted one timestamp from t = " + t + "s to t = 0s.");
+                            t = 0.0;
+                        }
+                        dataT.append(t);
+                    }
                     if (dataAbs != null)
                         if (type == Sensor.TYPE_ROTATION_VECTOR)
                             dataAbs.append(Math.sqrt(aquisitions*aquisitions-avgX*avgX-avgY*avgY-avgZ*avgZ) / aquisitions);

@@ -1,0 +1,41 @@
+Você sabe que você está carregando um Magnetômetro 3D? Que você pode usar o seu aparelho como um pêndulo para medir a aceleração da gravidade no seu local? E que você pode transformar seu smartphone em um sonar? 
+
+phyphox dá acesso aos sensores do seu aparelho, seja diretamente ou através de experimentos prontos que avaliam os dados e lhe permitem exportar as medidas para outras análises. Você pode até personalizar experimentos no website phyphox.org e compartilhar com seus colegas, estudantes e amigos. 
+
+Principais características:
+- Experimentos prontos: Apenas um toque para começar.
+- Exporte os seus dados para varios formatos comuns.
+- Acesso remoto ao seu experimento através uma interface web de qualquer computador na mesma rede do seu smartphone. Não instale nada - você precisa apenas de uma navegador atual.
+- Faça seus experimentos selecionando os sensores, o tempo da medida e criando visualizações especiais através do nosso editor (http://phyphox.org/editor). Esta análise pode ser simples como somar dois valores ou usando métodos avançados, como a transformada de Fourier ou correlação cruzada. Nós disponibilizamos vários conjuntos de análises. 
+
+Sensores suportados:
+- Acelerômetro
+- Magnetômetro
+- Giroscópio
+- Intensidade luminosa
+- Pressão
+- Microfone
+- Proximidade
+- GPS
+*alguns sensores não estão presentes em todos os aparelhos.
+
+Formatos para exportacão
+- CSV (valores separados por vírgula)
+- CSV (valores separados por tabulação)
+- Excel
+(se precisar de outro formato, entre em contato connosco)
+
+
+Esta app foi desenvolvida pelo 2º Instituto de Física da Universidade RWTH Aachen.
+
+--
+
+Explicação para acessos 
+
+Se você usa Android versão 6.0 ou superior, acesso a algumas funções será requisitado apenas quando necessário.
+
+Internet: Isto permite phyphox acesse a rede, que é necessário para carregar experimentos que estejam online ou quando acesso remoto for utilizado. Isto será apenas utilizado quando o usuário pedir e nenhum outro dado será transmitido.
+Bluetooth: Usado para acessar sensores externos.
+Ler armazenamento portátil: Pode ser necessário quando um experimento estiver gravando dados no aparelho.
+Gravador de som: Necessário para experimentos com o microfone.
+Localização: Usado para acessar o GPS para experimentos baseados na localização.

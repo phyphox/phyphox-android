@@ -323,7 +323,7 @@ public class FormulaParser {
             if (brackets == 0) {
                 switch (formula.charAt(i)) {
                     case '+':
-                        if (previousPriority >= 1 && !cmd.equals("e")) {
+                        if (previousPriority >= 1 && (i == start || !cmd.equals("e"))) {
                             previousPriority = 1;
                             operator = new AddFunction();
                             start1 = start;
@@ -333,7 +333,7 @@ public class FormulaParser {
                         }
                         break;
                     case '-':
-                        if (previousPriority >= 1 && !cmd.equals("e") && formula.charAt(i-1) != '+' && formula.charAt(i-1) != '*' && formula.charAt(i-1) != '-' && formula.charAt(i-1) != '/' && formula.charAt(i-1) != '%' && formula.charAt(i-1) != '^') {
+                        if (previousPriority >= 1 && formula.charAt(i-1) != 'e' && formula.charAt(i-1) != '+' && formula.charAt(i-1) != '*' && formula.charAt(i-1) != '-' && formula.charAt(i-1) != '/' && formula.charAt(i-1) != '%' && formula.charAt(i-1) != '^') {
                             previousPriority = 1;
                             operator = new SubtractFunction();
                             start1 = start;
@@ -384,17 +384,19 @@ public class FormulaParser {
                         break;
                 }
             }
-            if ((formula.charAt(i) >= 'a' && formula.charAt(i) <= 'z') || (!cmd.equals("") && formula.charAt(i) >= '0' && formula.charAt(i) <= '9')) {
+            boolean numberContinuation;
+            if (i == start)
+                numberContinuation = false;
+            else {
+                numberContinuation = cmd.equals("") && formula.charAt(i - 1) >= '0' && formula.charAt(i - 1) <= '9';
+            }
+            if (!numberContinuation && ((formula.charAt(i) >= 'a' && formula.charAt(i) <= 'z') || (!cmd.equals("") && formula.charAt(i) >= '0' && formula.charAt(i) <= '9'))) {
                 if (brackets == 0)
                     cmd += formula.charAt(i);
                 else
                     cmd = "";
             } else {
                 if (!cmd.isEmpty()) {
-                    if (cmd.equals("e")) {
-                        cmd = "";
-                        continue;
-                    }
                     if (formula.charAt(i) != '(')
                         throw new FormulaException("Function " + cmd + " needs a parameter.");
 

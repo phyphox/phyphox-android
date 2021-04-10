@@ -303,14 +303,19 @@ public class Analysis {
 
     //Get the seconds since the experiment started
     public static class timerAM extends AnalysisModule implements Serializable {
+        boolean linearTime = false;
 
-        protected timerAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
+        protected timerAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, boolean linearTime) {
             super(experiment, inputs, outputs);
+            this.linearTime = linearTime;
         }
 
         @Override
         protected void update() {
-            outputs.get(0).append((experiment.analysisTime - experiment.firstAnalysisTime)/1000.);
+            if (outputs.get(0) != null)
+                outputs.get(0).append(linearTime ? experiment.analysisLinearTime : experiment.analysisTime);
+            if (outputs.size() > 1 && outputs.get(1) != null)
+                outputs.get(1).append(linearTime ? experiment.experimentTimeReference.getSystemTimeReferenceByIndex(0) * 0.001 : experiment.experimentTimeReference.getSystemTimeReferenceByIndex(experiment.experimentTimeReference.getReferenceIndexFromExperimentTime(experiment.analysisTime)) * 0.001);
         }
     }
 
@@ -2500,7 +2505,9 @@ public class Analysis {
 
             for (int i = 0; i < n; i++) {
                 for (int out = 0; out < outputs.size() && out < inputArrays.size(); out++) {
-                    outputs.get(out).append(inputArrays.get(out)[indexArray[i]]);
+                    Double[] inputArray = inputArrays.get(out);
+                    int index = indexArray[i];
+                    outputs.get(out).append(index < inputArray.length ? inputArray[index] : Double.NaN);
                 }
             }
 

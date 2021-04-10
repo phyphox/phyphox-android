@@ -1,13 +1,17 @@
 package de.rwth_aachen.phyphox;
 
+import android.util.Log;
+
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -37,6 +41,10 @@ public class DataBuffer implements Serializable {
     transient private FloatBufferRepresentation floatCopy = null; //If a float copy has been requested, we keep it around as it will probably be requested again...
     transient private FloatBufferRepresentation floatCopyBarValue = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
     transient private FloatBufferRepresentation floatCopyBarAxis = null; //If a float copy for bar charts has been requested, we keep it around as it will probably be requested again...
+    transient private List<ExperimentTimeReferenceSet> experimentTimeReferenceSets = null;
+    transient public final Object experimentTimeReferenceSetsLock = new Object();
+    ExperimentTimeReference experimentTimeReference;
+    boolean linearTime = false;
     private double lineWidth = 1.0; //Used to calculate the right geometry of bar charts
 
     private int floatCopyCapacity = 0;
@@ -47,7 +55,8 @@ public class DataBuffer implements Serializable {
     private double max = Double.NaN;
 
     //Contructor. Set key name and target size.
-    protected DataBuffer(String name, int size) {
+    protected DataBuffer(String name, int size, ExperimentTimeReference experimentTimeReference) {
+        this.experimentTimeReference = experimentTimeReference;
         this.size = size;
         this.name = name;
         if (size > 0)
@@ -139,6 +148,20 @@ public class DataBuffer implements Serializable {
                     floatCopyBarValue.size-=6;
                 }
             }
+            if (experimentTimeReferenceSets != null) {
+                synchronized (experimentTimeReferenceSetsLock) {
+                    for (int i = experimentTimeReferenceSets.size()-1; i >= 0; i--) {
+                        experimentTimeReferenceSets.get(i).index--;
+                    }
+                    if (experimentTimeReferenceSets.get(0).index < 0) {
+                        experimentTimeReferenceSets.get(0).index = 0;
+                        experimentTimeReferenceSets.get(0).count--;
+                    }
+                    if (experimentTimeReferenceSets.get(0).count <= 0) {
+                        experimentTimeReferenceSets.remove(0);
+                    }
+                }
+            }
 
         }
         buffer.add(value);
@@ -193,6 +216,21 @@ public class DataBuffer implements Serializable {
 
                 putBarAxisValue(floatCopyBarAxis.data, last, value, floatCopyBarAxis.offset + floatCopyBarAxis.size);
                 floatCopyBarAxis.size += 6;
+            }
+        }
+        if (experimentTimeReferenceSets != null) {
+            synchronized (experimentTimeReferenceSetsLock) {
+                int referenceIndex = linearTime ? experimentTimeReference.getReferenceIndexFromLinearTime(value) : experimentTimeReference.getReferenceIndexFromExperimentTime(value);
+                if (experimentTimeReferenceSets.size() > 0) {
+                    ExperimentTimeReferenceSet lastSet = experimentTimeReferenceSets.get(experimentTimeReferenceSets.size()-1);
+                    if (lastSet.referenceIndex == referenceIndex) {
+                        lastSet.count++;
+                    } else {
+                        experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastSet.index + lastSet.count, 1, experimentTimeReference.getExperimentTimeReferenceByIndex(referenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(referenceIndex), referenceIndex, experimentTimeReference.getPausedByIndex(referenceIndex)));
+                    }
+                } else {
+                    experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(0, 1, experimentTimeReference.getExperimentTimeReferenceByIndex(referenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(referenceIndex), referenceIndex, experimentTimeReference.getPausedByIndex(referenceIndex)));
+                }
             }
         }
 
@@ -273,6 +311,11 @@ public class DataBuffer implements Serializable {
             //see above
             synchronized (floatCopyBarAxis.lock) {
                 floatCopyBarAxis = null;
+            }
+        }
+        if (experimentTimeReferenceSets != null) {
+            synchronized (experimentTimeReferenceSetsLock) {
+                experimentTimeReferenceSets = null;
             }
         }
         min = Double.NaN;
@@ -386,9 +429,43 @@ public class DataBuffer implements Serializable {
         return floatCopyBarValue;
     }
 
+    public List<ExperimentTimeReferenceSet> getExperimentTimeReferenceSets(boolean isLinearTime) {
+        if (buffer.size() <= 0)
+            return new ArrayList<>();
+
+        if (isLinearTime != linearTime) {
+            linearTime = isLinearTime;
+            synchronized (experimentTimeReferenceSetsLock) {
+                experimentTimeReferenceSets = null;
+            }
+        }
+
+        if (experimentTimeReferenceSets == null) {
+            experimentTimeReferenceSets = new ArrayList<>();
+            Iterator it = getIterator();
+            int lastReferenceIndex = -1;
+            int lastchange = 0;
+            int i = 0;
+            while (it.hasNext()) {
+                double value = (double)it.next();
+                int referenceIndex = isLinearTime ? experimentTimeReference.getReferenceIndexFromLinearTime(value) : experimentTimeReference.getReferenceIndexFromExperimentTime(value);
+                if (lastReferenceIndex < 0)
+                    lastReferenceIndex = referenceIndex;
+                else if (lastReferenceIndex != referenceIndex) {
+                    experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastchange, i-lastchange, experimentTimeReference.getExperimentTimeReferenceByIndex(lastReferenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(lastReferenceIndex), lastReferenceIndex, experimentTimeReference.getPausedByIndex(lastReferenceIndex)));
+                    lastchange = i;
+                    lastReferenceIndex = referenceIndex;
+                }
+                i++;
+            }
+            experimentTimeReferenceSets.add(new ExperimentTimeReferenceSet(lastchange, i-lastchange, experimentTimeReference.getExperimentTimeReferenceByIndex(lastReferenceIndex), experimentTimeReference.getSystemTimeReferenceByIndex(lastReferenceIndex), lastReferenceIndex, experimentTimeReference.getPausedByIndex(lastReferenceIndex)));
+        }
+        return experimentTimeReferenceSets;
+    }
+
     //Get all values as a short array. The data will be scaled so that (-/+)1 matches (-/+)Short.MAX_VALUE, used for audio data
     public short[] getShortArray() {
-        short ret[] = new short[buffer.size()];
+        short[] ret = new short[buffer.size()];
         Iterator it = getIterator();
         int i = 0;
         while (it.hasNext()) {
@@ -399,7 +476,7 @@ public class DataBuffer implements Serializable {
     }
 
     public DataBuffer copy() {
-        DataBuffer db = new DataBuffer(this.name, this.size);
+        DataBuffer db = new DataBuffer(this.name, this.size, this.experimentTimeReference);
         db.append(this.getArray(), this.getFilledSize());
         db.isStatic = this.isStatic;
         return db;
@@ -468,5 +545,23 @@ class FloatBufferRepresentation {
         this.data = data;
         this.size = size;
         this.offset = offset;
+    }
+}
+
+class ExperimentTimeReferenceSet {
+    int index;
+    int count;
+    int referenceIndex;
+    double experimentTime;
+    long systemTime;
+    boolean isPaused;
+
+    ExperimentTimeReferenceSet(int index, int count, double experimentTime, long systemTime, int referenceIndex, boolean isPaused) {
+        this.index = index;
+        this.count = count;
+        this.experimentTime = experimentTime;
+        this.systemTime = systemTime;
+        this.referenceIndex = referenceIndex;
+        this.isPaused = isPaused;
     }
 }

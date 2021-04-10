@@ -1,25 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/graph_tools_system_time"
+        android:title="@string/graph_tools_system_time"
+        android:checkable="true"
+        android:orderInCategory="1" />
     <item android:id="@+id/graph_tools_reset"
         android:title="@string/graph_tools_reset"
-        android:orderInCategory="1" />
+        android:orderInCategory="2" />
     <item android:id="@+id/graph_tools_follow"
         android:title="@string/graph_tools_follow"
         android:checkable="true"
-        android:orderInCategory="2" />
+        android:orderInCategory="3" />
     <item android:id="@+id/graph_tools_linear_fit"
         android:title="@string/graph_tools_linear_fit"
         android:checkable="true"
-        android:orderInCategory="3" />
+        android:orderInCategory="4" />
     <item android:id="@+id/graph_tools_export"
         android:title="@string/graph_tools_export"
-        android:orderInCategory="4" />
+        android:orderInCategory="5" />
     <item android:id="@+id/graph_tools_log_x"
         android:title="@string/graph_tools_log_x"
         android:checkable="true"
-        android:orderInCategory="5" />
+        android:orderInCategory="6" />
     <item android:id="@+id/graph_tools_log_y"
         android:title="@string/graph_tools_log_y"
         android:checkable="true"
-        android:orderInCategory="6" />
+        android:orderInCategory="7" />
 </menu>

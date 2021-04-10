@@ -7,6 +7,7 @@
     <string name="graph_tools_pan_and_zoom">Pan and zoom</string>
     <string name="graph_tools_pick">Pick data</string>
     <string name="graph_tools_more">More tools</string>
+    <string name="graph_tools_system_time">Convert to system time</string>
     <string name="graph_tools_reset">Reset zoom</string>
     <string name="graph_tools_follow">Follow new data</string>
     <string name="graph_tools_linear_fit">Linear fit</string>
@@ -279,6 +280,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
     <string name="categoryNewExperiment">Simple custom experiments</string>
     <string name="categoryRawSensor">Raw Sensors</string>
+    <string name="categoryPhyphoxOrg">Support phyphox</string>
+    <string name="categoryPhyphoxOrgHint">There are new options to support phyphox at the bottom of the list.</string>
 
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
     <string name="start_hint">Touch the triangle to start the experiment.</string>
@@ -335,5 +338,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="networkPrivacySensorLocation">Location data (GPS data or similar).</string>
     <string name="networkPrivacyDeviceInfo">Detailed information about the model of your device and/or the version of phyphox.</string>
     <string name="networkPrivacySensorInfo">Technical details about the following sensors:</string>
+
+    <string name="timedRunBeeps">Acoustic signals</string>
+    <string name="beeperCountdown">Countdown sounds</string>
+    <string name="beeperStart">Start sound</string>
+    <string name="beeperRunning">Running sounds</string>
+    <string name="beeperStop">Stop sound</string>
 
 </resources>

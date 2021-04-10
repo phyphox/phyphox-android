@@ -55,14 +55,13 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConversion;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkDiscovery;
-import de.rwth_aachen.phyphox.NetworkConnection.NetworkMetadata;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.11";
+    public final static String phyphoxFileVersion = "1.13";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -989,6 +988,9 @@ public abstract class PhyphoxFile {
                 case "data-containers": //The data-containers block defines all buffers used in this experiment
                     (new dataContainersBlockParser(xpp, experiment, parent)).process();
                     break;
+                case "events": //The events block stores events and their timestamps
+                    (new eventsBlockParser(xpp, experiment, parent)).process();
+                    break;
                 case "views": //A Views block may contain multiple view-blocks
                     (new viewsBlockParser(xpp, experiment, parent)).process();
                     break;
@@ -1111,7 +1113,7 @@ public abstract class PhyphoxFile {
                     if (!isValidIdentifier(name))
                         throw new phyphoxFileException("\"" + name + "\" is not a valid name for a data-container.", xpp.getLineNumber());
 
-                    DataBuffer newBuffer = experiment.createBuffer(name, size);
+                    DataBuffer newBuffer = experiment.createBuffer(name, size, experiment.experimentTimeReference);
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
@@ -1130,6 +1132,38 @@ public abstract class PhyphoxFile {
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
+        }
+
+    }
+
+    //Blockparser for the events block
+    private static class eventsBlockParser extends xmlBlockParser {
+
+        eventsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+            super(xpp, experiment, parent);
+        }
+
+        @Override
+        protected void processStartTag(String tag)  throws IOException, XmlPullParserException, phyphoxFileException {
+            ExperimentTimeReference.TimeMappingEvent event;
+            switch (tag.toLowerCase()) {
+                case "start":
+                    event = ExperimentTimeReference.TimeMappingEvent.START;
+                    break;
+                case "pause":
+                    event = ExperimentTimeReference.TimeMappingEvent.PAUSE;
+                    break;
+                default: //Unknown tag
+                    throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
+            }
+            Double experimentTime = getDoubleAttribute("experimentTime", -1.0);
+            String systemTimeStr = getStringAttribute("systemTime");
+            if (systemTimeStr == null)
+                throw new phyphoxFileException("An event requires both, an experiment time and a system time.", xpp.getLineNumber());
+            Long systemTime = Long.parseLong(systemTimeStr);
+            if (experimentTime < 0 || systemTime < 0)
+                throw new phyphoxFileException("An event requires both, an experiment time and a system time.", xpp.getLineNumber());
+            experiment.experimentTimeReference.timeMappings.add(experiment.experimentTimeReference.new TimeMapping(event, experimentTime, 0, systemTime));
         }
 
     }
@@ -1315,6 +1349,10 @@ public abstract class PhyphoxFile {
                             }
                         }
                     }
+                    boolean timeOnX = getBooleanAttribute("timeOnX", false);
+                    boolean timeOnY = getBooleanAttribute("timeOnY", false);
+                    boolean systemTime = getBooleanAttribute("systemTime", false);
+                    boolean linearTime = getBooleanAttribute("linearTime", false);
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
@@ -1390,6 +1428,7 @@ public abstract class PhyphoxFile {
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
+                    ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime);
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     if (!globalColor) {
@@ -1574,7 +1613,7 @@ public abstract class PhyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.sensorInputTimeReference));
+                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (SensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
@@ -1612,7 +1651,7 @@ public abstract class PhyphoxFile {
                     Vector<DataOutput> outputs = new Vector<>();
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
-                    experiment.gpsIn = new GpsInput(outputs, experiment.dataLock);
+                    experiment.gpsIn = new GpsInput(outputs, experiment.dataLock, experiment.experimentTimeReference);
                     experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
 
                     if (!GpsInput.isAvailable(parent)) {
@@ -1710,7 +1749,7 @@ public abstract class PhyphoxFile {
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
                             (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
-                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics);
+                                BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics, experiment.experimentTimeReference);
                                 if (mtu > 0)
                                     b.requestMTU = mtu;
                                 experiment.bluetoothInputs.add(b);
@@ -1861,10 +1900,12 @@ public abstract class PhyphoxFile {
                     } else if (type.equals("meta")) {
                         String metaName = getText();
                         try {
-                            sendable = new NetworkConnection.NetworkSendableData(new NetworkMetadata(metaName, parent));
+                            sendable = new NetworkConnection.NetworkSendableData(new Metadata(metaName, parent));
                         } catch (IllegalArgumentException e) {
                             throw new phyphoxFileException("Unknown meta data \"" + metaName + "\".", xpp.getLineNumber());
                         }
+                    } else if (type.equals("time")) {
+                        sendable = new NetworkConnection.NetworkSendableData(experiment.experimentTimeReference);
                     } else {
                         throw new phyphoxFileException("Unknown type \"" + type + "\".", xpp.getLineNumber());
                     }
@@ -1946,16 +1987,19 @@ public abstract class PhyphoxFile {
             switch (tag.toLowerCase()) {
                 case "timer": { //Start-time of analysis
 
+                    boolean linearTime = getBooleanAttribute("linearTime", false);
+
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "offset1970"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs, linearTime));
                 } break;
                 case "formula": {
                     String formula = getStringAttribute("formula");

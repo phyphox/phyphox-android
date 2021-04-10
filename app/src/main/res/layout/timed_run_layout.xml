@@ -8,7 +8,6 @@
     style="@style/phyphox">
 
     <CheckBox
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/timedRunEnabled"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -18,14 +17,14 @@
 
     <TableLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:stretchColumns="1"
-        android:shrinkColumns="1">
+        android:layout_height="wrap_content"
+        android:stretchColumns="0"
+        android:shrinkColumns="1"
+        android:id="@+id/timedRunTimeOptions">
 
         <TableRow
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_column="0">
+            android:layout_height="wrap_content">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -42,13 +41,12 @@
                 android:id="@id/timedRunStartDelay"
                 android:editable="false"
                 android:enabled="true"
-                android:text="3" />
+                android:text="" />
         </TableRow>
 
         <TableRow
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_column="0" >
+            android:layout_height="wrap_content">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -65,8 +63,128 @@
                 android:id="@id/timedRunStopDelay"
                 android:editable="false"
                 android:enabled="true"
-                android:text="10" />
+                android:text="" />
         </TableRow>
+
+    </TableLayout>
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="0"
+        android:shrinkColumns="1"
+        android:layout_marginTop="32dp"
+        android:id="@+id/timedRunBeepOptions">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/timedRunBeeps"
+                android:labelFor="@+id/timedRunBeepAll" />
+
+            <FrameLayout
+                android:layout_gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <CheckBox
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@id/timedRunBeepAll" />
+
+                <TextView
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/highlight"
+                    android:text="•"
+                    android:id="@+id/timedRunBeepUndef" />
+
+            </FrameLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="32dp"
+                android:layout_marginStart="32dp"
+                android:text="@string/beeperCountdown"
+                android:labelFor="@+id/timedRunBeepCountdown" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@id/timedRunBeepCountdown"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="32dp"
+                android:layout_marginStart="32dp"
+                android:text="@string/beeperStart"
+                android:labelFor="@+id/timedRunBeepStart" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@id/timedRunBeepStart"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="32dp"
+                android:layout_marginStart="32dp"
+                android:text="@string/beeperRunning"
+                android:labelFor="@id/timedRunBeepRunning" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/timedRunBeepRunning"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="32dp"
+                android:layout_marginStart="32dp"
+                android:text="@string/beeperStop"
+                android:labelFor="@+id/timedRunBeepStop" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@id/timedRunBeepStop"/>
+        </TableRow>
+
     </TableLayout>
 
 </LinearLayout>
