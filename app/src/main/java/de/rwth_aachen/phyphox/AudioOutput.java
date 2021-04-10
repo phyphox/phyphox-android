@@ -146,6 +146,9 @@ public class AudioOutput {
     private int index = 0;
     private boolean playing = false;
     private boolean active = false;
+    private boolean beepOnly = false;
+
+    Beeper beeper = null;
 
     private AudioTrack audioTrack;
 
@@ -167,13 +170,9 @@ public class AudioOutput {
             throw new Exception("Could not initialize audio. (" + audioTrack.getState() + ")");
         }
 
-        for (AudioOutputPlugin plugin : plugins) {
-            if (plugin instanceof AudioOutputPluginTone) {
-                for (int i = 0; i < sineLookupSize; i++)
-                    sineLookup[i] = (float)Math.sin(2.0*Math.PI*(double)i / (double)sineLookupSize);
-                break;
-            }
-        }
+
+        for (int i = 0; i < sineLookupSize; i++)
+            sineLookup[i] = (float)Math.sin(2.0*Math.PI*(double)i / (double)sineLookupSize);
     }
 
     private Runnable fillBuffer = new Runnable() {
@@ -187,14 +186,23 @@ public class AudioOutput {
                 Arrays.fill(floatData, 0);
                 amplitude = 0.0f;
 
-                for (AudioOutputPlugin plugin : plugins) {
-                    plugin.generate(floatData, bufferBaseSize, rate, index, loop);
-                    amplitude += plugin.getAmplitude();
+                if (beeper != null) {
+                    beeper.generate(floatData, bufferBaseSize, rate, index);
+                    amplitude += beeper.a;
+                    if (beeper.done)
+                        beeper = null;
+                }
+
+                if (!beepOnly) {
+                    for (AudioOutputPlugin plugin : plugins) {
+                        plugin.generate(floatData, bufferBaseSize, rate, index, loop);
+                        amplitude += plugin.getAmplitude();
+                    }
                 }
 
                 index += bufferBaseSize;
 
-                if (normalize)
+                if (normalize && amplitude > 0)
                     amplitude = 1.0f/amplitude;
                 else
                     amplitude = 1.0f;
@@ -213,7 +221,8 @@ public class AudioOutput {
         }
     };
 
-    public void start() {
+    public void start(boolean beepOnly) {
+        this.beepOnly = beepOnly;
         active = true;
     }
 
@@ -233,7 +242,64 @@ public class AudioOutput {
         new Thread(fillBuffer).start();
     }
 
+    private class Beeper {
+        double a = 0.5;
+        double f;
+        double d;
+        double phase = 0;
+        int start;
+        boolean done = false;
+
+        Beeper(double f, double d) {
+            this.f = f;
+            this.d = d;
+            start = -1;
+        }
+
+        public void generate(float[] buffer, int samples, int rate, int index) {
+            if (done)
+                return;
+
+            if (start < 0)
+                start = index;
+
+            int end = samples;
+            int durationEnd = start + (int)(d * rate) - index;
+            if (durationEnd <= 0) {
+                done = true;
+                return;
+            } else if (durationEnd < samples) {
+                done = true;
+                end = durationEnd;
+            }
+
+            double phaseStep = (double)f / (double)rate;
+
+            for (int i = 0; i < end; i++) {
+                buffer[i] += a * sineLookup[(int)(phase * sineLookupSize) % sineLookupSize];
+                phase += phaseStep;
+            }
+
+        }
+    }
+
+    public void beep(double f, double d) {
+        beeper = new Beeper(f, d);
+    }
+
     public void stop() {
+        if (beeper != null) {
+            int maxRemainingSamples;
+            if (beeper.start >= 0)
+                maxRemainingSamples = beeper.start + (int)beeper.d * rate - index + 4*bufferBaseSize;
+            else
+                maxRemainingSamples = (int)beeper.d * rate;
+            try {
+                Thread.sleep(1000*maxRemainingSamples / rate);
+            } catch (Exception e) {
+                //Nothing to do. It's not the end of the world if we cannot wait for the final beep to finish.
+            }
+        }
         active = false;
         playing = false;
         audioTrack.stop();

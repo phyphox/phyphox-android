@@ -339,4 +339,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="networkPrivacyDeviceInfo">Detailed information about the model of your device and/or the version of phyphox.</string>
     <string name="networkPrivacySensorInfo">Technical details about the following sensors:</string>
 
+    <string name="timedRunBeeps">Acoustic signals</string>
+    <string name="beeperCountdown">Countdown sounds</string>
+    <string name="beeperStart">Start sound</string>
+    <string name="beeperRunning">Running sounds</string>
+    <string name="beeperStop">Stop sound</string>
+
 </resources>

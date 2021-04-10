@@ -375,7 +375,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         //Playback
         if (audioOutput != null) {
-            audioOutput.start();
+            audioOutput.start(false);
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
