@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Einstellungen</string>
@@ -10,7 +10,6 @@
     <string name="close">Schließen</string>
     <string name="confirmDelete">Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?</string>
     <string name="confirmDeleteTitle">Löschen bestätigen?</string>
-
     <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsNames">Entwicklung und Konzept:
@@ -28,7 +27,6 @@
     <string name="donotshowagain">Nicht erneut anzeigen</string>
     <string name="enableTimedRun">Zeitautomatik nutzen</string>
     <string name="experimentinfo_hint">Schaue unter Experiment Info, um zu erfahren wie dieses Experiment funktioniert.</string>
-
     <string name="help">Hilfe und Infos</string>
     <string name="experimentsPhyphoxOrg">Experiment-Ideen und Anleitungen</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experimente</string>
@@ -36,10 +34,8 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq-de</string>
     <string name="remotePhyphoxOrg">Hilfe zum Fernzugriff</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/fernsteuerung</string>
-
     <string name="generalErrorDialog">Es ist ein Fehler aufgetreten.</string>
     <string name="loadingBluetoothConnectionText">Mit Bluetooth Gerät verbinden…</string>
-
     <string name="export">Daten exportieren</string>
     <string name="export_empty">Diese Experiment-Konfiguration definiert keine Daten für den Export. Wenn dies ein Fehler ist, wende dich bitte an die Quelle des QR-Codes oder der Konfigurationsdatei.</string>
     <string name="export_pick_share">Wählen Sie eine App für den Export</string>
@@ -116,16 +112,13 @@
     <string name="categoryRawSensor">Sensoren</string>
     <string name="categoryPhyphoxOrg">Unterstütze phyphox</string>
     <string name="categoryPhyphoxOrgHint">Am Ende der Liste gibt es neue Möglichkeiten, phyphox zu unterstützen.</string>
-
     <string name="translationInfo">Sprachen</string>
     <string name="translationText">Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen benutzen. Um deine bevorzugten Sprachen zu ändern, gehe unten in die Android \"Einstellungen\". Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".</string>
     <string name="translationToSettings">Einstellungen</string>
     <string name="translationToWebsite">Zur Webseite</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#de</string>
-
     <string name="bt_android_version">Bluetooth Low Energy wird von bei Android Versionen kleiner als 4.3 nicht unterstützt.</string>
-
-    <string name="bt_exception_uuid">Die Characteristic mit der UUID "</string>
+    <string name="bt_exception_uuid">Die Characteristic mit der UUID</string>
     <string name="bt_exception_uuid2">wurde nicht gefunden.</string>
     <string name="bt_exception_disabled">Bluetooth ist deaktiviert. Bitte aktiviere Bluetooth und versuche es noch einmal.</string>
     <string name="bt_exception_connection">Es konnte keine Bluetooth-Verbindung hergestellt werden.</string>
@@ -143,7 +136,6 @@
     <string name="bt_exception_no_connection">Es besteht keine Verbindung zu dem Bluetooth Gerät. Das Experiment kann nicht gestartet werden.</string>
     <string name="bt_exception_disconnected">Die Verbindung zu dem Bluetooth Gerät wurde getrennt.</string>
     <string name="bt_default_error_message">Es ist ein Fehler mit einem Bluetooth Gerät aufgetreten.</string>
-
     <string name="bt_error_writing">Fehler beim Schreiben der Characteristic mit der UUID</string>
     <string name="bt_error_reading">Fehler beim Lesen der Characteristic mit der UUID</string>
     <string name="bt_error_discovering">Fehler beim Finden der Services des Bluetooth Geräts.</string>
@@ -159,34 +151,27 @@
     <string name="graph_tools_export">Diesen Datensatz exportieren</string>
     <string name="graph_tools_log_x">Logarithmische x-Achse</string>
     <string name="graph_tools_log_y">Logarithmische y-Achse</string>
-
     <string name="graph_point_label">Punkt</string>
     <string name="graph_slope_label">Steigung</string>
     <string name="graph_difference_label">Differenz</string>
     <string name="graph_fit_label">Ausgleichsgerade: y = a x + b</string>
-
     <string name="applyZoomTitle">Zoom anwenden</string>
     <string name="applyZoomExplanation">Beim Verlassen des interaktiven Modus kannst du auswählen, ob du den Zoom beibehalten möchtest.</string>
     <string name="applyZoomAdvanced">Fortgeschrittene Optionen</string>
     <string name="applyZoomApply">Anwenden auf…</string>
-
     <string name="applyZoomReset">Auf Standard zurücksetzen</string>
     <string name="applyZoomKeep">Auswahl behalten</string>
     <string name="applyZoomFollow">Auswahl behalten und neuen Daten folgen</string>
-
     <string name="applyZoomThis">Nur diesen Graph</string>
     <string name="applyZoomSameVariable">Andere Graphen: Gleiche Variable</string>
     <string name="applyZoomSameUnit">Andere Graphen: Gleiche Einheit</string>
     <string name="applyZoomSameAxis">Andere Graphen: Gleiche Achse</string>
-
     <string name="newExperimentSimple">Neues einfaches Experiment</string>
     <string name="newExperimentBluetooth">Neues Experiment für Bluetooth-Gerät</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth Scan Fehler</string>
     <string name="newExperimentBluetoothLoadFromDevice">Vom Gerät laden</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Dieses Gerät bietet ein eigenes phyphox-Experiment. Wähle \"Von Gerät laden\" um es zu öffnen.</string>
-
     <string name="newExperimentQR">Neues Experiment von einem QR-Code</string>
-
     <string name="newExperimentQRscan">Scanne einen QR-Code, der ein phyphox-Experiment enthält.</string>
     <string name="newExperimentQRErrorTitle">QR-Code Fehler.</string>
     <string name="newExperimentQRNoExperiment">Konnte keinen QR-Code finden, der ein phyphox-Experiment enthält.</string>
@@ -194,55 +179,41 @@
     <string name="newExperimentQRCodesMissing1">Der QR-Code, den du gerade gescannt hast, gehört zu einem Satz von</string>
     <string name="newExperimentQRCodesMissing2">Codes. Bitte drücke auf \"weiter\" um die verbleibenden Codes zu scannen. Anzahl der noch fehlenden Codes:</string>
     <string name="newExperimentQRBadCRC">Ungültige Prüfsumme. Dies bedeutet, dass entweder der QR-Code fehlerhaft ist oder das Scannen nicht geklappt hat.</string>
-
     <string name="newExperimentBTReadErrorTitle">Bluetooth Experiment Fehler.</string>
     <string name="newExperimentBTReadErrorCorrupted">Die übermittelten Experiment-Daten sind fehlerhaft.</string>
-
     <string name="deviceInfo">Geräte-Info</string>
     <string name="copyToClipboard">Kopieren</string>
     <string name="deviceInfoCopied">Die Geräte-Info wurde in die Zwischenablage kopiert.</string>
-
     <string name="gpl">Phyphox® ist Open Source Software, welche unter der GNU General Public Licence steht. Weitere Informationen sowie den Quellcode findest du unter http://phyphox.org. Bei den Begriffen \"phyphox\" und \"RWTH Aachen\" handelt es sich hingegen um geschützte Marken.</string>
     <string name="sensorVendor">Herstellerspezifisch</string>
-
     <string name="vendorSensorTitle">Herstellerspezifischer Sensor</string>
     <string name="vendorSensorWarning1">Für den Sensor</string>
     <string name="vendorSensorWarning2">wird nicht der richtige Sensortyp angegeben. Es scheint sich um einen herstellerspezifischen Sensor zu handeln, dessen Funktion wir versuchen vom Namen herzuleiten. Dies funktioniert eventuell nicht wie erwartet.</string>
-
     <string name="doContinue">Weiter</string>
     <string name="rename">Umbenennen</string>
     <string name="remoteServerNoNetwork">Du musst erst eine WLAN-Verbindung zum zweiten Gerät herstellen. Bitte aktiviere WLAN oder erstelle einen mobilen Hotspot.</string>
     <string name="remoteColorMapWarning">Der Farb-Plot im Fernzugriff ist nur eine Näherung. Im Gegensatz zum Plot in der App kann dieser im Moment nicht-äquidistante Daten oder logarithmische Achsen nicht korrekt darstellen. Daten bei variierenden Intervallen erscheinen daher an einer falschen Position.</string>
-
     <string name="force_gnss">Nur Satelliten-Position</string>
-
     <string name="fontSize">Schriftgröße</string>
-
     <string name="open_zip_title">Öffne eine Experiment-Sammlung</string>
     <string name="open_zip_dialog_instructions">Diese Quelle enthält mehrere Experimente. Du kannst entweder eines auswählen, öffnen und wahlweise der Experiment-Sammlung hinzufügen oder du kannst den Button unten nutzen um alle Experimente gleichzeitig in die Sammlung zu übertragen.</string>
     <string name="open_save_all">Alle speichern</string>
-
     <string name="open_bluetooth_assets_title">Experimente für Bluetooth-Geräte</string>
     <string name="open_bluetooth_assets">Die folgenden Experimente für dein Gerät werden von phyphox unterstützt. Du kannst sie entweder einfach öffnen und benutzen oder alle deiner Sammlung hinzufügen um sie bequem aus dem Hauptmenü aufrufen zu können.</string>
-
     <string name="start_hint">Berühre das Dreieck um das Experiment zu starten.</string>
-
     <string name="bluetooth">Bluetooth Low Energy</string>
     <string name="bt_pick_device">Bitte wähle ein Gerät.</string>
     <string name="bt_scanning_generic">Suche nach Bluetooth-Geräten…</string>
     <string name="bt_scanning_specific1">Suche nach Bluetooth-Geräten mit</string>
     <string name="bt_scanning_specific2">im Namen…</string>
     <string name="bt_device_not_supported">Keine Experimente verfügbar.</string>
-
     <string name="bt_location_explanation">Android benötigt Standort-Rechte für Bluetooth-Scans, da die Ergebnisse genutzt werden könnten um einen Standort abzuleiten. Wir werden diese Rechte nun anfragen. Du musst die Rechte bestätigen um nach Bluetooth-Geräten suchen zu können.</string>
     <string name="bt_location_service_explanation">Zusätzlich zu den Standort-Rechten muss die Standort-Funktion aktiviert sein, damit Android uns einen Bluetooth-Scan erlaubt, da aus diesem der Standort abgeleitet werden könnte. Wir leiten dich daher zu den System-Einstellungen weiter.</string>
-
     <string name="bt_exception_config">Der Wert der Charakteristik</string>
     <string name="bt_exception_config2">konnte nicht gesetzt werden.</string>
     <string name="bt_more_info_link_text">Wenn dein Gerät nicht unterstützt wird, wähle \"Weitere Infos\" um mehr über die flexible Bluetooth Low Energy Unterstützung in phyphox auf unserer Webseite zu erfahren.</string>
     <string name="bt_more_info_link_button">Mehr Infos</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble-de</string>
-
     <string name="networkPrivacyWarning">Datenschutz-Warnung</string>
     <string name="networkVisitPrivacyURL">Datenschutzerklärung</string>
     <string name="networkPrivacyInfo">Dieses Experiment nutzt eine Netzwerkverbindung, was bedeutet, dass Daten an einen Netzwerk-Dienst übermittelt werden können. Um mehr Details zu erfahren, kannst du unten auf Datenschutzerklärung tippen, was dich auf eine Webseite führen wird, die eine Datenschutzerklärung beinhaltet, welche vom Autor dieser Experiment-Konfiguration bereitgestellt wird. Wenn der Netzwerk-Dienst kein lokales Gerät ist, sollte dir bewusst sein, dass phyphox möglicherweise folgende Daten übertragen wird:</string>
@@ -252,8 +223,12 @@
     <string name="networkPrivacySensorLocation">Standortdaten (GPS-Daten oder ähnliches).</string>
     <string name="networkPrivacyDeviceInfo">Genaue Informationen zu dem Modell deines Geräts und/oder zur Version von phyphox.</string>
     <string name="networkPrivacySensorInfo">Technische Details zu den folgenden Sensoren:</string>
-
-<string name="leave_experiment">Experiment verlassen</string>
+    <string name="leave_experiment">Experiment verlassen</string>
     <string name="leave_experiment_question">Experiment verlassen und aufgezeichnete Daten verwerfen?</string>
     <string name="leave">Verlassen</string>
-    </resources>
+    <string name="timedRunBeeps">Akustische Signale</string>
+    <string name="beeperCountdown">Countdown-Töne</string>
+    <string name="beeperStart">Start-Ton</string>
+    <string name="beeperRunning">Töne während Messung</string>
+    <string name="beeperStop">Stop-Ton</string>
+</resources>
