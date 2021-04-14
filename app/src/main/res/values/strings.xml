@@ -1,9 +1,8 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="graph_tools_pan_and_zoom">Pan and zoom</string>
     <string name="graph_tools_pick">Pick data</string>
     <string name="graph_tools_more">More tools</string>
@@ -14,42 +13,33 @@
     <string name="graph_tools_export">Export this dataset</string>
     <string name="graph_tools_log_x">Logarithmic x axis</string>
     <string name="graph_tools_log_y">Logarithmic y axis</string>
-
     <string name="graph_point_label">Point</string>
     <string name="graph_slope_label">Slope</string>
     <string name="graph_difference_label">Difference</string>
     <string name="graph_fit_label">Linear fit: y = a x + b</string>
-
     <string name="applyZoomTitle">Apply zoom</string>
     <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.</string>
     <string name="applyZoomAdvanced">Advanced options</string>
     <string name="applyZoomApply">Apply to…</string>
-
     <string name="applyZoomReset">Reset to default</string>
     <string name="applyZoomKeep">Keep as selected</string>
     <string name="applyZoomFollow">Keep and follow new data</string>
-
     <string name="applyZoomThis">Only this graph</string>
     <string name="applyZoomSameVariable">Other graphs: Same variable</string>
     <string name="applyZoomSameUnit">Other graphs: Same unit</string>
     <string name="applyZoomSameAxis">Other graphs: Same axis</string>
-
     <string name="newExperiment">Add experiments</string>
-
     <string name="newExperimentSimple">Add simple experiment</string>
     <string name="newExperimentPhyphoxInfo">Visit phyphox.org to create more advanced experiments including data analysis and share them with colleagues, students and friends.</string>
     <string name="newExperimentInputTitle">Title</string>
     <string name="newExperimentInputBufferSize">Buffer size (number of values to be stored)</string>
     <string name="newExperimentInputRate">Sensor rate (in Hz, 0 = as fast as possible)</string>
     <string name="newExperimentInputSensors">Active sensors</string>
-
     <string name="newExperimentBluetooth">Add experiment for Bluetooth device</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth scan error</string>
     <string name="newExperimentBluetoothLoadFromDevice">Load from device</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">This device provides its own phyphox experiment. Select "load from device" to open it.</string>
-
     <string name="newExperimentQR">Add experiment from QR code</string>
-
     <string name="newExperimentQRscan">Scan a QR code that contains a phyphox experiment.</string>
     <string name="newExperimentQRErrorTitle">QR code error.</string>
     <string name="newExperimentQRNoExperiment">Could not find a QR code that contains a phyphox experiment.</string>
@@ -57,12 +47,9 @@
     <string name="newExperimentQRCodesMissing1">The QR code you just scanned is part of a set of</string>
     <string name="newExperimentQRCodesMissing2">codes. Please press continue to scan the remaining codes. Codes still missing: </string>
     <string name="newExperimentQRBadCRC">Invalid checksum. This means that either the QR code is bad or something went wrong while scanning it.</string>
-
     <string name="newExperimentBTReadErrorTitle">Bluetooth experiment error.</string>
     <string name="newExperimentBTReadErrorCorrupted">The transmitted experiment data is corrupted.</string>
-
     <string name="generalErrorDialog">An error has occurred.</string>
-
     <string name="help">Help and info</string>
     <string name="experimentsPhyphoxOrg">Experiment ideas and instructions</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -75,15 +62,12 @@
     <string name="translationToSettings">Settings</string>
     <string name="translationToWebsite">Visit website</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
-
     <string name="deviceInfo">Device info</string>
     <string name="copyToClipboard">Copy to clipboard</string>
     <string name="deviceInfoCopied">The device info has been copied to your clipboard.</string>
-
     <string name="warning">Warning</string>
     <string name="donotshowagain">Do not show again</string>
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
-
     <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox® has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
@@ -162,7 +146,6 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<br />
 ]]>
     </string>
-
     <string name="sensorLinearAcceleration">Linear Acceleration</string>
     <string name="sensorLight">Light</string>
     <string name="sensorGyroscope">Gyroscope</string>
@@ -174,19 +157,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="sensorProximity">Proximity</string>
     <string name="sensorAttitude">Attitude</string>
     <string name="sensorVendor">Vendor specific</string>
-
     <string name="vendorSensorTitle">Vendor-specific sensor</string>
     <string name="vendorSensorWarning1">The sensor</string>
     <string name="vendorSensorWarning2">does not report the correct sensor type. It appears to be vendor-specific and we could only guess its type from its name. Therefore, it might not work as expected.</string>
-
     <string name="location">Location</string>
-
     <string name="sensorNotAvailableWarningTitle">Sensor not available.</string>
     <string name="sensorNotAvailableWarningText1">The sensor</string>
     <string name="sensorNotAvailableWarningText2">is not available. Usually this means, that your device simply does not have this type of sensor.</string>
     <string name="sensorNotAvailableWarningMoreInfo">More info</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="ok">OK</string>
     <string name="tryagain">Try again</string>
     <string name="doContinue">Continue</string>
@@ -194,12 +173,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="next">Next</string>
     <string name="cancel">Cancel</string>
     <string name="unknown">unknown</string>
-
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
     <string name="confirmDelete">Do you want to delete this experiment from your collection?</string>
     <string name="confirmDeleteTitle">Confirm delete?</string>
-
     <string name="stop">Stop</string>
     <string name="start">Start</string>
     <string name="clear_data">Clear data</string>
@@ -210,25 +187,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="leave">Leave</string>
     <string name="timed_stop">Stop timed run</string>
     <string name="timed_start">Start timed run</string>
-
     <string name="loadingTitle">Loading</string>
     <string name="loadingText">Loading experiment…</string>
     <string name="loadingBluetoothConnectionText">Connecting to Bluetooth device…</string>
-
     <string name="timedRunDialogTitle">Timed Run</string>
     <string name="timedRunStartDelay">Start delay (s)</string>
     <string name="timedRunStopDelay">Experiment duration (s)</string>
     <string name="enableTimedRun">Do a timed run</string>
-
     <string name="export">Export Data</string>
     <string name="export_empty">This experiment configuration does not define any data to be exported. If this is an error, please contact the source of the QR code or configuration file.</string>
     <string name="export_subject">Data from phyphox</string>
     <string name="export_pick_share">Pick an export method</string>
-
     <string name="share">Share screenshot</string>
     <string name="share_subject">Screenshot from phyphox</string>
     <string name="share_pick_share">Pick a share method</string>
-
     <string name="remoteServer">Allow remote access</string>
     <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.</string>
     <string name="remoteServerWarningTitle">Security warning!</string>
@@ -236,19 +208,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="remoteServerActive">Remote access enabled. Access this experiment from the following URL:
 \n%1$s</string>
     <string name="hotspotSettings">Hotspot Settings</string>
-
     <string name="remoteColorMapWarning">The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.</string>
-
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
     <string name="force_gnss">Satellite location only</string>
-
     <string name="switchToPhoneLayout">View: Narrow</string>
     <string name="switchColumns1">View: 1 column</string>
     <string name="switchColumns2">View: 2 columns</string>
     <string name="switchColumns3">View: 3 columns</string>
     <string name="toggleBrightMode">Bright mode</string>
     <string name="fontSize">Font size</string>
-
     <string name="show_description">Experiment info</string>
     <string name="save_locally">Add experiment to collection</string>
     <string name="save_locally_done">Experiment successfully added to collection.</string>
@@ -263,41 +231,30 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="save_state_subject">Experiment state for phyphox</string>
     <string name="save_state_default_title">Measurement</string>
     <string name="save_state_success">State has been saved to your collection.</string>
-
     <string name="open_zip_title">Opening a set of experiments</string>
     <string name="open_zip_dialog_instructions">This resource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.</string>
     <string name="open_save_all">Save all</string>
-
     <string name="open_bluetooth_assets_title">Experiments for Bluetooth device</string>
     <string name="open_bluetooth_assets">The following experiments for your device are available from phyphox. You can either just open and use them or add them all to your collection to easily access them from the main menu.</string>
-
     <string name="timedRun">Timed run</string>
-
     <string name="pick_exportSets">Pick the data sets to export.</string>
     <string name="pick_exportFormat">Choose the data format.</string>
-
     <string name="noDrawableData">No drawable data.</string>
-
     <string name="categoryNewExperiment">Simple custom experiments</string>
     <string name="categoryRawSensor">Raw Sensors</string>
-    <string name="categoryPhyphoxOrg">Support phyphox</string>
+    <string name="categoryPhyphoxOrg">Contribute to phyphox</string>
     <string name="categoryPhyphoxOrgHint">There are new options to support phyphox at the bottom of the list.</string>
-
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
     <string name="start_hint">Touch the triangle to start the experiment.</string>
-
     <string name="bluetooth">Bluetooth Low Energy</string>
     <string name="bt_android_version">Bluetooth Low Energy is not supported on Android Versions lower than 4.3.</string>
-
     <string name="bt_pick_device">Please pick a device.</string>
     <string name="bt_scanning_generic">Scanning for Bluetooth devices…</string>
     <string name="bt_scanning_specific1">Scanning for Bluetooth devices with</string>
     <string name="bt_scanning_specific2">in their name…</string>
     <string name="bt_device_not_supported">No experiment available.</string>
-
     <string name="bt_location_explanation">Android requires a location permission for Bluetooth scans as the result could be used to derive location information. We will now request these permissions. You need to grant them in order to do a Bluetooth scan.</string>
     <string name="bt_location_service_explanation">In addition to the permission to get location information, Android requires location services to be enabled for Bluetooth scans as the result could be used to derive location information. We will redirect you to your system settings.</string>
-
     <string name="bt_exception_uuid">Characteristic with UUID</string>
     <string name="bt_exception_uuid2">not found.</string>
     <string name="bt_exception_disabled">Bluetooth is disabled. Please enable bluetooth and try again.</string>
@@ -318,17 +275,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="bt_exception_no_connection">The Bluetooth device is not connected. Experiment can not be started.</string>
     <string name="bt_exception_disconnected">The Bluetooth device has been disconnected.</string>
     <string name="bt_default_error_message">There is an error with the Bluetooth device.</string>
-
     <string name="bt_error_writing">Error while writing characteristic with UUID</string>
     <string name="bt_error_reading">Error while reading characteristic with UUID</string>
     <string name="bt_error_discovering">Error while discovering the services of the bluetooth device.</string>
     <string name="bt_fail_reading">The reading operation was not successful.</string>
     <string name="bt_fail_writing">The writing operation was not successful.</string>
-
     <string name="bt_more_info_link_text">If your device is not supported, pick \"more info\" to learn more about the flexible Bluetooth Low Energy support in phyphox on our website.</string>
     <string name="bt_more_info_link_button">More info</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
     <string name="networkPrivacyWarning">Privacy warning</string>
     <string name="networkVisitPrivacyURL">Privacy policy</string>
     <string name="networkPrivacyInfo">This experiment uses a network connection, which means that experiment data can be transmitted to a network service. You can find more details by clicking the privacy policy button below, which will take you to a website with a privacy policy provided by the creator of this experiment. If the network service is not a local device, you should be aware that phyphox may transmit the following information if you start this experiment:</string>
@@ -338,11 +292,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="networkPrivacySensorLocation">Location data (GPS data or similar).</string>
     <string name="networkPrivacyDeviceInfo">Detailed information about the model of your device and/or the version of phyphox.</string>
     <string name="networkPrivacySensorInfo">Technical details about the following sensors:</string>
-
     <string name="timedRunBeeps">Acoustic signals</string>
     <string name="beeperCountdown">Countdown sounds</string>
     <string name="beeperStart">Start sound</string>
     <string name="beeperRunning">Running sounds</string>
     <string name="beeperStop">Stop sound</string>
-
 </resources>
