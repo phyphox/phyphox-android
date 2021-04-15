@@ -1597,27 +1597,40 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (timedRun) {
 
             millisUntilFinished = Math.round(timedRunStopDelay * 1000);
-            cdTimer = new CountDownTimer(millisUntilFinished, 100) {
+            cdTimer = new CountDownTimer(millisUntilFinished, 20) {
 
                 int nextBeep = -1;
+                boolean relative = false;
 
                 public void onTick(long muf) {
                     //On each tick update the menu to show the remaining time
-                    millisUntilFinished = muf;
-                    invalidateOptionsMenu();
-                    if (timedRunBeepRunning) {
+                    if (timedRunBeepRunning || timedRunBeepStop) {
                         if (nextBeep < 0)
                             nextBeep = (int)(Math.floor(muf/1000. - 0.6));
-                        if (muf/1000. < nextBeep) {
-                            audioOutput.beep(1000, 0.1);
+                        if (muf/1000. < nextBeep + 0.4) {
+                            if (nextBeep == 0 && timedRunBeepStop) {
+                                if (relative)
+                                    audioOutput.beepRelative(800, 0.5, 1.0);
+                                else {
+                                    audioOutput.beep(800, 0.5, muf / 1000. - nextBeep);
+                                    relative = true;
+                                }
+                            } else if (timedRunBeepRunning) {
+                                if (relative)
+                                    audioOutput.beepRelative(1000, 0.1, 1.0);
+                                else {
+                                    audioOutput.beep(1000, 0.1, muf / 1000. - nextBeep);
+                                    relative = true;
+                                }
+                            }
                             nextBeep--;
                         }
                     }
+                    millisUntilFinished = muf;
+                    invalidateOptionsMenu();
                 }
 
                 public void onFinish() {
-                    if (timedRunBeepStop)
-                        audioOutput.beep(800, 0.5);
                     stopMeasurement();
                 }
             }.start();
@@ -1683,24 +1696,37 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         millisUntilFinished = Math.round(timedRunStartDelay*1000);
         cdTimer = new CountDownTimer(millisUntilFinished, 20) {
             int nextBeep = -1;
+            boolean relative = false;
 
             public void onTick(long muf) {
                 //On each tick update the menu to show the remaining time
-                millisUntilFinished = muf;
-                invalidateOptionsMenu();
-                if (timedRunBeepCountdown) {
+                if (timedRunBeepCountdown || timedRunBeepStart) {
                     if (nextBeep < 0)
                         nextBeep = (int)(Math.floor(muf/1000. - 0.5));
-                    if (muf/1000. < nextBeep) {
-                        audioOutput.beep(800, 0.1);
+                    if (muf/1000. < nextBeep + 0.4) {
+                        if (nextBeep == 0 && timedRunBeepStart) {
+                            if (relative)
+                                audioOutput.beepRelative(1000, 0.5, 1.0);
+                            else {
+                                audioOutput.beep(1000, 0.5, muf / 1000. - nextBeep);
+                                relative = true;
+                            }
+                        } else if (timedRunBeepCountdown) {
+                            if (relative)
+                                audioOutput.beepRelative(800, 0.1, 1.0);
+                            else {
+                                audioOutput.beep(800, 0.1, muf / 1000. - nextBeep);
+                                relative = true;
+                            }
+                        }
                         nextBeep--;
                     }
                 }
+                millisUntilFinished = muf;
+                invalidateOptionsMenu();
             }
 
             public void onFinish() {
-                if (timedRunBeepStart)
-                    audioOutput.beep(1000, 0.5);
                 startMeasurement();
             }
         }.start();

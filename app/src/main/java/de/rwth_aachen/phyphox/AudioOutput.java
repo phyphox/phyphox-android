@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -143,6 +144,7 @@ public class AudioOutput {
     private ArrayList<AudioOutputPlugin> plugins = new ArrayList<>();
 
     private final int bufferBaseSize = 2048; //This is actually a fourth of the total buffer, similar to the four buffers used on iOS
+    private int bufferSize = 0; //Total buffer size, can be different if minBufferSize is larger than 4x2048
     private int index = 0;
     private boolean playing = false;
     private boolean active = false;
@@ -164,7 +166,7 @@ public class AudioOutput {
 
     public void init() throws Exception {
         int minBuffer = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        int bufferSize = Math.max(minBuffer, bufferBaseSize*2*4); //2048 frames with 2 bytes each (16bit short int), grouped in four buffers (on iOS at least)
+        bufferSize = Math.max(minBuffer, bufferBaseSize*2*4); //2048 frames with 2 bytes each (16bit short int), grouped in four buffers (on iOS at least)
         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
         if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
             throw new Exception("Could not initialize audio. (" + audioTrack.getState() + ")");
@@ -189,8 +191,6 @@ public class AudioOutput {
                 if (beeper != null) {
                     beeper.generate(floatData, bufferBaseSize, rate, index);
                     amplitude += beeper.a;
-                    if (beeper.done)
-                        beeper = null;
                 }
 
                 if (!beepOnly) {
@@ -250,18 +250,18 @@ public class AudioOutput {
         int start;
         boolean done = false;
 
-        Beeper(double f, double d) {
+        Beeper(double f, double d, double delay) {
             this.f = f;
             this.d = d;
-            start = -1;
+            this.start = index + (int)(delay*audioTrack.getPlaybackRate()) - bufferSize/2;
         }
 
         public void generate(float[] buffer, int samples, int rate, int index) {
             if (done)
                 return;
 
-            if (start < 0)
-                start = index;
+            if (start >= index + samples)
+                return;
 
             int end = samples;
             int durationEnd = start + (int)(d * rate) - index;
@@ -275,7 +275,7 @@ public class AudioOutput {
 
             double phaseStep = (double)f / (double)rate;
 
-            for (int i = 0; i < end; i++) {
+            for (int i = Math.max(0, start - index); i < end; i++) {
                 buffer[i] += a * sineLookup[(int)(phase * sineLookupSize) % sineLookupSize];
                 phase += phaseStep;
             }
@@ -283,15 +283,26 @@ public class AudioOutput {
         }
     }
 
-    public void beep(double f, double d) {
-        beeper = new Beeper(f, d);
+    long lastCall = 0;
+    long lastStart = 0;
+    public void beep(double f, double d, double delay) {
+        beeper = new Beeper(f, d, delay);
+    }
+
+    public void beepRelative(double f, double d, double after) {
+        if (beeper == null)
+            return;
+        beeper.start += after * audioTrack.getPlaybackRate();
+        beeper.f = f;
+        beeper.d = d;
+        beeper.done = false;
     }
 
     public void stop() {
         if (beeper != null) {
             int maxRemainingSamples;
             if (beeper.start >= 0)
-                maxRemainingSamples = beeper.start + (int)beeper.d * rate - index + 4*bufferBaseSize;
+                maxRemainingSamples = beeper.start + (int)beeper.d * rate - index + bufferSize/2;
             else
                 maxRemainingSamples = (int)beeper.d * rate;
             try {
