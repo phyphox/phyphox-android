@@ -68,46 +68,39 @@
 
     </TableLayout>
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="32dp"
+        android:id="@+id/timedRunBeepAllRow">
+
+        <TextView
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/timedRunBeeps"
+            android:labelFor="@+id/timedRunBeepAll" />
+
+        <Button
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@id/timedRunBeepAll" />
+
+    </RelativeLayout>
+
     <TableLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:stretchColumns="0"
         android:shrinkColumns="1"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
         android:id="@+id/timedRunBeepOptions">
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_vertical_margin">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/timedRunBeeps"
-                android:labelFor="@+id/timedRunBeepAll" />
-
-            <FrameLayout
-                android:layout_gravity="center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <CheckBox
-                    android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@id/timedRunBeepAll" />
-
-                <TextView
-                    android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/highlight"
-                    android:text="•"
-                    android:id="@+id/timedRunBeepUndef" />
-
-            </FrameLayout>
-        </TableRow>
 
         <TableRow
             android:layout_width="match_parent"

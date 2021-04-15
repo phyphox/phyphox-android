@@ -227,6 +227,8 @@ public class AudioOutput {
     }
 
     public void play() {
+        if (beeper != null)
+            beeper.start -= index;
         index = 0;
         if (playing || !active)
             return;
@@ -283,8 +285,6 @@ public class AudioOutput {
         }
     }
 
-    long lastCall = 0;
-    long lastStart = 0;
     public void beep(double f, double d, double delay) {
         beeper = new Beeper(f, d, delay);
     }

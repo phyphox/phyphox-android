@@ -297,4 +297,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="beeperStart">Start sound</string>
     <string name="beeperRunning">Running sounds</string>
     <string name="beeperStop">Stop sound</string>
+    <string name="activate_all">Activate all</string>
+    <string name="deactivate_all">Deactivate all</string>
 </resources>

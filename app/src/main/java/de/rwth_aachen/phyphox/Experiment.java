@@ -941,6 +941,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             final CheckBox cbTimedRunEnabled = (CheckBox) vLayout.findViewById(R.id.timedRunEnabled);
             final TableLayout tTimedRunTimeOptions = (TableLayout) vLayout.findViewById(R.id.timedRunTimeOptions);
+            final RelativeLayout tTimedRunBeeperAllRow = (RelativeLayout) vLayout.findViewById(R.id.timedRunBeepAllRow);
             final TableLayout tTimedRunBeeperOptions = (TableLayout) vLayout.findViewById(R.id.timedRunBeepOptions);
             cbTimedRunEnabled.setChecked(timedRun);
 
@@ -948,6 +949,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                   @Override
                   public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                       tTimedRunTimeOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                      tTimedRunBeeperAllRow.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                       tTimedRunBeeperOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                   }
 
@@ -965,69 +967,46 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 boolean ignore = true;
             }
             final IgnoreChanges ignoreChanges = new IgnoreChanges();
-            final CheckBox cbTimedRunBeeperAll = (CheckBox) vLayout.findViewById(R.id.timedRunBeepAll);
+            final Button cbTimedRunBeeperAll = (Button) vLayout.findViewById(R.id.timedRunBeepAll);
+            final class AllButtonOn {
+                boolean on = false;
+            }
+            final AllButtonOn allButtonOn = new AllButtonOn();
             final SwitchCompat cbTimedRunBeeperCountdown = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepCountdown);
             final SwitchCompat cbTimedRunBeeperStart = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepStart);
             final SwitchCompat cbTimedRunBeeperRunning = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepRunning);
             final SwitchCompat cbTimedRunBeeperStop = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepStop);
-            final TextView timedRunBeeperAllUndef = (TextView) vLayout.findViewById(R.id.timedRunBeepUndef);
 
-            final CompoundButton.OnCheckedChangeListener allButtonChanged;
+            final View.OnClickListener allButtonClicked;
 
             final CompoundButton.OnCheckedChangeListener updateAllButton = new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     if (ignoreChanges.ignore)
                         return;
-                    ignoreChanges.ignore = true;
 
-                    if (cbTimedRunBeeperCountdown.isChecked() == cbTimedRunBeeperStart.isChecked() && cbTimedRunBeeperCountdown.isChecked() == cbTimedRunBeeperRunning.isChecked() && cbTimedRunBeeperCountdown.isChecked() == cbTimedRunBeeperStop.isChecked()) {
-                        Drawable drawable = CompoundButtonCompat.getButtonDrawable(cbTimedRunBeeperAll);
-                        if (drawable != null) {
-                            drawable.setColorFilter(null);
-                        }
-                        timedRunBeeperAllUndef.setVisibility(View.INVISIBLE);
-                        if (cbTimedRunBeeperCountdown.isChecked()) {
-                            cbTimedRunBeeperAll.setChecked(true);
-                        } else {
-                            cbTimedRunBeeperAll.setChecked(false);
-                        }
-                    } else {
-                        ColorFilter colorFilter = new PorterDuffColorFilter(res.getColor(R.color.phyphox_color), PorterDuff.Mode.SRC_ATOP);
-                        Drawable drawable = CompoundButtonCompat.getButtonDrawable(cbTimedRunBeeperAll);
-                        if (drawable != null) {
-                            drawable.setColorFilter(colorFilter);
-                        }
-                        timedRunBeeperAllUndef.setVisibility(View.VISIBLE);
-                        cbTimedRunBeeperAll.setChecked(false);
-                    }
-
-                    ignoreChanges.ignore = false;
+                    allButtonOn.on = (cbTimedRunBeeperCountdown.isChecked() || cbTimedRunBeeperStart.isChecked() || cbTimedRunBeeperRunning.isChecked() || cbTimedRunBeeperStop.isChecked());
+                    cbTimedRunBeeperAll.setText(allButtonOn.on ? R.string.deactivate_all : R.string.activate_all);
                 }
             };
 
-            allButtonChanged = new CompoundButton.OnCheckedChangeListener() {
+            allButtonClicked = new View.OnClickListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if (ignoreChanges.ignore)
-                        return;
+                public void onClick(View view) {
                     ignoreChanges.ignore = true;
 
-                    Drawable drawable = CompoundButtonCompat.getButtonDrawable(cbTimedRunBeeperAll);
-                    if (drawable != null) {
-                        drawable.setColorFilter(null);
-                    }
-                    timedRunBeeperAllUndef.setVisibility(View.INVISIBLE);
-                    cbTimedRunBeeperCountdown.setChecked(cbTimedRunBeeperAll.isChecked());
-                    cbTimedRunBeeperStart.setChecked(cbTimedRunBeeperAll.isChecked());
-                    cbTimedRunBeeperRunning.setChecked(cbTimedRunBeeperAll.isChecked());
-                    cbTimedRunBeeperStop.setChecked(cbTimedRunBeeperAll.isChecked());
+                    allButtonOn.on = !allButtonOn.on;
+                    cbTimedRunBeeperAll.setText(allButtonOn.on ? R.string.deactivate_all : R.string.activate_all);
+                    cbTimedRunBeeperCountdown.setChecked(allButtonOn.on);
+                    cbTimedRunBeeperStart.setChecked(allButtonOn.on);
+                    cbTimedRunBeeperRunning.setChecked(allButtonOn.on);
+                    cbTimedRunBeeperStop.setChecked(allButtonOn.on);
 
                     ignoreChanges.ignore = false;
                 }
             };
 
-            cbTimedRunBeeperAll.setOnCheckedChangeListener(allButtonChanged);
+            cbTimedRunBeeperAll.setOnClickListener(allButtonClicked);
             cbTimedRunBeeperCountdown.setOnCheckedChangeListener(updateAllButton);
             cbTimedRunBeeperStart.setOnCheckedChangeListener(updateAllButton);
             cbTimedRunBeeperRunning.setOnCheckedChangeListener(updateAllButton);
@@ -1615,7 +1594,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                     audioOutput.beep(800, 0.5, muf / 1000. - nextBeep);
                                     relative = true;
                                 }
-                            } else if (timedRunBeepRunning) {
+                            } else if (nextBeep > 0 && timedRunBeepRunning) {
                                 if (relative)
                                     audioOutput.beepRelative(1000, 0.1, 1.0);
                                 else {
@@ -1711,7 +1690,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                                 audioOutput.beep(1000, 0.5, muf / 1000. - nextBeep);
                                 relative = true;
                             }
-                        } else if (timedRunBeepCountdown) {
+                        } else if (nextBeep > 0 && timedRunBeepCountdown) {
                             if (relative)
                                 audioOutput.beepRelative(800, 0.1, 1.0);
                             else {
