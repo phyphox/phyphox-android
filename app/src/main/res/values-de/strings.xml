@@ -110,7 +110,7 @@
     <string name="noDrawableData">Keine darstellbaren Daten.</string>
     <string name="categoryNewExperiment">Einfache eigene Experimente</string>
     <string name="categoryRawSensor">Sensoren</string>
-    <string name="categoryPhyphoxOrg">Unterstütze phyphox</string>
+    <string name="categoryPhyphoxOrg">Unterstütze phyphoxa</string>
     <string name="categoryPhyphoxOrgHint">Am Ende der Liste gibt es neue Möglichkeiten, phyphox zu unterstützen.</string>
     <string name="translationInfo">Sprachen</string>
     <string name="translationText">Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen benutzen. Um deine bevorzugten Sprachen zu ändern, gehe unten in die Android \"Einstellungen\". Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".</string>
