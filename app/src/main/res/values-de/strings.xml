@@ -231,4 +231,6 @@
     <string name="beeperStart">Start-Ton</string>
     <string name="beeperRunning">Töne während Messung</string>
     <string name="beeperStop">Stop-Ton</string>
+    <string name="activate_all">Alle aktivieren</string>
+    <string name="deactivate_all">Alle deaktivieren</string>
 </resources>
