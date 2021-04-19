@@ -228,4 +228,14 @@
     <string name="export_empty">Στην διαμόρφωση αυτού του πειράματος δεν καθορίζονται δεδομένα προς εξαγωγή. Αν πρόκειται για λάθος, παρακαλούμε επικοινωνήστε με τον πάροχο του QR code ή του αρχείου διαμόρφωσης.</string>
     <string name="toggleBrightMode">Διαμόρφωση έντονου φωτισμού</string>
     <string name="bt_location_service_explanation">Εκτός της άδειας για την απόκτηση πληροφοριών θέσης, το Android για τις αναζητήσεις Bluetooth, απαιτεί να είναι ενεργοποιημένες και οι υπηρεσίες εντοπισμού θέσης καθώς το αποτέλεσμα της αναζήτησης θα μπορούσε χρησιμοποιηθεί για να εξαχθούν πληροφορίες για τη θέση. Θα σας ανακατευθύνουμε προς τις ρυθμίσεις συστήματος.</string>
+    <string name="graph_tools_system_time">Χρήση του χρόνου συστήματος</string>
+    <string name="categoryPhyphoxOrg">Συνεισφέρετε στο phyphox</string>
+    <string name="categoryPhyphoxOrgHint">Υπάρχουν νέοι τρόποι υποστήριξης του phyphox στο τέλος της λίστας.</string>
+    <string name="timedRunBeeps">Ακουστικά σήματα</string>
+    <string name="beeperCountdown">Ήχος αντίστροφης μέτρησης</string>
+    <string name="beeperStart">Ήχος έναρξης</string>
+    <string name="beeperRunning">Ήχοι κατά τη διάρκεια της μέτρησης</string>
+    <string name="beeperStop">Ήχος λήξης</string>
+    <string name="activate_all">Ενεργοποίηση όλων</string>
+    <string name="deactivate_all">Απενεργοποίηση όλων</string>
 </resources>
