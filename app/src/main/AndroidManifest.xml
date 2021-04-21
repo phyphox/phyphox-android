@@ -112,6 +112,9 @@
             <data android:scheme="http" />
         </intent>
 
+        <!-- Youtube videos may be opened in the Youtube app -->
+        <package android:name="com.google.android.youtube" />
+
         <!-- Share states and screenshots -->
         <intent>
             <action android:name="android.intent.action.SEND" />

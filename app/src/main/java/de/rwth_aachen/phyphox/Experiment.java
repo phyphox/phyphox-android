@@ -1372,7 +1372,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         }
                     }
                 });
-                btn.setBackgroundResource(R.drawable.background_ripple);
+                btn.setBackgroundResource(R.drawable.background_ripple2);
                 ll.addView(btn);
             }
 
