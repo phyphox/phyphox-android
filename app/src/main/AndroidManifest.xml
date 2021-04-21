@@ -113,7 +113,15 @@
         </intent>
 
         <!-- Youtube videos may be opened in the Youtube app -->
-        <package android:name="com.google.android.youtube" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data  android:scheme="https" android:host="youtube.com" />
+        </intent>
+        
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="youtu.be" />
+        </intent>
 
         <!-- Share states and screenshots -->
         <intent>
