@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.NetworkConnection.Mqtt;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -28,13 +29,13 @@ public abstract class MqttService extends NetworkService.Service {
     String address;
     MqttAndroidClient client = null;
     Context context;
-    boolean connected = false;
     boolean subscribed = false;
     MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
     MemoryPersistence dataStore;
     int writeSequence = 0;
     Vector<JSONObject> messageBuffer = new Vector<JSONObject>(600);
     boolean persistence = false;
+    Toast toast;
 
     public void connect(String address) {
         this.address = address;
@@ -46,7 +47,6 @@ public abstract class MqttService extends NetworkService.Service {
         client.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
-                connected = true;
                 if (!receiveTopic.isEmpty()) {
                     try {
                         client.subscribe(receiveTopic, 0, null, new IMqttActionListener() {
@@ -70,7 +70,6 @@ public abstract class MqttService extends NetworkService.Service {
 
             @Override
             public void connectionLost(Throwable cause) {
-                connected = false;
                 subscribed = false;
                 Log.e("MQTT", "Connection lost: " + cause.getMessage());
             }
@@ -90,17 +89,17 @@ public abstract class MqttService extends NetworkService.Service {
             client.connect(mqttConnectOptions, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
-                    connected = true;
+                    toast = Toast.makeText(context, "MQTT: Connected", Toast.LENGTH_SHORT);
+                    toast.show();
                 }
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    connected = false;
                     subscribed = false;
-                    Log.e("MQTT", "Connection failed: " + exception.getMessage());
+                    toast = Toast.makeText(context, "MQTT: " + exception.getMessage(), Toast.LENGTH_SHORT);
+                    toast.show();
                 }
             });
-
 
         } catch (MqttException ex){
             Log.e("MQTT", "Could not connect: " + ex.getMessage());
@@ -114,7 +113,6 @@ public abstract class MqttService extends NetworkService.Service {
             Log.e("MQTT","Could not disconnect: " +  ex.getMessage());
         }
         client = null;
-        connected = false;
         subscribed = false;
     }
 
@@ -135,4 +133,7 @@ public abstract class MqttService extends NetworkService.Service {
         mqttConnectOptions.setMaxInflight(600);
     }
 
+    public boolean isConnected(){
+        return client.isConnected();
+    }
 }

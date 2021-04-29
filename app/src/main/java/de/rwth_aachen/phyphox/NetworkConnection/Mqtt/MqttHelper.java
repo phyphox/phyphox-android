@@ -147,7 +147,7 @@ public class MqttHelper{
 
         NetworkService.ServiceResult result;
         try {
-            if (!mqttService.connected) {
+            if (!mqttService.isConnected()) {
                 result = new NetworkService.ServiceResult(NetworkService.ResultEnum.noConnection, null);
                 if(mqttService.persistence){
                     recordePersistenceMassages(mqttService,send);
@@ -194,7 +194,7 @@ public class MqttHelper{
 
         NetworkService.ServiceResult result;
         try {
-        if (!mqttService.connected) {
+        if (!mqttService.isConnected()) {
             result = new NetworkService.ServiceResult(NetworkService.ResultEnum.noConnection, null);
         } else if (!mqttService.subscribed && !mqttService.receiveTopic.isEmpty()) {
             result = new NetworkService.ServiceResult(NetworkService.ResultEnum.genericError, "Not subscribed.");
