@@ -16,12 +16,14 @@ public class MqttTlsJson extends MqttService{
                        String userName,
                        String password,
                        Context context,
-                       boolean persistence) {
+                       boolean persistence,
+                       boolean clearBuffer) {
 
         this.receiveTopic = receiveTopic;
         this.sendTopic = sendTopic;
         this.context = context;
         this.persistence = persistence;
+        this.clearBuffer = clearBuffer;
 
         MqttHelper.tlsSetup(this, context, userName, password);
 
@@ -35,6 +37,6 @@ public class MqttTlsJson extends MqttService{
 
     @Override
     public void execute(Map<String, NetworkConnection.NetworkSendableData> send, List<NetworkService.RequestCallback> requestCallbacks) {
-        MqttHelper.sendJson(this,sendTopic,send,requestCallbacks);
+        MqttHelper.sendJson(this,sendTopic,send,requestCallbacks, clearBuffer);
     }
 }

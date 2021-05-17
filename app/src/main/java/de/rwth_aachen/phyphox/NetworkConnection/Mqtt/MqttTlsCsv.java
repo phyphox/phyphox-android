@@ -11,15 +11,17 @@ public class MqttTlsCsv extends MqttService {
     public MqttTlsCsv(String receiveTopic,
                       String userName,
                       String password,
-                      Context context) {
+                      Context context,
+                      boolean clearBuffer) {
 
         this.receiveTopic = receiveTopic;
         this.context = context;
+        this.clearBuffer = clearBuffer;
         MqttHelper.tlsSetup(this, context, userName, password);
         mqttConnectOptions.setCleanSession(true);
     }
 
     public void execute(Map<String, NetworkConnection.NetworkSendableData> send, List<NetworkService.RequestCallback> requestCallbacks) {
-        MqttHelper.sendCsv(this,send,requestCallbacks);
+        MqttHelper.sendCsv(this,send,requestCallbacks,clearBuffer);
     }
 }

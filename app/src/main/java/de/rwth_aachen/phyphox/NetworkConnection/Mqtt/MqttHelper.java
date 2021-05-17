@@ -142,7 +142,8 @@ public class MqttHelper{
     public static void sendJson (MqttService mqttService,
                                  String sendTopic,
                                  Map<String, NetworkConnection.NetworkSendableData> send,
-                                 List<NetworkService.RequestCallback> requestCallbacks
+                                 List<NetworkService.RequestCallback> requestCallbacks,
+                                 boolean clearBuffer
                                  ) {
 
         NetworkService.ServiceResult result;
@@ -179,6 +180,12 @@ public class MqttHelper{
             result = new NetworkService.ServiceResult(NetworkService.ResultEnum.genericError, "Could not build JSON. " + e.getMessage());
         }
 
+        if(clearBuffer == true) {
+            for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : send.entrySet()) {
+                item.getValue().buffer.clear(false);
+            }
+        }
+
         for (NetworkService.RequestCallback callback : requestCallbacks) {
             callback.requestFinished(result);
         }
@@ -186,7 +193,8 @@ public class MqttHelper{
 
     public static void sendCsv (MqttService mqttService,
                                 Map<String, NetworkConnection.NetworkSendableData> send,
-                                List<NetworkService.RequestCallback> requestCallbacks) {
+                                List<NetworkService.RequestCallback> requestCallbacks,
+                                boolean clearBuffer) {
 
         DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
         longformat.applyPattern("############0.000");
@@ -235,6 +243,10 @@ public class MqttHelper{
                     MqttMessage message = new MqttMessage();
                     message.setPayload(payload.getBytes());
                     mqttService.client.publish(item.getKey(), message);
+
+                    if(clearBuffer == true) {
+                            item.getValue().buffer.clear(false);
+                    }
                 }
                 result = new NetworkService.ServiceResult(NetworkService.ResultEnum.success, "");
         }

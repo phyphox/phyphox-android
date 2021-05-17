@@ -34,7 +34,7 @@ public abstract class MqttService extends NetworkService.Service {
     MemoryPersistence dataStore;
     int writeSequence = 0;
     Vector<JSONObject> messageBuffer = new Vector<JSONObject>(600);
-    boolean persistence = false;
+    boolean clearBuffer, persistence = false;
     Toast toast;
 
     public void connect(String address) {

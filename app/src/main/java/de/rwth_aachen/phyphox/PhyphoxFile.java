@@ -1787,6 +1787,7 @@ public abstract class PhyphoxFile {
                     String discoveryAddress = getStringAttribute("discoveryAddress");
                     boolean autoConnect = getBooleanAttribute("autoConnect", false);
                     double interval = getDoubleAttribute("interval", 0.0);
+                    boolean clearBuffer = getBooleanAttribute("clear", false);
 
                     String discoveryStr = getStringAttribute("discovery");
                     NetworkDiscovery.Discovery discovery = null;
@@ -1814,7 +1815,7 @@ public abstract class PhyphoxFile {
                                     String receiveTopicStr = getStringAttribute("receiveTopic");
                                     if (receiveTopicStr == null)
                                         receiveTopicStr = "";
-                                    service = new MqttCsv(receiveTopicStr, parent.getApplicationContext());
+                                    service = new MqttCsv(receiveTopicStr, parent.getApplicationContext(), clearBuffer);
                                 }
                                 break;
                             case "mqtt/json": {
@@ -1825,7 +1826,7 @@ public abstract class PhyphoxFile {
                                         receiveTopicStr = "";
                                     if (sendTopicStr == null || sendTopicStr.isEmpty())
                                         throw new phyphoxFileException("sendTopic must be set for the mqtt/json service. Use mqtt/csv if you do not intent to send anything.", xpp.getLineNumber());
-                                    service = new MqttJson(receiveTopicStr, sendTopicStr, parent.getApplicationContext(),persistence);
+                                    service = new MqttJson(receiveTopicStr, sendTopicStr, parent.getApplicationContext(),persistence, clearBuffer);
                                 }
                                 break;
                             case "mqtts/json" : {
@@ -1843,7 +1844,7 @@ public abstract class PhyphoxFile {
                                     throw new phyphoxFileException("password must be set for the mqtts/json service.", xpp.getLineNumber());
                                 if (userName == null || userName.isEmpty())
                                     throw new phyphoxFileException("userName must be set for the mqtts/json service.", xpp.getLineNumber());
-                                service = new MqttTlsJson(receiveTopicStr,sendTopicStr,userName,password,parent.getApplicationContext(),persistence);
+                                service = new MqttTlsJson(receiveTopicStr,sendTopicStr,userName,password,parent.getApplicationContext(),persistence, clearBuffer);
                             }
                             break;
                             case "mqtts/csv" : {
@@ -1857,7 +1858,7 @@ public abstract class PhyphoxFile {
                                     throw new phyphoxFileException("password must be set for the mqtts/csv service.", xpp.getLineNumber());
                                 if (userName == null || userName.isEmpty())
                                     throw new phyphoxFileException("userName must be set for the mqtts/csv service.", xpp.getLineNumber());
-                                service = new MqttTlsCsv(receiveTopicStr,userName,password,parent.getApplicationContext());
+                                service = new MqttTlsCsv(receiveTopicStr,userName,password,parent.getApplicationContext(),clearBuffer);
                             }
                             break;
                             default:
