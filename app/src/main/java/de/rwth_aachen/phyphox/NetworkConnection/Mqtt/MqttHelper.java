@@ -27,6 +27,7 @@ import javax.net.ssl.TrustManagerFactory;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.PhyphoxExperiment;
 
 
 public class MqttHelper{
@@ -143,7 +144,7 @@ public class MqttHelper{
                                  String sendTopic,
                                  Map<String, NetworkConnection.NetworkSendableData> send,
                                  List<NetworkService.RequestCallback> requestCallbacks,
-                                 boolean clearBuffer
+                                 PhyphoxExperiment experiment
                                  ) {
 
         NetworkService.ServiceResult result;
@@ -180,10 +181,17 @@ public class MqttHelper{
             result = new NetworkService.ServiceResult(NetworkService.ResultEnum.genericError, "Could not build JSON. " + e.getMessage());
         }
 
-        if(clearBuffer == true) {
+        experiment.dataLock.lock();
+        try{
+        if(mqttService.clearBuffer == true) {
             for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : send.entrySet()) {
-                item.getValue().buffer.clear(false);
+                if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER){
+                    item.getValue().buffer.clear(false);
+                }
             }
+        }
+        } finally {
+        experiment.dataLock.unlock();
         }
 
         for (NetworkService.RequestCallback callback : requestCallbacks) {
@@ -245,7 +253,9 @@ public class MqttHelper{
                     mqttService.client.publish(item.getKey(), message);
 
                     if(clearBuffer == true) {
+                        if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER){
                             item.getValue().buffer.clear(false);
+                        }
                     }
                 }
                 result = new NetworkService.ServiceResult(NetworkService.ResultEnum.success, "");
