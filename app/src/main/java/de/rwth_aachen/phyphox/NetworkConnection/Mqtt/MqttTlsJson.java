@@ -11,7 +11,6 @@ import de.rwth_aachen.phyphox.PhyphoxExperiment;
 
 public class MqttTlsJson extends MqttService{
     String sendTopic;
-    PhyphoxExperiment experiment;//todo
 
     public MqttTlsJson(String receiveTopic,
                        String sendTopic,

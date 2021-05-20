@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.PhyphoxExperiment;
 
 
 public abstract class MqttService extends NetworkService.Service {
@@ -36,6 +37,7 @@ public abstract class MqttService extends NetworkService.Service {
     Vector<JSONObject> messageBuffer = new Vector<JSONObject>(600);
     boolean clearBuffer, persistence = false;
     Toast toast;
+    PhyphoxExperiment experiment;
 
     public void connect(String address) {
         this.address = address;
