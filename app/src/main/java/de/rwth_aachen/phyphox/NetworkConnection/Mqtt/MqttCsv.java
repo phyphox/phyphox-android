@@ -7,15 +7,22 @@ import java.util.Map;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.PhyphoxExperiment;
 
 public class MqttCsv extends MqttService {
-    public MqttCsv(String receiveTopic, Context context) {
+    public MqttCsv(String receiveTopic,
+                   Context context,
+                   boolean clearBuffer,
+                   PhyphoxExperiment experiment) {
+
         this.receiveTopic = receiveTopic;
         this.context = context;
         this.clientID = "phyphox_" + String.format("%06x", (System.nanoTime() & 0xffffff));
+        this.clearBuffer = clearBuffer;
+        this.experiment = experiment;
     }
 
     public void execute(Map<String, NetworkConnection.NetworkSendableData> send, List<NetworkService.RequestCallback> requestCallbacks) {
-        MqttHelper.sendCsv(this,send,requestCallbacks);
+        MqttHelper.sendCsv(this,send,requestCallbacks, experiment);
     }
 }
