@@ -1,2 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">phyphox</string>
+    <string name="action_settings">Indstillinger</string>
+    <string name="title_activity_experiment">phyphox</string>
+    <string name="graph_tools_pan_and_zoom">Flyt/zoom</string>
+    <string name="graph_tools_pick">Vælg datapunkt</string>
+    <string name="graph_tools_more">Flere værktøjer</string>
+    <string name="graph_tools_system_time">Konvertér til systemtid</string>
+    <string name="graph_tools_reset">Nulstil zoom</string>
+    <string name="graph_tools_follow">Følg nye data</string>
+    <string name="graph_tools_linear_fit">Lineær regression</string>
+    <string name="graph_tools_export">Eksportér data</string>
+    <string name="graph_tools_log_x">Logaritmisk x-akse</string>
+    <string name="graph_tools_log_y">Logaritmisk y-akse</string>
+    <string name="graph_point_label">Punkt</string>
+    <string name="graph_slope_label">Hældning</string>
+    <string name="graph_difference_label">Forskel</string>
+    <string name="graph_fit_label">Lineær regression: y = a x + b</string>
+    <string name="applyZoomTitle">Vælg zoom</string>
+    <string name="applyZoomExplanation">Når du forlader den interaktive tilstand, kan du vælge, om du vil beholde dine zoom indstillinger.</string>
+    <string name="applyZoomAdvanced">Avancerede indstillinger</string>
+    <string name="applyZoomApply">Anvend til…</string>
+    <string name="applyZoomReset">Nulstil til standardindstillingerne</string>
+    <string name="applyZoomKeep">Behold udvalg</string>
+    <string name="applyZoomFollow">Behold udvalg og følg nye data</string>
+    <string name="applyZoomThis">Kun denne graf</string>
+    <string name="applyZoomSameVariable">Andre grafer: samme variabel</string>
+    <string name="applyZoomSameUnit">Andre grafer: samme enhed</string>
+    <string name="applyZoomSameAxis">Andre grafer: samme akse</string>
+    <string name="newExperiment">Nyt eksperiment</string>
+    <string name="newExperimentSimple">Nyt enkelt eksperiment</string>
+    <string name="newExperimentPhyphoxInfo">Besøg phyphox.org for at lave mere avancerede eksperimenter med dataanalyse, og dele dem med kollegaer, elever og venner.</string>
+    <string name="newExperimentInputTitle">Titel</string>
+    <string name="newExperimentInputBufferSize">Bufferstørrelse (antal værdier, der skal gemmes)</string>
+    <string name="newExperimentInputRate">Sensorfrekvens (i Hz, 0 = så hurtigt som muligt)</string>
+    <string name="newExperimentInputSensors">Aktive sensorer</string>
+    <string name="newExperimentBluetooth">Nyt eksperiment for Bluetooth enhed</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth scanningsfejl</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Indlæs fra enhed</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Denne enhed har sit eget phyphox eksperiment. Vælg \"indlæs fra enhed\" for at åbne det.</string>
+    <string name="newExperimentQR">Nyt eksperiment fra QR-kode</string>
+    <string name="newExperimentQRscan">Scan en QR-kode, som indeholder et phyphox eksperiment.</string>
+    <string name="newExperimentQRErrorTitle">QR-kode fejl.</string>
+    <string name="newExperimentQRNoExperiment">Kunne ikke finde en QR-kode, der indeholder et phyphox eksperiment.</string>
+    <string name="newExperimentQRcrcMismatch">QR-koden, som du lige har scannet, ser ikke ud til at matche de tidligere koder. Venligst scan kun koder, der hører til samme eksperiment.</string>
+    <string name="newExperimentQRCodesMissing1">QR-koden, som du lige har scannet, er del af en pakke af</string>
+    <string name="newExperimentQRCodesMissing2">koder. Venligst tryk \"videre\" for at scanne de øvrige koder. Antal koder, som stadig mangler:</string>
+    <string name="newExperimentQRBadCRC">Ugyldig kontrolsum. Det betyder, enten er QR-koden fejlbehæftet, eller noget gik galt under scanningen.</string>
+    <string name="newExperimentBTReadErrorTitle">Bluetooth eksperiment fejl.</string>
+    <string name="newExperimentBTReadErrorCorrupted">De overførte data er fejlbehæftede.</string>
+    <string name="generalErrorDialog">Der opstod en fejl.</string>
+    <string name="help">Hjælp og info</string>
+    <string name="experimentsPhyphoxOrg">Idéer til eksperimenter og vejledninger</string>
+    <string name="faqPhyphoxOrg">Ofte stillede spørgsmål</string>
+    <string name="remotePhyphoxOrg">Fjernadgang hjælp</string>
+    <string name="translationInfo">Sprog</string>
+    <string name="translationText">Phyphox bruger det første tilgængelige sprog fra din liste af fortrukne sprog. For at ændre dine fortrunkne sprog, gå i dine Android \"indstillinger\" nedenunder. For at finde ud af, hvilke sprog vi allerede tilbyder, og hvordan du kan hjælpe os, vælg \"besøg hjemmesiden\".</string>
+    <string name="translationToSettings">Indstillinger</string>
+    <string name="translationToWebsite">Besøg hjemmesiden</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#da</string>
+    <string name="deviceInfo">Enhed info</string>
+    <string name="copyToClipboard">Kopiér til udklipsholder</string>
+    <string name="deviceInfoCopied">Enhed info blev kopieret til udklipsholderen.</string>
+    <string name="warning">Advarsel</string>
+    <string name="donotshowagain">Vis ikke igen</string>
+    <string name="damageWarning">Vær forsigtigt, når du eksperimenterer, så du ikke skader din telefon. Undgå især, at tabe enheden på hårde overflader, eller at udsætte den for stærke magnetfelter. Udviklerne af denne app tager intet ansvar for skaderne på din enhed.</string>
+    <string name="info">Info</string>
+    <string name="credits">Credits</string>
+    <string name="creditsRWTH">phyphox® blev udviklet på 2. Physikalisches Institut ved RWTH Aachen Universitet.</string>
+    <string name="creditsNames">Udvikling og koncept:
+\nDr. Sebastian Staacks
+\nKonzept:
+\nProf. Christoph Stampfer
+\nProgrammierung:
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
+    <string name="gpl">Phyphox® er open source software, som licenseres under GNU General Public Licence. Yderligere informationer og kildekoden finder du her: http://phyphox.org. \"phyphox\" og \"RWTH Aachen\" er derimod beskyttede varemærker.</string>
+    <string name="sensorLinearAcceleration">Lineær acceleration</string>
+    <string name="sensorLight">Lys</string>
+    <string name="sensorGyroscope">Gyroskop</string>
+    <string name="sensorAccelerometer">Accelerometer</string>
+    <string name="sensorMagneticField">Magnetfelt</string>
+    <string name="sensorPressure">Tryk</string>
+    <string name="sensorTemperature">Temperatur</string>
+    <string name="sensorHumidity">Luftfugtighed</string>
+    <string name="sensorVendor">Leverandørspecifikt</string>
+    <string name="vendorSensorTitle">Leverandørspecifik sensor</string>
+</resources>
