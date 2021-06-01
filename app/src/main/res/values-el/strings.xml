@@ -19,7 +19,7 @@
     <string name="translationInfo">Γλώσσες</string>
     <string name="translationText">H εφαρμογή phyphox θα χρησιμοποιήσει την πρώτη διαθέσιμη γλώσσα από τη λίστα των προτιμώμενων γλωσσών σας. Για να αλλάξετε τις προτιμήσεις σας, επιλέξτε \"ρυθμίσεις\". Για να ενημερωθείτε για τις διαθέσιμες γλώσσες και πως μπορείτε να βοηθήσετε, επιλέξτε \"ιστοσελίδα\".</string>
     <string name="translationToSettings">Ρυθμίσεις</string>
-    <string name="translationToWebsite">Ιστοσελίδα</string>
+    <string name="translationToWebsite">Επίσκεψη στην ιστοσελίδα</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#el</string>
     <string name="warning">Προειδοποίηση</string>
     <string name="donotshowagain">Να μην προβληθεί ξανά</string>
@@ -121,7 +121,7 @@
     <string name="graph_tools_follow">Παρακολούθηση νέων δεδομένων</string>
     <string name="graph_tools_linear_fit">Γραμμική παλινδρόμηση</string>
     <string name="graph_tools_export">Εξαγωγή δεδομένων</string>
-    <string name="graph_tools_log_x">Λογαριθμικός x άξονας</string>
+    <string name="graph_tools_log_x">Λογαριθμικός άξονας x</string>
     <string name="graph_tools_log_y">Λογαριθμικός άξονας y</string>
     <string name="graph_point_label">Σημείο</string>
     <string name="graph_slope_label">Κλίση</string>
@@ -151,12 +151,12 @@
     <string name="newExperimentQRCodesMissing1">Ο κωδικός QR που σκανάρατε είναι μέρος μιας ομάδας</string>
     <string name="newExperimentQRCodesMissing2">κωδικών. Πατήστε συνέχεια για να σκανάρετε τους υπόλοιπους κωδικούς. Κωδικοί που απομένουν ακόμη:</string>
     <string name="newExperimentQRBadCRC">Άκυρο άθροισμα ελέγχου. Αυτό σημαίνει είτε εσφαλμένος κωδικός QR είτε ότι συνέβη κάποιο σφάλμα κατά το σκανάρισμα.</string>
-    <string name="newExperimentBTReadErrorTitle">Λανθασμένο πείραμα Bluetooth.</string>
+    <string name="newExperimentBTReadErrorTitle">Λάθος κατά τη διάρκεια πειράματος Bluetooth.</string>
     <string name="newExperimentBTReadErrorCorrupted">Tα πειραματικά δεδομένα που παραλήφθηκαν ήταν κατεστραμμένα.</string>
     <string name="generalErrorDialog">Συνέβη κάποιο λάθος.</string>
     <string name="deviceInfo">Πληροφορίες συσκευής</string>
     <string name="copyToClipboard">Αντιγραφή στο πρόχειρο</string>
-    <string name="deviceInfoCopied">Οι πληροφορίες της συσκευής αντιστράφηκαν στο πρόχειρο.</string>
+    <string name="deviceInfoCopied">Οι πληροφορίες της συσκευής αντιγράφηκαν στο πρόχειρο.</string>
     <string name="gpl">Το phyphox® είναι λογισμικό ανοιχτού κώδικα που δημοσιεύτηκε κάτω από την άδεια GNU General Public Licence. Παρακαλώ επισκεφτείτε τη σελίδα http://phyphοx.org για παραπάνω πληροφορίες καθώς και για να αποκτήσετε πρόσβαση στον κώδικά του. Όμως τα ονόματα \"phyphox\" και \"RWTH Aachen\" είναι καταχωρημένα εμπορικά σήματα.</string>
     <string name="sensorVendor">Καθοριζόμενος από τον προμηθευτή</string>
     <string name="vendorSensorTitle">Αισθητήρας καθοριζόμενος από τον προμηθευτή</string>
@@ -232,7 +232,7 @@
     <string name="categoryPhyphoxOrg">Συνεισφέρετε στο phyphox</string>
     <string name="categoryPhyphoxOrgHint">Υπάρχουν νέοι τρόποι υποστήριξης του phyphox στο τέλος της λίστας.</string>
     <string name="timedRunBeeps">Ακουστικά σήματα</string>
-    <string name="beeperCountdown">Ήχος αντίστροφης μέτρησης</string>
+    <string name="beeperCountdown">Ήχοι αντίστροφης μέτρησης</string>
     <string name="beeperStart">Ήχος έναρξης</string>
     <string name="beeperRunning">Ήχοι κατά τη διάρκεια της μέτρησης</string>
     <string name="beeperStop">Ήχος λήξης</string>
