@@ -40,12 +40,14 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
 
         public DataType type;
         public DataBuffer buffer = null;
+        public boolean clear = false;
         public Metadata metadata = null;
         public ExperimentTimeReference timeReference = null;
         public Map<String, String> additionalAttributes = null;
-        public NetworkSendableData(DataBuffer buffer) {
+        public NetworkSendableData(DataBuffer buffer, boolean clear) {
             this.type = DataType.BUFFER;
             this.buffer = buffer;
+            this.clear = clear;
         }
         public NetworkSendableData(Metadata metadata) {
             this.type = DataType.METADATA;
@@ -294,7 +296,15 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
     public void doExecute() {
         if (executeRequested) {
             this.requestCallbacks.add(this);
+
             service.execute(send, requestCallbacks);
+            for (Map.Entry<String, NetworkSendableData> item : send.entrySet()) {
+                if (item.getValue().buffer == null)
+                    continue;
+                if (item.getValue().clear)
+                    item.getValue().buffer.clear(false);
+            }
+
             this.requestCallbacks = null;
             executeRequested = false;
         }

@@ -32,7 +32,7 @@ import de.rwth_aachen.phyphox.PhyphoxExperiment;
 
 public class MqttHelper{
 
-    private static File handelBksFiels(Context context)throws FileNotFoundException{
+    private static File handleBksFiles(Context context)throws FileNotFoundException{
         File tempPath = new File(context.getFilesDir(), "temp_zip");
         final File[] bksFiles = tempPath.listFiles(new FilenameFilter() {
             @Override
@@ -54,7 +54,7 @@ public class MqttHelper{
                                 String userName,
                                 String password){
         try {
-            File bksFile = handelBksFiels(context);
+            File bksFile = handleBksFiles(context);
             KeyStore trustStore = KeyStore.getInstance("BKS");
 
             InputStream input = new FileInputStream(bksFile);
@@ -97,8 +97,7 @@ public class MqttHelper{
     }
 
     private static JSONObject buildJson(Map<String, NetworkConnection.NetworkSendableData> send,
-                                        MqttService mqttService,
-                                        PhyphoxExperiment experiment) throws JSONException{
+                                        MqttService mqttService) throws JSONException{
 
         JSONObject json = new JSONObject();
 
@@ -106,17 +105,7 @@ public class MqttHelper{
                 if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
                     json.put(item.getKey(), item.getValue().metadata.get(mqttService.address));
                 else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER) {
-                    if(mqttService.clearBuffer){
-                        experiment.dataLock.lock();
-                        try{
-                            writeBufferValuesIntoJson(item,json);
-                            item.getValue().buffer.clear(false);
-                        } finally {
-                            experiment.dataLock.unlock();
-                        }
-                    }else {
-                        writeBufferValuesIntoJson(item,json);
-                    }
+                    writeBufferValuesIntoJson(item,json);
                 } else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME) {
                     JSONObject timeInfo = new JSONObject();
                     timeInfo.put("now", System.currentTimeMillis() / 1000.0);
@@ -146,11 +135,10 @@ public class MqttHelper{
         mqttService.messageBuffer.clear();
     }
 
-    private static void recordePersistenceMassages(Map<String, NetworkConnection.NetworkSendableData> send,
-                                                   MqttService mqttService,
-                                                   PhyphoxExperiment experiment) throws JSONException{
+    private static void recordPersistenceMassages(Map<String, NetworkConnection.NetworkSendableData> send,
+                                                  MqttService mqttService) throws JSONException{
         int capacity = mqttService.messageBuffer.capacity();
-        mqttService.messageBuffer.insertElementAt(buildJson(send,mqttService,experiment),(mqttService.writeSequence % capacity));
+        mqttService.messageBuffer.insertElementAt(buildJson(send,mqttService),(mqttService.writeSequence % capacity));
         mqttService.writeSequence++;
         if(mqttService.writeSequence % capacity == 0) {
             mqttService.writeSequence = 0;
@@ -160,8 +148,7 @@ public class MqttHelper{
     public static void sendJson (MqttService mqttService,
                                  String sendTopic,
                                  Map<String, NetworkConnection.NetworkSendableData> send,
-                                 List<NetworkService.RequestCallback> requestCallbacks,
-                                 PhyphoxExperiment experiment
+                                 List<NetworkService.RequestCallback> requestCallbacks
                                  ) {
 
         NetworkService.ServiceResult result;
@@ -169,12 +156,12 @@ public class MqttHelper{
             if (!mqttService.isConnected()) {
                 result = new NetworkService.ServiceResult(NetworkService.ResultEnum.noConnection, null);
                 if(mqttService.persistence){
-                    recordePersistenceMassages(send,mqttService,experiment);
+                    recordPersistenceMassages(send,mqttService);
                 }
             } else if (!mqttService.subscribed && !mqttService.receiveTopic.isEmpty()) {
                 result = new NetworkService.ServiceResult(NetworkService.ResultEnum.genericError, "Not subscribed.");
             } else {
-            JSONObject json = buildJson(send, mqttService, experiment);
+            JSONObject json = buildJson(send, mqttService);
 
             MqttMessage message = new MqttMessage();
             if(mqttService.persistence){
@@ -234,8 +221,7 @@ public class MqttHelper{
 
     public static void sendCsv (MqttService mqttService,
                                 Map<String, NetworkConnection.NetworkSendableData> send,
-                                List<NetworkService.RequestCallback> requestCallbacks,
-                                PhyphoxExperiment experiment) {
+                                List<NetworkService.RequestCallback> requestCallbacks) {
 
         DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
         longformat.applyPattern("############0.000");
@@ -253,17 +239,7 @@ public class MqttHelper{
                     if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
                         payload = item.getValue().metadata.get(mqttService.address);
                     else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER) {
-                        if(mqttService.clearBuffer){
-                            experiment.dataLock.lock();
-                            try {
-                                payload = writeBufferValuesIntoCsvPayload(item,payload);
-                                item.getValue().buffer.clear(false);
-                            }finally {
-                                experiment.dataLock.unlock();
-                            }
-                        }else {
-                            payload = writeBufferValuesIntoCsvPayload(item,payload);
-                        }
+                        payload = writeBufferValuesIntoCsvPayload(item,payload);
                     } else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME)
                         payload = String.valueOf(longformat.format(System.currentTimeMillis()/1000.0));
                     else

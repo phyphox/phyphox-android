@@ -11,18 +11,15 @@ import de.rwth_aachen.phyphox.PhyphoxExperiment;
 
 public class MqttCsv extends MqttService {
     public MqttCsv(String receiveTopic,
-                   Context context,
-                   boolean clearBuffer,
-                   PhyphoxExperiment experiment) {
+                   Context context) {
 
         this.receiveTopic = receiveTopic;
         this.context = context;
         this.clientID = "phyphox_" + String.format("%06x", (System.nanoTime() & 0xffffff));
         this.clearBuffer = clearBuffer;
-        this.experiment = experiment;
     }
 
     public void execute(Map<String, NetworkConnection.NetworkSendableData> send, List<NetworkService.RequestCallback> requestCallbacks) {
-        MqttHelper.sendCsv(this,send,requestCallbacks, experiment);
+        MqttHelper.sendCsv(this,send,requestCallbacks);
     }
 }

@@ -15,17 +15,13 @@ public class MqttJson extends MqttService {
     public MqttJson(String receiveTopic,
                     String sendTopic,
                     Context context,
-                    boolean persistence,
-                    boolean clearBuffer,
-                    PhyphoxExperiment experiment) {
+                    boolean persistence) {
 
         this.receiveTopic = receiveTopic;
         this.sendTopic = sendTopic;
         this.context = context;
         this.persistence = persistence;
         this.clientID = "phyphox_" + String.format("%06x", (System.nanoTime() & 0xffffff));
-        this.clearBuffer = clearBuffer;
-        this.experiment = experiment;
 
         if(persistence){
             setPersistenceSettings();
@@ -35,6 +31,6 @@ public class MqttJson extends MqttService {
     }
 
     public void execute(Map<String, NetworkConnection.NetworkSendableData> send, List<NetworkService.RequestCallback> requestCallbacks) {
-        MqttHelper.sendJson(this,sendTopic,send,requestCallbacks,experiment);
+        MqttHelper.sendJson(this,sendTopic,send,requestCallbacks);
     }
 }

@@ -40,11 +40,15 @@ public abstract class MqttService extends NetworkService.Service {
     PhyphoxExperiment experiment;
 
     public void connect(String address) {
-        this.address = address;
+        Log.d("TEST", address);
+        if (!address.contains("://"))
+            this.address = "tcp://"+ address;
+        else
+            this.address = address;
 
         mqttConnectOptions.setAutomaticReconnect(true);
 
-        client = new MqttAndroidClient(context, address, clientID, dataStore);
+        client = new MqttAndroidClient(context, this.address, clientID, dataStore);
 
         client.setCallback(new MqttCallbackExtended() {
             @Override
