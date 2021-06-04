@@ -38,10 +38,10 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                 BUFFER, METADATA, TIME;
         }
 
-        DataType type;
-        DataBuffer buffer = null;
-        Metadata metadata = null;
-        ExperimentTimeReference timeReference = null;
+        public DataType type;
+        public DataBuffer buffer = null;
+        public Metadata metadata = null;
+        public ExperimentTimeReference timeReference = null;
         public Map<String, String> additionalAttributes = null;
         public NetworkSendableData(DataBuffer buffer) {
             this.type = DataType.BUFFER;
