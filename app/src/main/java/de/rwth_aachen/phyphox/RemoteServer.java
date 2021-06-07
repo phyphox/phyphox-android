@@ -771,7 +771,7 @@ public class RemoteServer extends Thread {
                                 v = Double.valueOf(value);
                             } catch (Exception e) {
                                 //Invalid input
-                                result = "{\"result\": true}";
+                                result = "{\"result\": false}";
                                 break;
                             }
                             if (Double.isNaN(v)) {
