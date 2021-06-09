@@ -285,12 +285,11 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
     };
 
     public void execute(List<NetworkService.RequestCallback> requestCallbacks) {
-        executeRequested = true;
         if (this.requestCallbacks == null)
             this.requestCallbacks = new ArrayList<>();
-        if (requestCallbacks == null)
-            return;
-        this.requestCallbacks.addAll(requestCallbacks);
+        if (requestCallbacks != null)
+            this.requestCallbacks.addAll(requestCallbacks);
+        executeRequested = true;
     }
 
     public void doExecute() {

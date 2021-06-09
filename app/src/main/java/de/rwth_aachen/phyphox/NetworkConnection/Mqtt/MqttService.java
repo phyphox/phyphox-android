@@ -40,7 +40,6 @@ public abstract class MqttService extends NetworkService.Service {
     PhyphoxExperiment experiment;
 
     public void connect(String address) {
-        Log.d("TEST", address);
         if (!address.contains("://"))
             this.address = "tcp://"+ address;
         else
