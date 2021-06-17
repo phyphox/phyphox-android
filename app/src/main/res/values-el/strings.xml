@@ -238,4 +238,14 @@
     <string name="beeperStop">Ήχος λήξης</string>
     <string name="activate_all">Ενεργοποίηση όλων</string>
     <string name="deactivate_all">Απενεργοποίηση όλων</string>
+    <string name="common_unit_short_arbitrary_unit">α.μ</string>
+    <string name="common_quantity_short_acceleration">α</string>
+    <string name="common_direction_short_north">Β</string>
+    <string name="common_direction_short_south">Ν</string>
+    <string name="common_direction_short_east">Α</string>
+    <string name="common_direction_short_west">Δ</string>
+    <string name="common_direction_short_north_east">ΒΑ</string>
+    <string name="common_direction_short_south_east">ΝΑ</string>
+    <string name="common_direction_short_north_west">ΒΔ</string>
+    <string name="common_direction_short_south_west">ΝΔ</string>
 </resources>
