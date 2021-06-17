@@ -2233,6 +2233,12 @@ public class ExperimentList extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
         //Switch from the theme used as splash screen to the theme for the activity
+        //This method is for pre Android 12 devices: We set a theme that shows the splash screen and
+        //on create is executed when all resources are loaded, which then replaces the theme with
+        //the normal one.
+        //On Android 12 this does not hurt, but Android 12 shows its own splash method (defined with
+        //specific attributes in the theme), so the classic splash screen is not shown anyways
+        //before setTheme is called and we see the normal theme right away.
         setTheme(R.style.experimentList);
 
         //Basics. Call super-constructor and inflate the layout.

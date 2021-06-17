@@ -112,6 +112,17 @@
             <data android:scheme="http" />
         </intent>
 
+        <!-- Youtube videos may be opened in the Youtube app -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data  android:scheme="https" android:host="youtube.com" />
+        </intent>
+
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="youtu.be" />
+        </intent>
+
         <!-- Share states and screenshots -->
         <intent>
             <action android:name="android.intent.action.SEND" />
