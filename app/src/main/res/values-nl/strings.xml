@@ -1,15 +1,14 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Instellingen</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="newExperiment">Voeg experimenten toe</string>
     <string name="newExperimentPhyphoxInfo">Ga naar phyphox.org om geavanceerdere experimenten te maken, inclusief data-analyse en deel deze met collega\'s, studenten en vrienden.</string>
     <string name="newExperimentInputTitle">Titel</string>
     <string name="newExperimentInputBufferSize">Buffer omvang (aantal op te slaan getallen)</string>
     <string name="newExperimentInputRate">Sensor frequentie</string>
     <string name="newExperimentInputSensors">Actieve sensoren</string>
-
     <string name="help">Help en info</string>
     <string name="experimentsPhyphoxOrg">Experiment: ideeën en instructies</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -22,11 +21,9 @@
     <string name="translationToSettings">Instellingen</string>
     <string name="translationToWebsite">Bezoek website</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#nl</string>
-
     <string name="warning">Waarschuwing</string>
     <string name="donotshowagain">Niet opnieuw tonen</string>
     <string name="damageWarning">Let op dat tijdens het experimenteren je smartphone niet beschadigd wordt. Laat hem niet vallen op een hard oppervlak en stel hem niet bloot aan sterke magnetische velden. De auteurs van phyphox zijn niet verantwoordelijk voor enige schade aan je smartphone.</string>
-
     <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox werd ontwikkeld aan het Instituut voor Fysica aan de RWTH Aachen University.</string>
@@ -48,25 +45,20 @@
     <string name="sensorTemperature">Temperatuur</string>
     <string name="sensorHumidity">Vochtigheid</string>
     <string name="sensorProximity">Nabijheid/Afstand</string>
-
     <string name="location">Locatie</string>
-
     <string name="sensorNotAvailableWarningTitle">Sensor niet beschikbaar.</string>
     <string name="sensorNotAvailableWarningText1">De sensor</string>
     <string name="sensorNotAvailableWarningText2">is niet beschikbaar. Meestal betekent dit dat uw apparaat niet over dit type sensor beschikt.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Meer informatie</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="ok">OKE</string>
     <string name="close">Sluiten</string>
     <string name="next">Volgende</string>
     <string name="cancel">Annuleer</string>
     <string name="unknown">onbekend</string>
-
     <string name="delete">Verwijder</string>
     <string name="confirmDelete">Wil u dit experiment uit de lijst verwijderen?</string>
     <string name="confirmDeleteTitle">Verwijderen?</string>
-
     <string name="stop">Stop</string>
     <string name="start">Start</string>
     <string name="clear_data">Verwijder data</string>
@@ -74,23 +66,18 @@
     <string name="clear">Verwijder</string>
     <string name="timed_stop">Stop getimede meting</string>
     <string name="timed_start">Start getimede meting</string>
-
     <string name="loadingTitle">Wordt geladen</string>
     <string name="loadingText">Experiment wordt geladen …</string>
-
     <string name="timedRunDialogTitle">Getimede meting</string>
     <string name="timedRunStartDelay">Uitgestelde start (s)</string>
     <string name="timedRunStopDelay">Duur experiment (s)</string>
     <string name="enableTimedRun">Doe een getimede meting</string>
-
     <string name="export">Export Data</string>
     <string name="export_subject">Data van phyphox</string>
     <string name="export_pick_share">Kies een export methode</string>
-
     <string name="share">Schermafbeelding delen</string>
     <string name="share_subject">Schermafbeelding van phyphox</string>
     <string name="share_pick_share">Kies een methode om te delen</string>
-
     <string name="remoteServer">Sta bediening op afstand toe</string>
     <string name="remoteServerWarning">U staat op het punt om toegang op afstand tot de verkregen data mogelijk te maken. Doe dit alleen via een betrouwbaar netwerk! Let er ook op dat een directe toegang tussen toestellen niet mogelijk kan zijn op vele bedrijfs- of universiteitsnetwerken. 
 \n 
@@ -101,14 +88,11 @@
     <string name="remoteServerActive">Bediening op afstand ingeschakeld. Krijg toegang tot dit experiment via volgende URL:
 \n%1$s</string>
     <string name="hotspotSettings">Hotspot Instellingen</string>
-
     <string name="calibrated_magnetometer">Gebruik gekalibreerde magnetometer</string>
-
     <string name="switchToPhoneLayout">Beeld: Smal</string>
     <string name="switchColumns1">Beeld: 1 kolom</string>
     <string name="switchColumns2">Beeld: 2 kolommen</string>
     <string name="switchColumns3">Beeld: 3 kolommen</string>
-
     <string name="show_description">Info over experiment</string>
     <string name="save_locally">Voeg experiment toe aan experimentenlijst</string>
     <string name="save_locally_done">Experiment toegevoegd aan experimentenlijst.</string>
@@ -123,20 +107,14 @@
     <string name="save_state_subject">Status van het experiment voor phyphox</string>
     <string name="save_state_default_title">Meting</string>
     <string name="save_state_success">Status is opgeslagen in uw experimentenlijst.</string>
-
     <string name="timedRun">Getimede meting</string>
-
     <string name="pick_exportSets">Kies datasets om te exporteren.</string>
     <string name="pick_exportFormat">Kies data formaat.</string>
-
     <string name="noDrawableData">Geen visualiseerbare data.</string>
-
     <string name="categoryNewExperiment">Simpele aangepaste experimenten</string>
     <string name="categoryRawSensor">Onbewerkte sensoren</string>
-
     <string name="experimentinfo_hint">Bekijk de experimenteninfo om te weten hoe u dit experiment moet gebruiken.</string>
-
-<string name="graph_tools_pan_and_zoom">Pannen en zoomen</string>
+    <string name="graph_tools_pan_and_zoom">Pannen en zoomen</string>
     <string name="graph_tools_pick">Haal gegevens op</string>
     <string name="graph_tools_more">Meer tools</string>
     <string name="graph_tools_reset">Reset de zoom</string>
@@ -145,34 +123,27 @@
     <string name="graph_tools_export">Exporteer deze dataset</string>
     <string name="graph_tools_log_x">Logaritmische x-as</string>
     <string name="graph_tools_log_y">Logaritmische y-as</string>
-
     <string name="graph_point_label">Punt</string>
     <string name="graph_slope_label">Helling</string>
     <string name="graph_difference_label">Verschil</string>
     <string name="graph_fit_label">Lineaire fit: y = a x + b</string>
-
     <string name="applyZoomTitle">Pas de zoom toe</string>
     <string name="applyZoomExplanation">Je sluit nu de interactieve modus van deze grafiek, je kan aangeven dat je je zoominstelling wenst te behouden.</string>
     <string name="applyZoomAdvanced">Geavanceerde opties</string>
     <string name="applyZoomApply">Pas toe op …</string>
-
     <string name="applyZoomReset">Zet standaardinstelling terug</string>
     <string name="applyZoomKeep">Bewaar je selectie</string>
     <string name="applyZoomFollow">Sla op en volg nieuwe data</string>
-
     <string name="applyZoomThis">Enkel deze grafiek</string>
     <string name="applyZoomSameVariable">Andere grafieken: Zelfde variabele</string>
     <string name="applyZoomSameUnit">Andere grafieken: Zelfde eenheid</string>
     <string name="applyZoomSameAxis">Andere grafieken: Zelfde as</string>
-
     <string name="newExperimentSimple">Voeg een eenvoudig experiment toe</string>
     <string name="newExperimentBluetooth">Voeg een Bluetooth experiment toe</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth scanfout</string>
     <string name="newExperimentBluetoothLoadFromDevice">Laad van apparaat</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Dit apparaat levert een eigen phyphox experiment. Selecteer \'laad van apparaat\' om het te openen.</string>
-
     <string name="newExperimentQR">Voeg experiment toe via QR code</string>
-
     <string name="newExperimentQRscan">Scan een QR code die een phyphox experiment bevat.</string>
     <string name="newExperimentQRErrorTitle">QR codefout.</string>
     <string name="newExperimentQRNoExperiment">Kan geen QR code vinden die een phyphox experiment bevat.</string>
@@ -180,55 +151,39 @@
     <string name="newExperimentQRCodesMissing1">De QR code die je juist scande is deel van een verzameling</string>
     <string name="newExperimentQRCodesMissing2">codes. Duw op Verder (continue) om de overige codes te scannen. Nog ontbrekende codes:</string>
     <string name="newExperimentQRBadCRC">Foute checksum. Dit betekent dat ofwel de QR code fout is ofwel dat er iets misging tijdens het scannen.</string>
-
     <string name="newExperimentBTReadErrorTitle">Fout in Bluetooth experiment.</string>
     <string name="newExperimentBTReadErrorCorrupted">De doorgestuurde experimentdata zijn onbetrouwbaar.</string>
-
     <string name="generalErrorDialog">Er is een fout gebeurd.</string>
-
     <string name="deviceInfo">Apparaatinfo</string>
     <string name="copyToClipboard">Kopieer naar klembord</string>
     <string name="deviceInfoCopied">Het apparaat heeft info gekopieerd naar je klembord.</string>
-
     <string name="gpl">Phyphox is open source software vrijgegeven onder de GNU General Public Licence. Bezoekt http://phyphox.org voor meer informatie en toegang tot de broncode. Niettemin zijn \"phyphox\" en \"RWTH Aachen\" geregistreerde merknamen.</string>
     <string name="sensorVendor">Specifiek voor de leverancier</string>
-
     <string name="vendorSensorTitle">Sensor van specifieke leverancier</string>
     <string name="vendorSensorWarning1">De sensor</string>
     <string name="vendorSensorWarning2">De sensor geeft niet het juiste sensortype weer. Het blijkt specifiek te zijn voor je leverancier en het type kan enkel geraden worden op basis van zijn naam. Bijgevolg is het mogelijk dat het niet naar verwachting werkt.</string>
-
     <string name="tryagain">Probeer nogmaals</string>
     <string name="doContinue">Verder</string>
     <string name="rename">Herbenoem</string>
     <string name="loadingBluetoothConnectionText">Verbinding makend met Bluetooth apparaat …</string>
-
     <string name="remoteServerNoNetwork">Je moet eerst een Wifiverbinding maken met je apparaat. Schakel Wifi in of maak een mobiele hotspot.</string>
     <string name="remoteColorMapWarning">Op het scherm in de op-afstand-besturing is de kleurenplot slechts een benadering. In tegenstelling tot de plot in de app, kan momenteel op afstand niet gewerkt worden met niet-equidistante gegevens of logaritmische schalen op de x- en y-as. Zodoende kunnen gegevens in verschillende intervallen op foute posities terecht komen.</string>
-
     <string name="force_gnss">Enkel satellietlocatie</string>
-
     <string name="fontSize">Lettergroote</string>
-
     <string name="open_zip_title">Een reeks experimenten openen</string>
     <string name="open_zip_dialog_instructions">Deze bron bevat meerdere experimenten. Je kunt er een uitkiezen en openen en het eventueel opslaan in je verzameling experimenten of de knop hieronder gebruiken om ze allemaal in een keer op te slaan in je verzameling.</string>
     <string name="open_save_all">Alles opslaan</string>
-
     <string name="open_bluetooth_assets_title">Experimenten voor Bluetooth apparaat</string>
     <string name="open_bluetooth_assets">Volgende experimenten zijn via phyphox beschikbaar op jouw smartphone. Je kunt er een openen en gebruiken of ze alle toevoegen aan je verzameling experimenten om ze makkelijk op te roepen vanuit het hoofdmenu.</string>
-
     <string name="start_hint">Tik op de driehoek om het experiment te starten.</string>
-
     <string name="bluetooth">Bluetooth Lage Energie</string>
     <string name="bt_android_version">Bluetooth Lage Energie wordt niet ondersteund op Android versies lager dan 4.3.</string>
-
     <string name="bt_pick_device">Kies een apparaat.</string>
     <string name="bt_scanning_generic">Zoeken naar Bluetooth apparaten …</string>
     <string name="bt_scanning_specific1">Zoeken naar Bluetooth apparaten met</string>
     <string name="bt_scanning_specific2">in hun naam …</string>
     <string name="bt_device_not_supported">Geen experiment beschikbaar.</string>
-
     <string name="bt_location_explanation">Android vereist toestemming om de locatie van je apparaat te kennen voor Bluetooth scans. We gaan nu die toestemming vragen. Je moet dit toestaan om een Bluetooth scan uit te voeren.</string>
-
     <string name="bt_exception_uuid">Karakteristiek met UUID</string>
     <string name="bt_exception_uuid2">niet gevonden.</string>
     <string name="bt_exception_disabled">"Bluetooth is uitgeschakeld. Schakel Bluetooth  in en probeer opnieuw."</string>
@@ -249,15 +204,17 @@
     <string name="bt_exception_no_connection">Het Bluetooth apparaat is niet geconnecteerd. Het experiment kan niet gestart worden.</string>
     <string name="bt_exception_disconnected">Het Bluetooth apparaat is gedeconnecteerd.</string>
     <string name="bt_default_error_message">Er is een fout met het Bluetooth apparaat.</string>
-
     <string name="bt_error_writing">Fout bij het schrijven van UUID-karakeristiek</string>
     <string name="bt_error_reading">Fout bij het inlezen van UUID-karakeristiek</string>
     <string name="bt_error_discovering">Fout bij het schrijven naar Bluetooth apparaat.</string>
     <string name="bt_fail_reading">Het inlezen was niet succesvol.</string>
     <string name="bt_fail_writing">De schrijfoperatie was niet succesvol.</string>
-
     <string name="bt_more_info_link_text">Als je apparaat niet ondersteund wordt, klik dan op \"meer info\" om meer te leren over de flexibele Bluetooth Low Energy ondersteuning in phyphox op onze website.</string>
     <string name="bt_more_info_link_button">Meer info</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
+    <string name="common_direction_short_south">Z</string>
+    <string name="common_direction_short_east">O</string>
+    <string name="common_direction_short_north_east">NO</string>
+    <string name="common_direction_short_south_east">ZO</string>
+    <string name="common_direction_short_south_west">ZW</string>
 </resources>
