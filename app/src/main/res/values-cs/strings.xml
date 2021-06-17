@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">phyphox</string>
     <string name="switchColumns1">Zobrazit: 1 sloupec</string>
@@ -106,12 +106,11 @@
     <string name="loadingTitle">Načítám</string>
     <string name="experimentsPhyphoxOrg">Nápady a návody k experimentům</string>
     <string name="save_state_share">Sdílet</string>
-<string name="translationInfo">Volba jazyka</string>
+    <string name="translationInfo">Volba jazyka</string>
     <string name="translationText">Phyphox se zobrazuje v tom jazyce, který je první na seznamu preferovaných jazyků v nastavení systému android vašeho zařízení. Přímý odkaz k příslušnému nastavení najdete pod tímto textem (tlačítko \"nastavení\"). Ne všechny jazyky jsou ovšem aplikací phyphox podporovány. Chcete-li zjistit, které jazyky jsou k dispozici, nebo byste chtěli pomoci s překladem, zmáčkěte tlačítko \"Navštivte internetovou stránku\".</string>
     <string name="translationToSettings">Nastavení</string>
     <string name="translationToWebsite">Navštivte internetovou stránku</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#cs</string>
-
     <string name="graph_tools_pan_and_zoom">Posouvat či přibližovat</string>
     <string name="graph_tools_pick">Vyberte data</string>
     <string name="graph_tools_more">Další nástroje</string>
@@ -120,30 +119,24 @@
     <string name="graph_tools_export">Exportovat tato data</string>
     <string name="graph_tools_log_x">Logarytmická osa x</string>
     <string name="graph_tools_log_y">Logarytmická osa y</string>
-
     <string name="graph_point_label">Bod</string>
     <string name="graph_slope_label">Sklon</string>
     <string name="graph_difference_label">Rozdíl</string>
     <string name="graph_fit_label">Lineární fitování: y= a x + b</string>
-
     <string name="applyZoomTitle">Provést zoom</string>
     <string name="applyZoomExplanation">Vzlehem k tomu, že vypínáte interaktivní verzi tohoto grafu, můžete se rozhodnout zachovat současné přiblížení grafu.</string>
     <string name="applyZoomAdvanced">Pokročilé nastavení</string>
     <string name="applyZoomApply">Aplikovat na…</string>
-
     <string name="applyZoomReset">Nastavit výchozí nastavení</string>
     <string name="applyZoomThis">Pouze tento graf</string>
     <string name="applyZoomSameVariable">Ostatní grafy: Stejná proměnná</string>
     <string name="applyZoomSameUnit">Ostatní grafy: Stejná jednotka</string>
     <string name="applyZoomSameAxis">Ostatní grafy: Stejná osa</string>
-
     <string name="newExperimentSimple">Přidat experiment</string>
     <string name="newExperimentBluetooth">Přidat experiment pro bluetoothové zařízení</string>
     <string name="newExperimentBluetoothLoadFromDevice">Načíst ze zařízení</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Toto zařízení obsahuje svůj vlastní phyphox experiment. Zvolte možnost načíst ze zařízení k jeho spuštění.</string>
-
     <string name="newExperimentQR">Přidat experiment pomocí QR kódu.</string>
-
     <string name="newExperimentQRscan">Naskenujte QR kód obsahující phyphox experiment.</string>
     <string name="newExperimentQRErrorTitle">Chyba QR kódu.</string>
     <string name="newExperimentQRNoExperiment">Nepodařilo se najít QR kód obsahující experiment pro phyphox.</string>
@@ -151,51 +144,36 @@
     <string name="newExperimentQRCodesMissing1">QR kód, který jste právě naskenoval/a, je součástí sady</string>
     <string name="newExperimentQRCodesMissing2">kódů. Prosím stiskněte pokračovat k naskenování zbytku kódů. Stále chybějící kódy:</string>
     <string name="newExperimentQRBadCRC">Neplatný kontrolní součet. To znamená, že buď je QR poškozen nebo nesprávný nebo došlo k chybě při jeho skenování.</string>
-
     <string name="newExperimentBTReadErrorTitle">Chyba bluetoothového experimentu.</string>
     <string name="newExperimentBTReadErrorCorrupted">Přenášená data experimentu jsou poškozena.</string>
-
     <string name="generalErrorDialog">Nastala chyba.</string>
-
     <string name="deviceInfo">Informace o zařízení</string>
     <string name="copyToClipboard">Zkopírovat do schránky</string>
     <string name="deviceInfoCopied">Informace o zařízení byly zkopírovány do schránky.</string>
-
     <string name="gpl">Phyphox je otevřený software vydaný pod GNU Všeobecnou veřejnou licencí. Pro více informací čí přístup ke zdrojovému kódu prosím navštivte http://phyphox.org. Nicméně, název \"phyphox\" a \"RWTH Aachen\" jsou chráněné.</string>
     <string name="sensorVendor">Závisí na výrobci</string>
-
     <string name="vendorSensorTitle">Senzor - typ závisí na výrobci</string>
     <string name="vendorSensorWarning1">Senzor</string>
     <string name="vendorSensorWarning2">nehlásí ve správném formátu typ senzoru. Zdá se, že jde o senzor specifický pro daného výrobce, a jeho fuknce byla odhadnuta pouze z jeho názvu. Senzor proto nemusí fungovat přesně tak, jak by měl.</string>
-
     <string name="tryagain">Zkuste to znovu</string>
     <string name="doContinue">Pokračovat</string>
     <string name="rename">Přejmenovat</string>
     <string name="loadingBluetoothConnectionText">Připojuji Bluetoothové zařízení…</string>
-
     <string name="remoteServerNoNetwork">Nejdříve je třeba nastavit Wifi připojení ke vzdálenému zařízení. Prosím povolte Wifi nebo vytvořte mobilní hotspot.</string>
     <string name="remoteColorMapWarning">Barevně vynesená data na vzdáleném zařízení jsou pouhou aproximací. Narozdíl od vykreslování v rámci aplikace tato metoda zatím nezvládá ne-ekvidistantní data nebo logaritmickou škálu os x a y. Proto se mohou data v různých intervalech objevovat na špatných místech.</string>
-
     <string name="force_gnss">GPS - jen satelit</string>
-
     <string name="fontSize">Velikost písma.</string>
-
     <string name="open_zip_title">Otevírám sadu experimentů</string>
     <string name="open_zip_dialog_instructions">Vybraná položka obsahuje několik experimentů. Můžete si vybrat, který otevřete nebo uložíte do vaší sbírky experimentů nebo můžete také uložit všechny experimenty najednou pomocí tlačítka dole.</string>
     <string name="open_save_all">Uložit všechny</string>
-
     <string name="open_bluetooth_assets">Následující experimenty určené pro vaše zařízení jsou dostupné skrze phyphox. Můžete je buď rovnou otevřít nebo si je přidat do vaší sbírky, abyste k nim měli snadný přístup z hlavního menu.</string>
-
     <string name="start_hint">Dotkněte se trojúhelníku pro spuštění experimentu.</string>
-
     <string name="bt_pick_device">Prosím vyberte si zařízení.</string>
     <string name="bt_scanning_generic">Hledám zařízení Bluetooth…</string>
     <string name="bt_scanning_specific1">Vyhledávám bluetooth zařízení s</string>
     <string name="bt_scanning_specific2">v názvu…</string>
     <string name="bt_device_not_supported">Žádný experiment není k dispozici.</string>
-
     <string name="bt_location_explanation">Android vyžaduje povolení zjišťění lokace, kvůli vyhledávání Bluetooth zařízení, neboť výsledky mohou být použity ke zjištění vaší pozice. Za okamžik dojde k vyžádání těchto povolení. Chcete-li provést Bluetooth vyhledávání musíte povolení udělit.</string>
-
     <string name="bt_exception_uuid">Charakteristika s UUID</string>
     <string name="bt_exception_uuid2">nenalezeno.</string>
     <string name="bt_exception_disabled">Bluetooth je vypnutý. Prosíme zapněte bluetooth a zkuste to znovu.</string>
@@ -203,7 +181,6 @@
     <string name="bt_exception_notfound">Zařízení Bluetooth nebylo nalezeno.</string>
     <string name="bt_exception_services">Nebylo možné načíst \"services\" ze zařízení.</string>
     <string name="bt_android_version">Technologie Bluetooth Low Energy je podporována Androidem až od verze 4.3. dál.</string>
-
     <string name="bt_exception_device_address">adresa</string>
     <string name="bt_exception_device_name">jméno</string>
     <string name="bt_exception_notification">Notifikace charakteristik UUID</string>
@@ -216,24 +193,28 @@
     <string name="bt_exception_no_connection">Bluetooth zařízení není připojené. Experiment nemohl být začat.</string>
     <string name="bt_exception_disconnected">Bluetooth zařízení bylo odpojeno.</string>
     <string name="bt_default_error_message">Zařízení Bluetooth vykazuje poruchu.</string>
-
     <string name="bt_error_writing">Chyba při zapisování charakteristik UUID</string>
     <string name="bt_error_reading">Chyba při čtení charakteristik UUID</string>
     <string name="bt_error_discovering">Chyba při prozokoumávání \"services\" zařízení Bluetooth.</string>
     <string name="bt_fail_reading">Operace načítání nebyla úspěšná.</string>
     <string name="bt_fail_writing">Operace zápis nebyla úspěšná.</string>
-
     <string name="bt_more_info_link_text">Pokud vaše zařízení není podporováno, pak zvolte možnost \"více informací\" abyste se na našich stránkách dozvěděli, jak phyphox podporuje flexibilní Bluetooth Low Energy.</string>
     <string name="bt_more_info_link_button">Více informací</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
-<string name="graph_tools_follow">Sledovat nová data</string>
+    <string name="graph_tools_follow">Sledovat nová data</string>
     <string name="applyZoomKeep">Ponechat nastavení</string>
     <string name="applyZoomFollow">Ponechat nastavení a sledovat nová data</string>
-
     <string name="newExperimentBluetoothErrorTitle">Chyba Bluetooth skenu</string>
     <string name="open_bluetooth_assets_title">Experimenty pro vybrané Bluetooth zařízení</string>
     <string name="bluetooth">Bluetooth Low Energy</string>
     <string name="bt_exception_device">Chyba zařízení se</string>
     <string name="bt_exception_rate">Neplatná hodnota \"rate\".</string>
-    </resources>
+    <string name="common_direction_short_north">S</string>
+    <string name="common_direction_short_south">J</string>
+    <string name="common_direction_short_east">V</string>
+    <string name="common_direction_short_west">Z</string>
+    <string name="common_direction_short_north_east">SV</string>
+    <string name="common_direction_short_south_east">JV</string>
+    <string name="common_direction_short_north_west">SZ</string>
+    <string name="common_direction_short_south_west">JZ</string>
+</resources>
