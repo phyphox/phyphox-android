@@ -228,4 +228,5 @@
     <string name="leave_experiment">Abandonar experimento</string>
     <string name="leave_experiment_question">¿Salir del experimento y descartar los datos grabados\?</string>
     <string name="leave">Salir</string>
+    <string name="common_quantity_short_sound_pressure_level">NPS</string>
 </resources>
