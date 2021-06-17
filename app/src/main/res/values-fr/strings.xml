@@ -1,15 +1,14 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Paramètres</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="newExperiment">Ajouter des expériences</string>
     <string name="newExperimentPhyphoxInfo">Visitez le site phyphox.org si vous voulez créer des expériences plus avancées (avec de l\'analyse de données, du partage avec des collègues, des étudiants ou des amis).</string>
     <string name="newExperimentInputTitle">Titre</string>
     <string name="newExperimentInputBufferSize">Taille du buffer (nombre de valeurs à enregistrer)</string>
     <string name="newExperimentInputRate">Fréquence de mesure (en hertz, 0 = aussi vite que possible)</string>
     <string name="newExperimentInputSensors">Capteurs activés</string>
-
     <string name="help">Aide et informations</string>
     <string name="experimentsPhyphoxOrg">Suggestions d\'expériences et instructions</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -22,11 +21,9 @@
     <string name="translationToSettings">Paramètres</string>
     <string name="translationToWebsite">Visiter le site web</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#fr</string>
-
     <string name="warning">Attention</string>
     <string name="donotshowagain">Ne plus montrer</string>
     <string name="damageWarning">Soyez prudents ! Faites attention à ne pas endommager votre téléphone pendant vos expériences. Veuillez faire particulièrement attention à ne pas le laisser tomber sur des surfaces dures, et ne pas l\'exposer à des champs magnétiques excessifs. Les auteurs de phyphox ne sont pas responsables des dommages éventuels de votre téléphone.</string>
-
     <string name="info">Info</string>
     <string name="credits">Crédits</string>
     <string name="creditsRWTH">phyphox® a été créé à l\'institut de physique II de l\'université technique de Rhénanie-Westphalie à Aix-la-Chapelle (RWTH Aachen University).</string>
@@ -47,45 +44,36 @@
     <string name="sensorTemperature">Température</string>
     <string name="sensorHumidity">Humidité</string>
     <string name="sensorProximity">Proximité</string>
-
     <string name="location">Localisation</string>
-
     <string name="sensorNotAvailableWarningTitle">Capteur non disponible.</string>
     <string name="sensorNotAvailableWarningText1">Le capteur</string>
     <string name="sensorNotAvailableWarningText2">n\'est pas disponible. La raison la plus probable est que votre téléphone ne dispose pas de ce capteur.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Plus d\'informations</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="ok">OK</string>
     <string name="close">Fermer</string>
     <string name="next">Suite</string>
     <string name="cancel">Annuler</string>
     <string name="unknown">inconnu</string>
-
     <string name="delete">Supprimer</string>
     <string name="confirmDelete">Voulez-vous supprimer cette expérience de votre collection ?</string>
     <string name="confirmDeleteTitle">Confirmation de suppression</string>
-
     <string name="stop">Stop</string>
     <string name="start">Début</string>
     <string name="clear_data">Effacer les données</string>
     <string name="clear_data_question">Voulez-vous effacer les données mesurées ?</string>
     <string name="clear">Effacer</string>
     <string name="loadingText">Chargement de l\'expérience…</string>
-
     <string name="timedRunDialogTitle">Expérience chronométrée</string>
     <string name="timedRunStartDelay">Délai avant de commencer (s)</string>
     <string name="timedRunStopDelay">Durée de l\'expérience (s)</string>
     <string name="enableTimedRun">Faire des mesures pendant un temps donné</string>
-
     <string name="export">Exporter les mesures</string>
     <string name="export_subject">Mesures de phyphox</string>
     <string name="export_pick_share">Choisissez votre moyen d\'exporter les mesures</string>
-
     <string name="share">Partager une capture d\'écran</string>
     <string name="share_subject">Capture d\'écran de phyphox</string>
     <string name="share_pick_share">Choisissez votre moyen de partage</string>
-
     <string name="remoteServer">Autoriser le contrôle à distance</string>
     <string name="remoteServerWarning">Vous êtes sur le point d\'activer l\'accès à distance aux mesures. Vous ne devez le faire que sur un réseau de confiance ! Notez également que l\'accès direct entre appareils peut ne pas être possible sur de certains réseaux d\'entreprise ou universitaires.
 \n
@@ -96,14 +84,11 @@
     <string name="remoteServerActive">Contrôle à distance activé. Les mesures de l\'expérience sont disponibles sur le lien suivant : 
 \n%1$s</string>
     <string name="hotspotSettings">Paramètres de partage de connexion</string>
-
     <string name="calibrated_magnetometer">Utilise la calibration du magnétomètre</string>
-
     <string name="switchToPhoneLayout">Affichage : étroit</string>
     <string name="switchColumns1">Affichage : 1 colonne</string>
     <string name="switchColumns2">Affichage : 2 colonnes</string>
     <string name="switchColumns3">Affichage : 3 colonnes</string>
-
     <string name="show_description">Information sur l\'expérience</string>
     <string name="save_locally">Ajouter l\'expérience à la collection</string>
     <string name="save_locally_done">Ajout réussi de l\'expérience à la collection.</string>
@@ -115,35 +100,28 @@
     <string name="graph_tools_export">Exporter ces données</string>
     <string name="graph_tools_log_x">Échelle logarithmique pour l\'axe x</string>
     <string name="graph_tools_log_y">Échelle logarithmique pour l\'axe y</string>
-
     <string name="graph_point_label">Point</string>
     <string name="graph_slope_label">Pente</string>
     <string name="graph_difference_label">Différence</string>
     <string name="graph_fit_label">Fit linéaire : y = a x + b</string>
-
     <string name="graph_tools_follow">Suivre nouvelles données</string>
     <string name="applyZoomTitle">Conserver le zoom</string>
     <string name="applyZoomExplanation">Vous quittez le mode interactif de ce graphe, vous pouvez choisir de conserver le zoom ou non.</string>
     <string name="applyZoomAdvanced">Options avancées</string>
     <string name="applyZoomApply">Appliquer à…</string>
-
     <string name="applyZoomReset">Revenir aux valeurs par défaut</string>
     <string name="applyZoomKeep">Conserver le zoom actuel</string>
     <string name="applyZoomFollow">Conserver, et s\'adapter aux nouvelles mesures</string>
-
     <string name="applyZoomThis">Ce graphe uniquement</string>
     <string name="applyZoomSameVariable">Les graphes avec le même paramètre</string>
     <string name="applyZoomSameUnit">Les graphes avec la même unité</string>
     <string name="applyZoomSameAxis">Les graphes avec le même axes</string>
-
     <string name="newExperimentSimple">Ajouter une expérience simple</string>
     <string name="newExperimentBluetooth">Ajouter une expérience avec un appareil Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Recherche Bluetooth : erreur</string>
     <string name="newExperimentBluetoothLoadFromDevice">Charger l\'expérience</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Cet appareil vous propose une expérience phyphox adaptée. Sélectionnez \"charger l\'expérience\" pour la récupérer.</string>
-
     <string name="newExperimentQR">Ajouter une expérience à partir d\'un QR code</string>
-
     <string name="newExperimentQRscan">Scanner le QR code contenant l\'expérience phyphox.</string>
     <string name="newExperimentQRErrorTitle">Erreur de QR code.</string>
     <string name="newExperimentQRNoExperiment">Impossible de reconnaitre un QR code contenant une expérience phyphox.</string>
@@ -151,40 +129,29 @@
     <string name="newExperimentQRCodesMissing1">Le QR code que vous venez de scanner fait partie d\'une série de</string>
     <string name="newExperimentQRCodesMissing2">codes. Appuyez sur \"continuer\" pour scanner les suivants. QR codes restant :</string>
     <string name="newExperimentQRBadCRC">Checksum invalide. Soit le QR code est mauvais, soit il y a eu un problème lors du scan.</string>
-
     <string name="newExperimentBTReadErrorTitle">Erreur Bluetooth pendant l\'expérience.</string>
     <string name="newExperimentBTReadErrorCorrupted">Les données transmises sont corrompues.</string>
-
     <string name="generalErrorDialog">Une erreur est survenue.</string>
-
     <string name="deviceInfo">Information sur l\'appareil</string>
     <string name="copyToClipboard">Copier dans le presse-papiers</string>
     <string name="deviceInfoCopied">Les informations de votre appareil ont été copiées dans le presse-papiers.</string>
-
     <string name="gpl">Phyphox® est un logiciel open source distribué sous licence GNU General Public License. Veuillez visiter http://phyphox.org pour plus d\'informations et pour accéder à son code source. Cependant, les noms \"phyphox\" et \"RWTH Aachen\" sont des marques déposées.</string>
     <string name="sensorLinearAcceleration">Accélération linéaire</string>
     <string name="sensorVendor">Spécifique au fabricant</string>
-
     <string name="vendorSensorTitle">Capteur spécifique au fabricant</string>
     <string name="vendorSensorWarning1">Le capteur</string>
     <string name="vendorSensorWarning2">n\'indique pas clairement sa fonction. Il est spécifique au fabricant, et nous ne pouvons que deviner son type à partir de son nom. En conséquence, il est possible que cela ne marche pas comme attendu...</string>
-
     <string name="tryagain">Nouvel essai</string>
     <string name="doContinue">Continuer</string>
     <string name="rename">Renommer</string>
     <string name="timed_stop">Arrêt de la mesure</string>
     <string name="timed_start">Début de la mesure</string>
-
     <string name="loadingTitle">Chargement</string>
     <string name="loadingBluetoothConnectionText">Connexion à l\'appareil Bluetooth…</string>
-
     <string name="remoteServerNoNetwork">Vous devez d\'abord établir une connexion Wifi avec le périphérique distant. Veuillez activer le Wifi ou créer un point d\'accès mobile.</string>
     <string name="remoteColorMapWarning">Le graphique couleur/3D dans l\'interface à distance n\'est qu\'une approximation. Contrairement au graphique dans l\'application, il ne gère pas les points non-équidistants ou les échelles logarithmiques sur les axes x et y. Ainsi les données acquises avec des intervalles irréguliers apparaitront au mauvais endroit.</string>
-
     <string name="force_gnss">Localisation par satellite uniquement</string>
-
     <string name="fontSize">taille de la police</string>
-
     <string name="save_locally_message">Cette expérience a été ouverte depuis une source à distance. Voulez-vous l\'ajouter à votre propre collection d\'expériences ?</string>
     <string name="save_locally_button">Enregistrer l\'expérience</string>
     <string name="save_state">Enregistrer l\'état de cette expérience</string>
@@ -196,38 +163,27 @@
     <string name="save_state_subject">État de l\'expérience phyphox</string>
     <string name="save_state_default_title">Mesures</string>
     <string name="save_state_success">Cette expérience à été enregistrée dans votre collection en l\'état.</string>
-
     <string name="open_zip_title">Ouverture d\'une série d\'expériences</string>
     <string name="open_zip_dialog_instructions">Cette ressource contient plusieurs expériences. Vous pouvez en choisir une pour l\'ouvrir et éventuellement l\'enregistrer dans votre collection, ou utiliser le bouton ci-dessous pour les enregistrer toutes en même temps dans votre collection.</string>
     <string name="open_save_all">Enregistrer tout</string>
-
     <string name="open_bluetooth_assets_title">Expériences propres aux appareils Bluetooth</string>
     <string name="open_bluetooth_assets">Les expériences suivantes sont propres à cet appareil Bluetooth sont disponibles auprès de Phyphox. Vous pouvez les ouvrir et les utiliser, ou bien les ajouter à votre collection pour y accéder facilement à partir du menu principal.</string>
-
     <string name="timedRun">Définir le temps de mesure</string>
-
     <string name="pick_exportSets">Choisir le jeu de données à exporter.</string>
     <string name="pick_exportFormat">Choisir le format des données.</string>
-
     <string name="noDrawableData">N.A.</string>
-
     <string name="categoryNewExperiment">Expériences simples personnalisées</string>
     <string name="categoryRawSensor">Capteurs</string>
-
     <string name="experimentinfo_hint">Regardez les informations sur l\'expérience pour apprendre comment l\'utiliser.</string>
     <string name="start_hint">Appuyez sur le triangle pour commencer l\'expérience.</string>
-
     <string name="bluetooth">Bluetooth à basse consommation</string>
     <string name="bt_android_version">La technologie Bluetooth à basse consommation n\'est pas compatible avec les versions Android antérieures à 4.3.</string>
-
     <string name="bt_pick_device">Choisissez un appareil.</string>
     <string name="bt_scanning_generic">Recherche d\'appareils Bluetooth…</string>
     <string name="bt_scanning_specific1">Recherche d\'appareils Bluetooth avec</string>
     <string name="bt_scanning_specific2">dans leur nom…</string>
     <string name="bt_device_not_supported">Pas d\'expérience disponible.</string>
-
     <string name="bt_location_explanation">Android requiert une autorisation de localisation pour les recherche d\'appareils Bluetooth car le résultat pourrait être utilisé pour déterminer des informations sur votre localisation. Nous allons maintenant demander ces autorisations. Vous devez les accepter pour pouvoir lancer la recherche d\'appareils Bluetooth.</string>
-
     <string name="bt_exception_uuid">Characteristic with UUID</string>
     <string name="bt_exception_uuid2">not found.</string>
     <string name="bt_exception_disabled">Le Bluetooth n\'est pas activé. Merci de l\'activer avant de recommencer.</string>
@@ -248,21 +204,17 @@
     <string name="bt_exception_no_connection">L\'appareil Bluetooth n\'est pas connecté. Impossible de commencer l\'expérience.</string>
     <string name="bt_exception_disconnected">L\'appareil Bluetooth a été déconnecté.</string>
     <string name="bt_default_error_message">Il y a une erreur avec l\'appareil Bluetooth.</string>
-
     <string name="bt_error_writing">Error while writing characteristic with UUID</string>
     <string name="bt_error_reading">Error while reading characteristic with UUID</string>
     <string name="bt_error_discovering">Error while discovering the services of the bluetooth device.</string>
     <string name="bt_fail_reading">The reading operation was not successful.</string>
     <string name="bt_fail_writing">The writing operation was not successful.</string>
-
     <string name="bt_more_info_link_text">Si votre appareil n\'est pas pris en charge, cliquez sur \"plus d\'infos\" pour en savoir plus sur la prise en charge par phyphox du Bluetooth à basse consommation (Bluetooth Low Energy, BLE) sur notre site Web.</string>
     <string name="bt_more_info_link_button">Plus d\'info</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
-<string name="export_empty">Cette configuration expérimentale ne nécessite pas de définir de données à exporter. Si il s\'agit d\'une erreur, merci de contacter le responsable du QR code ou du fichier de configuration.</string>
+    <string name="export_empty">Cette configuration expérimentale ne nécessite pas de définir de données à exporter. Si il s\'agit d\'une erreur, merci de contacter le responsable du QR code ou du fichier de configuration.</string>
     <string name="toggleBrightMode">Mode Lumineux</string>
     <string name="bt_location_service_explanation">En plus de l\'autorisation d\'obtenir des informations sur la localisation, Android exige que les services de localisation soient activés pour les scans Bluetooth car le résultat pourrait être utilisé pour trouver des informations de localisation. Nous vous redirigerons vers les paramètres de votre système.</string>
-
     <string name="networkPrivacyWarning">Avertissement de confidentialité</string>
     <string name="networkVisitPrivacyURL">Politique de confidentialité</string>
     <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que phyphox peut transmettre les informations suivantes si vous démarrez cette expérience :"</string>
@@ -272,5 +224,71 @@
     <string name="networkPrivacySensorLocation">Données de localisation (données GPS ou similaires).</string>
     <string name="networkPrivacyDeviceInfo">Des informations détaillées sur le modèle de votre appareil et / ou la version de phyphox.</string>
     <string name="networkPrivacySensorInfo">Détails techniques sur les capteurs suivants :</string>
-
+    <string name="common_unit_short_arbitrary_unit">u.a.</string>
+    <string name="common_direction_short_west">O</string>
+    <string name="common_direction_short_north_west">NO</string>
+    <string name="common_direction_short_south_west">SO</string>
+    <string name="common_musical_note_a2">La 1</string>
+    <string name="common_musical_note_bb2">La# 1 / Sib 1</string>
+    <string name="common_musical_note_b2">Si 1</string>
+    <string name="common_musical_note_a3">La 2</string>
+    <string name="common_musical_note_bb3">La# 2 / Sib 2</string>
+    <string name="common_musical_note_b3">Si 2</string>
+    <string name="common_musical_note_c3">Do 2</string>
+    <string name="common_musical_note_db3">Do# 2 / Réb 2</string>
+    <string name="common_musical_note_d3">Ré 2</string>
+    <string name="common_musical_note_eb3">Ré# 2 / Mib 2</string>
+    <string name="common_musical_note_e3">Mi 2</string>
+    <string name="common_musical_note_f3">Fa 2</string>
+    <string name="common_musical_note_gb3">Fa# 2 / Solb 2</string>
+    <string name="common_musical_note_g3">Sol 2</string>
+    <string name="common_musical_note_ab3">Sol# 2 / Lab 2</string>
+    <string name="common_musical_note_a4">La 3</string>
+    <string name="common_musical_note_bb4">La# 3 / Sib 3</string>
+    <string name="common_musical_note_b4">Si 3</string>
+    <string name="common_musical_note_c4">Do 3</string>
+    <string name="common_musical_note_db4">Do# 3 / Réb 3</string>
+    <string name="common_musical_note_d4">Ré 3</string>
+    <string name="common_musical_note_eb4">Ré# 3 / Mib 3</string>
+    <string name="common_musical_note_e4">Mi 3</string>
+    <string name="common_musical_note_f4">Fa 3</string>
+    <string name="common_musical_note_gb4">Fa# 3 / Solb 3</string>
+    <string name="common_musical_note_g4">Sol 3</string>
+    <string name="common_musical_note_ab4">Sol# 3 / Lab 3</string>
+    <string name="common_musical_note_a5">La 4</string>
+    <string name="common_musical_note_bb5">La# 4 / Sib 4</string>
+    <string name="common_musical_note_b5">Si 4</string>
+    <string name="common_musical_note_c5">Do 4</string>
+    <string name="common_musical_note_db5">Do# 4 / Réb 4</string>
+    <string name="common_musical_note_d5">Ré 4</string>
+    <string name="common_musical_note_eb5">Ré# 4 / Mib 4</string>
+    <string name="common_musical_note_e5">Mi 4</string>
+    <string name="common_musical_note_f5">Fa 4</string>
+    <string name="common_musical_note_gb5">Fa# 4 / Solb 4</string>
+    <string name="common_musical_note_g5">Sol 4</string>
+    <string name="common_musical_note_ab5">Sol# 4 / Lab 4</string>
+    <string name="common_musical_note_a6">La 5</string>
+    <string name="common_musical_note_bb6">La# 5 / Sib 5</string>
+    <string name="common_musical_note_b6">Si 5</string>
+    <string name="common_musical_note_c6">Do 5</string>
+    <string name="common_musical_note_db6">Do# 5 / Réb 5</string>
+    <string name="common_musical_note_d6">Ré 5</string>
+    <string name="common_musical_note_eb6">Ré# 5 / Mib 5</string>
+    <string name="common_musical_note_e6">Mi 5</string>
+    <string name="common_musical_note_f6">Fa 5</string>
+    <string name="common_musical_note_gb6">Fa# 5 / Solb 5</string>
+    <string name="common_musical_note_g6">Sol 5</string>
+    <string name="common_musical_note_ab6">Sol# 5 / Lab 5</string>
+    <string name="common_musical_note_a7">La 6</string>
+    <string name="common_musical_note_bb7">La# 6 / Sib 6</string>
+    <string name="common_musical_note_b7">Si 6</string>
+    <string name="common_musical_note_c7">Do 6</string>
+    <string name="common_musical_note_db7">Do# 6 / Réb 6</string>
+    <string name="common_musical_note_d7">Ré 6</string>
+    <string name="common_musical_note_eb7">Ré# 6 / Mib 6</string>
+    <string name="common_musical_note_e7">Mi 6</string>
+    <string name="common_musical_note_f7">Fa 6</string>
+    <string name="common_musical_note_gb7">Fa# 6 / Solb 6</string>
+    <string name="common_musical_note_g7">Sol 6</string>
+    <string name="common_musical_note_ab7">Sol# 6 / Lab 6</string>
 </resources>
