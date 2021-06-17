@@ -226,4 +226,27 @@
     <string name="networkPrivacySensorLocation">位置數據（GPS數據或類似數據）。</string>
     <string name="networkPrivacyDeviceInfo">有關您的手機型號或手機物理實作版本的詳細信息。</string>
     <string name="networkPrivacySensorInfo">有關以下感應器的技術細節：</string>
+    <string name="common_unit_short_second">秒</string>
+    <string name="common_unit_short_milli_second">毫秒</string>
+    <string name="common_unit_short_hertz">赫茲</string>
+    <string name="common_unit_short_micro_tesla">微特斯拉</string>
+    <string name="common_unit_short_lux">勒克斯</string>
+    <string name="common_unit_short_degree">度</string>
+    <string name="common_unit_short_meter">公尺</string>
+    <string name="common_unit_short_centi_meter">公分</string>
+    <string name="common_unit_short_kilo_meter">公里</string>
+    <string name="common_unit_short_meter_per_second">公尺/秒</string>
+    <string name="common_unit_short_meter_per_square_second">公尺/秒²</string>
+    <string name="common_unit_short_radian_per_second">弧度/秒</string>
+    <string name="common_unit_short_hecto_pascal">百帕</string>
+    <string name="common_unit_short_decibel">分貝</string>
+    <string name="common_unit_short_percent">百分比</string>
+    <string name="common_direction_short_north">北</string>
+    <string name="common_direction_short_south">南</string>
+    <string name="common_direction_short_east">東</string>
+    <string name="common_direction_short_west">西</string>
+    <string name="common_direction_short_north_east">東北</string>
+    <string name="common_direction_short_south_east">東南</string>
+    <string name="common_direction_short_north_west">西北</string>
+    <string name="common_direction_short_south_west">西南</string>
 </resources>
