@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -65,20 +66,24 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.13";
+    public final static String phyphoxFileVersion = "1.14";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
     private static int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
-    private static String translate(String input) {
+    private static String translate(String input, Experiment parent) {
         if (input == null)
             return null;
         if (translation.containsKey(input.trim()))
             return translation.get(input.trim());
-        else
+        if (!(input.startsWith("[[") && input.endsWith("]]")))
             return input;
+        int id = parent.getResources().getIdentifier("common_" + input.substring(2, input.length() - 2), "string", parent.getBaseContext().getPackageName());
+        if (id > 0)
+            return parent.getResources().getString(id);
+        return input;
     }
 
     //Returns true if the string is a valid identifier for a dataBuffer, very early versions had some rules here, but we now allow anything as long as it is not empty.
@@ -269,7 +274,7 @@ public abstract class PhyphoxFile {
 
         //Helper to receive a string typed attribute and translate it
         protected String getTranslatedAttribute(String identifier) {
-            return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
+            return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier), parent);
         }
 
         //Helper to receive an integer typed attribute, if invalid or not present, return default
@@ -1256,7 +1261,7 @@ public abstract class PhyphoxFile {
                         if (!at.name.equals("map")) {
                             throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
                         }
-                        ExpView.valueElement.Mapping map = ve.new Mapping(translate(at.content));
+                        ExpView.valueElement.Mapping map = ve.new Mapping(translate(at.content, parent));
                         if (at.attributes.containsKey("min")) {
                             try {
                                 map.min = Double.valueOf(at.attributes.get("min"));
