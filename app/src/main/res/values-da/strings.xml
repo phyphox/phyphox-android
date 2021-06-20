@@ -87,4 +87,52 @@
     <string name="sensorHumidity">Luftfugtighed</string>
     <string name="sensorVendor">Leverandørspecifikt</string>
     <string name="vendorSensorTitle">Leverandørspecifik sensor</string>
+    <string name="sensorNotAvailableWarningTitle">Sensor ikke tilgængelig.</string>
+    <string name="sensorNotAvailableWarningText1">Sensoren</string>
+    <string name="sensorNotAvailableWarningText2">er ikke tilgængelig. Det betyder typisk, at din enhed ikke råder over den type sensor.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Yderlige informationer</string>
+    <string name="ok">OK</string>
+    <string name="tryagain">Forsøg igen</string>
+    <string name="doContinue">Videre</string>
+    <string name="close">Luk</string>
+    <string name="next">Videre</string>
+    <string name="cancel">Afbryd</string>
+    <string name="unknown">ukendt</string>
+    <string name="rename">Skift navn</string>
+    <string name="delete">Slet</string>
+    <string name="confirmDelete">Vil du slette dette eksperiment fra din samling\?</string>
+    <string name="confirmDeleteTitle">Bekræft sletning\?</string>
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
+    <string name="clear_data">Slet dataene</string>
+    <string name="clear_data_question">Slet indsamlede data\?</string>
+    <string name="clear">Slet</string>
+    <string name="leave_experiment">Luk eksperiment</string>
+    <string name="leave_experiment_question">Luk eksperimentet og slet indsamlede data\?</string>
+    <string name="leave">Luk</string>
+    <string name="loadingTitle">Henter</string>
+    <string name="loadingText">Eksperimentet hentes…</string>
+    <string name="loadingBluetoothConnectionText">Tilslutter Bluetooth enhed…</string>
+    <string name="timedRunStopDelay">Eksperimentets varighed (s)</string>
+    <string name="export">Eksportér data</string>
+    <string name="export_empty">Denne eksperimentkonfiguration mangler en definition for data eksport. Hvis det er en fejl, kontakt venligst vedkommende, der har skabt QR-koden eller konfigurationsfilen.</string>
+    <string name="export_subject">Data fra phyphox</string>
+    <string name="export_pick_share">Vælg en App til eksport</string>
+    <string name="share">Del screenshot</string>
+    <string name="share_subject">Screenshot fra phyphox</string>
+    <string name="share_pick_share">Vælg en App til deling</string>
+    <string name="remoteServer">Tillad fjernadgang</string>
+    <string name="remoteServerWarning">Du er i gang med at aktivere fjernadgang. Du bør kun gøre det på et sikkert netværk! Vær venligst opmærksom på, at den direkte adgang mellem forskellige enheder på mange universitets- eller virksomhedsnetværk ikke er muligt.
+\n
+\nFor højest sikkerhed og bedst performance, anbefaler vi, at etablere en netværksforbindelse via tethering (mobil hotspot).
+\n
+\nEfter du har trykket på OK, kan du tilgå dine målinger fra hvilken som helst webbrowser i samme netværk.</string>
+    <string name="remoteServerWarningTitle">Sikkerhedsadvarsel!</string>
+    <string name="remoteServerNoNetwork">Du skal etablere en Wifi-forbindelse til anden enhed først. Venligst aktivér Wifi eller etablér en mobil hotspot.</string>
+    <string name="remoteServerActive">Fjernadgang aktiveret. Du kan tilgå eksperimentet på følgende URL:
+\n%1$s</string>
+    <string name="hotspotSettings">Hotspot indstillinger</string>
+    <string name="remoteColorMapWarning">Farveplottet via fjernadgang er kun en approksimation. I modsætning til plottet i appen, kan det i øjeblikket ikke korrekt vise ikke-ækvidistante data eller logaritmiske akser. Data med varierende intervaller vises derfor på et forkert sted i grafen.</string>
+    <string name="calibrated_magnetometer">Anvend et kalibreret magnetometer</string>
+    <string name="force_gnss">Kun satellitpositionen</string>
 </resources>
