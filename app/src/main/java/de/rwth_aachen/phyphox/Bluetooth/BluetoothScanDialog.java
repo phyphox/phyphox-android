@@ -232,7 +232,7 @@ public class BluetoothScanDialog {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return true;
 
-        if (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
             //Android 6.0: No permission? Request it!
             final Activity parent = this.parentActivity;
 
@@ -261,7 +261,20 @@ public class BluetoothScanDialog {
             });
 
             return false;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this.parentActivity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
+            //Android 12+: New Bluetooth scan permission required but no location permission
+            final Activity parent = this.parentActivity;
+
+            parent.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    dialog.cancel();
+                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, 0);
+                }
+            });
+            return false;
         }
+
         return true;
     }
 
