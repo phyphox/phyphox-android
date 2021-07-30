@@ -115,7 +115,7 @@ public class Metadata {
             case sensorMetadata:
                 SensorManager sensorManager = (SensorManager) ctx.getSystemService(SENSOR_SERVICE);
                 try {
-                    SensorInput testSensor = new SensorInput(sensor.name(), true, 0, false, null, null, null);
+                    SensorInput testSensor = new SensorInput(sensor.name(), true, 0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
                     testSensor.attachSensorManager(sensorManager);
                     if (testSensor.sensor == null)
                         return null;

@@ -915,7 +915,7 @@ public class ExperimentList extends AppCompatActivity {
                                 boolean ignoreUnavailable = (ignoreUnavailableStr != null && Boolean.valueOf(ignoreUnavailableStr));
                                 SensorInput testSensor;
                                 try {
-                                    testSensor = new SensorInput(type, ignoreUnavailable,0, false, null, null, null);
+                                    testSensor = new SensorInput(type, ignoreUnavailable,0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (SensorInput.SensorException e) {
                                     unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
@@ -2700,7 +2700,7 @@ public class ExperimentList extends AppCompatActivity {
                 //Now write the whole file...
                 try {
                     FileOutputStream output = c.openFileOutput(file, MODE_PRIVATE);
-                    output.write("<phyphox version=\"1.0\">".getBytes());
+                    output.write("<phyphox version=\"1.14\">".getBytes());
 
                     //Title, standard category and standard description
                     output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());

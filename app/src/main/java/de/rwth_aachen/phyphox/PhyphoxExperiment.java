@@ -47,6 +47,9 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
 public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.Listener {
+    int versionMinor;
+    int versionMajor;
+
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
@@ -237,8 +240,12 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
         newUserInput = false;
 
-        if (!measuring)
+        if (measuring) {
+            for (SensorInput sensor : inputSensors)
+                sensor.updateGeneratedRate();
+        } else
             cycle = 0;
+
         dataLock.lock();
         analysisTime = experimentTimeReference.getExperimentTime();
         analysisLinearTime = experimentTimeReference.getLinearTime();

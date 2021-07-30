@@ -1603,7 +1603,17 @@ public abstract class PhyphoxFile {
             switch (tag.toLowerCase()) {
                 case "sensor": { //A sensor input (in the sense of android sensor)
                     double rate = getDoubleAttribute("rate", 0.); //Aquisition rate (we always request fastest rate, but average or just pick every n-th readout)
+                    int stride = getIntAttribute("stride", 1);
                     boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
+                    SensorInput.SensorRateStrategy rateStrategy = (experiment.versionMajor > 1 || (experiment.versionMajor == 1 && experiment.versionMinor >= 14)) ? SensorInput.SensorRateStrategy.auto : SensorInput.SensorRateStrategy.limit;
+                    String rateStrategyStr = getStringAttribute("rateStrategy");
+                    if (rateStrategyStr != null && !rateStrategyStr.isEmpty()) {
+                        try {
+                            rateStrategy = SensorInput.SensorRateStrategy.valueOf(rateStrategyStr);
+                        } catch (IllegalArgumentException e) {
+                            throw new phyphoxFileException("Invalid rate strategy.", xpp.getLineNumber());
+                        }
+                    }
 
                     String type = getStringAttribute("type");
                     boolean ignoreUnavailable = getBooleanAttribute("ignoreUnavailable", false);
@@ -1622,7 +1632,7 @@ public abstract class PhyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
+                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, rateStrategy, stride, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (SensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
@@ -2929,15 +2939,15 @@ public abstract class PhyphoxFile {
                                 //Version strings are supposed to be of the form "x.y" with x being the major version number and y being minor.
 
                                 //File versions
-                                int major = Integer.valueOf(fileVersion.substring(0, split));
-                                int minor = Integer.valueOf(fileVersion.substring(split + 1));
+                                experiment.versionMajor = Integer.valueOf(fileVersion.substring(0, split));
+                                experiment.versionMinor = Integer.valueOf(fileVersion.substring(split + 1));
 
                                 //Class versions
                                 int phyphoxMajor = Integer.valueOf(phyphoxFileVersion.substring(0, phyphoxSplit));
                                 int phyphoxMinor = Integer.valueOf(phyphoxFileVersion.substring(phyphoxSplit + 1));
 
                                 //This class needs to be newer than the file. Otherwise ask the user to update.
-                                if (major > phyphoxMajor || (major == phyphoxMajor && minor > phyphoxMinor)) {
+                                if (experiment.versionMajor > phyphoxMajor || (experiment.versionMajor == phyphoxMajor && experiment.versionMinor > phyphoxMinor)) {
                                     experiment.message = "This experiment has been created for a more recent version of phyphox. Please update phyphox to load this experiment.";
                                     return experiment;
                                 }
