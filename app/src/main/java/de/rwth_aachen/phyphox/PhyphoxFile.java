@@ -1719,6 +1719,11 @@ public abstract class PhyphoxFile {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
                             throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                         } else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (ContextCompat.checkSelfPermission(parent, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(parent, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
+                                //Android 12+: New Bluetooth scan permission required
+                                ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, 0);
+                                throw new phyphoxFileException("Need permission to search for and access Bluetooth devices."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
+                            }
                             double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
 
                             String idString = getTranslatedAttribute("id");
