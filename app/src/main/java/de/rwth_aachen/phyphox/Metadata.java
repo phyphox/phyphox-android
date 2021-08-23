@@ -70,7 +70,8 @@ public class Metadata {
                 try {
                     pInfo = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), PackageManager.GET_PERMISSIONS);
                 } catch (Exception e) {
-                    pInfo = null;
+                    e.printStackTrace();
+                    return "N/A";
                 }
                 return pInfo.versionName;
             }
@@ -80,7 +81,8 @@ public class Metadata {
                 try {
                     pInfo = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), PackageManager.GET_PERMISSIONS);
                 } catch (Exception e) {
-                    pInfo = null;
+                    e.printStackTrace();
+                    return "N/A";
                 }
                 return String.valueOf(pInfo.versionCode);
             }

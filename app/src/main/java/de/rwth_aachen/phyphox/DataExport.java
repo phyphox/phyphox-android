@@ -558,14 +558,14 @@ public class DataExport implements Serializable {
     //This function is used when all the dialogs are not done in the app, but on the web interface.
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
-    protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName) {
+    protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName, Context ctx) {
         for (int i = 0; i < exportSets.size(); i++) {
             exportSets.get(i).getData();
         }
 
         format.setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
 
-        return format.export(exportSets, cacheDir, minimalistic, null);
+        return format.export(exportSets, cacheDir, minimalistic, ctx);
     }
 
 }
