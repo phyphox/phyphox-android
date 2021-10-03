@@ -4,3 +4,6 @@
 [submodule "app/src/main/assets/remote"]
 	path = app/src/main/assets/remote
 	url = https://github.com/Staacks/phyphox-webinterface
+[submodule "paho.mqtt.android"]
+	path = paho.mqtt.android
+	url = https://github.com/phyphox/paho.mqtt.android.git
