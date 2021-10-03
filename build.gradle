@@ -18,7 +18,7 @@ ext{
     compileSdkVersion = 31
     buildToolsVersion = '30.0.2'
     serviceVersion = '1.1.1' //Paho MQTT Service
-    clientVersion = '1.1.1' //Paho MQTT Client
+    clientVersion = '1.1.0' //Paho MQTT Client
     serviceArchivesBaseName = 'org.eclipse.paho.android.service'
 }
 
