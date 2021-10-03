@@ -1,5 +1,7 @@
 package de.rwth_aachen.phyphox.Bluetooth;
 
+import static android.bluetooth.BluetoothDevice.TRANSPORT_LE;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -312,7 +314,10 @@ public class Bluetooth implements Serializable {
         boolean result = false;
 
         cdl = new CancellableLatch(1);
-        btGatt = btDevice.connectGatt(context, false, btLeGattCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            btGatt = btDevice.connectGatt(context, false, btLeGattCallback, TRANSPORT_LE);
+        else
+            btGatt = btDevice.connectGatt(context, false, btLeGattCallback);
         try {
             // it should not be possible to continue before the device is connected
             // timeout after 5 seconds if the device could not be connected
