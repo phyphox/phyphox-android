@@ -202,7 +202,7 @@ public class GpsInput implements Serializable {
                 if (event.getExtras() != null)  //Not sure why this might happen, but there seem to be rare cases in which this leads to a crash
                     dataSatellites.append(event.getExtras().getInt("satellites", 0));
                 else
-                    dataSatellites.append(0);
+                    dataSatellites.append(-1);
             }
         } finally {
             dataLock.unlock();
