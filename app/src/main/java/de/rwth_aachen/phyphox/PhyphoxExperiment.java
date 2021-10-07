@@ -195,7 +195,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             if (!micRateOutput.isEmpty())
                 sampleRateBuffer = getBuffer(micRateOutput);
             DataBuffer recording = getBuffer(micOutput);
-            final int readBufferSize = Math.max(Math.min(recording.size, 4800),minBufferSize); //The dataBuffer for the recording
+            final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
             int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
             if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
@@ -229,14 +229,14 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
 
         //Check if the actual math should be done
-        if (analysisOnUserInput) {
-            //If set by the experiment, the analysis is only done when there is new input from the user
-            if (!newUserInput) {
+        if (!newUserInput) {
+            if (analysisOnUserInput) {
+                //If set by the experiment, the analysis is only done when there is new input from the user
                 return; //No new input. Nothing to do.
+            } else if (experimentTimeReference.getExperimentTime() - lastAnalysis <= sleep) {
+                //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
+                return; //Too soon. Nothing to do
             }
-        } else if (experimentTimeReference.getExperimentTime() - lastAnalysis <= sleep) {
-            //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
-            return; //Too soon. Nothing to do
         }
         newUserInput = false;
 
