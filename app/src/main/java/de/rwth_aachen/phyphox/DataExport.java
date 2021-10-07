@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.core.app.ShareCompat;
@@ -55,6 +56,17 @@ public class DataExport implements Serializable {
             SourceMapping(String name, String source) {
                 this.name = name;
                 this.source = source;
+            }
+
+            String getSecureName() {
+                //Returns a sanitized version of name to prevent creating malicious data files through phyphox.
+
+                //Prevent Excel formula injection (seriously, in case of csv, Excel should not be executing anyways, but let's protect the users...)
+                if (name.startsWith("=") || name.startsWith("+") || name.startsWith("-") || name.startsWith("@")) {
+                    return "'" + name;
+                }
+
+                return name;
             }
         }
 
@@ -158,7 +170,7 @@ public class DataExport implements Serializable {
                         //Contruct the table header in the first line
                         String header = "";
                         for (int j = 0; j < set.data.length; j++) { //Each column gets a name...
-                            header += "\"" + set.sources.get(j).name + "\"";
+                            header += "\"" + set.sources.get(j).getSecureName() + "\"";
                             if (j < set.data.length -1)
                                 header += separator;
                         }
@@ -225,7 +237,11 @@ public class DataExport implements Serializable {
                         longformat.setGroupingUsed(false);
 
                         data = new StringBuilder();
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+                        SimpleDateFormat dateFormat;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                            dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+                        else
+                            dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
                         for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
                             data.append("\"").append(timeMapping.event.name()).append("\"").append(separator);
                             data.append(format.format(timeMapping.experimentTime)).append(separator);
@@ -299,7 +315,7 @@ public class DataExport implements Serializable {
                     Row row = sheet.createRow(0);
                     for (int j = 0; j < set.data.length; j++) {
                         Cell c = row.createCell(j);
-                        c.setCellValue(set.sources.get(j).name);
+                        c.setCellValue(set.sources.get(j).getSecureName());
                         c.setCellStyle(cs);
                     }
 
@@ -370,7 +386,11 @@ public class DataExport implements Serializable {
 
                     i = 1;
                     data = new StringBuilder();
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+                    SimpleDateFormat dateFormat;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+                    else
+                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
                     for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
                         row = sheet.createRow(i);
                         row.createCell(0).setCellValue(timeMapping.event.name());
