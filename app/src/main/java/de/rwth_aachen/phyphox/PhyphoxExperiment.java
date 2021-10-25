@@ -233,7 +233,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             if (analysisOnUserInput) {
                 //If set by the experiment, the analysis is only done when there is new input from the user
                 return; //No new input. Nothing to do.
-            } else if (experimentTimeReference.getExperimentTime() - lastAnalysis <= sleep) {
+            } else if (measuring && experimentTimeReference.getExperimentTime() - lastAnalysis <= sleep) {
                 //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
                 return; //Too soon. Nothing to do
             }
