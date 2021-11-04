@@ -62,7 +62,7 @@ class GraphSetup {
 
     int plotBoundL, plotBoundT, plotBoundW, plotBoundH;
     int zaBoundL, zaBoundT, zaBoundW, zaBoundH;
-    float minX, maxX, minY, maxY, minZ, maxZ;
+    double minX, maxX, minY, maxY, minZ, maxZ;
     public final Vector<CurveData> dataSets = new Vector<>();
     public float[] positionMatrix = new float[16];
     public float[] zScaleMatrix = new float[16];
@@ -165,8 +165,8 @@ class GraphSetup {
             l = logMinX - plotBoundL / (float) plotBoundW * (logMaxX - logMinX);
             r = logMaxX + (w - plotBoundW - plotBoundL) / (float) plotBoundW * (logMaxX - logMinX);
         } else {
-            l = minX - plotBoundL / (float) plotBoundW * (maxX - minX);
-            r = maxX + (w - plotBoundW - plotBoundL) / (float) plotBoundW * (maxX - minX);
+            l = (float)minX - plotBoundL / (float) plotBoundW * ((float)maxX - (float)minX);
+            r = (float)maxX + (w - plotBoundW - plotBoundL) / (float) plotBoundW * ((float)maxX - (float)minX);
         }
         if (logY) {
             float logMinY = (float)Math.log(minY);
@@ -174,8 +174,8 @@ class GraphSetup {
             b = logMinY - (h - plotBoundT - plotBoundH) / (float) plotBoundH * (logMaxY - logMinY);
             t = logMaxY + (plotBoundT) / (float) plotBoundH * (logMaxY - logMinY);
         } else {
-            b = minY - (h - plotBoundT - plotBoundH) / (float) plotBoundH * (maxY - minY);
-            t = maxY + (plotBoundT) / (float) plotBoundH * (maxY - minY);
+            b = (float)minY - (h - plotBoundT - plotBoundH) / (float) plotBoundH * ((float)maxY - (float)minY);
+            t = (float)maxY + (plotBoundT) / (float) plotBoundH * ((float)maxY - (float)minY);
         }
 
         if (style.contains(GraphView.Style.mapXY) && maxZ != minZ) {
@@ -184,8 +184,8 @@ class GraphSetup {
                 zmin = (float) Math.log(minZ);
                 zmax = (float) Math.log(maxZ);
             } else {
-                zmin = minZ;
-                zmax = maxZ;
+                zmin = (float)minZ;
+                zmax = (float)maxZ;
             }
             if (zmin == zmax) {
                 zmin -= 1.0;
@@ -1126,7 +1126,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, nZGridLines * 2 * 2 * 4, zGridData, GLES20.GL_DYNAMIC_DRAW);
 
         FloatBuffer zRange = ByteBuffer.allocateDirect(4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        zRange.put(graphSetup.minZ).put(graphSetup.minZ).put(graphSetup.maxZ).put(graphSetup.maxZ);
+        zRange.put((float)graphSetup.minZ).put((float)graphSetup.minZ).put((float)graphSetup.maxZ).put((float)graphSetup.maxZ);
 
         FloatBuffer zScaleY = ByteBuffer.allocateDirect(4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         zScaleY.put(0).put(1).put(0).put(1);
