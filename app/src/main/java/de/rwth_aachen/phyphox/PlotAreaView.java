@@ -87,6 +87,7 @@ class GraphSetup {
     public boolean timeOnY = false;
     public boolean absoluteTime = false;
     public boolean linearTime = false;
+    public boolean hideTimeMarkers = false;
 
     GraphSetup() {
         plotBoundL = 0;
@@ -969,7 +970,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             }
         }
 
-        drawTimeRanges();
+        if (!graphSetup.hideTimeMarkers)
+            drawTimeRanges();
         drawGrid();
 
         for (int i = graphSetup.dataSets.size()-1; i >= 0; i--) {

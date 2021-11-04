@@ -1362,6 +1362,7 @@ public abstract class PhyphoxFile {
                     boolean timeOnY = getBooleanAttribute("timeOnY", false);
                     boolean systemTime = getBooleanAttribute("systemTime", false);
                     boolean linearTime = getBooleanAttribute("linearTime", false);
+                    boolean hideTimeMarkers = getBooleanAttribute("hideTimeMarkers", false);
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
@@ -1437,7 +1438,7 @@ public abstract class PhyphoxFile {
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
-                    ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime);
+                    ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime, hideTimeMarkers);
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     if (!globalColor) {

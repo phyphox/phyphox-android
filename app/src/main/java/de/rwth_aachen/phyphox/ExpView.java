@@ -1065,6 +1065,7 @@ public class ExpView implements Serializable{
         private boolean timeOnY = false; //y-axis is time axis?
         private boolean absoluteTime = false; //Use system time as default?
         private boolean linearTime = false; //time data is not given in experiment time (which pauses with the experiment) but as seconds since 1970 (ignoring pauses)
+        private boolean hideTimeMarkers = false; //Do not show the red markers that indicate times while the phyphox experiment was not running.
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
         private boolean logZ = false; //logarithmic scale for the z-axis?
@@ -1226,11 +1227,12 @@ public class ExpView implements Serializable{
                 gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
         }
 
-        protected void setTimeAxes(boolean timeOnX, boolean timeOnY, boolean absoluteTime, boolean linearTime) {
+        protected void setTimeAxes(boolean timeOnX, boolean timeOnY, boolean absoluteTime, boolean linearTime, boolean hideTimeMarkers) {
             this.timeOnX = timeOnX;
             this.timeOnY = timeOnY;
             this.absoluteTime = absoluteTime;
             this.linearTime = linearTime;
+            this.hideTimeMarkers = hideTimeMarkers;
         }
 
         //Interface to set log scales
@@ -1337,6 +1339,7 @@ public class ExpView implements Serializable{
             gv.setTimeAxes(timeOnX, timeOnY);
             gv.setAbsoluteTime(absoluteTime);
             gv.setLinearTime(linearTime);
+            gv.setHideTimeMarkers(hideTimeMarkers);
             gv.setLogScale(logX, logY, logZ);
             interactiveGV.allowLogX = logX;
             interactiveGV.allowLogY = logY;

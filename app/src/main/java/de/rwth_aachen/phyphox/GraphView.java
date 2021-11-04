@@ -90,6 +90,7 @@ public class GraphView extends View {
     public boolean timeOnY = false; //y-axis is time axis?
     public boolean absoluteTime = false; //Use system time on time axis instead of experiment time
     public boolean linearTime = false; //Time data is given in seconds since 1970, ignoring pauses (in constrast to experiment time)
+    public boolean hideTimeMarkers = false; //Do not show the red markers that indicate times while the phyphox experiment was not running.
     public boolean logX = false; //logarithmic scale for the x-axis?
     public boolean logY = false; //logarithmic scale for the y-axis?
     public boolean logZ = false; //logarithmic scale for the y-axis?
@@ -884,6 +885,13 @@ public class GraphView extends View {
         this.linearTime = linearTime;
         graphSetup.linearTime = linearTime;
         this.rescale();
+        this.invalidate();
+    }
+
+    //Interface to select if the red time markers should be visible
+    public void setHideTimeMarkers(boolean hideTimeMarkers) {
+        this.hideTimeMarkers = hideTimeMarkers;
+        graphSetup.hideTimeMarkers = hideTimeMarkers;
         this.invalidate();
     }
 
