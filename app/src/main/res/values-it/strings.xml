@@ -50,7 +50,7 @@
     <string name="sensorGyroscope">Giroscopio</string>
     <string name="switchToPhoneLayout">Vista: compatta</string>
     <string name="sensorProximity">Prossimità</string>
-    <string name="unknown">ignoto</string>
+    <string name="unknown">sconosciuto</string>
     <string name="next">Sucessivo</string>
     <string name="start">Start</string>
     <string name="clear_data">Elimina dati</string>
