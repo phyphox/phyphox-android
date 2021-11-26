@@ -14,10 +14,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -27,7 +23,6 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
-import android.util.MutableBoolean;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -63,7 +58,6 @@ import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
-import androidx.core.widget.CompoundButtonCompat;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
@@ -86,6 +80,7 @@ import java.util.Vector;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
@@ -283,6 +278,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 for (BluetoothOutput bti : experiment.bluetoothOutputs)
                     bti.closeConnection();
             }
+            if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                experiment.depthInput.stopCamera();
         }
 
         if (popupWindow != null)
@@ -1559,7 +1556,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                  };
                  Bluetooth.errorDialog.run();
                  return;
-	    }
+	        }
+        } catch (DepthInput.DepthInputException e) {
+            stopMeasurement(); // stop experiment
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(e.getMessage())
+                    .setPositiveButton(R.string.ok, null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
 
         //Set measurement state

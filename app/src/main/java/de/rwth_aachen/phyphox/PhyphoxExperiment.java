@@ -42,6 +42,7 @@ import javax.xml.transform.stream.StreamResult;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment
@@ -67,6 +68,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     public Vector<ExpView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public ExperimentTimeReference experimentTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<SensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
+    public DepthInput depthInput = null;
     public GpsInput gpsIn = null;
     public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
     public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
@@ -351,6 +353,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (gpsIn != null)
             gpsIn.stop();
 
+        if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            depthInput.stop();
+
         for (NetworkConnection networkConnection : networkConnections)
             networkConnection.stop();
 
@@ -365,7 +370,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
 
     //Helper to start all I/O of this experiment (i.e. when it should be started)
-    public void startAllIO() throws Bluetooth.BluetoothException {
+    public void startAllIO() throws Bluetooth.BluetoothException, DepthInput.DepthInputException {
 
         if (!loaded)
             return;
@@ -379,6 +384,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         if (gpsIn != null)
             gpsIn.start();
+
+        if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            depthInput.start();
 
         //Playback
         if (audioOutput != null) {

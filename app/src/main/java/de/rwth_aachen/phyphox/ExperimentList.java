@@ -32,6 +32,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.hardware.camera2.CameraManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -117,6 +118,8 @@ import java.util.zip.ZipInputStream;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
+import de.rwth_aachen.phyphox.Camera.CameraHelper;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 
 import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
 
@@ -932,6 +935,13 @@ public class ExperimentList extends AppCompatActivity {
                                     unavailableSensor = R.string.location;
                                 }
                                 break;
+                            case "depth":
+                                if (!inInput || unavailableSensor >= 0)
+                                    break;
+                                if (!DepthInput.isAvailable()) {
+                                    unavailableSensor = R.string.sensorDepth;
+                                }
+                                break;
                             case "bluetooth":
                                 if ((!inInput && !inOutput) || unavailableSensor >= 0) {
                                     break;
@@ -1037,6 +1047,12 @@ public class ExperimentList extends AppCompatActivity {
 
     //Load all experiments from assets and from local files
     private void loadExperimentList() {
+
+        //We want to show current availability of experiments requiring cameras
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            CameraManager cm = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraHelper.updateCameraList(cm);
+        }
 
         //Save scroll position to restore this later
         ScrollView sv = ((ScrollView)findViewById(R.id.experimentScroller));

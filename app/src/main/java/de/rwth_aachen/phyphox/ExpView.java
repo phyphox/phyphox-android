@@ -1,28 +1,43 @@
 package de.rwth_aachen.phyphox;
 
+import static android.view.View.INVISIBLE;
+import static android.view.View.VISIBLE;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.hardware.camera2.CameraCharacteristics;
+import android.os.Build;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+
+import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -30,6 +45,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Camera.DepthPreview;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
@@ -113,7 +130,7 @@ public class ExpView implements Serializable{
             needsUpdate = true;
         }
 
-        protected void cleanView(PhyphoxExperiment experiment) {
+        protected void onFragmentStop(PhyphoxExperiment experiment) {
             if (inputs != null) {
                 for (String buffer : inputs) {
                     if (buffer != null)
@@ -208,14 +225,14 @@ public class ExpView implements Serializable{
         protected void restore() {
             state = State.normal;
             if (rootView != null) {
-                rootView.setVisibility(View.VISIBLE);
+                rootView.setVisibility(VISIBLE);
             }
         }
 
         protected void maximize() {
             state = State.maximized;
             if (rootView != null) {
-                rootView.setVisibility(View.VISIBLE);
+                rootView.setVisibility(VISIBLE);
             }
         }
 
@@ -1367,8 +1384,8 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        public void cleanView(PhyphoxExperiment experiment) {
-            super.cleanView(experiment);
+        public void onFragmentStop(PhyphoxExperiment experiment) {
+            super.onFragmentStop(experiment);
 
             interactiveGV.stop();
             gv = null;
@@ -1870,6 +1887,284 @@ public class ExpView implements Serializable{
             }
             gv.zoomState = zoomState;
             gv.invalidate();
+        }
+    }
+
+    //depthGUI implements a camera preview and interface to customize the data acquisition of the
+    // depth sensor (LiDAR/ToF)
+    public class depthGuiElement extends expViewElement implements Serializable {
+        private final depthGuiElement self;
+        transient private ExpViewFragment parent = null;
+        transient private DepthPreview cv = null;
+        transient ImageView collapseImage = null;
+        transient ImageView expandImage = null;
+        transient Spinner modeControl = null;
+        transient Spinner cameraSelection = null;
+
+        private double aspectRatio;
+
+        private boolean isExclusive = false;
+        private int margin, elMargin;
+        private int color;
+
+        final String warningText;
+
+        //Quite usual constructor...
+        depthGuiElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+            this.self = this;
+
+            margin = res.getDimensionPixelSize(R.dimen.graph_label_start_margin);
+            elMargin = res.getDimensionPixelSize(R.dimen.expElementMargin);
+
+            aspectRatio = 2.5;
+
+            warningText = res.getString(R.string.remoteDepthGUIWarning).replace("'", "\\'");
+            this.color = res.getColor(R.color.mainExp);
+        }
+
+        //Interface to change the height of the graph
+        protected void setAspectRatio(double aspectRatio) {
+            this.aspectRatio = aspectRatio;
+        }
+
+        @Override
+        protected String getUpdateMode() {
+             return "none";
+        }
+
+        @Override
+        //Create the actual view in Android
+        protected void createView(LinearLayout ll, Context c, Resources res, final ExpViewFragment parent, PhyphoxExperiment experiment){
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+                return;
+
+            super.createView(ll, c, res, parent, experiment);
+            this.parent = parent;
+
+            Context ctx = c;
+            Activity act = null;
+            while (ctx instanceof ContextWrapper) {
+                if (ctx instanceof Activity) {
+                    act = (Activity) ctx;
+                }
+                ctx = ((ContextWrapper)ctx).getBaseContext();
+            }
+
+            //Create a row consisting of label and value
+            LinearLayout layout = new LinearLayout(c);
+            layout.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setGravity(Gravity.CENTER_HORIZONTAL);
+
+            RelativeLayout titleLine = new RelativeLayout(c);
+            titleLine.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            layout.addView(titleLine);
+
+            expandImage = new ImageView(c);
+            expandImage.setId(ViewCompat.generateViewId());
+            expandImage.setImageResource(R.drawable.unfold_more);
+            RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(elMargin, elMargin, elMargin, elMargin);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            expandImage.setLayoutParams(lp);
+            titleLine.addView(expandImage);
+
+            collapseImage = new ImageView(c);
+            collapseImage.setImageResource(R.drawable.unfold_less);
+            collapseImage.setLayoutParams(lp);
+            collapseImage.setVisibility(INVISIBLE);
+            titleLine.addView(collapseImage);
+
+            //Create the label as textView
+            TextView labelView = new TextView(c);
+            lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(margin, 0, 0, 0);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            lp.addRule(RelativeLayout.RIGHT_OF, expandImage.getId());
+            labelView.setLayoutParams(lp);
+            labelView.setText(this.label);
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            labelView.setTextColor(color);
+            titleLine.addView(labelView);
+
+            //Create the preview view
+            cv = new DepthPreview(c);
+            cv.attachDepthInput(experiment.depthInput);
+            cv.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+            cv.setAspectRatio(aspectRatio);
+            layout.addView(cv);
+
+            //Mode Controls
+            modeControl = new Spinner(c, Spinner.MODE_DIALOG);
+            modeControl.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            modeControl.setVisibility(View.GONE);
+            class ModeItem {
+                public final DepthInput.DepthExtractionMode key;
+                public final String value;
+                ModeItem(DepthInput.DepthExtractionMode key, String value) {
+                    this.key = key;
+                    this.value = value;
+                }
+                @Override
+                public String toString() {
+                    return value;
+                }
+            }
+            ArrayList<ModeItem> modeOptions = new ArrayList<>();
+            int selection = 0;
+            for (DepthInput.DepthExtractionMode mode : DepthInput.DepthExtractionMode.values()) {
+                int id = parent.getResources().getIdentifier("depthAggregationMode" + mode.name().substring(0, 1).toUpperCase() + mode.name().substring(1), "string", act.getPackageName());
+                modeOptions.add(new ModeItem(mode, res.getString(id)));
+            }
+            modeControl.setAdapter(new ArrayAdapter<>(c, android.R.layout.simple_spinner_dropdown_item, modeOptions));
+            for (int i = 0; i < modeOptions.size(); i++) {
+                if (modeOptions.get(i).key == experiment.depthInput.getExtractionMode())
+                    modeControl.setSelection(i);
+            }
+            modeControl.setPromptId(R.string.depthAggregationMode);
+            layout.addView(modeControl);
+            modeControl.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    cv.setExtractionMode(modeOptions.get(position).key);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                }
+            });
+
+            //Camera selection controls
+            cameraSelection = new Spinner(c);
+            cameraSelection.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            cameraSelection.setVisibility(View.GONE);
+            class CameraItem {
+                public final String key, value;
+                CameraItem(String key, String value) {
+                    this.key = key;
+                    this.value = value;
+                }
+                @Override
+                public String toString() {
+                    return value;
+                }
+            }
+            ArrayList<CameraItem> camOptions = new ArrayList<>();
+            String backCam = DepthInput.findCamera(CameraCharacteristics.LENS_FACING_BACK);
+            if (backCam != null)
+                camOptions.add(new CameraItem(backCam, res.getString(R.string.cameraBackFacing)));
+            String frontCam = DepthInput.findCamera(CameraCharacteristics.LENS_FACING_FRONT);
+            if (frontCam != null)
+                camOptions.add(new CameraItem(frontCam, res.getString(R.string.cameraFrontFacing)));
+            String extCam = DepthInput.findCamera(CameraCharacteristics.LENS_FACING_EXTERNAL);
+            if (extCam != null)
+                camOptions.add(new CameraItem(extCam, res.getString(R.string.cameraExternal)));
+            cameraSelection.setAdapter(new ArrayAdapter<>(c, android.R.layout.simple_spinner_dropdown_item, camOptions));
+            for (int i = 0; i < camOptions.size(); i++) {
+                if (camOptions.get(i).key.equals(experiment.depthInput.getCurrentCameraId()))
+                    cameraSelection.setSelection(i);
+            }
+            layout.addView(cameraSelection);
+            cameraSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    cv.setCamera(camOptions.get(position).key);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                }
+            });
+
+            layout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (self.parent != null) {
+                        if (isExclusive) {
+                            self.parent.leaveExclusive();
+                        } else {
+                            cv.requestFocus();
+                            self.parent.requestExclusive(self);
+                        }
+                    }
+                }
+            });
+
+            rootView = layout;
+            rootView.setFocusableInTouchMode(false);
+            ll.addView(rootView);
+
+        }
+
+        @Override
+        public void onFragmentStop(PhyphoxExperiment experiment) {
+            super.onFragmentStop(experiment);
+            cv.stop();
+            cv = null;
+        }
+
+        @Override
+        //Create the HTML markup. We do not stream the video to the web interface, so this is just a placeholder and notification
+        protected String createViewHTML(){
+            return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"" + htmlID + "\"><span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span><div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
+        }
+
+        @Override
+        protected void restore() {
+            super.restore();
+            if (rootView != null && cv != null && parent != null) {
+                isExclusive = false;
+
+                if (expandImage != null && collapseImage != null) {
+                    expandImage.setVisibility(VISIBLE);
+                    collapseImage.setVisibility(INVISIBLE);
+                }
+                if (modeControl != null)
+                    modeControl.setVisibility(View.GONE);
+                if (cameraSelection != null)
+                    cameraSelection.setVisibility(View.GONE);
+
+                rootView.getLayoutParams().height = LinearLayout.LayoutParams.WRAP_CONTENT;
+                rootView.requestLayout();
+
+                cv.setInteractive(false);
+            }
+        }
+
+        @Override
+        protected void maximize() {
+            super.maximize();
+            if (rootView != null && cv != null && parent != null) {
+                isExclusive = true;
+
+                if (expandImage != null && collapseImage != null) {
+                    expandImage.setVisibility(INVISIBLE);
+                    collapseImage.setVisibility(VISIBLE);
+                }
+                if (modeControl != null)
+                    modeControl.setVisibility(VISIBLE);
+                if (cameraSelection != null)
+                    cameraSelection.setVisibility(VISIBLE);
+
+                rootView.getLayoutParams().height = LinearLayout.LayoutParams.MATCH_PARENT;
+                rootView.requestLayout();
+
+                cv.setInteractive(true);
+            }
         }
     }
 
