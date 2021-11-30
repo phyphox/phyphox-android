@@ -311,15 +311,24 @@ public class SensorInput implements SensorEventListener, Serializable {
             if (dataZ != null)
                 dataZ.append(z);
             if (dataT != null) {
-                double t = experimentTimeReference.getExperimentTimeFromEvent(timestamp);
-                if (t < -10 && fixDeviceTimeOffset == 0.0) {
-                    Log.w("SensorInput", "Unrealistic time offset detected. Applying adjustment of " + -t + "s.");
-                    fixDeviceTimeOffset = -t;
-                }
-                t += fixDeviceTimeOffset;
-                if (t < 0.0) {
-                    Log.w("SensorInput", this.sensorName + ": Adjusted one timestamp from t = " + t + "s to t = 0s.");
-                    t = 0.0;
+                double t;
+                if (timestamp == 0) {
+                    //This is nonsense. The timestamp should be given in nanoseconds since system boot.
+                    //Receiving exactly 0 is very unlikely to be an offset, but most likely to be a bad
+                    //implementation on the device. We will do an best effort fix it by retrieving our
+                    //own timestamp.
+                    t = experimentTimeReference.getExperimentTime();
+                } else {
+                    t = experimentTimeReference.getExperimentTimeFromEvent(timestamp);
+                    if ((t < -10 || (t > experimentTimeReference.getExperimentTime())) && fixDeviceTimeOffset == 0.0) {
+                        Log.w("SensorInput", "Unrealistic time offset detected. Applying adjustment of " + -t + "s.");
+                        fixDeviceTimeOffset = -t;
+                    }
+                    t += fixDeviceTimeOffset;
+                    if (t < 0.0) {
+                        Log.w("SensorInput", this.sensorName + ": Adjusted one timestamp from t = " + t + "s to t = 0s.");
+                        t = 0.0;
+                    }
                 }
                 dataT.append(t);
             }
