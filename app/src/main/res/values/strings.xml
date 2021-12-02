@@ -158,6 +158,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="sensorAttitude">Attitude</string>
     <string name="sensorVendor">Vendor specific</string>
     <string name="sensorDepth">Depth (LiDAR/ToF)</string>
+    <string name="sensorCamera">Camera</string>
     <string name="vendorSensorTitle">Vendor-specific sensor</string>
     <string name="vendorSensorWarning1">The sensor</string>
     <string name="vendorSensorWarning2">does not report the correct sensor type. It appears to be vendor-specific and we could only guess its type from its name. Therefore, it might not work as expected.</string>

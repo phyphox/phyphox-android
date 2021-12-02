@@ -5,18 +5,24 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
+import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
+import android.util.Size;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.UUID;
 
+import de.rwth_aachen.phyphox.Camera.CameraHelper;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.ExperimentList;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 import de.rwth_aachen.phyphox.SensorInput;
 
 import static android.content.Context.SENSOR_SERVICE;
+
+import androidx.annotation.RequiresApi;
 
 public class Metadata {
 
@@ -25,7 +31,7 @@ public class Metadata {
     }
 
     public enum DeviceMetadata {
-        uniqueID, version, build, fileFormat, deviceModel, deviceBrand, deviceBoard, deviceManufacturer, deviceBaseOS, deviceCodename, deviceRelease, sensorMetadata
+        uniqueID, version, build, fileFormat, deviceModel, deviceBrand, deviceBoard, deviceManufacturer, deviceBaseOS, deviceCodename, deviceRelease, sensorMetadata, depthFrontSensor, depthFrontResolution, depthFrontRate, depthBackSensor, depthBackResolution, depthBackRate, camera2api, camera2apiFull
     }
 
     public DeviceMetadata metadata;
@@ -145,6 +151,51 @@ public class Metadata {
                 } catch (SensorInput.SensorException e) {
                     return null;
                 }
+                return null;
+
+            case depthFrontSensor:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    return String.valueOf(DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT));
+                return null;
+
+            case depthBackSensor:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    return String.valueOf(DepthInput.countCameras(CameraCharacteristics.LENS_FACING_BACK));
+                return null;
+
+            case depthFrontResolution:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && DepthInput.isAvailable()) {
+                    Size res = DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_FRONT);
+                    return String.valueOf(res.getWidth()) + "x" + String.valueOf(res.getHeight());
+                }
+                return null;
+
+            case depthBackResolution:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && DepthInput.isAvailable()) {
+                    Size res = DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_BACK);
+                    return String.valueOf(res.getWidth()) + "x" + String.valueOf(res.getHeight());
+                }
+                return null;
+
+            case depthFrontRate:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && DepthInput.isAvailable())
+                    return String.valueOf(DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_FRONT));
+                return null;
+
+            case depthBackRate:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && DepthInput.isAvailable())
+                    return String.valueOf(DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_BACK));
+                return null;
+
+            case camera2api:
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                    return null;
+                return CameraHelper.getCamera2FormattedCaps(false);
+
+            case camera2apiFull:
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                    return null;
+                return CameraHelper.getCamera2FormattedCaps(true);
         }
         return null;
     }

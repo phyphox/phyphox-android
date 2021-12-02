@@ -32,6 +32,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -2509,6 +2510,42 @@ public class ExperimentList extends AppCompatActivity {
                                     sb.append(sensor.getVersion());
                                     sb.append("<br /><br />");
                                 }
+                            }
+                            sb.append("<br /><br />");
+
+                            sb.append("<b>Cameras</b><br /><br />");
+                            sb.append("<b>Depth sensors</b><br />");
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                sb.append("- Depth sensors front: ");
+                                int depthFront = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
+                                sb.append(depthFront);
+                                sb.append("<br />");
+                                sb.append("- Max resolution front: ");
+                                sb.append(depthFront > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_FRONT) : "-");
+                                sb.append("<br />");
+                                sb.append("- Max frame rate front: ");
+                                sb.append(depthFront > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_FRONT) : "-");
+                                sb.append("<br />");
+                                sb.append("- Depth sensors back: ");
+                                int depthBack = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
+                                sb.append(depthBack);
+                                sb.append("<br />");
+                                sb.append("- Max resolution back: ");
+                                sb.append(depthBack > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_BACK) : "-");
+                                sb.append("<br />");
+                                sb.append("- Max frame rate back: ");
+                                sb.append(depthBack > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_BACK) : "-");
+                                sb.append("<br />");
+                            } else {
+                                sb.append("API < 23");
+                            }
+                            sb.append("<br /><br />");
+
+                            sb.append("<b>Camera 2 API</b><br />");
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                sb.append(CameraHelper.getCamera2FormattedCaps(false));
+                            } else {
+                                sb.append("API < 21");
                             }
 
                             final Spanned text = Html.fromHtml(sb.toString());

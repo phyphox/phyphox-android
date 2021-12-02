@@ -68,12 +68,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -460,9 +463,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         if (experiment.loaded && experiment.networkConnections.size() > 0) {
-            String[] sensors = new String[experiment.inputSensors.size()];
+            Set<String> sensors = new HashSet<>();
             for (int i = 0; i < experiment.inputSensors.size(); i++) {
-                sensors[i] = res.getString(experiment.inputSensors.get(i).getDescriptionRes());
+                sensors.add(res.getString(experiment.inputSensors.get(i).getDescriptionRes()));
+            }
+            if (experiment.depthInput != null) {
+                sensors.add(res.getString(R.string.sensorDepth));
             }
             experiment.networkConnections.get(0).getDataAndPolicyDialog(experiment.audioRecord != null, experiment.gpsIn != null, experiment.inputSensors.size() > 0, sensors, this, this).show();
         } else if (!experiment.isLocal && experiment.loaded) { //If this experiment has been loaded from a external source, we offer to save it locally

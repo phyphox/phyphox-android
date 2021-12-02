@@ -97,6 +97,78 @@ public class DepthInput {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
+    public static int countCameras(int lensFacing) {
+        int count = 0;
+        Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
+        for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
+            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
+            if (lensFacing >= 0 && lensFacing != foundFacing)
+                continue;
+            int[] caps = cam.getValue().get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            for (int cap : caps) {
+                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
+                    Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
+                    if (sizes == null)
+                        continue;
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static Size getMaxResolution(int lensFacing) {
+        Size maxSize = new Size(0, 0);
+        Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
+        for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
+            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
+            if (lensFacing >= 0 && lensFacing != foundFacing)
+                continue;
+            int[] caps = cam.getValue().get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            for (int cap : caps) {
+                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
+                    Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
+                    if (sizes == null)
+                        continue;
+                    for (Size size : sizes) {
+                        if (size.getWidth() * size.getHeight() > maxSize.getWidth() * maxSize.getHeight())
+                            maxSize = size;
+                    }
+                }
+            }
+        }
+        return maxSize;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static float getMaxRate(int lensFacing) {
+        float maxRate = 0.f;
+        Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
+        for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
+            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
+            if (lensFacing >= 0 && lensFacing != foundFacing)
+                continue;
+            int[] caps = cam.getValue().get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            for (int cap : caps) {
+                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
+                    Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
+                    if (sizes == null)
+                        continue;
+                    Range<Integer>[] ranges = cam.getValue().get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+                    if (ranges == null)
+                        continue;
+                    for (Range<Integer> range : ranges) {
+                        if (range.getUpper() > maxRate)
+                            maxRate = range.getUpper();
+                    }
+                }
+            }
+        }
+        return maxRate;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static String findCamera(int lensFacing) {
         String cameraId = null;
         boolean foundBackfacing = false;

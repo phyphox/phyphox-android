@@ -125,7 +125,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
         });
     }
 
-    public AlertDialog getDataAndPolicyDialog(boolean infoMicrophone, boolean infoLocation, boolean infoSensorData, String[] infoSensorDataList, Context ctx, NetworkConnectionDataPolicyInfoDelegate delegate) {
+    public AlertDialog getDataAndPolicyDialog(boolean infoMicrophone, boolean infoLocation, boolean infoSensorData, Set<String> infoSensorDataList, Context ctx, NetworkConnectionDataPolicyInfoDelegate delegate) {
         StringBuilder sb = new StringBuilder();
         sb.append(ctx.getResources().getString(R.string.networkPrivacyInfo));
         sb.append("\n\n");
@@ -157,6 +157,20 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                         infoSensorInfo = true;
                         infoSensorInfoList.add(ctx.getResources().getString(SensorInput.getDescriptionRes(SensorInput.resolveSensorName(sendable.metadata.sensor))));
                         break;
+                    case depthFrontSensor:
+                    case depthFrontResolution:
+                    case depthFrontRate:
+                    case depthBackSensor:
+                    case depthBackResolution:
+                    case depthBackRate:
+                        infoSensorInfo = true;
+                        infoSensorInfoList.add(ctx.getResources().getString(R.string.sensorDepth));
+                        break;
+                    case camera2api:
+                    case camera2apiFull:
+                        infoSensorInfo = true;
+                        infoSensorInfoList.add(ctx.getResources().getString(R.string.sensorCamera));
+                        break;
                 }
             }
         }
@@ -180,8 +194,9 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
             sb.append("- ");
             sb.append(ctx.getResources().getString(R.string.networkPrivacySensorData));
             sb.append(" ");
-            Arrays.sort(infoSensorDataList);
-            sb.append(TextUtils.join(", ", infoSensorDataList));
+            String[] list = infoSensorDataList.toArray(new String[0]);
+            Arrays.sort(list);
+            sb.append(TextUtils.join(", ", list));
             sb.append("\n");
         }
         if (infoDeviceInfo) {
