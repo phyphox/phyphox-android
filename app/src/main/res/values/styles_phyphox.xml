@@ -5,6 +5,7 @@
     <style name="splashTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@drawable/splash</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="android:windowSplashScreenBrandingImage">@drawable/rwth_white</item>
     </style>
 
     <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">

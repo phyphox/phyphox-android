@@ -42,11 +42,15 @@ import javax.xml.transform.stream.StreamResult;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
 public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.Listener {
+    int versionMinor;
+    int versionMajor;
+
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
@@ -64,6 +68,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     public Vector<ExpView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public ExperimentTimeReference experimentTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<SensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
+    public DepthInput depthInput = null;
     public GpsInput gpsIn = null;
     public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
     public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
@@ -192,7 +197,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             if (!micRateOutput.isEmpty())
                 sampleRateBuffer = getBuffer(micRateOutput);
             DataBuffer recording = getBuffer(micOutput);
-            final int readBufferSize = Math.max(Math.min(recording.size, 4800),minBufferSize); //The dataBuffer for the recording
+            final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
             short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
             int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
             if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
@@ -226,19 +231,23 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
 
         //Check if the actual math should be done
-        if (analysisOnUserInput) {
-            //If set by the experiment, the analysis is only done when there is new input from the user
-            if (!newUserInput) {
+        if (!newUserInput) {
+            if (analysisOnUserInput) {
+                //If set by the experiment, the analysis is only done when there is new input from the user
                 return; //No new input. Nothing to do.
+            } else if (measuring && experimentTimeReference.getExperimentTime() - lastAnalysis <= sleep) {
+                //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
+                return; //Too soon. Nothing to do
             }
-        } else if (experimentTimeReference.getExperimentTime() - lastAnalysis <= sleep) {
-            //This is the default: The analysis is done periodically. Either as fast as possible or after a period defined by the experiment
-            return; //Too soon. Nothing to do
         }
         newUserInput = false;
 
-        if (!measuring)
+        if (measuring) {
+            for (SensorInput sensor : inputSensors)
+                sensor.updateGeneratedRate();
+        } else
             cycle = 0;
+
         dataLock.lock();
         analysisTime = experimentTimeReference.getExperimentTime();
         analysisLinearTime = experimentTimeReference.getLinearTime();
@@ -344,6 +353,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (gpsIn != null)
             gpsIn.stop();
 
+        if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            depthInput.stop();
+
         for (NetworkConnection networkConnection : networkConnections)
             networkConnection.stop();
 
@@ -358,7 +370,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
 
     //Helper to start all I/O of this experiment (i.e. when it should be started)
-    public void startAllIO() throws Bluetooth.BluetoothException {
+    public void startAllIO() throws Bluetooth.BluetoothException, DepthInput.DepthInputException {
 
         if (!loaded)
             return;
@@ -372,6 +384,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         if (gpsIn != null)
             gpsIn.start();
+
+        if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            depthInput.start();
 
         //Playback
         if (audioOutput != null) {

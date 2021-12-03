@@ -167,7 +167,7 @@ public class ExpViewFragment extends Fragment {
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
             for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-                element.cleanView(((Experiment) getActivity()).experiment);
+                element.onFragmentStop(((Experiment) getActivity()).experiment);
             }
         }
 

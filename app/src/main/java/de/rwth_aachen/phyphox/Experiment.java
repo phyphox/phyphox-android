@@ -14,10 +14,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -27,7 +23,6 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
-import android.util.MutableBoolean;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -63,7 +58,6 @@ import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
-import androidx.core.widget.CompoundButtonCompat;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
@@ -74,18 +68,22 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
@@ -283,6 +281,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 for (BluetoothOutput bti : experiment.bluetoothOutputs)
                     bti.closeConnection();
             }
+            if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                experiment.depthInput.stopCamera();
         }
 
         if (popupWindow != null)
@@ -463,9 +463,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         if (experiment.loaded && experiment.networkConnections.size() > 0) {
-            String[] sensors = new String[experiment.inputSensors.size()];
+            Set<String> sensors = new HashSet<>();
             for (int i = 0; i < experiment.inputSensors.size(); i++) {
-                sensors[i] = res.getString(experiment.inputSensors.get(i).getDescriptionRes());
+                sensors.add(res.getString(experiment.inputSensors.get(i).getDescriptionRes()));
+            }
+            if (experiment.depthInput != null) {
+                sensors.add(res.getString(R.string.sensorDepth));
             }
             experiment.networkConnections.get(0).getDataAndPolicyDialog(experiment.audioRecord != null, experiment.gpsIn != null, experiment.inputSensors.size() > 0, sensors, this, this).show();
         } else if (!experiment.isLocal && experiment.loaded) { //If this experiment has been loaded from a external source, we offer to save it locally
@@ -1559,7 +1562,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                  };
                  Bluetooth.errorDialog.run();
                  return;
-	    }
+	        }
+        } catch (DepthInput.DepthInputException e) {
+            stopMeasurement(); // stop experiment
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(e.getMessage())
+                    .setPositiveButton(R.string.ok, null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
 
         //Set measurement state

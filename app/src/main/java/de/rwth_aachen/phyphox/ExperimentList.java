@@ -32,6 +32,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -117,6 +119,8 @@ import java.util.zip.ZipInputStream;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
+import de.rwth_aachen.phyphox.Camera.CameraHelper;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 
 import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
 
@@ -915,7 +919,7 @@ public class ExperimentList extends AppCompatActivity {
                                 boolean ignoreUnavailable = (ignoreUnavailableStr != null && Boolean.valueOf(ignoreUnavailableStr));
                                 SensorInput testSensor;
                                 try {
-                                    testSensor = new SensorInput(type, ignoreUnavailable,0, false, null, null, null);
+                                    testSensor = new SensorInput(type, ignoreUnavailable,0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (SensorInput.SensorException e) {
                                     unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
@@ -930,6 +934,13 @@ public class ExperimentList extends AppCompatActivity {
                                     break;
                                 if (!GpsInput.isAvailable(this)) {
                                     unavailableSensor = R.string.location;
+                                }
+                                break;
+                            case "depth":
+                                if (!inInput || unavailableSensor >= 0)
+                                    break;
+                                if (!DepthInput.isAvailable()) {
+                                    unavailableSensor = R.string.sensorDepth;
                                 }
                                 break;
                             case "bluetooth":
@@ -1037,6 +1048,12 @@ public class ExperimentList extends AppCompatActivity {
 
     //Load all experiments from assets and from local files
     private void loadExperimentList() {
+
+        //We want to show current availability of experiments requiring cameras
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            CameraManager cm = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraHelper.updateCameraList(cm);
+        }
 
         //Save scroll position to restore this later
         ScrollView sv = ((ScrollView)findViewById(R.id.experimentScroller));
@@ -2494,6 +2511,42 @@ public class ExperimentList extends AppCompatActivity {
                                     sb.append("<br /><br />");
                                 }
                             }
+                            sb.append("<br /><br />");
+
+                            sb.append("<b>Cameras</b><br /><br />");
+                            sb.append("<b>Depth sensors</b><br />");
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                sb.append("- Depth sensors front: ");
+                                int depthFront = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
+                                sb.append(depthFront);
+                                sb.append("<br />");
+                                sb.append("- Max resolution front: ");
+                                sb.append(depthFront > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_FRONT) : "-");
+                                sb.append("<br />");
+                                sb.append("- Max frame rate front: ");
+                                sb.append(depthFront > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_FRONT) : "-");
+                                sb.append("<br />");
+                                sb.append("- Depth sensors back: ");
+                                int depthBack = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
+                                sb.append(depthBack);
+                                sb.append("<br />");
+                                sb.append("- Max resolution back: ");
+                                sb.append(depthBack > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_BACK) : "-");
+                                sb.append("<br />");
+                                sb.append("- Max frame rate back: ");
+                                sb.append(depthBack > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_BACK) : "-");
+                                sb.append("<br />");
+                            } else {
+                                sb.append("API < 23");
+                            }
+                            sb.append("<br /><br />");
+
+                            sb.append("<b>Camera 2 API</b><br />");
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                sb.append(CameraHelper.getCamera2FormattedCaps(false));
+                            } else {
+                                sb.append("API < 21");
+                            }
 
                             final Spanned text = Html.fromHtml(sb.toString());
                             AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
@@ -2700,7 +2753,7 @@ public class ExperimentList extends AppCompatActivity {
                 //Now write the whole file...
                 try {
                     FileOutputStream output = c.openFileOutput(file, MODE_PRIVATE);
-                    output.write("<phyphox version=\"1.0\">".getBytes());
+                    output.write("<phyphox version=\"1.14\">".getBytes());
 
                     //Title, standard category and standard description
                     output.write(("<title>"+title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;")+"</title>").getBytes());

@@ -157,6 +157,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="sensorProximity">Proximity</string>
     <string name="sensorAttitude">Attitude</string>
     <string name="sensorVendor">Vendor specific</string>
+    <string name="sensorDepth">Depth (LiDAR/ToF)</string>
+    <string name="sensorCamera">Camera</string>
     <string name="vendorSensorTitle">Vendor-specific sensor</string>
     <string name="vendorSensorWarning1">The sensor</string>
     <string name="vendorSensorWarning2">does not report the correct sensor type. It appears to be vendor-specific and we could only guess its type from its name. Therefore, it might not work as expected.</string>
@@ -209,6 +211,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 \n%1$s</string>
     <string name="hotspotSettings">Hotspot Settings</string>
     <string name="remoteColorMapWarning">The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.</string>
+    <string name="remoteDepthGUIWarning">Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.</string>
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
     <string name="force_gnss">Satellite location only</string>
     <string name="switchToPhoneLayout">View: Narrow</string>
@@ -299,6 +302,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="beeperStop">Stop sound</string>
     <string name="activate_all">Activate all</string>
     <string name="deactivate_all">Deactivate all</string>
+    <string name="depthAggregationMode">Aggregation mode</string>
+    <string name="depthAggregationModePrompt">Select the method to aggregate depth information within the selected region.</string>
+    <string name="depthAggregationModeClosest">Closest</string>
+    <string name="depthAggregationModeAverage">Average</string>
+    <string name="depthAggregationModeWeighted">Weighted</string>
+
+    <string name="cameraFrontFacing">Front facing camera</string>
+    <string name="cameraBackFacing">Back facing camera</string>
+    <string name="cameraExternal">External camera</string>
 
     <string name="common_unit_short_arbitrary_unit">a.u.</string>
     <string name="common_unit_short_second">s</string>

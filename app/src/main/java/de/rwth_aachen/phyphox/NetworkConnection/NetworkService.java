@@ -177,7 +177,7 @@ public class NetworkService {
             } catch (MalformedURLException e) {
                 return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"No valid URL."), null);
             } catch (IOException e) {
-                return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"IOException."), null);
+                return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"IOException: " + e.getMessage()), null);
             } catch (JSONException e) {
                 return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"Could not build JSON."), null);
             }

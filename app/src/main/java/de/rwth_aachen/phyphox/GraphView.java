@@ -90,6 +90,7 @@ public class GraphView extends View {
     public boolean timeOnY = false; //y-axis is time axis?
     public boolean absoluteTime = false; //Use system time on time axis instead of experiment time
     public boolean linearTime = false; //Time data is given in seconds since 1970, ignoring pauses (in constrast to experiment time)
+    public boolean hideTimeMarkers = false; //Do not show the red markers that indicate times while the phyphox experiment was not running.
     public boolean logX = false; //logarithmic scale for the x-axis?
     public boolean logY = false; //logarithmic scale for the y-axis?
     public boolean logZ = false; //logarithmic scale for the y-axis?
@@ -233,13 +234,13 @@ public class GraphView extends View {
                 scaleY = 20;
 
             if (gestureOnZScale) {
-                zoomState.minZ = viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX);
-                zoomState.maxZ = viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX);
+                zoomState.minZ = Math.max(Math.min(viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX), 1e38), -1e38);
+                zoomState.maxZ = Math.max(Math.min(viewXToDataZ(dataZToViewX(scaleXOrigin) - (dataZToViewX(scaleXOrigin) - dataZToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX), 1e38), -1e38);
             } else {
-                zoomState.minX = viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX);
-                zoomState.minY = viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMin)) / scaleY + scaleYStart - focusY);
-                zoomState.maxX = viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX);
-                zoomState.maxY = viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMax)) / scaleY + scaleYStart - focusY);
+                zoomState.minX = Math.max(Math.min(viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMin)) / scaleX + scaleXStart - focusX), 1e38), -1e38);
+                zoomState.minY = Math.max(Math.min(viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMin)) / scaleY + scaleYStart - focusY), 1e38), -1e38);
+                zoomState.maxX = Math.max(Math.min(viewXToDataX(dataXToViewX(scaleXOrigin) - (dataXToViewX(scaleXOrigin) - dataXToViewX(scaleXStartMax)) / scaleX + scaleXStart - focusX), 1e38), -1e38);
+                zoomState.maxY = Math.max(Math.min(viewYToDataY(dataYToViewY(scaleYOrigin) - (dataYToViewY(scaleYOrigin) - dataYToViewY(scaleYStartMax)) / scaleY + scaleYStart - focusY), 1e38), -1e38);
             }
 
             invalidate();
@@ -496,13 +497,13 @@ public class GraphView extends View {
                 }
 
                 if (gestureOnZScale) {
-                    zoomState.minZ = viewXToDataZ(dataZToViewX(panXOrigin) - dx);
-                    zoomState.maxZ = viewXToDataZ(dataZToViewX(panXOrigin + panWOrigin) - dx);
+                    zoomState.minZ = Math.max(Math.min(viewXToDataZ(dataZToViewX(panXOrigin) - dx), 1e38), -1e38);
+                    zoomState.maxZ = Math.max(Math.min(viewXToDataZ(dataZToViewX(panXOrigin + panWOrigin) - dx), 1e38), -1e38);
                 } else {
-                    zoomState.minX = viewXToDataX(dataXToViewX(panXOrigin) - dx);
-                    zoomState.minY = viewYToDataY(dataYToViewY(panYOrigin) - dy);
-                    zoomState.maxX = viewXToDataX(dataXToViewX(panXOrigin + panWOrigin) - dx);
-                    zoomState.maxY = viewYToDataY(dataYToViewY(panYOrigin + panHOrigin) - dy);
+                    zoomState.minX = Math.max(Math.min(viewXToDataX(dataXToViewX(panXOrigin) - dx), 1e38), -1e38);
+                    zoomState.minY = Math.max(Math.min(viewYToDataY(dataYToViewY(panYOrigin) - dy), 1e38), -1e38);
+                    zoomState.maxX = Math.max(Math.min(viewXToDataX(dataXToViewX(panXOrigin + panWOrigin) - dx), 1e38), -1e38);
+                    zoomState.maxY = Math.max(Math.min(viewYToDataY(dataYToViewY(panYOrigin + panHOrigin) - dy), 1e38), -1e38);
                 }
 
                 invalidate();
@@ -884,6 +885,13 @@ public class GraphView extends View {
         this.linearTime = linearTime;
         graphSetup.linearTime = linearTime;
         this.rescale();
+        this.invalidate();
+    }
+
+    //Interface to select if the red time markers should be visible
+    public void setHideTimeMarkers(boolean hideTimeMarkers) {
+        this.hideTimeMarkers = hideTimeMarkers;
+        graphSetup.hideTimeMarkers = hideTimeMarkers;
         this.invalidate();
     }
 

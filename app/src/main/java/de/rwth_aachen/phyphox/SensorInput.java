@@ -5,6 +5,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.Serializable;
@@ -20,6 +21,10 @@ public class SensorInput implements SensorEventListener, Serializable {
     public SensorName sensorName; //Sensor name (phyphox identifier)
     public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
+    public int stride;
+    int strideCount;
+    public SensorRateStrategy rateStrategy;
+    private boolean lastOneTooFast = false;
     private final ExperimentTimeReference experimentTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
     public double fixDeviceTimeOffset = 0.0; //Some devices show a negative offset on the time events of the sensors. This seems to mostly affect sensors that report onChange. Our strategy is that sensor events with -10s < t < 0s are simply corrected to t=0 (old sensor events in the queue are still valid), but sensor events with t < -10s indicate a systematic problem on the device and are used to calculate this variable which will be used to also correct all subsequent readings.
 
@@ -35,6 +40,7 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     private long lastReading; //Remember the time of the last reading to fullfill the rate
     private double avgX, avgY, avgZ, avgAccuracy; //Used for averaging
+    private double genX, genY, genZ, genAccuracy; //Store last output for "generate" rate strategy
     private boolean average = false; //Avergae over aquisition period?
     private int aquisitions; //Number of aquisitions for this average
 
@@ -45,6 +51,10 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     public enum SensorName {
         accelerometer, linear_acceleration, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity, attitude
+    }
+
+    public enum SensorRateStrategy {
+        auto, request, generate, limit
     }
 
     public class SensorException extends Exception {
@@ -78,7 +88,7 @@ public class SensorInput implements SensorEventListener, Serializable {
         }
     }
 
-    private SensorInput(boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
+    private SensorInput(boolean ignoreUnavailable, double rate, SensorRateStrategy rateStrategy, int stride, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
         this.dataLock = lock;
         this.experimentTimeReference = experimentTimeReference;
 
@@ -86,6 +96,8 @@ public class SensorInput implements SensorEventListener, Serializable {
             this.period = 0;
         else
             this.period = (long) ((1 / rate) * 1e9); //Period in ns
+        this.stride = stride;
+        this.rateStrategy = rateStrategy;
 
         this.average = average;
 
@@ -112,8 +124,8 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
     // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    public SensorInput(SensorName type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
-        this(ignoreUnavailable, rate, average, buffers, lock, experimentTimeReference);
+    public SensorInput(SensorName type, boolean ignoreUnavailable, double rate, SensorRateStrategy rateStrategy, int stride, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
+        this(ignoreUnavailable, rate, rateStrategy, stride, average, buffers, lock, experimentTimeReference);
 
         this.type = resolveSensorName(type);
         this.sensorName = type;
@@ -121,8 +133,8 @@ public class SensorInput implements SensorEventListener, Serializable {
             throw new SensorException("Unknown sensor.");
     }
 
-    public SensorInput(String type, boolean ignoreUnavailable, double rate, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
-        this(ignoreUnavailable, rate, average, buffers, lock, experimentTimeReference);
+    public SensorInput(String type, boolean ignoreUnavailable, double rate, SensorRateStrategy rateStrategy, int stride, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
+        this(ignoreUnavailable, rate, rateStrategy, stride, average, buffers, lock, experimentTimeReference);
 
         this.type = resolveSensorString(type);
         if (this.type < 0)
@@ -262,8 +274,13 @@ public class SensorInput implements SensorEventListener, Serializable {
         this.avgZ = 0.;
         this.avgAccuracy = 0.;
         this.aquisitions = 0;
+        this.strideCount = 0;
+        lastOneTooFast = false;
 
-        this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
+        if (rateStrategy == SensorRateStrategy.request || rateStrategy == SensorRateStrategy.auto)
+            this.sensorManager.registerListener(this, sensor, (int)(period / 1000));
+        else
+            this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     //Stop the data aquisition by unregistering the listener for this sensor
@@ -276,6 +293,80 @@ public class SensorInput implements SensorEventListener, Serializable {
     //This event listener is mandatory as this class implements SensorEventListener
     //But phyphox does not need it
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    private void appendToBuffers(long timestamp, double x, double y, double z, double accuracy) {
+        strideCount++;
+        if (strideCount < stride) {
+            return;
+        } else {
+            strideCount = 0;
+        }
+        dataLock.lock();
+        try {
+            if (dataX != null)
+                dataX.append(x);
+            if (dataY != null)
+                dataY.append(y);
+            if (dataZ != null)
+                dataZ.append(z);
+            if (dataT != null) {
+                double t;
+                if (timestamp == 0) {
+                    //This is nonsense. The timestamp should be given in nanoseconds since system boot.
+                    //Receiving exactly 0 is very unlikely to be an offset, but most likely to be a bad
+                    //implementation on the device. We will do an best effort fix it by retrieving our
+                    //own timestamp.
+                    t = experimentTimeReference.getExperimentTime();
+                } else {
+                    t = experimentTimeReference.getExperimentTimeFromEvent(timestamp);
+                    if ((t < -10 || (t > experimentTimeReference.getExperimentTime())) && fixDeviceTimeOffset == 0.0) {
+                        Log.w("SensorInput", "Unrealistic time offset detected. Applying adjustment of " + -t + "s.");
+                        fixDeviceTimeOffset = -t;
+                    }
+                    t += fixDeviceTimeOffset;
+                    if (t < 0.0) {
+                        Log.w("SensorInput", this.sensorName + ": Adjusted one timestamp from t = " + t + "s to t = 0s.");
+                        t = 0.0;
+                    }
+                }
+                dataT.append(t);
+            }
+            if (dataAbs != null)
+                if (type == Sensor.TYPE_ROTATION_VECTOR)
+                    dataAbs.append(Math.sqrt(aquisitions*aquisitions-avgX*avgX-avgY*avgY-avgZ*avgZ) / aquisitions);
+                else
+                    dataAbs.append(Math.sqrt(avgX*avgX+avgY*avgY+avgZ*avgZ) / aquisitions);
+            if (dataAccuracy != null)
+                dataAccuracy.append(accuracy);
+        } finally {
+            dataLock.unlock();
+        }
+    }
+
+    private void resetAveraging(long t) {
+        //Reset averaging
+        avgX = 0.;
+        avgY = 0.;
+        avgZ = 0.;
+        avgAccuracy = 0.;
+        lastReading = t;
+        aquisitions = 0;
+    }
+
+    public void updateGeneratedRate() {
+        long now;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            now = SystemClock.elapsedRealtimeNanos();
+        } else {
+            now = SystemClock.elapsedRealtime() * 1000000L;
+        }
+        if (rateStrategy == SensorRateStrategy.generate && lastReading > 0) {
+            while (lastReading + 2*period <= now) { //In case we did not get a sensor event in the last 200ms + 2*period, we fill it up here. This just ensures that the user gets data even with sensor types that do not update without a change.
+                appendToBuffers(lastReading + period, genX, genY, genZ, genAccuracy);
+                lastReading += period;
+            }
+        }
     }
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
@@ -301,71 +392,79 @@ public class SensorInput implements SensorEventListener, Serializable {
                 }
             }
 
-            if (average) {
-                //We want averages, so sum up all the data and count the aquisitions
-                avgX += event.values[0];
-                if (event.values.length > 1) {
-                    avgY += event.values[1];
-                    if (event.values.length > 2)
-                        avgZ += event.values[2];
-                }
-
-                avgAccuracy = Math.min(accuracy, avgAccuracy);
-                aquisitions++;
-            } else {
-                //No averaging. Just keep the last result
-                avgX = event.values[0];
-                if (event.values.length > 1) {
-                    avgY = event.values[1];
-                    if (event.values.length > 2)
-                        avgZ = event.values[2];
-                }
-                avgAccuracy = accuracy;
-                aquisitions = 1;
-            }
-            if (lastReading == 0)
-                lastReading = event.timestamp;
-            if (lastReading + period <= event.timestamp) {
-                //Average/waiting period is over
-                //Append the data to available buffers
-                dataLock.lock();
-                try {
-                    if (dataX != null)
-                        dataX.append(avgX / aquisitions);
-                    if (dataY != null)
-                        dataY.append(avgY / aquisitions);
-                    if (dataZ != null)
-                        dataZ.append(avgZ / aquisitions);
-                    if (dataT != null) {
-                        double t = experimentTimeReference.getExperimentTimeFromEvent(event.timestamp);
-                        if (t < -10 && fixDeviceTimeOffset == 0.0) {
-                            Log.w("SensorInput", "Unrealistic time offset detected. Applying adjustment of " + -t + "s.");
-                            fixDeviceTimeOffset = -t;
-                        }
-                        t += fixDeviceTimeOffset;
-                        if (t < 0.0) {
-                            Log.w("SensorInput", this.sensorName + ": Adjusted one timestamp from t = " + t + "s to t = 0s.");
-                            t = 0.0;
-                        }
-                        dataT.append(t);
+            if (rateStrategy == SensorRateStrategy.generate) {
+                if (lastReading == 0) { //First value
+                    genX = event.values[0];
+                    genY = event.values.length > 1 ? event.values[1] : event.values[0];
+                    genZ = event.values.length > 2 ? event.values[2] : event.values[0];
+                    genAccuracy = accuracy;
+                } else if (lastReading + period <= event.timestamp) {
+                    while (lastReading + 2*period <= event.timestamp) {
+                        appendToBuffers(lastReading + period, genX, genY, genZ, genAccuracy);
+                        lastReading += period;
                     }
-                    if (dataAbs != null)
-                        if (type == Sensor.TYPE_ROTATION_VECTOR)
-                            dataAbs.append(Math.sqrt(aquisitions*aquisitions-avgX*avgX-avgY*avgY-avgZ*avgZ) / aquisitions);
-                        else
-                            dataAbs.append(Math.sqrt(avgX*avgX+avgY*avgY+avgZ*avgZ) / aquisitions);
-                    if (dataAccuracy != null)
-                        dataAccuracy.append(accuracy);
-                } finally {
-                    dataLock.unlock();
+                    if (aquisitions > 0) {
+                        genX = avgX / aquisitions;
+                        genY = avgY / aquisitions;
+                        genZ = avgZ / aquisitions;
+                        genAccuracy = avgAccuracy;
+                    }
+                    appendToBuffers(lastReading + period, genX, genY, genZ, genAccuracy);
+                    resetAveraging(lastReading + period);
                 }
-                //Reset averaging
-                avgX = 0.;
-                avgY = 0.;
-                avgZ = 0.;
-                avgAccuracy = 0.;
-                lastReading = event.timestamp;
-                aquisitions = 0;
+            }
+
+            if (rateStrategy != SensorRateStrategy.request) {
+                if (average) {
+                    //We want averages, so sum up all the data and count the aquisitions
+                    avgX += event.values[0];
+                    if (event.values.length > 1) {
+                        avgY += event.values[1];
+                        if (event.values.length > 2)
+                            avgZ += event.values[2];
+                    }
+
+                    avgAccuracy = Math.min(accuracy, avgAccuracy);
+                    aquisitions++;
+                } else {
+                    //No averaging. Just keep the last result
+                    avgX = event.values[0];
+                    if (event.values.length > 1) {
+                        avgY = event.values[1];
+                        if (event.values.length > 2)
+                            avgZ = event.values[2];
+                    }
+                    avgAccuracy = accuracy;
+                    aquisitions = 1;
+                }
+                if (lastReading == 0)
+                    lastReading = event.timestamp;
+            }
+
+            switch (rateStrategy) {
+                case auto:
+                    if (event.timestamp - lastReading < period * 0.9) {
+                        if (lastOneTooFast)
+                            rateStrategy = SensorRateStrategy.generate;
+                        lastOneTooFast = true;
+                    } else {
+                        lastOneTooFast = false;
+                    }
+                    appendToBuffers(event.timestamp, event.values[0], event.values.length > 1 ? event.values[1] : event.values[0], event.values.length > 2 ? event.values[2] : event.values[0], accuracy);
+                    resetAveraging(event.timestamp); //Keep averaging clean in case we need to change the strategy
+                    break;
+                case request:
+                    appendToBuffers(event.timestamp, event.values[0], event.values.length > 1 ? event.values[1] : event.values[0], event.values.length > 2 ? event.values[2] : event.values[0], accuracy);
+                    break;
+                case generate:
+                    //Done before averaging
+                    break;
+                case limit:
+                    if (lastReading + period <= event.timestamp) {
+                        appendToBuffers(event.timestamp, avgX / aquisitions, avgY / aquisitions, avgZ / aquisitions, avgAccuracy);
+                        resetAveraging(event.timestamp);
+                    }
+                    break;
             }
         }
     }

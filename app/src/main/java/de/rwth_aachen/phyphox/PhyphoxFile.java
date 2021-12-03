@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.hardware.camera2.CameraManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -53,6 +54,8 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
+import de.rwth_aachen.phyphox.Camera.CameraHelper;
+import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttJson;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttTlsCsv;
@@ -1362,6 +1365,7 @@ public abstract class PhyphoxFile {
                     boolean timeOnY = getBooleanAttribute("timeOnY", false);
                     boolean systemTime = getBooleanAttribute("systemTime", false);
                     boolean linearTime = getBooleanAttribute("linearTime", false);
+                    boolean hideTimeMarkers = getBooleanAttribute("hideTimeMarkers", false);
                     boolean logX = getBooleanAttribute("logX", false);
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
@@ -1437,7 +1441,7 @@ public abstract class PhyphoxFile {
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
-                    ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime);
+                    ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime, hideTimeMarkers);
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     if (!globalColor) {
@@ -1550,6 +1554,12 @@ public abstract class PhyphoxFile {
                     newView.elements.add(be);
                     break;
                 }
+                case "depth-gui": //GUI for the depth input (LiDAR/ToF)
+                    double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
+                    ExpView.depthGuiElement dge = newView.new depthGuiElement(label, null, null, parent.getResources()); //Two array inputs
+                    dge.setAspectRatio(aspectRatio);
+                    newView.elements.add(dge);
+                    break;
                 case "svg": //A (parametric) svg image
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
@@ -1603,7 +1613,17 @@ public abstract class PhyphoxFile {
             switch (tag.toLowerCase()) {
                 case "sensor": { //A sensor input (in the sense of android sensor)
                     double rate = getDoubleAttribute("rate", 0.); //Aquisition rate (we always request fastest rate, but average or just pick every n-th readout)
+                    int stride = getIntAttribute("stride", 1);
                     boolean average = getBooleanAttribute("average", false); //Average if we have a lower rate than the sensor can deliver?
+                    SensorInput.SensorRateStrategy rateStrategy = (experiment.versionMajor > 1 || (experiment.versionMajor == 1 && experiment.versionMinor >= 14)) ? SensorInput.SensorRateStrategy.auto : SensorInput.SensorRateStrategy.limit;
+                    String rateStrategyStr = getStringAttribute("rateStrategy");
+                    if (rateStrategyStr != null && !rateStrategyStr.isEmpty()) {
+                        try {
+                            rateStrategy = SensorInput.SensorRateStrategy.valueOf(rateStrategyStr);
+                        } catch (IllegalArgumentException e) {
+                            throw new phyphoxFileException("Invalid rate strategy.", xpp.getLineNumber());
+                        }
+                    }
 
                     String type = getStringAttribute("type");
                     boolean ignoreUnavailable = getBooleanAttribute("ignoreUnavailable", false);
@@ -1622,7 +1642,7 @@ public abstract class PhyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
+                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, rateStrategy, stride, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (SensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
@@ -1705,10 +1725,93 @@ public abstract class PhyphoxFile {
 
                     break;
                 }
+                case "depth": {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                        throw new phyphoxFileException("Depth input is only supported from API level 23 upwards (Android 6)");
+                    } else {
+                        //Check for camera permission
+                        if (ContextCompat.checkSelfPermission(parent, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            //No permission? Request it (Android 6+, only)
+                            ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.CAMERA}, 0);
+                            throw new phyphoxFileException("Need permission to access the camera."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
+                        }
+
+                        String modeStr = getStringAttribute("mode");
+                        if (modeStr == null)
+                            modeStr = "closest";
+                        else
+                            modeStr = modeStr.toLowerCase();
+
+                        DepthInput.DepthExtractionMode mode;
+                        switch (modeStr) {
+                            case "closest": {
+                                mode = DepthInput.DepthExtractionMode.closest;
+                                break;
+                            }
+                            case "weighted": {
+                                mode = DepthInput.DepthExtractionMode.weighted;
+                                break;
+                            }
+                            case "average": {
+                                mode = DepthInput.DepthExtractionMode.average;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown depth extraction mode: " + modeStr, xpp.getLineNumber());
+                            }
+                        }
+
+                        double x1user = getDoubleAttribute("x1", 0.4);
+                        double x2user = getDoubleAttribute("x2", 0.6);
+                        double y1user = getDoubleAttribute("y1", 0.4);
+                        double y2user = getDoubleAttribute("y2", 0.6);
+
+                        //Careful: We will translate the user coordinate system to the camera coordinate system: x -> -y, y -> -x
+                        double x1 = 1.0 - y1user;
+                        double x2 = 1.0 - y2user;
+                        double y1 = 1.0 - x1user;
+                        double y2 = 1.0 - x2user;
+
+                        //Allowed input/output configuration
+                        ioBlockParser.ioMapping[] outputMapping = {
+                                new ioBlockParser.ioMapping() {{
+                                    name = "z";
+                                    asRequired = false;
+                                    minCount = 1;
+                                    maxCount = 1;
+                                    valueAllowed = false;
+                                }},
+                                new ioBlockParser.ioMapping() {{
+                                    name = "t";
+                                    asRequired = true;
+                                    minCount = 0;
+                                    maxCount = 1;
+                                    valueAllowed = false;
+                                }}
+                        };
+                        Vector<DataOutput> outputs = new Vector<>();
+                        (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
+
+                        CameraManager cameraManager = (CameraManager) parent.getSystemService(Context.CAMERA_SERVICE);
+                        CameraHelper.updateCameraList(cameraManager);
+                        experiment.depthInput = new DepthInput(mode, (float) x1, (float) x2, (float) y1, (float) y2, outputs, experiment.dataLock, experiment.experimentTimeReference, cameraManager);
+
+                        if (!DepthInput.isAvailable()) {
+                            throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(R.string.sensorDepth) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
+                        }
+                    }
+
+                    break;
+                }
                 case "bluetooth": { //A bluetooth input
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
                             throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                         } else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (ContextCompat.checkSelfPermission(parent, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(parent, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
+                                //Android 12+: New Bluetooth scan permission required
+                                ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, 0);
+                                throw new phyphoxFileException("Need permission to search for and access Bluetooth devices."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
+                            }
                             double rate = getDoubleAttribute("rate", 0.); //Aquisition rate
 
                             String idString = getTranslatedAttribute("id");
@@ -2929,15 +3032,15 @@ public abstract class PhyphoxFile {
                                 //Version strings are supposed to be of the form "x.y" with x being the major version number and y being minor.
 
                                 //File versions
-                                int major = Integer.valueOf(fileVersion.substring(0, split));
-                                int minor = Integer.valueOf(fileVersion.substring(split + 1));
+                                experiment.versionMajor = Integer.valueOf(fileVersion.substring(0, split));
+                                experiment.versionMinor = Integer.valueOf(fileVersion.substring(split + 1));
 
                                 //Class versions
                                 int phyphoxMajor = Integer.valueOf(phyphoxFileVersion.substring(0, phyphoxSplit));
                                 int phyphoxMinor = Integer.valueOf(phyphoxFileVersion.substring(phyphoxSplit + 1));
 
                                 //This class needs to be newer than the file. Otherwise ask the user to update.
-                                if (major > phyphoxMajor || (major == phyphoxMajor && minor > phyphoxMinor)) {
+                                if (experiment.versionMajor > phyphoxMajor || (experiment.versionMajor == phyphoxMajor && experiment.versionMinor > phyphoxMinor)) {
                                     experiment.message = "This experiment has been created for a more recent version of phyphox. Please update phyphox to load this experiment.";
                                     return experiment;
                                 }

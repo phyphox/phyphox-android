@@ -344,8 +344,7 @@ public class DataBuffer implements Serializable {
 
     //Get all values as a double array
     public Double[] getArray() {
-        Double ret[] = new Double[buffer.size()];
-        return buffer.toArray(ret);
+        return buffer.toArray(new Double[0]);
     }
 
     public FloatBufferRepresentation getFloatBuffer() {
