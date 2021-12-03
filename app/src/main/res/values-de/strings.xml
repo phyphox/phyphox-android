@@ -343,7 +343,18 @@
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
     <string name="common_musical_note_g7">G7</string>
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
-    <string name="creditsApache" translatable="false"></string>
-    <string name="creditsZxing" translatable="false"></string>
-    <string name="creditsPahoMQTT" translatable="false"></string>
+    <string name="creditsApache" translatable="false"/>
+    <string name="creditsZxing" translatable="false"/>
+    <string name="creditsPahoMQTT" translatable="false"/>
+    <string name="sensorDepth">Tiefe (LiDAR/ToF)</string>
+    <string name="sensorCamera">Kamera</string>
+    <string name="remoteDepthGUIWarning">Vorschau und Steuerung des LiDAR/ToF-Sensors wird im Fernzugriff nicht unterstützt.</string>
+    <string name="depthAggregationMode">Erfassungsmethode</string>
+    <string name="depthAggregationModePrompt">Wähle die Methode, mit welcher die Tiefenwerte im gewählten Bereich zusammengefasst werden.</string>
+    <string name="depthAggregationModeClosest">Nächste</string>
+    <string name="depthAggregationModeAverage">Mittelwert</string>
+    <string name="depthAggregationModeWeighted">Gewichtet</string>
+    <string name="cameraFrontFacing">Vordere Kamera</string>
+    <string name="cameraBackFacing">Hintere Kamera</string>
+    <string name="cameraExternal">Externe Kamera</string>
 </resources>
