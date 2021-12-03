@@ -1,15 +1,14 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Podešavanja</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="newExperiment">Dodaj eksperiment</string>
     <string name="newExperimentPhyphoxInfo">Posetite phyphox.org kako biste sproveli naprednije eksperimente, uključujući analizu podataka i deljenje istih sa kolegama, studentima i prijateljima.</string>
     <string name="newExperimentInputTitle">Naslov</string>
     <string name="newExperimentInputBufferSize">Veličina bafera</string>
     <string name="newExperimentInputRate">Brzina senzora (u Hz, 0=najbrže moguće)</string>
     <string name="newExperimentInputSensors">Aktivni senzori</string>
-
     <string name="help">Pomoć i informacije</string>
     <string name="experimentsPhyphoxOrg">Ideje za eksperimente i uputstva</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -22,11 +21,9 @@
     <string name="translationToSettings">Podešavanja</string>
     <string name="translationToWebsite">Poseti vebsajt</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#sr</string>
-
     <string name="warning">Upozorenje</string>
     <string name="donotshowagain">Ne pokazuj ponovo</string>
     <string name="damageWarning">Molimo vas da budete oprezni prilikom izvođenja eksperimenata, kako ne biste oštetili vaš telefon. Molimo vas da posebno povedete računa o ispuštanju telefona na čvrste površine i da ga ne izlažete jakom magnetnom polju. Autori Phyphox-a nisu odgovorni za bilo kakva oštećenja vašeg telefona.</string>
-
     <string name="info">Info</string>
     <string name="credits">Bodovi</string>
     <string name="creditsRWTH">phyphox je nastao na Drugom institutu za fiziku, Univerzitet u Aachan RWTH.</string>
@@ -48,69 +45,56 @@
     <string name="sensorTemperature">Temperatura</string>
     <string name="sensorHumidity">Vlažnost</string>
     <string name="sensorProximity">Blizina</string>
-
     <string name="location">Položaj</string>
-
     <string name="sensorNotAvailableWarningTitle">Senzor nije dostupan.</string>
     <string name="sensorNotAvailableWarningText1">Senzor</string>
     <string name="sensorNotAvailableWarningText2">nije dostupa. Uobičajeno ovo znači da vaš uređaj ne poseduje ovaj tip senzora.</string>
     <string name="sensorNotAvailableWarningMoreInfo">Više informacija</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="ok">OK</string>
     <string name="close">Zatvori</string>
     <string name="next">Sledeće</string>
     <string name="cancel">Poništi</string>
     <string name="unknown">nepoznato</string>
-
     <string name="delete">Obriši</string>
-    <string name="confirmDelete">Da li želite da obrišete ovaj esperiment iz vaše kolekcije?</string>
-    <string name="confirmDeleteTitle">Potvrdi brisanje?</string>
-
+    <string name="confirmDelete">Da li želite da obrišete ovaj esperiment iz vaše kolekcije\?</string>
+    <string name="confirmDeleteTitle">Potvrdi brisanje\?</string>
     <string name="stop">Zaustavi</string>
     <string name="start">Početak</string>
     <string name="clear_data">Obriši podatke</string>
-    <string name="clear_data_question">Obriši snimljene podatke?</string>
+    <string name="clear_data_question">Obriši snimljene podatke\?</string>
     <string name="clear">Obriši</string>
     <string name="timed_stop">Zaustavi tajmer</string>
     <string name="timed_start">Pokreni tajmer</string>
-
     <string name="loadingTitle">Učitavanje</string>
     <string name="loadingText">Učitavanje eksperimenta…</string>
-
     <string name="timedRunStartDelay">Odloženi start (s)</string>
     <string name="timedRunStopDelay">Trajanje eksperimenta (s)</string>
     <string name="timedRunDialogTitle">Podešavanje vremena</string>
     <string name="enableTimedRun">Podesi merač vremena</string>
-
     <string name="export">Otpremi podatke</string>
     <string name="export_subject">Podaci sa phyphox-a</string>
     <string name="export_pick_share">Izaberi metod odpremanja</string>
-
     <string name="share">Podeli sliku ekrana</string>
     <string name="share_subject">Slika ekrana iz phyphox-a</string>
     <string name="share_pick_share">Izaberi metod za deljenje</string>
-
     <string name="remoteServer">Dozvoli upravljanje na daljinu</string>
     <string name="remoteServerWarning">Omogućićete upravljanje na daljinu za izabrane podatke. Ovo bi trebalo da radite samo na poverljivoj mreži! Na mnogim univerzitetskim mrežama direktan pristup uređaju neće biti omogućen.
 \nZbog bezbednosti i performansi savetujemo vam da se sa uređajem povežete preko mobilnog hotspot-a.
 \nNakon odabira dugmeta ok, biće omogućen pristup merenju sa bilo kog pretraživača koji se nalazi na istoj mreži.</string>
     <string name="remoteServerWarningTitle">Bezbednostno upozorenje!</string>
-    <string name="remoteServerActive">Daljinsko upravljanja je omogućeno. Pristupite ovom eksperimentu sa sledećeg URL-a: 
+    <string name="remoteServerActive">Daljinsko upravljanja je omogućeno. Pristupite ovom eksperimentu sa sledećeg URL-a:
 \n%1$s</string>
     <string name="hotspotSettings">Podešavanje hotspot-a</string>
-
     <string name="calibrated_magnetometer">Koristi kalibrisani magnetometar</string>
-
     <string name="switchToPhoneLayout">Pregled: Uzan</string>
     <string name="switchColumns1">Pregled: 1 kolona</string>
     <string name="switchColumns2">Pregled: 2 kolone</string>
     <string name="switchColumns3">Pregled: 3 kolone</string>
-
     <string name="show_description">Informacije o eksperimentu</string>
     <string name="save_locally">Dodaj eksperiment u kolekciju</string>
     <string name="save_locally_done">Eksperiment uspešno dodat u kolekciju.</string>
-    <string name="save_locally_message">Ovaj eksperiment je otvoren sa daljinskog izvora. Da li želite da ga dodate u vašu kolekciju eksperimenata?</string>
+    <string name="save_locally_message">Ovaj eksperiment je otvoren sa daljinskog izvora. Da li želite da ga dodate u vašu kolekciju eksperimenata\?</string>
     <string name="save_locally_button">Sačuvaj u kolekciju</string>
     <string name="save_state">Sačuvaj stanje eksperimenta</string>
     <string name="save_state_category">Sačuvana stanja eksperimenta</string>
@@ -121,20 +105,14 @@
     <string name="save_state_subject">Stanje eksprimenta za phyhox</string>
     <string name="save_state_default_title">Merenje</string>
     <string name="save_state_success">Stanje je sačuvano u vašu kolekciju.</string>
-
     <string name="timedRun">Merenje vremena</string>
-
     <string name="pick_exportSets">Izaberi podatke za odpremanje.</string>
     <string name="pick_exportFormat">Izaberi format podataka.</string>
-
     <string name="noDrawableData">Nema slikovnih podataka.</string>
-
     <string name="categoryNewExperiment">Laki nasumični eksperimenti</string>
     <string name="categoryRawSensor">Senzori</string>
-
     <string name="experimentinfo_hint">Pogledaj uputstvo za eksperiment kako bi ga izvršio.</string>
-
-<string name="graph_tools_pan_and_zoom">Pomeranje i zumiranje</string>
+    <string name="graph_tools_pan_and_zoom">Pomeranje i zumiranje</string>
     <string name="graph_tools_pick">Izaberite podatke</string>
     <string name="graph_tools_more">Više alata</string>
     <string name="graph_tools_reset">Resetuj zumiranje</string>
@@ -143,34 +121,27 @@
     <string name="graph_tools_export">Otpremi ove podatke</string>
     <string name="graph_tools_log_x">Logaritamska x osa</string>
     <string name="graph_tools_log_y">Logaritamska y osa</string>
-
     <string name="graph_point_label">Tačka</string>
     <string name="graph_slope_label">Nagib</string>
     <string name="graph_difference_label">Razlika</string>
     <string name="graph_fit_label">Linearan fit: y = a x + b</string>
-
     <string name="applyZoomTitle">Primeni zumiranje</string>
     <string name="applyZoomExplanation">Kako zatvarate interaktivni mod ovog grafika, ako želite možete izabrati da zadržite vaše zumiranje.</string>
     <string name="applyZoomAdvanced">Napredne opcije</string>
     <string name="applyZoomApply">Primeni na…</string>
-
     <string name="applyZoomReset">Resetuj na početna podešavanja</string>
     <string name="applyZoomKeep">Zadrži kao što je selektovano</string>
     <string name="applyZoomFollow">Zadrži prati nove podatke</string>
-
     <string name="applyZoomThis">Samo ovaj grafik</string>
     <string name="applyZoomSameVariable">Ostali grafici: Iste promenljive</string>
     <string name="applyZoomSameUnit">Ostali grafici: Iste jedinice</string>
     <string name="applyZoomSameAxis">Ostali grafici: Iste ose</string>
-
     <string name="newExperimentSimple">Dodaj jednostavan eksperiment</string>
     <string name="newExperimentBluetooth">Dodaj eksperiment za blutut uređaj</string>
     <string name="newExperimentBluetoothErrorTitle">Blutut skener greška</string>
     <string name="newExperimentBluetoothLoadFromDevice">Skini sa uređaja</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Ovaj uređaj sprovodi sopstveni phyphox eksperiment. Odaberite \"skini sa uređaja\" kako biste ga otvorili.</string>
-
     <string name="newExperimentQR">Dodaj eksperiment sa QR koda</string>
-
     <string name="newExperimentQRscan">Skeniraj QR kod koji sadrži phyphox eksperiment.</string>
     <string name="newExperimentQRErrorTitle">QR kod greška.</string>
     <string name="newExperimentQRNoExperiment">Nije pronađen QR kod koji sadrži phyphox eksperiment.</string>
@@ -178,55 +149,39 @@
     <string name="newExperimentQRCodesMissing1">QR kod koji ste skenirali je deo seta od</string>
     <string name="newExperimentQRCodesMissing2">kodova. Molimo vas pritisnite nastavak za skeniranje ostalih kodova. Kodovi i dalje nedostaju:</string>
     <string name="newExperimentQRBadCRC">Pogrešna suma. Ovo znači da ili su QR kodovi loši ili je nešto pošlo naopako tokom skeniranja.</string>
-
     <string name="newExperimentBTReadErrorTitle">Blutut eksperiment greška.</string>
     <string name="newExperimentBTReadErrorCorrupted">Prenosni podaci eksperimenta su poremećeni.</string>
-
     <string name="generalErrorDialog">Desila se greška.</string>
-
     <string name="deviceInfo">Informacije o uređaju</string>
     <string name="copyToClipboard">Kopiraj u klipbord</string>
     <string name="deviceInfoCopied">Informacije o uređaju su kopirane u vaš klipbord.</string>
-
     <string name="vendorSensorWarning1">Senzor</string>
     <string name="vendorSensorWarning2">nije predstavljen tačan tip senzora. Izgleeda da je specifičan za proizvođača i njegov tip se može samo naslutiti iz naslova. Stoga, moguće je da neće raditi, kao što se očekuje.</string>
-
     <string name="gpl">Phyphox® je softver otvorenog koda realizovan pod GNU General Public Licence. Molimo posetite http://phyphox.org za više informacija i pristup izvornom kodu. Ipak, naziv \"phyphox\" i \"RWTH Aachen\" su registrovane robne marke.</string>
     <string name="sensorVendor">Karakteristike dobavljača</string>
-
     <string name="vendorSensorTitle">Senzor karakterističan za dobavljača</string>
     <string name="tryagain">Pokušajte ponovo</string>
     <string name="doContinue">Nastavi</string>
     <string name="rename">Preimenuj</string>
     <string name="loadingBluetoothConnectionText">Povezivanje na Bluetooth uređaj…</string>
-
     <string name="remoteServerNoNetwork">Najpre uspostavite WiFi konekciju na udaljenom uređaju. Molimo omogućite WiFi vezu ili mobilni hotspot.</string>
     <string name="remoteColorMapWarning">Nijansa na udaljenom interfejsu je samo približna vrednost. Nasuprot nijansi u aplikaciji, trenutno ne mogu biti podržani neekvidistantni podaci ili logaritamska skala na x i y osama. Tako da se podaci mogu u različitim intervalima pojaviti na pogrešnoj lokaciji.</string>
-
     <string name="force_gnss">Samo satelitska lokacija</string>
-
     <string name="fontSize">Veličina slova</string>
-
     <string name="open_zip_title">Otvaranje grupe eksperimenata</string>
     <string name="open_zip_dialog_instructions">Ovaj izvor sadrži više eksperimenata. Možete izabrati otvaranje jednog i ukoliko želite, sačuvate u Vašu kolekciju ili ih sve sačuvati odjednom-pritiskom na dugme ispod.</string>
     <string name="open_save_all">Sačuvaj sve</string>
-
     <string name="open_bluetooth_assets_title">Eksperimenti za Bluetooth uređaje</string>
     <string name="open_bluetooth_assets">Sledeći eksperimenti za Vaš uređaj su dostupni na phyphox-u. Možete ih otvoriti i koristiti ili dodati sve u Vašu kolekciju za lako pristupanje sa glavnog menija.</string>
-
     <string name="start_hint">Dodirnite trougao za početak eksperimenta.</string>
-
     <string name="bluetooth">Blutut niske energije</string>
     <string name="bt_android_version">Bluetooth Low Energy nije podržan na Android verzijama nižim od 4.3.</string>
-
     <string name="bt_pick_device">Molimo izaberite uređaj.</string>
     <string name="bt_scanning_generic">Traženje Bluetooth uređaja…</string>
     <string name="bt_scanning_specific1">Traženje Bluetooth uređaja sa</string>
     <string name="bt_scanning_specific2">u svom imenu…</string>
     <string name="bt_device_not_supported">Nema dostupnih eksperimenata.</string>
-
     <string name="bt_location_explanation">Android zahteva dozvolu lociranja za Bluetooth skeniranja, kako bi rezultat mogao da se koristi za izvođenje informacija o lokaciji. Sada ćemo zatražiti ove dozvole. Potrebno ja da odobrite da biste obavili Bluetooth skeniranje.</string>
-
     <string name="bt_exception_uuid">Karakteristike UUID</string>
     <string name="bt_exception_uuid2">nije pronadjena.</string>
     <string name="bt_exception_disabled">Bluethoot je onemogućen. Molimo omogućite bluetooth i pokušajte ponovo.</string>
@@ -247,21 +202,17 @@
     <string name="bt_exception_no_connection">Bluetooth uređaj nije povezan. Eksperiment se ne može započeti.</string>
     <string name="bt_exception_disconnected">Bluetooth uređaj više nije povezan.</string>
     <string name="bt_default_error_message">Greška sa Bluetooth uređajem.</string>
-
     <string name="bt_error_writing">Greška pri unosu karakteristike za UUID</string>
     <string name="bt_error_reading">Greška pri iščitavanju karakakteristike UUID</string>
     <string name="bt_error_discovering">Greška pri pronalaženju usluga Bluetooth uređaja.</string>
     <string name="bt_fail_reading">Čitanje neuspešno.</string>
     <string name="bt_fail_writing">Upisivanje neuspešno.</string>
-
     <string name="bt_more_info_link_text">Ukoliko Vaš uređaj nije podržan, izaberite opciju \"more info\" da biste saznali viže o prilagodljivoj Bluetooth Low Energy podršci u phyphox na našem veb sajtu.</string>
     <string name="bt_more_info_link_button">Više informacija</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
-<string name="export_empty">Ova konfiguracija eksperimenta ne definiše podatke koje treba izvoziti. Ako je ovo greška, obratite se izvoru QR koda ili konfiguracione datoteke.</string>
+    <string name="export_empty">Ova konfiguracija eksperimenta ne definiše podatke koje treba izvoziti. Ako je ovo greška, obratite se izvoru QR koda ili konfiguracione datoteke.</string>
     <string name="toggleBrightMode">Osvetljeni mod</string>
     <string name="bt_location_service_explanation">Pored dozvole za dobijanje informacija o lokaciji, Android zahteva da se omoguće usluge lokacije za skeniranje Bluetooth-a, jer bi se rezultat mogao koristiti za dobijanje informacija o lokaciji. Preusmerićemo vas na sistemska podešavanja.</string>
-
     <string name="networkPrivacyWarning">Upozorenje o privatnosti</string>
     <string name="networkVisitPrivacyURL">Polisa privatnosti</string>
     <string name="networkPrivacyInfo">Ovaj eksperiment koristi mrežnu vezu, što znači da se podaci eksperimenta mogu preneti na mrežni servis. Više detalja možete pronaći klikom na dugme smernice za privatnost dole, koje će vas odvesti na veb lokaciju sa politikom privatnosti koju je stvorio autor ovog eksperimenta. Ako mrežna usluga nije lokalni uređaj, trebali biste biti svesni da phyphox može preneti sledeće informacije ako pokrenete ovaj eksperiment:</string>
@@ -271,5 +222,126 @@
     <string name="networkPrivacySensorLocation">Podaci o položaju (GPS podaci ili slični).</string>
     <string name="networkPrivacyDeviceInfo">Detaljne informacije o modelu vašeg uređaja i / ili verziji phyphox-a.</string>
     <string name="networkPrivacySensorInfo">Tehnički podaci o sledećim senzorima:</string>
-
+    <string name="creditsApache" translatable="false"></string>
+    <string name="creditsZxing" translatable="false"></string>
+    <string name="creditsPahoMQTT" translatable="false"></string>
+    <string name="sensorAttitude"></string>
+    <string name="leave_experiment"></string>
+    <string name="leave_experiment_question"></string>
+    <string name="leave"></string>
+    <string name="graph_tools_system_time"></string>
+    <string name="categoryPhyphoxOrg"></string>
+    <string name="categoryPhyphoxOrgHint"></string>
+    <string name="timedRunBeeps"></string>
+    <string name="beeperCountdown"></string>
+    <string name="beeperStart"></string>
+    <string name="beeperRunning"></string>
+    <string name="beeperStop"></string>
+    <string name="activate_all"></string>
+    <string name="deactivate_all"></string>
+    <string name="common_unit_short_arbitrary_unit"></string>
+    <string name="common_unit_short_second"></string>
+    <string name="common_unit_short_milli_second"></string>
+    <string name="common_unit_short_hertz"></string>
+    <string name="common_unit_short_micro_tesla"></string>
+    <string name="common_unit_short_lux"></string>
+    <string name="common_unit_short_degree"></string>
+    <string name="common_unit_short_degree_celsius"></string>
+    <string name="common_unit_short_meter"></string>
+    <string name="common_unit_short_milli_meter"></string>
+    <string name="common_unit_short_centi_meter"></string>
+    <string name="common_unit_short_kilo_meter"></string>
+    <string name="common_unit_short_meter_per_second"></string>
+    <string name="common_unit_short_kilo_meter_per_hour"></string>
+    <string name="common_unit_short_meter_per_square_second"></string>
+    <string name="common_unit_short_radian_per_second"></string>
+    <string name="common_unit_short_hecto_pascal"></string>
+    <string name="common_unit_short_decibel"></string>
+    <string name="common_unit_short_percent"></string>
+    <string name="common_quantity_short_time"></string>
+    <string name="common_quantity_short_angular_velocity"></string>
+    <string name="common_quantity_short_magnetic_field"></string>
+    <string name="common_quantity_short_illuminance"></string>
+    <string name="common_quantity_short_acceleration"></string>
+    <string name="common_quantity_short_amplitude"></string>
+    <string name="common_quantity_short_height"></string>
+    <string name="common_quantity_short_velocity"></string>
+    <string name="common_quantity_short_pressure"></string>
+    <string name="common_quantity_short_earth_acceleration"></string>
+    <string name="common_quantity_short_distance"></string>
+    <string name="common_quantity_short_sound_pressure_level"></string>
+    <string name="common_quantity_short_latitude"></string>
+    <string name="common_quantity_short_longitude"></string>
+    <string name="common_quantity_short_altitude"></string>
+    <string name="common_direction_short_north"></string>
+    <string name="common_direction_short_south"></string>
+    <string name="common_direction_short_east"></string>
+    <string name="common_direction_short_west"></string>
+    <string name="common_direction_short_north_east"></string>
+    <string name="common_direction_short_south_east"></string>
+    <string name="common_direction_short_north_west"></string>
+    <string name="common_direction_short_south_west"></string>
+    <string name="common_musical_note_a2"></string>
+    <string name="common_musical_note_bb2"></string>
+    <string name="common_musical_note_b2"></string>
+    <string name="common_musical_note_a3"></string>
+    <string name="common_musical_note_bb3"></string>
+    <string name="common_musical_note_b3"></string>
+    <string name="common_musical_note_c3"></string>
+    <string name="common_musical_note_db3"></string>
+    <string name="common_musical_note_d3"></string>
+    <string name="common_musical_note_eb3"></string>
+    <string name="common_musical_note_e3"></string>
+    <string name="common_musical_note_f3"></string>
+    <string name="common_musical_note_gb3"></string>
+    <string name="common_musical_note_g3"></string>
+    <string name="common_musical_note_ab3"></string>
+    <string name="common_musical_note_a4"></string>
+    <string name="common_musical_note_bb4"></string>
+    <string name="common_musical_note_b4"></string>
+    <string name="common_musical_note_c4"></string>
+    <string name="common_musical_note_db4"></string>
+    <string name="common_musical_note_d4"></string>
+    <string name="common_musical_note_eb4"></string>
+    <string name="common_musical_note_e4"></string>
+    <string name="common_musical_note_f4"></string>
+    <string name="common_musical_note_gb4"></string>
+    <string name="common_musical_note_g4"></string>
+    <string name="common_musical_note_ab4"></string>
+    <string name="common_musical_note_a5"></string>
+    <string name="common_musical_note_bb5"></string>
+    <string name="common_musical_note_b5"></string>
+    <string name="common_musical_note_c5"></string>
+    <string name="common_musical_note_db5"></string>
+    <string name="common_musical_note_d5"></string>
+    <string name="common_musical_note_eb5"></string>
+    <string name="common_musical_note_e5"></string>
+    <string name="common_musical_note_f5"></string>
+    <string name="common_musical_note_gb5"></string>
+    <string name="common_musical_note_g5"></string>
+    <string name="common_musical_note_ab5"></string>
+    <string name="common_musical_note_a6"></string>
+    <string name="common_musical_note_bb6"></string>
+    <string name="common_musical_note_b6"></string>
+    <string name="common_musical_note_c6"></string>
+    <string name="common_musical_note_db6"></string>
+    <string name="common_musical_note_d6"></string>
+    <string name="common_musical_note_eb6"></string>
+    <string name="common_musical_note_e6"></string>
+    <string name="common_musical_note_f6"></string>
+    <string name="common_musical_note_gb6"></string>
+    <string name="common_musical_note_g6"></string>
+    <string name="common_musical_note_ab6"></string>
+    <string name="common_musical_note_a7"></string>
+    <string name="common_musical_note_bb7"></string>
+    <string name="common_musical_note_b7"></string>
+    <string name="common_musical_note_c7"></string>
+    <string name="common_musical_note_db7"></string>
+    <string name="common_musical_note_d7"></string>
+    <string name="common_musical_note_eb7"></string>
+    <string name="common_musical_note_e7"></string>
+    <string name="common_musical_note_f7"></string>
+    <string name="common_musical_note_gb7"></string>
+    <string name="common_musical_note_g7"></string>
+    <string name="common_musical_note_ab7"></string>
 </resources>
