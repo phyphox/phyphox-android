@@ -1,12 +1,11 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Ayarlar</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="newExperiment">Deney ekle</string>
     <string name="newExperimentInputTitle">Başlık</string>
     <string name="newExperimentInputSensors">Aktif sensörler</string>
-
     <string name="help">Yardım ve bilgi</string>
     <string name="experimentsPhyphoxOrg">Deney fikirleri ve eğitimleri</string>
     <string name="faqPhyphoxOrg">Sıkça sorulan sorular</string>
@@ -26,9 +25,7 @@
     <string name="sensorTemperature">Sıcaklık</string>
     <string name="sensorHumidity">Nem</string>
     <string name="sensorProximity">Yakınlık</string>
-
     <string name="location">Konum</string>
-
     <string name="sensorNotAvailableWarningTitle">Sensör mevcut değil.</string>
     <string name="sensorNotAvailableWarningText1">Sensör</string>
     <string name="sensorNotAvailableWarningMoreInfo">Daha fazla bilgi</string>
@@ -37,28 +34,22 @@
     <string name="next">Sonraki</string>
     <string name="cancel">İptal</string>
     <string name="unknown">Bilinmeyen</string>
-
     <string name="delete">Sil</string>
-    <string name="confirmDelete">Bu deneyi koleksiyonundan silmek istiyor musun?</string>
-    <string name="confirmDeleteTitle">Silmeyi onayla?</string>
-
+    <string name="confirmDelete">Bu deneyi koleksiyonundan silmek istiyor musun\?</string>
+    <string name="confirmDeleteTitle">Silmeyi onayla\?</string>
     <string name="stop">Dur</string>
     <string name="start">Başla</string>
     <string name="clear_data">Veriyi temizle</string>
-    <string name="clear_data_question">Kaydedilmiş veriyi temizle?</string>
+    <string name="clear_data_question">Kaydedilmiş veriyi temizle\?</string>
     <string name="clear">Temizle</string>
     <string name="loadingTitle">Yükleniyor</string>
     <string name="loadingText">Deney yükleniyor…</string>
-
     <string name="timedRunStopDelay">Deney süresi (s)</string>
     <string name="share">Ekran görüntüsü paylaş</string>
     <string name="share_pick_share">Paylaşım yöntemi seç</string>
-
     <string name="remoteServerWarningTitle">Güvenlik uyarısı!</string>
     <string name="hotspotSettings">Paylaşım noktası ayarları</string>
-
     <string name="calibrated_magnetometer">Kalibre edilmiş manyetometre kullan</string>
-
     <string name="switchToPhoneLayout">Görünüm: Dar</string>
     <string name="switchColumns1">Görünüm: 1 sütun</string>
     <string name="show_description">Deney bilgisi</string>
@@ -72,14 +63,10 @@
     <string name="save_state_share">Paylaş</string>
     <string name="save_state_default_title">Ölçüm</string>
     <string name="save_state_success">Durum koleksiyonuna kaydedildi.</string>
-
     <string name="pick_exportFormat">Veri biçimini seçin.</string>
-
     <string name="noDrawableData">Çizilebilir veri yok.</string>
-
     <string name="experimentinfo_hint">Deneyin nasıl kullanılacağını öğrenmek için deney bilgisi kısmını kontrol edin.</string>
-
-<string name="newExperimentPhyphoxInfo">Veri analizi de dahil olmak üzere daha ileri düzey deneyler oluşturmak için phyphox.org adresini ziyaret edin. Meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşın.</string>
+    <string name="newExperimentPhyphoxInfo">Veri analizi de dahil olmak üzere daha ileri düzey deneyler oluşturmak için phyphox.org adresini ziyaret edin. Meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşın.</string>
     <string name="newExperimentInputBufferSize">Ara bellek boyutu (depolanacak değerlerin sayısı)</string>
     <string name="newExperimentInputRate">Sensör oranı (Hertz, 0 = mümkün olduğunca hızlı)</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -87,9 +74,7 @@
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationText">Phyphox, tercih ettiğiniz diller listesinden ulaşabileceği ilk dili kullanacaktır. Tercihlerinizi değiştirmek için aşağıdan Android \"ayarlarına\" gidin. Hangi dillerin uygun olduğunu ve nasıl yardımcı olabileceğinizi öğrenmek için \"web sitesini ziyaret et\" seçeneğini seçin.</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#tr</string>
-
     <string name="damageWarning">Deney yaparken telefonunuza zarar vermemeye lütfen dikkat edin. Sert yüzeyler üzerine düşürmemek için özel dikkat gösterin ve aşırı manyetik alanlara maruz bırakmayın. Telefonunuzdaki herhangi bir hasardan Phyphox\'un yazarları sorumlu değildir.</string>
-
     <string name="creditsRWTH">Phyphox® RWTH Aachen Üniversitesi 2. Fizik Enstitüsü\'nde oluşturulmuştur.</string>
     <string name="creditsNames">Fikir ve Geliştirme:
 \nDr. Sebastian Staacks
@@ -102,34 +87,27 @@
     <string name="creditsLibs">Uzaktan erişim için web arayüzü, MIT lisansı altında bulunan “Chart.js” (http://chartjs.org) JavaScript kütüphanesini kullanmaktadır. Fourier dönüşümü için, FFTW kütüphanesi kullanılmaktadır (http://fftw.org), Telif Hakkı © 2003, 2007-11 Matteo Frigo, Telif Hakkı © 2003, 2007-11 Massachusetts Teknoloji Enstitüsü, GNU Genel Kamuoyu Lisansı altındadır. (sürüm 2 veya üstü). GPS yükseklik verileri, EGM84 verileri (30 \'çözünürlük) ve GographicLib\'den taşınan bir fonksiyon (https://geographiclib.sourceforge.io/, MIT / X11 lisansı) kullanılarak WGS84 elipsoidinden EGM84 geoid\'e dönüştürülmektedir.</string>
     <string name="sensorNotAvailableWarningText2">mevcut değil. Genellikle cihazınızın bu tip bir sensöre sahip olmadığı anlamına gelir.</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-
     <string name="timed_stop">Zamanlı denemeyi durdur</string>
     <string name="timed_start">Zamanlı denemeyi başlat</string>
-
     <string name="timedRunDialogTitle">Zamanlı deneme</string>
     <string name="timedRunStartDelay">Başlangıç gecikmesi (s)</string>
     <string name="enableTimedRun">Zamanlı deneme yap</string>
-
     <string name="export">Veriyi dışa aktar</string>
     <string name="export_subject">Phyphox verileri</string>
     <string name="export_pick_share">Dışa aktarma yöntemi seç</string>
-
     <string name="share_subject">Phyphox ekran görüntüsü</string>
     <string name="remoteServer">Uzaktan erişime izin ver</string>
     <string name="remoteServerActive">Uzaktan erişim etkinleştirildi. Bu deneye aşağıdaki linkten ulaşabilirsiniz:
 \n%1$s</string>
     <string name="switchColumns2">Görünüm: 2 sütün</string>
     <string name="switchColumns3">Görünüm: 3 sütun</string>
-
-    <string name="save_locally_message">Bu deney uzak bir kaynaktan açıldı. Deneyi koleksiyonunuza eklemek ister misiniz?</string>
+    <string name="save_locally_message">Bu deney uzak bir kaynaktan açıldı. Deneyi koleksiyonunuza eklemek ister misiniz\?</string>
     <string name="credits">Emeği geçenler</string>
     <string name="save_state_message">Verilerinizi içeren bu deneyin durumunu koleksiyonunuza kaydedebilir veya farklı bir uygulama kullanarak paylaşabilirsiniz.</string>
     <string name="save_state_subject">Phyphox için deney durumları</string>
     <string name="timedRun">Zamanlı deneme</string>
-
     <string name="categoryNewExperiment">Basit özel deneyler</string>
     <string name="categoryRawSensor">Ham Sensörler</string>
-
     <string name="remoteServerWarning">Elde edilen verilere uzaktan erişimi etkinleştirmek üzeresiniz. Bunu sadece güvenli bir ağda yapmanız tavsiye edilir. Ayrıca, birçok şirket veya üniversite ağında cihazlar arasında doğrudan erişim mümkün olmayabilir.
 \n
 \nEn iyi güvenlik ve performans için bu cihaza mobil erişim noktası ile bağlanmalısınız.
@@ -145,34 +123,27 @@
     <string name="graph_tools_export">Verileri dışa aktar</string>
     <string name="graph_tools_log_x">Logaritmik x ekseni</string>
     <string name="graph_tools_log_y">Logaritmik y ekseni</string>
-
     <string name="graph_point_label">Nokta</string>
     <string name="graph_slope_label">Eğim</string>
     <string name="graph_difference_label">Fark</string>
     <string name="graph_fit_label">Lineer uyum: y = a x + b</string>
-
     <string name="applyZoomTitle">Yakınlaştırma uygula</string>
     <string name="applyZoomExplanation">Bu grafiğin etkileşimli modunu kapatırken, yakınlaştırmanızı korumak isteyip istemediğinizi seçebilirsiniz.</string>
     <string name="applyZoomAdvanced">Gelişmiş seçenekler</string>
     <string name="applyZoomApply">Şuna uygula…</string>
-
     <string name="applyZoomReset">Varsayılana sıfırla</string>
     <string name="applyZoomKeep">Seçileni koru</string>
     <string name="applyZoomFollow">Koru ve yeni verileri takip et</string>
-
     <string name="applyZoomThis">Sadece bu grafik</string>
     <string name="applyZoomSameVariable">Diğer grafikler: Aynı değişken</string>
     <string name="applyZoomSameUnit">Diğer grafikler: Aynı birim</string>
     <string name="applyZoomSameAxis">Diğer grafikler: Aynı eksen</string>
-
     <string name="newExperimentSimple">Basit deney ekle</string>
     <string name="newExperimentBluetooth">Bluetooth cihazı için deney ekle</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth tarama hatası</string>
     <string name="newExperimentBluetoothLoadFromDevice">Cihazdan yükle</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Bu cihaz kendi phyphox deneyini sunuyor. Açmak için cihazdan yüklemeyi seçin.</string>
-
     <string name="newExperimentQR">QR kodundan deney ekle</string>
-
     <string name="newExperimentQRscan">Phyphox deneyi içeren bir QR kodu taratın.</string>
     <string name="newExperimentQRErrorTitle">QR kodu hatası.</string>
     <string name="newExperimentQRNoExperiment">Phyphox deneyi içeren bir QR kodu bulunamadı.</string>
@@ -180,55 +151,39 @@
     <string name="newExperimentQRCodesMissing1">Az önce taranan QR kodu bir dizi</string>
     <string name="newExperimentQRCodesMissing2">kodlar. Kalan kodları taramak için lütfen devama basın. Kodlar hala eksik:</string>
     <string name="newExperimentQRBadCRC">Geçersiz sağlama. Bu, QR kodunun kötü olduğu veya tararken bir şeylerin ters gittiği anlamına gelir.</string>
-
     <string name="newExperimentBTReadErrorTitle">Bluetooth deney hatası.</string>
     <string name="newExperimentBTReadErrorCorrupted">İletilen deney verileri bozuk.</string>
-
     <string name="generalErrorDialog">Bir hata meydana geldi.</string>
-
     <string name="deviceInfo">Cihaz bilgisi</string>
     <string name="copyToClipboard">Panoya kopyala</string>
     <string name="deviceInfoCopied">Cihaz bilgisi panoya kopyalandı.</string>
-
     <string name="gpl">Phyphox®, GNU Genel Kamu Lisansı kapsamında yayınlanan açık kaynaklı bir yazılımdır. Daha fazla bilgi ve kaynak koduna erişmek için lütfen http://phyphox.org adresini ziyaret edin. Ayrıca, \"phyphox\" ve \"RWTH Aachen\" adları tescilli ticari markalardır.</string>
     <string name="sensorVendor">Satıcıya özel</string>
-
     <string name="vendorSensorTitle">Satıcıya özgü sensör</string>
     <string name="vendorSensorWarning1">Sensör</string>
     <string name="vendorSensorWarning2">doğru sensör tipini rapor etmez. Satıcıya özgü gibi görünüyor ve türünü yalnızca adından tahmin edebiliyoruz. Bu nedenle beklendiği gibi çalışmayabilir.</string>
-
     <string name="tryagain">Yeniden dene</string>
     <string name="doContinue">Devam</string>
     <string name="rename">Yeniden adlandır</string>
     <string name="loadingBluetoothConnectionText">Bluetooth cihazına bağlanıyor…</string>
-
     <string name="remoteServerNoNetwork">Önce uzak cihaza bir Wifi bağlantısı kurmanız gerekiyor. Lütfen Wifi\'yi etkinleştirin veya bir mobil hotspot oluşturun.</string>
     <string name="remoteColorMapWarning">Uzak arayüzdeki renk grafiği sadece bir yaklaşımdır. Uygulama içi çizimin aksine, şu anda eşit olmayan veri veya x ve y ekseninde logaritmik ölçekleme işleyemez. Bu nedenle, farklı aralıklarda veriler yanlış yerde görünebilir.</string>
-
     <string name="force_gnss">Sadece uydu konumu</string>
-
     <string name="fontSize">Yazı boyutu</string>
-
     <string name="open_zip_title">Bir dizi deney açın</string>
     <string name="open_zip_dialog_instructions">Bu kaynak birden fazla deney içerir. Açmak için bir tane seçebilir, isterseniz koleksiyonunuza kaydedebilir ya da hepsini bir kerede koleksiyonunuza kaydetmek için aşağıdaki düğmeyi kullanabilirsiniz.</string>
     <string name="open_save_all">Hepsini kaydet</string>
-
     <string name="open_bluetooth_assets_title">Bluetooth cihazı için deneyler</string>
     <string name="open_bluetooth_assets">Cihazınız için aşağıdaki deneyler phyphox\'tan edinilebilir. Ana menüye kolayca erişebilmek için bunları açıp kullanabilir veya hepsini koleksiyonunuza ekleyebilirsiniz.</string>
-
     <string name="start_hint">Deneyi başlatmak için üçgene dokunun.</string>
-
     <string name="bluetooth">Bluetooth Düşük Enerji</string>
     <string name="bt_android_version">Bluetooth Düşük Enerji, Android 4.3\'ten düşük sürümlerde desteklenmez.</string>
-
     <string name="bt_pick_device">Lütfen bir cihaz seçin.</string>
     <string name="bt_scanning_generic">Bluetooth cihazları taranıyor…</string>
     <string name="bt_scanning_specific1">Bluetooth cihazları ile tarama</string>
     <string name="bt_scanning_specific2">onların adına…</string>
     <string name="bt_device_not_supported">Mevcut deney yok.</string>
-
     <string name="bt_location_explanation">Android, konum bilgisini türetmek için kullanılabilecek şekilde Bluetooth taramaları için konum izni gerektiriyor. Şimdi bu izinleri talep edeceğiz. Bluetooth taraması yapmak için bu izinleri vermeniz gerekir.</string>
-
     <string name="bt_exception_uuid">UUID ile karakteristik</string>
     <string name="bt_exception_uuid2">bulunamadı.</string>
     <string name="bt_exception_disabled">Bluetooth devre dışı. Lütfen bluetooth özelliğini etkinleştirin ve tekrar deneyin.</string>
@@ -249,21 +204,17 @@
     <string name="bt_exception_no_connection">Bluetooth cihazı bağlı değil. Deneme başlatılamıyor.</string>
     <string name="bt_exception_disconnected">Bluetooth cihazı bağlantısı kesildi.</string>
     <string name="bt_default_error_message">Bluetooth cihazında bir hata var.</string>
-
     <string name="bt_error_writing">UUID ile karakteristik yazılırken hata oluştu</string>
     <string name="bt_error_reading">UUID ile karakteristik okunurken hata oluştu</string>
     <string name="bt_error_discovering">Bluetooth servisleri keşfedilirken hata.</string>
     <string name="bt_fail_reading">Okuma işlemi başarılı değildi.</string>
     <string name="bt_fail_writing">Yazma işlemi başarılı değildi.</string>
-
     <string name="bt_more_info_link_text">Cihazınız desteklenmiyorsa, web sitemizde phyphox\'taki esnek Bluetooth Düşük Enerji desteği hakkında daha fazla bilgi edinmek için \"daha fazla bilgi\" seçeneğini seçin.</string>
     <string name="bt_more_info_link_button">Daha fazla bilgi</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-
-<string name="export_empty">Bu deney konfigürasyonu dışa aktarılacak herhangi bir veri tanımlamıyor. Bu bir hata ise, lütfen QR kodunun veya yapılandırma dosyasının kaynağına başvurun.</string>
+    <string name="export_empty">Bu deney konfigürasyonu dışa aktarılacak herhangi bir veri tanımlamıyor. Bu bir hata ise, lütfen QR kodunun veya yapılandırma dosyasının kaynağına başvurun.</string>
     <string name="toggleBrightMode">Parlak mod</string>
     <string name="bt_location_service_explanation">Konum bilgisi alma iznine ek olarak, Android, konum bilgilerinin türetilmesi için kullanılabileceği için Bluetooth taramalarında konum servislerinin etkinleştirilmesini gerektirir. Sizi sistem ayarlarınıza yönlendireceğiz.</string>
-
     <string name="networkPrivacyWarning">Gizlilik uyarısı</string>
     <string name="networkVisitPrivacyURL">Gizlilik Politikası</string>
     <string name="networkPrivacyInfo">Bu deney bir ağ bağlantısı kullanmaktadır; bu durum deney verilerinin bir şebeke servisine aktarılabileceği anlamına gelmektedir. Sizi deneyin yapımcısı tarafından sağlanan gizlilik politikasına sahip bir web sitesine götürecek olan, aşağıdaki \"gizlilik politikası\" düğmesini tıklayarak daha fazla ayrıntı bulabilirsiniz. Ağ hizmeti yerel bir cihaz değilse, bu deneyi başlatırsanız phyphox\'un aşağıdaki bilgileri iletebileceğinin bilincinde olmalısınız:</string>
@@ -273,5 +224,126 @@
     <string name="networkPrivacySensorLocation">Konum verileri (GPS verileri veya benzeri).</string>
     <string name="networkPrivacyDeviceInfo">Cihazınızın modeli ve / veya phyphox sürümü hakkında ayrıntılı bilgi.</string>
     <string name="networkPrivacySensorInfo">Aşağıdaki sensörler hakkında teknik detaylar:</string>
-
+    <string name="creditsApache" translatable="false"></string>
+    <string name="creditsZxing" translatable="false"></string>
+    <string name="creditsPahoMQTT" translatable="false"></string>
+    <string name="sensorAttitude"></string>
+    <string name="leave_experiment"></string>
+    <string name="leave_experiment_question"></string>
+    <string name="leave"></string>
+    <string name="graph_tools_system_time"></string>
+    <string name="categoryPhyphoxOrg"></string>
+    <string name="categoryPhyphoxOrgHint"></string>
+    <string name="timedRunBeeps"></string>
+    <string name="beeperCountdown"></string>
+    <string name="beeperStart"></string>
+    <string name="beeperRunning"></string>
+    <string name="beeperStop"></string>
+    <string name="activate_all"></string>
+    <string name="deactivate_all"></string>
+    <string name="common_unit_short_arbitrary_unit"></string>
+    <string name="common_unit_short_second"></string>
+    <string name="common_unit_short_milli_second"></string>
+    <string name="common_unit_short_hertz"></string>
+    <string name="common_unit_short_micro_tesla"></string>
+    <string name="common_unit_short_lux"></string>
+    <string name="common_unit_short_degree"></string>
+    <string name="common_unit_short_degree_celsius"></string>
+    <string name="common_unit_short_meter"></string>
+    <string name="common_unit_short_milli_meter"></string>
+    <string name="common_unit_short_centi_meter"></string>
+    <string name="common_unit_short_kilo_meter"></string>
+    <string name="common_unit_short_meter_per_second"></string>
+    <string name="common_unit_short_kilo_meter_per_hour"></string>
+    <string name="common_unit_short_meter_per_square_second"></string>
+    <string name="common_unit_short_radian_per_second"></string>
+    <string name="common_unit_short_hecto_pascal"></string>
+    <string name="common_unit_short_decibel"></string>
+    <string name="common_unit_short_percent"></string>
+    <string name="common_quantity_short_time"></string>
+    <string name="common_quantity_short_angular_velocity"></string>
+    <string name="common_quantity_short_magnetic_field"></string>
+    <string name="common_quantity_short_illuminance"></string>
+    <string name="common_quantity_short_acceleration"></string>
+    <string name="common_quantity_short_amplitude"></string>
+    <string name="common_quantity_short_height"></string>
+    <string name="common_quantity_short_velocity"></string>
+    <string name="common_quantity_short_pressure"></string>
+    <string name="common_quantity_short_earth_acceleration"></string>
+    <string name="common_quantity_short_distance"></string>
+    <string name="common_quantity_short_sound_pressure_level"></string>
+    <string name="common_quantity_short_latitude"></string>
+    <string name="common_quantity_short_longitude"></string>
+    <string name="common_quantity_short_altitude"></string>
+    <string name="common_direction_short_north"></string>
+    <string name="common_direction_short_south"></string>
+    <string name="common_direction_short_east"></string>
+    <string name="common_direction_short_west"></string>
+    <string name="common_direction_short_north_east"></string>
+    <string name="common_direction_short_south_east"></string>
+    <string name="common_direction_short_north_west"></string>
+    <string name="common_direction_short_south_west"></string>
+    <string name="common_musical_note_a2"></string>
+    <string name="common_musical_note_bb2"></string>
+    <string name="common_musical_note_b2"></string>
+    <string name="common_musical_note_a3"></string>
+    <string name="common_musical_note_bb3"></string>
+    <string name="common_musical_note_b3"></string>
+    <string name="common_musical_note_c3"></string>
+    <string name="common_musical_note_db3"></string>
+    <string name="common_musical_note_d3"></string>
+    <string name="common_musical_note_eb3"></string>
+    <string name="common_musical_note_e3"></string>
+    <string name="common_musical_note_f3"></string>
+    <string name="common_musical_note_gb3"></string>
+    <string name="common_musical_note_g3"></string>
+    <string name="common_musical_note_ab3"></string>
+    <string name="common_musical_note_a4"></string>
+    <string name="common_musical_note_bb4"></string>
+    <string name="common_musical_note_b4"></string>
+    <string name="common_musical_note_c4"></string>
+    <string name="common_musical_note_db4"></string>
+    <string name="common_musical_note_d4"></string>
+    <string name="common_musical_note_eb4"></string>
+    <string name="common_musical_note_e4"></string>
+    <string name="common_musical_note_f4"></string>
+    <string name="common_musical_note_gb4"></string>
+    <string name="common_musical_note_g4"></string>
+    <string name="common_musical_note_ab4"></string>
+    <string name="common_musical_note_a5"></string>
+    <string name="common_musical_note_bb5"></string>
+    <string name="common_musical_note_b5"></string>
+    <string name="common_musical_note_c5"></string>
+    <string name="common_musical_note_db5"></string>
+    <string name="common_musical_note_d5"></string>
+    <string name="common_musical_note_eb5"></string>
+    <string name="common_musical_note_e5"></string>
+    <string name="common_musical_note_f5"></string>
+    <string name="common_musical_note_gb5"></string>
+    <string name="common_musical_note_g5"></string>
+    <string name="common_musical_note_ab5"></string>
+    <string name="common_musical_note_a6"></string>
+    <string name="common_musical_note_bb6"></string>
+    <string name="common_musical_note_b6"></string>
+    <string name="common_musical_note_c6"></string>
+    <string name="common_musical_note_db6"></string>
+    <string name="common_musical_note_d6"></string>
+    <string name="common_musical_note_eb6"></string>
+    <string name="common_musical_note_e6"></string>
+    <string name="common_musical_note_f6"></string>
+    <string name="common_musical_note_gb6"></string>
+    <string name="common_musical_note_g6"></string>
+    <string name="common_musical_note_ab6"></string>
+    <string name="common_musical_note_a7"></string>
+    <string name="common_musical_note_bb7"></string>
+    <string name="common_musical_note_b7"></string>
+    <string name="common_musical_note_c7"></string>
+    <string name="common_musical_note_db7"></string>
+    <string name="common_musical_note_d7"></string>
+    <string name="common_musical_note_eb7"></string>
+    <string name="common_musical_note_e7"></string>
+    <string name="common_musical_note_f7"></string>
+    <string name="common_musical_note_gb7"></string>
+    <string name="common_musical_note_g7"></string>
+    <string name="common_musical_note_ab7"></string>
 </resources>
