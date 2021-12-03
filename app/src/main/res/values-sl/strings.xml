@@ -1,50 +1,40 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<resources><string name="app_name">phyphox</string>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">Nastavitve</string>
     <string name="title_activity_experiment">phyphox</string>
-
     <string name="graph_tools_more">Več</string>
     <string name="graph_tools_reset">Ponastavi</string>
     <string name="graph_tools_export">Izvozi podatke</string>
     <string name="graph_tools_log_x">Logaritemska x os</string>
     <string name="graph_tools_log_y">Logaritemska y os</string>
-
     <string name="graph_point_label">Točka</string>
     <string name="graph_slope_label">Naklon</string>
     <string name="graph_difference_label">Razlika</string>
     <string name="graph_fit_label">Linearno prileganje: y = a x + b</string>
-
     <string name="applyZoomTitle">Uporabi povečavo</string>
     <string name="applyZoomAdvanced">Napredne možnosti</string>
     <string name="applyZoomApply">Velja za …</string>
-
     <string name="applyZoomReset">Ponastavi na privzeto</string>
     <string name="applyZoomFollow">Ohrani in nadaljuj z novimi podatki</string>
-
     <string name="applyZoomThis">Samo za ta graf</string>
     <string name="applyZoomSameVariable">Drugi grafi: Ista spremenljivka</string>
     <string name="applyZoomSameUnit">Drugi grafi: ista enota</string>
     <string name="applyZoomSameAxis">Drugi grafi: ista os</string>
-
     <string name="newExperiment">Dodaj eksperimete</string>
-
     <string name="newExperimentSimple">Dodaj preprost eksperimet</string>
     <string name="newExperimentInputTitle">Naslov</string>
     <string name="newExperimentInputBufferSize">Velikost medpomnilnika (število vrednosti, ki jih želite shraniti)</string>
     <string name="newExperimentInputRate">Odzivnost senzorja (v Hz, 0 = najhitrejši)</string>
     <string name="newExperimentInputSensors">Aktivni senzorji</string>
-
     <string name="newExperimentBluetooth">Dodajte eksperiment za napravo Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Napaka pri branju preko Bluetooth</string>
     <string name="newExperimentBluetoothLoadFromDevice">Naloži iz naprave</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Ta naprava ima lastne phyphox eksperimente. Izberite naloži iz naprave.</string>
-
     <string name="newExperimentQR">Dodaj eksperiment s pomočjo QR kode</string>
-
     <string name="newExperimentQRscan">Preberi QR kodo, ki vsebuje phyphox eksperiment.</string>
     <string name="newExperimentQRErrorTitle">Napaka v QR kodi</string>
     <string name="generalErrorDialog">Prišlo je do napake.</string>
-
     <string name="help">Pomoč in info</string>
     <string name="experimentsPhyphoxOrg">Predlogi za eksperimente in navodila</string>
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
@@ -56,7 +46,6 @@
     <string name="deviceInfo">Informacije o napravi</string>
     <string name="copyToClipboard">Kopiraj v odložišče</string>
     <string name="deviceInfoCopied">Informacije o napravi so kopirane v odložišče.</string>
-
     <string name="warning">Opozorilo</string>
     <string name="donotshowagain">Ne prikaži več</string>
     <string name="info">Info</string>
@@ -78,7 +67,6 @@
     <string name="vendorSensorTitle">Senzor, specifičen za proizvajalca</string>
     <string name="vendorSensorWarning1">Senzor</string>
     <string name="location">Lokacija</string>
-
     <string name="sensorNotAvailableWarningTitle">Senzor ni na voljo.</string>
     <string name="sensorNotAvailableWarningText1">Senzor</string>
     <string name="sensorNotAvailableWarningMoreInfo">Podrobnosti</string>
@@ -89,54 +77,45 @@
     <string name="next">Naprej</string>
     <string name="cancel">Prekliči</string>
     <string name="unknown">neznano</string>
-
     <string name="rename">Preimenuj</string>
     <string name="delete">Izbriši</string>
-    <string name="confirmDelete">Ali želite izbrisati eksperimet iz vaše zbirke?</string>
-    <string name="confirmDeleteTitle">Potrdi brisanje?</string>
-
+    <string name="confirmDelete">Ali želite izbrisati eksperimet iz vaše zbirke\?</string>
+    <string name="confirmDeleteTitle">Potrdi brisanje\?</string>
     <string name="stop">Stop</string>
     <string name="clear_data">Počisti podatke</string>
-    <string name="clear_data_question">Počistimo posnete podatke?</string>
+    <string name="clear_data_question">Počistimo posnete podatke\?</string>
     <string name="clear">Počisti</string>
     <string name="timed_stop">Ustavi štoparico</string>
     <string name="loadingTitle">Nalaganje</string>
     <string name="loadingText">Nalagam…</string>
     <string name="loadingBluetoothConnectionText">Povezovanje z napravo Bluetooth…</string>
-
     <string name="timedRunDialogTitle">Čas eksperimentiranja</string>
     <string name="timedRunStartDelay">Zamik starta (s)</string>
     <string name="timedRunStopDelay">Trajanje eksperimenta (s)</string>
     <string name="enableTimedRun">Uporabi časovni potek</string>
-
     <string name="export">Izvozi podatke</string>
     <string name="export_subject">Podatki iz phyphox</string>
     <string name="export_pick_share">Izberite način izvoza</string>
-
     <string name="share">Delite posnetek zaslona</string>
     <string name="share_subject">Posnetek zaslona iz phyphoxa</string>
     <string name="share_pick_share">Izberite način skupne rabe</string>
-
     <string name="remoteServer">Dovoli oddaljeni dostop</string>
     <string name="remoteServerWarningTitle">Varnostno opozorilo!</string>
     <string name="remoteServerNoNetwork">Najprej morate vzpostaviti WIFI povezavo z oddaljeno napravo. Omogočite WIFI ali ustvarite mobilno dostopno točko.</string>
-    <string name="remoteServerActive">Povezava je vzpostavljana. Do tega eksperimenta lahko dostopate z naslednjim URL-jem: 
+    <string name="remoteServerActive">Povezava je vzpostavljana. Do tega eksperimenta lahko dostopate z naslednjim URL-jem:
 \n%1$s</string>
     <string name="hotspotSettings">Nastavitve dostopne točke</string>
-
     <string name="calibrated_magnetometer">Uporabite umerjeni magnetometer</string>
     <string name="force_gnss">Samo satelitska lokacija</string>
-
     <string name="switchToPhoneLayout">Pogled: Ozek</string>
     <string name="switchColumns1">Pogled: 1 stolpec</string>
     <string name="switchColumns2">Pogled: 2 stolpca</string>
     <string name="switchColumns3">Pogled: 3 stolpce</string>
     <string name="fontSize">Velikost pisave</string>
-
     <string name="show_description">Info o eksperimentu</string>
     <string name="save_locally">Dodaj eksperiment v zbirko</string>
     <string name="save_locally_done">Eksperiment uspešno dodan v zbirko.</string>
-    <string name="save_locally_message">Eksperiment je bil odprt iz oddaljenega vira. Ali ga želite dodati v zbirko eksperimentov?</string>
+    <string name="save_locally_message">Eksperiment je bil odprt iz oddaljenega vira. Ali ga želite dodati v zbirko eksperimentov\?</string>
     <string name="save_locally_button">Shrani v zbirko</string>
     <string name="save_state">Shrani stanje eksperimenta</string>
     <string name="save_state_category">Stanje eksperimenta shranjeno</string>
@@ -147,30 +126,21 @@
     <string name="save_state_subject">Stanje phyphox eksperimenta</string>
     <string name="save_state_default_title">Meritev</string>
     <string name="save_state_success">Stanje je bilo shranjeno v vašo zbirko.</string>
-
     <string name="open_zip_title">Odpiranje niza eksperimentov</string>
     <string name="open_save_all">Shrani vse</string>
-
     <string name="open_bluetooth_assets_title">Eksperimenti preko naprave Bluetooth</string>
     <string name="timedRun">Merjenje časa</string>
-
     <string name="pick_exportSets">Izberite zbirke podatkov za izvoz.</string>
     <string name="pick_exportFormat">Izberite obliko podatkov.</string>
-
     <string name="noDrawableData">Ni podatkov za izris.</string>
-
     <string name="categoryNewExperiment">Preprosti eksprimenti po meri</string>
     <string name="categoryRawSensor">Senzorji RAW</string>
-
     <string name="experimentinfo_hint">Preverite navodila o izvedbi taga eksperimenta.</string>
     <string name="start_hint">S klikom na trikotnik zaženete eksperimet.</string>
-
     <string name="bt_android_version">Bluetooth Low Energy ni podprt v Android različicah, ki so nižje od 4.3.</string>
-
     <string name="bt_pick_device">Izberite napravo.</string>
     <string name="bt_scanning_generic">Iskanje naprav Bluetooth …</string>
     <string name="bt_device_not_supported">Eksperimenti niso na voljo</string>
-
     <string name="bt_exception_disabled">Bluetooth je onemogočen. Omogočite bluetooth in poskusite znova.</string>
     <string name="bt_exception_connection">Povezave Bluetooth ni bilo mogoče odpreti.</string>
     <string name="bt_exception_notfound">Naprave Bluetooth ni mogoče najti.</string>
@@ -180,5 +150,196 @@
     <string name="bt_exception_no_connection">Naprava Bluetooth ni povezana. Eksperimenta ni mogoče zagnati.</string>
     <string name="bt_exception_disconnected">Povezava z napravo Bluetooth je prekinjena.</string>
     <string name="bt_default_error_message">Napaka v napravi Bluetooth.</string>
-
-    </resources>
+    <string name="graph_tools_pan_and_zoom"></string>
+    <string name="graph_tools_pick"></string>
+    <string name="graph_tools_follow"></string>
+    <string name="graph_tools_linear_fit"></string>
+    <string name="applyZoomExplanation"></string>
+    <string name="applyZoomKeep"></string>
+    <string name="newExperimentPhyphoxInfo"></string>
+    <string name="newExperimentQRNoExperiment"></string>
+    <string name="newExperimentQRcrcMismatch"></string>
+    <string name="newExperimentQRCodesMissing1"></string>
+    <string name="newExperimentQRCodesMissing2"></string>
+    <string name="newExperimentQRBadCRC"></string>
+    <string name="newExperimentBTReadErrorTitle"></string>
+    <string name="newExperimentBTReadErrorCorrupted"></string>
+    <string name="remotePhyphoxOrg"></string>
+    <string name="remotePhyphoxOrgURL"></string>
+    <string name="translationText"></string>
+    <string name="translationToWebsiteURL"></string>
+    <string name="damageWarning"></string>
+    <string name="credits"></string>
+    <string name="creditsRWTH"></string>
+    <string name="gpl"></string>
+    <string name="creditsLibs"></string>
+    <string name="creditsApache" translatable="false"></string>
+    <string name="creditsZxing" translatable="false"></string>
+    <string name="creditsPahoMQTT" translatable="false"></string>
+    <string name="sensorLinearAcceleration"></string>
+    <string name="sensorLight"></string>
+    <string name="sensorAttitude"></string>
+    <string name="sensorVendor"></string>
+    <string name="vendorSensorWarning2"></string>
+    <string name="sensorNotAvailableWarningText2"></string>
+    <string name="sensorNotAvailableWarningMoreInfoURL"></string>
+    <string name="start"></string>
+    <string name="leave_experiment"></string>
+    <string name="leave_experiment_question"></string>
+    <string name="leave"></string>
+    <string name="timed_start"></string>
+    <string name="export_empty"></string>
+    <string name="remoteServerWarning"></string>
+    <string name="remoteColorMapWarning"></string>
+    <string name="toggleBrightMode"></string>
+    <string name="open_zip_dialog_instructions"></string>
+    <string name="open_bluetooth_assets"></string>
+    <string name="bluetooth"></string>
+    <string name="bt_scanning_specific1"></string>
+    <string name="bt_scanning_specific2"></string>
+    <string name="bt_location_explanation"></string>
+    <string name="bt_location_service_explanation"></string>
+    <string name="bt_exception_uuid"></string>
+    <string name="bt_exception_uuid2"></string>
+    <string name="bt_exception_services"></string>
+    <string name="bt_exception_rate"></string>
+    <string name="bt_exception_notification"></string>
+    <string name="bt_exception_notification_enable"></string>
+    <string name="bt_exception_notification_disable"></string>
+    <string name="bt_exception_notification_fail_enable"></string>
+    <string name="bt_exception_notification_fail"></string>
+    <string name="bt_exception_config"></string>
+    <string name="bt_exception_config2"></string>
+    <string name="bt_error_writing"></string>
+    <string name="bt_error_reading"></string>
+    <string name="bt_error_discovering"></string>
+    <string name="bt_fail_reading"></string>
+    <string name="bt_fail_writing"></string>
+    <string name="bt_more_info_link_text"></string>
+    <string name="bt_more_info_link_button"></string>
+    <string name="bt_more_info_link_url"></string>
+    <string name="networkPrivacyWarning"></string>
+    <string name="networkVisitPrivacyURL"></string>
+    <string name="networkPrivacyInfo"></string>
+    <string name="networkPrivacyUniqueID"></string>
+    <string name="networkPrivacySensorData"></string>
+    <string name="networkPrivacySensorMicrophone"></string>
+    <string name="networkPrivacySensorLocation"></string>
+    <string name="networkPrivacyDeviceInfo"></string>
+    <string name="networkPrivacySensorInfo"></string>
+    <string name="graph_tools_system_time"></string>
+    <string name="categoryPhyphoxOrg"></string>
+    <string name="categoryPhyphoxOrgHint"></string>
+    <string name="timedRunBeeps"></string>
+    <string name="beeperCountdown"></string>
+    <string name="beeperStart"></string>
+    <string name="beeperRunning"></string>
+    <string name="beeperStop"></string>
+    <string name="activate_all"></string>
+    <string name="deactivate_all"></string>
+    <string name="common_unit_short_arbitrary_unit"></string>
+    <string name="common_unit_short_second"></string>
+    <string name="common_unit_short_milli_second"></string>
+    <string name="common_unit_short_hertz"></string>
+    <string name="common_unit_short_micro_tesla"></string>
+    <string name="common_unit_short_lux"></string>
+    <string name="common_unit_short_degree"></string>
+    <string name="common_unit_short_degree_celsius"></string>
+    <string name="common_unit_short_meter"></string>
+    <string name="common_unit_short_milli_meter"></string>
+    <string name="common_unit_short_centi_meter"></string>
+    <string name="common_unit_short_kilo_meter"></string>
+    <string name="common_unit_short_meter_per_second"></string>
+    <string name="common_unit_short_kilo_meter_per_hour"></string>
+    <string name="common_unit_short_meter_per_square_second"></string>
+    <string name="common_unit_short_radian_per_second"></string>
+    <string name="common_unit_short_hecto_pascal"></string>
+    <string name="common_unit_short_decibel"></string>
+    <string name="common_unit_short_percent"></string>
+    <string name="common_quantity_short_time"></string>
+    <string name="common_quantity_short_angular_velocity"></string>
+    <string name="common_quantity_short_magnetic_field"></string>
+    <string name="common_quantity_short_illuminance"></string>
+    <string name="common_quantity_short_acceleration"></string>
+    <string name="common_quantity_short_amplitude"></string>
+    <string name="common_quantity_short_height"></string>
+    <string name="common_quantity_short_velocity"></string>
+    <string name="common_quantity_short_pressure"></string>
+    <string name="common_quantity_short_earth_acceleration"></string>
+    <string name="common_quantity_short_distance"></string>
+    <string name="common_quantity_short_sound_pressure_level"></string>
+    <string name="common_quantity_short_latitude"></string>
+    <string name="common_quantity_short_longitude"></string>
+    <string name="common_quantity_short_altitude"></string>
+    <string name="common_direction_short_north"></string>
+    <string name="common_direction_short_south"></string>
+    <string name="common_direction_short_east"></string>
+    <string name="common_direction_short_west"></string>
+    <string name="common_direction_short_north_east"></string>
+    <string name="common_direction_short_south_east"></string>
+    <string name="common_direction_short_north_west"></string>
+    <string name="common_direction_short_south_west"></string>
+    <string name="common_musical_note_a2"></string>
+    <string name="common_musical_note_bb2"></string>
+    <string name="common_musical_note_b2"></string>
+    <string name="common_musical_note_a3"></string>
+    <string name="common_musical_note_bb3"></string>
+    <string name="common_musical_note_b3"></string>
+    <string name="common_musical_note_c3"></string>
+    <string name="common_musical_note_db3"></string>
+    <string name="common_musical_note_d3"></string>
+    <string name="common_musical_note_eb3"></string>
+    <string name="common_musical_note_e3"></string>
+    <string name="common_musical_note_f3"></string>
+    <string name="common_musical_note_gb3"></string>
+    <string name="common_musical_note_g3"></string>
+    <string name="common_musical_note_ab3"></string>
+    <string name="common_musical_note_a4"></string>
+    <string name="common_musical_note_bb4"></string>
+    <string name="common_musical_note_b4"></string>
+    <string name="common_musical_note_c4"></string>
+    <string name="common_musical_note_db4"></string>
+    <string name="common_musical_note_d4"></string>
+    <string name="common_musical_note_eb4"></string>
+    <string name="common_musical_note_e4"></string>
+    <string name="common_musical_note_f4"></string>
+    <string name="common_musical_note_gb4"></string>
+    <string name="common_musical_note_g4"></string>
+    <string name="common_musical_note_ab4"></string>
+    <string name="common_musical_note_a5"></string>
+    <string name="common_musical_note_bb5"></string>
+    <string name="common_musical_note_b5"></string>
+    <string name="common_musical_note_c5"></string>
+    <string name="common_musical_note_db5"></string>
+    <string name="common_musical_note_d5"></string>
+    <string name="common_musical_note_eb5"></string>
+    <string name="common_musical_note_e5"></string>
+    <string name="common_musical_note_f5"></string>
+    <string name="common_musical_note_gb5"></string>
+    <string name="common_musical_note_g5"></string>
+    <string name="common_musical_note_ab5"></string>
+    <string name="common_musical_note_a6"></string>
+    <string name="common_musical_note_bb6"></string>
+    <string name="common_musical_note_b6"></string>
+    <string name="common_musical_note_c6"></string>
+    <string name="common_musical_note_db6"></string>
+    <string name="common_musical_note_d6"></string>
+    <string name="common_musical_note_eb6"></string>
+    <string name="common_musical_note_e6"></string>
+    <string name="common_musical_note_f6"></string>
+    <string name="common_musical_note_gb6"></string>
+    <string name="common_musical_note_g6"></string>
+    <string name="common_musical_note_ab6"></string>
+    <string name="common_musical_note_a7"></string>
+    <string name="common_musical_note_bb7"></string>
+    <string name="common_musical_note_b7"></string>
+    <string name="common_musical_note_c7"></string>
+    <string name="common_musical_note_db7"></string>
+    <string name="common_musical_note_d7"></string>
+    <string name="common_musical_note_eb7"></string>
+    <string name="common_musical_note_e7"></string>
+    <string name="common_musical_note_f7"></string>
+    <string name="common_musical_note_gb7"></string>
+    <string name="common_musical_note_g7"></string>
+    <string name="common_musical_note_ab7"></string>
+</resources>
