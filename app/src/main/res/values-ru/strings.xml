@@ -333,17 +333,4 @@
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
     <string name="common_musical_note_g7">G7</string>
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
-    <string name="creditsApache" translatable="false"></string>
-    <string name="creditsZxing" translatable="false"></string>
-    <string name="creditsPahoMQTT" translatable="false"></string>
-    <string name="graph_tools_system_time"></string>
-    <string name="categoryPhyphoxOrg"></string>
-    <string name="categoryPhyphoxOrgHint"></string>
-    <string name="timedRunBeeps"></string>
-    <string name="beeperCountdown"></string>
-    <string name="beeperStart"></string>
-    <string name="beeperRunning"></string>
-    <string name="beeperStop"></string>
-    <string name="activate_all"></string>
-    <string name="deactivate_all"></string>
 </resources>
