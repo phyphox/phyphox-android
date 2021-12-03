@@ -27,12 +27,12 @@
     <string name="info">Информация</string>
     <string name="credits">Авторы</string>
     <string name="creditsRWTH">phyphox был создан во 2-м институте физики Рейнско-Вестфальского Технического Университета Ахена.</string>
-    <string name="creditsNames">Разработка и концепция: 
-\nDr. Sebastian Staacks 
-\nКонцепция: 
-\nProf. Christoph Stampfer 
-\nПрограммное обеспечение: 
-\nDominik Dorsel 
+    <string name="creditsNames">Разработка и концепция:
+\nDr. Sebastian Staacks
+\nКонцепция:
+\nProf. Christoph Stampfer
+\nПрограммное обеспечение:
+\nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
     <string name="creditsLibs">Веб-интерфейс для удаленного доступа использует библиотеку JavaScript «Chart.js» (http://chartjs.org), доступную под лицензией MIT. Для преобразования Фурье мы используем библиотеку FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Массачусетский технологический институт, который доступен под общим названием GNU General Public Лицензия (версия 2 или новее). Данные GPS по высоте над уровнем моря преобразуются из эллипсоида WGS84 в геоид EGM84 с помощью данных EGM84 (разрешение 30\') и функции переноса из GographicLib (https://geographiclib.sourceforge.io/, лицензия MIT/X11).</string>
@@ -57,12 +57,12 @@
     <string name="cancel">Отмена</string>
     <string name="unknown">неизвестный</string>
     <string name="delete">Удалить</string>
-    <string name="confirmDelete">Вы хотите удалить этот эксперимент из своей коллекции?</string>
-    <string name="confirmDeleteTitle">Подтвердить удаление?</string>
+    <string name="confirmDelete">Вы хотите удалить этот эксперимент из своей коллекции\?</string>
+    <string name="confirmDeleteTitle">Подтвердить удаление\?</string>
     <string name="stop">Стоп</string>
     <string name="start">Старт</string>
     <string name="clear_data">Удалить данные</string>
-    <string name="clear_data_question">Удалить записанные данные?</string>
+    <string name="clear_data_question">Удалить записанные данные\?</string>
     <string name="clear">Удалить</string>
     <string name="timed_stop">Остановить таймер</string>
     <string name="timed_start">Запустить таймер</string>
@@ -96,7 +96,7 @@
     <string name="show_description">Информация к эксперименту</string>
     <string name="save_locally">Добавить эксперимент в коллекцию</string>
     <string name="save_locally_done">Эксперимент успешно добавлен в коллекцию.</string>
-    <string name="save_locally_message">Этот эксперимент был загружен из удаленного источника. Вы хотите добавить его в свою коллекцию экспериментов?</string>
+    <string name="save_locally_message">Этот эксперимент был загружен из удаленного источника. Вы хотите добавить его в свою коллекцию экспериментов\?</string>
     <string name="save_locally_button">Сохранить в коллекции</string>
     <string name="save_state">Сохранить эксперимент</string>
     <string name="save_state_category">Сохраненные эксперименты</string>
@@ -226,7 +226,7 @@
     <string name="networkPrivacySensorInfo">Технические подробности о следующих датчиках:</string>
     <string name="sensorAttitude">Позиция</string>
     <string name="leave_experiment">Покинуть эксперимент</string>
-    <string name="leave_experiment_question">Покинуть эксперимент и удалить измерения?</string>
+    <string name="leave_experiment_question">Покинуть эксперимент и удалить измерения\?</string>
     <string name="leave">Покинуть</string>
     <string name="common_unit_short_arbitrary_unit">пр. е.</string>
     <string name="common_unit_short_second">c</string>
@@ -333,4 +333,17 @@
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
     <string name="common_musical_note_g7">G7</string>
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
+    <string name="creditsApache" translatable="false"></string>
+    <string name="creditsZxing" translatable="false"></string>
+    <string name="creditsPahoMQTT" translatable="false"></string>
+    <string name="graph_tools_system_time"></string>
+    <string name="categoryPhyphoxOrg"></string>
+    <string name="categoryPhyphoxOrgHint"></string>
+    <string name="timedRunBeeps"></string>
+    <string name="beeperCountdown"></string>
+    <string name="beeperStart"></string>
+    <string name="beeperRunning"></string>
+    <string name="beeperStop"></string>
+    <string name="activate_all"></string>
+    <string name="deactivate_all"></string>
 </resources>
