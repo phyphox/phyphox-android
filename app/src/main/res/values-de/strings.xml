@@ -5,11 +5,11 @@
     <string name="calibrated_magnetometer">Kalibriertes Magnetometer nutzen</string>
     <string name="cancel">Abbrechen</string>
     <string name="clear_data">Daten löschen</string>
-    <string name="clear_data_question">Aufgenommene Daten löschen?</string>
+    <string name="clear_data_question">Aufgenommene Daten löschen\?</string>
     <string name="clear">Löschen</string>
     <string name="close">Schließen</string>
-    <string name="confirmDelete">Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen?</string>
-    <string name="confirmDeleteTitle">Löschen bestätigen?</string>
+    <string name="confirmDelete">Möchten Sie dieses Experiment aus Ihrer Sammlung entfernen\?</string>
+    <string name="confirmDeleteTitle">Löschen bestätigen\?</string>
     <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsNames">Entwicklung und Konzept:
@@ -55,12 +55,17 @@
     <string name="pick_exportFormat">Wählen Sie ein Datei-Format.</string>
     <string name="pick_exportSets">Wählen Sie die zu exportierenden Datensätze.</string>
     <string name="remoteServer">Fernzugriff erlauben</string>
-    <string name="remoteServerActive">Fernzugriff aktiv. Sie erreichen dieses Experiment unter folgender URL:\n%1$s</string>
-    <string name="remoteServerWarning">Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.\n\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.\n\nNachdem Sie auf OK geklickt haben, können Sie Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.</string>
+    <string name="remoteServerActive">Fernzugriff aktiv. Sie erreichen dieses Experiment unter folgender URL:
+\n%1$s</string>
+    <string name="remoteServerWarning">Sie sind im Begriff, den Fernzugriff zu aktivieren. Sie sollten dies nur in einem vertrauenswürdigen Netzwerk machen! Beachten Sie bitte auch, dass der direkte Zugriff zwischen verschiedenen Geräten in vielen Universitäts- und Firmennetzwerken nicht möglich ist.
+\n
+\nUm eine hohe Sicherheit und gute Performance zu erreichen, empfehlen wir, die Netzwerkverbindung über eine Tethering-Option (Mobiler Hotspot) herzustellen.
+\n
+\nNachdem Sie auf OK geklickt haben, können Sie Ihre Messung von jedem Webbrowser im gleichen Netzwerk erreichen.</string>
     <string name="remoteServerWarningTitle">Sicherheitswarnung!</string>
     <string name="save_locally">Experiment zur Sammlung hinzufügen</string>
     <string name="save_locally_done">Das Experiment wurde zur Sammlung hinzugefügt.</string>
-    <string name="save_locally_message">Dieses Experiment wurde aus einer externen Quelle geöffnet. Möchtest du es deiner Experiment-Sammlung hinzufügen?</string>
+    <string name="save_locally_message">Dieses Experiment wurde aus einer externen Quelle geöffnet. Möchtest du es deiner Experiment-Sammlung hinzufügen\?</string>
     <string name="save_locally_button">In Sammlung speichern</string>
     <string name="save_state">Zustand speichern</string>
     <string name="save_state_category">Gespeicherte Zustände</string>
@@ -127,7 +132,7 @@
     <string name="bt_exception_device">Betrifft das Gerät mit</string>
     <string name="bt_exception_device_address">Adresse</string>
     <string name="bt_exception_device_name">Name</string>
-    <string name="bt_exception_rate">Ungültiger Wert für "rate".</string>
+    <string name="bt_exception_rate">Ungültiger Wert für rate.</string>
     <string name="bt_exception_notification">Die Notification für die Characteristic mit der UUID</string>
     <string name="bt_exception_notification_enable">konnte nicht aktiviert werden.</string>
     <string name="bt_exception_notification_disable">konnte nicht wieder deaktiviert werden.</string>
@@ -224,7 +229,7 @@
     <string name="networkPrivacyDeviceInfo">Genaue Informationen zu dem Modell deines Geräts und/oder zur Version von phyphox.</string>
     <string name="networkPrivacySensorInfo">Technische Details zu den folgenden Sensoren:</string>
     <string name="leave_experiment">Experiment verlassen</string>
-    <string name="leave_experiment_question">Experiment verlassen und aufgezeichnete Daten verwerfen?</string>
+    <string name="leave_experiment_question">Experiment verlassen und aufgezeichnete Daten verwerfen\?</string>
     <string name="leave">Verlassen</string>
     <string name="timedRunBeeps">Akustische Signale</string>
     <string name="beeperCountdown">Countdown-Töne</string>
@@ -338,4 +343,7 @@
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
     <string name="common_musical_note_g7">G7</string>
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
+    <string name="creditsApache" translatable="false"></string>
+    <string name="creditsZxing" translatable="false"></string>
+    <string name="creditsPahoMQTT" translatable="false"></string>
 </resources>
