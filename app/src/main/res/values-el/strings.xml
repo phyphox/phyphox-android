@@ -343,4 +343,7 @@
     <string name="common_musical_note_gb7">Φα#7/Σολb7</string>
     <string name="common_musical_note_g7">Σολ 7</string>
     <string name="common_musical_note_ab7">Σολ#7/Λαb7</string>
+    <string name="creditsApache" translatable="false"></string>
+    <string name="creditsZxing" translatable="false"></string>
+    <string name="creditsPahoMQTT" translatable="false"></string>
 </resources>
