@@ -211,7 +211,7 @@ public class DataExport implements Serializable {
 
                         StringBuilder data = new StringBuilder();
                         for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
-                            if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID)
+                            if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID || deviceMetadata == Metadata.DeviceMetadata.camera2api || deviceMetadata == Metadata.DeviceMetadata.camera2apiFull)
                                 continue;
                             String identifier = deviceMetadata.toString();
                             data.append("\"").append(identifier).append("\"").append(separator);
@@ -349,7 +349,7 @@ public class DataExport implements Serializable {
                     int i = 1;
                     StringBuilder data = new StringBuilder();
                     for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
-                        if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID)
+                        if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID || deviceMetadata == Metadata.DeviceMetadata.camera2api || deviceMetadata == Metadata.DeviceMetadata.camera2apiFull)
                             continue;
                         String identifier = deviceMetadata.toString();
 
