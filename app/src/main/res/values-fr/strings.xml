@@ -27,13 +27,13 @@
     <string name="info">Info</string>
     <string name="credits">Crédits</string>
     <string name="creditsRWTH">phyphox® a été créé à l\'institut de physique II de l\'université technique de Rhénanie-Westphalie à Aix-la-Chapelle (RWTH Aachen University).</string>
-    <string name="creditsNames">Concept et développement : 
-\nDr. Sebastian Staacks 
-\nConcept : 
-\nProf. Christoph Stampfer 
-\nProgrammation : 
-\nDominik Dorsel 
-\nJonas Gessner 
+    <string name="creditsNames">Concept et développement :
+\nDr. Sebastian Staacks
+\nConcept :
+\nProf. Christoph Stampfer
+\nProgrammation :
+\nDominik Dorsel
+\nJonas Gessner
 \nCamilla Lummerzheim</string>
     <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus). Les données d\'élévation GPS sont converties de l\'ellipsoïde WGS84 au géoïde EGM84 à l\'aide des données EGM84 (résolution 30 \') et d\'une fonction portée de GographicLib (https://geographiclib.sourceforge.io/, licence MIT / X11).</string>
     <string name="sensorLight">Luminosité</string>
@@ -56,12 +56,12 @@
     <string name="cancel">Annuler</string>
     <string name="unknown">inconnu</string>
     <string name="delete">Supprimer</string>
-    <string name="confirmDelete">Voulez-vous supprimer cette expérience de votre collection ?</string>
+    <string name="confirmDelete">Voulez-vous supprimer cette expérience de votre collection \?</string>
     <string name="confirmDeleteTitle">Confirmation de suppression</string>
     <string name="stop">Stop</string>
     <string name="start">Début</string>
     <string name="clear_data">Effacer les données</string>
-    <string name="clear_data_question">Voulez-vous effacer les données mesurées ?</string>
+    <string name="clear_data_question">Voulez-vous effacer les données mesurées \?</string>
     <string name="clear">Effacer</string>
     <string name="loadingText">Chargement de l\'expérience…</string>
     <string name="timedRunDialogTitle">Expérience chronométrée</string>
@@ -81,7 +81,7 @@
 \n
 \nAprès avoir appuyé sur OK, vous pourrez accéder à vos mesures de n\'importe quel navigateur Web sur le même réseau.</string>
     <string name="remoteServerWarningTitle">Avertissement !</string>
-    <string name="remoteServerActive">Contrôle à distance activé. Les mesures de l\'expérience sont disponibles sur le lien suivant : 
+    <string name="remoteServerActive">Contrôle à distance activé. Les mesures de l\'expérience sont disponibles sur le lien suivant :
 \n%1$s</string>
     <string name="hotspotSettings">Paramètres de partage de connexion</string>
     <string name="calibrated_magnetometer">Utilise la calibration du magnétomètre</string>
@@ -152,7 +152,7 @@
     <string name="remoteColorMapWarning">Le graphique couleur/3D dans l\'interface à distance n\'est qu\'une approximation. Contrairement au graphique dans l\'application, il ne gère pas les points non-équidistants ou les échelles logarithmiques sur les axes x et y. Ainsi les données acquises avec des intervalles irréguliers apparaitront au mauvais endroit.</string>
     <string name="force_gnss">Localisation par satellite uniquement</string>
     <string name="fontSize">taille de la police</string>
-    <string name="save_locally_message">Cette expérience a été ouverte depuis une source à distance. Voulez-vous l\'ajouter à votre propre collection d\'expériences ?</string>
+    <string name="save_locally_message">Cette expérience a été ouverte depuis une source à distance. Voulez-vous l\'ajouter à votre propre collection d\'expériences \?</string>
     <string name="save_locally_button">Enregistrer l\'expérience</string>
     <string name="save_state">Enregistrer l\'état de cette expérience</string>
     <string name="save_state_category">Expériences enregistrées</string>
@@ -291,4 +291,59 @@
     <string name="common_musical_note_gb7">Fa# 6 / Solb 6</string>
     <string name="common_musical_note_g7">Sol 6</string>
     <string name="common_musical_note_ab7">Sol# 6 / Lab 6</string>
+    <string name="creditsApache" translatable="false"></string>
+    <string name="creditsZxing" translatable="false"></string>
+    <string name="creditsPahoMQTT" translatable="false"></string>
+    <string name="sensorAttitude"></string>
+    <string name="leave_experiment"></string>
+    <string name="leave_experiment_question"></string>
+    <string name="leave"></string>
+    <string name="graph_tools_system_time"></string>
+    <string name="categoryPhyphoxOrg"></string>
+    <string name="categoryPhyphoxOrgHint"></string>
+    <string name="timedRunBeeps"></string>
+    <string name="beeperCountdown"></string>
+    <string name="beeperStart"></string>
+    <string name="beeperRunning"></string>
+    <string name="beeperStop"></string>
+    <string name="activate_all"></string>
+    <string name="deactivate_all"></string>
+    <string name="common_unit_short_second"></string>
+    <string name="common_unit_short_milli_second"></string>
+    <string name="common_unit_short_hertz"></string>
+    <string name="common_unit_short_micro_tesla"></string>
+    <string name="common_unit_short_lux"></string>
+    <string name="common_unit_short_degree"></string>
+    <string name="common_unit_short_degree_celsius"></string>
+    <string name="common_unit_short_meter"></string>
+    <string name="common_unit_short_milli_meter"></string>
+    <string name="common_unit_short_centi_meter"></string>
+    <string name="common_unit_short_kilo_meter"></string>
+    <string name="common_unit_short_meter_per_second"></string>
+    <string name="common_unit_short_kilo_meter_per_hour"></string>
+    <string name="common_unit_short_meter_per_square_second"></string>
+    <string name="common_unit_short_radian_per_second"></string>
+    <string name="common_unit_short_hecto_pascal"></string>
+    <string name="common_unit_short_decibel"></string>
+    <string name="common_unit_short_percent"></string>
+    <string name="common_quantity_short_time"></string>
+    <string name="common_quantity_short_angular_velocity"></string>
+    <string name="common_quantity_short_magnetic_field"></string>
+    <string name="common_quantity_short_illuminance"></string>
+    <string name="common_quantity_short_acceleration"></string>
+    <string name="common_quantity_short_amplitude"></string>
+    <string name="common_quantity_short_height"></string>
+    <string name="common_quantity_short_velocity"></string>
+    <string name="common_quantity_short_pressure"></string>
+    <string name="common_quantity_short_earth_acceleration"></string>
+    <string name="common_quantity_short_distance"></string>
+    <string name="common_quantity_short_sound_pressure_level"></string>
+    <string name="common_quantity_short_latitude"></string>
+    <string name="common_quantity_short_longitude"></string>
+    <string name="common_quantity_short_altitude"></string>
+    <string name="common_direction_short_north"></string>
+    <string name="common_direction_short_south"></string>
+    <string name="common_direction_short_east"></string>
+    <string name="common_direction_short_north_east"></string>
+    <string name="common_direction_short_south_east"></string>
 </resources>
