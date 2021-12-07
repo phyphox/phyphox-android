@@ -155,7 +155,7 @@ public class SensorInput implements SensorEventListener, Serializable {
                     continue;
                 String name = s.getName().toLowerCase();
                 if (type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
-                    if (name.toLowerCase().contains("temperature") || name.toLowerCase().contains("thermo")) {
+                    if (name.toLowerCase().contains("temperature") || name.toLowerCase().contains("thermo")) { //Samsung devices have an entry "thermistor", but we do not get any data by naively reading it, so do not add it unless there are other devices that benefit from accepting this name.
                         sensor = s;
                         break;
                     }
