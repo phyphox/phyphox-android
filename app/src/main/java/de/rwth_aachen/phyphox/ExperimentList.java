@@ -1490,10 +1490,10 @@ public class ExperimentList extends AppCompatActivity {
 
             @Override
             public void onCharacteristicChanged(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-
                 if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
                     return;
                 byte[] data = characteristic.getValue();
+
                 if (currentBluetoothData == null) {
                     String header = new String(data);
                     if (!header.startsWith("phyphox")) {
@@ -1514,6 +1514,13 @@ public class ExperimentList extends AppCompatActivity {
                     for (int i = 0; i < 4; i++) {
                         currentBluetoothDataCRC32 <<= 8;
                         currentBluetoothDataCRC32 |= (data[7+4+i] & 0xFF);
+                    }
+
+                    if (currentBluetoothDataSize > 10e6 || currentBluetoothDataSize < 0) {
+                        disconnect(gatt);
+                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid size in header)", device);
+                        progress.dismiss();
+                        currentBluetoothDataSize = 0;
                     }
 
                     currentBluetoothData = new byte[currentBluetoothDataSize];
@@ -1562,6 +1569,11 @@ public class ExperimentList extends AppCompatActivity {
                             gatt.writeDescriptor(descriptor);
                         }
                         disconnect(gatt);
+
+                        if (currentBluetoothDataSize == 0) {
+                            progress.dismiss();
+                            return;
+                        }
 
                         /*
                         StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
