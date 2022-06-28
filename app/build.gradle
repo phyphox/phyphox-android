@@ -2,22 +2,24 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
-        targetSdkVersion 31
+        targetSdkVersion 32
 
-        versionName "1.1.10"
+        versionName "1.1.11"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1011002 //1.01.10-02
+        versionCode 1011100
+        resConfigs 'en', 'cs', 'de', 'el', 'es', 'fr', 'it', 'ja', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW'
+//1.01.10-02
 
-        resConfigs "en", "cs", "de", "el", "es", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "b+sr+Latn", "tr", "vi", "zh-rCN", "zh-rTW"
         vectorDrawables {
             useSupportLibrary = true
         }
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -59,12 +61,14 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'com.google.android.material:material:1.4.0'
-    implementation 'androidx.annotation:annotation:1.3.0'
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'androidx.appcompat:appcompat-resources:1.3.1'
-    implementation 'androidx.core:core:1.7.0'
-    implementation 'androidx.fragment:fragment:1.3.6'
+    implementation 'androidx.multidex:multidex:2.0.1'
+
+    implementation 'com.google.android.material:material:1.6.1'
+    implementation 'androidx.annotation:annotation:1.4.0'
+    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.appcompat:appcompat-resources:1.4.2'
+    implementation 'androidx.core:core:1.8.0'
+    implementation 'androidx.fragment:fragment:1.4.1'
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
     //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md
