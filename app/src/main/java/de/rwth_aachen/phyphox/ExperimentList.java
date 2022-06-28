@@ -225,6 +225,13 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     private void showSupportHintIfRequired() {
+        try {
+            if (!getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS).versionName.equals(phyphoxCatHintRelease))
+                return;
+        } catch (Exception e) {
+            return;
+        }
+
         final SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         String lastSupportHint = settings.getString("lastSupportHint", "");
         if (lastSupportHint.equals(phyphoxCatHintRelease)) {
