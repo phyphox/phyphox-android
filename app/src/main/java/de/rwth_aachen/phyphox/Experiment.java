@@ -333,15 +333,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = null;
         }
         if (result.equals("")) { //No error
-            //Show that it has been successfull and return to the experiment selection so the user
-            //  can see the new addition to his collection
+            experiment.isLocal = true;
             Toast.makeText(this, R.string.save_locally_done, Toast.LENGTH_LONG).show(); //Present message
-            //Create intent to experiment list
-            Intent upIntent = NavUtils.getParentActivityIntent(this);
-            TaskStackBuilder.create(this)
-                    .addNextIntent(upIntent)
-                    .startActivities();
-            finish(); //Close this activity
         } else // There has been an error
             Toast.makeText(this, result, Toast.LENGTH_LONG).show(); //Show error to user
     }
