@@ -862,37 +862,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
-    //Recursively get all TextureViews, used for screenshots
-    public Vector<PlotAreaView> getAllPlotAreaViews(View v) {
-        Vector<PlotAreaView> l = new Vector<>();
-        if (v.getVisibility() != View.VISIBLE)
-            return l;
-        if (v instanceof PlotAreaView) {
-            l.add((PlotAreaView)v);
-        } else if (v instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup)v;
-            for (int i = 0; i < vg.getChildCount(); i++) {
-                l.addAll(getAllPlotAreaViews(vg.getChildAt(i)));
-            }
-        }
-        return l;
-    }
-
-    public Vector<InteractiveGraphView> getAllInteractiveGraphViews(View v) {
-        Vector<InteractiveGraphView> l = new Vector<>();
-        if (v.getVisibility() != View.VISIBLE)
-            return l;
-        if (v instanceof InteractiveGraphView) {
-            l.add((InteractiveGraphView)v);
-        } else if (v instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup)v;
-            for (int i = 0; i < vg.getChildCount(); i++) {
-                l.addAll(getAllInteractiveGraphViews(vg.getChildAt(i)));
-            }
-        }
-        return l;
-    }
-
     @Override
     //the user has clicked an option.
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -1193,88 +1162,58 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         //The share button. Take a screenshot and send a share intent to all those social media apps...
+
         if (id == R.id.action_share) {
-            View screenView = findViewById(R.id.rootLayout).getRootView();
-
-            screenView.setDrawingCacheEnabled(true);
-            Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
-            screenView.setDrawingCacheEnabled(false);
-
-            Canvas canvas = new Canvas(bitmap);
-
-            Vector<PlotAreaView> pavList = getAllPlotAreaViews(screenView);
-            for (PlotAreaView pav : pavList) {
-                pav.setDrawingCacheEnabled(true);
-                Bitmap bmp = pav.getBitmap();
-                pav.setDrawingCacheEnabled(false);
-
-                int location[] = new int[2];
-                pav.getLocationOnScreen(location);
-                canvas.drawBitmap(bmp, location[0], location[1], null);
-            }
-
-            Vector<InteractiveGraphView> gvList = getAllInteractiveGraphViews(screenView);
-            for (InteractiveGraphView gv : gvList) {
-                gv.setDrawingCacheEnabled(true);
-                Bitmap bmp = Bitmap.createBitmap(gv.getDrawingCache());
-                gv.setDrawingCacheEnabled(false);
-
-                int location[] = new int[2];
-                gv.getLocationOnScreen(location);
-                canvas.drawBitmap(bmp, location[0], location[1], null);
-
-                if (gv.popupWindowInfo != null) {
-                    View popupView = gv.popupWindowInfo.getContentView();
-                    popupView.setDrawingCacheEnabled(true);
-                    bmp = Bitmap.createBitmap(popupView.getDrawingCache());
-                    popupView.setDrawingCacheEnabled(false);
-
-                    popupView.getLocationOnScreen(location);
-                    canvas.drawBitmap(bmp, location[0], location[1], null);
-                }
-
-
-            }
 
             final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
             File file = new File(this.getCacheDir(), "/"+ (fileName.isEmpty() ? "phyphox" : fileName) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
-            try {
-                FileOutputStream out = new FileOutputStream(file);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                out.flush();
-                out.close();
-                bitmap.recycle();
+            final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
 
-                final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
+            final Intent intent = ShareCompat.IntentBuilder.from(this)
+                    .setType("image/png")
+                    .setSubject(getString(R.string.share_subject))
+                    .setStream(uri)
+                    .getIntent()
+                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                    .setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                final Intent intent = ShareCompat.IntentBuilder.from(this)
-                        .setType("image/png")
-                        .setSubject(getString(R.string.share_subject))
-                        .setStream(uri)
-                        .getIntent()
-                        .setFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                        .setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Helper.ScreenshotCallback callback = new Helper.ScreenshotCallback() {
+                @Override
+                public void onSuccess(Bitmap bitmap) {
+                    try {
+                        FileOutputStream out = new FileOutputStream(file);
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        out.flush();
+                        out.close();
+                        bitmap.recycle();
 
-                List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
-                for (ResolveInfo ri : resInfoList) {
-                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                        for (ResolveInfo ri : resInfoList) {
+                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+
+                        //Create chooser
+                        Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                        //And finally grant permissions again for any activities created by the chooser
+                        resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                        for (ResolveInfo ri : resInfoList) {
+                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                            ))
+                                continue;
+                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+                        //Execute this intent
+                        startActivity(chooser);
+                    } catch (Exception e) {
+                        Log.e("action_share", "Unhandled exception", e);
+                    }
                 }
+            };
 
-                //Create chooser
-                Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
-                //And finally grant permissions again for any activities created by the chooser
-                resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
-                for (ResolveInfo ri : resInfoList) {
-                    if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                    ))
-                        continue;
-                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }
-                //Execute this intent
-                startActivity(chooser);
-            } catch (Exception e) {
-                Log.e("action_share", "Unhandled exception", e);
-            }
+            View screenView = findViewById(R.id.rootLayout).getRootView();
+            Helper.getScreenshot(screenView, this.getWindow(), callback);
+
+
         }
 
         if (id == R.id.action_calibrated_magnetometer) {
