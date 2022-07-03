@@ -379,6 +379,8 @@ public class DepthInput {
         @Override
         public void onImageAvailable(ImageReader reader) {
             Image image = reader.acquireNextImage();
+            if (image == null)
+                return;
             if (measuring && image.getFormat() == ImageFormat.DEPTH16) {
                 int w = image.getWidth();
                 int h = image.getHeight();
