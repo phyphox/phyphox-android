@@ -33,6 +33,7 @@ public class DataBuffer implements Serializable {
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
     public Double [] init = new Double[0];
     public boolean staticAndSet = false;
+    public boolean linkedToUserInput = false; //If set to true, we should avoid overwriting this value by global operations, i.e.: Do not clear on a reset event.
 
     //Analysis modules and graphs can register to receive notifications if a buffer changes.
     public Set<BufferNotification> updateListeners = new HashSet<>();

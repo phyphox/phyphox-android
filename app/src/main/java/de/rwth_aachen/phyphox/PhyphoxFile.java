@@ -3071,6 +3071,16 @@ public abstract class PhyphoxFile {
 
             }
 
+            for (ExpView v : experiment.experimentViews) {
+                for (ExpView.expViewElement ev : v.elements) {
+                    if (ev instanceof ExpView.editElement) {
+                        DataBuffer buffer = experiment.getBuffer(((ExpView.editElement) ev).valueOutput);
+                        if (buffer != null)
+                            experiment.getBuffer(((ExpView.editElement)ev).valueOutput).linkedToUserInput = true;
+                    }
+                }
+            }
+
             //Sanity check: If the experiment did not define any views, we cannot use it
             if (experiment.experimentViews.size() == 0) {
                 experiment.message = "Bad experiment definition: No valid view found.";

@@ -1688,7 +1688,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {
             for (DataBuffer buffer : experiment.dataBuffers)
-                buffer.clear(true);
+                if (!buffer.linkedToUserInput)
+                    buffer.clear(true);
         } finally {
             experiment.dataLock.unlock();
         }
