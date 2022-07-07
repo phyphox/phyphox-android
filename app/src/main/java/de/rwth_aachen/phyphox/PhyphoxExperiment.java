@@ -192,28 +192,34 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
 
         //Get the data from the audio recording if used
-        if (audioRecord != null && measuring) {
+        if (audioRecord != null) {
+            boolean sampleRateWritten = false;
             DataBuffer sampleRateBuffer = null;
             if (!micRateOutput.isEmpty())
                 sampleRateBuffer = getBuffer(micRateOutput);
-            DataBuffer recording = getBuffer(micOutput);
-            final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
-            short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
-            int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
-            if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
-                dataLock.lock();
-                try {
-                    if (recordingUsed) {
-                        recording.clear(false); //We only want fresh data
-                        if (sampleRateBuffer != null)
-                            sampleRateBuffer.append(audioRecord.getSampleRate());
-                        recordingUsed = false;
+
+            if (measuring) {
+                DataBuffer recording = getBuffer(micOutput);
+                final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
+                short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
+                int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
+                if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
+                    dataLock.lock();
+                    try {
+                        if (recordingUsed) {
+                            recording.clear(false); //We only want fresh data
+                            if (sampleRateBuffer != null)
+                                sampleRateBuffer.append(audioRecord.getSampleRate());
+                            sampleRateWritten = true;
+                            recordingUsed = false;
+                        }
+                        recording.append(buffer, bytesRead);
+                    } finally {
+                        dataLock.unlock();
                     }
-                    recording.append(buffer, bytesRead);
-                } finally {
-                    dataLock.unlock();
                 }
-            } else {
+            }
+            if (!sampleRateWritten) {
                 //Even if we do not use the first recording, we write the audio rate so it is available early.
                 dataLock.lock();
                 try {

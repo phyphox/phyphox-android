@@ -271,7 +271,7 @@ public class Analysis {
 /*
                 Log.d("AnalysisDebug", "[" + this.getClass().toString() + "]");
                 if (!useArray) {
-                    for (dataInput input : inputs)
+                    for (DataInput input : inputs)
                         if (input != null)
                             Log.d("AnalysisDebug", "in: " + input.getValue() + " (length " + input.getFilledSize() + ")");
                 } else {
@@ -279,7 +279,7 @@ public class Analysis {
                         if (inputArrays.get(i) != null)
                             Log.d("AnalysisDebug", "in: " + (inputArraySizes.get(i) > 0 ? inputArrays.get(i)[inputArraySizes.get(i)-1] : "[]") + " (length " + inputArraySizes.get(i) + ")");
                 }
-                for (dataOutput output : outputs)
+                for (DataOutput output : outputs)
                     if (output != null)
                         Log.d("AnalysisDebug", output.buffer.name + " => " + output.getValue() + " (length " + output.getFilledSize() + ")");
 
