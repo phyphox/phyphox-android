@@ -1108,6 +1108,8 @@ public class ExpView implements Serializable{
         double minZ = 0.;
         double maxZ = 0.;
 
+        boolean followX = false;
+
         GraphView.ZoomState zoomState = null;
 
         final String warningText;
@@ -1218,6 +1220,15 @@ public class ExpView implements Serializable{
             this.maxZ = maxV;
             if (gv != null)
                 gv.setScaleModeZ(minMode, minV, maxMode, maxV);
+        }
+
+        public void setFollowX(boolean followX) {
+            this.followX = followX;
+            if (followX) {
+                this.scaleMinX = GraphView.scaleMode.fixed;
+                this.scaleMaxX = GraphView.scaleMode.fixed;
+                this.partialUpdate = true;
+            }
         }
 
         //Interface to set a history length
@@ -1352,6 +1363,7 @@ public class ExpView implements Serializable{
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
+            gv.setFollowX(followX);
             gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
             gv.setTimeAxes(timeOnX, timeOnY);
             gv.setAbsoluteTime(absoluteTime);
@@ -1886,6 +1898,7 @@ public class ExpView implements Serializable{
                 }
             }
             gv.zoomState = zoomState;
+            gv.rescale();
             gv.invalidate();
         }
     }

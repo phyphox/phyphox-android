@@ -147,9 +147,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                     graphView.setAbsoluteTime(!graphView.absoluteTime);
                                     graphView.invalidate();
                                 } else if (id == R.id.graph_tools_reset) {
-                                    graphView.zoomState.follows = false;
-                                    graphView.zoomState.minX = Double.NaN;
-                                    graphView.zoomState.maxX = Double.NaN;
+                                    graphView.zoomState.follows = graphView.followX;
+                                    if (graphView.followX) {
+                                        graphView.zoomState.minX = graphView.minX;
+                                        graphView.zoomState.maxX = graphView.maxX;
+                                    } else {
+                                        graphView.zoomState.minX = Double.NaN;
+                                        graphView.zoomState.maxX = Double.NaN;
+                                    }
                                     graphView.zoomState.minY = Double.NaN;
                                     graphView.zoomState.maxY = Double.NaN;
                                     graphView.zoomState.minZ = Double.NaN;
@@ -321,6 +326,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     if ((simple && rbReset.isChecked()) || (!simple && rbResetX.isChecked())) {
                         minX = Double.NaN;
                         maxX = Double.NaN;
+
                     } else {
                         minX = graphView.zoomState.minX;
                         maxX = graphView.zoomState.maxX;
@@ -332,11 +338,21 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         minY = graphView.zoomState.minY;
                         maxY = graphView.zoomState.maxY;
                     }
+
+                    if ((simple && graphView.zoomState.follows) || (!simple && rbFollowX.isChecked())) {
+                        graphView.zoomState.follows = true;
+                    } else if ((simple && rbReset.isChecked() && graphView.followX)
+                            || (!simple && rbResetX.isChecked() && graphView.followX)) {
+                        graphView.zoomState.follows = true;
+                        minX = graphView.minX;
+                        maxX = graphView.maxX;
+                    } else
+                        graphView.zoomState.follows = false;
                     graphView.zoomState.minX = minX;
                     graphView.zoomState.maxX = maxX;
                     graphView.zoomState.minY = minY;
                     graphView.zoomState.maxY = maxY;
-                    graphView.zoomState.follows = (simple && graphView.zoomState.follows) || (!simple && rbFollowX.isChecked());
+                    graphView.rescale();
 
                     if (!simple) {
 

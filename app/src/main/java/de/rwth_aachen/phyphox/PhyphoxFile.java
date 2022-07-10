@@ -69,7 +69,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.14";
+    public final static String phyphoxFileVersion = "1.15";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -1394,6 +1394,7 @@ public abstract class PhyphoxFile {
                     double minZ = getDoubleAttribute("minZ", 0.);
                     double maxZ = getDoubleAttribute("maxZ", 0.);
 
+                    boolean followX = getBooleanAttribute("followX", false);
 
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
@@ -1439,6 +1440,7 @@ public abstract class PhyphoxFile {
                     ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
                     ge.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
+                    ge.setFollowX(followX);
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
                     ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime, hideTimeMarkers);

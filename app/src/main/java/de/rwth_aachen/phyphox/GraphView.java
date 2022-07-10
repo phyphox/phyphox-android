@@ -121,6 +121,8 @@ public class GraphView extends View {
     double minZ = 0.;
     double maxZ = 0.;
 
+    boolean followX = false;
+
     private TouchMode touchMode = TouchMode.off;
     public class ZoomState {
         double minX = Double.NaN;
@@ -660,6 +662,17 @@ public class GraphView extends View {
             maxZ = Double.NEGATIVE_INFINITY;
     }
 
+    public void setFollowX(boolean followX) {
+        this.followX = followX;
+        zoomState.follows = followX;
+        if (followX) {
+            this.scaleMinX = scaleMode.fixed;
+            this.scaleMaxX = scaleMode.fixed;
+            zoomState.minX = minX;
+            zoomState.maxX = maxX;
+        }
+    }
+
     public void setTimeRanges(List<Double> trStarts, List<Double> trStops, List<Double> systemTimeReferenceGap) {
         graphSetup.setTimeRanges(trStarts, trStops, systemTimeReferenceGap, plotRenderer);
     }
@@ -712,7 +725,7 @@ public class GraphView extends View {
             maxZ = dataMaxZ;
 
         if (!Double.isNaN(zoomState.minX) && !Double.isNaN(zoomState.maxX)) {
-            if (zoomState.follows) {
+            if (zoomState.follows && Double.isFinite(dataMaxX) && Double.isFinite(dataMinX)) {
                 double w = zoomState.maxX - zoomState.minX;
                 zoomState.minX = dataMaxX - w;
                 zoomState.maxX = dataMaxX;
