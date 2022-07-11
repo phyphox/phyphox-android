@@ -357,4 +357,5 @@
     <string name="cameraFrontFacing">Vordere Kamera</string>
     <string name="cameraBackFacing">Hintere Kamera</string>
     <string name="cameraExternal">Externe Kamera</string>
+    <string name="sensorGravity">Gravitation</string>
 </resources>
