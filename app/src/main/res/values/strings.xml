@@ -147,6 +147,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 ]]>
     </string>
     <string name="sensorLinearAcceleration">Linear Acceleration</string>
+    <string name="sensorGravity">Gravity</string>
     <string name="sensorLight">Light</string>
     <string name="sensorGyroscope">Gyroscope</string>
     <string name="sensorAccelerometer">Accelerometer</string>
