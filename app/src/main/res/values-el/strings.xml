@@ -16,10 +16,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Απομακρυσμένος Έλεγχος</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Γλώσσες</string>
-    <string name="translationText">H εφαρμογή phyphox θα χρησιμοποιήσει την πρώτη διαθέσιμη γλώσσα από τη λίστα των προτιμώμενων γλωσσών σας. Για να αλλάξετε τις προτιμήσεις σας, επιλέξτε \"ρυθμίσεις\". Για να ενημερωθείτε για τις διαθέσιμες γλώσσες και πως μπορείτε να βοηθήσετε, επιλέξτε \"ιστοσελίδα\".</string>
-    <string name="translationToSettings">Ρυθμίσεις</string>
-    <string name="translationToWebsite">Επίσκεψη στην ιστοσελίδα</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#el</string>
     <string name="warning">Προειδοποίηση</string>
     <string name="donotshowagain">Να μην προβληθεί ξανά</string>

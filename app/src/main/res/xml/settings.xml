@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <androidx.preference.PreferenceCategory android:title="@string/settingsHeadLanguage">
+        <androidx.preference.ListPreference
+            android:dialogTitle="@string/settingsLanguage"
+            android:summary="%s"
+            android:key="language"
+            android:icon="@drawable/setting_language"
+            android:title="@string/settingsLanguage"
+            >
+
+        </androidx.preference.ListPreference>
+        <androidx.preference.Preference
+            android:summary="@string/settingsTranslationMore"
+            android:icon="@drawable/setting_translate"
+            android:title="@string/settingsTranslation">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="@string/translationToWebsiteURL" />
+        </androidx.preference.Preference>
+    </androidx.preference.PreferenceCategory>
+
+    <androidx.preference.PreferenceCategory android:title="@string/settingsHeadAdvanced">
+        <androidx.preference.SwitchPreference
+            android:key="proximityLock"
+            android:title="@string/settingsProximityLock"
+            android:icon="@drawable/setting_lock"
+            android:summary="@string/settingsProximityLockDetail"
+            android:defaultValue="false" />
+    </androidx.preference.PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>

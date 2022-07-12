@@ -16,10 +16,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Aide pour le contrôle à distance</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Langues</string>
-    <string name="translationText">Phyphox utilisera la première langue disponible dans votre liste de langues préférées. Vous pouvez modifier vos préférences Android en cliquant sur \"Paramètres\" ci-dessous. Pour savoir dans quelles langues phyphox est disponible et comment vous pouvez aider, sélectionnez \"Visiter le site web\".</string>
-    <string name="translationToSettings">Paramètres</string>
-    <string name="translationToWebsite">Visiter le site web</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#fr</string>
     <string name="warning">Attention</string>
     <string name="donotshowagain">Ne plus montrer</string>

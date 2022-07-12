@@ -56,10 +56,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Petunjuk akses jarak jauh</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Bahasa</string>
-    <string name="translationText">Phyphox akan menggunakan bahasa pilihan anda yang tersedia. Untuk mengubah pilihan, pada Android pilih \"pengaturan\". Untuk melihat pilihan bahasa yang tersedia dan bagaimana anda dapat membantu, pilih \"kunjungi website\".</string>
-    <string name="translationToSettings">Pengaturan</string>
-    <string name="translationToWebsite">Kunjungi website</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#id</string>
     <string name="deviceInfo">Informasi alat</string>
     <string name="copyToClipboard">Rekam ke clipboard</string>

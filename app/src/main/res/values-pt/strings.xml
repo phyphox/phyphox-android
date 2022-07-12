@@ -15,12 +15,8 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Ajuda do acesso remoto (em Inglês)</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Idiomas</string>
-    <string name="translationText">Phyphox usa o primeiro idioma disponível da sua lista de idiomas preferidos. Para mudar suas preferências, vá em \"Configurações\". Para ver quais idiomas estão disponíveis e ver como você pode nos ajudar, selecione \"Visitar website (em Inglês)\".</string>
-    <string name="translationToSettings">Configurações</string>
     <string name="donotshowagain">Não mostrar novamente</string>
     <string name="experimentinfo_hint">Veja informações sobre o experimento para aprender como usá-lo.</string>
-    <string name="translationToWebsite">Visitar website (em inglês)</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#pt</string>
     <string name="info">Informações</string>
     <string name="creditsRWTH">phyphox foi criado no 2º Instituto de Física da Universidade RWTH Aachen.</string>

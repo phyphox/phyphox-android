@@ -107,10 +107,6 @@
     <string name="loadingTitle">Načítám</string>
     <string name="experimentsPhyphoxOrg">Nápady a návody k experimentům</string>
     <string name="save_state_share">Sdílet</string>
-    <string name="translationInfo">Volba jazyka</string>
-    <string name="translationText">Phyphox se zobrazuje v tom jazyce, který je první na seznamu preferovaných jazyků v nastavení systému android vašeho zařízení. Přímý odkaz k příslušnému nastavení najdete pod tímto textem (tlačítko \"nastavení\"). Ne všechny jazyky jsou ovšem aplikací phyphox podporovány. Chcete-li zjistit, které jazyky jsou k dispozici, nebo byste chtěli pomoci s překladem, zmáčkěte tlačítko \"Navštivte internetovou stránku\".</string>
-    <string name="translationToSettings">Nastavení</string>
-    <string name="translationToWebsite">Navštivte internetovou stránku</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#cs</string>
     <string name="graph_tools_pan_and_zoom">Posouvat či přibližovat</string>
     <string name="graph_tools_pick">Vyberte data</string>

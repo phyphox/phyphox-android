@@ -73,6 +73,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
@@ -2287,6 +2288,8 @@ public class ExperimentList extends AppCompatActivity {
             showSupportHintIfRequired();
         }
 
+        Activity parentActivity = this;
+
         //Set the on-click-listener for the credits
         View.OnClickListener ocl = new View.OnClickListener() {
             @Override
@@ -2360,36 +2363,9 @@ public class ExperimentList extends AppCompatActivity {
                                     startActivity(intent);
                                 }
                             return true;
-                        } else if (item.getItemId() == R.id.action_translationInfo) {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
-                                builder.setMessage(res.getString(R.string.translationText))
-                                        .setTitle(R.string.translationInfo)
-                                        .setPositiveButton(R.string.translationToWebsite, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                Uri uri = Uri.parse(res.getString(R.string.translationToWebsiteURL));
-                                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                                    startActivity(intent);
-                                                }
-                                            }
-                                        })
-                                        .setNeutralButton(R.string.translationToSettings, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                final Intent intent = new Intent(Intent.ACTION_MAIN, null);
-                                                intent.addCategory(Intent.CATEGORY_LAUNCHER);
-                                                final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.LanguageSettings");
-                                                intent.setComponent(cn);
-                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                                startActivity( intent);
-                                            }
-                                        })
-                                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-
-                                            }
-                                        });
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
+                        } else if (item.getItemId() == R.id.action_settings) {
+                                Intent intent = new Intent(parentActivity, Settings.class);
+                                startActivity(intent);
                                 return true;
                             } else if (item.getItemId() == R.id.action_deviceInfo) {
                             StringBuilder sb = new StringBuilder();

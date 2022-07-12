@@ -3,8 +3,6 @@
     <string name="newExperimentInputTitle">عنوان</string>
     <string name="newExperimentInputSensors">حسگرهای فعال</string>
     <string name="faqPhyphoxOrg">پرسش‌های متداول</string>
-    <string name="translationInfo">زبان‌ها</string>
-    <string name="translationToSettings">تنظیمات</string>
     <string name="sensorLight">نور</string>
     <string name="sensorGyroscope">چرخش‌نما</string>
     <string name="app_name">فیفاکس</string>
@@ -17,8 +15,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">راهنمای کنترل از راه دور</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationText">فیفاکس از نخستین زبان موجود در لیست «تنظیمات برگزیده زبان» تلفن همراه شما استفاده می‌کند. برای تغییر تنظیمات، به بخش «تنظیمات» اندروید خود در زیر بروید. جهت آگاهی از زبان‌های موجود و اینکه چگونه می‌توانید کمک کنید، «بازدید از وبگاه» را انتخاب کنید.</string>
-    <string name="translationToWebsite">بازدید از وبگاه</string>
     <string name="warning">هشدار</string>
     <string name="donotshowagain">دوباره نمایش نده</string>
     <string name="info">اطلاعات</string>
