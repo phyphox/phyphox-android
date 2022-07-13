@@ -363,4 +363,5 @@
     <string name="settingsHeadAdvanced">Fortgeschritten</string>
     <string name="settingsProximityLock">Näherungssperre</string>
     <string name="settingsProximityLockDetail">Bildschirm ausschalten wenn der Näherungssensor ausgelöst wird um ungewünschte Eingaben (z.B. in einer Tasche) zu vermeiden.</string>
+    <string name="settingsPort">Port für Fernzugriff</string>
 </resources>
