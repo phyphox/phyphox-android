@@ -354,4 +354,13 @@
     <string name="cameraBackFacing">Hintere Kamera</string>
     <string name="cameraExternal">Externe Kamera</string>
     <string name="sensorGravity">Gravitation</string>
+    <string name="settingsDefault">Standard</string>
+    <string name="settings">Einstellungen</string>
+    <string name="settingsHeadLanguage">Sprache</string>
+    <string name="settingsLanguage">Sprache der App</string>
+    <string name="settingsTranslation">Übersetzung</string>
+    <string name="settingsTranslationMore">Erfahre mehr über verfügbare Sprachen und wie du helfen kannst.</string>
+    <string name="settingsHeadAdvanced">Fortgeschritten</string>
+    <string name="settingsProximityLock">Näherungssperre</string>
+    <string name="settingsProximityLockDetail">Bildschirm ausschalten wenn der Näherungssensor ausgelöst wird um ungewünschte Eingaben (z.B. in einer Tasche) zu vermeiden.</string>
 </resources>
