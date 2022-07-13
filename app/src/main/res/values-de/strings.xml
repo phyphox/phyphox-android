@@ -117,10 +117,6 @@
     <string name="categoryRawSensor">Sensoren</string>
     <string name="categoryPhyphoxOrg">Unterstütze phyphox</string>
     <string name="categoryPhyphoxOrgHint">Am Ende der Liste gibt es neue Möglichkeiten, phyphox zu unterstützen.</string>
-    <string name="translationInfo">Sprachen</string>
-    <string name="translationText">Phyphox wird die erste verfügbare Sprache aus der Liste deiner bevorzugten Sprachen benutzen. Um deine bevorzugten Sprachen zu ändern, gehe unten in die Android \"Einstellungen\". Um zu erfahren, welche Sprachen wir schon anbieten und wie du uns helfen kannst, wähle \"zur Webseite\".</string>
-    <string name="translationToSettings">Einstellungen</string>
-    <string name="translationToWebsite">Zur Webseite</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#de</string>
     <string name="bt_android_version">Bluetooth Low Energy wird von bei Android Versionen kleiner als 4.3 nicht unterstützt.</string>
     <string name="bt_exception_uuid">Die Characteristic mit der UUID</string>

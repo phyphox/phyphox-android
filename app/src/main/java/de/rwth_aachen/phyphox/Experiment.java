@@ -22,6 +22,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.preference.Preference;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -60,6 +62,7 @@ import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.PreferenceManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
@@ -154,6 +157,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     MenuItem startMenuItem = null; //Reference to play-hint button
     ImageView hintAnimation = null; //Reference to the animated part of the play-hint button
 
+    boolean proximityLock = false;
+    PowerManager.WakeLock wakeLock = null;
+
     //The analysis progress bar
     ProgressBar analysisProgress;       //Reference to the progress bar view
     boolean analysisInProgress = false; //Set to true by second thread while analysis is running
@@ -212,6 +218,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setTheme(R.style.phyphox);
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -520,6 +528,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             showMenuHint();
         else if (!startHintDismissed)
             showStartHint();
+
+        settings =  PreferenceManager.getDefaultSharedPreferences(this);
+        proximityLock = settings.getBoolean("proximityLock", false);
+        if (proximityLock && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            PowerManager powerManager = (PowerManager) getBaseContext().getSystemService(Context.POWER_SERVICE);
+            if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK))
+                wakeLock = powerManager.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "phyphox:measuring");
+        }
     }
 
     private void showSensorWarning(SensorInput sensor) {
@@ -1508,7 +1524,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         measuring = true;
 
         //No more turning off during the measurement
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setKeepScreenOn(true);
 
         //Start the analysis "loop"
         Thread t = new Thread(updateData);
@@ -1562,7 +1578,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Start a timed measurement
     public void startTimedMeasurement() {
         //No more turning off during the measurement
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setKeepScreenOn(true);
 
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             // check if all Bluetooth devices are connected and display an errorDialog if not
@@ -1660,8 +1676,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         analysisProgressAlpha = 0.f; //Disable the progress bar
 
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
-        if (!serverEnabled)
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (!serverEnabled) {
+            setKeepScreenOn(false);
+        }
 
         //Deactivate any timer
         if (cdTimer != null) {
@@ -1736,13 +1753,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         //Also we want to keep the device active for remote access
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setKeepScreenOn(true);
     }
 
     //Stop the remote server (see remoteServer class)
     private void stopRemoteServer() {
-        if (!measuring)
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (!measuring) {
+            setKeepScreenOn(false);
+        }
         //Announce this to the user, so he knows why the webinterface stopped working.
         TextView announcer = (TextView)findViewById(R.id.remoteInfo);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -1834,5 +1852,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    private void setKeepScreenOn(boolean keepOn) {
+        if (keepOn) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (proximityLock) {
+                if (wakeLock != null && !wakeLock.isHeld()) {
+                    wakeLock.acquire();
+                }
+            }
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (proximityLock && wakeLock.isHeld()) {
+                if (wakeLock != null)
+                    wakeLock.release();
+            }
+        }
+    }
 
 }

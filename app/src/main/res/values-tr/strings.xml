@@ -10,9 +10,6 @@
     <string name="experimentsPhyphoxOrg">Deney fikirleri ve eğitimleri</string>
     <string name="faqPhyphoxOrg">Sıkça sorulan sorular</string>
     <string name="remotePhyphoxOrg">Uzaktan yardım</string>
-    <string name="translationInfo">Diller</string>
-    <string name="translationToSettings">Ayarlar</string>
-    <string name="translationToWebsite">Siteyi ziyaret edin</string>
     <string name="warning">Uyarı</string>
     <string name="donotshowagain">Bir daha gösterme</string>
     <string name="info">Bilgi</string>
@@ -72,7 +69,6 @@
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationText">Phyphox, tercih ettiğiniz diller listesinden ulaşabileceği ilk dili kullanacaktır. Tercihlerinizi değiştirmek için aşağıdan Android \"ayarlarına\" gidin. Hangi dillerin uygun olduğunu ve nasıl yardımcı olabileceğinizi öğrenmek için \"web sitesini ziyaret et\" seçeneğini seçin.</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#tr</string>
     <string name="damageWarning">Deney yaparken telefonunuza zarar vermemeye lütfen dikkat edin. Sert yüzeyler üzerine düşürmemek için özel dikkat gösterin ve aşırı manyetik alanlara maruz bırakmayın. Telefonunuzdaki herhangi bir hasardan Phyphox\'un yazarları sorumlu değildir.</string>
     <string name="creditsRWTH">Phyphox® RWTH Aachen Üniversitesi 2. Fizik Enstitüsü\'nde oluşturulmuştur.</string>

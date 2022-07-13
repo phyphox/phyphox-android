@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="action_settings">設定</string>
-    <string name="translationInfo">語言</string>
     <string name="app_name">手機物理實作</string>
     <string name="title_activity_experiment">手機物理實作</string>
     <string name="newExperiment">新建實驗</string>
@@ -17,9 +16,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">遠程控制協助說明</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationText">Phyphox將使用您首選語言列表中的第一種語言。 要更改您的偏好設定，請用下方的Android“設定”。 要了解哪些語言可用以及如何提供協助，請選擇“拜訪網站”。</string>
-    <string name="translationToSettings">設定</string>
-    <string name="translationToWebsite">拜訪網站</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#zh_Hant</string>
     <string name="warning">警示</string>
     <string name="donotshowagain">不要再顯示</string>

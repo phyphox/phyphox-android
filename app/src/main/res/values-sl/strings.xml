@@ -40,9 +40,6 @@
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="faqPhyphoxOrg">Pogosto zastavljena vprašanja</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
-    <string name="translationInfo">Jeziki</string>
-    <string name="translationToSettings">Nastavitve</string>
-    <string name="translationToWebsite">Obiščite spletno mesto</string>
     <string name="deviceInfo">Informacije o napravi</string>
     <string name="copyToClipboard">Kopiraj v odložišče</string>
     <string name="deviceInfoCopied">Informacije o napravi so kopirane v odložišče.</string>

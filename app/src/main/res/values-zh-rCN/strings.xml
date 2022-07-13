@@ -16,13 +16,9 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">远程控制帮助</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">语言</string>
-    <string name="translationToSettings">设置</string>
-    <string name="translationToWebsite">访问网站</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#zh_Hans</string>
     <string name="warning">警告</string>
     <string name="donotshowagain">不再显示</string>
-    <string name="translationText">Phyphox将使用您语言偏好列表中的第一种语言。如需更改偏好设置，请转到下方的Android“设置”。要了解哪些语言可用以及如何提供协助，请选择“访问网站”。</string>
     <string name="info">信息</string>
     <string name="credits">创立团队</string>
     <string name="creditsRWTH">Phyphox是由亚琛工业大学第二物理研究所开发。</string>

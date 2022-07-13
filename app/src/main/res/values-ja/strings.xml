@@ -16,11 +16,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">遠隔操作ヘルプ</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">言語</string>
-    <string name="translationText">phyphoxはあなたの優先言語リストのうち使用可能な第一言語を利用します．優先度は下記のAndroid \"設定\" から
-\n変更することができます．どの言語が利用可能か，またあなたがどのように役立つことができるかを知りたい方は\"ウェブサイトへ移動\"を選択してください．</string>
-    <string name="translationToSettings">設定</string>
-    <string name="translationToWebsite">ウェブサイトへ移行</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#ja</string>
     <string name="warning">注意</string>
     <string name="donotshowagain">今後表示しない</string>
