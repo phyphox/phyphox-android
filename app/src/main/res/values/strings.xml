@@ -319,6 +319,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settingsHeadAdvanced">Advanced</string>
     <string name="settingsProximityLock">Proximity lock</string>
     <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
+    <string name="settingsPort">Remote access port</string>
 
     <string name="common_unit_short_arbitrary_unit">a.u.</string>
     <string name="common_unit_short_second">s</string>

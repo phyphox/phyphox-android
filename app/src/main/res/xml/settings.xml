@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen  xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.preference.PreferenceScreen  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
     android:layout_width="match_parent">
 
@@ -24,12 +24,23 @@
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory android:title="@string/settingsHeadAdvanced">
+        <androidx.preference.EditTextPreference
+            android:key="remoteAccessPort"
+            android:title="@string/settingsPort"
+            android:summary="%s"
+            android:defaultValue="8080"
+            android:icon="@drawable/setting_http"
+            android:persistent="true"
+            app:useSimpleSummaryProvider="true"
+            />
         <androidx.preference.SwitchPreference
             android:key="proximityLock"
             android:title="@string/settingsProximityLock"
             android:icon="@drawable/setting_lock"
             android:summary="@string/settingsProximityLockDetail"
+            android:persistent="true"
             android:defaultValue="false" />
+
     </androidx.preference.PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

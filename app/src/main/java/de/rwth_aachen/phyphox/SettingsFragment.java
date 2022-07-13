@@ -4,11 +4,16 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.text.InputType;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.ConfigurationCompat;
 import androidx.core.os.LocaleListCompat;
+import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -23,8 +28,32 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.settings, rootKey);
+        setupPortEditText();
         prepareLanguageList();
         updateCurrentLanguage();
+    }
+
+    private void setupPortEditText() {
+        EditTextPreference editTextPreference = (EditTextPreference)findPreference("remoteAccessPort");
+        editTextPreference.setOnBindEditTextListener(new EditTextPreference.OnBindEditTextListener() {
+            @Override
+            public void onBindEditText(@NonNull EditText editText) {
+                editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+            }
+        });
+
+        editTextPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                int v = Integer.parseInt(newValue.toString());
+                if ((v >= 1024) && (v < 65536)) {
+                    return true;
+                } else {
+                    Toast.makeText(getContext(), "Allowed range: 1024-65535", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            }
+        });
     }
 
     private void updateCurrentLanguage() {

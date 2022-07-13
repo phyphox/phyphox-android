@@ -16,6 +16,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.preference.PreferenceManager;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -74,7 +75,7 @@ public class RemoteServer extends Thread {
 
     HttpService httpService; //Holds our http service
     BasicHttpContext basicHttpContext; //A simple http context...
-    static final int HttpServerPORT = 8080; //We have to pick a high port number. We may not use 80...
+    static int httpServerPort = 8080; //We have to pick a high port number. We may not use 80...
     boolean RUNNING = false; //Keeps the main loop alive...
     Context context; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
@@ -371,7 +372,7 @@ public class RemoteServer extends Thread {
 
                     //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
                     if (!inetAddress.isAnyLocalAddress() && !inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address && !inetAddress.equals(filterMobile)) {
-                        ret += "http://" + inetAddress.getHostAddress() + ":" + HttpServerPORT + "\n";
+                        ret += "http://" + inetAddress.getHostAddress() + ":" + httpServerPort + "\n";
                     }
 
                 }
@@ -389,7 +390,7 @@ public class RemoteServer extends Thread {
     public void run() {
         try {
             //Setup server socket
-            ServerSocket serverSocket = new ServerSocket(HttpServerPORT);
+            ServerSocket serverSocket = new ServerSocket(httpServerPort);
             serverSocket.setReuseAddress(true);
             serverSocket.setSoTimeout(3000);
 
@@ -434,6 +435,8 @@ public class RemoteServer extends Thread {
 
     //This starts the http service and registers the handlers for several requests
     private synchronized void startHttpService() {
+        httpServerPort = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", "8080"));
+
         BasicHttpProcessor basicHttpProcessor = new BasicHttpProcessor();
         basicHttpContext = new BasicHttpContext();
 
