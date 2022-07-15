@@ -350,4 +350,15 @@
     <string name="cameraFrontFacing">Μπροστινή κάμερα</string>
     <string name="cameraBackFacing">Οπίσθια κάμερα</string>
     <string name="cameraExternal">Εξωτερική κάμερα</string>
+    <string name="sensorGravity">Βαρύτητα</string>
+    <string name="settingsDefault">Προεπιλογή</string>
+    <string name="settings">Ρυθμίσεις</string>
+    <string name="settingsHeadLanguage">Γλώσσα</string>
+    <string name="settingsLanguage">Γλώσσα Εφαρμογής</string>
+    <string name="settingsTranslation">Μετάφραση</string>
+    <string name="settingsTranslationMore">Μάθετε περισσότερα σχετικά με τις μεταφράσεις και πως μπορείτε να βοηθήσετε.</string>
+    <string name="settingsHeadAdvanced">Προχωρημένες</string>
+    <string name="settingsProximityLock">Κλείδωμα εγγύτητας</string>
+    <string name="settingsProximityLockDetail">Απενεργοποίηση της οθόνης όταν ενεργοποιείται ο αισθητήρας εγγύτητας για την αποφυγή ακούσιων καταγραφών, για παράδειγμα από την τσέπη.</string>
+    <string name="settingsPort">Θύρα απομακρυσμένης πρόσβασης</string>
 </resources>
