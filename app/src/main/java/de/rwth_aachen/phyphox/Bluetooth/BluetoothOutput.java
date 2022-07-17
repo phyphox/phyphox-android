@@ -51,12 +51,24 @@ public class BluetoothOutput extends Bluetooth {
     public void sendData() {
         if (!forcedBreak) {
             for (BluetoothGattCharacteristic characteristic : mapping.keySet()) {
+                int n = 0;
+                byte[] out = null;
                 for (Characteristic c : mapping.get(characteristic)) {
                     if (data.get(c.index).getFilledSize() != 0) {
                         byte[] value = convertData(data.get(c.index).buffer, c.outputConversionFunction);
-                        characteristic.setValue(value);
-                        add(new WriteCommand(btGatt, characteristic));
+                        if (value.length + c.outputOffset > n) {
+                            n = value.length + c.outputOffset;
+                            byte[] newOut = new byte[n];
+                            if (out != null)
+                                System.arraycopy(out, 0, newOut, 0, out.length);
+                            out = newOut;
+                        }
+                        System.arraycopy(value, 0, out, c.outputOffset, value.length);
                     }
+                }
+                if (out != null) {
+                    characteristic.setValue(out);
+                    add(new WriteCommand(btGatt, characteristic));
                 }
             }
         }

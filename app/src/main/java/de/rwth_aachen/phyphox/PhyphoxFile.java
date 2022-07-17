@@ -523,6 +523,8 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                     }
 
+                    short offset = (short)getIntAttribute("offset", 0);
+
                     // check if buffer exists
                     String bufferName = getText();
                     DataBuffer buffer = experiment.getBuffer(bufferName);
@@ -533,7 +535,7 @@ public abstract class PhyphoxFile {
                     inputList.add(new DataInput(buffer, false));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
+                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction, offset));
 
                     break;
                 }

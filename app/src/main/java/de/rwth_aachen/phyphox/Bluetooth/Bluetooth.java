@@ -706,6 +706,7 @@ public class Bluetooth implements Serializable {
         public ConversionsConfig.ConfigConversion configConversionFunction = null;
         public ConversionsInput.InputConversion inputConversionFunction = null;
         public ConversionsOutput.OutputConversion outputConversionFunction = null;
+        public short outputOffset = 0;
 
         /**
          * Create a new Characteristic.
@@ -723,9 +724,10 @@ public class Bluetooth implements Serializable {
             this.inputConversionFunction = conversionFunction;
         }
 
-        public Characteristic(int index, ConversionsOutput.OutputConversion conversionFunction) {
+        public Characteristic(int index, ConversionsOutput.OutputConversion conversionFunction, short outputOffset) {
             this.index = index;
             this.outputConversionFunction = conversionFunction;
+            this.outputOffset = outputOffset;
         }
     } // end of class Characteristic
 
@@ -1062,7 +1064,7 @@ public class Bluetooth implements Serializable {
          * Method that will be called to convert the value of the characteristic.
          */
         public ConversionsOutput.OutputConversion conversionFunction;
-
+        public short offset;
         /**
          * Create a new OutputData.
          *
@@ -1070,10 +1072,11 @@ public class Bluetooth implements Serializable {
          * @param index              index of the buffer
          * @param conversionFunction OutputConversion instance that will be used to convert the value of the characteristic
          */
-        public OutputData(UUID uuid, int index, ConversionsOutput.OutputConversion conversionFunction) {
+        public OutputData(UUID uuid, int index, ConversionsOutput.OutputConversion conversionFunction, short offset) {
             this.uuid = uuid;
             this.index = index;
             this.conversionFunction = conversionFunction;
+            this.offset = offset;
         }
 
         /**
@@ -1089,7 +1092,7 @@ public class Bluetooth implements Serializable {
                 // add Characteristic to the list for its BluetoothGattCharacteristic
                 b.mapping.put(c, new ArrayList<Characteristic>());
             }
-            Characteristic toAdd = new Characteristic(this.index, this.conversionFunction);
+            Characteristic toAdd = new Characteristic(this.index, this.conversionFunction, this.offset);
             b.valuesSize++;
             b.mapping.get(c).add(toAdd);
         }
