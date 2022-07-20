@@ -50,6 +50,7 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -168,25 +169,25 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
-    private void doLeaveExperiment(Activity activity) {
-        Intent upIntent = NavUtils.getParentActivityIntent(activity);
-        if (NavUtils.shouldUpRecreateTask(activity, upIntent)) {
-            TaskStackBuilder.create(activity)
+    private void doLeaveExperiment() {
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
+            TaskStackBuilder.create(this)
                     .addNextIntent(upIntent)
                     .startActivities();
             finish();
         } else {
-            NavUtils.navigateUpTo(activity, upIntent);
+            NavUtils.navigateUpTo(this, upIntent);
         }
     }
 
-    private void leaveExperiment(Activity activity) {
+    private void leaveExperiment() {
         if (experiment != null && experiment.analysisTime > 10.0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.leave_experiment_question))
                     .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            doLeaveExperiment(activity);
+                            doLeaveExperiment();
                         }
                     })
                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -197,21 +198,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             AlertDialog dialog = builder.create();
             dialog.show();
         } else {
-            doLeaveExperiment(activity);
+            doLeaveExperiment();
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (adapter != null && pager != null) {
-            ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
-            if (f != null && f.hasExclusive()) {
-                f.leaveExclusive();
-                return;
-            }
-        }
-        leaveExperiment(this);
-        //super.onBackPressed();
     }
 
     @Override
@@ -220,6 +208,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         super.onCreate(savedInstanceState);
 
         setTheme(R.style.phyphox);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (adapter != null && pager != null) {
+                    ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
+                    if (f != null && f.hasExclusive()) {
+                        f.leaveExclusive();
+                        return;
+                    }
+                }
+                leaveExperiment();
+            }
+        });
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -878,7 +880,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Home-button. Back to the Experiment List
         if (id == android.R.id.home) {
-            leaveExperiment(this);
+            leaveExperiment();
             return true;
         }
 
