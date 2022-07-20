@@ -42,6 +42,7 @@ import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 
@@ -62,6 +63,7 @@ public class Bluetooth implements Serializable {
     public final static UUID phyphoxServiceUUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a");
     public final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
     public final static UUID phyphoxExperimentControlCharacteristicUUID = UUID.fromString("cddf0003-30f7-4671-8b43-5e40ba53514a");
+    public final static UUID phyphoxEventCharacteristicUUID = UUID.fromString("cddf0004-30f7-4671-8b43-5e40ba53514a");
 
     transient private static BluetoothAdapter btAdapter;
     public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
@@ -74,6 +76,8 @@ public class Bluetooth implements Serializable {
     public UUID uuidFilter;
     public Boolean autoConnect;
     public int requestMTU;
+
+    BluetoothGattCharacteristic eventCharacteristic = null;
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -237,6 +241,14 @@ public class Bluetooth implements Serializable {
         if (!isConnected()) {
             btGatt.connect();
         }
+
+        try {
+            eventCharacteristic = findCharacteristic(phyphoxEventCharacteristicUUID);
+            writeEventCharacteristic(null);
+        } catch (BluetoothException e) {
+            //That's ok. Most devices do not have a phyphox event caracteristic, in which case phyphox simply will not report event.
+        }
+
         mapping.clear(); // clear mapping so it won't contain a characteristic twice
         // add characteristics and do the config
         for (CharacteristicData cd : characteristics) {
@@ -1383,5 +1395,54 @@ public class Bluetooth implements Serializable {
             super.onCancelled();
         }
     } // end of class ReconnectBluetoothTask
+
+    // Writes the status and time references (experiment time and system time) when triggered by
+    // a start/pause event.
+    public void writeEventCharacteristic(ExperimentTimeReference.TimeMapping timeMapping) {
+        if (!forcedBreak && eventCharacteristic != null) {
+            byte[] out = new byte[17];
+
+            //Byte 0 is 0x00 for pause, 0x01 for start event
+            if (timeMapping != null) {
+                switch (timeMapping.event) {
+                    case PAUSE:
+                        out[0] = 0x00;
+                        break;
+                    case START:
+                        out[0] = 0x01;
+                        break;
+                }
+            } else
+                out[0] = (byte)0xff;
+
+            //Bytes 1-8 are experiment time in millis since experiment start
+            //Format is a 64bit signed integer (big endian) to match endianess of existing characteristics and to match Javas system time format
+            //In case of a pause event before a start was triggered, this should be set to -1
+            long experimentTimeMillis = timeMapping != null ? (long)(timeMapping.experimentTime*1000) : -1;
+            out[1] = (byte) (experimentTimeMillis >> 56);
+            out[2] = (byte) (experimentTimeMillis >> 48);
+            out[3] = (byte) (experimentTimeMillis >> 40);
+            out[4] = (byte) (experimentTimeMillis >> 32);
+            out[5] = (byte) (experimentTimeMillis >> 24);
+            out[6] = (byte) (experimentTimeMillis >> 16);
+            out[7] = (byte) (experimentTimeMillis >> 8);
+            out[8] = (byte) experimentTimeMillis;
+
+            //Byte 9-16 are system time in millis since midnight 01.01.1970 UTC
+            //Format is a 64bit signed integer (big endian) to match endianess of existing characteristics and to match Javas system time format
+            long systemTimeMillis = timeMapping != null ? timeMapping.systemTime : System.currentTimeMillis();
+            out[9] = (byte) (systemTimeMillis >> 56);
+            out[10] = (byte) (systemTimeMillis >> 48);
+            out[11] = (byte) (systemTimeMillis >> 40);
+            out[12] = (byte) (systemTimeMillis >> 32);
+            out[13] = (byte) (systemTimeMillis >> 24);
+            out[14] = (byte) (systemTimeMillis >> 16);
+            out[15] = (byte) (systemTimeMillis >> 8);
+            out[16] = (byte) systemTimeMillis;
+
+            eventCharacteristic.setValue(out);
+            add(new WriteCommand(btGatt, eventCharacteristic));
+        }
+    }
 
 } // end of class Bluetooth

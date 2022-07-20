@@ -343,6 +343,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             return;
 
         experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
+        ExperimentTimeReference.TimeMapping event = experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1);
         lastAnalysis = 0.0;
 
         //Recording
@@ -367,11 +368,16 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             //Bluetooth
-            for (BluetoothInput bti : bluetoothInputs)
+            for (BluetoothInput bti : bluetoothInputs) {
                 bti.stop();
-            for (BluetoothOutput bto : bluetoothOutputs)
+                bti.writeEventCharacteristic(event);
+            }
+            for (BluetoothOutput bto : bluetoothOutputs) {
                 bto.stop();
+                bto.writeEventCharacteristic(event);
+            }
         }
+
     }
 
 
@@ -382,6 +388,13 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             return;
 
         experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.START);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            ExperimentTimeReference.TimeMapping event = experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1);
+            for (BluetoothInput bti : bluetoothInputs)
+                bti.writeEventCharacteristic(event);
+            for (BluetoothOutput bto : bluetoothOutputs)
+                bto.writeEventCharacteristic(event);
+        }
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
 
