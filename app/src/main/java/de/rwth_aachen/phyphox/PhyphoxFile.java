@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.hardware.camera2.CameraManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
@@ -56,6 +55,7 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttJson;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttTlsCsv;
@@ -523,6 +523,8 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                     }
 
+                    short offset = (short)getIntAttribute("offset", 0);
+
                     // check if buffer exists
                     String bufferName = getText();
                     DataBuffer buffer = experiment.getBuffer(bufferName);
@@ -533,7 +535,7 @@ public abstract class PhyphoxFile {
                     inputList.add(new DataInput(buffer, false));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
+                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction, offset));
 
                     break;
                 }
@@ -1370,9 +1372,9 @@ public abstract class PhyphoxFile {
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
-                    int xPrecision = getIntAttribute("xPrecision", 3);
-                    int yPrecision = getIntAttribute("yPrecision", 3);
-                    int zPrecision = getIntAttribute("zPrecision", 3);
+                    int xPrecision = getIntAttribute("xPrecision", -1);
+                    int yPrecision = getIntAttribute("yPrecision", -1);
+                    int zPrecision = getIntAttribute("zPrecision", -1);
                     int color = parent.getResources().getColor(R.color.highlight);
                     boolean globalColor = false;
                     if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {

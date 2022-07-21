@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Helper;
 
 import android.content.Context;
 import android.util.AttributeSet;

@@ -76,9 +76,9 @@ class GraphSetup {
 
     public Vector<Integer> colorScale = new Vector<>();
 
-    public double[] xTics = null;
-    public double[] yTics = null;
-    public double[] zTics = null;
+    public GraphView.Tic[] xTics = null;
+    public GraphView.Tic[] yTics = null;
+    public GraphView.Tic[] zTics = null;
 
     public List<Double> trStarts = null;
     public List<Double> trStops = null;
@@ -131,7 +131,7 @@ class GraphSetup {
         zaBoundH = Math.round(h);
     }
 
-    public void setTics(double[] xTics, double[] yTics, double[] zTics, PlotRenderer plotRenderer) {
+    public void setTics(GraphView.Tic[] xTics, GraphView.Tic[] yTics, GraphView.Tic[] zTics, PlotRenderer plotRenderer) {
         this.xTics = xTics;
         this.yTics = yTics;
         this.zTics = zTics;
@@ -1090,14 +1090,16 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             return;
 
         FloatBuffer gridData = ByteBuffer.allocateDirect((graphSetup.xTics.length + graphSetup.yTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        for (double x : graphSetup.xTics) {
+        for (GraphView.Tic tic : graphSetup.xTics) {
+            double x = tic.value;
             gridData.put((float)(graphSetup.logX ? Math.log(x) : x));
             gridData.put((float)(graphSetup.logY ? Math.log(graphSetup.minY): graphSetup.minY));
             gridData.put((float)(graphSetup.logX ? Math.log(x) : x));
             gridData.put((float)(graphSetup.logY ? Math.log(graphSetup.maxY): graphSetup.maxY));
             nGridLines++;
         }
-        for (double y : graphSetup.yTics) {
+        for (GraphView.Tic tic : graphSetup.yTics) {
+            double y = tic.value;
             gridData.put((float)(graphSetup.logX ? Math.log(graphSetup.minX): graphSetup.minX));
             gridData.put((float)(graphSetup.logY ? Math.log(y) : y));
             gridData.put((float)(graphSetup.logX ? Math.log(graphSetup.maxX): graphSetup.maxX));
@@ -1114,7 +1116,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             return;
 
         FloatBuffer zGridData = ByteBuffer.allocateDirect((graphSetup.zTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        for (double z : graphSetup.zTics) {
+        for (GraphView.Tic tic : graphSetup.zTics) {
+            double z = tic.value;
             zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
             zGridData.put((float)(0.));
             zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));

@@ -13,7 +13,6 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -23,7 +22,6 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.preference.Preference;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -50,6 +48,7 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -71,7 +70,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -81,12 +79,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
@@ -168,25 +167,25 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
-    private void doLeaveExperiment(Activity activity) {
-        Intent upIntent = NavUtils.getParentActivityIntent(activity);
-        if (NavUtils.shouldUpRecreateTask(activity, upIntent)) {
-            TaskStackBuilder.create(activity)
+    private void doLeaveExperiment() {
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
+            TaskStackBuilder.create(this)
                     .addNextIntent(upIntent)
                     .startActivities();
             finish();
         } else {
-            NavUtils.navigateUpTo(activity, upIntent);
+            NavUtils.navigateUpTo(this, upIntent);
         }
     }
 
-    private void leaveExperiment(Activity activity) {
+    private void leaveExperiment() {
         if (experiment != null && experiment.analysisTime > 10.0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.leave_experiment_question))
                     .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            doLeaveExperiment(activity);
+                            doLeaveExperiment();
                         }
                     })
                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -197,21 +196,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             AlertDialog dialog = builder.create();
             dialog.show();
         } else {
-            doLeaveExperiment(activity);
+            doLeaveExperiment();
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (adapter != null && pager != null) {
-            ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
-            if (f != null && f.hasExclusive()) {
-                f.leaveExclusive();
-                return;
-            }
-        }
-        leaveExperiment(this);
-        //super.onBackPressed();
     }
 
     @Override
@@ -220,6 +206,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         super.onCreate(savedInstanceState);
 
         setTheme(R.style.phyphox);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (adapter != null && pager != null) {
+                    ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
+                    if (f != null && f.hasExclusive()) {
+                        f.leaveExclusive();
+                        return;
+                    }
+                }
+                leaveExperiment();
+            }
+        });
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -844,12 +844,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //If the timedRun is active, we have to set the value of the countdown
         if (timedRun) {
             if (cdTimer != null) { //Timer running? Show the last known value of millisUntilFinished
-                timer.setTitle(String.format(Locale.US, "%.1f", millisUntilFinished / 1000.0));
+                timer.setTitle(String.format(Locale.getDefault(), "%.1f", millisUntilFinished / 1000.0));
             } else { //No timer running? Show the start value of the next timer, which is...
                 if (measuring) //...the stop delay if we are already measuring
-                    timer.setTitle(String.format(Locale.US, "%.1f", timedRunStopDelay));
+                    timer.setTitle(String.format(Locale.getDefault(), "%.1f", timedRunStopDelay));
                 else //...the start delay if we are paused
-                    timer.setTitle(String.format(Locale.US, "%.1f", timedRunStartDelay));
+                    timer.setTitle(String.format(Locale.getDefault(), "%.1f", timedRunStartDelay));
             }
         }
         return true;
@@ -878,7 +878,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Home-button. Back to the Experiment List
         if (id == android.R.id.home) {
-            leaveExperiment(this);
+            leaveExperiment();
             return true;
         }
 
@@ -940,8 +940,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             enabledChanged.onCheckedChanged(cbTimedRunEnabled, timedRun);
 
             final EditText etTimedRunStartDelay = (EditText) vLayout.findViewById(R.id.timedRunStartDelay);
+            etTimedRunStartDelay.addTextChangedListener(new DecimalTextWatcher());
             etTimedRunStartDelay.setText(String.valueOf(timedRunStartDelay));
             final EditText etTimedRunStopDelay = (EditText) vLayout.findViewById(R.id.timedRunStopDelay);
+            etTimedRunStopDelay.addTextChangedListener(new DecimalTextWatcher());
             etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
 
             final class IgnoreChanges {
@@ -1007,14 +1009,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                             timedRun = cbTimedRunEnabled.isChecked();
                             itemRef.setChecked(timedRun);
 
-                            String startDelayRaw = etTimedRunStartDelay.getText().toString();
+                            String startDelayRaw = etTimedRunStartDelay.getText().toString().replace(",",".");
                             try {
                                 timedRunStartDelay = Double.valueOf(startDelayRaw);
                             } catch (Exception e) {
                                 timedRunStartDelay = 0.;
                             }
 
-                            String stopDelayRaw = etTimedRunStopDelay.getText().toString();
+                            String stopDelayRaw = etTimedRunStopDelay.getText().toString().replace(",", ".");
                             try {
                                 timedRunStopDelay = Double.valueOf(stopDelayRaw);
                             } catch (Exception e) {

@@ -15,7 +15,6 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -73,7 +72,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
@@ -90,7 +88,6 @@ import com.google.zxing.integration.android.IntentResult;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -100,7 +97,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -122,6 +118,9 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
 
 import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
 
@@ -2706,6 +2705,7 @@ public class ExperimentList extends AppCompatActivity {
         final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
 
         //Setup the dialog builder...
+        neRate.addTextChangedListener(new DecimalTextWatcher());
         neDialog.setView(neLayout);
         neDialog.setTitle(R.string.newExperiment);
         neDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
@@ -2720,7 +2720,7 @@ public class ExperimentList extends AppCompatActivity {
                 //Prepare the rate
                 double rate;
                 try {
-                    rate = Double.valueOf(neRate.getText().toString());
+                    rate = Double.valueOf(neRate.getText().toString().replace(',', '.'));
                 } catch (Exception e) {
                     rate = 0;
                     Toast.makeText(ExperimentList.this, "Invaid sensor rate. Fall back to fastest rate.", Toast.LENGTH_LONG).show();

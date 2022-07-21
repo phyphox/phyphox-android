@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Helper;
 
 import android.app.Activity;
 import android.content.Context;
@@ -34,6 +34,10 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+
+import de.rwth_aachen.phyphox.InteractiveGraphView;
+import de.rwth_aachen.phyphox.PlotAreaView;
+import de.rwth_aachen.phyphox.R;
 
 public abstract class Helper {
 
