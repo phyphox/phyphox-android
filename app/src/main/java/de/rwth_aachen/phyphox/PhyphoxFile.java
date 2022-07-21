@@ -1372,9 +1372,9 @@ public abstract class PhyphoxFile {
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
-                    int xPrecision = getIntAttribute("xPrecision", 3);
-                    int yPrecision = getIntAttribute("yPrecision", 3);
-                    int zPrecision = getIntAttribute("zPrecision", 3);
+                    int xPrecision = getIntAttribute("xPrecision", -1);
+                    int yPrecision = getIntAttribute("yPrecision", -1);
+                    int zPrecision = getIntAttribute("zPrecision", -1);
                     int color = parent.getResources().getColor(R.color.highlight);
                     boolean globalColor = false;
                     if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {

@@ -1098,9 +1098,9 @@ public class ExpView implements Serializable{
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
         private boolean logZ = false; //logarithmic scale for the z-axis?
-        private int xPrecision = 3;
-        private int yPrecision = 3;
-        private int zPrecision = 3;
+        private int xPrecision = -1;
+        private int yPrecision = -1;
+        private int zPrecision = -1;
         private Vector<Double> lineWidth = new Vector<>();
         private Vector<Integer> color = new Vector<>();
 
