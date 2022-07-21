@@ -593,14 +593,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_point_label));
             sb.append("\n    ");
-            sb.append(activeMarker.dataX);
+            sb.append(String.format("%g", activeMarker.dataX));
             sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
             sb.append("\n    ");
-            sb.append(activeMarker.dataY);
+            sb.append(String.format("%g", activeMarker.dataY));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
             if (!Double.isNaN(activeMarker.dataZ)) {
                 sb.append("\n    ");
-                sb.append(activeMarker.dataZ);
+                sb.append(String.format("%g", activeMarker.dataZ));
                 sb.append(graphView.getUnitZ() != null && !graphView.getUnitZ().isEmpty() ? " " + graphView.getUnitZ() : "");
             }
 
