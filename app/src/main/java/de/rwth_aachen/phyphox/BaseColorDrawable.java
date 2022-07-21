@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat;
 
 import com.caverock.androidsvg.SVG;
 
+import de.rwth_aachen.phyphox.Helper.Helper;
+
 //This is the base class of our experiment icons. It is basically just stuff drawn on a colored background.
 //All icons are supposed to be used as squares!
 abstract class BaseColorDrawable extends Drawable {

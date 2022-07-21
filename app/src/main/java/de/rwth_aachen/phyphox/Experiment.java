@@ -13,7 +13,6 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -23,7 +22,6 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.preference.Preference;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -72,7 +70,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -82,12 +79,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
@@ -846,12 +844,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //If the timedRun is active, we have to set the value of the countdown
         if (timedRun) {
             if (cdTimer != null) { //Timer running? Show the last known value of millisUntilFinished
-                timer.setTitle(String.format(Locale.US, "%.1f", millisUntilFinished / 1000.0));
+                timer.setTitle(String.format(Locale.getDefault(), "%.1f", millisUntilFinished / 1000.0));
             } else { //No timer running? Show the start value of the next timer, which is...
                 if (measuring) //...the stop delay if we are already measuring
-                    timer.setTitle(String.format(Locale.US, "%.1f", timedRunStopDelay));
+                    timer.setTitle(String.format(Locale.getDefault(), "%.1f", timedRunStopDelay));
                 else //...the start delay if we are paused
-                    timer.setTitle(String.format(Locale.US, "%.1f", timedRunStartDelay));
+                    timer.setTitle(String.format(Locale.getDefault(), "%.1f", timedRunStartDelay));
             }
         }
         return true;
@@ -942,8 +940,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             enabledChanged.onCheckedChanged(cbTimedRunEnabled, timedRun);
 
             final EditText etTimedRunStartDelay = (EditText) vLayout.findViewById(R.id.timedRunStartDelay);
+            etTimedRunStartDelay.addTextChangedListener(new DecimalTextWatcher());
             etTimedRunStartDelay.setText(String.valueOf(timedRunStartDelay));
             final EditText etTimedRunStopDelay = (EditText) vLayout.findViewById(R.id.timedRunStopDelay);
+            etTimedRunStopDelay.addTextChangedListener(new DecimalTextWatcher());
             etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
 
             final class IgnoreChanges {
@@ -1009,14 +1009,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                             timedRun = cbTimedRunEnabled.isChecked();
                             itemRef.setChecked(timedRun);
 
-                            String startDelayRaw = etTimedRunStartDelay.getText().toString();
+                            String startDelayRaw = etTimedRunStartDelay.getText().toString().replace(",",".");
                             try {
                                 timedRunStartDelay = Double.valueOf(startDelayRaw);
                             } catch (Exception e) {
                                 timedRunStartDelay = 0.;
                             }
 
-                            String stopDelayRaw = etTimedRunStopDelay.getText().toString();
+                            String stopDelayRaw = etTimedRunStopDelay.getText().toString().replace(",", ".");
                             try {
                                 timedRunStopDelay = Double.valueOf(stopDelayRaw);
                             } catch (Exception e) {

@@ -15,6 +15,7 @@ import android.os.Build;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
+import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
 import android.util.Log;
 import android.util.TypedValue;
@@ -47,6 +48,7 @@ import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Camera.DepthPreview;
+import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
@@ -704,7 +706,7 @@ public class ExpView implements Serializable{
 
         @Override
         //Create the view in Android and append it to the linear layout
-        protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
+        protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
             //Create a row holding the label and the textEdit
             LinearLayout row = new LinearLayout(c);
@@ -753,17 +755,27 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.7f)); //Most of the right half
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-         //   et.setPadding((int) labelSize / 2, 0, 0, 0);
+            //   et.setPadding((int) labelSize / 2, 0, 0, 0);
             et.setTypeface(null, Typeface.BOLD);
             et.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Construct the inputType flags from our own state
             int inputType = InputType.TYPE_CLASS_NUMBER;
-            if (signed)
+            StringBuilder allowedDigits = new StringBuilder();
+            allowedDigits.append("0123456789");
+            if (signed) {
                 inputType |= InputType.TYPE_NUMBER_FLAG_SIGNED;
-            if (decimal)
+                allowedDigits.append("-");
+            }
+            if (decimal) {
                 inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
+                allowedDigits.append(".,");
+            }
             et.setInputType(inputType);
+            if (decimal) {
+                et.setKeyListener(DigitsKeyListener.getInstance(allowedDigits.toString()));
+                et.addTextChangedListener(new DecimalTextWatcher());
+            }
 
             //Start with NaN
             et.setText("NaN");
@@ -849,7 +861,7 @@ public class ExpView implements Serializable{
             if (et == null || focused)
                 return currentValue;
             try {
-                currentValue = Double.valueOf(et.getText().toString())/factor;
+                currentValue = Double.valueOf(et.getText().toString().replace(",", "."))/factor;
                 if (currentValue < min) {
                     currentValue = min;
                 }
