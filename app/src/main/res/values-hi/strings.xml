@@ -19,4 +19,5 @@
     <string name="applyZoomTitle">ज़ूम लागू करें</string>
     <string name="applyZoomExplanation">आप इस ग्राफ़ के इंटरएक्टिव मोड को बंद कर रहे हैं | अगर आप अपना ज़ूम रखना चाहते हैं, तो विकल्प चुनें |</string>
     <string name="applyZoomAdvanced">उच्च</string>
+    <string name="settings">सेटिंग्स</string>
 </resources>
