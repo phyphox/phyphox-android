@@ -1,2 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">phyphox</string>
+    <string name="action_settings">설정</string>
+    <string name="title_activity_experiment">phyphox</string>
+</resources>
