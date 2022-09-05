@@ -54,10 +54,6 @@
     <string name="experimentsPhyphoxOrg">Idéer til eksperimenter og vejledninger</string>
     <string name="faqPhyphoxOrg">Ofte stillede spørgsmål</string>
     <string name="remotePhyphoxOrg">Fjernadgang hjælp</string>
-    <string name="translationInfo">Sprog</string>
-    <string name="translationText">Phyphox bruger det første tilgængelige sprog fra din liste af fortrukne sprog. For at ændre dine fortrunkne sprog, gå i dine Android \"indstillinger\" nedenunder. For at finde ud af, hvilke sprog vi allerede tilbyder, og hvordan du kan hjælpe os, vælg \"besøg hjemmesiden\".</string>
-    <string name="translationToSettings">Indstillinger</string>
-    <string name="translationToWebsite">Besøg hjemmesiden</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#da</string>
     <string name="deviceInfo">Enhed info</string>
     <string name="copyToClipboard">Kopiér til udklipsholder</string>

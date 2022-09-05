@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.hardware.camera2.CameraManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
@@ -56,6 +55,7 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttJson;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttTlsCsv;
@@ -69,7 +69,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.14";
+    public final static String phyphoxFileVersion = "1.15";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -523,6 +523,8 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
                     }
 
+                    short offset = (short)getIntAttribute("offset", 0);
+
                     // check if buffer exists
                     String bufferName = getText();
                     DataBuffer buffer = experiment.getBuffer(bufferName);
@@ -533,7 +535,7 @@ public abstract class PhyphoxFile {
                     inputList.add(new DataInput(buffer, false));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction));
+                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction, offset));
 
                     break;
                 }
@@ -1370,9 +1372,9 @@ public abstract class PhyphoxFile {
                     boolean logY = getBooleanAttribute("logY", false);
                     boolean logZ = getBooleanAttribute("logZ", false);
                     double lineWidth = getDoubleAttribute("lineWidth", 1.0);
-                    int xPrecision = getIntAttribute("xPrecision", 3);
-                    int yPrecision = getIntAttribute("yPrecision", 3);
-                    int zPrecision = getIntAttribute("zPrecision", 3);
+                    int xPrecision = getIntAttribute("xPrecision", -1);
+                    int yPrecision = getIntAttribute("yPrecision", -1);
+                    int zPrecision = getIntAttribute("zPrecision", -1);
                     int color = parent.getResources().getColor(R.color.highlight);
                     boolean globalColor = false;
                     if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {
@@ -1394,6 +1396,7 @@ public abstract class PhyphoxFile {
                     double minZ = getDoubleAttribute("minZ", 0.);
                     double maxZ = getDoubleAttribute("maxZ", 0.);
 
+                    boolean followX = getBooleanAttribute("followX", false);
 
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
@@ -1439,6 +1442,7 @@ public abstract class PhyphoxFile {
                     ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
                     ge.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
+                    ge.setFollowX(followX);
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
                     ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime, hideTimeMarkers);
@@ -3069,6 +3073,16 @@ public abstract class PhyphoxFile {
                 experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
                 return experiment;
 
+            }
+
+            for (ExpView v : experiment.experimentViews) {
+                for (ExpView.expViewElement ev : v.elements) {
+                    if (ev instanceof ExpView.editElement) {
+                        DataBuffer buffer = experiment.getBuffer(((ExpView.editElement) ev).valueOutput);
+                        if (buffer != null)
+                            experiment.getBuffer(((ExpView.editElement)ev).valueOutput).linkedToUserInput = true;
+                    }
+                }
             }
 
             //Sanity check: If the experiment did not define any views, we cannot use it

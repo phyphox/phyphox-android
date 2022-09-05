@@ -57,10 +57,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Remote control help</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Languages</string>
-    <string name="translationText">Phyphox will use the first language available from your preferred languages list. To change your preferences, go to your Android \"settings\" below. To learn which languages are available and how you can help, select \"visit website\".</string>
-    <string name="translationToSettings">Settings</string>
-    <string name="translationToWebsite">Visit website</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
     <string name="deviceInfo">Device info</string>
     <string name="copyToClipboard">Copy to clipboard</string>
@@ -147,6 +143,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 ]]>
     </string>
     <string name="sensorLinearAcceleration">Linear Acceleration</string>
+    <string name="sensorGravity">Gravity</string>
     <string name="sensorLight">Light</string>
     <string name="sensorGyroscope">Gyroscope</string>
     <string name="sensorAccelerometer">Accelerometer</string>
@@ -311,6 +308,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="cameraFrontFacing">Front facing camera</string>
     <string name="cameraBackFacing">Back facing camera</string>
     <string name="cameraExternal">External camera</string>
+
+    <string name="settingsDefault">Default</string>
+
+    <string name="settings">Settings</string>
+    <string name="settingsHeadLanguage">Language</string>
+    <string name="settingsLanguage">App language</string>
+    <string name="settingsTranslation">Translation</string>
+    <string name="settingsTranslationMore">Learn more about available languages and how you can help.</string>
+    <string name="settingsHeadAdvanced">Advanced</string>
+    <string name="settingsProximityLock">Proximity lock</string>
+    <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
+    <string name="settingsPort">Remote access port</string>
 
     <string name="common_unit_short_arbitrary_unit">a.u.</string>
     <string name="common_unit_short_second">s</string>

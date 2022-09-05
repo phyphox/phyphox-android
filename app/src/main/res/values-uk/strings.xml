@@ -56,10 +56,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Інформація про віддалений контроль</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Мови</string>
-    <string name="translationText">Phyphox використовує першу мову з Вашого списку системних мов. Щоб змінити Ваші налаштування Андроїду, натисніть на \"Налаштування\" нижче. Щоб дізнатися, які мови доступні і як ви можете допомогти, виберіть \"Відвідати сторінку\".</string>
-    <string name="translationToSettings">Налаштування</string>
-    <string name="translationToWebsite">Відвідати сторінку</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
     <string name="deviceInfo">Інформація про пристрій</string>
     <string name="copyToClipboard">Скопіювати в буфер обміну</string>

@@ -56,10 +56,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Fjärrkontroll-hjälp</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Språk</string>
-    <string name="translationText">Phyphox kommer att använda det första tillgängliga språket från din lista med föredragna språk. För att ändra dina preferenser, gå till dina Android-\"inställningar\" nedan. För att veta vilka språk som finns tillgängliga och hur du kan hjälpa till, välj \"besök webbplatsen\".</string>
-    <string name="translationToSettings">Inställningar</string>
-    <string name="translationToWebsite">Besök webbplatsen</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#se</string>
     <string name="deviceInfo">Information om din enhet</string>
     <string name="copyToClipboard">Kopiera till urklipp</string>

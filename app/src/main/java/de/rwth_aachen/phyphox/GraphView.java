@@ -94,9 +94,18 @@ public class GraphView extends View {
     public boolean logX = false; //logarithmic scale for the x-axis?
     public boolean logY = false; //logarithmic scale for the y-axis?
     public boolean logZ = false; //logarithmic scale for the y-axis?
-    private int xPrecision = 3;
-    private int yPrecision = 3;
-    private int zPrecision = 3;
+    private int xPrecision = -1;
+    private int yPrecision = -1;
+    private int zPrecision = -1;
+
+    public class Tic {
+        double value;
+        int precision;
+        Tic(double value, int precision) {
+            this.value = value;
+            this.precision = precision;
+        }
+    }
 
     private double[] lineWidth;
     private int[] color;
@@ -120,6 +129,8 @@ public class GraphView extends View {
     double maxY = 0.;
     double minZ = 0.;
     double maxZ = 0.;
+
+    boolean followX = false;
 
     private TouchMode touchMode = TouchMode.off;
     public class ZoomState {
@@ -660,6 +671,17 @@ public class GraphView extends View {
             maxZ = Double.NEGATIVE_INFINITY;
     }
 
+    public void setFollowX(boolean followX) {
+        this.followX = followX;
+        zoomState.follows = followX;
+        if (followX) {
+            this.scaleMinX = scaleMode.fixed;
+            this.scaleMaxX = scaleMode.fixed;
+            zoomState.minX = minX;
+            zoomState.maxX = maxX;
+        }
+    }
+
     public void setTimeRanges(List<Double> trStarts, List<Double> trStops, List<Double> systemTimeReferenceGap) {
         graphSetup.setTimeRanges(trStarts, trStops, systemTimeReferenceGap, plotRenderer);
     }
@@ -712,7 +734,7 @@ public class GraphView extends View {
             maxZ = dataMaxZ;
 
         if (!Double.isNaN(zoomState.minX) && !Double.isNaN(zoomState.maxX)) {
-            if (zoomState.follows) {
+            if (zoomState.follows && Double.isFinite(dataMaxX) && Double.isFinite(dataMinX)) {
                 double w = zoomState.maxX - zoomState.minX;
                 zoomState.minX = dataMaxX - w;
                 zoomState.maxX = dataMaxX;
@@ -964,14 +986,14 @@ public class GraphView extends View {
     //Takes the min and max of that axis, a maximum count of tics, whether the axis is supposed to
     // be logarithmic and whether it is showing experiment time or system time (starting at the
     // given offset timestamp since 1970 in milliseconds if non-zero)
-    private double[] getTics(double min, double max, int maxTics, boolean log, boolean isTime, double systemTimeOffset){
+    private Tic[] getTics(double min, double max, int maxTics, boolean log, boolean isTime, double systemTimeOffset){
         if (!(max > min))
-            return new double[0]; //Invalid axis. No tics
+            return new Tic[0]; //Invalid axis. No tics
         if (Double.isInfinite(min) || Double.isNaN(min) || Double.isInfinite(max) || Double.isNaN(max))
-            return new double[0];  //Invalid axis. No tics
+            return new Tic[0];  //Invalid axis. No tics
         if (log) { //Logarithmic axis. This needs logic of its own... We do not consider time here - wouldn't make sense.
             if (min < 0) //negative values do not work for logarithmic axes
-                return new double[0];
+                return new Tic[0];
             double logMax = Math.log10(max); //Store the log of the max and min value
             double logMin = Math.log10(min);
 
@@ -979,35 +1001,39 @@ public class GraphView extends View {
 
             //we will just set up tics at powers of ten: 0.1, 1, 10, 100 etc.
             if (digitRange < 1) //Range to short for this naive tic algorithm
-                return new double[0];
+                return new Tic[0];
 
+            int precision = -(int)Math.floor(logMin);
             double first = Math.pow(10, Math.floor(logMin)); //The first tic above min
-            double[] tics;  //The array to hold the tics
+            Tic[] tics;  //The array to hold the tics
 
             if (digitRange < 3) { //Very small range - we will multiple steps inbetween: 1 2 5 10 20 50 100 200 500 ...
-                tics = new double[3 * digitRange];
+                tics = new Tic[3 * digitRange];
                 for (int i = 0; i < digitRange; i++) {
-                    tics[3 * i] = first;
-                    tics[3 * i + 1] = 2 * first;
-                    tics[3 * i + 2] = 5 * first;
+                    tics[3 * i] = new Tic(first, precision);
+                    tics[3 * i + 1] = new Tic(2 * first, precision);
+                    tics[3 * i + 2] = new Tic(5 * first, precision);
                     first *= 10;
+                    precision -= 1;
                 }
             } else if (digitRange < 4) { //Small range - we will have a step inbetween: 1 5 10 50 100 500 ...
-                tics =  new double[2*digitRange];
+                tics =  new Tic[2*digitRange];
                 for (int i = 0; i < digitRange; i++) {
-                    tics[2*i] = first;
-                    tics[2*i+1] = 5*first;
+                    tics[2*i] = new Tic(first, precision);
+                    tics[2*i+1] = new Tic(5*first, precision);
                     first *= 10;
+                    precision -= 1;
                 }
             } else { //Regular range - we will do powers of ten
                 int magStep = 1; //If we cover huge scales we might want to do larger steps...
                 while (digitRange > maxTics * magStep) //Do we have more than max tics? Increase step size then.
                     magStep++;
                 double magFactor = Math.pow(10, magStep);
-                tics = new double[digitRange/magStep+1];
+                tics = new Tic[digitRange/magStep+1];
                 for (int i = 0; i <= digitRange / magStep; i++) { //Fill the array with powers of ten
-                    tics[i] = first;
+                    tics[i] = new Tic(first, precision);
                     first *= magFactor;
+                    precision -= magStep;
                 }
             }
 
@@ -1015,29 +1041,39 @@ public class GraphView extends View {
         }
 
         //Basic non-logarithmic algorithm
+        int precision = 0;
         double range = max-min; //axis range
         double step = 1.; //The step size to be determined.
         if (isTime && systemTimeOffset > 0) {
             step = getTimeStepFromRange(range, maxTics);
         } else {
-            double stepFactor = Math.pow(10, Math.floor(Math.log10(range)) - 1); //First estimate how large the steps between our tics should be as a power of ten
+            int exponent = (int)Math.floor(Math.log10(range)) - 1;
+            double stepFactor = Math.pow(10, exponent); //First estimate how large the steps between our tics should be as a power of ten
             double steps = range/stepFactor; //How many steps would there be with step times stepfactor?
 
             //Depending on how many steps we would have, increase the step factor to stay within maxTics
-            if (steps <= maxTics)
-                step = 1*stepFactor;
-            else if (steps <= maxTics * 2)
+            if (steps <= maxTics) {
+                step = 1 * stepFactor;
+                precision = -exponent;
+            } else if (steps <= maxTics * 2) {
                 step = 2*stepFactor;
-            else if (steps <= maxTics * 5)
+                precision = -exponent;
+            } else if (steps <= maxTics * 5) {
                 step = 5*stepFactor;
-            else if (steps <= maxTics * 10)
+                precision = -exponent;
+            } else if (steps <= maxTics * 10) {
                 step = 10*stepFactor;
-            else if (steps <= maxTics * 20)
+                precision = -exponent-1;
+            } else if (steps <= maxTics * 20) {
                 step = 20*stepFactor;
-            else if (steps <= maxTics * 50)
+                precision = -exponent-1;
+            } else if (steps <= maxTics * 50) {
                 step = 50*stepFactor;
-            else if (steps <= maxTics * 100)
-                step = 100*stepFactor;
+                precision = -exponent-1;
+            } else if (steps <= maxTics * 100) {
+                step = 100 * stepFactor;
+                precision = -exponent-2;
+            }
         }
 
         //ok how many (integer) steps exactly?
@@ -1049,30 +1085,34 @@ public class GraphView extends View {
             first = Math.ceil((alignedOffset + min) / step) * step - alignedOffset; //Value of the first tic
         } else
             first = Math.ceil((min)/step)*step; //Value of the first tic
-        double[] tics = new double[iSteps]; //Array to hold the tics
+        Tic[] tics = new Tic[iSteps]; //Array to hold the tics
 
         //Generate the tics by stepping up from the first tic
         for (int i = 0; i < iSteps; i++) {
-            tics[i] = first + i * step;
+            tics[i] = new Tic(first + i * step, precision);
         }
 
         return tics; //Done
     }
 
-    private String formatTic(double value, int precision, boolean isTime, double systemTimeOffset) {
+    private String formatTic(Tic tic, int precision, boolean isTime, double systemTimeOffset) {
         if (isTime && systemTimeOffset > 0) {
             double alignedOffset = systemTimeOffset + TimeZone.getDefault().getRawOffset()/1000.0;
-            if (Math.abs(Math.round(value + alignedOffset) % (24*60*60)) < 0.0001) //If the time stamp is on 00:00:00, we show the date instead
-                return DateFormat.getDateInstance().format(new Date((long)((systemTimeOffset + value) * 1000)));
+            if (Math.abs(Math.round(tic.value + alignedOffset) % (24*60*60)) < 0.0001) //If the time stamp is on 00:00:00, we show the date instead
+                return DateFormat.getDateInstance().format(new Date((long)((systemTimeOffset + tic.value) * 1000)));
             else
-                return DateFormat.getTimeInstance().format(new Date((long)((systemTimeOffset + value) * 1000)));
+                return DateFormat.getTimeInstance().format(new Date((long)((systemTimeOffset + tic.value) * 1000)));
         }
 
-        try {
-            return String.format("%." + precision + "g", value);
-        } catch (ArrayIndexOutOfBoundsException e) {
-            //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
-            return String.format("%." + precision + "f", value);
+        if (precision < 0 && (tic.value == 0 || ((Math.abs(tic.value) < 10000) && (Math.abs(tic.value) >= 0.0001))))
+            return String.format("%." + Math.max(tic.precision, 0) + "f", tic.value);
+        else {
+            try {
+                return String.format("%." + (precision < 0 ? 3 : precision) + "g", tic.value);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
+                return String.format("%." + (precision < 0 ? 3 : precision) + "f", tic.value);
+            }
         }
     }
 
@@ -1230,9 +1270,9 @@ public class GraphView extends View {
         int maxZTics = maxZRegularTics;
 
         //Generate the tics
-        double[] xTics = getTics(workingMinX, workingMaxX, maxXTics, logX, timeOnX, systemTimeOffsetX);
-        double[] yTics = getTics(workingMinY, workingMaxY, maxYTics, logY, timeOnY, systemTimeOffsetY);
-        double[] zTics = null;
+        Tic[] xTics = getTics(workingMinX, workingMaxX, maxXTics, logX, timeOnX, systemTimeOffsetX);
+        Tic[] yTics = getTics(workingMinY, workingMaxY, maxYTics, logY, timeOnY, systemTimeOffsetY);
+        Tic[] zTics = null;
         if (zScale)
             zTics = getTics(workingMinZ, workingMaxZ, maxZTics, logZ, false, 0);
 
@@ -1246,7 +1286,7 @@ public class GraphView extends View {
             graphB += (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.3);
         int graphL = 0;
         int graphT = 0;
-        for (double tic : yTics) {
+        for (Tic tic : yTics) {
             double tw = paint.measureText(formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY)) + res.getDimension(R.dimen.graph_font) / 2.;
             if (tw > graphL)
                 graphL = (int)Math.ceil(tw);
@@ -1276,25 +1316,25 @@ public class GraphView extends View {
 
         //Labels for the tics
         paint.setTextAlign(Paint.Align.CENTER);
-        for (double tic : xTics) {
-            if (tic < workingMinX || tic > workingMaxX)
+        for (Tic tic : xTics) {
+            if (tic.value < workingMinX || tic.value > workingMaxX)
                 continue;
-            double x = dataXToViewX(tic);
+            double x = dataXToViewX(tic.value);
             canvas.drawText(formatTic(tic, xPrecision, timeOnX, systemTimeOffsetX), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
-        for (double tic : yTics) {
-            if (tic < workingMinY || tic > workingMaxY)
+        for (Tic tic : yTics) {
+            if (tic.value < workingMinY || tic.value > workingMaxY)
                 continue;
-            double y = dataYToViewY(tic);
+            double y = dataYToViewY(tic.value);
             canvas.drawText(formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
         }
         if (zScale) {
             paint.setTextAlign(Paint.Align.CENTER);
-            for (double tic : zTics) {
-                if (tic < workingMinZ || tic > workingMaxZ)
+            for (Tic tic : zTics) {
+                if (tic.value < workingMinZ || tic.value > workingMaxZ)
                     continue;
-                double x = dataZToViewX(tic);
+                double x = dataZToViewX(tic.value);
                 canvas.drawText(formatTic(tic, zPrecision, false, 0), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
             }
         }

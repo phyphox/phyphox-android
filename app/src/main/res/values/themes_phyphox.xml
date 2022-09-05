@@ -32,7 +32,7 @@
 
         <item name="colorPrimary">@color/phyphox_color</item>
         <item name="colorPrimaryDark">@color/background3</item>
-        <item name="android:textSize">@dimen/font</item>
+        <item name="android:colorBackground">@color/background3</item>
 
         <item name="alertDialogTheme">@style/phyphoxDialog</item>
         <item name="dialogTheme">@style/phyphoxDialog</item>

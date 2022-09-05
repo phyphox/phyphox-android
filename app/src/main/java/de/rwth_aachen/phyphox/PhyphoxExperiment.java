@@ -192,28 +192,34 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
 
         //Get the data from the audio recording if used
-        if (audioRecord != null && measuring) {
+        if (audioRecord != null) {
+            boolean sampleRateWritten = false;
             DataBuffer sampleRateBuffer = null;
             if (!micRateOutput.isEmpty())
                 sampleRateBuffer = getBuffer(micRateOutput);
-            DataBuffer recording = getBuffer(micOutput);
-            final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
-            short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
-            int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
-            if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
-                dataLock.lock();
-                try {
-                    if (recordingUsed) {
-                        recording.clear(false); //We only want fresh data
-                        if (sampleRateBuffer != null)
-                            sampleRateBuffer.append(audioRecord.getSampleRate());
-                        recordingUsed = false;
+
+            if (measuring) {
+                DataBuffer recording = getBuffer(micOutput);
+                final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
+                short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
+                int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
+                if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
+                    dataLock.lock();
+                    try {
+                        if (recordingUsed) {
+                            recording.clear(false); //We only want fresh data
+                            if (sampleRateBuffer != null)
+                                sampleRateBuffer.append(audioRecord.getSampleRate());
+                            sampleRateWritten = true;
+                            recordingUsed = false;
+                        }
+                        recording.append(buffer, bytesRead);
+                    } finally {
+                        dataLock.unlock();
                     }
-                    recording.append(buffer, bytesRead);
-                } finally {
-                    dataLock.unlock();
                 }
-            } else {
+            }
+            if (!sampleRateWritten) {
                 //Even if we do not use the first recording, we write the audio rate so it is available early.
                 dataLock.lock();
                 try {
@@ -337,6 +343,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             return;
 
         experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
+        ExperimentTimeReference.TimeMapping event = experimentTimeReference.timeMappings.size() > 0 ? experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1) : null;
         lastAnalysis = 0.0;
 
         //Recording
@@ -361,11 +368,16 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             //Bluetooth
-            for (BluetoothInput bti : bluetoothInputs)
+            for (BluetoothInput bti : bluetoothInputs) {
                 bti.stop();
-            for (BluetoothOutput bto : bluetoothOutputs)
+                bti.writeEventCharacteristic(event);
+            }
+            for (BluetoothOutput bto : bluetoothOutputs) {
                 bto.stop();
+                bto.writeEventCharacteristic(event);
+            }
         }
+
     }
 
 
@@ -376,6 +388,13 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             return;
 
         experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.START);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            ExperimentTimeReference.TimeMapping event = experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1);
+            for (BluetoothInput bti : bluetoothInputs)
+                bti.writeEventCharacteristic(event);
+            for (BluetoothOutput bto : bluetoothOutputs)
+                bto.writeEventCharacteristic(event);
+        }
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
 

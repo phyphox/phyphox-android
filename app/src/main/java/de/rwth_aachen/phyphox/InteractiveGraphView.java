@@ -147,9 +147,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                     graphView.setAbsoluteTime(!graphView.absoluteTime);
                                     graphView.invalidate();
                                 } else if (id == R.id.graph_tools_reset) {
-                                    graphView.zoomState.follows = false;
-                                    graphView.zoomState.minX = Double.NaN;
-                                    graphView.zoomState.maxX = Double.NaN;
+                                    graphView.zoomState.follows = graphView.followX;
+                                    if (graphView.followX) {
+                                        graphView.zoomState.minX = graphView.minX;
+                                        graphView.zoomState.maxX = graphView.maxX;
+                                    } else {
+                                        graphView.zoomState.minX = Double.NaN;
+                                        graphView.zoomState.maxX = Double.NaN;
+                                    }
                                     graphView.zoomState.minY = Double.NaN;
                                     graphView.zoomState.maxY = Double.NaN;
                                     graphView.zoomState.minZ = Double.NaN;
@@ -321,6 +326,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     if ((simple && rbReset.isChecked()) || (!simple && rbResetX.isChecked())) {
                         minX = Double.NaN;
                         maxX = Double.NaN;
+
                     } else {
                         minX = graphView.zoomState.minX;
                         maxX = graphView.zoomState.maxX;
@@ -332,11 +338,21 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         minY = graphView.zoomState.minY;
                         maxY = graphView.zoomState.maxY;
                     }
+
+                    if ((simple && graphView.zoomState.follows) || (!simple && rbFollowX.isChecked())) {
+                        graphView.zoomState.follows = true;
+                    } else if ((simple && rbReset.isChecked() && graphView.followX)
+                            || (!simple && rbResetX.isChecked() && graphView.followX)) {
+                        graphView.zoomState.follows = true;
+                        minX = graphView.minX;
+                        maxX = graphView.maxX;
+                    } else
+                        graphView.zoomState.follows = false;
                     graphView.zoomState.minX = minX;
                     graphView.zoomState.maxX = maxX;
                     graphView.zoomState.minY = minY;
                     graphView.zoomState.maxY = maxY;
-                    graphView.zoomState.follows = (simple && graphView.zoomState.follows) || (!simple && rbFollowX.isChecked());
+                    graphView.rescale();
 
                     if (!simple) {
 
@@ -497,7 +513,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_fit_label));
             sb.append("\na = ");
-            sb.append((float)a);
+            sb.append(String.format("%g", a));
             if (graphView.getUnitYX() != null)
                 sb.append(graphView.getUnitYX());
             else {
@@ -506,7 +522,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
             }
             sb.append("\nb = ");
-            sb.append((float)b);
+            sb.append(String.format("%g", b));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
 
             int infoX = Math.round((viewX1 + viewX2)/2.f + pos[0] - getRootView().getWidth()/2.f);
@@ -531,14 +547,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_difference_label));
             sb.append("\n    ");
-            sb.append(Math.abs(marker[0].dataX - marker[1].dataX));
+            sb.append(String.format("%g", Math.abs(marker[0].dataX - marker[1].dataX)));
             sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
             sb.append("\n    ");
-            sb.append(Math.abs(marker[0].dataY - marker[1].dataY));
+            sb.append(String.format("%g", Math.abs(marker[0].dataY - marker[1].dataY)));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
             if (!Double.isNaN(marker[0].dataZ) && !Double.isNaN(marker[0].dataZ)) {
                 sb.append("\n    ");
-                sb.append(Math.abs(marker[0].dataZ - marker[1].dataZ));
+                sb.append(String.format("%g", Math.abs(marker[0].dataZ - marker[1].dataZ)));
                 sb.append(graphView.getUnitZ() != null && !graphView.getUnitZ().isEmpty() ? " " + graphView.getUnitZ() : "");
             }
             sb.append("\n");
@@ -546,7 +562,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             sb.append("\n    ");
             float dx = marker[0].dataX - marker[1].dataX;
             if (dx != 0) {
-                sb.append((marker[0].dataY - marker[1].dataY) / (marker[0].dataX - marker[1].dataX));
+                sb.append(String.format("%g", (marker[0].dataY - marker[1].dataY) / (marker[0].dataX - marker[1].dataX)));
                 if (graphView.getUnitYX() != null)
                     sb.append(graphView.getUnitYX());
                 else {
@@ -577,14 +593,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_point_label));
             sb.append("\n    ");
-            sb.append(activeMarker.dataX);
+            sb.append(String.format("%g", activeMarker.dataX));
             sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
             sb.append("\n    ");
-            sb.append(activeMarker.dataY);
+            sb.append(String.format("%g", activeMarker.dataY));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
             if (!Double.isNaN(activeMarker.dataZ)) {
                 sb.append("\n    ");
-                sb.append(activeMarker.dataZ);
+                sb.append(String.format("%g", activeMarker.dataZ));
                 sb.append(graphView.getUnitZ() != null && !graphView.getUnitZ().isEmpty() ? " " + graphView.getUnitZ() : "");
             }
 

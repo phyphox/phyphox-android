@@ -13,7 +13,6 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -22,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -48,6 +48,7 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -60,6 +61,7 @@ import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.PreferenceManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
@@ -68,7 +70,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -78,12 +79,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
@@ -154,6 +156,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     MenuItem startMenuItem = null; //Reference to play-hint button
     ImageView hintAnimation = null; //Reference to the animated part of the play-hint button
 
+    boolean proximityLock = false;
+    PowerManager.WakeLock wakeLock = null;
+
     //The analysis progress bar
     ProgressBar analysisProgress;       //Reference to the progress bar view
     boolean analysisInProgress = false; //Set to true by second thread while analysis is running
@@ -162,25 +167,25 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
-    private void doLeaveExperiment(Activity activity) {
-        Intent upIntent = NavUtils.getParentActivityIntent(activity);
-        if (NavUtils.shouldUpRecreateTask(activity, upIntent)) {
-            TaskStackBuilder.create(activity)
+    private void doLeaveExperiment() {
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
+            TaskStackBuilder.create(this)
                     .addNextIntent(upIntent)
                     .startActivities();
             finish();
         } else {
-            NavUtils.navigateUpTo(activity, upIntent);
+            NavUtils.navigateUpTo(this, upIntent);
         }
     }
 
-    private void leaveExperiment(Activity activity) {
+    private void leaveExperiment() {
         if (experiment != null && experiment.analysisTime > 10.0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.leave_experiment_question))
                     .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            doLeaveExperiment(activity);
+                            doLeaveExperiment();
                         }
                     })
                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -191,27 +196,30 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             AlertDialog dialog = builder.create();
             dialog.show();
         } else {
-            doLeaveExperiment(activity);
+            doLeaveExperiment();
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (adapter != null && pager != null) {
-            ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
-            if (f != null && f.hasExclusive()) {
-                f.leaveExclusive();
-                return;
-            }
-        }
-        leaveExperiment(this);
-        //super.onBackPressed();
     }
 
     @Override
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setTheme(R.style.phyphox);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (adapter != null && pager != null) {
+                    ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
+                    if (f != null && f.hasExclusive()) {
+                        f.leaveExclusive();
+                        return;
+                    }
+                }
+                leaveExperiment();
+            }
+        });
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -333,15 +341,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = null;
         }
         if (result.equals("")) { //No error
-            //Show that it has been successfull and return to the experiment selection so the user
-            //  can see the new addition to his collection
+            experiment.isLocal = true;
             Toast.makeText(this, R.string.save_locally_done, Toast.LENGTH_LONG).show(); //Present message
-            //Create intent to experiment list
-            Intent upIntent = NavUtils.getParentActivityIntent(this);
-            TaskStackBuilder.create(this)
-                    .addNextIntent(upIntent)
-                    .startActivities();
-            finish(); //Close this activity
         } else // There has been an error
             Toast.makeText(this, result, Toast.LENGTH_LONG).show(); //Show error to user
     }
@@ -527,6 +528,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             showMenuHint();
         else if (!startHintDismissed)
             showStartHint();
+
+        settings =  PreferenceManager.getDefaultSharedPreferences(this);
+        proximityLock = settings.getBoolean("proximityLock", false);
+        if (proximityLock && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            PowerManager powerManager = (PowerManager) getBaseContext().getSystemService(Context.POWER_SERVICE);
+            if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK))
+                wakeLock = powerManager.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "phyphox:measuring");
+        }
     }
 
     private void showSensorWarning(SensorInput sensor) {
@@ -835,12 +844,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //If the timedRun is active, we have to set the value of the countdown
         if (timedRun) {
             if (cdTimer != null) { //Timer running? Show the last known value of millisUntilFinished
-                timer.setTitle(String.format(Locale.US, "%.1f", millisUntilFinished / 1000.0));
+                timer.setTitle(String.format(Locale.getDefault(), "%.1f", millisUntilFinished / 1000.0));
             } else { //No timer running? Show the start value of the next timer, which is...
                 if (measuring) //...the stop delay if we are already measuring
-                    timer.setTitle(String.format(Locale.US, "%.1f", timedRunStopDelay));
+                    timer.setTitle(String.format(Locale.getDefault(), "%.1f", timedRunStopDelay));
                 else //...the start delay if we are paused
-                    timer.setTitle(String.format(Locale.US, "%.1f", timedRunStartDelay));
+                    timer.setTitle(String.format(Locale.getDefault(), "%.1f", timedRunStartDelay));
             }
         }
         return true;
@@ -862,37 +871,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
-    //Recursively get all TextureViews, used for screenshots
-    public Vector<PlotAreaView> getAllPlotAreaViews(View v) {
-        Vector<PlotAreaView> l = new Vector<>();
-        if (v.getVisibility() != View.VISIBLE)
-            return l;
-        if (v instanceof PlotAreaView) {
-            l.add((PlotAreaView)v);
-        } else if (v instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup)v;
-            for (int i = 0; i < vg.getChildCount(); i++) {
-                l.addAll(getAllPlotAreaViews(vg.getChildAt(i)));
-            }
-        }
-        return l;
-    }
-
-    public Vector<InteractiveGraphView> getAllInteractiveGraphViews(View v) {
-        Vector<InteractiveGraphView> l = new Vector<>();
-        if (v.getVisibility() != View.VISIBLE)
-            return l;
-        if (v instanceof InteractiveGraphView) {
-            l.add((InteractiveGraphView)v);
-        } else if (v instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup)v;
-            for (int i = 0; i < vg.getChildCount(); i++) {
-                l.addAll(getAllInteractiveGraphViews(vg.getChildAt(i)));
-            }
-        }
-        return l;
-    }
-
     @Override
     //the user has clicked an option.
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -900,7 +878,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Home-button. Back to the Experiment List
         if (id == android.R.id.home) {
-            leaveExperiment(this);
+            leaveExperiment();
             return true;
         }
 
@@ -962,8 +940,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             enabledChanged.onCheckedChanged(cbTimedRunEnabled, timedRun);
 
             final EditText etTimedRunStartDelay = (EditText) vLayout.findViewById(R.id.timedRunStartDelay);
+            etTimedRunStartDelay.addTextChangedListener(new DecimalTextWatcher());
             etTimedRunStartDelay.setText(String.valueOf(timedRunStartDelay));
             final EditText etTimedRunStopDelay = (EditText) vLayout.findViewById(R.id.timedRunStopDelay);
+            etTimedRunStopDelay.addTextChangedListener(new DecimalTextWatcher());
             etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
 
             final class IgnoreChanges {
@@ -1029,14 +1009,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                             timedRun = cbTimedRunEnabled.isChecked();
                             itemRef.setChecked(timedRun);
 
-                            String startDelayRaw = etTimedRunStartDelay.getText().toString();
+                            String startDelayRaw = etTimedRunStartDelay.getText().toString().replace(",",".");
                             try {
                                 timedRunStartDelay = Double.valueOf(startDelayRaw);
                             } catch (Exception e) {
                                 timedRunStartDelay = 0.;
                             }
 
-                            String stopDelayRaw = etTimedRunStopDelay.getText().toString();
+                            String stopDelayRaw = etTimedRunStopDelay.getText().toString().replace(",", ".");
                             try {
                                 timedRunStopDelay = Double.valueOf(stopDelayRaw);
                             } catch (Exception e) {
@@ -1193,88 +1173,58 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         //The share button. Take a screenshot and send a share intent to all those social media apps...
+
         if (id == R.id.action_share) {
-            View screenView = findViewById(R.id.rootLayout).getRootView();
-
-            screenView.setDrawingCacheEnabled(true);
-            Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
-            screenView.setDrawingCacheEnabled(false);
-
-            Canvas canvas = new Canvas(bitmap);
-
-            Vector<PlotAreaView> pavList = getAllPlotAreaViews(screenView);
-            for (PlotAreaView pav : pavList) {
-                pav.setDrawingCacheEnabled(true);
-                Bitmap bmp = pav.getBitmap();
-                pav.setDrawingCacheEnabled(false);
-
-                int location[] = new int[2];
-                pav.getLocationOnScreen(location);
-                canvas.drawBitmap(bmp, location[0], location[1], null);
-            }
-
-            Vector<InteractiveGraphView> gvList = getAllInteractiveGraphViews(screenView);
-            for (InteractiveGraphView gv : gvList) {
-                gv.setDrawingCacheEnabled(true);
-                Bitmap bmp = Bitmap.createBitmap(gv.getDrawingCache());
-                gv.setDrawingCacheEnabled(false);
-
-                int location[] = new int[2];
-                gv.getLocationOnScreen(location);
-                canvas.drawBitmap(bmp, location[0], location[1], null);
-
-                if (gv.popupWindowInfo != null) {
-                    View popupView = gv.popupWindowInfo.getContentView();
-                    popupView.setDrawingCacheEnabled(true);
-                    bmp = Bitmap.createBitmap(popupView.getDrawingCache());
-                    popupView.setDrawingCacheEnabled(false);
-
-                    popupView.getLocationOnScreen(location);
-                    canvas.drawBitmap(bmp, location[0], location[1], null);
-                }
-
-
-            }
 
             final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
             File file = new File(this.getCacheDir(), "/"+ (fileName.isEmpty() ? "phyphox" : fileName) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
-            try {
-                FileOutputStream out = new FileOutputStream(file);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                out.flush();
-                out.close();
-                bitmap.recycle();
+            final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
 
-                final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
+            final Intent intent = ShareCompat.IntentBuilder.from(this)
+                    .setType("image/png")
+                    .setSubject(getString(R.string.share_subject))
+                    .setStream(uri)
+                    .getIntent()
+                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                    .setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                final Intent intent = ShareCompat.IntentBuilder.from(this)
-                        .setType("image/png")
-                        .setSubject(getString(R.string.share_subject))
-                        .setStream(uri)
-                        .getIntent()
-                        .setFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                        .setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Helper.ScreenshotCallback callback = new Helper.ScreenshotCallback() {
+                @Override
+                public void onSuccess(Bitmap bitmap) {
+                    try {
+                        FileOutputStream out = new FileOutputStream(file);
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        out.flush();
+                        out.close();
+                        bitmap.recycle();
 
-                List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
-                for (ResolveInfo ri : resInfoList) {
-                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                        for (ResolveInfo ri : resInfoList) {
+                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+
+                        //Create chooser
+                        Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                        //And finally grant permissions again for any activities created by the chooser
+                        resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                        for (ResolveInfo ri : resInfoList) {
+                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                            ))
+                                continue;
+                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+                        //Execute this intent
+                        startActivity(chooser);
+                    } catch (Exception e) {
+                        Log.e("action_share", "Unhandled exception", e);
+                    }
                 }
+            };
 
-                //Create chooser
-                Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
-                //And finally grant permissions again for any activities created by the chooser
-                resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
-                for (ResolveInfo ri : resInfoList) {
-                    if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                    ))
-                        continue;
-                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }
-                //Execute this intent
-                startActivity(chooser);
-            } catch (Exception e) {
-                Log.e("action_share", "Unhandled exception", e);
-            }
+            View screenView = findViewById(R.id.rootLayout).getRootView();
+            Helper.getScreenshot(screenView, this.getWindow(), callback);
+
+
         }
 
         if (id == R.id.action_calibrated_magnetometer) {
@@ -1576,7 +1526,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         measuring = true;
 
         //No more turning off during the measurement
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setKeepScreenOn(true);
 
         //Start the analysis "loop"
         Thread t = new Thread(updateData);
@@ -1630,7 +1580,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Start a timed measurement
     public void startTimedMeasurement() {
         //No more turning off during the measurement
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setKeepScreenOn(true);
 
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             // check if all Bluetooth devices are connected and display an errorDialog if not
@@ -1728,8 +1678,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         analysisProgressAlpha = 0.f; //Disable the progress bar
 
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
-        if (!serverEnabled)
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (!serverEnabled) {
+            setKeepScreenOn(false);
+        }
 
         //Deactivate any timer
         if (cdTimer != null) {
@@ -1756,7 +1707,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {
             for (DataBuffer buffer : experiment.dataBuffers)
-                buffer.clear(true);
+                if (!buffer.linkedToUserInput)
+                    buffer.clear(true);
         } finally {
             experiment.dataLock.unlock();
         }
@@ -1803,13 +1755,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         //Also we want to keep the device active for remote access
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setKeepScreenOn(true);
     }
 
     //Stop the remote server (see remoteServer class)
     private void stopRemoteServer() {
-        if (!measuring)
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (!measuring) {
+            setKeepScreenOn(false);
+        }
         //Announce this to the user, so he knows why the webinterface stopped working.
         TextView announcer = (TextView)findViewById(R.id.remoteInfo);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -1901,5 +1854,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    private void setKeepScreenOn(boolean keepOn) {
+        if (keepOn) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (proximityLock) {
+                if (wakeLock != null && !wakeLock.isHeld()) {
+                    wakeLock.acquire();
+                }
+            }
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (proximityLock && wakeLock.isHeld()) {
+                if (wakeLock != null)
+                    wakeLock.release();
+            }
+        }
+    }
 
 }

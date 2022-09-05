@@ -1,10 +1,18 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.Helper;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
+import android.view.PixelCopy;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -15,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.util.Locale;
+import java.util.Vector;
 import java.util.zip.CRC32;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,6 +34,10 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+
+import de.rwth_aachen.phyphox.InteractiveGraphView;
+import de.rwth_aachen.phyphox.PlotAreaView;
+import de.rwth_aachen.phyphox.R;
 
 public abstract class Helper {
 
@@ -206,5 +219,105 @@ public abstract class Helper {
         long refCRC32 = crc32.getValue();
 
         return experimentInCollection(refCRC32, act);
+    }
+
+    //Recursively get all TextureViews, used for screenshots
+    public static Vector<PlotAreaView> getAllPlotAreaViews(View v) {
+        Vector<PlotAreaView> l = new Vector<>();
+        if (v.getVisibility() != View.VISIBLE)
+            return l;
+        if (v instanceof PlotAreaView) {
+            l.add((PlotAreaView)v);
+        } else if (v instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup)v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                l.addAll(getAllPlotAreaViews(vg.getChildAt(i)));
+            }
+        }
+        return l;
+    }
+
+    public static Vector<InteractiveGraphView> getAllInteractiveGraphViews(View v) {
+        Vector<InteractiveGraphView> l = new Vector<>();
+        if (v.getVisibility() != View.VISIBLE)
+            return l;
+        if (v instanceof InteractiveGraphView) {
+            l.add((InteractiveGraphView)v);
+        } else if (v instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup)v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                l.addAll(getAllInteractiveGraphViews(vg.getChildAt(i)));
+            }
+        }
+        return l;
+    }
+
+    public interface ScreenshotCallback {
+        void onSuccess(Bitmap bitmap);
+    }
+    public static void getScreenshot(View screenView, Window window, ScreenshotCallback callback) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Bitmap bitmap = Bitmap.createBitmap(screenView.getWidth(), screenView.getHeight(), Bitmap.Config.ARGB_8888);
+            int location[] = new int[2];
+            screenView.getLocationInWindow(location);
+
+            PixelCopy.OnPixelCopyFinishedListener listener = new PixelCopy.OnPixelCopyFinishedListener() {
+                @Override
+                public void onPixelCopyFinished(int result) {
+                    if (result == PixelCopy.SUCCESS)
+                        callback.onSuccess(bitmap);
+                }
+            };
+
+            PixelCopy.request(window, new Rect(location[0], location[1], location[0] + screenView.getWidth(), location[1] + screenView.getHeight()), bitmap, listener, new Handler());
+
+        } else { //Fallback if Pixel Copy API is not available
+            screenView.setDrawingCacheEnabled(true);
+            Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
+            screenView.setDrawingCacheEnabled(false);
+
+            Canvas canvas = new Canvas(bitmap);
+
+            Vector<PlotAreaView> pavList = getAllPlotAreaViews(screenView);
+            for (PlotAreaView pav : pavList) {
+                pav.setDrawingCacheEnabled(true);
+                Bitmap bmp = pav.getBitmap();
+                pav.setDrawingCacheEnabled(false);
+
+                int location[] = new int[2];
+                pav.getLocationOnScreen(location);
+                canvas.drawBitmap(bmp, location[0], location[1], null);
+            }
+
+            Vector<InteractiveGraphView> gvList = getAllInteractiveGraphViews(screenView);
+            for (InteractiveGraphView gv : gvList) {
+                try {
+                    gv.setDrawingCacheEnabled(true);
+                    Bitmap bmp = Bitmap.createBitmap(gv.getDrawingCache());
+                    gv.setDrawingCacheEnabled(false);
+
+                    int location[] = new int[2];
+                    gv.getLocationOnScreen(location);
+                    canvas.drawBitmap(bmp, location[0], location[1], null);
+
+                    if (gv.popupWindowInfo != null) {
+                        View popupView = gv.popupWindowInfo.getContentView();
+                        popupView.setDrawingCacheEnabled(true);
+                        bmp = Bitmap.createBitmap(popupView.getDrawingCache());
+                        popupView.setDrawingCacheEnabled(false);
+
+                        popupView.getLocationOnScreen(location);
+                        canvas.drawBitmap(bmp, location[0], location[1], null);
+                    }
+                } catch (Exception e) {
+                    //getDrawingCache can fail in landscape orientation as plots may use a rather large area of screen that will not fit into a software buffer.
+                    //We only catch it without a solution (which would be tricky) as this method is a fallback anyways for API <24 devices that do not support Pixel Copy API. This should occur rarely.
+                    e.printStackTrace();
+                }
+
+
+            }
+            callback.onSuccess(bitmap);
+        }
     }
 }

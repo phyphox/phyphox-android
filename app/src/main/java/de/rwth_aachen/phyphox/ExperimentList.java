@@ -15,7 +15,6 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -89,7 +88,6 @@ import com.google.zxing.integration.android.IntentResult;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -99,7 +97,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -121,6 +118,9 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
 
 import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
 
@@ -225,6 +225,13 @@ public class ExperimentList extends AppCompatActivity {
     }
 
     private void showSupportHintIfRequired() {
+        try {
+            if (!getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS).versionName.equals(phyphoxCatHintRelease))
+                return;
+        } catch (Exception e) {
+            return;
+        }
+
         final SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         String lastSupportHint = settings.getString("lastSupportHint", "");
         if (lastSupportHint.equals(phyphoxCatHintRelease)) {
@@ -1490,10 +1497,10 @@ public class ExperimentList extends AppCompatActivity {
 
             @Override
             public void onCharacteristicChanged(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-
                 if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
                     return;
                 byte[] data = characteristic.getValue();
+
                 if (currentBluetoothData == null) {
                     String header = new String(data);
                     if (!header.startsWith("phyphox")) {
@@ -1514,6 +1521,13 @@ public class ExperimentList extends AppCompatActivity {
                     for (int i = 0; i < 4; i++) {
                         currentBluetoothDataCRC32 <<= 8;
                         currentBluetoothDataCRC32 |= (data[7+4+i] & 0xFF);
+                    }
+
+                    if (currentBluetoothDataSize > 10e6 || currentBluetoothDataSize < 0) {
+                        disconnect(gatt);
+                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid size in header)", device);
+                        progress.dismiss();
+                        currentBluetoothDataSize = 0;
                     }
 
                     currentBluetoothData = new byte[currentBluetoothDataSize];
@@ -1562,6 +1576,11 @@ public class ExperimentList extends AppCompatActivity {
                             gatt.writeDescriptor(descriptor);
                         }
                         disconnect(gatt);
+
+                        if (currentBluetoothDataSize == 0) {
+                            progress.dismiss();
+                            return;
+                        }
 
                         /*
                         StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
@@ -2268,6 +2287,8 @@ public class ExperimentList extends AppCompatActivity {
             showSupportHintIfRequired();
         }
 
+        Activity parentActivity = this;
+
         //Set the on-click-listener for the credits
         View.OnClickListener ocl = new View.OnClickListener() {
             @Override
@@ -2341,36 +2362,9 @@ public class ExperimentList extends AppCompatActivity {
                                     startActivity(intent);
                                 }
                             return true;
-                        } else if (item.getItemId() == R.id.action_translationInfo) {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
-                                builder.setMessage(res.getString(R.string.translationText))
-                                        .setTitle(R.string.translationInfo)
-                                        .setPositiveButton(R.string.translationToWebsite, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                Uri uri = Uri.parse(res.getString(R.string.translationToWebsiteURL));
-                                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                                    startActivity(intent);
-                                                }
-                                            }
-                                        })
-                                        .setNeutralButton(R.string.translationToSettings, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                final Intent intent = new Intent(Intent.ACTION_MAIN, null);
-                                                intent.addCategory(Intent.CATEGORY_LAUNCHER);
-                                                final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.LanguageSettings");
-                                                intent.setComponent(cn);
-                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                                startActivity( intent);
-                                            }
-                                        })
-                                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-
-                                            }
-                                        });
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
+                        } else if (item.getItemId() == R.id.action_settings) {
+                                Intent intent = new Intent(parentActivity, Settings.class);
+                                startActivity(intent);
                                 return true;
                             } else if (item.getItemId() == R.id.action_deviceInfo) {
                             StringBuilder sb = new StringBuilder();
@@ -2711,6 +2705,7 @@ public class ExperimentList extends AppCompatActivity {
         final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
 
         //Setup the dialog builder...
+        neRate.addTextChangedListener(new DecimalTextWatcher());
         neDialog.setView(neLayout);
         neDialog.setTitle(R.string.newExperiment);
         neDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
@@ -2725,7 +2720,7 @@ public class ExperimentList extends AppCompatActivity {
                 //Prepare the rate
                 double rate;
                 try {
-                    rate = Double.valueOf(neRate.getText().toString());
+                    rate = Double.valueOf(neRate.getText().toString().replace(',', '.'));
                 } catch (Exception e) {
                     rate = 0;
                     Toast.makeText(ExperimentList.this, "Invaid sensor rate. Fall back to fastest rate.", Toast.LENGTH_LONG).show();

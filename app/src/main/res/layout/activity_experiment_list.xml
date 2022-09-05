@@ -48,7 +48,7 @@
             android:contentDescription="@string/info"/>
     </RelativeLayout>
 
-    <de.rwth_aachen.phyphox.ReportingScrollView
+    <de.rwth_aachen.phyphox.Helper.ReportingScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/experimentScroller"
@@ -69,7 +69,7 @@
             android:layout_height="match_parent"
             android:id="@+id/experimentList"
             android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
-    </de.rwth_aachen.phyphox.ReportingScrollView>
+    </de.rwth_aachen.phyphox.Helper.ReportingScrollView>
 
     <View
         android:layout_width="match_parent"

@@ -11,10 +11,6 @@
     <string name="experimentsPhyphoxOrg">Ideas para experimentos e instrucciones</string>
     <string name="faqPhyphoxOrg">Preguntas más frecuentes</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Idiomas</string>
-    <string name="translationText">Phyphox usará el primer idioma disponible de su lista de idiomas preferidos. Para cambiar sus preferencias en Android, vaya a \"Ajustes\" seleccionando la opción a continuación. Para saber qué idiomas están disponibles en Phyphox y cómo puede ayudar, seleccione \"Visitar sitio web\".</string>
-    <string name="translationToSettings">Ajustes</string>
-    <string name="translationToWebsite">Visitar sitio web</string>
     <string name="warning">Advertencia</string>
     <string name="donotshowagain">No mostrar de nuevo</string>
     <string name="damageWarning">Por favor, ten cuidado de no dañar tu dispositivo durante los experimentos. Por favor ten especial cuidado en evitar dejarlo caer sobre superficies duras y no lo expongas a campos magnéticos de alta intensidad. Los autores de phyphox no se hacen responsables de cualquier posible daño a tu dispositivo.</string>

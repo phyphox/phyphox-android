@@ -50,7 +50,7 @@ public class SensorInput implements SensorEventListener, Serializable {
     public Sensor sensor;
 
     public enum SensorName {
-        accelerometer, linear_acceleration, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity, attitude
+        accelerometer, linear_acceleration, gravity, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity, attitude
     }
 
     public enum SensorRateStrategy {
@@ -66,15 +66,16 @@ public class SensorInput implements SensorEventListener, Serializable {
     public static int resolveSensorName(SensorName type) {
         //Interpret the type string
         switch (type) {
-            case linear_acceleration: return Sensor.TYPE_LINEAR_ACCELERATION;
-            case light: return Sensor.TYPE_LIGHT;
-            case gyroscope: return Sensor.TYPE_GYROSCOPE;
             case accelerometer: return Sensor.TYPE_ACCELEROMETER;
+            case linear_acceleration: return Sensor.TYPE_LINEAR_ACCELERATION;
+            case gravity: return Sensor.TYPE_GRAVITY;
+            case gyroscope: return Sensor.TYPE_GYROSCOPE;
             case magnetic_field: return Sensor.TYPE_MAGNETIC_FIELD;
             case pressure: return Sensor.TYPE_PRESSURE;
+            case light: return Sensor.TYPE_LIGHT;
+            case proximity: return Sensor.TYPE_PROXIMITY;
             case temperature: return Sensor.TYPE_AMBIENT_TEMPERATURE;
             case humidity: return Sensor.TYPE_RELATIVE_HUMIDITY;
-            case proximity: return Sensor.TYPE_PROXIMITY;
             case attitude: return Sensor.TYPE_ROTATION_VECTOR;
             default: return -1;
         }
@@ -196,26 +197,28 @@ public class SensorInput implements SensorEventListener, Serializable {
     //Get the internationalization string for a sensor type
     public static int getDescriptionRes(int type) {
         switch (type) {
-            case Sensor.TYPE_LINEAR_ACCELERATION:
-                return R.string.sensorLinearAcceleration;
-            case Sensor.TYPE_LIGHT:
-                return R.string.sensorLight;
-            case Sensor.TYPE_GYROSCOPE:
-                return R.string.sensorGyroscope;
             case Sensor.TYPE_ACCELEROMETER:
                 return R.string.sensorAccelerometer;
+            case Sensor.TYPE_LINEAR_ACCELERATION:
+                return R.string.sensorLinearAcceleration;
+            case Sensor.TYPE_GRAVITY:
+                return R.string.sensorGravity;
+            case Sensor.TYPE_GYROSCOPE:
+                return R.string.sensorGyroscope;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 return R.string.sensorMagneticField;
             case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
                 return R.string.sensorMagneticField;
             case Sensor.TYPE_PRESSURE:
                 return R.string.sensorPressure;
+            case Sensor.TYPE_LIGHT:
+                return R.string.sensorLight;
+            case Sensor.TYPE_PROXIMITY:
+                return R.string.sensorProximity;
             case Sensor.TYPE_AMBIENT_TEMPERATURE:
                 return R.string.sensorTemperature;
             case Sensor.TYPE_RELATIVE_HUMIDITY:
                 return R.string.sensorHumidity;
-            case Sensor.TYPE_PROXIMITY:
-                return R.string.sensorProximity;
             case Sensor.TYPE_ROTATION_VECTOR:
                 return R.string.sensorAttitude;
         }

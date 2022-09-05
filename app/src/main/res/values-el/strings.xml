@@ -16,10 +16,6 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">Απομακρυσμένος Έλεγχος</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationInfo">Γλώσσες</string>
-    <string name="translationText">H εφαρμογή phyphox θα χρησιμοποιήσει την πρώτη διαθέσιμη γλώσσα από τη λίστα των προτιμώμενων γλωσσών σας. Για να αλλάξετε τις προτιμήσεις σας, επιλέξτε \"ρυθμίσεις\". Για να ενημερωθείτε για τις διαθέσιμες γλώσσες και πως μπορείτε να βοηθήσετε, επιλέξτε \"ιστοσελίδα\".</string>
-    <string name="translationToSettings">Ρυθμίσεις</string>
-    <string name="translationToWebsite">Επίσκεψη στην ιστοσελίδα</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#el</string>
     <string name="warning">Προειδοποίηση</string>
     <string name="donotshowagain">Να μην προβληθεί ξανά</string>
@@ -343,4 +339,26 @@
     <string name="common_musical_note_gb7">Φα#7/Σολb7</string>
     <string name="common_musical_note_g7">Σολ 7</string>
     <string name="common_musical_note_ab7">Σολ#7/Λαb7</string>
+    <string name="sensorDepth">Βάθος(LiDAR/ToF)</string>
+    <string name="sensorCamera">Κάμερα</string>
+    <string name="remoteDepthGUIWarning">Δεν υποστηρίζεται η προεπισκόπιση και ο έλεγχος του αισθητήρα LiDAR/ToF στην απομακρυσμένη πρόσβαση.</string>
+    <string name="depthAggregationMode">Μέθοδος συγκέντρωσης δεδομένων</string>
+    <string name="depthAggregationModePrompt">Επιλέξτε τη μέθοδο συγκέντρωσης πληροφοριών βάθους στην επιλεγμένη περιοχή.</string>
+    <string name="depthAggregationModeClosest">Πλησιέστερα</string>
+    <string name="depthAggregationModeAverage">Μέσες τιμές</string>
+    <string name="depthAggregationModeWeighted">Σταθμισμένα</string>
+    <string name="cameraFrontFacing">Μπροστινή κάμερα</string>
+    <string name="cameraBackFacing">Οπίσθια κάμερα</string>
+    <string name="cameraExternal">Εξωτερική κάμερα</string>
+    <string name="sensorGravity">Βαρύτητα</string>
+    <string name="settingsDefault">Προεπιλογή</string>
+    <string name="settings">Ρυθμίσεις</string>
+    <string name="settingsHeadLanguage">Γλώσσα</string>
+    <string name="settingsLanguage">Γλώσσα Εφαρμογής</string>
+    <string name="settingsTranslation">Μετάφραση</string>
+    <string name="settingsTranslationMore">Μάθετε περισσότερα σχετικά με τις μεταφράσεις και πως μπορείτε να βοηθήσετε.</string>
+    <string name="settingsHeadAdvanced">Προχωρημένες</string>
+    <string name="settingsProximityLock">Κλείδωμα εγγύτητας</string>
+    <string name="settingsProximityLockDetail">Απενεργοποίηση της οθόνης όταν ενεργοποιείται ο αισθητήρας εγγύτητας για την αποφυγή ακούσιων καταγραφών, για παράδειγμα από την τσέπη.</string>
+    <string name="settingsPort">Θύρα απομακρυσμένης πρόσβασης</string>
 </resources>
