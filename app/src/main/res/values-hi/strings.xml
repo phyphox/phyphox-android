@@ -5,7 +5,7 @@
     <string name="title_activity_experiment">फाईफॉक्स</string>
     <string name="graph_tools_pan_and_zoom">ऊँगली से ज़ूम</string>
     <string name="graph_tools_pick">डाटा उठाएं</string>
-    <string name="graph_tools_more">और टूल्स</string>
+    <string name="graph_tools_more">"और अधिक  टूल्स"</string>
     <string name="graph_tools_reset">ज़ूम रिसेट करें</string>
     <string name="graph_tools_follow">नए डाटा को फॉलो करें</string>
     <string name="graph_tools_linear_fit">रैखिक फिट</string>
@@ -18,7 +18,27 @@
     <string name="graph_fit_label">रैखिक फिट: y = a x + b</string>
     <string name="applyZoomTitle">ज़ूम लागू करें</string>
     <string name="applyZoomExplanation">आप इस ग्राफ़ के इंटरएक्टिव मोड को बंद कर रहे हैं | अगर आप अपना ज़ूम रखना चाहते हैं, तो विकल्प चुनें |</string>
-    <string name="applyZoomAdvanced">उच्च</string>
+    <string name="applyZoomAdvanced">विकसित विकल्प</string>
     <string name="settings">सेटिंग्स</string>
     <string name="settingsProximityLock">सामीप्य (proximity) लॉक</string>
+    <string name="applyZoomApply">पर लागू</string>
+    <string name="applyZoomReset">डिफ़ॉल्ट पर रीसेट</string>
+    <string name="applyZoomKeep">चयनित के रूप में रखें</string>
+    <string name="applyZoomFollow">नया डेटा रखें और उसका पालन करें</string>
+    <string name="applyZoomThis">केवल यह ग्राफ</string>
+    <string name="applyZoomSameVariable">अन्य ग्राफ : वही चर</string>
+    <string name="applyZoomSameUnit">अन्य ग्राफ वही इकाई</string>
+    <string name="applyZoomSameAxis">अन्य ग्राफ: वही अक्ष</string>
+    <string name="newExperiment">प्रयोग जोड़ें</string>
+    <string name="newExperimentSimple">सरल प्रयोग जोड़ें</string>
+    <string name="newExperimentPhyphoxInfo">डेटा विश्लेषण सहित अधिक उन्नत प्रयोग बनाने के लिए phyphox.org पर जाएं और उन्हें सहकर्मियों, छात्रों और दोस्तों के साथ साझा करें।</string>
+    <string name="newExperimentInputTitle">शीर्षक</string>
+    <string name="newExperimentInputBufferSize">बफर आकार (संग्रहीत किए जाने वाले मानों की संख्या)</string>
+    <string name="newExperimentInputRate">सेंसर दर (हर्ट्ज में, 0 = जितनी जल्दी हो सके)</string>
+    <string name="graph_tools_system_time">सिस्टम समय में बदलें</string>
+    <string name="sensorDepth">गहराई (LiDAR/ToF)</string>
+    <string name="sensorCamera">कैमरा</string>
+    <string name="cameraFrontFacing">सामने की ओर मुख किया हुआ कैमरा</string>
+    <string name="cameraBackFacing">पीछे की ओर मुख किया हुआ कैमरा</string>
+    <string name="sensorGravity">गुरुत्व</string>
 </resources>
