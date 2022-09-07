@@ -225,4 +225,8 @@
     <string name="leave_experiment_question">¿Salir del experimento y descartar los datos grabados\?</string>
     <string name="leave">Salir</string>
     <string name="common_quantity_short_sound_pressure_level">NPS</string>
+    <string name="settingsHeadAdvanced">Avanzado</string>
+    <string name="settingsProximityLock">bloqueo de proximidad</string>
+    <string name="settingsProximityLockDetail">Desactive la pantalla cuando se active el sensor de proximidad para evitar entradas no deseadas, por ejemplo, en un bolsillo.</string>
+    <string name="settingsPort">Puerto de acceso remoto</string>
 </resources>
