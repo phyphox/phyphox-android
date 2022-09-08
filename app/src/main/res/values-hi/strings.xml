@@ -44,4 +44,13 @@
     <string name="newExperimentInputSensors">सक्रिय सेंसर</string>
     <string name="newExperimentBluetooth">ब्लूटूथ उपकरण के लिए प्रयोग जोड़ें</string>
     <string name="newExperimentBluetoothErrorTitle">ब्लूटूथ स्कैन त्रुटि</string>
+    <string name="experimentsPhyphoxOrg">प्रायोगिक विचार एवं अनुदेश</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">बार बार पूंछे जाने वाले प्रश्न</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">रिमोट कण्ट्रोल सहायता</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="deviceInfo">युक्ति (डिवाइस) का विवरण</string>
+    <string name="copyToClipboard">क्लिप बोर्ड पर कॉपी करें</string>
 </resources>
