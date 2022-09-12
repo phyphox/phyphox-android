@@ -53,4 +53,5 @@
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
     <string name="deviceInfo">युक्ति (डिवाइस) का विवरण</string>
     <string name="copyToClipboard">क्लिप बोर्ड पर कॉपी करें</string>
+    <string name="ok">ठीक है</string>
 </resources>
