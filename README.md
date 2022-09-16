@@ -40,6 +40,8 @@ This repository contains the source for the Android version of the app. The whol
 
 * **phyphox-webinterface**
   This is the webinterface served by the webserver in the app when the "remote access" feature is activated
+  
+The overarching documentation (for example of the phyphox file format or the REST API) can be found in our [Wiki on phyphox.org](https://phyphox.org/wiki).
 
 ## Branches
 
