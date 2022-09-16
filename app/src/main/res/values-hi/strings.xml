@@ -57,4 +57,5 @@
     <string name="settingsPort">दूर संवेदक पोर्ट</string>
     <string name="stop">स्टॉप</string>
     <string name="start">स्टार्ट</string>
+    <string name="depthAggregationModeAverage">औसत</string>
 </resources>
