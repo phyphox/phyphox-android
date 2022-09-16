@@ -55,4 +55,6 @@
     <string name="copyToClipboard">क्लिप बोर्ड पर कॉपी करें</string>
     <string name="ok">ठीक है</string>
     <string name="settingsPort">दूर संवेदक पोर्ट</string>
+    <string name="stop">स्टॉप</string>
+    <string name="start">स्टार्ट</string>
 </resources>
