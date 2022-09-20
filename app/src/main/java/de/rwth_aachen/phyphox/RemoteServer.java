@@ -547,7 +547,7 @@ public class RemoteServer extends Thread {
             Uri uri=Uri.parse(request.getRequestLine().getUri());
 
             //Based on code from getQueryParameterNames, see http://stackoverflow.com/questions/11642494/android-net-uri-getqueryparameternames-alternative
-            String query = uri.getEncodedQuery();
+            String query = uri.getQuery();
             Set<bufferRequest> bufferList = new LinkedHashSet<>(); //This list will hold all requests
             int start = 0;
             if (query != null) {
