@@ -3,4 +3,8 @@
     <string name="app_name">phyphox</string>
     <string name="action_settings">설정</string>
     <string name="title_activity_experiment">phyphox</string>
+    <string name="ok">확인</string>
+    <string name="stop">중지</string>
+    <string name="start">시작</string>
+    <string name="settings">설정</string>
 </resources>
