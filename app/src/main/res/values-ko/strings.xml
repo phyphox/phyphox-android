@@ -7,4 +7,5 @@
     <string name="stop">중지</string>
     <string name="start">시작</string>
     <string name="settings">설정</string>
+    <string name="unknown">알려지지 않음</string>
 </resources>
