@@ -290,7 +290,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     bti.closeConnection();
             }
             if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                experiment.depthInput.stopCamera();
+                experiment.depthInput.stopCameras();
         }
 
         if (popupWindow != null)
@@ -306,6 +306,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         shutdown = false; //Deactivate shutdown variable
 
+        if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                experiment.depthInput.startCameras();
+            } catch (Exception e) {
+                Toast.makeText(this, "DepthPreview: setCamera could not restart depthInput: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
+            }
+        }
         updateViewsHandler.postDelayed(updateViews, 40); //Start the "main loop" again
         startRemoteServer();  //Restart the remote server (if it is activated)
         //We do not start the measurement again automatically. If the user switched away, this might
@@ -439,6 +446,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             //Also invalidate the options menu, so it can activate any controls, that are valid for a loaded experiment
             invalidateOptionsMenu();
 
+            if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    experiment.depthInput.startCameras();
+                } catch (Exception e) {
+                    Toast.makeText(this, "DepthPreview: setCamera could not restart depthInput: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
+                }
+            }
             //Start the remote server if activated
             startRemoteServer();
         } else {

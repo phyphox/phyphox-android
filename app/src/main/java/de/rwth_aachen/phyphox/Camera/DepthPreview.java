@@ -37,16 +37,9 @@ import de.rwth_aachen.phyphox.MarkerOverlayView;
 
 public class DepthPreview extends FrameLayout implements TextureView.SurfaceTextureListener {
     DepthInput depthInput = null;
-    private String cameraId;
-    private CameraDevice cameraDevice;
     private TextureView camView;
-    Surface surface = null;
     Matrix transformation = new Matrix();
     private MarkerOverlayView overlayView;
-    private CameraCaptureSession captureSession;
-    private int w = 0, h = 0;
-    private int outWidth = 0, outHeight = 0;
-    private float zoom = 1.0f;
 
     private boolean interactive = false;
     private double aspectRatio = 2.5;
@@ -79,11 +72,6 @@ public class DepthPreview extends FrameLayout implements TextureView.SurfaceText
     public DepthPreview(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
-    }
-
-    public void stop() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            stopCamera();
     }
 
     public void setInteractive(boolean interactive) {
@@ -211,6 +199,8 @@ public class DepthPreview extends FrameLayout implements TextureView.SurfaceText
     }
 
     private void updateTransformation(int outWidth, int outHeight) {
+        int w = depthInput.previewW;
+        int h = depthInput.previewH;
         if (w == 0 || h == 0)
             return;
 
@@ -280,178 +270,11 @@ public class DepthPreview extends FrameLayout implements TextureView.SurfaceText
         this.depthInput = depthInput;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public String findMatchingCamera(int outWidth, int outHeight) {
-        if (depthInput == null)
-            return null;
-        String depthCamId = depthInput.getCurrentCameraId();
-        if (depthCamId == null)
-            return null;
-        Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
-        CameraCharacteristics depthCamChar = cams.get(depthCamId);
-        if (depthCamChar == null)
-            return null;
-
-        String cameraId = null;
-
-        int camFacing = depthCamChar.get(CameraCharacteristics.LENS_FACING);
-        zoom = depthInput.pickDefaultZoom();
-
-        for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
-            if (cam.getValue().get(CameraCharacteristics.LENS_FACING) != camFacing)
-                continue;
-            Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(SurfaceTexture.class);
-            if (sizes == null || sizes.length == 0)
-                continue;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Range<Float> range = cam.getValue().get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
-                if (range.getLower() > zoom || range.getUpper() < zoom) {
-                    continue;
-                }
-            }
-
-            float targetAspect = (float)depthInput.getCurrentWidth() / (float)depthInput.getCurrentHeight();
-            int targetWidth, targetHeight;
-            if ((float)outWidth/(float)outHeight > targetAspect) {
-                targetWidth = Math.round(outHeight * targetAspect);
-                targetHeight = outHeight;
-            } else {
-                targetWidth = outWidth;
-                targetHeight = Math.round(outWidth / targetAspect);
-            }
-
-            w = 0;
-            h = 0;
-            for (Size size : sizes) {
-                int newW = size.getWidth();
-                int newH = size.getHeight();
-                if ((w < targetWidth || h < targetHeight)) {
-                    //As long as any side is still too small, we take anything that is larger than before
-                    if (newW > w || newH > h) {
-                        w = newW;
-                        h = newH;
-                    }
-                } else {
-                    //We already have something large enough. Now we need to get a bit more picky.
-                    //However, we do not want to pick something smaller
-                    if ((newW < targetWidth || newH < targetHeight))
-                        continue;
-                    //Most important criterium: Match aspect ratio of depth sensor
-                    float aspect = (float)w/(float)h;
-                    float newAspect = (float)newW/(float)newH;
-                    if (Math.abs(targetAspect - newAspect) < Math.abs(targetAspect - aspect)) {
-                        w = size.getWidth();
-                        h = size.getHeight();
-                    } else if (Math.abs(targetAspect - newAspect) == Math.abs(targetAspect - aspect)) {
-                        //Same aspect and larger than target? Pick the smaller one
-                        if (newW < w) {
-                            w = size.getWidth();
-                            h = size.getHeight();
-                        }
-                    }
-                }
-            }
-
-            return cam.getKey();
-        }
-        return null;
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public void startCamera(int outWidth, int outHeight) throws DepthPreviewException {
-        cameraId = findMatchingCamera(outWidth, outHeight);
-        if (cameraId == null) {
-            throw new DepthPreviewException("No suitable camera found.");
-        }
-        Log.i("DepthPreview", "Setting up camera \"" + cameraId + "\" at " + w + "x" + h);
-        camView.getSurfaceTexture().setDefaultBufferSize(w, h);
-        updateTransformation(outWidth, outHeight);
-        try {
-            depthInput.cameraManager.openCamera(cameraId, new CameraDevice.StateCallback() {
-                @Override
-                public void onOpened(CameraDevice camera) {
-                    DepthPreview.this.cameraDevice = camera;
-
-                    List<Surface> surfaces = new ArrayList<>();
-                    if (surface == null)
-                        surface = new Surface(camView.getSurfaceTexture());
-                    surfaces.add(surface);
-                    try {
-                        cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
-                            @Override
-                            public void onConfigured(CameraCaptureSession session) {
-                                DepthPreview.this.captureSession = session;
-                                try {
-                                    CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                                    builder.addTarget(surface);
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                                        builder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoom);
-                                    session.setRepeatingRequest(builder.build(), null, null);
-                                } catch (Exception e) {
-                                    Toast.makeText(getContext(), "DepthPreview: Creating requests threw an exception: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
-                                    Log.e("DepthPreview", "Creating requests threw an exception: " + e.getMessage());
-                                    e.printStackTrace();
-                                    stop();
-                                }
-                            }
-
-                            @Override
-                            public void onConfigureFailed(CameraCaptureSession session) {
-                                Toast.makeText(getContext(), "DepthPreview: Configure failed.", Toast.LENGTH_LONG).show(); //Present message
-                                Log.e("DepthPreview", "Configure failed.");
-                                stop();
-                            }
-                        }, null);
-                    } catch (Exception e) {
-                        Toast.makeText(getContext(), "DepthPreview: createCaptureSession threw an exception: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
-                        Log.e("DepthPreview", "createCaptureSession threw an exception: " + e.getMessage());
-                        e.printStackTrace();
-                        stop();
-                    }
-                }
-
-                @Override
-                public void onDisconnected(CameraDevice camera) {
-                    Toast.makeText(getContext(), "DepthPreview: CameraDevice disconnected.", Toast.LENGTH_LONG).show(); //Present message
-                    Log.e("DepthPreview", "CameraDevice disconnected.");
-                    stop();
-                }
-
-                @Override
-                public void onError(CameraDevice camera, int error) {
-                    Toast.makeText(getContext(), "DepthPreview: onError: " + error, Toast.LENGTH_LONG).show(); //Present message
-                    Log.e("DepthPreview", "onError: " + error);
-                    stop();
-                }
-            }, null);
-        } catch (SecurityException e) {
-            //This should be caught earlier anyways. Here it is just in case...
-            throw new DepthPreviewException("Security exception: Please reload and make sure to grand camera permissions.");
-        } catch (Exception e) {
-            throw new DepthPreviewException("openCamera threw an exception: " + e.getMessage());
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public void stopCamera() {
-        if (captureSession != null) {
-            try {
-                captureSession.abortCaptures();
-            } catch (Exception e) {
-                //Don't worry
-            }
-            captureSession.close();
-            captureSession = null;
-        }
-        if (cameraDevice != null) {
-            cameraDevice.close();
-            cameraDevice = null;
-        }
-        if (surface != null) {
-            surface.release();
-            surface = null;
-        }
-
+    public void stop() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+            return;
+        if (depthInput != null)
+            depthInput.detachPreviewSurface();
     }
 
     public void setExtractionMode(DepthInput.DepthExtractionMode mode) {
@@ -461,16 +284,10 @@ public class DepthPreview extends FrameLayout implements TextureView.SurfaceText
     public void setCamera(String id) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
             return;
-        stopCamera();
-        depthInput.stopCamera();
+        depthInput.stopCameras();
         depthInput.setCamera(id);
         try {
-            startCamera(outWidth, outHeight);
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "DepthPreview: setCamera could not restart camera: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
-        }
-        try {
-            depthInput.startCamera();
+            depthInput.startCameras();
         } catch (Exception e) {
             Toast.makeText(getContext(), "DepthPreview: setCamera could not restart depthInput: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
         }
@@ -478,11 +295,12 @@ public class DepthPreview extends FrameLayout implements TextureView.SurfaceText
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture st, int width, int height) {
-        outWidth = width;
-        outHeight = height;
+        if (depthInput == null)
+            return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
-                startCamera(width, height);
+                depthInput.attachPreviewSurface(st, width, height);
+                updateTransformation(width, height);
             } catch (Exception e) {
                 Toast.makeText(getContext(), "DepthPreview: startCamera for changed surface texture failed: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
             }
@@ -491,9 +309,17 @@ public class DepthPreview extends FrameLayout implements TextureView.SurfaceText
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture st, int width, int height) {
-        outWidth = width;
-        outHeight = height;
-        updateTransformation(width, height);
+        if (depthInput == null)
+            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            depthInput.detachPreviewSurface();
+            try {
+                depthInput.attachPreviewSurface(st, width, height);
+                updateTransformation(width, height);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "DepthPreview: startCamera for changed surface texture failed: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
+            }
+        }
     }
 
     @Override
