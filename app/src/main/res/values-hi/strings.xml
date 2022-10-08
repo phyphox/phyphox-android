@@ -58,4 +58,5 @@
     <string name="stop">स्टॉप</string>
     <string name="start">स्टार्ट</string>
     <string name="depthAggregationModeAverage">औसत</string>
+    <string name="unknown">अज्ञात</string>
 </resources>
