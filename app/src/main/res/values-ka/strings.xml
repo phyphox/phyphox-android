@@ -1,2 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">ფაიფოქსი</string>
+    <string name="action_settings">პარამეტრები</string>
+    <string name="title_activity_experiment">ფაიფოქსი</string>
+    <string name="graph_tools_pan_and_zoom">მასშტაბი</string>
+    <string name="graph_tools_pick">აირჩიე მონაცემი</string>
+    <string name="graph_tools_more">დამატებითი ხელსაწყოები</string>
+    <string name="graph_tools_system_time">დროში დაკონვერტირება</string>
+    <string name="graph_tools_reset">მასშტაბის საწყისში დაბრუნება</string>
+    <string name="graph_tools_follow">ახალი მონაცემები</string>
+    <string name="graph_tools_linear_fit">წრფივი ფიტირება</string>
+    <string name="graph_tools_export">მონაცემების ექსპორტი</string>
+    <string name="graph_tools_log_x">ლოგარითმული x ღერძი</string>
+    <string name="graph_tools_log_y">ლოგარითმული y ღერძი</string>
+    <string name="graph_point_label">წერტილი</string>
+    <string name="graph_slope_label">დახრა</string>
+    <string name="graph_difference_label">განსხვავება</string>
+    <string name="graph_fit_label">წრფივი ფიტირება: y = a x + b</string>
+    <string name="applyZoomTitle">მასშტაბის შეცვლა</string>
+    <string name="applyZoomExplanation">ინტერაქციული გრაფიკის დახურვისას, შეგიძლია მონიშნო გსურს თუ არა ამ მასშტაბის შენარჩუნება.</string>
+    <string name="applyZoomAdvanced">დამატებითი პარამეტრები</string>
+    <string name="applyZoomApply">მოარგე…</string>
+    <string name="applyZoomReset">საწყისზე გადატვირთვა</string>
+    <string name="applyZoomKeep">შეინარჩუნე მონიშნულები</string>
+    <string name="applyZoomFollow">დაიმახსვრე და გადადი ახალ მონაცემებზე</string>
+    <string name="applyZoomThis">მხოლოდ ეს გრაფიკი</string>
+    <string name="applyZoomSameVariable">სხვა გრაფიკი: იგივე ცვლადები</string>
+    <string name="applyZoomSameUnit">სხვა გრაფიკები: იგივე ერთეულები</string>
+    <string name="applyZoomSameAxis">სხვა გრაფიკები: იგივე ღერძები</string>
+    <string name="newExperiment">დაამატე ექსპერიმენტი</string>
+    <string name="newExperimentSimple">დაამატე მარტივი ექსპერიმენტი</string>
+    <string name="newExperimentPhyphoxInfo">ეწვიე phyphox.org ვებგვერდს უფრო რთული ექსპერიმენტების შესაქმენლად, მანაცებეის ანალიზის ჩათვლით და გაუზიარე კოლეგებს, სტუდენტებს და მეგობრებს.</string>
+    <string name="newExperimentInputTitle">დასახელება</string>
+    <string name="newExperimentInputBufferSize">სარეზერვო მარაგი (დასამახსოვრებელი მონაცემების რაოდენობა)</string>
+    <string name="newExperimentInputRate">სენსორის სიხშირე (ჰც-ში, 0 = ყველაზე ჩქარი)</string>
+    <string name="newExperimentInputSensors">აქტიური სენსორები</string>
+    <string name="newExperimentBluetooth">დაამატე ექპერიმენტი ბლუთუზის მოწყობილობისთვის</string>
+    <string name="newExperimentBluetoothErrorTitle">ბლუთუზის სკანირების შეცდომა</string>
+    <string name="newExperimentBluetoothLoadFromDevice">მოწყობილობიდან ჩატვირთვა</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">ეს მოწყობილობა გთავაზობს თავის ფაიფოქსის ექსპერიმენტს. ამოირჩიე ფაილი მოწყობილობიდან მის გასახსნელად.</string>
+    <string name="newExperimentQR">დაამატე ექპერიმენტი QR კოდით</string>
+    <string name="newExperimentQRscan">დაასკანერე QR კოდი რომელიც შეიცავს ფაიფოქსის ექსპერიმენტს.</string>
+    <string name="newExperimentQRErrorTitle">QR კოდის შეცდომა.</string>
+    <string name="newExperimentQRNoExperiment">ვერ იქნა ნაპოვნი QR კოდი რომელიც შეიცავს ფაიფოქსის ექსპერიმენტს.</string>
+    <string name="newExperimentQRcrcMismatch">QR კოდი რომელიც დაასკანერე არ ემთხვევა წინა კოდებს. გთხოვ დაასკანერო მხოლოდ ის კოდები რომელიც ეკუთვნის ერთიდაიგივე ექსპერიმენტს.</string>
+    <string name="newExperimentQRCodesMissing1">დასკანირებული QR კოდი არის ნაწილი ჯგუფისა</string>
+    <string name="newExperimentQRCodesMissing2">კოდები. დააჭირე გაგრძელებას იმიასთვის რომ დაასკანერო დარჩენილი კოდები. დარჩენილი კოდებია:</string>
+    <string name="newExperimentQRBadCRC">შეცდომა. ან QR კოდი არის არასწორი ან დასკანირების პრობლემაა.</string>
+    <string name="newExperimentBTReadErrorTitle">ბლუთუზის ექპერიმენტის შეცდომა.</string>
+    <string name="newExperimentBTReadErrorCorrupted">გადაცემული ექსპერიმენტის მონაცემები არის დაზიანებული.</string>
+    <string name="generalErrorDialog">დაფიქსირდა შეცდომა.</string>
+    <string name="help">დახმარება და ინფორმაცია</string>
+    <string name="experimentsPhyphoxOrg">ექსპრეიმენტების იდეები და ინსტრუქციები</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">ხშირად დასმული შეკთხვები</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">დისტანციური კონტროლის დახმარება</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="deviceInfo">მოწყობილობაზე ინფორმაცია</string>
+    <string name="copyToClipboard">დაკოპირება</string>
+    <string name="deviceInfoCopied">მოწყობილობის ინფორმაცია დაკოპირდა.</string>
+    <string name="warning">გაფრთხილება</string>
+    <string name="donotshowagain">აღარ მაჩვენო</string>
+    <string name="damageWarning">მოუფრთხილდი ტელეფონს ექპერიმენტების ჩატარებისას, რადგან არ დაიზიანდეს. მიაქციე ყურადღება რომ არ დავარდეს მყარ ზედაპირებზე და არ მიიტანო დიდ მაგნიტურ ველებთან. ფაიფოქსის ავტორები არ არიან პასუხისმგებლები შენი ტელეფონის დაზიანებაზე.</string>
+    <string name="info">ინფორმაცია</string>
+    <string name="credits">კრედიტები</string>
+    <string name="creditsRWTH">phyphox® შეიქმნა RWTH Aachen University-ის მეორე ფიზიკის ინსტიტუტში.</string>
+    <string name="creditsNames">კონცეფტი და დეველოპმენტი:
+\n Dr. Sebastian Staacks
+\n კონცეფტი:
+\n Prof. Christoph Stampfer
+\n პროგრამირება:
+\n Dominik Dorsel
+\n Jonas Gessner
+\n Camilla Lummerzheim</string>
+    <string name="gpl">Phyphox® არის ღია წვდომის პროგრამა შემქნილი GNU General Public Licence-ს მიერ. გთხოვთ ეწვიოთ http://phyphox.org დამატებითი ინფორმაციისთვის და ასევე კოდზე წვდომის მისაღებად. თუმცა დასახელება \"phyphox\" და\"RWTH Aachen\" არიან დარეგისტრირებული საფირმო ნიშნები.</string>
+    <string name="creditsLibs">"ვებ-ინტერფეისი დისტანციური წვდომისთვის იყენებს JavaScript-ის ბიბლიოთეკა \"Chart.js\" (http://chartjs.org), ხელმისაწვდომია MIT-ის ლიცენზიით. ფურიე გარდაქმნებისთვის ჩვენ ვიყენებთ FFTW  ბიბლიოთეკას (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, ხელმისაწვდომია GNU General Public Licence (version 2 or later) ლიცენზიით. GPS სიმაღლის მონაცემები კონვერტირდება WGS84 ellipsoid-დან EGM84 geoid-ში EGM84 data (30\' resolution)-ის გამოყენებით და დაპორტირებული ფუნქციები GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence)-დან."</string>
+    <string name="sensorLinearAcceleration">წრფივი აჩქარება</string>
+    <string name="sensorGravity">გარავიტაცია</string>
+    <string name="sensorLight">სინათლე</string>
+    <string name="sensorGyroscope">გიროსკოპი</string>
+    <string name="sensorAccelerometer">აქსელომეტრი</string>
+    <string name="sensorMagneticField">მაგნიტური ველი</string>
+    <string name="sensorPressure">წნევა</string>
+    <string name="sensorTemperature">ტემპერატურა</string>
+    <string name="sensorHumidity">ტენიანობა</string>
+    <string name="sensorProximity">სახლოვე</string>
+    <string name="sensorAttitude">სიმაღლე</string>
+    <string name="sensorVendor">სპეციფიური</string>
+    <string name="sensorDepth">სიღრმე (LiDAR/ToF)</string>
+    <string name="sensorCamera">კამერა</string>
+    <string name="vendorSensorTitle">ვენდორ სპეციფიური სენსორი</string>
+    <string name="vendorSensorWarning1">სენსორი</string>
+    <string name="vendorSensorWarning2">არა არის სწორის სენსორის ტიპი. არის ვენდორ-სფეციფიური და ჩვენ მხოლოდ სახელით შეგვიძლია გამოვიცნოთ. ამის გამო შეიძლება გამართულად ვერ იმუშაოს.</string>
+    <string name="location">მდებარეობა</string>
+    <string name="sensorNotAvailableWarningTitle">სენსორი არ არის ხელმისაწვდომი.</string>
+    <string name="sensorNotAvailableWarningText1">სენსორი</string>
+    <string name="sensorNotAvailableWarningText2">არ არის ხელმისაწვდომი. ხშირად ეს ნიშნავს, რომ თქვენს მოწყობილობას არ აქვს ასეთი ტიპის სენსორი.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">დამატებითი ინფორმაცია</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+    <string name="ok">დიახ</string>
+    <string name="tryagain">სცადეთ თავიდან</string>
+    <string name="doContinue">განაგრძე</string>
+    <string name="close">დახურვა</string>
+    <string name="next">შემდეგი</string>
+    <string name="cancel">გათიშვა</string>
+    <string name="unknown">უცნობი</string>
+    <string name="rename">სახელის გადარქმევა</string>
+    <string name="delete">წაშლა</string>
+    <string name="confirmDelete">გსურთ ამ ექსპერიმენტის წაშლა თქვენი კოლექციიდან\?</string>
+    <string name="confirmDeleteTitle">ადასტურებთ წაშლას\?</string>
+    <string name="stop">შეწყვეტა</string>
+    <string name="start">დაწყება</string>
+    <string name="clear_data">მონაცემების გასუფთავება</string>
+    <string name="clear_data_question">გსურთ ჩაწერილი მონაცემების წაშლა\?</string>
+    <string name="clear">წაშლა</string>
+    <string name="leave_experiment">დატოვე ექპერიმენტი</string>
+    <string name="leave_experiment_question">გსურთ გამოსვლა და მონაცემების წაშლა\?</string>
+    <string name="leave">გამოსვლა</string>
+    <string name="timed_stop">შეაჩერე დროს ათვლა</string>
+    <string name="timed_start">დაიწყე დროის ათვლა</string>
+    <string name="loadingTitle">იტვირთება</string>
+    <string name="loadingText">ექპერიმენტი იტვირტება…</string>
+    <string name="loadingBluetoothConnectionText">უკავშირდება ბლუთუზის მოწყობილობას…</string>
+    <string name="timedRunDialogTitle">დროის ათვლა</string>
+    <string name="timedRunStartDelay">დაგვვიანებით დაწყება</string>
+    <string name="timedRunStopDelay">ექპერიმენტის ხანგრძლივობა</string>
+    <string name="enableTimedRun">გააკეთე დროის ათვლა</string>
+    <string name="export">მონაცემების ექსპორტი</string>
+    <string name="export_empty">ესეთი ექპრეიმენტის კონფიგურაცია არ მოითხოვს მონაცმებეის ექპორტს. თუ ეს შეცდომაა, გთხოვთ დაუკავშირდეთ QR კოდის წყაროს ან კონფიგურაციის ფაილს.</string>
+    <string name="export_subject">მონაცემები ფაიფოქსიდან</string>
+    <string name="export_pick_share">ამოირჩიე ექსპორტის მეთოდი</string>
+    <string name="share">გააზიარე სკრინშოტი</string>
+    <string name="share_subject">სკრინშოტი ფაიფოქსიდან</string>
+    <string name="share_pick_share">აირჩიე გაზიარების მეთოდი</string>
+    <string name="remoteServer">ნება დართე დისტანციურ წვდომას</string>
+    <string name="remoteServerWarning">შენ აპირებ რომ ჩართო დისტანციური წვდომა მონაცემებე. ეს მხოლოდ სანდო მოწყობილობებზე უნდა ქნა. ასევე გაითვალისწინე რომ პირდაპირი კავშირი შეიძლება შეუძლებელი იყოს კოპრორატიული და უნივერსიტეტის ინტერნეტის გამო.
+\n
+\nუსაფრთხოებისთვის და საუკეთესო მუშაობის ხარისხისთვის უმჯობესია კავშირი განხორციელდეს მობილურის ჰოთსფოთით.
+\n
+\nდიახ-ის დაჭერის შემდეგ, შეგიძლია წვდომა გქონდეს შენს გაზომვებთან ნებისმიერი ვებ-ბრაუზერიდან იგივე ინტერნეტზე.</string>
+    <string name="remoteServerWarningTitle">უსაფრთხოების გაფრთხილება!</string>
+    <string name="remoteServerNoNetwork">პირველ რიგში საჭიროა Wifi კავშირი დამყარდეს დისტანციურ მოწყობილობაზე. გთხოვ ჩართო Wifi ან ჰოთსფოთი.</string>
+    <string name="remoteServerActive">დისტანციური წვდომა ნებადართულია. დაუკავშირდი ამ ექსპერიმენტს შემდეგი URL:
+\n%1$s</string>
+    <string name="hotspotSettings">ჰოთსფოთის პარამეტრები</string>
+    <string name="remoteColorMapWarning">ფერადი გრაფიკი დისტანციურ ინტერფეისში არის მიახლოებითი. აპლიკაციაში გრაფიკი, ამო მომენტისთვის ვერახერხებს არა თანაბარ დაშორებიანი მონაცემების ან ლოგარითმული შკალის ღერზებზე სწორად გადატანას. ამიტომ მონაცემები ცვლადი ინტერვალებით შეიძლება გამოჩნდეს არასწორ ადგილებში.</string>
+    <string name="remoteDepthGUIWarning">წინასწარ ნახვა და კონტროლი LiDAR/ToF სენსორის, დისტანციურ ინტერფეისში არის შეუძლებელი.</string>
+    <string name="calibrated_magnetometer">გამოიყენე დაკალიბრებული მანგიტომეტრი</string>
+    <string name="force_gnss">სატელიტის ლოკაცია მხოლოდ</string>
+    <string name="switchToPhoneLayout">პერსპექტივა: ვიწრო</string>
+    <string name="switchColumns1">პერსპექტივა: ერთი სვეტი</string>
+    <string name="switchColumns2">პერსპექტივა: 2 სვეტი</string>
+    <string name="switchColumns3">პერსპექტივა: 3 სვეტი</string>
+    <string name="toggleBrightMode">ნათელი რეჟიმი</string>
+    <string name="fontSize">შრიფტის ზომა</string>
+    <string name="show_description">ექსპერიმენტიზე ინფორმაცია</string>
+    <string name="save_locally">დაამატე ექპერიმენტი კოლექციაში</string>
+    <string name="save_locally_done">ექსპერიმენტი წარმატებით დაემატა კოლექციაში.</string>
+    <string name="save_locally_message">ეს ექსპერიმენტი გაიხსა დისტანციური წყაროდან. გსურს ამ ექსპერიმენტის დამატება კოლექციაში\?</string>
+    <string name="save_locally_button">შეინახე კოლექციაში</string>
+    <string name="save_state">შეინახე ექსპერიმენტის მდომარეობა</string>
+    <string name="save_state_category">შენახული ექსპერიმენტების მდგომარეობა</string>
+    <string name="save_state_message">შეგიძლია შეინახო ექპერიმენტის მდგომარეობა, მონაცემების ჩათვლით შენს კოლექციაში ან გააზიარო დამატებით აპლიკაციაში.</string>
+    <string name="save_state_title">დასახელება</string>
+    <string name="save_state_save">კოლექციაში</string>
+    <string name="save_state_share">გაზიარება</string>
+    <string name="save_state_subject">ექპერიმენტის მდოგომარეობა ფაიფოქსისთვის</string>
+    <string name="save_state_default_title">გაზომვა</string>
+    <string name="save_state_success">მდგომარეობა შენახული იქნა კოლექციაში.</string>
+    <string name="open_zip_title">იხსნება ექპერიმენტის ჩამონათვალი</string>
+    <string name="open_zip_dialog_instructions">ეს წყარო შეიცავს რამდენიმე ექპერიმენტს. შენ შეგიძლია გახნსა ერთი და შურვილისამებრ შეინახო შენს კოლექციაში ან გამოიყენო ქვედა ღილაკი და ყველა მათგანი ერთდოულად შეინახო კოლექციაში.</string>
+    <string name="open_save_all">შენახე ყველა</string>
+    <string name="open_bluetooth_assets_title">ექსპერიმენტები ბლუთუზ მოწყობილობისათვის</string>
+</resources>
