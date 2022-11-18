@@ -59,4 +59,114 @@
     <string name="start">स्टार्ट</string>
     <string name="depthAggregationModeAverage">औसत</string>
     <string name="unknown">अज्ञात</string>
+    <string name="newExperimentBluetoothLoadFromDevice">डिवाइस से लोड करें</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">यह डिवाइस अपना स्वयं का फाईफॉक्स प्रयोग प्रदान करता है। इसे खोलने के लिए डिवाइस से लोड चुनें।</string>
+    <string name="newExperimentQR">QR कोड से प्रयोग जोड़ें</string>
+    <string name="newExperimentQRscan">QR कोड स्कैन करें जिसमें फ़िफ़ॉक्स प्रयोग शामिल है।</string>
+    <string name="newExperimentQRErrorTitle">QR कोड त्रुटि।</string>
+    <string name="newExperimentQRNoExperiment">कोई QR कोड नहीं मिला जिसमें फ़िफ़ॉक्स प्रयोग शामिल है।</string>
+    <string name="newExperimentQRcrcMismatch">आपके द्वारा अभी-अभी स्कैन किया गया QR कोड पिछले कोड से मेल नहीं खाता है। कृपया केवल उसी प्रयोग से संबंधित कोड को स्कैन करना सुनिश्चित करें।</string>
+    <string name="newExperimentQRCodesMissing1">आपके द्वारा अभी-अभी स्कैन किया गया QR कोड एक सेट का हिस्सा है</string>
+    <string name="newExperimentQRCodesMissing2">कोड। शेष कोड स्कैन करने के लिए कृपया जारी रखें दबाएं। कोड अभी भी गायब हैं:</string>
+    <string name="newExperimentQRBadCRC">अमान्य जाँच परिणाम। इसका मतलब है कि या तो QR कोड खराब है या उसे स्कैन करते समय कुछ गलत हो गया।</string>
+    <string name="newExperimentBTReadErrorTitle">ब्लूटूथ प्रयोग त्रुटि।</string>
+    <string name="newExperimentBTReadErrorCorrupted">प्रेषित प्रयोग डेटा अनुपयोगी है।</string>
+    <string name="generalErrorDialog">कुछ गलती हुई है।</string>
+    <string name="help">सहायता एवं जानकारी</string>
+    <string name="deviceInfoCopied">डिवाइस की जानकारी आपके क्लिपबोर्ड पर कॉपी कर दी गई है।</string>
+    <string name="warning">चेतावनी</string>
+    <string name="donotshowagain">पुनः न दिखाएँ</string>
+    <string name="damageWarning">प्रयोग करते समय कृपया सावधान रहें कि आपके फोन को नुकसान न पहुंचे। कृपया इसे कठोर सतहों पर गिरने से बचाने के लिए विशेष ध्यान रखें और इसे अत्यधिक चुंबकीय क्षेत्र के संपर्क में न आने दें। फाईफॉक्स के लेखक आपके फोन को होने वाली किसी भी क्षति के लिए जिम्मेदार नहीं हैं।</string>
+    <string name="info">जानकारी</string>
+    <string name="credits">आभार</string>
+    <string name="creditsRWTH">phyphox® को RWTH आचेन यूनिवर्सिटी के द्वितीय भौतिक विज्ञान संस्थान में बनाया गया है।</string>
+    <string name="creditsNames">विकास और अवधारणा:
+\n डॉ सेबस्टियन स्टैक्स
+\n संकल्पना:
+\n प्रो क्रिस्टोफ Stampfer
+\n प्रोग्रामिंग:
+\n डोमिनिक डोरसेल
+\n जोनास गेस्नर
+\n कैमिला लुमेरज़ाइम</string>
+    <string name="gpl">Phyphox® GNU जनरल पब्लिक लाइसेंस के तहत जारी किया गया ओपन सोर्स सॉफ्टवेयर है। अधिक जानकारी के लिए और इसके स्रोत कोड तक पहुंच प्राप्त करने के लिए कृपया http://phyphox.org पर जाएं। हालांकि, \"फाइफॉक्स\" और \"आरडब्ल्यूटीएच आचेन\" नाम पंजीकृत ट्रेडमार्क हैं।</string>
+    <string name="creditsLibs">रिमोट एक्सेस के लिए वेब-इंटरफेस एमआईटी लाइसेंस के तहत उपलब्ध जावास्क्रिप्ट लाइब्रेरी \"चार्ट.जेएस\" (http://chartjs.org) का उपयोग करता है। फूरियर रूपांतरण के लिए, हम FFTW लाइब्रेरी (http://fftw.org), कॉपीराइट © 2003, 2007-11 मैटियो फ्रिगो, कॉपीराइट © 2003, 2007-11 मैसाचुसेट्स इंस्टीट्यूट ऑफ टेक्नोलॉजी का उपयोग करते हैं, जो जीएनयू जनरल पब्लिक के तहत उपलब्ध है लाइसेंस (संस्करण 2 या बाद का)। GPS उन्नयन डेटा को EGM84 डेटा (30\' रेजोल्यूशन) और GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 लाइसेंस) से पोर्ट किए गए फ़ंक्शन का उपयोग करके WGS84 दीर्घवृत्त से EGM84 जियोइड में परिवर्तित किया जाता है।</string>
+    <string name="sensorLinearAcceleration">रैखिक त्वरण</string>
+    <string name="sensorLight">प्रकाश</string>
+    <string name="sensorGyroscope">जाइरोस्कोप</string>
+    <string name="sensorAccelerometer">त्वरणमापी</string>
+    <string name="sensorMagneticField">चुम्बकीय क्षेत्र</string>
+    <string name="sensorPressure">दाब</string>
+    <string name="sensorTemperature">तापमान</string>
+    <string name="sensorHumidity">आर्द्रता</string>
+    <string name="sensorProximity">निकटता</string>
+    <string name="sensorAttitude">रवैया</string>
+    <string name="sensorVendor">विक्रेता विशिष्ट</string>
+    <string name="vendorSensorTitle">विक्रेता विशिष्ट सेंसर</string>
+    <string name="vendorSensorWarning1">सेंसर</string>
+    <string name="vendorSensorWarning2">सही सेंसर प्रकार की सूचना नहीं देता है। यह विक्रेता-विशिष्ट प्रतीत होता है और हम इसके नाम से ही इसके प्रकार का अनुमान लगा सकते हैं। इसलिए, यह उम्मीद के मुताबिक काम नहीं कर सकता है।</string>
+    <string name="location">स्थिति</string>
+    <string name="sensorNotAvailableWarningTitle">सेंसर उपलब्ध नहीं.</string>
+    <string name="sensorNotAvailableWarningText1">सेंसर</string>
+    <string name="sensorNotAvailableWarningText2">उपलब्ध नहीं है। आमतौर पर इसका मतलब है कि आपके डिवाइस में इस प्रकार का सेंसर नहीं है।</string>
+    <string name="sensorNotAvailableWarningMoreInfo">अधिक जानकारी</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+    <string name="tryagain">पुनः प्रयास करें</string>
+    <string name="doContinue">जारी रखें</string>
+    <string name="close">बंद</string>
+    <string name="next">अगला</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="rename">नाम बदलें</string>
+    <string name="delete">मिटायें</string>
+    <string name="confirmDelete">क्या आप इस प्रयोग को अपने संग्रह से हटाना चाहते हैं\?</string>
+    <string name="confirmDeleteTitle">मिटाने की पुष्टि करें\?</string>
+    <string name="clear_data">डाटा मिटायें</string>
+    <string name="clear_data_question">रिकार्डेड डाटा मिटायें \?</string>
+    <string name="clear">मिटायें</string>
+    <string name="leave_experiment">प्रयोग छोड़ें</string>
+    <string name="leave_experiment_question">इस प्रयोग को छोड़ें और रिकॉर्ड किए गए डेटा को खारिज करें\?</string>
+    <string name="leave">छोड़ें</string>
+    <string name="timed_stop">समयबद्ध रन रोकें</string>
+    <string name="timed_start">समयबद्ध रन प्रारंभ करें</string>
+    <string name="loadingTitle">लोड हो रहा है</string>
+    <string name="loadingText">प्रयोग लोड हो रहा है…</string>
+    <string name="loadingBluetoothConnectionText">ब्लूटूथ डिवाइस से कनेक्ट हो रहा है…</string>
+    <string name="timedRunDialogTitle">समयबद्ध रन</string>
+    <string name="timedRunStartDelay">शुरू होने में देरी (s)</string>
+    <string name="timedRunStopDelay">प्रयोग की अवधि (s)</string>
+    <string name="enableTimedRun">समयबद्ध रन करें</string>
+    <string name="export">जानकारी भेजें</string>
+    <string name="export_empty">यह प्रयोग कॉन्फ़िगरेशन निर्यात किए जाने वाले किसी भी डेटा को परिभाषित नहीं करता है। यदि यह एक त्रुटि है, तो कृपया QR कोड या कॉन्फ़िगरेशन फ़ाइल के स्रोत से संपर्क करें।</string>
+    <string name="export_subject">फिफॉक्स से डेटा</string>
+    <string name="export_pick_share">निर्यात की विधि चुनें</string>
+    <string name="share">स्क्रीनशॉट शेयर करें</string>
+    <string name="share_subject">फाईफॉक्स से स्क्रीनशॉट</string>
+    <string name="share_pick_share">शेयर विधि चुनें</string>
+    <string name="remoteServer">रिमोट एक्सेस की अनुमति दें</string>
+    <string name="remoteServerWarning">आप प्राप्त डेटा तक दूरस्थ पहुंच को सक्षम करने वाले हैं। आपको ऐसा केवल विश्वसनीय नेटवर्क पर ही करना चाहिए! यह भी ध्यान दें कि कई कॉर्पोरेट या विश्वविद्यालय नेटवर्क पर उपकरणों के बीच सीधी पहुंच संभव नहीं हो सकती है।
+\n
+\nसर्वोत्तम सुरक्षा और प्रदर्शन के लिए आपको इस डिवाइस को टेथरिंग विकल्प (मोबाइल हॉटस्पॉट) के माध्यम से कनेक्ट करना चाहिए।
+\n
+\nओके दबाने के बाद, आप उसी नेटवर्क पर किसी भी वेब ब्राउज़र से अपने माप को एक्सेस कर सकते हैं।</string>
+    <string name="remoteServerWarningTitle">सुरक्षा चेतावनी!</string>
+    <string name="remoteServerNoNetwork">आपको पहले रिमोट डिवाइस के लिए Wifi कनेक्शन सेट करना होगा। कृपया Wifi सक्षम करें या मोबाइल हॉटस्पॉट बनाएं।</string>
+    <string name="remoteServerActive">रिमोट एक्सेस इनेबल। इस प्रयोग को निम्न URL से एक्सेस करें:
+\n%1$s</string>
+    <string name="hotspotSettings">हॉटस्पॉट सेटिंग्स</string>
+    <string name="remoteColorMapWarning">रिमोट इंटरफ़ेस में कलर प्लॉट केवल एक निकट मान है। इन-ऐप प्लॉट के विपरीत, फिलहाल यह एक्स और वाई अक्ष पर गैर-समतुल्य डेटा या लॉगरिदमिक स्केलिंग को संभाल नहीं सकता है। इसलिए, अलग-अलग अंतराल पर डेटा गलत स्थान पर दिखाई दे सकता है।</string>
+    <string name="calibrated_magnetometer">कैलिब्रेटेड मैग्नेटोमीटर का प्रयोग करें</string>
+    <string name="force_gnss">केवल उपग्रह स्थिति</string>
+    <string name="switchToPhoneLayout">देखें: संकीर्ण</string>
+    <string name="switchColumns1">देखें: 1 कॉलम</string>
+    <string name="switchColumns2">देखें: 2 कॉलम</string>
+    <string name="switchColumns3">देखें: 3 कॉलम</string>
+    <string name="toggleBrightMode">ब्राइट मोड</string>
+    <string name="fontSize">फ़ॉन्ट साइज़</string>
+    <string name="show_description">प्रयोग की जानकारी</string>
+    <string name="save_locally">संग्रह में प्रयोग जोड़ें</string>
+    <string name="save_locally_done">प्रयोग संग्रह में सफलतापूर्वक जोड़ा गया।</string>
+    <string name="save_locally_message">यह प्रयोग एक दूरस्थ स्रोत से खोला गया है। क्या आप इसे अपने प्रयोग संग्रह में जोड़ना चाहते हैं\?</string>
+    <string name="save_locally_button">संग्रह में सहेजें</string>
+    <string name="save_state">प्रयोग की स्थिति सेव करें</string>
+    <string name="save_state_category">सहेजे गए प्रयोग की स्थिति</string>
+    <string name="remoteDepthGUIWarning">रिमोट इंटरफ़ेस पर LiDAR/ToF सेंसर का पूर्वावलोकन और नियंत्रण सपोर्टेड नहीं है।</string>
 </resources>
