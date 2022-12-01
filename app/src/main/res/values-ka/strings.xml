@@ -76,7 +76,7 @@
 \n Jonas Gessner
 \n Camilla Lummerzheim</string>
     <string name="gpl">Phyphox® არის ღია წვდომის პროგრამა შემქნილი GNU General Public Licence-ს მიერ. გთხოვთ ეწვიოთ http://phyphox.org დამატებითი ინფორმაციისთვის და ასევე კოდზე წვდომის მისაღებად. თუმცა დასახელება \"phyphox\" და\"RWTH Aachen\" არიან დარეგისტრირებული საფირმო ნიშნები.</string>
-    <string name="creditsLibs">"ვებ-ინტერფეისი დისტანციური წვდომისთვის იყენებს JavaScript-ის ბიბლიოთეკა \"Chart.js\" (http://chartjs.org), ხელმისაწვდომია MIT-ის ლიცენზიით. ფურიე გარდაქმნებისთვის ჩვენ ვიყენებთ FFTW  ბიბლიოთეკას (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, ხელმისაწვდომია GNU General Public Licence (version 2 or later) ლიცენზიით. GPS სიმაღლის მონაცემები კონვერტირდება WGS84 ellipsoid-დან EGM84 geoid-ში EGM84 data (30\' resolution)-ის გამოყენებით და დაპორტირებული ფუნქციები GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence)-დან."</string>
+    <string name="creditsLibs">ვებ-ინტერფეისი დისტანციური წვდომისთვის იყენებს JavaScript-ის ბიბლიოთეკა \"Chart.js\" (http://chartjs.org), ხელმისაწვდომია MIT-ის ლიცენზიით. ფურიე გარდაქმნებისთვის ჩვენ ვიყენებთ FFTW ბიბლიოთეკას (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, ხელმისაწვდომია GNU General Public Licence (version 2 or later) ლიცენზიით. GPS სიმაღლის მონაცემები კონვერტირდება WGS84 ellipsoid-დან EGM84 geoid-ში EGM84 data (30\' resolution)-ის გამოყენებით და დაპორტირებული ფუნქციები GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence)-დან.</string>
     <string name="sensorLinearAcceleration">წრფივი აჩქარება</string>
     <string name="sensorGravity">გარავიტაცია</string>
     <string name="sensorLight">სინათლე</string>
@@ -179,7 +179,7 @@
     <string name="pick_exportSets">ამოირჩიე მონაცემები საექსპორტოდ.</string>
     <string name="pick_exportFormat">ამოირჩიე მონაცემების ფორმატი.</string>
     <string name="noDrawableData">არარის დახატვადი მონაცემები.</string>
-    <string name="categoryNewExperiment">მარტივი ექსპერიმენტები.</string>
+    <string name="categoryNewExperiment">მარტივი ექსპერიმენტები</string>
     <string name="categoryRawSensor">სენსორის მონაცემები</string>
     <string name="categoryPhyphoxOrg">წვლილი შეიტანეთ ფაიფოქსში</string>
     <string name="categoryPhyphoxOrgHint">ფაიფოქსის დასახმარებლად ახალი ფუნქციებია სიის ბოლოს.</string>
