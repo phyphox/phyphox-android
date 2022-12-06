@@ -323,11 +323,17 @@ public class SensorInput implements SensorEventListener, Serializable {
                     t = experimentTimeReference.getExperimentTime();
                 } else {
                     t = experimentTimeReference.getExperimentTimeFromEvent(timestamp);
-                    if ((t < -10 || (t > experimentTimeReference.getExperimentTime())) && fixDeviceTimeOffset == 0.0) {
-                        Log.w("SensorInput", "Unrealistic time offset detected. Applying adjustment of " + -t + "s.");
-                        fixDeviceTimeOffset = -t;
+
+                    //Some devices have a bad implementation with a significant time offset. Here we check for this problem and try to correct it
+                    if (fixDeviceTimeOffset == 0.0) { //Once we add an adjustment we should not change it
+                        double now = experimentTimeReference.getExperimentTime();
+                        if ((t < -10 || (t > now)) && fixDeviceTimeOffset == 0.0) { //Timestamp from before the start of the experiment or in the future
+                            Log.w("SensorInput", "Unrealistic time offset detected at " + now + ". Applying adjustment of " + -t + "s.");
+                            fixDeviceTimeOffset = now-t;
+                        }
                     }
                     t += fixDeviceTimeOffset;
+
                     if (t < 0.0) {
                         Log.w("SensorInput", this.sensorName + ": Adjusted one timestamp from t = " + t + "s to t = 0s.");
                         t = 0.0;
@@ -374,7 +380,6 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(SensorEvent event) {
-
         //From here only listen to "this" sensor
         if (event.sensor.getType() == sensor.getType()) {
 

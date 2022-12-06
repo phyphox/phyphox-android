@@ -86,7 +86,7 @@ public class ExperimentTimeReference {
         if (timeMappings.isEmpty())
             return 0.0;
         TimeMapping last = timeMappings.get(timeMappings.size()-1);
-        if (last.event == TimeMappingEvent.PAUSE)
+        if ((last.event == TimeMappingEvent.PAUSE) || (eventTime < last.eventTime))
             return last.experimentTime;
         return last.experimentTime + (eventTime - last.eventTime)*1e-9;
     }
