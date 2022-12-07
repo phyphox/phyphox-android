@@ -49,7 +49,6 @@ import android.util.Xml;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -171,9 +170,9 @@ public class ExperimentList extends AppCompatActivity {
             return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
         View hintView = inflater.inflate(R.layout.support_phyphox_hint, null);
-        TextView text = (TextView)hintView.findViewById(R.id.support_phyphox_hint_text);
+        TextView text = hintView.findViewById(R.id.support_phyphox_hint_text);
         text.setText(res.getString(R.string.categoryPhyphoxOrgHint));
-        ImageView iv = ((ImageView) hintView.findViewById(R.id.support_phyphox_hint_arrow));
+        ImageView iv = hintView.findViewById(R.id.support_phyphox_hint_arrow);
         LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams)iv.getLayoutParams();
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         iv.setLayoutParams(lp);
@@ -187,33 +186,22 @@ public class ExperimentList extends AppCompatActivity {
         popupWindow.setOutsideTouchable(false);
         popupWindow.setTouchable(false);
         popupWindow.setFocusable(false);
-        LinearLayout ll = (LinearLayout) hintView.findViewById(R.id.support_phyphox_hint_root);
+        LinearLayout ll = hintView.findViewById(R.id.support_phyphox_hint_root);
 
-        ll.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (popupWindow != null)
-                    popupWindow.dismiss();
-                return true;
-            }
+        ll.setOnTouchListener((view, motionEvent) -> {
+            if (popupWindow != null)
+                popupWindow.dismiss();
+            return true;
         });
 
-        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                popupWindow = null;
-            }
-        });
-
+        popupWindow.setOnDismissListener(() -> popupWindow = null);
 
         final View root = findViewById(R.id.rootExperimentList);
-        root.post(new Runnable() {
-            public void run() {
-                try {
-                    popupWindow.showAtLocation(root, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
-                } catch (WindowManager.BadTokenException e) {
-                    Log.e("showHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
-                }
+        root.post(() -> {
+            try {
+                popupWindow.showAtLocation(root, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+            } catch (WindowManager.BadTokenException e) {
+                Log.e("showHint", "Bad token when showing hint. This is not unusual when app is rotating while showing the hint.");
             }
         });
     }
@@ -380,16 +368,14 @@ public class ExperimentList extends AppCompatActivity {
                                         return;
                                     }
                                 }
-                            } catch (Exception e) {
+                            } catch (Exception ignored) {
 
                             }
                             AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
                             builder.setMessage("This entry is just a link, but its URL is invalid.")
                                     .setTitle("Invalid URL")
-                                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
+                                    .setPositiveButton(R.string.ok, (dialog, id) -> {
 
-                                        }
                                     });
                             AlertDialog dialog = builder.create();
                             dialog.show();
@@ -399,18 +385,14 @@ public class ExperimentList extends AppCompatActivity {
                             AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
                             builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(unavailableSensorList.get(position)) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
                                     .setTitle(R.string.sensorNotAvailableWarningTitle)
-                                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
+                                    .setPositiveButton(R.string.ok, (dialog, id) -> {
 
-                                        }
                                     })
-                                    .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
-                                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                                startActivity(intent);
-                                            }
+                                    .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), (dialog, id) -> {
+                                        Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                        if (intent.resolveActivity(getPackageManager()) != null) {
+                                            startActivity(intent);
                                         }
                                     });
                             AlertDialog dialog = builder.create();
@@ -421,10 +403,10 @@ public class ExperimentList extends AppCompatActivity {
 
                 //Create our holder and set its refernces to the views
                 holder = new Holder();
-                holder.icon = (ImageView) convertView.findViewById(R.id.expIcon);
-                holder.title = (TextView) convertView.findViewById(R.id.expTitle);
-                holder.info = (TextView) convertView.findViewById(R.id.expInfo);
-                holder.menuBtn = (ImageButton) convertView.findViewById(R.id.menuButton);
+                holder.icon = convertView.findViewById(R.id.expIcon);
+                holder.title = convertView.findViewById(R.id.expTitle);
+                holder.info = convertView.findViewById(R.id.expInfo);
+                holder.menuBtn = convertView.findViewById(R.id.menuButton);
 
                 //Connect the convertView and the holder to retrieve it later
                 convertView.setTag(holder);
@@ -454,104 +436,94 @@ public class ExperimentList extends AppCompatActivity {
                 holder.menuBtn.setVisibility(ImageView.VISIBLE);
                 if (Helper.luminance(colors.get(position)) > 0.1)
                     holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
-                holder.menuBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
-                        popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
+                holder.menuBtn.setOnClickListener(v -> {
+                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
+                    popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
 
-                        popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
+                    popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
 
-                        popup.setOnMenuItemClickListener(new android.widget.PopupMenu.OnMenuItemClickListener() {
-                            @Override
-                            public boolean onMenuItemClick(MenuItem menuItem) {
-                                switch (menuItem.getItemId()) {
-                                    case R.id.experiment_item_share: {
-                                        File file = new File(getFilesDir(), "/"+xmlFiles.get(position));
+                    popup.setOnMenuItemClickListener(menuItem -> {
+                        switch (menuItem.getItemId()) {
+                            case R.id.experiment_item_share: {
+                                File file = new File(getFilesDir(), "/"+xmlFiles.get(position));
 
-                                        final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
-                                        final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
-                                                .setType("application/octet-stream") //mime type from the export filter
-                                                .setSubject(getString(R.string.save_state_subject))
-                                                .setStream(uri)
-                                                .getIntent()
-                                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                                final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
+                                        .setType("application/octet-stream") //mime type from the export filter
+                                        .setSubject(getString(R.string.save_state_subject))
+                                        .setStream(uri)
+                                        .getIntent()
+                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                                        List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
-                                        for (ResolveInfo ri : resInfoList) {
-                                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                        }
-
-                                        //Create chooser
-                                        Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
-                                        //And finally grant permissions again for any activities created by the chooser
-                                        resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
-                                        for (ResolveInfo ri : resInfoList) {
-                                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                                            ))
-                                                continue;
-                                            grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                        }
-                                        //Execute this intent
-                                        startActivity(chooser);
-                                        return true;
-                                    }
-                                    case R.id.experiment_item_delete: {
-                                        //Create dialog to ask the user if he REALLY wants to delete...
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                                        builder.setMessage(res.getString(R.string.confirmDelete))
-                                                .setTitle(R.string.confirmDeleteTitle)
-                                                .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        //Confirmed. Delete the item and reload the list
-                                                        deleteFile(xmlFiles.get(position));
-                                                        loadExperimentList();
-                                                    }
-                                                })
-                                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        //Aborted by user. Nothing to do.
-                                                    }
-                                                });
-                                        AlertDialog dialog = builder.create();
-                                        dialog.show();
-                                        return true;
-                                    }
-                                    case R.id.experiment_item_rename: {
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                                        final EditText edit = new EditText(parentActivity);
-                                        edit.setText(titles.get(position));
-                                        builder.setView(edit)
-                                                .setTitle(R.string.rename)
-                                                .setPositiveButton(R.string.rename, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        String newName = edit.getText().toString();
-                                                        if (newName.replaceAll("\\s+", "").isEmpty())
-                                                            return;
-                                                        //Confirmed. Rename the item and reload the list
-                                                        if (isSavedState)
-                                                            Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), "/phyphox/state-title", newName);
-                                                        loadExperimentList();
-                                                    }
-                                                })
-                                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        //Aborted by user. Nothing to do.
-                                                    }
-                                                });
-                                        AlertDialog dialog = builder.create();
-                                        dialog.show();
-                                        return true;
-                                    }
-
+                                List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                                for (ResolveInfo ri : resInfoList) {
+                                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                                 }
-                                return false;
-                            }
-                        });
 
-                        popup.show();
-                    }
+                                //Create chooser
+                                Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                                //And finally grant permissions again for any activities created by the chooser
+                                resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                                for (ResolveInfo ri : resInfoList) {
+                                    if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                                    ))
+                                        continue;
+                                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                }
+                                //Execute this intent
+                                startActivity(chooser);
+                                return true;
+                            }
+                            case R.id.experiment_item_delete: {
+                                //Create dialog to ask the user if he REALLY wants to delete...
+                                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                                builder.setMessage(res.getString(R.string.confirmDelete))
+                                        .setTitle(R.string.confirmDeleteTitle)
+                                        .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                //Confirmed. Delete the item and reload the list
+                                                deleteFile(xmlFiles.get(position));
+                                                loadExperimentList();
+                                            }
+                                        })
+                                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                //Aborted by user. Nothing to do.
+                                            }
+                                        });
+                                AlertDialog dialog = builder.create();
+                                dialog.show();
+                                return true;
+                            }
+                            case R.id.experiment_item_rename: {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                                final EditText edit = new EditText(parentActivity);
+                                edit.setText(titles.get(position));
+                                builder.setView(edit)
+                                        .setTitle(R.string.rename)
+                                        .setPositiveButton(R.string.rename, (dialog, id) -> {
+                                            String newName = edit.getText().toString();
+                                            if (newName.replaceAll("\\s+", "").isEmpty())
+                                                return;
+                                            //Confirmed. Rename the item and reload the list
+                                            if (isSavedState)
+                                                Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), "/phyphox/state-title", newName);
+                                            loadExperimentList();
+                                        })
+                                        .setNegativeButton(R.string.cancel, (dialog, id) -> {
+                                            //Aborted by user. Nothing to do.
+                                        });
+                                AlertDialog dialog = builder.create();
+                                dialog.show();
+                                return true;
+                            }
+
+                        }
+                        return false;
+                    });
+
+                    popup.show();
                 });
             }
 
@@ -959,13 +931,13 @@ public class ExperimentList extends AppCompatActivity {
                                 UUID uuid = null;
                                 try {
                                     uuid = UUID.fromString(uuidStr);
-                                } catch (Exception e) {
+                                } catch (Exception ignored) {
 
                                 }
                                 if (name != null && !name.isEmpty()) {
                                     if (bluetoothDeviceNameList != null) {
                                         if (!bluetoothDeviceNameList.containsKey(name))
-                                            bluetoothDeviceNameList.put(name, new Vector<String>());
+                                            bluetoothDeviceNameList.put(name, new Vector<>());
                                         bluetoothDeviceNameList.get(name).add(experimentXML);
                                     }
                                 }
@@ -1063,25 +1035,20 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Save scroll position to restore this later
-        ScrollView sv = ((ScrollView)findViewById(R.id.experimentScroller));
+        ScrollView sv = findViewById(R.id.experimentScroller);
         int scrollY = sv.getScrollY();
 
         //Clear the old list first
         categories.clear();
         bluetoothDeviceNameList.clear();
         bluetoothDeviceUUIDList.clear();
-        LinearLayout catList = (LinearLayout)findViewById(R.id.experimentList);
+        LinearLayout catList = findViewById(R.id.experimentList);
         catList.removeAllViews();
 
         //Load experiments from local files
         try {
             //Get all files that end on ".phyphox"
-            File[] files = getFilesDir().listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String filename) {
-                    return filename.endsWith(".phyphox");
-                }
-            });
+            File[] files = getFilesDir().listFiles((dir, filename) -> filename.endsWith(".phyphox"));
 
             for (File file : files) {
                 if (file.isDirectory())
@@ -1091,7 +1058,7 @@ public class ExperimentList extends AppCompatActivity {
                 loadExperimentInfo(input, file.getName(), null, false, categories, null, null);
             }
         } catch (IOException e) {
-            Toast.makeText(this, "Error: Could not load internal experiment list. " + e.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: Could not load internal experiment list. " + e, Toast.LENGTH_LONG).show();
         }
 
         //Load experiments from assets
@@ -1106,7 +1073,7 @@ public class ExperimentList extends AppCompatActivity {
                 loadExperimentInfo(input, experimentXML, null,true, categories, null, null);
             }
         } catch (IOException e) {
-            Toast.makeText(this, "Error: Could not load internal experiment list. " + e.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error: Could not load internal experiment list. " + e, Toast.LENGTH_LONG).show();
         }
 
         Collections.sort(categories, new categoryComparator());
@@ -1329,25 +1296,15 @@ public class ExperimentList extends AppCompatActivity {
                 View view = inflater.inflate(R.layout.open_multipe_dialog, null);
                 final Activity parent = this;
                 builder.setView(view)
-                        .setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int id) {
-                                for (File file : files) {
-                                    if (!Helper.experimentInCollection(file, parent))
-                                        file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
-                                }
-                                loadExperimentList();
-                                dialog.dismiss();
+                        .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
+                            for (File file : files) {
+                                if (!Helper.experimentInCollection(file, parent))
+                                    file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
                             }
-
+                            loadExperimentList();
+                            dialog.dismiss();
                         })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                            }
-
-                        });
+                        .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
                 AlertDialog dialog = builder.create();
 
                 ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_zip_dialog_instructions);

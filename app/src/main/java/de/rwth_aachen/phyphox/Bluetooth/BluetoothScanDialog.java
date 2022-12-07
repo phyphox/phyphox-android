@@ -6,7 +6,6 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
@@ -16,7 +15,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -56,7 +54,7 @@ public class BluetoothScanDialog {
     private Set<String> supportedNameFilter;
     private Set<UUID> supportedUUIDFilter;
 
-    private Boolean autoConnect;
+    private final Boolean autoConnect;
 
     public BluetoothScanDialog(Boolean autoConnect, final Activity activity, final Context context, BluetoothAdapter bta) {
         this.autoConnect = autoConnect;
@@ -64,70 +62,52 @@ public class BluetoothScanDialog {
         this.ctx = context;
         this.bta = bta;
 
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+        activity.runOnUiThread(() -> {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
 
-                if (!autoConnect) {
-                    LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            if (!autoConnect) {
+                LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-                    View view = inflater.inflate(R.layout.bluetooth_scan_dialog, null);
-                    builder.setView(view)
-                            .setPositiveButton(R.string.bt_more_info_link_button, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Uri uri = Uri.parse(context.getString(R.string.bt_more_info_link_url));
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                    if (intent.resolveActivity(activity.getPackageManager()) != null) {
-                                        activity.startActivity(intent);
-                                    }
-                                    dialog.dismiss();
-                                }
-                            });
-                    title = (TextView) view.findViewById(R.id.bluetooth_scan_dialog_title);
-                    list = (ListView) view.findViewById(R.id.bluetooth_scan_dialog_items);
-                }
-                builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                   @Override
-                   public void onClick(DialogInterface dialog, int id) {
-                       dialog.dismiss();
-                   }
-
-                });
-
-                dialog = builder.create();
-
-                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        synchronized (lock) {
-                            lock.notify();
-                        }
-                    }
-                });
-
-                if (!autoConnect) {
-                    listAdapter = new DeviceListAdapter();
-                    list.setAdapter(listAdapter);
-                    list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                            if (!listAdapter.getDevice(pos).supported && !listAdapter.getDevice(pos).phyphoxService)
-                                return;
-                            selectedDevice = listAdapter.getDevice(pos);
+                View view = inflater.inflate(R.layout.bluetooth_scan_dialog, null);
+                builder.setView(view)
+                        .setPositiveButton(R.string.bt_more_info_link_button, (dialog, which) -> {
+                            Uri uri = Uri.parse(context.getString(R.string.bt_more_info_link_url));
+                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                            if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                                activity.startActivity(intent);
+                            }
                             dialog.dismiss();
-                        }
-                    });
+                        });
+                title = view.findViewById(R.id.bluetooth_scan_dialog_title);
+                list = view.findViewById(R.id.bluetooth_scan_dialog_items);
+            }
+            builder.setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
 
-                    dialog.setTitle(context.getResources().getString(R.string.bt_pick_device));
+            dialog = builder.create();
+
+            dialog.setOnDismissListener(dialogInterface -> {
+                synchronized (lock) {
+                    lock.notify();
                 }
+            });
+
+            if (!autoConnect) {
+                listAdapter = new DeviceListAdapter();
+                list.setAdapter(listAdapter);
+                list.setOnItemClickListener((adapterView, view, pos, l) -> {
+                    if (!listAdapter.getDevice(pos).supported && !listAdapter.getDevice(pos).phyphoxService)
+                        return;
+                    selectedDevice = listAdapter.getDevice(pos);
+                    dialog.dismiss();
+                });
+
+                dialog.setTitle(context.getResources().getString(R.string.bt_pick_device));
             }
         });
     }
 
-    private BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
+    private final BluetoothAdapter.LeScanCallback scanCallback = new BluetoothAdapter.LeScanCallback() {
             @Override
             public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
                 final Set<UUID> uuids = new HashSet<>();
@@ -217,12 +197,9 @@ public class BluetoothScanDialog {
                         dialog.dismiss();
                     }
                 } else {
-                    parentActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            listAdapter.addDevice(deviceInfo);
-                            listAdapter.notifyDataSetChanged();
-                        }
+                    parentActivity.runOnUiThread(() -> {
+                        listAdapter.addDevice(deviceInfo);
+                        listAdapter.notifyDataSetChanged();
                     });
                 }
             }
@@ -236,28 +213,19 @@ public class BluetoothScanDialog {
             //Android 6.0: No permission? Request it!
             final Activity parent = this.parentActivity;
 
-            parent.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(parent);
-                    builder.setMessage(parent.getResources().getText(R.string.bt_location_explanation));
-                    builder.setCancelable(true);
-                    builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-                                    //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
-                                }
-                            });
-                    builder.setNegativeButton(parent.getResources().getText(R.string.cancel), new DialogInterface.OnClickListener() {
-                        public void onClick(final DialogInterface dialog, final int id) {
+            parent.runOnUiThread(() -> {
+                AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+                builder.setMessage(parent.getResources().getText(R.string.bt_location_explanation));
+                builder.setCancelable(true);
+                builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
+                        (dialog, id) -> {
                             dialog.cancel();
-                        }
-                    });
-                    final AlertDialog alert = builder.create();
-                    alert.show();
-                }
+                            ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                            //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
+                        });
+                builder.setNegativeButton(parent.getResources().getText(R.string.cancel), (dialog, id) -> dialog.cancel());
+                final AlertDialog alert = builder.create();
+                alert.show();
             });
 
             return false;
@@ -265,12 +233,9 @@ public class BluetoothScanDialog {
             //Android 12+: New Bluetooth scan permission required but no location permission
             final Activity parent = this.parentActivity;
 
-            parent.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    dialog.cancel();
-                    ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, 0);
-                }
+            parent.runOnUiThread(() -> {
+                dialog.cancel();
+                ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, 0);
             });
             return false;
         }
@@ -287,27 +252,18 @@ public class BluetoothScanDialog {
 
             //Android 6.0: Location service not enabled? Ask to enable it.
             final Activity parent = this.parentActivity;
-            parent.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(parent);
-                    builder.setMessage(parent.getResources().getText(R.string.bt_location_service_explanation));
-                    builder.setCancelable(true);
-                    builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                    parent.startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                                }
-                            });
-                    builder.setNegativeButton(parent.getResources().getText(R.string.cancel), new DialogInterface.OnClickListener() {
-                        public void onClick(final DialogInterface dialog, final int id) {
+            parent.runOnUiThread(() -> {
+                AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+                builder.setMessage(parent.getResources().getText(R.string.bt_location_service_explanation));
+                builder.setCancelable(true);
+                builder.setPositiveButton(parent.getResources().getText(R.string.doContinue),
+                        (dialog, id) -> {
                             dialog.cancel();
-                        }
-                    });
-                    final AlertDialog alert = builder.create();
-                    alert.show();
-                }
+                            parent.startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        });
+                builder.setNegativeButton(parent.getResources().getText(R.string.cancel), (dialog, id) -> dialog.cancel());
+                final AlertDialog alert = builder.create();
+                alert.show();
             });
 
             return false;
@@ -315,7 +271,11 @@ public class BluetoothScanDialog {
         return true;
     }
 
-    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter, final UUID uuidFilter, final Set<String> supportedNameFilter, final Set<UUID> supportedUUIDFilter, final String idString) {
+    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter,
+                                                  final UUID uuidFilter,
+                                                  final Set<String> supportedNameFilter,
+                                                  final Set<UUID> supportedUUIDFilter,
+                                                  final String idString) {
         this.nameFilter = nameFilter;
         this.uuidFilter = uuidFilter;
         this.supportedNameFilter = supportedNameFilter;
@@ -329,21 +289,18 @@ public class BluetoothScanDialog {
 
         bta.startLeScan(scanCallback);
 
-        parentActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                String notification;
-                if (nameFilter == null || nameFilter.isEmpty()) {
-                    notification = ctx.getResources().getString(R.string.bt_scanning_generic) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : "");
-                } else {
-                    notification = ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + "\" " + ctx.getResources().getString(R.string.bt_scanning_specific2) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : "");
-                }
-                if (autoConnect)
-                    dialog.setMessage(notification);
-                else
-                    title.setText(notification);
-                dialog.show();
+        parentActivity.runOnUiThread(() -> {
+            String notification;
+            if (nameFilter == null || nameFilter.isEmpty()) {
+                notification = ctx.getResources().getString(R.string.bt_scanning_generic) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : "");
+            } else {
+                notification = ctx.getResources().getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + "\" " + ctx.getResources().getString(R.string.bt_scanning_specific2) + (idString != null && !idString.isEmpty() ? " (" + idString + ")" : "");
             }
+            if (autoConnect)
+                dialog.setMessage(notification);
+            else
+                title.setText(notification);
+            dialog.show();
         });
 
         synchronized (lock) {
@@ -385,7 +342,7 @@ public class BluetoothScanDialog {
         private LayoutInflater inflator;
         public DeviceListAdapter() {
             super();
-            devices = new ArrayList<BluetoothDeviceInfo>();
+            devices = new ArrayList<>();
             inflator = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
         public void addDevice(BluetoothDeviceInfo device) {
@@ -415,21 +372,26 @@ public class BluetoothScanDialog {
         public BluetoothDeviceInfo getDevice(int position) {
             return devices.get(position);
         }
+
         public void clear() {
             devices.clear();
         }
+
         @Override
         public int getCount() {
             return devices.size();
         }
+
         @Override
         public Object getItem(int i) {
             return devices.get(i);
         }
+
         @Override
         public long getItemId(int i) {
             return i;
         }
+
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             SubViews subViews;
@@ -437,9 +399,9 @@ public class BluetoothScanDialog {
             if (view == null) {
                 view = inflator.inflate(R.layout.bluetooth_scan_dialog_entry, null);
                 subViews = new SubViews();
-                subViews.deviceName = (TextView) view.findViewById(R.id.device_name);
-                subViews.notSupported = (TextView) view.findViewById(R.id.device_not_supported);
-                subViews.signalStrength = (ImageView) view.findViewById(R.id.signal_strength);
+                subViews.deviceName = view.findViewById(R.id.device_name);
+                subViews.notSupported = view.findViewById(R.id.device_not_supported);
+                subViews.signalStrength = view.findViewById(R.id.signal_strength);
                 view.setTag(subViews);
             } else {
                 subViews = (SubViews) view.getTag();
