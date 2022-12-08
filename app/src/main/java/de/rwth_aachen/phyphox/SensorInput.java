@@ -26,7 +26,7 @@ public class SensorInput implements SensorEventListener, Serializable {
     public SensorRateStrategy rateStrategy;
     private boolean lastOneTooFast = false;
     private final ExperimentTimeReference experimentTimeReference; //the start time of the measurement. This allows for timestamps relative to the beginning of a measurement
-    public double fixDeviceTimeOffset = 0.0; //Some devices show a negative offset on the time events of the sensors. This seems to mostly affect sensors that report onChange. Our strategy is that sensor events with -10s < t < 0s are simply corrected to t=0 (old sensor events in the queue are still valid), but sensor events with t < -10s indicate a systematic problem on the device and are used to calculate this variable which will be used to also correct all subsequent readings.
+    public double fixDeviceTimeOffset = 0.0; //Some devices show a negative offset on the time events of the sensors. This seems to mostly affect sensors that report onChange. Our strategy is that sensor events with -300s < t < 0s are simply corrected to t=0 (old sensor events in the queue are still valid), but sensor events with t < -300s indicate a systematic problem on the device and are used to calculate this variable which will be used to also correct all subsequent readings.
 
     public boolean ignoreUnavailable = false;
 
@@ -327,7 +327,7 @@ public class SensorInput implements SensorEventListener, Serializable {
                     //Some devices have a bad implementation with a significant time offset. Here we check for this problem and try to correct it
                     if (fixDeviceTimeOffset == 0.0) { //Once we add an adjustment we should not change it
                         double now = experimentTimeReference.getExperimentTime();
-                        if ((t < -10 || (t > now)) && fixDeviceTimeOffset == 0.0) { //Timestamp from before the start of the experiment or in the future
+                        if ((t < -300 || (t > now + 0.1)) && fixDeviceTimeOffset == 0.0) { //Timestamp from before the start of the experiment or in the future
                             Log.w("SensorInput", "Unrealistic time offset detected at " + now + ". Applying adjustment of " + -t + "s.");
                             fixDeviceTimeOffset = now-t;
                         }
