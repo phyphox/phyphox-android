@@ -180,15 +180,15 @@ public class GpsInput implements Serializable {
             if (dataLon != null)
                 dataLon.append(event.getLongitude());
             if (dataZWGS84 != null) {
-                dataZWGS84.append(event.getAltitude());
+                dataZWGS84.append(event.hasAltitude() ? event.getAltitude() : Double.NaN);
             }
             if (dataZ != null) {
-                dataZ.append(event.getAltitude() != 0 ? event.getAltitude() - geoid.height(event.getLatitude(), event.getLongitude()) : 0.0);
+                dataZ.append(event.hasAltitude() ? event.getAltitude() - geoid.height(event.getLatitude(), event.getLongitude()) : Double.NaN);
             }
             if (dataV != null)
-                dataV.append(event.getSpeed());
+                dataV.append(event.hasSpeed() ? event.getSpeed() : Double.NaN);
             if (dataDir != null)
-                dataDir.append(event.getBearing());
+                dataDir.append(event.hasBearing() ? event.getBearing() : Double.NaN);
 
             if (dataAccuracy != null)
                 dataAccuracy.append(event.getAccuracy());
