@@ -57,7 +57,7 @@
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <string name="remotePhyphoxOrg">დისტანციური კონტროლის დახმარება</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
-    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#ka</string>
     <string name="deviceInfo">მოწყობილობაზე ინფორმაცია</string>
     <string name="copyToClipboard">დაკოპირება</string>
     <string name="deviceInfoCopied">მოწყობილობის ინფორმაცია დაკოპირდა.</string>
