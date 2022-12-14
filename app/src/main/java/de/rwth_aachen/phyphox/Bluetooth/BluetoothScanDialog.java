@@ -56,6 +56,8 @@ public class BluetoothScanDialog {
 
     private final Boolean autoConnect;
 
+    ArrayList<String> macAddresses = new ArrayList<>();
+
     public BluetoothScanDialog(Boolean autoConnect, final Activity activity, final Context context, BluetoothAdapter bta) {
         this.autoConnect = autoConnect;
         this.parentActivity = activity;
@@ -198,8 +200,13 @@ public class BluetoothScanDialog {
                     }
                 } else {
                     parentActivity.runOnUiThread(() -> {
-                        listAdapter.addDevice(deviceInfo);
-                        listAdapter.notifyDataSetChanged();
+                        String macAddress = deviceInfo.device.getAddress();
+                        if (!macAddresses.contains(macAddress)) {
+                            //TODO: improve the addition of macaddress or change it
+                            macAddresses.add(macAddress);
+                            listAdapter.addDevice(deviceInfo);
+                            listAdapter.notifyDataSetChanged();
+                        }
                     });
                 }
             }
