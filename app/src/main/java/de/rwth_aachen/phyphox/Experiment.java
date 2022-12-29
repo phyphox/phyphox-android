@@ -38,6 +38,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -65,6 +66,9 @@ import androidx.preference.PreferenceManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.journeyapps.barcodescanner.BarcodeEncoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -1735,13 +1739,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Start the remote server (see remoteServer class)
     private void startRemoteServer() {
-        TextView announcer = (TextView)findViewById(R.id.remoteInfo);
+        TextView tv_announcer = (TextView)findViewById(R.id.remoteInfo);
+        ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
+        FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                announcer.animate().translationY(announcer.getMeasuredHeight());
+                tv_announcer.animate().translationY(tv_announcer.getMeasuredHeight());
             else
-                announcer.setVisibility(View.INVISIBLE);
+                fl_announcer.setVisibility(View.INVISIBLE);
             return;
         }
 
@@ -1756,20 +1762,47 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Announce this to the user as there are security concerns.
         final String addressList = RemoteServer.getAddresses(getBaseContext()).replaceAll("\\s+$", "");
         if (addressList.isEmpty())
-            announcer.setText(res.getString(R.string.remoteServerNoNetwork));
+            tv_announcer.setText(res.getString(R.string.remoteServerNoNetwork));
         else
-            announcer.setText(res.getString(R.string.remoteServerActive, addressList));
-        announcer.setVisibility(View.VISIBLE);
+            tv_announcer.setText(res.getString(R.string.remoteServerActive, addressList));
+        fl_announcer.setVisibility(View.VISIBLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            announcer.animate().translationY(0).alpha(1.0f);
+            tv_announcer.animate().translationY(0).alpha(1.0f);
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
         lp.addRule(RelativeLayout.ABOVE, R.id.remoteInfo);
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
+        btn_moreInfo.setOnClickListener(v -> openDialogWithQrCode(addressList));
+
         //Also we want to keep the device active for remote access
         setKeepScreenOn(true);
+    }
+
+    private void openDialogWithQrCode(String serverAddress){
+        Bitmap bitmap = null;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater layoutInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+
+        View view = layoutInflater.inflate(R.layout.dialog_show_qrcode, null);
+
+        ImageView ivServerAddressQr = (ImageView) view.findViewById(R.id.img_qr_code);
+        BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+        try {
+            bitmap = barcodeEncoder.encodeBitmap(serverAddress, BarcodeFormat.QR_CODE,400,400);
+        } catch (WriterException e) {
+            Log.e("Error in QrCode", e.getMessage());
+        }
+
+        ivServerAddressQr.setImageBitmap(bitmap);
+
+        //TODO: Translate the text
+        builder.setTitle("For easy URL access, scan the QR code from your device.");
+        builder.setView(view).setPositiveButton("Ok", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+
     }
 
     //Stop the remote server (see remoteServer class)
