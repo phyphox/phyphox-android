@@ -2,7 +2,9 @@ package de.rwth_aachen.phyphox;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
+import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -90,7 +92,10 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
-public class Experiment extends AppCompatActivity implements View.OnClickListener, NetworkConnection.ScanDialogDismissedDelegate, NetworkConnection.NetworkConnectionDataPolicyInfoDelegate {
+public class Experiment extends AppCompatActivity implements View.OnClickListener,
+        NetworkConnection.ScanDialogDismissedDelegate,
+        NetworkConnection.NetworkConnectionDataPolicyInfoDelegate,
+        ComponentCallbacks2 {
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -220,6 +225,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 leaveExperiment();
             }
         });
+
+
+        ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
+        Log.d("Experiment", String.valueOf(memoryInfo.lowMemory));
+        Log.d("Experiment", String.valueOf(memoryInfo.availMem));
+        Log.d("Experiment", String.valueOf(memoryInfo.threshold));
+        Log.d("Experiment", String.valueOf(memoryInfo.totalMem));
+
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -1885,4 +1898,55 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    private void alertLowMemoryDialog(String title){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage("Do you want to stop the experiment?");
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                stopMeasurement();
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        builder.show();
+    }
+
+    //TODO : Translate string and manage the cases further
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        // TODO: This can be used to know how much memory is available, what is the threshold, so on..
+        ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
+
+        switch (level) {
+
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE:
+                Toast.makeText(this,"Memory running out! Please consider stopping experiment.",
+                        Toast.LENGTH_LONG).show();
+                break;
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW:
+                alertLowMemoryDialog("Memory running low");
+                break;
+            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL:
+                alertLowMemoryDialog("Memory running Critical");
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Get a MemoryInfo object for the device's current memory status.
+    private ActivityManager.MemoryInfo getAvailableMemory() {
+        ActivityManager activityManager = (ActivityManager) this.getSystemService(ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(memoryInfo);
+        return memoryInfo;
+    }
 }
