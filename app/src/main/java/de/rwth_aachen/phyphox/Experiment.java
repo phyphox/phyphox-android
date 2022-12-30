@@ -227,13 +227,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         });
 
 
-        ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
-        Log.d("Experiment", String.valueOf(memoryInfo.lowMemory));
-        Log.d("Experiment", String.valueOf(memoryInfo.availMem));
-        Log.d("Experiment", String.valueOf(memoryInfo.threshold));
-        Log.d("Experiment", String.valueOf(memoryInfo.totalMem));
-
-
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
@@ -1928,7 +1921,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         switch (level) {
 
             case ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE:
-                Toast.makeText(this,"Memory running out! Please consider stopping experiment.",
+                Toast.makeText(this, "Memory running out! Please consider stopping experiment.",
                         Toast.LENGTH_LONG).show();
                 break;
             case ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW:
