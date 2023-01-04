@@ -23,6 +23,34 @@
         </androidx.preference.Preference>
     </androidx.preference.PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="@string/settingGraphViewEdit">
+
+        <ListPreference
+            android:dialogTitle="@string/fontSize"
+            android:key="@string/keyFontSize"
+            android:icon="@drawable/ic_font_size"
+            android:defaultValue="@string/mediumValueFontSize"
+            android:entries="@array/entriesListPreferenceSize"
+            android:entryValues="@array/entriesValuesListPreferenceFontSize"
+            app:useSimpleSummaryProvider="true"
+            android:title="@string/fontSize"
+            />
+
+        <ListPreference
+            android:dialogTitle="@string/line_width"
+            android:key="@string/keyLinewidth"
+            android:icon="@drawable/ic_line_width"
+            android:defaultValue="@string/mediumValueLineWidth"
+            android:entries="@array/entriesListPreferenceSize"
+            android:entryValues="@array/entriesValuesListPreferenceLineWidth"
+            app:useSimpleSummaryProvider="true"
+            android:title="@string/line_width"
+            />
+
+
+    </PreferenceCategory>
+
     <androidx.preference.PreferenceCategory android:title="@string/settingsHeadAdvanced">
         <androidx.preference.EditTextPreference
             android:key="remoteAccessPort"

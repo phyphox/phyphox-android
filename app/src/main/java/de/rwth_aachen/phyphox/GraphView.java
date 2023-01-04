@@ -9,6 +9,8 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
+import androidx.preference.PreferenceManager;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -1195,7 +1197,11 @@ public class GraphView extends View {
 
         Resources res = getResources();
 
-        paint.setTextSize(res.getDimension(R.dimen.graph_font));
+        String savedFontSize = PreferenceManager.getDefaultSharedPreferences(
+                getContext()).getString(getResources().getString(R.string.keyFontSize),
+                getResources().getString(R.string.mediumValueFontSize));
+
+        paint.setTextSize(Float.parseFloat(savedFontSize));
         paint.setColor(res.getColor(R.color.mainExp));
         paint.setStrokeWidth(1);
         paint.setAlpha(255);
@@ -1355,7 +1361,11 @@ public class GraphView extends View {
 
         //Draw rect around graph
         paint.setColor(res.getColor(R.color.mainExp));
-        paint.setStrokeWidth(3);
+        String savedLineWidth = PreferenceManager.getDefaultSharedPreferences(
+                getContext()).getString(getResources().getString(R.string.keyLinewidth),
+                getResources().getString(R.string.mediumValueLineWidth));
+
+        paint.setStrokeWidth(Float.parseFloat(savedLineWidth));
         paint.setAlpha(255);
         paint.setStrokeCap(Paint.Cap.SQUARE);
         paint.setStyle(Paint.Style.STROKE);
