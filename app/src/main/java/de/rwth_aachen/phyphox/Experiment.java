@@ -63,6 +63,8 @@ import androidx.core.content.FileProvider;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
@@ -74,6 +76,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -87,6 +90,7 @@ import java.util.UUID;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -170,6 +174,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
+
+    ArrayList<Map<String,Object>> connectedDevices = new ArrayList<>();
+
 
     private void doLeaveExperiment() {
         Intent upIntent = NavUtils.getParentActivityIntent(this);
@@ -599,43 +606,47 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
                 // define onSuccess
                 if (startMeasurement) {
-                    btTask.onSuccess = new Runnable () {
-                      @Override
-                        public void run () {
-                          if (timed) {
-                              startTimedMeasurement();
-                          } else {
-                              startMeasurement();
-                          }
-                      }
+                    btTask.onSuccess = () -> {
+                        showBatteryLevel();
+                        if (timed) {
+                            startTimedMeasurement();
+                        } else {
+                            startMeasurement();
+                        }
                     };
                 }
 
                 // set attributes of errorDialog
                 Bluetooth.errorDialog.context = Experiment.this;
-                Bluetooth.errorDialog.cancel = new Runnable () {
-                    @Override
-                    public void run () {
-                        btTask.progress.dismiss();
+                Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
+                Bluetooth.errorDialog.tryAgain = () -> {
+                    // start a new task with the same attributes
+                    Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
+                    newBtTask.progress = btTask.progress;
+                    newBtTask.onSuccess = btTask.onSuccess;
+                    // show ProgressDialog again
+                    if (btTask.progress != null) {
+                        btTask.progress.show();
                     }
-                };
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                    @Override
-                    public void run() {
-                        // start a new task with the same attributes
-                        Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
-                        newBtTask.progress = btTask.progress;
-                        newBtTask.onSuccess = btTask.onSuccess;
-                        // show ProgressDialog again
-                        if (btTask.progress != null) {
-                            btTask.progress.show();
-                        }
-                        newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-                    }
+                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+                    newBtTask.onSuccess = this::showBatteryLevel;
                 };
                 btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
             }
         }
+    }
+
+    private void showBatteryLevel(){
+        Map<String, Object> data;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            data = Bluetooth.getConnectedDeviceInfo();
+            connectedDevices.add(data);
+        }
+
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
+        ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(deviceInfoAdapter);
     }
 
     @SuppressLint("ClickableViewAccessibility")

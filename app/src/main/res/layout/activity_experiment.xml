@@ -1,6 +1,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:paddingBottom="0dp"
     tools:context="de.rwth_aachen.phyphox.Experiment"
     android:clickable="false"
@@ -16,7 +17,9 @@
         android:background="?attr/colorPrimary"
         android:elevation="8dp"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true">
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -53,13 +56,6 @@
         android:progressBackgroundTint="@android:color/transparent"
         android:layout_below="@+id/tab_layout" />
 
-    <androidx.viewpager.widget.ViewPager
-        android:layout_below="@id/tab_layout"
-        android:id="@+id/view_pager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -75,21 +71,25 @@
         android:paddingRight="@dimen/activity_horizontal_padding"
         android:visibility="invisible"/>
 
+    <androidx.viewpager.widget.ViewPager
+        android:layout_below="@id/tab_layout"
+        android:id="@+id/view_pager"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/recycler_view_battery"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        />
+
     <FrameLayout
         android:id="@+id/fl_remoteInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignWithParentIfMissing="false"
+        android:layout_above="@id/recycler_view_battery"
         android:paddingLeft="@dimen/activity_horizontal_padding"
         android:paddingRight="@dimen/activity_horizontal_padding"
-        android:visibility="invisible"
-        android:elevation="4dp">
+        android:visibility="invisible">
 
         <TextView
             android:layout_width="wrap_content"
@@ -107,6 +107,7 @@
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:paddingEnd="4dp"
+            android:paddingLeft="4dp"
             android:paddingBottom="4dp"
             android:background="@color/backgroundExp2"
             android:layout_gravity="bottom|end"
@@ -114,5 +115,17 @@
             android:paddingRight="4dp" />
 
     </FrameLayout>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_battery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        app:layout_constraintHeight_max="50dp"
+        android:scrollbars="vertical">
+
+    </androidx.recyclerview.widget.RecyclerView>
+
 
 </RelativeLayout>
