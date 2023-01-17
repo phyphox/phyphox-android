@@ -1755,8 +1755,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
                 tv_announcer.animate().translationY(tv_announcer.getMeasuredHeight());
+                btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight());
+            }
             else
                 fl_announcer.setVisibility(View.INVISIBLE);
             return;
@@ -1777,8 +1779,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         else
             tv_announcer.setText(res.getString(R.string.remoteServerActive, addressList));
         fl_announcer.setVisibility(View.VISIBLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            btn_moreInfo.animate().translationY(0).alpha(1.0f);
             tv_announcer.animate().translationY(0).alpha(1.0f);
+        }
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
@@ -1823,10 +1827,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         //Announce this to the user, so he knows why the webinterface stopped working.
         TextView announcer = (TextView)findViewById(R.id.remoteInfo);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight()).alpha(0.0f);
             announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
-        else
+        }
+        else{
+            btn_moreInfo.setVisibility(View.INVISIBLE);
             announcer.setVisibility(View.INVISIBLE);
+
+        }
+
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
