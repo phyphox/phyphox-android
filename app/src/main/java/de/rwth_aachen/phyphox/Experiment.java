@@ -1786,7 +1786,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
-        lp.addRule(RelativeLayout.ABOVE, R.id.remoteInfo);
+        lp.addRule(RelativeLayout.ABOVE, R.id.fl_remoteInfo);
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         btn_moreInfo.setOnClickListener(v -> openDialogWithQrCode(addressList));
@@ -1835,12 +1835,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         else{
             btn_moreInfo.setVisibility(View.INVISIBLE);
             announcer.setVisibility(View.INVISIBLE);
-
         }
 
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
+        lp.addRule(RelativeLayout.ABOVE, R.id.recycler_view_battery);
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         if (remote == null) //no server there? never mind.
