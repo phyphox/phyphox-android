@@ -15,7 +15,7 @@
         android:gravity="center"
         android:text=""
         android:padding="10dp"
-        android:textColor="@color/mainDialog" />
+        android:textColor="@color/phyphox_black_100" />
 
     <ImageView
         android:id="@+id/support_phyphox_hint_arrow"

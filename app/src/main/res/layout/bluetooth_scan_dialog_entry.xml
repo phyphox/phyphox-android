@@ -13,7 +13,7 @@
         android:textSize="24sp"/>
     <TextView android:id="@+id/device_not_supported"
         android:text="@string/bt_device_not_supported"
-        android:textColor="@color/highlight"
+        android:textColor="@color/phyphox_primary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/device_name"

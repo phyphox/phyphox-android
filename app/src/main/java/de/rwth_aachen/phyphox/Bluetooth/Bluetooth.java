@@ -1310,7 +1310,7 @@ public class Bluetooth implements Serializable {
                 if (message.equals("")) {
                     message = context.getResources().getString(R.string.bt_default_error_message); // set default error message
                 }
-                ContextThemeWrapper ctw = new ContextThemeWrapper(context, R.style.phyphox);
+                ContextThemeWrapper ctw = new ContextThemeWrapper(context, R.style.Theme_Phyphox_DayNight);
                 AlertDialog.Builder errorDialog = new AlertDialog.Builder(ctw);
                 LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 View neLayout = neInflater.inflate(R.layout.error_dialog, null);

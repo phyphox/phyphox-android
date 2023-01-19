@@ -217,7 +217,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setTheme(R.style.phyphox);
+        setTheme(R.style.Theme_Phyphox_DayNight);
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -1332,7 +1332,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (!experiment.stateTitle.isEmpty()) {
                 TextView stateLabel = new TextView(builder.getContext());
                 stateLabel.setText(experiment.stateTitle);
-                stateLabel.setTextColor(res.getColor(R.color.main));
+                stateLabel.setTextColor(res.getColor(R.color.phyphox_white_100));
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
                 stateLabel.setLayoutParams(lp);
@@ -1341,7 +1341,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             TextView description = new TextView(builder.getContext());
             description.setText(experiment.description);
-            description.setTextColor(res.getColor(R.color.main2));
+            description.setTextColor(res.getColor(R.color.phyphox_white_80));
 
             ll.addView(description);
 

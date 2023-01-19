@@ -7,12 +7,11 @@
     android:paddingRight="0dp"
     android:paddingTop="0dp"
     android:paddingBottom="0dp" tools:context=".ExperimentList"
-    android:background="@color/background"
     android:id="@+id/rootExperimentList">
 
     <RelativeLayout
         android:id="@+id/expListHeader"
-        android:background="@color/background"
+        android:background="@color/phyphox_black_60"
         android:elevation="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -27,7 +26,7 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:background="@color/background"
+            android:background="@color/phyphox_black_60"
             android:layout_marginLeft="@dimen/activity_horizontal_margin"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
@@ -58,7 +57,6 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:background="@color/background"
         android:layout_below="@+id/expListHeader">
 
         <LinearLayout
@@ -68,7 +66,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/experimentList"
-            android:paddingTop="@dimen/activity_vertical_margin"></LinearLayout>
+            android:paddingTop="@dimen/activity_vertical_margin"/>
     </de.rwth_aachen.phyphox.Helper.ReportingScrollView>
 
     <View
@@ -76,7 +74,7 @@
         android:layout_height="match_parent"
         android:visibility="invisible"
         android:id="@+id/experimentListDimmer"
-        android:background="@color/background"/>
+        android:background="@color/phyphox_black_60"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         app:useCompatPadding="true"
@@ -86,7 +84,7 @@
         android:text="@string/newExperimentQR"
         android:id="@+id/newExperimentQR"
         app:srcCompat="@drawable/new_experiment_qr"
-        app:backgroundTint="@color/qrFabBG"
+        app:backgroundTint="@color/phyphox_white_80"
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"
@@ -115,7 +113,7 @@
         android:text="@string/newExperimentBluetooth"
         android:id="@+id/newExperimentBluetooth"
         app:srcCompat="@drawable/new_experiment_bluetooth"
-        app:backgroundTint="@color/bluetooth"
+        app:backgroundTint="@color/phyphox_blue_100"
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"
@@ -144,7 +142,7 @@
         android:text="@string/newExperimentSimple"
         android:id="@+id/newExperimentSimple"
         app:srcCompat="@drawable/new_experiment_simple"
-        app:backgroundTint="@color/newExperimentFabBG"
+        app:backgroundTint="@color/phyphox_red"
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"

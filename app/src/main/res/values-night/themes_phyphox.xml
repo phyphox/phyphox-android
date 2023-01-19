@@ -3,25 +3,23 @@
 <!-- Generated with http://android-holo-colors.com -->
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox"/>
+    <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox.Dark"/>
 
-    <style name="Theme.Phyphox" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="Theme.Phyphox.Dark" parent="Theme.Phyphox">
 
-        <item name="android:textColor">@color/phyphox_black_60</item>
-        <item name="android:textColorPrimary">@color/phyphox_black_60</item>
-        <item name="android:textColorSecondary">@color/phyphox_black_60</item>
+        <item name="android:textColor">@color/phyphox_white_100</item>
+        <item name="android:textColorPrimary">@color/phyphox_white_100</item>
+        <item name="android:textColorSecondary">@color/phyphox_white_100</item>
         <item name="colorAccent">@color/phyphox_primary</item>
         <item name="android:colorAccent" tools:ignore="NewApi">@color/phyphox_primary</item>
         <item name="android:textColorHighlight">@color/phyphox_primary</item>
-        <item name="backgroundColor">@color/phyphox_white_100</item>
+        <item name="backgroundColor">@color/phyphox_black_80</item>
 
         <item name="colorPrimary">@color/phyphox_primary</item>
         <item name="colorPrimaryDark">@color/phyphox_black_80</item>
 
         <item name="android:textSize">@dimen/font</item>
 
-        <item name="textAppearanceLabelSmall">@style/TextAppearance.Phyphox.Small</item>
-        <item name="textAppearanceLabelMedium">@style/TextAppearance.Phyphox.Medium</item>
 
         <item name="alertDialogTheme">@style/phyphoxDialog</item>
         <item name="dialogTheme">@style/phyphoxDialog</item>

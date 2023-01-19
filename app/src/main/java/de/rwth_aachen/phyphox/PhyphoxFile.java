@@ -1248,7 +1248,7 @@ public abstract class PhyphoxFile {
                     int precision = getIntAttribute("precision", 2);
                     boolean scientific = getBooleanAttribute("scientific", false);
                     double size = getDoubleAttribute("size", 1.0);
-                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.mainExp));
+                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
 
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
@@ -1293,7 +1293,7 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "info": { //An info element just shows some text
-                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.mainExp));
+                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
                     boolean bold = getBooleanAttribute("bold", false);
                     boolean italic = getBooleanAttribute("italic", false);
                     String gravityString = getStringAttribute("align");
@@ -1312,7 +1312,7 @@ public abstract class PhyphoxFile {
                 }
                 case "separator": //An info element just shows some text
                     ExpView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
-                    int c = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
+                    int c = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_60));
                     float height = (float)getDoubleAttribute("height", 0.1);
                     separatore.setColor(c);
                     separatore.setHeight(height);
@@ -1335,7 +1335,7 @@ public abstract class PhyphoxFile {
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
                     while (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE,"mapColor"+colorStepIndex) != null) {
-                        int color = getColorAttribute("mapColor"+colorStepIndex, parent.getResources().getColor(R.color.highlight));
+                        int color = getColorAttribute("mapColor"+colorStepIndex, parent.getResources().getColor(R.color.phyphox_primary));
                         colorScale.add(color);
                         colorStepIndex++;
                     }
@@ -1375,10 +1375,10 @@ public abstract class PhyphoxFile {
                     int xPrecision = getIntAttribute("xPrecision", -1);
                     int yPrecision = getIntAttribute("yPrecision", -1);
                     int zPrecision = getIntAttribute("zPrecision", -1);
-                    int color = parent.getResources().getColor(R.color.highlight);
+                    int color = parent.getResources().getColor(R.color.phyphox_primary);
                     boolean globalColor = false;
                     if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {
-                        color = getColorAttribute("color", parent.getResources().getColor(R.color.highlight));
+                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_primary));
                         globalColor = true;
                     }
 
@@ -1451,17 +1451,17 @@ public abstract class PhyphoxFile {
                     if (!globalColor) {
                         for (int i = 0; i < Math.ceil(ats.size() / 3); i++) {
                             switch (i % 6) {
-                                case 0: ge.setColor(parent.getResources().getColor(R.color.presetOrange), i);
+                                case 0: ge.setColor(parent.getResources().getColor(R.color.phyphox_primary), i);
                                     break;
-                                case 1: ge.setColor(parent.getResources().getColor(R.color.presetGreen), i);
+                                case 1: ge.setColor(parent.getResources().getColor(R.color.phyphox_green), i);
                                     break;
-                                case 2: ge.setColor(parent.getResources().getColor(R.color.presetBlue), i);
+                                case 2: ge.setColor(parent.getResources().getColor(R.color.phyphox_blue_60), i);
                                     break;
-                                case 3: ge.setColor(parent.getResources().getColor(R.color.presetYellow), i);
+                                case 3: ge.setColor(parent.getResources().getColor(R.color.phyphox_yellow), i);
                                     break;
-                                case 4: ge.setColor(parent.getResources().getColor(R.color.presetMagenta), i);
+                                case 4: ge.setColor(parent.getResources().getColor(R.color.phyphox_magenta), i);
                                     break;
-                                case 5: ge.setColor(parent.getResources().getColor(R.color.presetRed), i);
+                                case 5: ge.setColor(parent.getResources().getColor(R.color.phyphox_red), i);
                                     break;
                             }
                         }
@@ -1484,7 +1484,7 @@ public abstract class PhyphoxFile {
                             }
                         }
                         if (at.attributes.containsKey("color")) {
-                            int localColor = Helper.parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.presetOrange), parent.getResources());
+                            int localColor = Helper.parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.phyphox_primary), parent.getResources());
                             ge.setColor(localColor | 0xff000000, i/3);
                         }
                         if (at.attributes.containsKey("linewidth")) {
@@ -1593,7 +1593,7 @@ public abstract class PhyphoxFile {
                     } else
                         svge.setSvgParts(svgCode);
 
-                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.backgroundExp));
+                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_60));
                     svge.setBackgroundColor(color);
 
                     newView.elements.add(svge);

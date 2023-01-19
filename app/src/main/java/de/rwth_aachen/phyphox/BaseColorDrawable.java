@@ -23,7 +23,7 @@ abstract class BaseColorDrawable extends Drawable {
     BaseColorDrawable(Context c) {
         //Background paint
         this.paintBG = new Paint();
-        paintBG.setColor(ContextCompat.getColor(c, R.color.highlight));
+        paintBG.setColor(ContextCompat.getColor(c, R.color.phyphox_primary));
         paintBG.setStyle(Paint.Style.FILL);
     }
 
@@ -64,7 +64,7 @@ class TextIcon extends BaseColorDrawable {
 
         //Text-Paint
         this.paint = new Paint();
-        paint.setColor(ContextCompat.getColor(c, R.color.main));
+        paint.setColor(ContextCompat.getColor(c, R.color.phyphox_white_100));
         paint.setTextSize(c.getResources().getDimension(R.dimen.expElementIconSize)*0.5f);
         paint.setAntiAlias(true);
         paint.setFakeBoldText(true);

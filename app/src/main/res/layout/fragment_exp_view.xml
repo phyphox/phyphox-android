@@ -5,7 +5,7 @@
         android:id="@+id/scrollView"
         tools:context="de.rwth_aachen.phyphox.ExpViewFragment"
         android:clickable="true"
-        android:background="@color/backgroundExp" >
+        android:background="@color/phyphox_black_60" >
 
         <LinearLayout
             android:orientation="vertical"

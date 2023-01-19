@@ -125,21 +125,21 @@ public abstract class Helper {
             return defaultValue;
         //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
         switch(colorStr.toLowerCase()) {
-            case "orange": return res.getColor(R.color.presetOrange);
-            case "red": return res.getColor(R.color.presetRed);
-            case "magenta": return res.getColor(R.color.presetMagenta);
-            case "blue": return res.getColor(R.color.presetBlue);
-            case "green": return res.getColor(R.color.presetGreen);
-            case "yellow": return res.getColor(R.color.presetYellow);
-            case "white": return res.getColor(R.color.presetWhite);
+            case "orange": return res.getColor(R.color.phyphox_primary);
+            case "red": return res.getColor(R.color.phyphox_red);
+            case "magenta": return res.getColor(R.color.phyphox_magenta);
+            case "blue": return res.getColor(R.color.phyphox_blue_60);
+            case "green": return res.getColor(R.color.phyphox_green);
+            case "yellow": return res.getColor(R.color.phyphox_yellow);
+            case "white": return res.getColor(R.color.phyphox_white_100);
 
-            case "weakorange": return res.getColor(R.color.presetWeakOrange);
-            case "weakred": return res.getColor(R.color.presetWeakRed);
-            case "weakmagenta": return res.getColor(R.color.presetWeakMagenta);
-            case "weakblue": return res.getColor(R.color.presetWeakBlue);
-            case "weakgreen": return res.getColor(R.color.presetWeakGreen);
-            case "weakyellow": return res.getColor(R.color.presetWeakYellow);
-            case "weakwhite": return res.getColor(R.color.presetWeakWhite);
+            case "weakorange": return res.getColor(R.color.phyphox_primary_weak);
+            case "weakred": return res.getColor(R.color.phyphox_red_weak);
+            case "weakmagenta": return res.getColor(R.color.phyphox_magenta_weak);
+            case "weakblue": return res.getColor(R.color.phyphox_blue_40);
+            case "weakgreen": return res.getColor(R.color.phyphox_green_weak);
+            case "weakyellow": return res.getColor(R.color.phyphox_yellow_weak);
+            case "weakwhite": return res.getColor(R.color.phyphox_white_60);
         }
 
         //Not a constant, so it hast to be hex...

@@ -426,7 +426,7 @@ public class BluetoothScanDialog {
                 subViews.notSupported.setVisibility(View.VISIBLE);
             }
 
-            int color = deviceInfo.supported || deviceInfo.phyphoxService ? (deviceInfo.oneOfMany && deviceInfo.strongestSignal ? ctx.getResources().getColor(R.color.highlight) : ctx.getResources().getColor(R.color.main)) : ctx.getResources().getColor(R.color.mainDisabled);
+            int color = deviceInfo.supported || deviceInfo.phyphoxService ? (deviceInfo.oneOfMany && deviceInfo.strongestSignal ? ctx.getResources().getColor(R.color.phyphox_primary) : ctx.getResources().getColor(R.color.phyphox_white_100)) : ctx.getResources().getColor(R.color.phyphox_white_50_black_50);
             subViews.deviceName.setTextColor(color);
 
             if (deviceInfo.lastRSSI > -30)

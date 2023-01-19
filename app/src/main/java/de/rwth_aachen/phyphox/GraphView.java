@@ -1200,7 +1200,7 @@ public class GraphView extends View {
         Resources res = getResources();
 
         paint.setTextSize(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.TEXT_SIZE));
-        paint.setColor(res.getColor(R.color.mainExp));
+        paint.setColor(res.getColor(R.color.phyphox_white_100));
         paint.setStrokeWidth(1);
         paint.setAlpha(255);
         paint.setStyle(Paint.Style.FILL);
@@ -1358,7 +1358,7 @@ public class GraphView extends View {
         }
 
         //Draw rect around graph
-        paint.setColor(res.getColor(R.color.mainExp));
+        paint.setColor(res.getColor(R.color.phyphox_white_100));
 
         paint.setStrokeWidth(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.BORDER_WIDTH));
         paint.setAlpha(255);
