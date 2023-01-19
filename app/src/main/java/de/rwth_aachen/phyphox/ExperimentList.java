@@ -71,6 +71,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
@@ -437,7 +438,7 @@ public class ExperimentList extends AppCompatActivity {
                 if (Helper.luminance(colors.get(position)) > 0.1)
                     holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.menuBtn.setOnClickListener(v -> {
-                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
+                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight), v);
                     popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
 
                     popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
@@ -2237,6 +2238,10 @@ public class ExperimentList extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experiment_list);
 
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
+
         res = getResources(); //Get Resource reference for easy access.
 
         if (!displayDoNotDamageYourPhone()) { //Show the do-not-damage-your-phone-warning
@@ -2250,7 +2255,7 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox);
+                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight);
                 PopupMenu popup = new PopupMenu(wrapper, v);
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override

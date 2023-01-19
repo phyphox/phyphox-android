@@ -23,8 +23,8 @@
         <item name="textAppearanceLabelSmall">@style/TextAppearance.Phyphox.Small</item>
         <item name="textAppearanceLabelMedium">@style/TextAppearance.Phyphox.Medium</item>
 
-        <item name="alertDialogTheme">@style/phyphoxDialog</item>
-        <item name="dialogTheme">@style/phyphoxDialog</item>
+        <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
+        <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
     </style>
 
@@ -40,8 +40,8 @@
         <item name="colorPrimaryDark">@color/phyphox_black_80</item>
         <item name="android:colorBackground">@color/phyphox_black_80</item>
 
-        <item name="alertDialogTheme">@style/phyphoxDialog</item>
-        <item name="dialogTheme">@style/phyphoxDialog</item>
+        <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
+        <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
     </style>
 

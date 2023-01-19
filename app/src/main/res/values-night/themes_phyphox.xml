@@ -15,14 +15,10 @@
         <item name="android:textColorHighlight">@color/phyphox_primary</item>
         <item name="backgroundColor">@color/phyphox_black_80</item>
 
-        <item name="colorPrimary">@color/phyphox_primary</item>
-        <item name="colorPrimaryDark">@color/phyphox_black_80</item>
-
-        <item name="android:textSize">@dimen/font</item>
+        <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
+        <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
 
 
-        <item name="alertDialogTheme">@style/phyphoxDialog</item>
-        <item name="dialogTheme">@style/phyphoxDialog</item>
 
     </style>
 
@@ -38,8 +34,8 @@
         <item name="colorPrimaryDark">@color/phyphox_black_80</item>
         <item name="android:colorBackground">@color/phyphox_black_80</item>
 
-        <item name="alertDialogTheme">@style/phyphoxDialog</item>
-        <item name="dialogTheme">@style/phyphoxDialog</item>
+        <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
+        <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
     </style>
 

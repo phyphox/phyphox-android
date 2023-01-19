@@ -18,8 +18,14 @@
       <item name="android:colorBackground">@color/phyphox_black_40</item>
   </style>
 
-    <style name="phyphoxDialog" parent="Theme.AppCompat.Dialog.Alert">
+    <style name="Theme.Phyphox.Dialog.Alert.Light" parent="Theme.AppCompat.Dialog.Alert">
         <item name="colorAccent">@color/phyphox_primary</item>
+        <item name="android:colorBackground">@color/phyphox_white_100</item>
+    </style>
+
+    <style name="Theme.Phyphox.Dialog.Alert.Dark" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/phyphox_primary</item>
+        <item name="android:colorBackground">@color/phyphox_black_60</item>
     </style>
 
     <style name="rwthDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
