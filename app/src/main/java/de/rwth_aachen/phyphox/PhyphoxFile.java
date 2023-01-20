@@ -1382,6 +1382,7 @@ public abstract class PhyphoxFile {
                         globalColor = true;
                     }
 
+
                     GraphView.scaleMode scaleMinX = parseScaleMode("scaleMinX");
                     GraphView.scaleMode scaleMaxX = parseScaleMode("scaleMaxX");
                     GraphView.scaleMode scaleMinY = parseScaleMode("scaleMinY");

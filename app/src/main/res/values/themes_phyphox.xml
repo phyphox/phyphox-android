@@ -26,6 +26,8 @@
         <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
+        <item name="tint">@color/phyphox_black_80</item>
+
     </style>
 
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">

@@ -385,7 +385,7 @@ public class ExpView implements Serializable{
             labelView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL); //Align right to the center of the row
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(color);
+            //labelView.setTextColor(color);
 
             //Create the value (and unit) as textView
             tv = new TextView(c);
@@ -397,7 +397,7 @@ public class ExpView implements Serializable{
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize*(float)size); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
-            tv.setTextColor(color);
+            //tv.setTextColor(color);
 
 
             //Add label and value to the row
@@ -623,7 +623,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     (int)(res.getDimension(R.dimen.info_element_font)*height));
             rootView.setLayoutParams(lllp);
-            rootView.setBackgroundColor(color);
+            //rootView.setBackgroundColor(color);
 
             //Add it to the linear layout
             ll.addView(rootView);
@@ -1629,7 +1629,8 @@ public class ExpView implements Serializable{
                                     "spanGaps: false," +
                                     "borderColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
                                     "backgroundColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
-                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) + "*scaleFactor," +
+                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) +
+                                    "*scaleFactor," +
                                     "xAxisID: \"xaxis\"," +
                                     "yAxisID: \"yaxis\"" +
                                 "},";
@@ -1945,7 +1946,7 @@ public class ExpView implements Serializable{
             aspectRatio = 2.5;
 
             warningText = res.getString(R.string.remoteDepthGUIWarning).replace("'", "\\'");
-            this.color = res.getColor(R.color.phyphox_white_100);
+            //this.color = res.getColor(R.color.phyphox_white_100);
         }
 
         //Interface to change the height of the graph
@@ -2232,7 +2233,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
-            svgView.setBackgroundColor(backgroundColor);
+            //svgView.setBackgroundColor(backgroundColor);
             if (source != null)
                 svgView.setSvgParts(source);
 

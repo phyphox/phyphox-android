@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.Helper;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -128,10 +129,26 @@ public abstract class Helper {
             case "orange": return res.getColor(R.color.phyphox_primary);
             case "red": return res.getColor(R.color.phyphox_red);
             case "magenta": return res.getColor(R.color.phyphox_magenta);
-            case "blue": return res.getColor(R.color.phyphox_blue_60);
-            case "green": return res.getColor(R.color.phyphox_green);
-            case "yellow": return res.getColor(R.color.phyphox_yellow);
-            case "white": return res.getColor(R.color.phyphox_white_100);
+            case "blue":
+                if(isDarkTheme(res))
+                    return res.getColor(R.color.phyphox_blue_60);
+                else
+                    return res.getColor(R.color.phyphox_blue_strong);
+            case "green":
+                if(isDarkTheme(res))
+                    return res.getColor(R.color.phyphox_green);
+                else
+                    return res.getColor(R.color.phyphox_green_strong);
+            case "yellow":
+                if(isDarkTheme(res))
+                    return res.getColor(R.color.phyphox_yellow);
+                else
+                    return res.getColor(R.color.phyphox_yellow_strong);
+            case "white":
+                if(isDarkTheme(res))
+                    return res.getColor(R.color.phyphox_white_100);
+                else
+                    return res.getColor(R.color.phyphox_black_80);
 
             case "weakorange": return res.getColor(R.color.phyphox_primary_weak);
             case "weakred": return res.getColor(R.color.phyphox_red_weak);
@@ -146,6 +163,19 @@ public abstract class Helper {
         if (colorStr.length() != 6)
             return defaultValue;
         return Integer.parseInt(colorStr, 16) | 0xff000000;
+    }
+
+    public static boolean isDarkTheme(Resources res){
+        int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        switch (nightModelFlags){
+            case Configuration.UI_MODE_NIGHT_YES:
+            case Configuration.UI_MODE_NIGHT_UNDEFINED:
+                return true;
+            case Configuration.UI_MODE_NIGHT_NO:
+                return false;
+        }
+        return false;
     }
 
     public static void replaceTagInFile(String file, Context ctx, String tag, String newContent) {

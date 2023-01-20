@@ -11,11 +11,9 @@
         android:id="@+id/support_phyphox_hint_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_dialog"
         android:gravity="center"
         android:text=""
-        android:padding="10dp"
-        android:textColor="@color/phyphox_black_100" />
+        android:padding="10dp" />
 
     <ImageView
         android:id="@+id/support_phyphox_hint_arrow"

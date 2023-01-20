@@ -31,7 +31,6 @@
 
     <com.google.android.material.tabs.TabLayout
         android:elevation="4dp"
-        android:background="@color/phyphox_black_40"
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="36dp"
@@ -63,7 +62,6 @@
         android:id="@+id/errorMessage"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
-        android:textColor="@color/phyphox_white_100"
         android:text=""
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
@@ -95,8 +93,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/remoteInfo"
-            android:background="@color/phyphox_black_40"
-            android:textColor="@color/phyphox_white_100"
             android:layout_gravity="top|start"
             android:textIsSelectable="true"
             android:text="@string/remoteServerActive"
@@ -109,7 +105,6 @@
             android:paddingEnd="4dp"
             android:paddingLeft="4dp"
             android:paddingBottom="4dp"
-            android:background="@color/phyphox_black_40"
             android:layout_gravity="bottom|end"
             android:src="@android:drawable/ic_dialog_info"
             android:paddingRight="4dp" />

@@ -13,10 +13,13 @@
         <item name="colorAccent">@color/phyphox_primary</item>
         <item name="android:colorAccent" tools:ignore="NewApi">@color/phyphox_primary</item>
         <item name="android:textColorHighlight">@color/phyphox_primary</item>
-        <item name="backgroundColor">@color/phyphox_black_80</item>
+        <item name="backgroundColor">@color/phyphox_black_40</item>
 
         <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
+
+        <item name="tint">@color/phyphox_white_100</item>
+
 
 
 
