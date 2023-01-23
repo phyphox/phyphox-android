@@ -92,7 +92,6 @@
         <activity
             android:name="de.rwth_aachen.phyphox.Settings"
             android:label="@string/settings"
-            android:theme="@style/experimentList"
             android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

@@ -11,7 +11,6 @@ public class Settings extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(R.style.experimentList);
         setContentView(R.layout.activity_settings);
 
         SettingsFragment settingsFragment = new SettingsFragment();

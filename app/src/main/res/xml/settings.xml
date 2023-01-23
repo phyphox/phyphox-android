@@ -24,6 +24,7 @@
     </androidx.preference.PreferenceCategory>
 
     <PreferenceCategory
+        app:isPreferenceVisible="false"
         android:title="@string/settingGraphViewEdit">
 
         <SeekBarPreference

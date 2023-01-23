@@ -19,6 +19,8 @@
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
 
         <item name="tint">@color/phyphox_white_100</item>
+        <item name="android:tint">@color/phyphox_white_100</item>
+
 
 
 
