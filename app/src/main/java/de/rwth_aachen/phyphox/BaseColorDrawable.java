@@ -113,7 +113,7 @@ class BitmapIcon extends BaseColorDrawable {
     //Draw the icon
     public void draw(Canvas canvas) {
         //A rectangle and text on top. Quite simple.
-        int size = canvas.getWidth();
+        int size = getBounds().width();
         int wSrc = icon.getWidth();
         int hSrc = icon.getHeight();
         canvas.drawRect(new Rect(0, 0, size, size), paintBG);

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
 /**
@@ -426,7 +427,21 @@ public class BluetoothScanDialog {
                 subViews.notSupported.setVisibility(View.VISIBLE);
             }
 
-            int color = deviceInfo.supported || deviceInfo.phyphoxService ? (deviceInfo.oneOfMany && deviceInfo.strongestSignal ? ctx.getResources().getColor(R.color.phyphox_primary) : ctx.getResources().getColor(R.color.phyphox_white_100)) : ctx.getResources().getColor(R.color.phyphox_white_50_black_50);
+            int color;
+            if(deviceInfo.supported || deviceInfo.phyphoxService){
+                if(deviceInfo.oneOfMany && deviceInfo.strongestSignal){
+                   color = ctx.getResources().getColor(R.color.phyphox_primary);
+                }else{
+                    if(Helper.isDarkTheme(ctx.getResources())){
+                        color = ctx.getResources().getColor(R.color.phyphox_white_100);
+                    } else{
+                        color = ctx.getResources().getColor(R.color.phyphox_black_80);
+                    }
+                }
+            } else{
+               color = ctx.getResources().getColor(R.color.phyphox_white_50_black_50);
+            }
+
             subViews.deviceName.setTextColor(color);
 
             if (deviceInfo.lastRSSI > -30)

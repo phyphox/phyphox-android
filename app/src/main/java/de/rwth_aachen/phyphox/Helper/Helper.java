@@ -5,10 +5,12 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Base64;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.View;
@@ -148,7 +150,7 @@ public abstract class Helper {
                 if(isDarkTheme(res))
                     return res.getColor(R.color.phyphox_white_100);
                 else
-                    return res.getColor(R.color.phyphox_black_80);
+                    return res.getColor(R.color.phyphox_white_80);
 
             case "weakorange": return res.getColor(R.color.phyphox_primary_weak);
             case "weakred": return res.getColor(R.color.phyphox_red_weak);
@@ -352,6 +354,12 @@ public abstract class Helper {
             }
             callback.onSuccess(bitmap);
         }
+    }
+
+    //Decode the experiment icon (base64) and return a bitmap
+    public static Bitmap decodeBase64(String input) throws IllegalArgumentException {
+        byte[] decodedByte = Base64.decode(input, 0); //Decode the base64 data to binary
+        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
     }
 
     private static int getResourceId(GraphField field, int size){

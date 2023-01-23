@@ -27,6 +27,7 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -38,8 +39,10 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 import android.util.Base64;
@@ -625,7 +628,6 @@ public class ExperimentList extends AppCompatActivity {
                     res.getDimensionPixelOffset(R.dimen.activity_vertical_margin)
             );
             catLayout.setLayoutParams(lllp);
-            //catLayout.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.mainExp));
 
             //Create the headline text view
             categoryHeadline = new TextView(parentContext);
@@ -637,8 +639,6 @@ public class ExperimentList extends AppCompatActivity {
             categoryHeadline.setText(name.equals(phyphoxCat) ? res.getString(R.string.categoryPhyphoxOrg) : name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
             categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
-            //categoryHeadline.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.phyphox_primary));
-            //categoryHeadline.setTextColor(ContextCompat.getColor(parentContext, R.color.phyphox_white_100));
             categoryHeadline.setPadding(res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10, res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10);
 
             //Create the gridView for the experiment items
@@ -743,11 +743,6 @@ public class ExperimentList extends AppCompatActivity {
         categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
     }
 
-    //Decode the experiment icon (base64) and return a bitmap
-    public static Bitmap decodeBase64(String input) throws IllegalArgumentException {
-        byte[] decodedByte = Base64.decode(input, 0); //Decode the base64 data to binary
-        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
-    }
 
     private void addInvalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
@@ -840,7 +835,7 @@ public class ExperimentList extends AppCompatActivity {
                                         //base64 encoded image. Decode it
                                         icon = xpp.nextText().trim();
                                         try {
-                                            Bitmap bitmap = decodeBase64(icon);
+                                            Bitmap bitmap = Helper.decodeBase64(icon);
                                             if (bitmap != null)
                                                 image = new BitmapIcon(bitmap, this);
                                         } catch (IllegalArgumentException e) {
@@ -2337,6 +2332,12 @@ public class ExperimentList extends AppCompatActivity {
                                 pInfo = null;
                             }
 
+                            if(Helper.isDarkTheme(res)){
+                                sb.append(" <font color='white'");
+                            }else{
+                                sb.append(" <font color='black'");
+                            }
+
                             sb.append("<b>phyphox</b><br />");
                             if (pInfo != null) {
                                 sb.append("Version: ");
@@ -2502,9 +2503,11 @@ public class ExperimentList extends AppCompatActivity {
                             } else {
                                 sb.append("API < 21");
                             }
+                            sb.append("</font>");
 
                             final Spanned text = Html.fromHtml(sb.toString());
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                            ContextThemeWrapper ctw = new ContextThemeWrapper( ExperimentList.this, R.style.Theme_Phyphox_DayNight);
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ctw);
                             builder.setMessage(text)
                                     .setTitle(R.string.deviceInfo)
                                     .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
