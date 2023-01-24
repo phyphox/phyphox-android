@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rl_battery_level"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignWithParentIfMissing="false"
+        android:layout_above="@+id/fl_remoteInfo">
+
+    <TextView
+        android:id="@+id/bluetooth_device_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:text="Name Placeholder" />
+
+    <ImageView
+        android:id="@+id/signal_strength"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/fl_remoteInfo"
+        android:layout_toLeftOf="@+id/battery_level"
+        android:layout_toStartOf="@id/battery_level"
+        app:srcCompat="@drawable/bluetooth_signal_na" />
+
+    <ImageView
+        android:id="@+id/battery_level"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/fl_remoteInfo"
+        android:layout_alignParentRight="true"
+        app:srcCompat="@drawable/battery_level_0" />
+
+</RelativeLayout>
