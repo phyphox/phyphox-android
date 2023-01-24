@@ -23,13 +23,15 @@
         <item name="android:tint">@color/phyphox_black_100</item>
         <item name="tint">@color/phyphox_white_100</item>
 
+        <item name="itemBackground">@color/phyphox_white_90</item>
+
         <item name="textAppearanceLabelSmall">@style/TextAppearance.Phyphox.Small</item>
         <item name="textAppearanceLabelMedium">@style/TextAppearance.Phyphox.Medium</item>
 
-        <item name="android:listSeparatorTextViewStyle">@style/Pref</item>
-
         <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
+
+        <item name="popupMenuStyle">@style/Widget.Phyphox.PopupMenu.Overflow</item>
 
 
     </style>

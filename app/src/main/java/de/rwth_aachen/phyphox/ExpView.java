@@ -385,7 +385,7 @@ public class ExpView implements Serializable{
             labelView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL); //Align right to the center of the row
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            //labelView.setTextColor(color);
+            labelView.setTextColor(color);
 
             //Create the value (and unit) as textView
             tv = new TextView(c);
@@ -397,7 +397,7 @@ public class ExpView implements Serializable{
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize*(float)size); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
-            //tv.setTextColor(color);
+            tv.setTextColor(color);
 
 
             //Add label and value to the row
@@ -726,7 +726,6 @@ public class ExpView implements Serializable{
             labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(ContextCompat.getColor(c, R.color.phyphox_white_100));
 
             //Create a horizontal linear layout, which seperates the right half into the edit field
             //and a textView to show the unit next to the user input
@@ -757,7 +756,6 @@ public class ExpView implements Serializable{
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             //   et.setPadding((int) labelSize / 2, 0, 0, 0);
             et.setTypeface(null, Typeface.BOLD);
-            et.setTextColor(ContextCompat.getColor(c, R.color.phyphox_white_100));
 
             //Construct the inputType flags from our own state
             int inputType = InputType.TYPE_CLASS_NUMBER;
@@ -790,7 +788,6 @@ public class ExpView implements Serializable{
             unitView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             unitView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             unitView.setPadding(0, 0, (int) labelSize / 2, 0);
-            unitView.setTextColor(ContextCompat.getColor(c, R.color.phyphox_white_100));
             unitView.setTypeface(null, Typeface.BOLD);
 
             //Add edit box and unit to the horizontal linear layout that makes up the right half of the row
@@ -977,7 +974,6 @@ public class ExpView implements Serializable{
 
             b.setLayoutParams(vglp);
             b.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            b.setTextColor(ContextCompat.getColor(c, R.color.phyphox_white_100));
             b.setText(this.label);
 
             //Add the button to the main linear layout passed to this function

@@ -150,7 +150,7 @@ public abstract class Helper {
                 if(isDarkTheme(res))
                     return res.getColor(R.color.phyphox_white_100);
                 else
-                    return res.getColor(R.color.phyphox_white_80);
+                    return res.getColor(R.color.phyphox_white_50_black_50);
 
             case "weakorange": return res.getColor(R.color.phyphox_primary_weak);
             case "weakred": return res.getColor(R.color.phyphox_red_weak);

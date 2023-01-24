@@ -13,13 +13,12 @@
         android:layout_height="?actionBarSize"
         android:id="@+id/customActionBar"
         android:theme="@style/ActionBarPhyphox"
-        app:popupTheme="@style/PopupMenuPhyphox"
         android:background="?attr/colorPrimary"
         android:elevation="8dp"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true">
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

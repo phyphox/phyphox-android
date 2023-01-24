@@ -1248,8 +1248,12 @@ public abstract class PhyphoxFile {
                     int precision = getIntAttribute("precision", 2);
                     boolean scientific = getBooleanAttribute("scientific", false);
                     double size = getDoubleAttribute("size", 1.0);
-                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
-
+                    int color;
+                    if(Helper.isDarkTheme(parent.getResources())){
+                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
+                    } else{
+                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_80));
+                    }
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1293,7 +1297,13 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "info": { //An info element just shows some text
-                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
+                    int color;
+                    if(Helper.isDarkTheme(parent.getResources())){
+                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
+                    } else{
+                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_80));
+                    }
+
                     boolean bold = getBooleanAttribute("bold", false);
                     boolean italic = getBooleanAttribute("italic", false);
                     String gravityString = getStringAttribute("align");

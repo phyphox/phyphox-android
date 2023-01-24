@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
+import android.content.res.ColorStateList;
 import android.graphics.Point;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -29,8 +30,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.widget.ImageViewCompat;
+
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import de.rwth_aachen.phyphox.Helper.Helper;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
 
@@ -106,6 +111,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         expandImage = (ImageView)this.findViewById(R.id.graph_expand_image);
         collapseImage = (ImageView)this.findViewById(R.id.graph_collapse_image);
         toolbar = (BottomNavigationView) this.findViewById(R.id.graph_toolbar);
+        setExpandCollapseImageColor(context);
 
         toolbar.inflateMenu(R.menu.graph_menu);
         toolbar.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -221,6 +227,22 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 ViewGroup.LayoutParams.MATCH_PARENT));
         markerOverlayView.setGraphSetup(graphView.graphSetup);
         graphFrame.addView(markerOverlayView);
+    }
+
+    private void setExpandCollapseImageColor(Context context) {
+        if(Helper.isDarkTheme(getResources())){
+            ImageViewCompat.setImageTintList(collapseImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_white_100)));
+            ImageViewCompat.setImageTintList(expandImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_white_100)));
+            toolbar.setBackgroundColor(getResources().getColor(R.color.phyphox_black_50));
+
+
+        }else{
+            ImageViewCompat.setImageTintList(collapseImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_black_100)));
+            ImageViewCompat.setImageTintList(expandImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_black_100)));
+            toolbar.setBackgroundColor(getResources().getColor(R.color.phyphox_white_60));
+
+
+        }
     }
 
     public void assignDataExporter(DataExport dataExport) {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="splashTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@drawable/splash</item>
@@ -8,12 +8,12 @@
         <item name="android:windowSplashScreenBrandingImage">@drawable/rwth_white</item>
     </style>
 
-    <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+    <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.ActionBar">
         <item name="android:textColorPrimary">@color/phyphox_white_100</item>
         <item name="android:textColorSecondary">@color/phyphox_white_100</item>
     </style>
 
-  <style name="PopupMenuPhyphox" parent="ThemeOverlay.AppCompat.Dark">
+  <style name="Widget.Phyphox.PopupMenu.Overflow" parent="Widget.AppCompat.PopupMenu.Overflow">
       <item name="android:textColor">@color/phyphox_white_100</item>
       <item name="android:colorBackground">@color/phyphox_black_40</item>
   </style>
@@ -42,7 +42,4 @@
         <item name="android:textSize">@dimen/graph_tools_font</item>
     </style>
 
-    <style name="Pref" parent="Preference">
-        <item name="android:textColor">@color/phyphox_white_50_black_50</item>
-    </style>
 </resources>
