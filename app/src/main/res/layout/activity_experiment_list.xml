@@ -27,7 +27,8 @@
             android:layout_marginLeft="@dimen/activity_horizontal_margin"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
-            android:layout_marginBottom="@dimen/activity_vertical_margin"/>
+            android:layout_marginBottom="@dimen/activity_vertical_margin"
+            app:tint="@color/phyphox_white_90" />
 
         <TextView
         android:layout_width="wrap_content"
@@ -45,6 +46,7 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             app:srcCompat="@drawable/info"
+            android:tint="@color/phyphox_white_90"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
             android:adjustViewBounds="true"
             android:layout_alignParentStart="false"
@@ -90,6 +92,7 @@
         android:text="@string/newExperimentQR"
         android:id="@+id/newExperimentQR"
         app:srcCompat="@drawable/new_experiment_qr"
+        android:tint="@color/phyphox_white_90"
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"
@@ -119,6 +122,7 @@
         android:text="@string/newExperimentBluetooth"
         android:id="@+id/newExperimentBluetooth"
         app:srcCompat="@drawable/new_experiment_bluetooth"
+        android:tint="@color/phyphox_white_90"
         app:fabSize="mini"
         android:visibility="invisible"
         android:clickable="false"
@@ -147,6 +151,7 @@
         android:contentDescription="@string/newExperimentSimple"
         android:text="@string/newExperimentSimple"
         android:id="@+id/newExperimentSimple"
+        android:tint="@color/phyphox_white_90"
         app:srcCompat="@drawable/new_experiment_simple"
         app:fabSize="mini"
         android:visibility="invisible"
@@ -178,6 +183,7 @@
         android:id="@+id/newExperiment"
         app:srcCompat="@drawable/new_experiment"
         app:fabSize="normal"
+        android:tint="@color/phyphox_white_90"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:elevation="12dp"

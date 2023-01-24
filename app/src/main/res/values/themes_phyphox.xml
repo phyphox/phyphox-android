@@ -21,7 +21,6 @@
         <item name="android:textSize">@dimen/font</item>
 
         <item name="android:tint">@color/phyphox_black_100</item>
-        <item name="tint">@color/phyphox_white_100</item>
 
         <item name="itemBackground">@color/phyphox_white_90</item>
 
@@ -32,6 +31,8 @@
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
         <item name="popupMenuStyle">@style/Widget.Phyphox.PopupMenu.Overflow</item>
+
+
 
 
     </style>

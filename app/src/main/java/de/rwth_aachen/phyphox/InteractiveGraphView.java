@@ -239,7 +239,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         }else{
             ImageViewCompat.setImageTintList(collapseImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_black_100)));
             ImageViewCompat.setImageTintList(expandImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_black_100)));
-            toolbar.setBackgroundColor(getResources().getColor(R.color.phyphox_white_60));
+            toolbar.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
 
 
         }

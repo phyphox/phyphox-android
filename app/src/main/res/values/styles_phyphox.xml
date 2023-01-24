@@ -42,4 +42,5 @@
         <item name="android:textSize">@dimen/graph_tools_font</item>
     </style>
 
+
 </resources>

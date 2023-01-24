@@ -12,7 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
         android:id="@+id/customActionBar"
-        android:theme="@style/ActionBarPhyphox"
         android:background="?attr/colorPrimary"
         android:elevation="8dp"
         android:layout_alignParentLeft="true"
@@ -24,6 +23,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="2"
+            android:textColor="@color/phyphox_white_90"
             style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
             android:id="@+id/titleText" />
     </androidx.appcompat.widget.Toolbar>
@@ -105,7 +105,7 @@
             android:paddingLeft="4dp"
             android:paddingBottom="4dp"
             android:layout_gravity="bottom|end"
-            android:src="@android:drawable/ic_dialog_info"
+            android:src="@drawable/ic_info"
             android:paddingRight="4dp" />
 
     </FrameLayout>
