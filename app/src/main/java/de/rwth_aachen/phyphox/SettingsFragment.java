@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.Locale;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
+
+    public static final String GRAPH_SIZE_KEY = "graph_size_dialog";
+
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         PreferenceManager.setDefaultValues(getContext(),R.xml.settings, false);
@@ -34,8 +37,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         setupPortEditText();
         prepareLanguageList();
         updateCurrentLanguage();
-        updateLineWidth();
-        updateFontSize();
+        updateGraphView();
     }
 
     private void setupPortEditText() {
@@ -124,17 +126,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     }
 
 
-    private void updateLineWidth(){
-        ListPreference lp = findPreference(getResources().getString(R.string.keyLinewidth));
-        assert lp != null;
-        lp.setOnPreferenceChangeListener((preference, newValue) -> {
-            lp.setValue(newValue.toString());
-            return true;
-        });
-    }
-
-    private void updateFontSize(){
-        ListPreference lp = findPreference(getResources().getString(R.string.keyFontSize));
+    private void updateGraphView(){
+        ListPreference lp = findPreference(GRAPH_SIZE_KEY);
         assert lp != null;
         lp.setOnPreferenceChangeListener((preference, newValue) -> {
             lp.setValue(newValue.toString());

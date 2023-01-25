@@ -13,16 +13,10 @@
         <item>@string/big</item>
     </string-array>
 
-    <string-array name="entriesValuesListPreferenceLineWidth">
-        <item>@string/smallValueLineWidth</item>
-        <item>@string/mediumValueLineWidth</item>
-        <item>@string/bigValueLineWidth</item>
-    </string-array>
-
-    <string-array name="entriesValuesListPreferenceFontSize">
-        <item>@string/smallValueFontSize</item>
-        <item>@string/mediumValueFontSize</item>
-        <item>@string/bigValueFontSize</item>
+    <string-array name="entriesValuesListPreferenceGraphView">
+        <item>"Small"</item>
+        <item>"Medium"</item>
+        <item>"Big"</item>
     </string-array>
 
 

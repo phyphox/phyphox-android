@@ -32,6 +32,8 @@ import androidx.appcompat.widget.SwitchCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import de.rwth_aachen.phyphox.Helper.Helper;
+
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
 
     private boolean interactive = false;
@@ -200,7 +202,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
-        plotRenderer = new PlotRenderer(context.getResources());
+        plotRenderer = new PlotRenderer(context);
         plotRenderer.start();
         plotAreaView.setSurfaceTextureListener(plotRenderer);
 
@@ -426,6 +428,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     public void setLabel(String label) {
         graphLabel.setText(label);
+        graphLabel.setTextSize(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.LABEL_SIZE));
     }
 
     private void setPopupInfo(int x, int y, String text) {

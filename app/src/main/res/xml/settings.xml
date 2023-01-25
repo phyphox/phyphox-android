@@ -27,26 +27,15 @@
         android:title="@string/settingGraphViewEdit">
 
         <ListPreference
-            android:dialogTitle="@string/fontSize"
-            android:key="@string/keyFontSize"
-            android:icon="@drawable/ic_font_size"
-            android:defaultValue="@string/mediumValueFontSize"
+            android:dialogTitle="@string/settingGraphSize"
+            android:key="graph_size_dialog"
+            android:icon="@drawable/ic_line_width"
             android:entries="@array/entriesListPreferenceSize"
-            android:entryValues="@array/entriesValuesListPreferenceFontSize"
+            android:entryValues="@array/entriesValuesListPreferenceGraphView"
             app:useSimpleSummaryProvider="true"
-            android:title="@string/fontSize"
+            android:title="@string/settingGraphSize"
             />
 
-        <ListPreference
-            android:dialogTitle="@string/line_width"
-            android:key="@string/keyLinewidth"
-            android:icon="@drawable/ic_line_width"
-            android:defaultValue="@string/mediumValueLineWidth"
-            android:entries="@array/entriesListPreferenceSize"
-            android:entryValues="@array/entriesValuesListPreferenceLineWidth"
-            app:useSimpleSummaryProvider="true"
-            android:title="@string/line_width"
-            />
 
 
     </PreferenceCategory>
