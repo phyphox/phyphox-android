@@ -6,7 +6,6 @@
     <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox"/>
 
     <style name="Theme.Phyphox" parent="Theme.AppCompat.DayNight.NoActionBar">
-
         <item name="android:textColor">@color/phyphox_black_60</item>
         <item name="android:textColorPrimary">@color/phyphox_black_60</item>
         <item name="android:textColorSecondary">@color/phyphox_black_60</item>
@@ -14,14 +13,9 @@
         <item name="android:colorAccent" tools:ignore="NewApi">@color/phyphox_primary</item>
         <item name="android:textColorHighlight">@color/phyphox_primary</item>
         <item name="backgroundColor">@color/phyphox_white_100</item>
-
         <item name="colorPrimary">@color/phyphox_primary</item>
         <item name="colorPrimaryDark">@color/phyphox_black_80</item>
-
         <item name="android:textSize">@dimen/font</item>
-
-        <item name="android:tint">@color/phyphox_black_100</item>
-
         <item name="itemBackground">@color/phyphox_white_90</item>
 
         <item name="textAppearanceLabelSmall">@style/TextAppearance.Phyphox.Small</item>
@@ -31,10 +25,6 @@
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
         <item name="popupMenuStyle">@style/Widget.Phyphox.PopupMenu.Overflow</item>
-
-
-
-
     </style>
 
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">

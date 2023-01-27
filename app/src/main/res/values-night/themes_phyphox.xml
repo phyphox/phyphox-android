@@ -6,7 +6,6 @@
     <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox.Dark"/>
 
     <style name="Theme.Phyphox.Dark" parent="Theme.Phyphox">
-
         <item name="android:textColor">@color/phyphox_white_100</item>
         <item name="android:textColorPrimary">@color/phyphox_white_100</item>
         <item name="android:textColorSecondary">@color/phyphox_white_100</item>
@@ -15,14 +14,8 @@
         <item name="android:textColorHighlight">@color/phyphox_primary</item>
         <item name="backgroundColor">@color/phyphox_black_40</item>
 
-        <item name="tint">@color/phyphox_white_100</item>
-
         <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
-
-
-
-
     </style>
 
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">

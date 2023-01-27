@@ -11,7 +11,7 @@
 
     <RelativeLayout
         android:id="@+id/expListHeader"
-        android:background="@color/phyphox_primary"
+        android:background="@color/phyphox_black_60"
         android:elevation="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -19,34 +19,26 @@
             android:layout_width="wrap_content"
             android:layout_height="@dimen/titleIconSize"
             android:id="@+id/logo"
-            android:src="@drawable/ic_phyphox_transparent"
+            android:src="@drawable/phyphox_dark"
             android:scaleType="fitStart"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:background="@color/phyphox_black_60"
             android:layout_marginLeft="@dimen/activity_horizontal_margin"
             android:layout_marginTop="@dimen/activity_vertical_margin"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
-            android:layout_marginBottom="@dimen/activity_vertical_margin"
-            app:tint="@color/phyphox_white_90" />
-
-        <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-            android:layout_alignRight="@id/logo"
-            android:layout_marginTop="16dp"
-            android:textStyle="bold"
-        android:textColor="@color/phyphox_white_100"
-        android:text="Phyphox"/>
-
+            android:layout_marginBottom="@dimen/activity_vertical_margin"/>
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="@dimen/titleIconSize"
             android:id="@+id/credits"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            app:srcCompat="@drawable/info"
             android:tint="@color/phyphox_white_90"
+            app:srcCompat="@drawable/info"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
             android:adjustViewBounds="true"
             android:layout_alignParentStart="false"
