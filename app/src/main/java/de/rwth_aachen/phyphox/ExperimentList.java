@@ -2228,6 +2228,7 @@ public class ExperimentList extends AppCompatActivity {
         //On Android 12 this does not hurt, but Android 12 shows its own splash method (defined with
         //specific attributes in the theme), so the classic splash screen is not shown anyways
         //before setTheme is called and we see the normal theme right away.
+        setTheme(R.style.Theme_Phyphox_DayNight);
 
         //Basics. Call super-constructor and inflate the layout.
         super.onCreate(savedInstanceState);

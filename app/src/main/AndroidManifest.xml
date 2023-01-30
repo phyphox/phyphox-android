@@ -29,9 +29,11 @@
         android:enableOnBackInvokedCallback="true"
         android:localeConfig="@xml/locales_config"
         android:usesCleartextTraffic="true"><!-- While not recommended, there are plenty of use cases for phyphox on local networks where unencrypted communication is not unreasonable. -->
+
         <activity
             android:name="de.rwth_aachen.phyphox.ExperimentList"
             android:exported="true"
+            android:theme="@style/splashTheme"
             android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
