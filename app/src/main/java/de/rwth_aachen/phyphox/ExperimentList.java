@@ -26,8 +26,6 @@ import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -39,13 +37,10 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
-import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
@@ -74,7 +69,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
@@ -2233,7 +2227,7 @@ public class ExperimentList extends AppCompatActivity {
 
         String themePreference = PreferenceManager
                 .getDefaultSharedPreferences(this)
-                .getString(getString(R.string.setting_theme_key),SettingsFragment.THEME_NIGHT);
+                .getString(getString(R.string.setting_dark_mode_key),SettingsFragment.DARK_MODE_ON);
         SettingsFragment.setApplicationTheme(themePreference);
 
         //Basics. Call super-constructor and inflate the layout.

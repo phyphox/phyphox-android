@@ -44,5 +44,13 @@
         <item name="android:textSize">@dimen/graph_tools_font</item>
     </style>
 
+    <style name="PreferenceThemeOverlay.v14.Phyphox.Dark" parent="PreferenceThemeOverlay.v14">
+        <item name="android:tint">@color/phyphox_white_100</item>
+    </style>
+
+    <style name="PreferenceThemeOverlay.v14.Phyphox.Light" parent="PreferenceThemeOverlay.v14">
+        <item name="android:tint">@color/phyphox_black_100</item>
+    </style>
+
 
 </resources>

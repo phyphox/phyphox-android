@@ -16,6 +16,8 @@
 
         <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Dark</item>
     </style>
 
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">

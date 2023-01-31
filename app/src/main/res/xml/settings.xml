@@ -38,8 +38,8 @@
 
 
         <ListPreference
-            android:key="@string/setting_theme_key"
-            android:icon="@android:drawable/ic_menu_view"
+            android:key="@string/setting_dark_mode_key"
+            android:icon="@drawable/ic_dark_mode"
             android:summary="%s"
             android:defaultValue="1"
             app:useSimpleSummaryProvider="true"

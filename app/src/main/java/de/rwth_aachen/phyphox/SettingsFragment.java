@@ -32,6 +32,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         PreferenceManager.setDefaultValues(getContext(),R.xml.settings, false);
         setPreferencesFromResource(R.xml.settings, rootKey);
+
         setupPortEditText();
         prepareLanguageList();
         updateCurrentLanguage();
@@ -135,20 +136,20 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void updateTheme(){
-        ListPreference lp = findPreference(getString(R.string.setting_theme_key));
+        ListPreference lp = findPreference(getString(R.string.setting_dark_mode_key));
         CharSequence[] entries;
         CharSequence[] entryValues;
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
             entries = new CharSequence[]{
-                    getString(R.string.settings_theme_night),
-                    getString(R.string.settings_theme_no_night)};
-            entryValues = new CharSequence[]{ THEME_NIGHT, THEME_LIGHT };
+                    getString(R.string.settings_mode_dark),
+                    getString(R.string.settings_mode_no_dark)};
+            entryValues = new CharSequence[]{DARK_MODE_ON, DARK_MODE_OFF};
         } else {
             entries = new CharSequence[]{
-                    getString(R.string.settings_theme_night),
-                    getString(R.string.settings_theme_no_night),
-                    getString(R.string.settings_theme_sync_setting)};
-            entryValues = new CharSequence[]{ THEME_NIGHT, THEME_LIGHT, THEME_SYNC_SYSTEM };
+                    getString(R.string.settings_mode_dark),
+                    getString(R.string.settings_mode_no_dark),
+                    getString(R.string.settings_mode_dark_system)};
+            entryValues = new CharSequence[]{DARK_MODE_ON, DARK_MODE_OFF, DARK_MODE_SYSTEM};
         }
 
         if(lp != null){
@@ -163,9 +164,9 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     }
 
     public static void setApplicationTheme(String themePreference){
-        if(themePreference.equals(THEME_SYNC_SYSTEM)){
+        if(themePreference.equals(DARK_MODE_SYSTEM)){
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-        } else if(themePreference.equals(THEME_LIGHT)){
+        } else if(themePreference.equals(DARK_MODE_OFF)){
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         } else{
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);

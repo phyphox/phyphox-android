@@ -25,6 +25,8 @@
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
         <item name="popupMenuStyle">@style/Widget.Phyphox.PopupMenu.Overflow</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Light</item>
     </style>
 
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
