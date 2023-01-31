@@ -460,8 +460,19 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private void setPopupInfo(int x, int y, String text) {
         if (popupWindowInfo == null) {
             View pointInfoView = inflate(getContext(), R.layout.point_info, null);
-            popupWindowText = (TextView)pointInfoView.findViewById(R.id.point_info_text);
-            popupWindowInfo = new PopupWindow(pointInfoView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            popupWindowText = pointInfoView.findViewById(R.id.point_info_text);
+            popupWindowInfo = new PopupWindow(
+                    pointInfoView,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            if(Helper.isDarkTheme(getResources())){
+                pointInfoView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
+                popupWindowText.setTextColor(getResources().getColor(R.color.phyphox_black_100));
+            } else{
+                pointInfoView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_100));
+                popupWindowText.setTextColor(getResources().getColor(R.color.phyphox_white_100));
+            }
             if (Build.VERSION.SDK_INT >= 21){
                 popupWindowInfo.setElevation(4.0f);
             }
