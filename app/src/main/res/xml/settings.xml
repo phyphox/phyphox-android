@@ -24,7 +24,7 @@
     </androidx.preference.PreferenceCategory>
 
     <PreferenceCategory
-        app:isPreferenceVisible="false"
+        app:isPreferenceVisible="true"
         android:title="@string/settingGraphViewEdit">
 
         <SeekBarPreference
@@ -36,6 +36,15 @@
             />
 
 
+
+        <ListPreference
+            android:key="@string/setting_theme_key"
+            android:icon="@android:drawable/ic_menu_view"
+            android:summary="%s"
+            android:defaultValue="1"
+            app:useSimpleSummaryProvider="true"
+            android:title="@string/settings_theme_title"
+            />
 
     </PreferenceCategory>
 

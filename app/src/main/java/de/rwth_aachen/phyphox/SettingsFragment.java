@@ -1,5 +1,7 @@
 package de.rwth_aachen.phyphox;
 
+
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Toast;
@@ -21,6 +23,11 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     public static final String GRAPH_SIZE_KEY = "graph_size_dialog";
 
+
+    public static final String THEME_NIGHT = "1";
+    public static final String THEME_LIGHT = "2";
+    public static final String THEME_SYNC_SYSTEM = "3";
+
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         PreferenceManager.setDefaultValues(getContext(),R.xml.settings, false);
@@ -28,6 +35,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         setupPortEditText();
         prepareLanguageList();
         updateCurrentLanguage();
+        updateTheme();
         updateGraphSize();
     }
 
@@ -124,6 +132,44 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             lp.setValue((Integer) newValue);
             return true;
         });
+    }
+
+    private void updateTheme(){
+        ListPreference lp = findPreference(getString(R.string.setting_theme_key));
+        CharSequence[] entries;
+        CharSequence[] entryValues;
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+            entries = new CharSequence[]{
+                    getString(R.string.settings_theme_night),
+                    getString(R.string.settings_theme_no_night)};
+            entryValues = new CharSequence[]{ THEME_NIGHT, THEME_LIGHT };
+        } else {
+            entries = new CharSequence[]{
+                    getString(R.string.settings_theme_night),
+                    getString(R.string.settings_theme_no_night),
+                    getString(R.string.settings_theme_sync_setting)};
+            entryValues = new CharSequence[]{ THEME_NIGHT, THEME_LIGHT, THEME_SYNC_SYSTEM };
+        }
+
+        if(lp != null){
+            lp.setEntries(entries);
+            lp.setEntryValues(entryValues);
+            lp.setOnPreferenceChangeListener((preference, newValue) -> {
+                lp.setValue(newValue.toString());
+                setApplicationTheme(newValue.toString());
+                return true;
+            });
+        }
+    }
+
+    public static void setApplicationTheme(String themePreference){
+        if(themePreference.equals(THEME_SYNC_SYSTEM)){
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        } else if(themePreference.equals(THEME_LIGHT)){
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else{
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
     }
 
 }

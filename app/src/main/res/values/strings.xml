@@ -321,6 +321,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
     <string name="settingsPort">Remote access port</string>
 
+    <string name="settings_theme_title">Application theme</string>
+    <string name="settings_theme_night">Default</string>
+    <string name="settings_theme_no_night">Light mode </string>
+    <string name="settings_theme_sync_setting">Sync with system</string>
     <string name="settingGraphViewEdit">User interface</string>
     <string name="settingGraphSize">Graph size</string>
     <string name="settingGraphSizeSubTitle">Make graph size bigger or smaller</string>

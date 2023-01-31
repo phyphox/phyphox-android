@@ -81,6 +81,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.preference.PreferenceManager;
 
 import com.caverock.androidsvg.SVG;
 import com.caverock.androidsvg.SVGParseException;
@@ -2230,13 +2231,14 @@ public class ExperimentList extends AppCompatActivity {
         //before setTheme is called and we see the normal theme right away.
         setTheme(R.style.Theme_Phyphox_DayNight);
 
+        String themePreference = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(getString(R.string.setting_theme_key),SettingsFragment.THEME_NIGHT);
+        SettingsFragment.setApplicationTheme(themePreference);
+
         //Basics. Call super-constructor and inflate the layout.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experiment_list);
-
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        }
 
         res = getResources(); //Get Resource reference for easy access.
 
