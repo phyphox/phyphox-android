@@ -52,5 +52,9 @@
         <item name="android:tint">@color/phyphox_black_100</item>
     </style>
 
+    <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <!-- Customize color of navigation drawer icon and back arrow -->
+        <item name="colorControlNormal">@color/phyphox_white_100</item>
+    </style>
 
 </resources>

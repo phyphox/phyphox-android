@@ -13,6 +13,7 @@
         android:layout_height="?actionBarSize"
         android:id="@+id/customActionBar"
         android:background="?attr/colorPrimary"
+        app:theme="@style/ToolbarTheme"
         android:elevation="8dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
