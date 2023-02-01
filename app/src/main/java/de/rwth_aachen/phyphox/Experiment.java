@@ -430,6 +430,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
+            if(Helper.isDarkTheme(getResources())){
+                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
+            } else {
+                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
+            }
             pager = ((ViewPager)findViewById(R.id.view_pager));
             FragmentManager manager = getSupportFragmentManager();
             adapter = new ExpViewPagerAdapter(manager, this.experiment);
