@@ -4,11 +4,7 @@
 
     <!--Need to fix the splash screen for API level less than 31, White background appears
         but need to have dark background-->
-    <style name="splashTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
-        <item name="android:windowBackground">@drawable/splash_screen</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowSplashScreenBrandingImage">@drawable/rwth_splash_screen</item>
-    </style>
+
 
     <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.ActionBar">
         <item name="android:textColorPrimary">@color/phyphox_white_100</item>

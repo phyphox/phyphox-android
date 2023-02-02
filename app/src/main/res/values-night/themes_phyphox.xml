@@ -5,6 +5,8 @@
 
     <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox.Dark"/>
 
+    <style name="Theme.Phyphox.DayNight.Splash" parent="Theme.Phyphox.Splash.Dark"/>
+
     <style name="Theme.Phyphox.Dark" parent="Theme.Phyphox">
         <item name="android:textColor">@color/phyphox_white_100</item>
         <item name="android:textColorPrimary">@color/phyphox_white_100</item>
@@ -44,6 +46,12 @@
         <item name="colorPrimary">@color/phyphox_black_100</item>
         <item name="colorAccent">@color/phyphox_rwth_primary</item>
         <item name="alertDialogTheme">@style/rwthDialog</item>
+    </style>
+
+    <style name="Theme.Phyphox.Splash.Dark" parent="Theme.Phyphox.Splash">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowSplashScreenBrandingImage">@drawable/rwth_white</item>
     </style>
 
 </resources>
