@@ -20,6 +20,8 @@
         <item name="android:textSize">@dimen/font</item>
         <item name="itemBackground">@color/phyphox_white_90</item>
 
+        <item name="tint">@color/phyphox_white_100</item>
+
         <item name="android:windowBackground">@color/phyphox_white_100</item>
 
         <item name="textAppearanceLabelSmall">@style/TextAppearance.Phyphox.Small</item>
@@ -31,6 +33,8 @@
         <item name="popupMenuStyle">@style/Widget.Phyphox.PopupMenu.Overflow</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Light</item>
+
+        <item name="colorControlNormal">@color/phyphox_white_50_black_50</item>
     </style>
 
     <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">

@@ -667,7 +667,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (popupWindow != null)
             return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View hintView = inflater.inflate(R.layout.menu_hint, null);
+        View hintView;
+        if(Helper.isDarkTheme(getResources())){
+            hintView = inflater.inflate(R.layout.menu_hint, null);
+        } else{
+            hintView = inflater.inflate(R.layout.menu_hint_light, null);
+        }
+
         TextView text = (TextView)hintView.findViewById(R.id.hint_text);
         text.setText(textRessource);
         ImageView iv = ((ImageView) hintView.findViewById(R.id.hint_arrow));
