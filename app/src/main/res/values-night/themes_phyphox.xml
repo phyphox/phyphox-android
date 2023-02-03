@@ -7,6 +7,8 @@
 
     <style name="Theme.Phyphox.DayNight.Splash" parent="Theme.Phyphox.Splash.Dark"/>
 
+    <style name="Widget.Phyphox.BottomNavigationView.DayNight" parent="Widget.Phyphox.BottomNavigationView.Dark"/>
+
     <style name="Theme.Phyphox.Dark" parent="Theme.Phyphox">
         <item name="android:textColor">@color/phyphox_white_100</item>
         <item name="android:textColorPrimary">@color/phyphox_white_100</item>
@@ -52,6 +54,12 @@
         <item name="android:windowBackground">@drawable/splash</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowSplashScreenBrandingImage">@drawable/rwth_white</item>
+    </style>
+
+    <style name="Widget.Phyphox.BottomNavigationView.Dark" parent="Widget.Phyphox.BottomNavigationView">
+        <item name="android:textColor">@color/phyphox_white_100</item>
+        <item name="tint">@color/phyphox_white_100</item>
+        <item name="android:tint">@color/phyphox_white_100</item>
     </style>
 
 </resources>
