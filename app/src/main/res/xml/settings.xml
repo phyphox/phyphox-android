@@ -30,6 +30,7 @@
             android:dialogTitle="@string/settingGraphSize"
             android:key="graph_size_dialog"
             android:icon="@drawable/ic_line_width"
+            android:defaultValue="@string/medium"
             android:entries="@array/entriesListPreferenceSize"
             android:entryValues="@array/entriesValuesListPreferenceGraphView"
             app:useSimpleSummaryProvider="true"

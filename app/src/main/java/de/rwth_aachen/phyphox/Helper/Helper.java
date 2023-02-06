@@ -340,7 +340,7 @@ public abstract class Helper {
                 } else if(size.equals(FieldSize.BIG)){
                     return R.dimen.text_size_big;
                 } else{
-                    return R.dimen.text_size_big;
+                    return R.dimen.text_size_medium;
                 }
             case LINE_WIDTH:
                 if(size.equals(FieldSize.SMALL)){

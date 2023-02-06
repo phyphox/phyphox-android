@@ -324,7 +324,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settingGraphViewEdit">Edit graph elements size</string>
     <string name="settingGraphSize">Graph size</string>
     <string name="small">Small</string>
-    <string name="medium">Medium</string>
+    <string name="medium">Default</string>
     <string name="big">Big</string>
 
     <string name="common_unit_short_arbitrary_unit">a.u.</string>

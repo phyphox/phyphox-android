@@ -31,17 +31,17 @@
     <dimen name="expElementElevation">4dp</dimen>
     <dimen name="expElementMargin">1dp</dimen>
 
-   <dimen name="label_size_small">5dp</dimen>
-   <dimen name="label_size_medium">6dp</dimen>
-   <dimen name="label_size_big">7dp</dimen>
-   <dimen name="text_size_small">9dp</dimen>
-   <dimen name="text_size_medium">10dp</dimen>
-   <dimen name="text_size_big">12dp</dimen>
-   <dimen name="line_width_small">1dp</dimen>
-   <dimen name="line_width_medium">1.5dp</dimen>
+   <dimen name="label_size_small">5.5sp</dimen>
+   <dimen name="label_size_medium">6.5sp</dimen>
+   <dimen name="label_size_big">7.5sp</dimen>
+   <dimen name="text_size_small">12sp</dimen>
+   <dimen name="text_size_medium">14sp</dimen>
+   <dimen name="text_size_big">16sp</dimen>
+   <dimen name="line_width_small">0.5dp</dimen>
+   <dimen name="line_width_medium">0.6dp</dimen>
    <dimen name="line_width_big">2dp</dimen>
    <dimen name="border_width_small">1dp</dimen>
-   <dimen name="border_width_medium">2dp</dimen>
-   <dimen name="border_width_big">3dp</dimen>
+   <dimen name="border_width_medium">1.4dp</dimen>
+   <dimen name="border_width_big">2dp</dimen>
 
 </resources>
