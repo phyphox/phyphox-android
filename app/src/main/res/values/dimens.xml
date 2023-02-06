@@ -31,9 +31,12 @@
     <dimen name="expElementElevation">4dp</dimen>
     <dimen name="expElementMargin">1dp</dimen>
 
-   <dimen name="label_size_small">5.5sp</dimen>
-   <dimen name="label_size_medium">6.5sp</dimen>
-   <dimen name="label_size_big">7.5sp</dimen>
+    <!-- px is used instead of dp because when system font is changed,
+    the label size does not change as per the other text. Instead, it is much bigger than others.
+     Need to test in most devices to see how using px impacts as per device screen size-->
+   <dimen name="label_size_small">16px</dimen>
+   <dimen name="label_size_medium">18px</dimen>
+   <dimen name="label_size_big">19px</dimen>
    <dimen name="text_size_small">12sp</dimen>
    <dimen name="text_size_medium">14sp</dimen>
    <dimen name="text_size_big">16sp</dimen>

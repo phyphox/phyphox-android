@@ -428,7 +428,11 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     public void setLabel(String label) {
         graphLabel.setText(label);
-        graphLabel.setTextSize(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.LABEL_SIZE));
+        float selectedTextSize = Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.LABEL_SIZE);
+        float textSizeAsDisplay = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX,
+                selectedTextSize,
+                getContext().getResources().getDisplayMetrics());
+        graphLabel.setTextSize(textSizeAsDisplay);
     }
 
     private void setPopupInfo(int x, int y, String text) {
