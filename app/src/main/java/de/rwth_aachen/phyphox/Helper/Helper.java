@@ -324,37 +324,45 @@ public abstract class Helper {
         }
     }
 
-    private static int getResourceId(GraphField field, String size){
+    private static int getResourceId(GraphField field, int size){
         switch (field){
             case LABEL_SIZE:
-                if(size.equals(FieldSize.SMALL)){
+                if(size == FieldSize.SMALL){
                     return R.dimen.label_size_small;
-                } else if(size.equals(FieldSize.BIG)){
+                } else if(size == FieldSize.BIG){
                     return R.dimen.label_size_big;
+                } else if(size == FieldSize.BIGGER){
+                    return R.dimen.label_size_bigger;
                 } else{
                     return R.dimen.label_size_medium;
                 }
             case TEXT_SIZE:
-                if(size.equals(FieldSize.SMALL)){
+                if(size==FieldSize.SMALL){
                     return R.dimen.text_size_small;
-                } else if(size.equals(FieldSize.BIG)){
+                } else if(size==FieldSize.BIG){
                     return R.dimen.text_size_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.text_size_bigger;
                 } else{
                     return R.dimen.text_size_medium;
                 }
             case LINE_WIDTH:
-                if(size.equals(FieldSize.SMALL)){
+                if(size==FieldSize.SMALL){
                     return R.dimen.line_width_small;
-                } else if(size.equals(FieldSize.BIG)){
+                } else if(size==FieldSize.BIG){
                     return R.dimen.line_width_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.line_width_bigger;
                 } else{
                     return R.dimen.line_width_medium;
                 }
             case BORDER_WIDTH:
-                if(size.equals(FieldSize.SMALL)){
+                if(size==FieldSize.SMALL){
                     return R.dimen.border_width_small;
-                } else if(size.equals(FieldSize.BIG)){
+                } else if(size==FieldSize.BIG){
                     return R.dimen.border_width_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.border_width_bigger;
                 } else{
                     return R.dimen.border_width_medium;
                 }
@@ -363,7 +371,9 @@ public abstract class Helper {
     }
 
     public static float getUserSelectedGraphSetting(Context context, GraphField field) {
-        String savedSize = PreferenceManager.getDefaultSharedPreferences(context).getString(SettingsFragment.GRAPH_SIZE_KEY, FieldSize.MEDIUM);
+        int savedSize = PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getInt(SettingsFragment.GRAPH_SIZE_KEY, FieldSize.MEDIUM);
         int resourceId = getResourceId(field,savedSize);
         return context.getResources().getDimension(resourceId);
     }
@@ -373,8 +383,9 @@ public abstract class Helper {
     }
 
     public static class FieldSize {
-        final static String SMALL = "Small";
-        final static String MEDIUM = "Medium";
-        final static String BIG = "Big";
+        public final static int SMALL = 0;
+        public final static int MEDIUM = 1;
+        public final static int BIG = 2;
+        public final static int BIGGER = 3;
     }
 }

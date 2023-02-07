@@ -7,17 +7,5 @@
         <item>@string/applyZoomSameAxis</item>
     </string-array>
 
-    <string-array name="entriesListPreferenceSize">
-        <item>@string/medium</item>
-        <item>@string/small</item>
-        <item>@string/big</item>
-    </string-array>
-
-    <string-array name="entriesValuesListPreferenceGraphView">
-        <item>@string/medium</item>
-        <item>@string/small</item>
-        <item>@string/big</item>
-    </string-array>
-
 
 </resources>

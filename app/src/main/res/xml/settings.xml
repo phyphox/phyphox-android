@@ -26,15 +26,12 @@
     <PreferenceCategory
         android:title="@string/settingGraphViewEdit">
 
-        <ListPreference
-            android:dialogTitle="@string/settingGraphSize"
+        <SeekBarPreference
+            android:max="3"
+            app:min="0"
+            android:layout="@layout/seekbar_preference_custom"
+            android:defaultValue="1"
             android:key="graph_size_dialog"
-            android:icon="@drawable/ic_line_width"
-            android:defaultValue="@string/medium"
-            android:entries="@array/entriesListPreferenceSize"
-            android:entryValues="@array/entriesValuesListPreferenceGraphView"
-            app:useSimpleSummaryProvider="true"
-            android:title="@string/settingGraphSize"
             />
 
 

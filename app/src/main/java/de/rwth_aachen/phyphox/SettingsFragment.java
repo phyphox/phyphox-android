@@ -1,28 +1,19 @@
 package de.rwth_aachen.phyphox;
 
-import android.app.LocaleConfig;
-import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.LocaleList;
 import android.text.InputType;
-import android.util.Log;
-import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.os.ConfigurationCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
-import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
+import androidx.preference.SeekBarPreference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -37,7 +28,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         setupPortEditText();
         prepareLanguageList();
         updateCurrentLanguage();
-        updateGraphView();
+        updateGraphSize();
     }
 
     private void setupPortEditText() {
@@ -126,11 +117,11 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     }
 
 
-    private void updateGraphView(){
-        ListPreference lp = findPreference(GRAPH_SIZE_KEY);
+    private void updateGraphSize(){
+        SeekBarPreference lp = findPreference(GRAPH_SIZE_KEY);
         assert lp != null;
         lp.setOnPreferenceChangeListener((preference, newValue) -> {
-            lp.setValue(newValue.toString());
+            lp.setValue((Integer) newValue);
             return true;
         });
     }
