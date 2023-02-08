@@ -7,6 +7,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
@@ -134,43 +135,35 @@ public abstract class Helper {
             return defaultValue;
         //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
         switch(colorStr.toLowerCase()) {
-            case "orange": return res.getColor(R.color.phyphox_primary);
-            case "red": return res.getColor(R.color.phyphox_red);
-            case "magenta": return res.getColor(R.color.phyphox_magenta);
-            case "blue":
-                if(isDarkTheme(res))
-                    return res.getColor(R.color.phyphox_blue_60);
-                else
-                    return res.getColor(R.color.phyphox_blue_strong);
-            case "green":
-                if(isDarkTheme(res))
-                    return res.getColor(R.color.phyphox_green);
-                else
-                    return res.getColor(R.color.phyphox_green_strong);
-            case "yellow":
-                if(isDarkTheme(res))
-                    return res.getColor(R.color.phyphox_yellow);
-                else
-                    return res.getColor(R.color.phyphox_yellow_strong);
-            case "white":
-                if(isDarkTheme(res))
-                    return res.getColor(R.color.phyphox_white_100);
-                else
-                    return res.getColor(R.color.phyphox_black_100);
+            case "orange": return getRequiredColor(res, R.color.phyphox_primary);
+            case "red": return getRequiredColor(res, R.color.phyphox_red);
+            case "magenta": return getRequiredColor(res, R.color.phyphox_magenta);
+            case "blue": return getRequiredColor(res, R.color.phyphox_blue_60);
+            case "green": return getRequiredColor(res, R.color.phyphox_green);
+            case "yellow": return getRequiredColor(res, R.color.phyphox_yellow);
+            case "white": return getRequiredColor(res, R.color.phyphox_white_100);
 
-            case "weakorange": return res.getColor(R.color.phyphox_primary_weak);
-            case "weakred": return res.getColor(R.color.phyphox_red_weak);
-            case "weakmagenta": return res.getColor(R.color.phyphox_magenta_weak);
-            case "weakblue": return res.getColor(R.color.phyphox_blue_40);
-            case "weakgreen": return res.getColor(R.color.phyphox_green_weak);
-            case "weakyellow": return res.getColor(R.color.phyphox_yellow_weak);
-            case "weakwhite": return res.getColor(R.color.phyphox_white_60);
+            case "weakorange": return getRequiredColor(res, R.color.phyphox_primary_weak);
+            case "weakred": return getRequiredColor(res, R.color.phyphox_red_weak);
+            case "weakmagenta": return getRequiredColor(res, R.color.phyphox_magenta_weak);
+            case "weakblue": return getRequiredColor(res, R.color.phyphox_blue_40);
+            case "weakgreen": return getRequiredColor(res, R.color.phyphox_green_weak);
+            case "weakyellow": return getRequiredColor(res, R.color.phyphox_yellow_weak);
+            case "weakwhite": return getRequiredColor(res, R.color.phyphox_white_60);
         }
 
         //Not a constant, so it hast to be hex...
         if (colorStr.length() != 6)
             return defaultValue;
         return Integer.parseInt(colorStr, 16) | 0xff000000;
+    }
+
+    private static int getRequiredColor(Resources res, int resId){
+        if(isDarkTheme(res))
+            return res.getColor(resId);
+        else {
+            return Color.parseColor(ColorConverter.adjustableColor(res.getColor(resId)));
+        }
     }
 
     public static boolean isDarkTheme(Resources res){
