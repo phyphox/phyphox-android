@@ -26,6 +26,7 @@ import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -422,9 +423,6 @@ public class ExperimentList extends AppCompatActivity {
             if (unavailableSensorList.get(position) >= 0) {
                 holder.title.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
                 holder.info.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
-            } else {
-                //holder.title.setTextColor(res.getColor(R.color.background));
-                //holder.info.setTextColor(res.getColor(R.color.background));
             }
 
             //Handle the menubutton. Set it visible only for non-assets
@@ -767,6 +765,7 @@ public class ExperimentList extends AppCompatActivity {
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
         BaseColorDrawable image = null; //This will hold the icon
+        BaseColorDrawable imageForContributionHeadline = null; //This will hold the icon for Contribution for light theme
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             int eventType = xpp.getEventType(); //should be START_DOCUMENT
@@ -831,8 +830,14 @@ public class ExperimentList extends AppCompatActivity {
                                         icon = xpp.nextText().trim();
                                         try {
                                             Bitmap bitmap = Helper.decodeBase64(icon);
-                                            if (bitmap != null)
+                                            // This bitmap will be used for the icon used in contribution headline
+                                            if(bitmap != null) {
                                                 image = new BitmapIcon(bitmap, this);
+                                                Bitmap bitmapDiffColor = Helper.changeColorOf(this, bitmap, R.color.phyphox_white_100);
+                                                if(bitmapDiffColor != null)
+                                                    imageForContributionHeadline = new BitmapIcon(bitmapDiffColor, this);
+                                            }
+
                                         } catch (IllegalArgumentException e) {
                                             Log.e("loadExperimentInfo", "Invalid icon: " + e.getMessage());
                                         }
@@ -1002,12 +1007,23 @@ public class ExperimentList extends AppCompatActivity {
             //Let's check the icon
             if (image == null) //No icon given. Create a TextIcon from the first three characters of the title
                 image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
-            image.setBaseColor(color);
+
 
 
             //We have all the information. Add the experiment.
-            if (categories != null)
-                addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+            BaseColorDrawable mImage;
+            if (categories != null){
+                // Following condition is for setting the proper image and its color in the Contribution Headline
+                if(category.equals("phyphox.org") && !Helper.isDarkTheme(getResources())){
+                    mImage = imageForContributionHeadline;
+                    mImage.setColorFilter( 0xff000000, PorterDuff.Mode.MULTIPLY );
+                } else {
+                    mImage = image;
+                    mImage.setBaseColor(color);
+                }
+                addExperiment(title, category, color, mImage, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+            }
+
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (XML Exception)", isTemp, isAsset, categories);
