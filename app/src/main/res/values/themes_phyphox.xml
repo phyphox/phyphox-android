@@ -52,4 +52,8 @@
         <item name="android:tint">@color/phyphox_black_100</item>
     </style>
 
+    <style name="Widget.Phyphox.Fab.QR" parent="Theme.Phyphox.DayNight">
+        <item name="tint">@color/phyphox_black_100</item>
+    </style>
+
 </resources>
