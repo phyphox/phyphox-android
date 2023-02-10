@@ -26,7 +26,7 @@ import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -42,7 +42,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
-import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
@@ -77,6 +76,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.preference.PreferenceManager;
 
 import com.caverock.androidsvg.SVG;
 import com.caverock.androidsvg.SVGParseException;
@@ -421,11 +421,8 @@ public class ExperimentList extends AppCompatActivity {
             holder.info.setText(infos.get(position));
 
             if (unavailableSensorList.get(position) >= 0) {
-                holder.title.setTextColor(res.getColor(R.color.mainDisabled));
-                holder.info.setTextColor(res.getColor(R.color.mainDisabled));
-            } else {
-                holder.title.setTextColor(res.getColor(R.color.main));
-                holder.info.setTextColor(res.getColor(R.color.main2));
+                holder.title.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
+                holder.info.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
             }
 
             //Handle the menubutton. Set it visible only for non-assets
@@ -437,7 +434,7 @@ public class ExperimentList extends AppCompatActivity {
                 if (Helper.luminance(colors.get(position)) > 0.1)
                     holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.menuBtn.setOnClickListener(v -> {
-                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
+                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight), v);
                     popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
 
                     popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
@@ -624,7 +621,6 @@ public class ExperimentList extends AppCompatActivity {
                     res.getDimensionPixelOffset(R.dimen.activity_vertical_margin)
             );
             catLayout.setLayoutParams(lllp);
-            catLayout.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.background));
 
             //Create the headline text view
             categoryHeadline = new TextView(parentContext);
@@ -636,8 +632,6 @@ public class ExperimentList extends AppCompatActivity {
             categoryHeadline.setText(name.equals(phyphoxCat) ? res.getString(R.string.categoryPhyphoxOrg) : name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
             categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
-            categoryHeadline.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.highlight));
-            categoryHeadline.setTextColor(ContextCompat.getColor(parentContext, R.color.main));
             categoryHeadline.setPadding(res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10, res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10);
 
             //Create the gridView for the experiment items
@@ -742,11 +736,6 @@ public class ExperimentList extends AppCompatActivity {
         categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
     }
 
-    //Decode the experiment icon (base64) and return a bitmap
-    public static Bitmap decodeBase64(String input) throws IllegalArgumentException {
-        byte[] decodedByte = Base64.decode(input, 0); //Decode the base64 data to binary
-        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
-    }
 
     private void addInvalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
@@ -771,11 +760,12 @@ public class ExperimentList extends AppCompatActivity {
         String title = ""; //Experiment title
         String stateTitle = ""; //A title given by the user for a saved experiment state
         String category = ""; //Experiment category
-        int color = getResources().getColor(R.color.phyphox_color); //Icon base color
+        int color = getResources().getColor(R.color.phyphox_primary); //Icon base color
         boolean customColor = false;
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
         BaseColorDrawable image = null; //This will hold the icon
+        BaseColorDrawable imageForContributionHeadline = null; //This will hold the icon for Contribution for light theme
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             int eventType = xpp.getEventType(); //should be START_DOCUMENT
@@ -839,9 +829,15 @@ public class ExperimentList extends AppCompatActivity {
                                         //base64 encoded image. Decode it
                                         icon = xpp.nextText().trim();
                                         try {
-                                            Bitmap bitmap = decodeBase64(icon);
-                                            if (bitmap != null)
+                                            Bitmap bitmap = Helper.decodeBase64(icon);
+                                            // This bitmap will be used for the icon used in contribution headline
+                                            if(bitmap != null) {
                                                 image = new BitmapIcon(bitmap, this);
+                                                Bitmap bitmapDiffColor = Helper.changeColorOf(this, bitmap, R.color.phyphox_white_100);
+                                                if(bitmapDiffColor != null)
+                                                    imageForContributionHeadline = new BitmapIcon(bitmapDiffColor, this);
+                                            }
+
                                         } catch (IllegalArgumentException e) {
                                             Log.e("loadExperimentInfo", "Invalid icon: " + e.getMessage());
                                         }
@@ -879,7 +875,7 @@ public class ExperimentList extends AppCompatActivity {
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
                                     customColor = true;
-                                    color = Helper.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_color), getResources());
+                                    color = Helper.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_primary), getResources());
                                 }
                                 break;
                             case "input": //We just have to check if there are any sensors, which are not supported on this device
@@ -954,7 +950,7 @@ public class ExperimentList extends AppCompatActivity {
                                     unavailableSensor = R.string.bluetooth;
                                 }
                                 if (!customColor)
-                                    color = getResources().getColor(R.color.bluetooth);
+                                    color = getResources().getColor(R.color.phyphox_blue_100);
                                 break;
                         }
                         break;
@@ -1011,12 +1007,23 @@ public class ExperimentList extends AppCompatActivity {
             //Let's check the icon
             if (image == null) //No icon given. Create a TextIcon from the first three characters of the title
                 image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
-            image.setBaseColor(color);
+
 
 
             //We have all the information. Add the experiment.
-            if (categories != null)
-                addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+            BaseColorDrawable mImage;
+            if (categories != null){
+                // Following condition is for setting the proper image and its color in the Contribution Headline
+                if(category.equals("phyphox.org") && !Helper.isDarkTheme(getResources())){
+                    mImage = imageForContributionHeadline;
+                    mImage.setColorFilter( 0xff000000, PorterDuff.Mode.MULTIPLY );
+                } else {
+                    mImage = image;
+                    mImage.setBaseColor(color);
+                }
+                addExperiment(title, category, color, mImage, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+            }
+
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (XML Exception)", isTemp, isAsset, categories);
@@ -2232,7 +2239,12 @@ public class ExperimentList extends AppCompatActivity {
         //On Android 12 this does not hurt, but Android 12 shows its own splash method (defined with
         //specific attributes in the theme), so the classic splash screen is not shown anyways
         //before setTheme is called and we see the normal theme right away.
-        setTheme(R.style.experimentList);
+        setTheme(R.style.Theme_Phyphox_DayNight);
+
+        String themePreference = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(getString(R.string.setting_dark_mode_key),SettingsFragment.DARK_MODE_ON);
+        SettingsFragment.setApplicationTheme(themePreference);
 
         //Basics. Call super-constructor and inflate the layout.
         super.onCreate(savedInstanceState);
@@ -2251,7 +2263,7 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox);
+                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight);
                 PopupMenu popup = new PopupMenu(wrapper, v);
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
@@ -2331,6 +2343,12 @@ public class ExperimentList extends AppCompatActivity {
                                 pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
                             } catch (Exception e) {
                                 pInfo = null;
+                            }
+
+                            if(Helper.isDarkTheme(res)){
+                                sb.append(" <font color='white'");
+                            }else{
+                                sb.append(" <font color='black'");
                             }
 
                             sb.append("<b>phyphox</b><br />");
@@ -2498,9 +2516,11 @@ public class ExperimentList extends AppCompatActivity {
                             } else {
                                 sb.append("API < 21");
                             }
+                            sb.append("</font>");
 
                             final Spanned text = Html.fromHtml(sb.toString());
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                            ContextThemeWrapper ctw = new ContextThemeWrapper( ExperimentList.this, R.style.Theme_Phyphox_DayNight);
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ctw);
                             builder.setMessage(text)
                                     .setTitle(R.string.deviceInfo)
                                     .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
@@ -2599,7 +2619,7 @@ public class ExperimentList extends AppCompatActivity {
     //Displays a warning message that some experiments might damage the phone
     private boolean displayDoNotDamageYourPhone() {
         //Use the app theme and create an AlertDialog-builder
-        ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.phyphox);
+        ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.Theme_Phyphox_DayNight);
         AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
         LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View warningLayout = adbInflater.inflate(R.layout.donotshowagain, null);
@@ -2640,7 +2660,7 @@ public class ExperimentList extends AppCompatActivity {
     //This displays a rather complex dialog to allow users to set up a simple experiment
     private void newExperimentDialog(final Context c) {
         //Build the dialog with an AlertDialog builder...
-        ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.phyphox);
+        ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.Theme_Phyphox_DayNight);
         AlertDialog.Builder neDialog = new AlertDialog.Builder(ctw);
         LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View neLayout = neInflater.inflate(R.layout.new_experiment, null);

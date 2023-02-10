@@ -2,17 +2,27 @@ package de.rwth_aachen.phyphox.Helper;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Base64;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+
+import androidx.core.content.ContextCompat;
 
 import androidx.preference.PreferenceManager;
 
@@ -125,27 +135,48 @@ public abstract class Helper {
             return defaultValue;
         //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
         switch(colorStr.toLowerCase()) {
-            case "orange": return res.getColor(R.color.presetOrange);
-            case "red": return res.getColor(R.color.presetRed);
-            case "magenta": return res.getColor(R.color.presetMagenta);
-            case "blue": return res.getColor(R.color.presetBlue);
-            case "green": return res.getColor(R.color.presetGreen);
-            case "yellow": return res.getColor(R.color.presetYellow);
-            case "white": return res.getColor(R.color.presetWhite);
+            case "orange": return getRequiredColor(res, R.color.phyphox_primary);
+            case "red": return getRequiredColor(res, R.color.phyphox_red);
+            case "magenta": return getRequiredColor(res, R.color.phyphox_magenta);
+            case "blue": return getRequiredColor(res, R.color.phyphox_blue_60);
+            case "green": return getRequiredColor(res, R.color.phyphox_green);
+            case "yellow": return getRequiredColor(res, R.color.phyphox_yellow);
+            case "white": return getRequiredColor(res, R.color.phyphox_white_100);
 
-            case "weakorange": return res.getColor(R.color.presetWeakOrange);
-            case "weakred": return res.getColor(R.color.presetWeakRed);
-            case "weakmagenta": return res.getColor(R.color.presetWeakMagenta);
-            case "weakblue": return res.getColor(R.color.presetWeakBlue);
-            case "weakgreen": return res.getColor(R.color.presetWeakGreen);
-            case "weakyellow": return res.getColor(R.color.presetWeakYellow);
-            case "weakwhite": return res.getColor(R.color.presetWeakWhite);
+            case "weakorange": return getRequiredColor(res, R.color.phyphox_primary_weak);
+            case "weakred": return getRequiredColor(res, R.color.phyphox_red_weak);
+            case "weakmagenta": return getRequiredColor(res, R.color.phyphox_magenta_weak);
+            case "weakblue": return getRequiredColor(res, R.color.phyphox_blue_40);
+            case "weakgreen": return getRequiredColor(res, R.color.phyphox_green_weak);
+            case "weakyellow": return getRequiredColor(res, R.color.phyphox_yellow_weak);
+            case "weakwhite": return getRequiredColor(res, R.color.phyphox_white_60);
         }
 
         //Not a constant, so it hast to be hex...
         if (colorStr.length() != 6)
             return defaultValue;
         return Integer.parseInt(colorStr, 16) | 0xff000000;
+    }
+
+    private static int getRequiredColor(Resources res, int resId){
+        if(isDarkTheme(res))
+            return res.getColor(resId);
+        else {
+            return Color.parseColor(ColorConverter.adjustableColor(res.getColor(resId)));
+        }
+    }
+
+    public static boolean isDarkTheme(Resources res){
+        int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        switch (nightModelFlags){
+            case Configuration.UI_MODE_NIGHT_YES:
+            case Configuration.UI_MODE_NIGHT_UNDEFINED:
+                return true;
+            case Configuration.UI_MODE_NIGHT_NO:
+                return false;
+        }
+        return false;
     }
 
     public static void replaceTagInFile(String file, Context ctx, String tag, String newContent) {
@@ -322,6 +353,24 @@ public abstract class Helper {
             }
             callback.onSuccess(bitmap);
         }
+    }
+
+    //Decode the experiment icon (base64) and return a bitmap
+    public static Bitmap decodeBase64(String input) throws IllegalArgumentException {
+        byte[] decodedByte = Base64.decode(input, 0); //Decode the base64 data to binary
+        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
+    }
+
+    public static Bitmap changeColorOf(Context context,Bitmap bitmap, int colorId){
+        Bitmap mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Paint paint = new Paint();
+        ColorFilter filter = new PorterDuffColorFilter(ContextCompat.getColor(context, colorId), PorterDuff.Mode.SRC_IN);
+        paint.setColorFilter(filter);
+
+        Canvas canvas = new Canvas(mutableBitmap);
+        canvas.drawBitmap(mutableBitmap, 0, 0, paint);
+
+        return mutableBitmap;
     }
 
     private static int getResourceId(GraphField field, int size){

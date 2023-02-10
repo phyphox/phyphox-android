@@ -1,6 +1,11 @@
 <resources>
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="titleIconSize">40dp</dimen>
+    <!-- Icon size is customized for the home page as standard is not same as previous version.
+    previous version: there was only dark mode.
+    Now, as there is 'tint' set in the theme, the phyphox_dark image need to be added in
+    android:background instead of android:src-->
+    <dimen name="titleIconSizeCustom">45dp</dimen>
 
     <dimen name="activity_horizontal_margin">12dp</dimen>
     <dimen name="activity_horizontal_button_margin">12dp</dimen>

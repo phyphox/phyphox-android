@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox.Dark"/>
+
+    <style name="Widget.Phyphox.DayNight" parent="Widget.Phyphox.Dark"/>
+
+    <style name="Theme.Phyphox.Dark" parent="Theme.Phyphox">
+        <item name="android:textColor">@color/phyphox_white_100</item>
+        <item name="android:textColorPrimary">@color/phyphox_white_100</item>
+        <item name="android:textColorSecondary">@color/phyphox_white_100</item>
+        <item name="colorAccent">@color/phyphox_primary</item>
+        <item name="android:colorAccent" tools:ignore="NewApi">@color/phyphox_primary</item>
+        <item name="android:textColorHighlight">@color/phyphox_primary</item>
+        <item name="backgroundColor">@color/phyphox_black_50</item>
+
+        <item name="android:windowBackground">@color/phyphox_black_60</item>
+
+        <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
+        <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Dark</item>
+    </style>
+
+    <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:textColor">@color/phyphox_white_100</item>
+        <item name="android:textColorPrimary">@color/phyphox_white_100</item>
+        <item name="android:textColorSecondary">@color/phyphox_white_80</item>
+        <item name="colorAccent">@color/phyphox_primary</item>
+        <item name="android:colorAccent" tools:ignore="NewApi">@color/phyphox_primary</item>
+        <item name="android:textColorHighlight">@color/phyphox_primary</item>
+
+        <item name="colorPrimary">@color/phyphox_primary</item>
+        <item name="colorPrimaryDark">@color/phyphox_black_80</item>
+        <item name="android:colorBackground">@color/phyphox_black_80</item>
+
+        <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
+        <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
+
+    </style>
+
+    <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:textColor">@color/phyphox_black_100</item>
+        <item name="colorPrimary">@color/phyphox_black_100</item>
+        <item name="colorAccent">@color/phyphox_rwth_primary</item>
+        <item name="alertDialogTheme">@style/rwthDialog</item>
+    </style>
+
+    <style name="Widget.Phyphox.Dark" parent="Widget.Phyphox.Light">
+        <item name="android:textColor">@color/phyphox_white_100</item>
+        <item name="tint">@color/phyphox_white_100</item>
+        <item name="android:tint">@color/phyphox_white_100</item>
+    </style>
+
+</resources>

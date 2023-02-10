@@ -11,8 +11,7 @@
         android:clickable="false"
         android:elevation="1dp"
         android:paddingRight="@dimen/activity_horizontal_padding"
-        android:paddingEnd="@dimen/activity_horizontal_padding"
-        android:background="@drawable/background_ripple">
+        android:paddingEnd="@dimen/activity_horizontal_padding">
 
         <ImageView
             android:layout_width="@dimen/expElementIconSize"
@@ -27,27 +26,23 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
+            style="@style/TextAppearance.Phyphox.Medium"
             android:text="Medium Text"
             android:id="@+id/expTitle"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@+id/expIcon"
-            android:textSize="@dimen/experiment_title_font"
             android:singleLine="true"
-            android:textColor="@color/main"
             android:layout_toLeftOf="@+id/menuButton"
             android:layout_toStartOf="@+id/menuButton" />
 
         <TextView
-            android:textColor="@color/main2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
+            style="@style/TextAppearance.Phyphox.Small"
             android:text="Small Text"
             android:id="@+id/expInfo"
             android:layout_below="@+id/expTitle"
             android:layout_toRightOf="@+id/expIcon"
-            android:textSize="@dimen/experiment_info_font"
             android:singleLine="true"
             android:layout_toLeftOf="@+id/menuButton"
             android:layout_toStartOf="@+id/menuButton" />

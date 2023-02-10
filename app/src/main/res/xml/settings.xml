@@ -24,6 +24,7 @@
     </androidx.preference.PreferenceCategory>
 
     <PreferenceCategory
+        app:isPreferenceVisible="true"
         android:title="@string/settingGraphViewEdit">
 
         <SeekBarPreference
@@ -35,6 +36,15 @@
             />
 
 
+
+        <ListPreference
+            android:key="@string/setting_dark_mode_key"
+            android:icon="@drawable/ic_dark_mode"
+            android:summary="%s"
+            android:defaultValue="1"
+            app:useSimpleSummaryProvider="true"
+            android:title="@string/settings_theme_title"
+            />
 
     </PreferenceCategory>
 

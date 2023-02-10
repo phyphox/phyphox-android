@@ -1,29 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- For now, splash screen shows only in dark theme-->
     <style name="splashTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@drawable/splash</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowSplashScreenBrandingImage">@drawable/rwth_white</item>
     </style>
 
-    <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="android:textColorPrimary">@color/main</item>
-        <item name="android:textColorSecondary">@color/main</item>
+    <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <item name="android:textColorPrimary">@color/phyphox_white_100</item>
+        <item name="android:textColorSecondary">@color/phyphox_white_100</item>
     </style>
 
-  <style name="PopupMenuPhyphox" parent="ThemeOverlay.AppCompat.Dark">
-      <item name="android:textColor">@color/mainExp</item>
-      <item name="android:colorBackground">@color/backgroundExp2</item>
+  <style name="Widget.Phyphox.PopupMenu.Overflow" parent="Widget.AppCompat.PopupMenu.Overflow">
+      <item name="android:textColor">@color/phyphox_white_100</item>
+      <item name="android:colorBackground">@color/phyphox_black_40</item>
   </style>
 
-    <style name="phyphoxDialog" parent="Theme.AppCompat.Dialog.Alert">
-        <item name="colorAccent">@color/highlight</item>
+    <style name="Theme.Phyphox.Dialog.Alert.Light" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <item name="textColorAlertDialogListItem">@color/phyphox_black_100</item>
+        <item name="colorAccent">@color/phyphox_primary</item>
+        <item name="android:colorBackground">@color/phyphox_white_100</item>
+    </style>
+
+    <style name="Theme.Phyphox.Dialog.Alert.Dark" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="textColorAlertDialogListItem">@color/phyphox_white_100</item>
+        <item name="colorAccent">@color/phyphox_primary</item>
+        <item name="android:colorBackground">@color/phyphox_black_60</item>
     </style>
 
     <style name="rwthDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="colorAccent">@color/rwth</item>
+        <item name="colorAccent">@color/phyphox_rwth_primary</item>
+
     </style>
 
     <style name="BottomNavigationView" parent="@style/TextAppearance.AppCompat.Caption">
@@ -33,5 +43,14 @@
     <style name="BottomNavigationView.Active" parent="@style/TextAppearance.AppCompat.Caption">
         <item name="android:textSize">@dimen/graph_tools_font</item>
     </style>
+
+    <style name="PreferenceThemeOverlay.v14.Phyphox.Dark" parent="PreferenceThemeOverlay.v14">
+        <item name="android:tint">@color/phyphox_white_100</item>
+    </style>
+
+    <style name="PreferenceThemeOverlay.v14.Phyphox.Light" parent="PreferenceThemeOverlay.v14">
+        <item name="android:tint">@color/phyphox_black_100</item>
+    </style>
+
 
 </resources>

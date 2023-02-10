@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#ff202020</color>
-    <color name="background2">#ff404040</color>
-    <color name="background3">#ff101010</color>
-    <color name="backgroundExp">#ff202020</color>
-    <color name="backgroundExp2">#ff404040</color>
-    <color name="backgroundExp3">#ff101010</color>
-    <color name="backgroundDialog">#ffffffff</color>
-    <color name="main">#ffffffff</color>
-    <color name="main2">#ffe0e0e0</color>
-    <color name="mainDisabled">#ff808080</color>
-    <color name="mainExp">#ffffffff</color>
-    <color name="mainDialog">#ff000000</color>
-    <color name="grid">#ff808080</color>
-    <color name="highlight">#ffff7e22</color>
-    <color name="phyphox_color">#ffff7e22</color>
-    <color name="rwth">#ff00549f</color>
 
-    <color name="bluetooth">#ff2260a5</color>
-    <color name="qrFabBG">#ffe0e0e0</color>
-    <color name="newExperimentFabBG">#fffe005d</color>
+    <color name="phyphox_primary">#ffff7e22</color>
+    <color name="phyphox_primary_weak">#ffffc399</color>
+    <color name="phyphox_rwth_primary">#ff00549f</color>
 
-    <color name="presetOrange">#ffff7e22</color>
-    <color name="presetRed">#fffe005d</color>
-    <color name="presetMagenta">#ffeb46f4</color>
-    <color name="presetBlue">#ff39a2ff</color>
-    <color name="presetGreen">#ff2bfb4c</color>
-    <color name="presetYellow">#ffedf668</color>
-    <color name="presetWhite">#ffffffff</color>
+    <color name="phyphox_white_100">#ffffffff</color>
+    <color name="phyphox_white_90">#fff0f0f0</color>
+    <color name="phyphox_white_80">#ffe0e0e0</color>
+    <color name="phyphox_white_70">#ffd0d0d0</color>
+    <color name="phyphox_white_60">#ffc4c4c4</color>
+    <color name="phyphox_white_50_black_50">#ff808080</color>
+    <color name="phyphox_black_40">#ff404040</color>
+    <color name="phyphox_black_50">#ff303030</color>
+    <color name="phyphox_black_60">#ff202020</color>
+    <color name="phyphox_black_80">#ff101010</color>
+    <color name="phyphox_black_100">#ff000000</color>
 
-    <color name="presetWeakOrange">#ffffc399</color>
-    <color name="presetWeakRed">#ffff7cac</color>
-    <color name="presetWeakMagenta">#fff6aafa</color>
-    <color name="presetWeakBlue">#ff9dd1ff</color>
-    <color name="presetWeakGreen">#ffa1fdaf</color>
-    <color name="presetWeakYellow">#ffe7e09b</color>
-    <color name="presetWeakWhite">#ffc4c4c4</color>
+    <color name="phyphox_blue_100">#ff2260a5</color>
+    <color name="phyphox_blue_60">#ff39a2ff</color>
+    <color name="phyphox_blue_40">#ff9dd1ff</color>
+    <color name="phyphox_blue_strong">#ff0169c5</color>
+
+    <color name="phyphox_red">#fffe005d</color>
+    <color name="phyphox_red_weak">#ffff7cac</color>
+
+    <color name="phyphox_magenta">#ffeb46f4</color>
+    <color name="phyphox_magenta_weak">#fff6aafa</color>
+
+    <color name="phyphox_green">#ff2bfb4c</color>
+    <color name="phyphox_green_weak">#ffa1fdaf</color>
+    <color name="phyphox_green_strong">#ff00d425</color>
+
+    <color name="phyphox_yellow_weak">#ffe7e09b</color>
+    <color name="phyphox_yellow">#ffedf668</color>
+    <color name="phyphox_yellow_strong">#ff8d9709</color>
+
 </resources>

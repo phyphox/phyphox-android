@@ -1,8 +1,10 @@
 package de.rwth_aachen.phyphox;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -1200,7 +1202,19 @@ public class GraphView extends View {
         Resources res = getResources();
 
         paint.setTextSize(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.TEXT_SIZE));
-        paint.setColor(res.getColor(R.color.mainExp));
+        int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        switch (nightModelFlags){
+            case Configuration.UI_MODE_NIGHT_YES:
+                paint.setColor(res.getColor(R.color.phyphox_white_100));
+                break;
+            case Configuration.UI_MODE_NIGHT_NO:
+                paint.setColor(res.getColor(R.color.phyphox_black_80));
+                break;
+            case Configuration.UI_MODE_NIGHT_UNDEFINED:
+                paint.setColor(res.getColor(R.color.phyphox_white_100));
+                break;
+        }
         paint.setStrokeWidth(1);
         paint.setAlpha(255);
         paint.setStyle(Paint.Style.FILL);
@@ -1358,7 +1372,6 @@ public class GraphView extends View {
         }
 
         //Draw rect around graph
-        paint.setColor(res.getColor(R.color.mainExp));
 
         paint.setStrokeWidth(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.BORDER_WIDTH));
         paint.setAlpha(255);

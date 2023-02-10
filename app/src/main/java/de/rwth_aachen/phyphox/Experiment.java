@@ -13,6 +13,10 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -22,6 +26,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -72,6 +77,7 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
@@ -216,8 +222,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Where it all begins...
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        setTheme(R.style.phyphox);
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -426,6 +430,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
+            if(Helper.isDarkTheme(getResources())){
+                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
+            } else {
+                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
+            }
             pager = ((ViewPager)findViewById(R.id.view_pager));
             FragmentManager manager = getSupportFragmentManager();
             adapter = new ExpViewPagerAdapter(manager, this.experiment);
@@ -646,6 +655,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
+        if(Helper.isDarkTheme(getResources())){
+            recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
+        }else {
+            recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
+        }
         deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(deviceInfoAdapter);
@@ -658,7 +672,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (popupWindow != null)
             return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View hintView = inflater.inflate(R.layout.menu_hint, null);
+        View hintView;
+        if(Helper.isDarkTheme(getResources())){
+            hintView = inflater.inflate(R.layout.menu_hint, null);
+        } else{
+            hintView = inflater.inflate(R.layout.menu_hint_light, null);
+        }
+
         TextView text = (TextView)hintView.findViewById(R.id.hint_text);
         text.setText(textRessource);
         ImageView iv = ((ImageView) hintView.findViewById(R.id.hint_arrow));
@@ -1332,7 +1352,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (!experiment.stateTitle.isEmpty()) {
                 TextView stateLabel = new TextView(builder.getContext());
                 stateLabel.setText(experiment.stateTitle);
-                stateLabel.setTextColor(res.getColor(R.color.main));
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
                 stateLabel.setLayoutParams(lp);
@@ -1341,7 +1360,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             TextView description = new TextView(builder.getContext());
             description.setText(experiment.description);
-            description.setTextColor(res.getColor(R.color.main2));
 
             ll.addView(description);
 
@@ -1358,7 +1376,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         }
                     }
                 });
-                btn.setBackgroundResource(R.drawable.background_ripple2);
                 ll.addView(btn);
             }
 
@@ -1757,6 +1774,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         TextView tv_announcer = (TextView)findViewById(R.id.remoteInfo);
         ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
         FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
+        if(Helper.isDarkTheme(res)){
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_black_50));
+        } else {
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_white_80));
+        }
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
@@ -1814,7 +1836,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             Log.e("Error in QrCode", e.getMessage());
         }
 
-        ivServerAddressQr.setImageBitmap(bitmap);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            ivServerAddressQr.setBackground(new BitmapDrawable(getResources(), bitmap));
+        }
 
         //TODO: Translate the text
         builder.setTitle("For easy URL access, scan the QR code from your device.");
@@ -1832,6 +1856,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Announce this to the user, so he knows why the webinterface stopped working.
         TextView announcer = (TextView)findViewById(R.id.remoteInfo);
         ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
+        FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
+        if(Helper.isDarkTheme(res)){
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_black_60));
+        } else {
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
             btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight()).alpha(0.0f);
             announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
