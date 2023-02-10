@@ -20,7 +20,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -37,13 +36,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.PhyphoxFile;
@@ -185,6 +183,9 @@ public class Bluetooth implements Serializable {
         }
         return result;
     }
+
+
+    public  static ConnectedDeviceInfo connectedDeviceInformation = new ConnectedDeviceInfo();
 
     /**
      * Create a new Bluetooth object.
@@ -541,7 +542,6 @@ public class Bluetooth implements Serializable {
         commandQueue.clear();
     }
 
-
     /**
      * Callback for Gatt operations.
      * The methods allow the queue to execute the next command, display errors and make sure the read data is retrieved.
@@ -554,6 +554,7 @@ public class Bluetooth implements Serializable {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
+            gatt.readRemoteRssi();
             executeNext();
             // retrieve data directly when the characteristic has changed
             byte[] data = characteristic.getValue();
@@ -563,12 +564,10 @@ public class Bluetooth implements Serializable {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
 
-            final Integer batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-
-            if (batteryLevel != null) {
-                connectedDeviceInfo.put(DEVICE_BATTERY_LEVEL, batteryLevel);
-                connectedDeviceInfo.put(DEVICE_NAME, gatt.getDevice().getName());
-            }
+            int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+            connectedDeviceInformation.setBatteryLabel(batteryLevel);
+            String connectedDeviceName = gatt.getDevice().getName();
+            connectedDeviceInformation.setDeviceName(connectedDeviceName);
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 displayErrorMessage(context.getResources().getString(R.string.bt_fail_reading) + BluetoothException.getMessage(Bluetooth.this));
@@ -604,7 +603,41 @@ public class Bluetooth implements Serializable {
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             super.onReadRemoteRssi(gatt, rssi, status);
-            connectedDeviceInfo.put(DEVICE_SIGNAL, rssi);
+            if(Experiment.bluetoothConnectionSuccessful){
+                int prevRssi = connectedDeviceInformation.getSignalStrength();
+                // As onReadRemoteRssi is called every second, this function will make sure the ui
+                // updates only when the signal level is changed
+                updateViewOnlyWhenSignalLevelChanged(rssi, prevRssi);
+            }
+            connectedDeviceInformation.setSignalStrength(rssi);
+        }
+
+        private void updateViewOnlyWhenSignalLevelChanged(int rssi, int prevRssi){
+            if(rssi != prevRssi){
+                if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_FULL, ConnectedDeviceInfo.SIGNAL_HIGH)){
+                    updateConnectedDeviceInfoAdapter();
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_HIGH, ConnectedDeviceInfo.SIGNAL_MEDIUM)){
+                    updateConnectedDeviceInfoAdapter();
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_MEDIUM, ConnectedDeviceInfo.SIGNAL_LOW)){
+                    updateConnectedDeviceInfoAdapter();
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_LOW, ConnectedDeviceInfo.NO_SIGNAL)){
+                    updateConnectedDeviceInfoAdapter();
+                } else if(prevRssi <= ConnectedDeviceInfo.NO_SIGNAL && prevRssi >= -100){
+                    updateConnectedDeviceInfoAdapter();
+                }
+            }
+        }
+
+        private void updateConnectedDeviceInfoAdapter(){
+            Runnable runnable = () -> Experiment.deviceInfoAdapter.notifyDataSetChanged();
+            activity.runOnUiThread(runnable);
+        }
+
+        private boolean hasSignalLevelChanged(int prevRssi, int rssi, int upperBound, int lowerBound){
+            boolean isValueInSignalRange = (rssi <= upperBound && rssi > lowerBound);
+            boolean isValueInPreviousSignalRange = (prevRssi <= upperBound && prevRssi > lowerBound);
+
+            return prevRssi > upperBound && isValueInSignalRange  || rssi > upperBound && isValueInPreviousSignalRange ;
         }
 
         @Override
