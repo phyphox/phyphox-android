@@ -23,9 +23,9 @@ import de.rwth_aachen.phyphox.R;
 public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<ConnectedBluetoothDeviceInfoAdapter.ViewHolder>{
     private Context mParent;
 
-    ArrayList<Map<String,Object>> connectedDevices;
+    ArrayList<ConnectedDeviceInfo> connectedDevices;
 
-    public ConnectedBluetoothDeviceInfoAdapter(ArrayList<Map<String, Object>> connectedDevices){
+    public ConnectedBluetoothDeviceInfoAdapter(ArrayList<ConnectedDeviceInfo> connectedDevices){
         this.connectedDevices = connectedDevices;
     }
 
@@ -42,9 +42,9 @@ public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<Co
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 
-        String deviceName = (String) connectedDevices.get(position).get(Bluetooth.DEVICE_NAME);
-        Integer deviceSignal = (Integer) connectedDevices.get(position).get(Bluetooth.DEVICE_SIGNAL);
-        Integer deviceBatteryLevel = (Integer) connectedDevices.get(position).get(Bluetooth.DEVICE_BATTERY_LEVEL);
+        String deviceName = connectedDevices.get(position).getDeviceName();
+        int deviceSignal =  connectedDevices.get(position).getSignalStrength();
+        int deviceBatteryLevel =  connectedDevices.get(position).getBatteryLabel();
 
         Drawable batteryImage = getBatteryLevelImage(deviceBatteryLevel);
         Drawable signalStrengthImage = getSignalStrengthImage(deviceSignal);
@@ -99,13 +99,13 @@ public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<Co
 
     private Drawable getSignalStrengthImage(int signalStrength){
         Drawable signalStrengthDrawable;
-        if (signalStrength > -30)
+        if (signalStrength > ConnectedDeviceInfo.SIGNAL_FULL)
             signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_4);
-        else if (signalStrength > -50)
+        else if (signalStrength > ConnectedDeviceInfo.SIGNAL_HIGH)
             signalStrengthDrawable=  ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_3);
-        else if (signalStrength > -70)
+        else if (signalStrength > ConnectedDeviceInfo.SIGNAL_MEDIUM)
             signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_2);
-        else if (signalStrength > -90)
+        else if (signalStrength > ConnectedDeviceInfo.SIGNAL_LOW)
             signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_1);
         else
             signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_0);

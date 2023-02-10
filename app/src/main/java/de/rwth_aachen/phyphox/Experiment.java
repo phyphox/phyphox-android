@@ -91,6 +91,7 @@ import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
+import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -175,7 +176,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
-    ArrayList<Map<String,Object>> connectedDevices = new ArrayList<>();
+
 
 
     private void doLeaveExperiment() {
@@ -607,7 +608,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 // define onSuccess
                 if (startMeasurement) {
                     btTask.onSuccess = () -> {
-                        showBatteryLevel();
+                        showBluetoothConnectedDeviceInfo();
                         if (timed) {
                             startTimedMeasurement();
                         } else {
@@ -629,24 +630,27 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         btTask.progress.show();
                     }
                     newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-                    newBtTask.onSuccess = this::showBatteryLevel;
+                    newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
                 };
                 btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
             }
         }
     }
+    public static boolean bluetoothConnectionSuccessful = false;
+    public static ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
+    ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
 
-    private void showBatteryLevel(){
-        Map<String, Object> data;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            data = Bluetooth.getConnectedDeviceInfo();
-            connectedDevices.add(data);
+    private void showBluetoothConnectedDeviceInfo(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            connectedDevices.add(Bluetooth.connectedDeviceInformation);
         }
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
-        ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
+        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(deviceInfoAdapter);
+
+        bluetoothConnectionSuccessful = true;
     }
 
     @SuppressLint("ClickableViewAccessibility")
