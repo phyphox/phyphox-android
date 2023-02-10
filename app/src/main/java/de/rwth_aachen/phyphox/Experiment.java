@@ -655,6 +655,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
+        if(Helper.isDarkTheme(getResources())){
+            recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
+        }else {
+            recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
+        }
         deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(deviceInfoAdapter);
@@ -1769,6 +1774,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         TextView tv_announcer = (TextView)findViewById(R.id.remoteInfo);
         ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
         FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
+        if(Helper.isDarkTheme(res)){
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_black_50));
+        } else {
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_white_80));
+        }
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
@@ -1846,6 +1856,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Announce this to the user, so he knows why the webinterface stopped working.
         TextView announcer = (TextView)findViewById(R.id.remoteInfo);
         ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
+        FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
+        if(Helper.isDarkTheme(res)){
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_black_60));
+        } else {
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
             btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight()).alpha(0.0f);
             announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);

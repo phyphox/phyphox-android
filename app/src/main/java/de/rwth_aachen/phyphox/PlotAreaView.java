@@ -426,7 +426,10 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     PlotRenderer(Context ctx) {
         super("PlotRenderer GL");
         this.ctx = ctx;
-        bgColor = ctx.getResources().getColor(R.color.phyphox_black_60);
+        if(Helper.isDarkTheme(ctx.getResources()))
+            bgColor = ctx.getResources().getColor(R.color.phyphox_black_60);
+        else
+            bgColor = ctx.getResources().getColor(R.color.phyphox_white_100);
     }
 
     @Override

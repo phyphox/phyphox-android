@@ -86,6 +86,7 @@
         android:layout_above="@id/recycler_view_battery"
         android:paddingLeft="@dimen/activity_horizontal_padding"
         android:paddingRight="@dimen/activity_horizontal_padding"
+        android:theme="@style/Widget.Phyphox.DayNight"
         android:visibility="invisible">
 
         <TextView
