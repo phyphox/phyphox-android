@@ -2241,11 +2241,6 @@ public class ExperimentList extends AppCompatActivity {
         //before setTheme is called and we see the normal theme right away.
         setTheme(R.style.Theme_Phyphox_DayNight);
 
-        String themePreference = PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getString(getString(R.string.setting_dark_mode_key),SettingsFragment.DARK_MODE_ON);
-        SettingsFragment.setApplicationTheme(themePreference);
-
         //Basics. Call super-constructor and inflate the layout.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_experiment_list);
