@@ -22,6 +22,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.Helper.Helper;
+
 //The graphView class implements an Android view which displays a data graph
 
 public class GraphView extends View {
@@ -1197,11 +1199,7 @@ public class GraphView extends View {
 
         Resources res = getResources();
 
-        String savedFontSize = PreferenceManager.getDefaultSharedPreferences(
-                getContext()).getString(getResources().getString(R.string.keyFontSize),
-                getResources().getString(R.string.mediumValueFontSize));
-
-        paint.setTextSize(Float.parseFloat(savedFontSize));
+        paint.setTextSize(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.TEXT_SIZE));
         paint.setColor(res.getColor(R.color.mainExp));
         paint.setStrokeWidth(1);
         paint.setAlpha(255);
@@ -1361,11 +1359,8 @@ public class GraphView extends View {
 
         //Draw rect around graph
         paint.setColor(res.getColor(R.color.mainExp));
-        String savedLineWidth = PreferenceManager.getDefaultSharedPreferences(
-                getContext()).getString(getResources().getString(R.string.keyLinewidth),
-                getResources().getString(R.string.mediumValueLineWidth));
 
-        paint.setStrokeWidth(Float.parseFloat(savedLineWidth));
+        paint.setStrokeWidth(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.BORDER_WIDTH));
         paint.setAlpha(255);
         paint.setStrokeCap(Paint.Cap.SQUARE);
         paint.setStyle(Paint.Style.STROKE);

@@ -22,6 +22,8 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 
+import de.rwth_aachen.phyphox.Helper.Helper;
+
 public class PlotAreaView extends TextureView {
 
     private void init() {
@@ -414,9 +416,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
             "}";
 
-    PlotRenderer(Resources res) {
+    private Context ctx;
+
+    PlotRenderer(Context ctx) {
         super("PlotRenderer GL");
-        bgColor = res.getColor(R.color.backgroundExp);
+        this.ctx = ctx;
+        bgColor = ctx.getResources().getColor(R.color.backgroundExp);
     }
 
     @Override
@@ -815,7 +820,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glUniformMatrix4fv(positionMatrixHandle, 1, false, graphSetup.positionMatrix, 0);
         GLES20.glUniform1i(logXYHandle, (graphSetup.logX ? 0x01 : 0x00) | (graphSetup.logY ? 0x02 : 0x00));
 
-        GLES20.glLineWidth(2.f * graphSetup.lineWidth.get(i));
+        float updatedLineWidth = Helper.getUserSelectedGraphSetting(ctx, Helper.GraphField.LINE_WIDTH);
+        GLES20.glLineWidth(updatedLineWidth * graphSetup.lineWidth.get(i));
 
         CurveData dataSet = graphSetup.dataSets.get(i);
         if (dataSet.n == 0 || (dataSet.n < 2 && !(graphSetup.style.get(i) == GraphView.Style.dots)))

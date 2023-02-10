@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import androidx.preference.PreferenceManager;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
@@ -38,6 +40,7 @@ import javax.xml.xpath.XPathFactory;
 import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.SettingsFragment;
 
 public abstract class Helper {
 
@@ -319,5 +322,70 @@ public abstract class Helper {
             }
             callback.onSuccess(bitmap);
         }
+    }
+
+    private static int getResourceId(GraphField field, int size){
+        switch (field){
+            case LABEL_SIZE:
+                if(size == FieldSize.SMALL){
+                    return R.dimen.label_size_small;
+                } else if(size == FieldSize.BIG){
+                    return R.dimen.label_size_big;
+                } else if(size == FieldSize.BIGGER){
+                    return R.dimen.label_size_bigger;
+                } else{
+                    return R.dimen.label_size_medium;
+                }
+            case TEXT_SIZE:
+                if(size==FieldSize.SMALL){
+                    return R.dimen.text_size_small;
+                } else if(size==FieldSize.BIG){
+                    return R.dimen.text_size_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.text_size_bigger;
+                } else{
+                    return R.dimen.text_size_medium;
+                }
+            case LINE_WIDTH:
+                if(size==FieldSize.SMALL){
+                    return R.dimen.line_width_small;
+                } else if(size==FieldSize.BIG){
+                    return R.dimen.line_width_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.line_width_bigger;
+                } else{
+                    return R.dimen.line_width_medium;
+                }
+            case BORDER_WIDTH:
+                if(size==FieldSize.SMALL){
+                    return R.dimen.border_width_small;
+                } else if(size==FieldSize.BIG){
+                    return R.dimen.border_width_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.border_width_bigger;
+                } else{
+                    return R.dimen.border_width_medium;
+                }
+        }
+        return 0;
+    }
+
+    public static float getUserSelectedGraphSetting(Context context, GraphField field) {
+        int savedSize = PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getInt(SettingsFragment.GRAPH_SIZE_KEY, FieldSize.MEDIUM);
+        int resourceId = getResourceId(field,savedSize);
+        return context.getResources().getDimension(resourceId);
+    }
+
+    public enum GraphField {
+        LABEL_SIZE, TEXT_SIZE, LINE_WIDTH, BORDER_WIDTH
+    }
+
+    public static class FieldSize {
+        public final static int SMALL = 0;
+        public final static int MEDIUM = 1;
+        public final static int BIG = 2;
+        public final static int BIGGER = 3;
     }
 }

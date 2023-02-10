@@ -321,19 +321,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
     <string name="settingsPort">Remote access port</string>
 
-    <string name="settingGraphViewEdit">Edit graph visual elements</string>
-    <string name="keyLinewidth">keyLineWidth</string>
-    <string name="keyFontSize">keyFontSize</string>
-    <string name="line_width">Border width</string>
-    <string name="small">Small</string>
-    <string name="medium">Medium</string>
-    <string name="big">Big</string>
-    <string name="smallValueFontSize">25</string>
-    <string name="mediumValueFontSize">30</string>
-    <string name="bigValueFontSize">40</string>
-    <string name="smallValueLineWidth">1</string>
-    <string name="mediumValueLineWidth">3</string>
-    <string name="bigValueLineWidth">8</string>
+    <string name="settingGraphViewEdit">User interface</string>
+    <string name="settingGraphSize">Graph size</string>
+    <string name="settingGraphSizeSubTitle">Make graph size bigger or smaller</string>
 
     <string name="common_unit_short_arbitrary_unit">a.u.</string>
     <string name="common_unit_short_second">s</string>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="18dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/img_pref"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
+        android:layout_marginLeft="15dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/img_minus"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_line_width"
+        />
+
+    <TextView
+        android:id="@+id/txt_pref_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/settingGraphSize"
+        app:layout_constraintStart_toEndOf="@+id/img_pref"
+        app:layout_constraintBottom_toTopOf="@id/txt_pref_subtitle"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/txt_pref_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="3dp"
+        android:text="@string/settingGraphSizeSubTitle"
+        app:layout_constraintStart_toEndOf="@+id/img_pref"
+        app:layout_constraintTop_toBottomOf="@id/txt_pref_title"/>
+
+    <TextView
+        android:visibility="gone"
+        android:id="@+id/seekbar_value"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:textSize="0sp"
+        />
+
+
+    <ImageView
+        android:id="@+id/img_minus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txt_pref_subtitle"
+        app:layout_constraintStart_toEndOf="@+id/img_pref"
+        app:srcCompat="@drawable/ic_baseline_minus_24"
+        android:layout_marginLeft="30dp"
+        tools:layout_editor_absoluteX="114dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="15dp"/>
+
+    <SeekBar
+        android:id="@+id/seekbar"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="3"
+        android:progress="1"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="15dp"
+        android:layout_marginStart="90dp"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/img_plus"
+        app:layout_constraintStart_toEndOf="@+id/img_minus"
+        app:layout_constraintTop_toBottomOf="@+id/txt_pref_subtitle" />
+
+
+    <ImageView
+        android:id="@+id/img_plus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txt_pref_subtitle"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="15dp"
+        android:layout_marginEnd="10dp"
+        app:srcCompat="@drawable/ic_baseline_add_24" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
