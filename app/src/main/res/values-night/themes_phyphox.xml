@@ -5,7 +5,7 @@
 
     <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox.Dark"/>
 
-    <style name="Widget.Phyphox.BottomNavigationView.DayNight" parent="Widget.Phyphox.BottomNavigationView.Dark"/>
+    <style name="Widget.Phyphox.DayNight" parent="Widget.Phyphox.Dark"/>
 
     <style name="Theme.Phyphox.Dark" parent="Theme.Phyphox">
         <item name="android:textColor">@color/phyphox_white_100</item>
@@ -48,7 +48,7 @@
         <item name="alertDialogTheme">@style/rwthDialog</item>
     </style>
 
-    <style name="Widget.Phyphox.BottomNavigationView.Dark" parent="Widget.Phyphox.BottomNavigationView">
+    <style name="Widget.Phyphox.Dark" parent="Widget.Phyphox.Light">
         <item name="android:textColor">@color/phyphox_white_100</item>
         <item name="tint">@color/phyphox_white_100</item>
         <item name="android:tint">@color/phyphox_white_100</item>

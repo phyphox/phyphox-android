@@ -250,7 +250,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     private boolean updateGrid = false;
     private boolean updateTimeRanges = false;
     private SurfaceTexture newSurface = null;
-    private Resources res;
 
     private GraphSetup graphSetup = null;
 
@@ -724,7 +723,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         gridGreenColor = GLES20.glGetUniformLocation(gridProgram, "g");
         gridBlueColor = GLES20.glGetUniformLocation(gridProgram, "b");
 
-        if(Helper.isDarkTheme(res)){
+        if(Helper.isDarkTheme(ctx.getResources())){
             GLES20.glUniform1f(gridRedColor, 1.0f);
             GLES20.glUniform1f(gridGreenColor, 1.0f);
             GLES20.glUniform1f(gridBlueColor, 1.0f);

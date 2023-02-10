@@ -5,7 +5,7 @@
 
     <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox"/>
 
-    <style name="Widget.Phyphox.BottomNavigationView.DayNight" parent="Widget.Phyphox.BottomNavigationView"/>
+    <style name="Widget.Phyphox.DayNight" parent="Widget.Phyphox.Light"/>
 
     <style name="Theme.Phyphox" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:textColor">@color/phyphox_black_60</item>
@@ -46,7 +46,7 @@
     </style>
 
 
-    <style name="Widget.Phyphox.BottomNavigationView" parent="Theme.Phyphox.DayNight">
+    <style name="Widget.Phyphox.Light" parent="Theme.Phyphox.DayNight">
         <item name="android:textColor">@color/phyphox_black_100</item>
         <item name="tint">@color/phyphox_black_100</item>
         <item name="android:tint">@color/phyphox_black_100</item>
