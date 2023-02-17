@@ -70,50 +70,24 @@ public class NetworkService {
         List<RequestCallback> requestCallbacks;
     }
 
-    private static class HttpTask extends AsyncTask<HttpTaskParameters, Void, HttpTaskResult> {
+    private static class HttpTask implements Runnable {
         HttpTaskParameters parameters;
         HttpURLConnection connection;
+        URL url;
+        String postData;
 
-        public void cancel() {
-            cancel(true);
-            if (connection != null)
-                connection.disconnect();
-        }
-
-        @Override
-        protected HttpTaskResult doInBackground(HttpTaskParameters... params) {
+        //Synchronous function to prepare the data while buffers are blocked before the asynchronous communication may try to access the buffers while they are no longer locked
+        protected void prepare(HttpTaskParameters params) {
             DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
             longformat.applyPattern("############0.000");
             longformat.setGroupingUsed(false);
 
-            parameters = params[0];
+            parameters = params;
 
             try {
                 Uri uri = Uri.parse(parameters.address);
 
-                if (!parameters.usePost) {
-                    for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : parameters.send.entrySet()) {
-                        String value = "";
-                        if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
-                            value = item.getValue().metadata.get(parameters.address);
-                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER)
-                            value = String.valueOf(item.getValue().buffer.value);
-                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME)
-                            value = String.valueOf(longformat.format(System.currentTimeMillis()/1000.0));
-                        uri = uri.buildUpon().appendQueryParameter(item.getKey(), value).build();
-                    }
-                }
-
-                URL url = new URL(uri.toString());
-
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod(parameters.usePost ? "POST" : "GET");
-
                 if (parameters.usePost) {
-                    connection.setRequestProperty("Content-Type", "application/json; utf-8");
-                    connection.setRequestProperty("Accept", "application/json");
-                    connection.setDoOutput(true);
-
                     JSONObject json = new JSONObject();
                     for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : parameters.send.entrySet()) {
                         if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
@@ -151,9 +125,50 @@ public class NetworkService {
                             json.put(item.getKey(), timeInfo);
                         }
                     }
+                    postData = json.toString();
+                } else {
+                    for (Map.Entry<String, NetworkConnection.NetworkSendableData> item : parameters.send.entrySet()) {
+                        String value = "";
+                        if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.METADATA)
+                            value = item.getValue().metadata.get(parameters.address);
+                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.BUFFER)
+                            value = String.valueOf(item.getValue().buffer.value);
+                        else if (item.getValue().type == NetworkConnection.NetworkSendableData.DataType.TIME)
+                            value = String.valueOf(longformat.format(System.currentTimeMillis()/1000.0));
+                        uri = uri.buildUpon().appendQueryParameter(item.getKey(), value).build();
+                    }
+                    postData = null;
+                }
+
+                url = new URL(uri.toString());
+            } catch (MalformedURLException e) {
+                finish(new HttpTaskResult(new ServiceResult(ResultEnum.genericError, "No valid URL."), null));
+            } catch (JSONException e) {
+                finish(new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"Could not build JSON."), null));
+            }
+        }
+
+        public void cancel() {
+            if (connection != null)
+                connection.disconnect();
+        }
+
+        @Override
+        public void run() {
+            if (parameters == null)
+                return;
+
+            try {
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod(parameters.usePost ? "POST" : "GET");
+
+                if (parameters.usePost && postData != null) {
+                    connection.setRequestProperty("Content-Type", "application/json; utf-8");
+                    connection.setRequestProperty("Accept", "application/json");
+                    connection.setDoOutput(true);
 
                     OutputStream os = connection.getOutputStream();
-                    byte[] input = json.toString().getBytes("utf-8");
+                    byte[] input = postData.getBytes("utf-8");
                     os.write(input, 0, input.length);
                     os.close();
                 }
@@ -162,7 +177,8 @@ public class NetworkService {
                 int responseCode = connection.getResponseCode();
                 if (200 > responseCode || 300 <= responseCode) {
                     connection.disconnect();
-                    return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"Http response code: " + responseCode), null);
+                    finish(new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"Http response code: " + responseCode), null));
+                    return;
                 }
 
                 InputStream is = connection.getInputStream();
@@ -170,23 +186,17 @@ public class NetworkService {
                 is.close();
                 connection.disconnect();
 
-                return new HttpTaskResult(new ServiceResult(ResultEnum.success,null), data);
-
-
-
-            } catch (MalformedURLException e) {
-                return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"No valid URL."), null);
+                finish(new HttpTaskResult(new ServiceResult(ResultEnum.success,null), data));
             } catch (IOException e) {
-                return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"IOException: " + e.getMessage()), null);
-            } catch (JSONException e) {
-                return new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"Could not build JSON."), null);
+                finish(new HttpTaskResult(new ServiceResult(ResultEnum.genericError,"IOException: " + e.getMessage()), null));
             }
         }
 
-        @Override
-        protected void onPostExecute(HttpTaskResult result) {
+
+        protected void finish(HttpTaskResult result) {
             result.requestCallbacks = parameters.requestCallbacks;
             parameters.taskCallback.requestFinished(result);
+            parameters = null;
         }
     }
 
@@ -217,7 +227,10 @@ public class NetworkService {
             parameters.address = address;
             parameters.send = send;
             parameters.usePost = false;
-            new HttpTask().execute(parameters);
+            HttpTask httpTask = new HttpTask();
+            httpTask.prepare(parameters);
+            Thread t = new Thread(httpTask);
+            t.start();
         }
 
         public byte[][] getResults() {
@@ -261,7 +274,10 @@ public class NetworkService {
             parameters.address = address;
             parameters.send = send;
             parameters.usePost = true;
-            new HttpTask().execute(parameters);
+            HttpTask httpTask = new HttpTask();
+            httpTask.prepare(parameters);
+            Thread t = new Thread(httpTask);
+            t.start();
         }
 
         public byte[][] getResults() {
