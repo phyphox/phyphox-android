@@ -844,7 +844,7 @@ public class GraphView extends View {
     }
 
     public String getLabelAndSystemTimeRangeX(double min, double max, double systemTimeOffset) {
-        if (timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
+        if (timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0] != null && timeReferencesX[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
             int offset = TimeZone.getDefault().getRawOffset();
             int hours = offset / (60*60*1000);
             int minutes = (Math.abs(offset) / (60*1000)) % 60;
@@ -862,7 +862,7 @@ public class GraphView extends View {
     }
 
     public String getLabelAndSystemTimeRangeY(double min, double max, double systemTimeOffset) {
-        if (timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
+        if (timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0] != null && timeReferencesY[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
             int offset = TimeZone.getDefault().getRawOffset();
             int hours = offset / (60*60*1000);
             int minutes = (Math.abs(offset) / (60*1000)) % 60;
@@ -1276,8 +1276,8 @@ public class GraphView extends View {
 
         double systemTimeOffsetX, systemTimeOffsetY;
         if (absoluteTime) {
-            systemTimeOffsetX = (timeOnX && timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0].size() > 0) ? (timeReferencesX[0].get(0).systemTime*0.001 - timeReferencesX[0].get(0).experimentTime) : 0.0;
-            systemTimeOffsetY = (timeOnY && timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0].size() > 0) ? (timeReferencesY[0].get(0).systemTime*0.001 - timeReferencesY[0].get(0).experimentTime) : 0.0;
+            systemTimeOffsetX = (timeOnX && timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0] != null && timeReferencesX[0].size() > 0) ? (timeReferencesX[0].get(0).systemTime*0.001 - timeReferencesX[0].get(0).experimentTime) : 0.0;
+            systemTimeOffsetY = (timeOnY && timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0] != null && timeReferencesY[0].size() > 0) ? (timeReferencesY[0].get(0).systemTime*0.001 - timeReferencesY[0].get(0).experimentTime) : 0.0;
         } else {
             systemTimeOffsetX = 0.0;
             systemTimeOffsetY = 0.0;
