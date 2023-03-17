@@ -243,22 +243,23 @@ public class Bluetooth implements Serializable {
      * @throws BluetoothException if there is an error on findDevice, openConnection or process CharacteristicData
      */
     public void connect(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
+        boolean reusedDevice = false;
         if (btDevice == null) {
-            findDevice(knownDevices);
+            reusedDevice = findDevice(knownDevices);
         }
         if (btDevice == null)
             return;
         // check if a device was found and if it is already connected
         if (btGatt == null || !isConnected()) {
             openConnection();
-        }
-        if (!isConnected()) {
-            btGatt.connect();
+            if (!isConnected())
+                btGatt.connect();
         }
 
         try {
             eventCharacteristic = findCharacteristic(phyphoxEventCharacteristicUUID);
-            writeEventCharacteristic(null);
+            if (!reusedDevice)
+                writeEventCharacteristic(null);
         } catch (BluetoothException e) {
             //That's ok. Most devices do not have a phyphox event caracteristic, in which case phyphox simply will not report event.
         }
@@ -275,7 +276,7 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is disabled or if the device could not be found
      */
-    public void findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
+    public boolean findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
@@ -283,7 +284,7 @@ public class Bluetooth implements Serializable {
         //First check if we have already connected to a device with the same idString
         if (idString != null && !idString.isEmpty() && knownDevices != null && knownDevices.containsKey(idString)) {
             btDevice = knownDevices.get(idString);
-            return;
+            return true;
         }
 
         // First check paired devices - those get precedence
@@ -308,9 +309,9 @@ public class Bluetooth implements Serializable {
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(autoConnect, activity, context, btAdapter);
             if (!bsd.scanPermission())
-                return;
+                return false;
             if (!bsd.locationEnabled())
-                return;
+                return false;
             BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null, idString);
             if (bdi != null)
                 btDevice = bdi.device;
@@ -319,6 +320,7 @@ public class Bluetooth implements Serializable {
             //still null? Give up and complain
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notfound), this);
         }
+        return false;
     }
 
     /**
