@@ -7,7 +7,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.camera2.CameraCharacteristics;
@@ -17,7 +16,6 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -35,10 +33,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
-
-import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -1989,7 +1984,7 @@ public class ExpView implements Serializable{
 
             expandImage = new ImageView(c);
             expandImage.setId(ViewCompat.generateViewId());
-            expandImage.setImageResource(R.drawable.arrow_up_left_and_arrow_down_right);
+            expandImage.setImageResource(R.drawable.ic_expand_arrow);
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.setMargins(elMargin, elMargin, elMargin, elMargin);
             lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
@@ -1998,7 +1993,7 @@ public class ExpView implements Serializable{
             titleLine.addView(expandImage);
 
             collapseImage = new ImageView(c);
-            collapseImage.setImageResource(R.drawable.arrow_down_right_and_arrow_up_left);
+            collapseImage.setImageResource(R.drawable.ic_collapse_arrow);
             collapseImage.setLayoutParams(lp);
             collapseImage.setVisibility(INVISIBLE);
             titleLine.addView(collapseImage);
