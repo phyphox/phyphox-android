@@ -1989,7 +1989,7 @@ public class ExpView implements Serializable{
 
             expandImage = new ImageView(c);
             expandImage.setId(ViewCompat.generateViewId());
-            expandImage.setImageResource(R.drawable.unfold_more);
+            expandImage.setImageResource(R.drawable.arrow_up_left_and_arrow_down_right);
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.setMargins(elMargin, elMargin, elMargin, elMargin);
             lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
@@ -1998,7 +1998,7 @@ public class ExpView implements Serializable{
             titleLine.addView(expandImage);
 
             collapseImage = new ImageView(c);
-            collapseImage.setImageResource(R.drawable.unfold_less);
+            collapseImage.setImageResource(R.drawable.arrow_down_right_and_arrow_up_left);
             collapseImage.setLayoutParams(lp);
             collapseImage.setVisibility(INVISIBLE);
             titleLine.addView(collapseImage);

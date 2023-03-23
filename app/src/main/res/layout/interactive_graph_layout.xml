@@ -6,7 +6,7 @@
 
     <ImageView
         android:id="@+id/graph_expand_image"
-        app:srcCompat="@drawable/unfold_more"
+        app:srcCompat="@drawable/arrow_up_left_and_arrow_down_right"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_margin="@dimen/expElementMargin"
@@ -14,7 +14,7 @@
 
     <ImageView
         android:id="@+id/graph_collapse_image"
-        app:srcCompat="@drawable/unfold_less"
+        app:srcCompat="@drawable/arrow_down_right_and_arrow_up_left"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:visibility="invisible"
