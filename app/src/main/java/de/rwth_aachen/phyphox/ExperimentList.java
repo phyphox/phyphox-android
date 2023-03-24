@@ -113,6 +113,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
@@ -147,14 +148,10 @@ public class ExperimentList extends AppCompatActivity {
 
     ProgressDialog progress = null;
 
+    BluetoothExperimentLoader bluetoothExperimentLoader = null;
     long currentQRcrc32 = -1;
     int currentQRsize = -1;
     byte[][] currentQRdataPackets = null;
-
-    byte[] currentBluetoothData = null;
-    int currentBluetoothDataSize = 0;
-    int currentBluetoothDataIndex = 0;
-    long currentBluetoothDataCRC32 = 0;
 
     boolean newExperimentDialogOpen = false;
 
@@ -1386,298 +1383,75 @@ public class ExperimentList extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void loadExperimentFromBluetoothDevice(final BluetoothDevice device) {
         final ExperimentList parent = this;
-        currentBluetoothData = null;
-        currentBluetoothDataSize = 0;
-        currentBluetoothDataIndex = 0;
-
-        final BluetoothGatt gatt = device.connectGatt(this, false, new BluetoothGattCallback() {
-
-            private void disconnect(final BluetoothGatt gatt) {
-                //If phyphoxExperimentControlCharacteristicUUID is available, we can tell the device that we are no longer expecting the transfer by writing 0
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService != null) {
-                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
-                    if (experimentControlCharacteristic != null) {
-                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
-                        gatt.writeCharacteristic(experimentControlCharacteristic);
-                    }
-                }
-                gatt.disconnect();
-            }
-
-            BluetoothGattDescriptor descriptor = null;
-
-            @Override
-            public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
-                switch (newState) {
-                    case BluetoothProfile.STATE_CONNECTED:
-                        gatt.discoverServices();
-                        break;
-                    case BluetoothProfile.STATE_DISCONNECTED:
-                        // fall through to default
-                    default:
-                        progress.dismiss();
-                        gatt.close();
-                        return;
-                }
-            }
-
-            @Override
-            public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (could not discover services)", device);
-                }
-
-                //Find characteristic
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService == null) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no phyphox service)", device);
-                    return;
-                }
-                BluetoothGattCharacteristic experimentCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentCharacteristicUUID);
-                if (experimentCharacteristic == null) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no experiment characteristic)", device);
-                    return;
-                }
-
-                //Enable notifications
-                if (!gatt.setCharacteristicNotification(experimentCharacteristic, true)) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (set char notification failed)", device);
-                    return;
-                }
-                descriptor = experimentCharacteristic.getDescriptor(BluetoothInput.CONFIG_DESCRIPTOR);
-                if (descriptor == null) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (descriptor failed)", device);
-                    return;
-                }
-
-                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                gatt.writeDescriptor(descriptor);
-            }
-
-            @Override
-            public void onCharacteristicChanged(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
-                    return;
-                byte[] data = characteristic.getValue();
-
-                if (currentBluetoothData == null) {
-                    String header = new String(data);
-                    if (!header.startsWith("phyphox")) {
-                        if (descriptor != null) {
-                            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                            gatt.writeDescriptor(descriptor);
-                        }
-                        disconnect(gatt);
-                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid header)", device);
-                    }
-                    currentBluetoothDataSize = 0;
-                    currentBluetoothDataIndex = 0;
-                    for (int i = 0; i < 4; i++) {
-                        currentBluetoothDataSize <<= 8;
-                        currentBluetoothDataSize |= (data[7+i] & 0xFF);
-                    };
-                    currentBluetoothDataCRC32 = 0;
-                    for (int i = 0; i < 4; i++) {
-                        currentBluetoothDataCRC32 <<= 8;
-                        currentBluetoothDataCRC32 |= (data[7+4+i] & 0xFF);
-                    }
-
-                    if (currentBluetoothDataSize > 10e6 || currentBluetoothDataSize < 0) {
-                        disconnect(gatt);
-                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid size in header)", device);
-                        progress.dismiss();
-                        currentBluetoothDataSize = 0;
-                    }
-
-                    currentBluetoothData = new byte[currentBluetoothDataSize];
-
-                    //From here we can estimate the progress, so let's show a determinate progress dialog instead
-                    progress.dismiss();
-                    parent.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progress = new ProgressDialog(parent);
-                            progress.setTitle(res.getString(R.string.loadingTitle));
-                            progress.setMessage(res.getString(R.string.loadingText));
-                            progress.setIndeterminate(false);
-                            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                            progress.setCancelable(true);
-                            progress.setOnCancelListener(new DialogInterface.OnCancelListener() {
+        if (bluetoothExperimentLoader == null) {
+            bluetoothExperimentLoader = new BluetoothExperimentLoader(getBaseContext(), new BluetoothExperimentLoader.BluetoothExperimentLoaderCallback() {
+                @Override
+                public void updateProgress(int transferred, int total) {
+                    if (total > 0) {
+                        if (progress.isIndeterminate()) {
+                            parent.runOnUiThread(new Runnable() {
                                 @Override
-                                public void onCancel(DialogInterface dialogInterface) {
-                                    if (descriptor != null) {
-                                        descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                                        gatt.writeDescriptor(descriptor);
-                                    }
-                                    disconnect(gatt);
+                                public void run() {
+                                    progress = new ProgressDialog(parent);
+                                    progress.setTitle(res.getString(R.string.loadingTitle));
+                                    progress.setMessage(res.getString(R.string.loadingText));
+                                    progress.setIndeterminate(false);
+                                    progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                                    progress.setCancelable(true);
+                                    progress.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                        @Override
+                                        public void onCancel(DialogInterface dialogInterface) {
+                                            if (bluetoothExperimentLoader != null)
+                                                bluetoothExperimentLoader.cancel();
+                                        }
+                                    });
+                                    progress.setProgress(transferred);
+                                    progress.setMax(total);
+                                    progress.show();
                                 }
                             });
-                            progress.setProgress(0);
-                            progress.setMax(currentBluetoothDataSize);
-                            progress.show();
-                        }
-                    });
-                } else {
-                    int size = data.length;
-
-                    if (currentBluetoothDataIndex + size > currentBluetoothDataSize)
-                        size = currentBluetoothDataSize - currentBluetoothDataIndex;
-
-                    System.arraycopy(data, 0, currentBluetoothData, currentBluetoothDataIndex, size);
-                    currentBluetoothDataIndex += size;
-
-                    progress.setProgress(currentBluetoothDataIndex);
-                    if (currentBluetoothDataIndex >= currentBluetoothDataSize) {
-                        //We are done. Check and use result
-
-                        if (descriptor != null) {
-                            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                            gatt.writeDescriptor(descriptor);
-                        }
-                        disconnect(gatt);
-
-                        if (currentBluetoothDataSize == 0) {
-                            progress.dismiss();
-                            return;
-                        }
-
-                        /*
-                        StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
-                        for(byte b: currentBluetoothData)
-                            sb.append(String.format("%02x ", b));
-                        final String hex = sb.toString();
-
-                        for (int i = 0; i < hex.length(); i+= 48) {
-                            Log.d("TEST", hex.substring(i, Math.min(i+48, hex.length())));
-                        }
-                        */
-
-                        CRC32 crc32 = new CRC32();
-                        crc32.update(currentBluetoothData);
-                        if (crc32.getValue() != currentBluetoothDataCRC32) {
-                            showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (CRC32)", device);
-                         //   Log.d("TEST", "CRC32: Expected " + currentBluetoothDataCRC32 + " but calculated " + crc32.getValue());
-                            return;
-                        }
-
-                        File tempPath = new File(getFilesDir(), "temp_bt");
-                        if (!tempPath.exists()) {
-                            if (!tempPath.mkdirs()) {
-                                showBluetoothExperimentReadError("Could not create temporary directory to write bluetooth experiment file.", device);
-                                return;
-                            }
-                        }
-                        String[] files = tempPath.list();
-                        for (String file : files) {
-                            if (!(new File(tempPath, file).delete())) {
-                                showBluetoothExperimentReadError("Could not clear temporary directory to extract bluetooth experiment file.", device);
-                                return;
-                            }
-                        }
-
-                        if (currentBluetoothData[0] == '<'
-                            && currentBluetoothData[1] == 'p'
-                            && currentBluetoothData[2] == 'h'
-                            && currentBluetoothData[3] == 'y'
-                            && currentBluetoothData[4] == 'p'
-                            && currentBluetoothData[5] == 'h'
-                            && currentBluetoothData[6] == 'o'
-                            && currentBluetoothData[7] == 'x') {
-                            //This is just an XML file, store it
-                            File xmlFile;
-                            try {
-                                xmlFile = new File(tempPath, "bt.phyphox");
-                                FileOutputStream out = new FileOutputStream(xmlFile);
-                                out.write(currentBluetoothData);
-                                out.close();
-                            } catch (Exception e) {
-                                showBluetoothExperimentReadError("Could not write Bluetooth experiment content to phyphox file.", device);
-                                return;
-                            }
-
-                            //Create an intent for this file
-                            Intent intent = new Intent(parent, Experiment.class);
-                            intent.setData(Uri.fromFile(xmlFile));
-                            intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, device.getAddress());
-                            intent.setAction(Intent.ACTION_VIEW);
-
-                            //Open the file
-                            startActivity(intent);
                         } else {
-
-                            byte[] finalBluetoothData = inflatePartialZip(currentBluetoothData);
-
-                            File zipFile;
-                            try {
-                                zipFile = new File(tempPath, "bt.zip");
-                                FileOutputStream out = new FileOutputStream(zipFile);
-                                out.write(finalBluetoothData);
-                                out.close();
-                            } catch (Exception e) {
-                                showBluetoothExperimentReadError("Could not write Bluetooth experiment content to zip file.", device);
-                                return;
-                            }
-
-                            Intent zipIntent = new Intent(parent, Experiment.class);
-                            zipIntent.setData(Uri.fromFile(zipFile));
-                            zipIntent.setAction(Intent.ACTION_VIEW);
-                            new handleZipIntent(zipIntent, parent, device).execute();
+                            progress.setProgress(transferred);
                         }
                     }
                 }
-            }
 
-            @Override
-            public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    disconnect(gatt);
-                    showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write)", device);
-                }
-            }
-
-            @Override
-            public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    disconnect(gatt);
-                    showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write descriptor)", device);
-                    return;
+                @Override
+                public void dismiss() {
+                    progress.dismiss();
                 }
 
-                //If phyphoxExperimentControlCharacteristicUUID is also present, the device expects us to initiate transfer by setting it to 1. This is a work-around for BLE libraries that cannot react to subscriptions
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService != null) {
-                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
-                    if (experimentControlCharacteristic != null) {
-                        experimentControlCharacteristic.setValue(1, FORMAT_UINT8, 0);
-                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                @Override
+                public void error(String msg) {
+                    showBluetoothExperimentReadError(msg, device);
+                }
+
+                @Override
+                public void success(Uri experimentUri, boolean isZip) {
+                    Intent intent = new Intent(parent, Experiment.class);
+                    intent.setData(experimentUri);
+                    intent.setAction(Intent.ACTION_VIEW);
+                    if (isZip) {
+                        new ExperimentList.handleZipIntent(intent, parent, device).execute();
+                    } else {
+                        intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, device.getAddress());
+                        startActivity(intent);
                     }
                 }
-            }
-        });
-
+            });
+        }
         progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true, true, new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialogInterface) {
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService != null) {
-                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
-                    if (experimentControlCharacteristic != null) {
-                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
-                        gatt.writeCharacteristic(experimentControlCharacteristic);
-                    }
-                }
-                gatt.disconnect();
-                progress.dismiss();
+                if (bluetoothExperimentLoader != null)
+                    bluetoothExperimentLoader.cancel();
             }
         });
+        bluetoothExperimentLoader.loadExperimentFromBluetoothDevice(device);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @SuppressLint("MissingPermission") //TODO: The permission is actually checked when entering the entire BLE dialog and I do not see how we could reach this part of the code if it failed. However, I cannot rule out some other mechanism of revoking permissions during an app switch or from the notifications bar (?), so a cleaner implementation might be good idea
     public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {
 
         Set<String> experiments = new HashSet<>();
@@ -2009,111 +1783,6 @@ public class ExperimentList extends AppCompatActivity {
         });
     }
 
-    private byte [] inflatePartialZip(byte [] dataReceived) {
-        byte [] zipData;
-        int totalSize = dataReceived.length;
-        if (dataReceived[totalSize-16] == 0x50 && dataReceived[totalSize-15] == 0x4b && dataReceived[totalSize-14] == 0x07 && dataReceived[totalSize-13] == 0x08) {
-            //This is a data descriptor we found at the end of the QR code data.
-            //Therefore, we did not receive a complete zip file, but a partial one that
-            // only contains a single entry and omits the local file header as well as
-            // the central directory
-            //We have to add those ourselves.
-
-            zipData = new byte[39 + totalSize - 16 + 55 + 22];
-
-            //Local file header
-            zipData[0] = 0x50; //Local file header signature
-            zipData[1] = 0x4b;
-            zipData[2] = 0x03;
-            zipData[3] = 0x04;
-            zipData[4] = 0x0a; //Version
-            zipData[5] = 0x00;
-            zipData[6] = 0x00; //General purpose flag
-            zipData[7] = 0x00;
-            zipData[8] = 0x00; //Compression method
-            zipData[9] = 0x00;
-            zipData[10] = 0x00; //modification time
-            zipData[11] = 0x00;
-            zipData[12] = 0x00; //modification date
-            zipData[13] = 0x00;
-            System.arraycopy(dataReceived, totalSize - 12, zipData, 14, 12); //CRC32, compressed size and uncompressed size
-            zipData[26] = 0x09; //File name length
-            zipData[27] = 0x00;
-            zipData[28] = 0x00; //Extra field length
-            zipData[29] = 0x00;
-            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 30, 9);
-
-            //Data (without data descriptor)
-            System.arraycopy(dataReceived, 0, zipData, 39, totalSize-16);
-
-            //Central directory
-            zipData[39 + totalSize - 16] = 0x50; //signature
-            zipData[39 + totalSize - 16 +  1] = 0x4b;
-            zipData[39 + totalSize - 16 +  2] = 0x01;
-            zipData[39 + totalSize - 16 +  3] = 0x02;
-            zipData[39 + totalSize - 16 +  4] = 0x0a; //Version made by
-            zipData[39 + totalSize - 16 +  5] = 0x00;
-            zipData[39 + totalSize - 16 +  6] = 0x0a; //Version needed
-            zipData[39 + totalSize - 16 +  7] = 0x00;
-            zipData[39 + totalSize - 16 +  8] = 0x00; //General purpose flag
-            zipData[39 + totalSize - 16 +  9] = 0x00;
-            zipData[39 + totalSize - 16 + 10] = 0x00; //Compression method
-            zipData[39 + totalSize - 16 + 11] = 0x00;
-            zipData[39 + totalSize - 16 + 12] = 0x00; //modification time
-            zipData[39 + totalSize - 16 + 13] = 0x00;
-            zipData[39 + totalSize - 16 + 14] = 0x00; //modification date
-            zipData[39 + totalSize - 16 + 15] = 0x00;
-            System.arraycopy(dataReceived, totalSize - 12, zipData, 39 + totalSize - 16 + 16, 12); //CRC32, compressed size and uncompressed size
-            zipData[39 + totalSize - 16 + 28] = 0x09; //File name length
-            zipData[39 + totalSize - 16 + 29] = 0x00;
-            zipData[39 + totalSize - 16 + 30] = 0x00; //Extra field length
-            zipData[39 + totalSize - 16 + 31] = 0x00;
-            zipData[39 + totalSize - 16 + 32] = 0x00; //File comment length
-            zipData[39 + totalSize - 16 + 33] = 0x00;
-            zipData[39 + totalSize - 16 + 34] = 0x00; //Disk number
-            zipData[39 + totalSize - 16 + 35] = 0x00;
-            zipData[39 + totalSize - 16 + 36] = 0x00; //Internal file attributes
-            zipData[39 + totalSize - 16 + 37] = 0x00;
-            zipData[39 + totalSize - 16 + 38] = 0x00; //External file attributes
-            zipData[39 + totalSize - 16 + 39] = 0x00;
-            zipData[39 + totalSize - 16 + 40] = 0x00;
-            zipData[39 + totalSize - 16 + 41] = 0x00;
-            zipData[39 + totalSize - 16 + 42] = 0x00; //Relative offset of local header
-            zipData[39 + totalSize - 16 + 43] = 0x00;
-            zipData[39 + totalSize - 16 + 44] = 0x00;
-            zipData[39 + totalSize - 16 + 45] = 0x00;
-            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 39 + totalSize - 16 + 46, 9);
-
-            //End of central directory
-            zipData[39 + totalSize - 16 + 55] = 0x50; //signature
-            zipData[39 + totalSize - 16 + 55 +  1] = 0x4b;
-            zipData[39 + totalSize - 16 + 55 +  2] = 0x05;
-            zipData[39 + totalSize - 16 + 55 +  3] = 0x06;
-            zipData[39 + totalSize - 16 + 55 +  4] = 0x00; //Disk number
-            zipData[39 + totalSize - 16 + 55 +  5] = 0x00;
-            zipData[39 + totalSize - 16 + 55 +  6] = 0x00; //Start disk number
-            zipData[39 + totalSize - 16 + 55 +  7] = 0x00;
-            zipData[39 + totalSize - 16 + 55 +  8] = 0x01; //Number of central directories on disk
-            zipData[39 + totalSize - 16 + 55 +  9] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 10] = 0x01; //Number of central directories in total
-            zipData[39 + totalSize - 16 + 55 + 11] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 12] = 0x37; //Size of central directory
-            zipData[39 + totalSize - 16 + 55 + 13] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 14] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 15] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 16] = (byte) ((long) (39 + totalSize)); //Start of central directory
-            zipData[39 + totalSize - 16 + 55 + 17] = (byte) ((long) (39 + totalSize) >> 8);
-            zipData[39 + totalSize - 16 + 55 + 18] = (byte) ((long) (39 + totalSize) >> 16);
-            zipData[39 + totalSize - 16 + 55 + 19] = (byte) ((long) (39 + totalSize) >> 24);
-            zipData[39 + totalSize - 16 + 55 + 20] = 0x00; //Comment length
-            zipData[39 + totalSize - 16 + 55 + 21] = 0x00;
-
-        } else {
-            zipData = dataReceived;
-        }
-        return zipData;
-    }
-
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
@@ -2196,8 +1865,7 @@ public class ExperimentList extends AppCompatActivity {
                         return;
                     }
 
-                    byte [] zipData = inflatePartialZip(dataReceived);
-
+                    byte [] zipData = Helper.inflatePartialZip(dataReceived);
 
                     File zipFile;
                     try {
