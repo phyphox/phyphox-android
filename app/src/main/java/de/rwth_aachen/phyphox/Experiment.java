@@ -98,6 +98,7 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
+import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -651,6 +652,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public static ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
     ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
 
+    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
+
     private void showBluetoothConnectedDeviceInfo(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             connectedDevices.add(Bluetooth.connectedDeviceInformation);
@@ -662,10 +665,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }else {
             recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
         }
-        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(deviceInfoAdapter);
 
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
+
+        updateConnectedDeviceDelegate = new UpdateConnectedDeviceDelegate() {
+            @Override
+            public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
+                deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDeviceInfos);
+
+            }
+        };
+
+        recyclerView.setAdapter(deviceInfoAdapter);
         bluetoothConnectionSuccessful = true;
     }
 

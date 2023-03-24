@@ -31,6 +31,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -84,6 +85,8 @@ public class Bluetooth implements Serializable {
     public int requestMTU;
 
     BluetoothGattCharacteristic eventCharacteristic = null;
+
+    private ArrayList<ConnectedDeviceInfo> connectedDeviceInfoArrayList = new ArrayList<>();
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -611,6 +614,13 @@ public class Bluetooth implements Serializable {
                 updateViewOnlyWhenSignalLevelChanged(rssi, prevRssi);
             }
             connectedDeviceInformation.setSignalStrength(rssi);
+            connectedDeviceInformation.setDeviceId(gatt.getDevice().getAddress());
+            connectedDeviceInformation.setDeviceName(gatt.getDevice().getName());
+            connectedDeviceInfoArrayList.clear();
+            connectedDeviceInfoArrayList.add(connectedDeviceInformation);
+
+            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(connectedDeviceInfoArrayList);
+
         }
 
         private void updateViewOnlyWhenSignalLevelChanged(int rssi, int prevRssi){
@@ -644,8 +654,6 @@ public class Bluetooth implements Serializable {
         @Override
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
             if(newState == BluetoothProfile.STATE_CONNECTED) {
-                String connectedDeviceName = gatt.getDevice().getName();
-                connectedDeviceInformation.setDeviceName(connectedDeviceName);
 
                 gatt.readRemoteRssi();
             }
@@ -1366,6 +1374,13 @@ public class Bluetooth implements Serializable {
          */
         public Runnable onSuccess;
 
+        private ConnectBluetoothDelegate delegate;
+
+        public interface ConnectBluetoothDelegate {
+            void onConnectionSuccessful(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos);
+        }
+
+
         /**
          * Try to connect all Bluetooth devices and display the error if there is one.
          *
@@ -1523,3 +1538,4 @@ public class Bluetooth implements Serializable {
     }
 
 } // end of class Bluetooth
+

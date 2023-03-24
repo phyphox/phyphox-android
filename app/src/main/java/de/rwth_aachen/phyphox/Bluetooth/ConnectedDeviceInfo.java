@@ -7,12 +7,21 @@ public class ConnectedDeviceInfo {
     public static final int SIGNAL_LOW = -90;
     public static final int NO_SIGNAL = -98;
 
+    private String deviceId;
     private String deviceName;
     private int batteryLabel;
     private int signalStrength;
 
 
     ConnectedDeviceInfo(){}
+
+    public String getDeviceId(){
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId){
+        this.deviceId = deviceId;
+    }
 
     public int getBatteryLabel() {
         return batteryLabel;
