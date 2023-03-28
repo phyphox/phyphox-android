@@ -652,12 +652,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public static ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
     ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
 
-    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
+    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate = new UpdateConnectedDeviceDelegate() {
+        @Override
+        public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
+            connectedDevices = connectedDeviceInfos;
+
+        }
+    };
 
     private void showBluetoothConnectedDeviceInfo(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            connectedDevices.add(Bluetooth.connectedDeviceInformation);
-        }
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
         if(Helper.isDarkTheme(getResources())){
@@ -669,13 +672,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
 
-        updateConnectedDeviceDelegate = new UpdateConnectedDeviceDelegate() {
-            @Override
-            public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
-                deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDeviceInfos);
 
-            }
-        };
 
         recyclerView.setAdapter(deviceInfoAdapter);
         bluetoothConnectionSuccessful = true;

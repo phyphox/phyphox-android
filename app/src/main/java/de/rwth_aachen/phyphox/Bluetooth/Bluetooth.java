@@ -31,12 +31,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
@@ -188,7 +188,7 @@ public class Bluetooth implements Serializable {
     }
 
 
-    public  static ConnectedDeviceInfo connectedDeviceInformation = new ConnectedDeviceInfo();
+    private ConnectedDeviceInfo connectedDeviceInformation = new ConnectedDeviceInfo();
 
     /**
      * Create a new Bluetooth object.
@@ -611,19 +611,33 @@ public class Bluetooth implements Serializable {
                 int prevRssi = connectedDeviceInformation.getSignalStrength();
                 // As onReadRemoteRssi is called every second, this function will make sure the ui
                 // updates only when the signal level is changed
-                updateViewOnlyWhenSignalLevelChanged(rssi, prevRssi);
+                checkChangeInRssiValue(rssi, prevRssi);
             }
             connectedDeviceInformation.setSignalStrength(rssi);
-            connectedDeviceInformation.setDeviceId(gatt.getDevice().getAddress());
-            connectedDeviceInformation.setDeviceName(gatt.getDevice().getName());
-            connectedDeviceInfoArrayList.clear();
-            connectedDeviceInfoArrayList.add(connectedDeviceInformation);
+
+            if(connectedDeviceInfoArrayList != null){
+                boolean containesId = connectedDeviceInfoArrayList.stream()
+                        .anyMatch(
+                                value -> value.getDeviceId().equals(connectedDeviceInformation.getDeviceId()));
+
+                if(!containesId){
+                    connectedDeviceInfoArrayList.add(connectedDeviceInformation);
+                } else {
+                    int index = 0;
+                    for(ConnectedDeviceInfo device : connectedDeviceInfoArrayList){
+                        if(Objects.equals(device.getDeviceId(), gatt.getDevice().getAddress())){
+                            connectedDeviceInfoArrayList.remove(index);
+                            connectedDeviceInfoArrayList.add(index, connectedDeviceInformation);
+                        }
+                        index++;
+                    }
+                }
+            }
 
             Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(connectedDeviceInfoArrayList);
-
         }
 
-        private void updateViewOnlyWhenSignalLevelChanged(int rssi, int prevRssi){
+        private void checkChangeInRssiValue(int rssi, int prevRssi){
             if(rssi != prevRssi){
                 if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_FULL, ConnectedDeviceInfo.SIGNAL_HIGH)){
                     updateConnectedDeviceInfoAdapter();
@@ -654,8 +668,8 @@ public class Bluetooth implements Serializable {
         @Override
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
             if(newState == BluetoothProfile.STATE_CONNECTED) {
-
-                gatt.readRemoteRssi();
+                connectedDeviceInformation.setDeviceId(gatt.getDevice().getAddress());
+                connectedDeviceInformation.setDeviceName(gatt.getDevice().getName());
             }
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
