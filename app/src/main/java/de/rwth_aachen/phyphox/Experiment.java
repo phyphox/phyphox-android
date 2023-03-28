@@ -98,6 +98,7 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
+import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -105,7 +106,9 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
-public class Experiment extends AppCompatActivity implements View.OnClickListener, NetworkConnection.ScanDialogDismissedDelegate, NetworkConnection.NetworkConnectionDataPolicyInfoDelegate {
+public class Experiment extends AppCompatActivity implements View.OnClickListener,
+        NetworkConnection.ScanDialogDismissedDelegate,
+        NetworkConnection.NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate{
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -236,6 +239,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 leaveExperiment();
             }
         });
+
+        updateConnectedDeviceDelegate = this;
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -615,16 +620,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
 
                 // define onSuccess
-                if (startMeasurement) {
-                    btTask.onSuccess = () -> {
-                        showBluetoothConnectedDeviceInfo();
-                        if (timed) {
+                btTask.onSuccess = () -> {
+                    showBluetoothConnectedDeviceInfo();
+
+                    if(startMeasurement){
+                        if(timed){
                             startTimedMeasurement();
                         } else {
                             startMeasurement();
                         }
-                    };
-                }
+                    }
+                };
 
                 // set attributes of errorDialog
                 Bluetooth.errorDialog.context = Experiment.this;
@@ -638,32 +644,33 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     if (btTask.progress != null) {
                         btTask.progress.show();
                     }
-                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
                     newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
+                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+
                 };
                 btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
             }
         }
     }
     public static boolean bluetoothConnectionSuccessful = false;
-    public static ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
+    ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
     ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
 
-    private void showBluetoothConnectedDeviceInfo(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            connectedDevices.add(Bluetooth.connectedDeviceInformation);
-        }
+    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
+    private  RecyclerView recyclerView;
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
+    private void showBluetoothConnectedDeviceInfo(){
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
         if(Helper.isDarkTheme(getResources())){
             recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
         }else {
             recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
         }
-        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(deviceInfoAdapter);
 
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
+        recyclerView.setAdapter(deviceInfoAdapter);
         bluetoothConnectionSuccessful = true;
     }
 
@@ -1974,4 +1981,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    Runnable runDeviceUpdate = new Runnable() {
+        @Override
+        public void run() {
+            if(deviceInfoAdapter != null){
+                deviceInfoAdapter.update(connectedDevices);
+            }
+        }
+    };
+
+    @Override
+    public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
+        connectedDevices = connectedDeviceInfos;
+        runOnUiThread(runDeviceUpdate);
+    }
 }

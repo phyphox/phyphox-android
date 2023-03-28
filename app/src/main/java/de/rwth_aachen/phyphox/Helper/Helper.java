@@ -373,6 +373,14 @@ public abstract class Helper {
         return mutableBitmap;
     }
 
+    public static ColorFilter getAdjustedColorForImage(Context context){
+        if(isDarkTheme(context.getResources())){
+           return new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.phyphox_white_100), PorterDuff.Mode.SRC_IN);
+        } else {
+            return new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.phyphox_black_100), PorterDuff.Mode.SRC_IN);
+        }
+    }
+
     private static int getResourceId(GraphField field, int size){
         switch (field){
             case LABEL_SIZE:

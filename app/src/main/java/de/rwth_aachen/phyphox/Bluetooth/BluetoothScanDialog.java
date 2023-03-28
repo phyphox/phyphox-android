@@ -203,7 +203,6 @@ public class BluetoothScanDialog {
                     parentActivity.runOnUiThread(() -> {
                         String macAddress = deviceInfo.device.getAddress();
                         if (!macAddresses.contains(macAddress)) {
-                            //TODO: improve the addition of macaddress or change it
                             macAddresses.add(macAddress);
                             listAdapter.addDevice(deviceInfo);
                             listAdapter.notifyDataSetChanged();
@@ -445,18 +444,20 @@ public class BluetoothScanDialog {
             subViews.deviceName.setTextColor(color);
 
             if (deviceInfo.lastRSSI > -30)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_4);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_4));
             else if (deviceInfo.lastRSSI > -50)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_3);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_3));
             else if (deviceInfo.lastRSSI > -70)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_2);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_2));
             else if (deviceInfo.lastRSSI > -90)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_1);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_1));
             else
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_0);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_0));
 
+            subViews.signalStrength.setColorFilter(Helper.getAdjustedColorForImage(ctx));
             return view;
         }
+
     }
 
     static class SubViews {
