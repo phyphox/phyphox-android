@@ -569,8 +569,6 @@ public class Bluetooth implements Serializable {
 
             int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
             connectedDeviceInformation.setBatteryLabel(batteryLevel);
-            String connectedDeviceName = gatt.getDevice().getName();
-            connectedDeviceInformation.setDeviceName(connectedDeviceName);
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 displayErrorMessage(context.getResources().getString(R.string.bt_fail_reading) + BluetoothException.getMessage(Bluetooth.this));
