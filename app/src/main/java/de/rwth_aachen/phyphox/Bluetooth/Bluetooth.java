@@ -20,6 +20,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -607,12 +608,7 @@ public class Bluetooth implements Serializable {
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             super.onReadRemoteRssi(gatt, rssi, status);
-            if(Experiment.bluetoothConnectionSuccessful){
-                int prevRssi = connectedDeviceInformation.getSignalStrength();
-                // As onReadRemoteRssi is called every second, this function will make sure the ui
-                // updates only when the signal level is changed
-                checkChangeInRssiValue(rssi, prevRssi);
-            }
+
             connectedDeviceInformation.setSignalStrength(rssi);
 
             if(connectedDeviceInfoArrayList != null){
@@ -634,7 +630,15 @@ public class Bluetooth implements Serializable {
                 }
             }
 
-            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(connectedDeviceInfoArrayList);
+
+                int prevRssi = connectedDeviceInformation.getSignalStrength();
+                // As onReadRemoteRssi is called every second, this function will make sure the ui
+                // updates only when the signal level is changed
+                Log.d("BluetoothCheck", "connectionSucces");
+                Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(connectedDeviceInfoArrayList);
+
+
+
         }
 
         private void checkChangeInRssiValue(int rssi, int prevRssi){
@@ -654,8 +658,7 @@ public class Bluetooth implements Serializable {
         }
 
         private void updateConnectedDeviceInfoAdapter(){
-            Runnable runnable = () -> Experiment.deviceInfoAdapter.notifyDataSetChanged();
-            activity.runOnUiThread(runnable);
+            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(connectedDeviceInfoArrayList);
         }
 
         private boolean hasSignalLevelChanged(int prevRssi, int rssi, int upperBound, int lowerBound){

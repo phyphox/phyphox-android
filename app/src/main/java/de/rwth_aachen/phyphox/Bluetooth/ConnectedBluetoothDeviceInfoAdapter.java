@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox.Bluetooth;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,15 @@ public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<Co
 
     public ConnectedBluetoothDeviceInfoAdapter(ArrayList<ConnectedDeviceInfo> connectedDevices){
         this.connectedDevices = connectedDevices;
+    }
+
+    public void update(ArrayList<ConnectedDeviceInfo> data) {
+        connectedDevices.clear();
+        connectedDevices.addAll(data);
+        for (ConnectedDeviceInfo value: connectedDevices) {
+            Log.d("BluetoothCheck", ""+value.getSignalStrength());
+        }
+        notifyDataSetChanged();
     }
 
     @NonNull

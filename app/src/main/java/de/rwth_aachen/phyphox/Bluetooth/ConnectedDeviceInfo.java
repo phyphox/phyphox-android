@@ -10,10 +10,17 @@ public class ConnectedDeviceInfo {
     private String deviceId;
     private String deviceName;
     private int batteryLabel;
-    private int signalStrength;
+    private int signalStrength = 0;
 
 
     ConnectedDeviceInfo(){}
+
+    public ConnectedDeviceInfo(String deviceId, String deviceName, int batteryLabel, int signalStrength){
+        this.deviceId = deviceId;
+        this.deviceName = deviceName;
+        this.batteryLabel = batteryLabel;
+        this.signalStrength = signalStrength;
+    }
 
     public String getDeviceId(){
         return deviceId;

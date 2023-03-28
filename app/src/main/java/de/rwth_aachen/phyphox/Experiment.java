@@ -106,7 +106,9 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
-public class Experiment extends AppCompatActivity implements View.OnClickListener, NetworkConnection.ScanDialogDismissedDelegate, NetworkConnection.NetworkConnectionDataPolicyInfoDelegate {
+public class Experiment extends AppCompatActivity implements View.OnClickListener,
+        NetworkConnection.ScanDialogDismissedDelegate,
+        NetworkConnection.NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate{
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -237,6 +239,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 leaveExperiment();
             }
         });
+
+        updateConnectedDeviceDelegate = this;
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -617,7 +621,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
                 // define onSuccess
                 btTask.onSuccess = () -> {
-                    showBluetoothConnectedDeviceInfo();
+                    if(!Experiment.bluetoothConnectionSuccessful){
+                        showBluetoothConnectedDeviceInfo();
+                    }
 
                     if(startMeasurement){
                         if(timed){
@@ -640,7 +646,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     if (btTask.progress != null) {
                         btTask.progress.show();
                     }
-                    newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
+                    if(!Experiment.bluetoothConnectionSuccessful) {
+                        newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
+                    }
                     newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
 
                 };
@@ -649,20 +657,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
     public static boolean bluetoothConnectionSuccessful = false;
-    public static ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
+    ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
     ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
 
-    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate = new UpdateConnectedDeviceDelegate() {
-        @Override
-        public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
-            connectedDevices = connectedDeviceInfos;
-
-        }
-    };
+    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
+    private  RecyclerView recyclerView;
 
     private void showBluetoothConnectedDeviceInfo(){
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
         if(Helper.isDarkTheme(getResources())){
             recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
         }else {
@@ -670,12 +673,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
-
-
-
-        recyclerView.setAdapter(deviceInfoAdapter);
+        updateValues();
         bluetoothConnectionSuccessful = true;
+    }
+
+    private void updateValues() {
+        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
+        recyclerView.setAdapter(deviceInfoAdapter);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -1985,4 +1989,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            deviceInfoAdapter.update(connectedDevices);
+        }
+    };
+
+    @Override
+    public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
+        connectedDevices = connectedDeviceInfos;
+        runOnUiThread(runnable);
+    }
 }
