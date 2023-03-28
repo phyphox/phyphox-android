@@ -203,7 +203,6 @@ public class BluetoothScanDialog {
                     parentActivity.runOnUiThread(() -> {
                         String macAddress = deviceInfo.device.getAddress();
                         if (!macAddresses.contains(macAddress)) {
-                            //TODO: improve the addition of macaddress or change it
                             macAddresses.add(macAddress);
                             listAdapter.addDevice(deviceInfo);
                             listAdapter.notifyDataSetChanged();

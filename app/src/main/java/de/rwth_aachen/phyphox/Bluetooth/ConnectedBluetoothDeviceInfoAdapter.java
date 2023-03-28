@@ -33,9 +33,6 @@ public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<Co
     public void update(ArrayList<ConnectedDeviceInfo> data) {
         connectedDevices.clear();
         connectedDevices.addAll(data);
-        for (ConnectedDeviceInfo value: connectedDevices) {
-            Log.d("BluetoothCheck", ""+value.getSignalStrength());
-        }
         notifyDataSetChanged();
     }
 

@@ -673,13 +673,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        updateValues();
-        bluetoothConnectionSuccessful = true;
-    }
-
-    private void updateValues() {
         deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
         recyclerView.setAdapter(deviceInfoAdapter);
+        bluetoothConnectionSuccessful = true;
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -1989,7 +1985,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
-    Runnable runnable = new Runnable() {
+    Runnable runDeviceUpdate = new Runnable() {
         @Override
         public void run() {
             deviceInfoAdapter.update(connectedDevices);
@@ -1999,6 +1995,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     @Override
     public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
         connectedDevices = connectedDeviceInfos;
-        runOnUiThread(runnable);
+        runOnUiThread(runDeviceUpdate);
     }
 }

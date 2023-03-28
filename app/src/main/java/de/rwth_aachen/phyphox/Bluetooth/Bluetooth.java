@@ -609,64 +609,17 @@ public class Bluetooth implements Serializable {
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             super.onReadRemoteRssi(gatt, rssi, status);
 
-            connectedDeviceInformation.setSignalStrength(rssi);
-
-            if(connectedDeviceInfoArrayList != null){
-                boolean containesId = connectedDeviceInfoArrayList.stream()
-                        .anyMatch(
-                                value -> value.getDeviceId().equals(connectedDeviceInformation.getDeviceId()));
-
-                if(!containesId){
-                    connectedDeviceInfoArrayList.add(connectedDeviceInformation);
-                } else {
-                    int index = 0;
-                    for(ConnectedDeviceInfo device : connectedDeviceInfoArrayList){
-                        if(Objects.equals(device.getDeviceId(), gatt.getDevice().getAddress())){
-                            connectedDeviceInfoArrayList.remove(index);
-                            connectedDeviceInfoArrayList.add(index, connectedDeviceInformation);
-                        }
-                        index++;
-                    }
-                }
+            int prevRssi = connectedDeviceInformation.getSignalStrength();
+            if(isNotRssiValueUpdateRequired(rssi, prevRssi) || !Experiment.bluetoothConnectionSuccessful){
+                connectedDeviceInformation.setSignalStrength(rssi);
+                return;
             }
 
-
-                int prevRssi = connectedDeviceInformation.getSignalStrength();
-                // As onReadRemoteRssi is called every second, this function will make sure the ui
-                // updates only when the signal level is changed
-                Log.d("BluetoothCheck", "connectionSucces");
-                Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(connectedDeviceInfoArrayList);
-
-
+            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(
+                    getUpdatedList(connectedDeviceInfoArrayList, gatt.getDevice().getAddress(), rssi));
 
         }
 
-        private void checkChangeInRssiValue(int rssi, int prevRssi){
-            if(rssi != prevRssi){
-                if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_FULL, ConnectedDeviceInfo.SIGNAL_HIGH)){
-                    updateConnectedDeviceInfoAdapter();
-                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_HIGH, ConnectedDeviceInfo.SIGNAL_MEDIUM)){
-                    updateConnectedDeviceInfoAdapter();
-                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_MEDIUM, ConnectedDeviceInfo.SIGNAL_LOW)){
-                    updateConnectedDeviceInfoAdapter();
-                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_LOW, ConnectedDeviceInfo.NO_SIGNAL)){
-                    updateConnectedDeviceInfoAdapter();
-                } else if(prevRssi <= ConnectedDeviceInfo.NO_SIGNAL && prevRssi >= -100){
-                    updateConnectedDeviceInfoAdapter();
-                }
-            }
-        }
-
-        private void updateConnectedDeviceInfoAdapter(){
-            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(connectedDeviceInfoArrayList);
-        }
-
-        private boolean hasSignalLevelChanged(int prevRssi, int rssi, int upperBound, int lowerBound){
-            boolean isValueInSignalRange = (rssi <= upperBound && rssi > lowerBound);
-            boolean isValueInPreviousSignalRange = (prevRssi <= upperBound && prevRssi > lowerBound);
-
-            return prevRssi > upperBound && isValueInSignalRange  || rssi > upperBound && isValueInPreviousSignalRange ;
-        }
 
         @Override
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
@@ -755,6 +708,52 @@ public class Bluetooth implements Serializable {
                 }
             }
             executeNext();
+        }
+
+        private boolean isNotRssiValueUpdateRequired(int rssi, int prevRssi){
+            if(rssi != prevRssi){
+                if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_FULL, ConnectedDeviceInfo.SIGNAL_HIGH)){
+                    return true;
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_HIGH, ConnectedDeviceInfo.SIGNAL_MEDIUM)){
+                    return true;
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_MEDIUM, ConnectedDeviceInfo.SIGNAL_LOW)){
+                    return true;
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_LOW, ConnectedDeviceInfo.NO_SIGNAL)){
+                    return true;
+                } else return prevRssi <= ConnectedDeviceInfo.NO_SIGNAL && prevRssi >= -100;
+            }
+            return false;
+        }
+
+        private ArrayList<ConnectedDeviceInfo> getUpdatedList(ArrayList<ConnectedDeviceInfo> connectedDeviceInfoArrayList, String address, int rssi){
+            connectedDeviceInformation.setSignalStrength(rssi);
+            if(connectedDeviceInfoArrayList != null){
+                boolean containesId = connectedDeviceInfoArrayList.stream()
+                        .anyMatch(
+                                value -> value.getDeviceId().equals(connectedDeviceInformation.getDeviceId()));
+
+                if(!containesId){
+                    connectedDeviceInfoArrayList.add(connectedDeviceInformation);
+                } else {
+                    int index = 0;
+                    for(ConnectedDeviceInfo device : connectedDeviceInfoArrayList){
+                        if(Objects.equals(device.getDeviceId(), address)){
+                            connectedDeviceInfoArrayList.remove(index);
+                            connectedDeviceInfoArrayList.add(index, connectedDeviceInformation);
+                        }
+                        index++;
+                    }
+                }
+            }
+            return connectedDeviceInfoArrayList;
+
+        }
+
+        private boolean hasSignalLevelChanged(int prevRssi, int rssi, int upperBound, int lowerBound){
+            boolean isValueInSignalRange = (rssi <= upperBound && rssi > lowerBound);
+            boolean isValueInPreviousSignalRange = (prevRssi <= upperBound && prevRssi > lowerBound);
+
+            return prevRssi > upperBound && isValueInSignalRange  || rssi > upperBound && isValueInPreviousSignalRange ;
         }
     }; // end of BluetoothGattCallback
 
