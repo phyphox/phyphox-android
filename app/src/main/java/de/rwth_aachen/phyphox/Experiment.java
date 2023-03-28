@@ -1988,7 +1988,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     Runnable runDeviceUpdate = new Runnable() {
         @Override
         public void run() {
-            deviceInfoAdapter.update(connectedDevices);
+            if(deviceInfoAdapter != null){
+                deviceInfoAdapter.update(connectedDevices);
+            }
         }
     };
 
