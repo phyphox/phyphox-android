@@ -615,16 +615,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
 
                 // define onSuccess
-                if (startMeasurement) {
-                    btTask.onSuccess = () -> {
-                        showBluetoothConnectedDeviceInfo();
-                        if (timed) {
+                btTask.onSuccess = () -> {
+                    showBluetoothConnectedDeviceInfo();
+
+                    if(startMeasurement){
+                        if(timed){
                             startTimedMeasurement();
                         } else {
                             startMeasurement();
                         }
-                    };
-                }
+                    }
+                };
 
                 // set attributes of errorDialog
                 Bluetooth.errorDialog.context = Experiment.this;
@@ -638,8 +639,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     if (btTask.progress != null) {
                         btTask.progress.show();
                     }
-                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
                     newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
+                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+
                 };
                 btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
             }

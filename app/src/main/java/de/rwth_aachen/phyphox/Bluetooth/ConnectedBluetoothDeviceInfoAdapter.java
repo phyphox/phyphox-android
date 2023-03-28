@@ -78,7 +78,9 @@ public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<Co
 
     private Drawable getBatteryLevelImage(int batteryLevel){
         Drawable batteryDrawable;
-        if(batteryLevel <= 15)
+        if(batteryLevel == 0)
+            batteryDrawable = ContextCompat.getDrawable(mParent, R.drawable.ic_empty);
+        else if(batteryLevel <= 15)
             batteryDrawable = ContextCompat.getDrawable(mParent, R.drawable.battery_level_1);
         else if(batteryLevel <= 30)
             batteryDrawable = ContextCompat.getDrawable(mParent, R.drawable.battery_level_2);

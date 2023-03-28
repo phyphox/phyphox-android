@@ -563,6 +563,7 @@ public class Bluetooth implements Serializable {
             retrieveData(data, characteristic);
         }
 
+
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
 
@@ -645,6 +646,9 @@ public class Bluetooth implements Serializable {
         @Override
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
             if(newState == BluetoothProfile.STATE_CONNECTED) {
+                String connectedDeviceName = gatt.getDevice().getName();
+                connectedDeviceInformation.setDeviceName(connectedDeviceName);
+
                 gatt.readRemoteRssi();
             }
 
