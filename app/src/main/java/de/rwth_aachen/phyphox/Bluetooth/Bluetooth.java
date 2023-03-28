@@ -69,10 +69,6 @@ public class Bluetooth implements Serializable {
     private final static UUID BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
     private final static UUID BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
 
-    public final static String DEVICE_NAME = "DEVICE_NAME";
-    public final static String DEVICE_BATTERY_LEVEL = "DEVICE_BATTERY_LEVEL";
-    public final static String DEVICE_SIGNAL = "DEVICE_SIGNAL";
-
     transient private static BluetoothAdapter btAdapter;
     public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
 

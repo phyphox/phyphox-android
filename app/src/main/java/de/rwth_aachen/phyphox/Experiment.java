@@ -621,9 +621,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
                 // define onSuccess
                 btTask.onSuccess = () -> {
-                    if(!Experiment.bluetoothConnectionSuccessful){
-                        showBluetoothConnectedDeviceInfo();
-                    }
+                    showBluetoothConnectedDeviceInfo();
 
                     if(startMeasurement){
                         if(timed){
@@ -646,9 +644,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     if (btTask.progress != null) {
                         btTask.progress.show();
                     }
-                    if(!Experiment.bluetoothConnectionSuccessful) {
-                        newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
-                    }
+                    newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
                     newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
 
                 };
