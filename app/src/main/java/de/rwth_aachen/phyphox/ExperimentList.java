@@ -114,34 +114,20 @@ import java.util.zip.ZipInputStream;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
-import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.PhyphoxSharedPreference;
 import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
-
-import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
 
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
 
 public class ExperimentList extends AppCompatActivity {
 
-    //Strings which define extra information for intents starting an experiment from local files
-    public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
-    public final static String EXPERIMENT_ISTEMP = "com.dicon.phyphox.EXPERIMENT_ISTEMP";
-    public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
-    public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
-    public final static String EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS= "com.dicon.phyphox.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS";
-
-    //String constant to identify our preferences
-    public static final String PREFS_NAME = "phyphox";
-
-    //Name of support category
-    static final String phyphoxCat = "phyphox.org";
-    static final String phyphoxCatHintRelease = "1.1.9"; //Change this to reactivate the phyphox support category hint on the next update. We set it to the version in which it is supposed to be re-enabled, so we can easily understand its meaning.
+     //Change this to reactivate the phyphox support category hint on the next update. We set it to the version in which it is supposed to be re-enabled, so we can easily understand its meaning.
 
     //A resource reference for easy access
     private Resources res;
@@ -217,8 +203,8 @@ public class ExperimentList extends AppCompatActivity {
             return;
         }
 
-        final SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        String lastSupportHint = settings.getString("lastSupportHint", "");
+
+        String lastSupportHint = PhyphoxSharedPreference.getLastSupportHint(this);
         if (lastSupportHint.equals(phyphoxCatHintRelease)) {
             return;
         }
@@ -244,494 +230,8 @@ public class ExperimentList extends AppCompatActivity {
 
     //This adapter is used to fill the gridView of the categories in the experiment list.
     //So, this can be considered to be the experiment entries within an category
-    private class ExperimentItemAdapter extends BaseAdapter {
-        final private Activity parentActivity; //Reference to the main activity for the alertDialog when deleting files
-        final private boolean isSimpleExperiment, isSavedState;
 
-        private String preselectedBluetoothAddress = null;
 
-        //Experiment data
-        Vector<Integer> colors = new Vector<>(); //List of icons for each experiment
-        Vector<Drawable> icons = new Vector<>(); //List of icons for each experiment
-        Vector<String> titles = new Vector<>(); //List of titles for each experiment
-        Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
-        Vector<String> xmlFiles = new Vector<>(); //List of xmlFile name for each experiment (has to be provided in the intent if the user wants to load this)
-        Vector<String> isTemp = new Vector<>(); //List of booleans for each experiment, which track whether the file is a temporary file
-        Vector<Boolean> isAsset = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
-        Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
-        Vector<String> isLinkList = new Vector<>(); //List of strings for each experiment, which are an URL is it is only a link entry
-
-        //The constructor takes the activity reference. That's all.
-        public ExperimentItemAdapter(Activity parentActivity, String category) {
-            this.parentActivity = parentActivity;
-            this.isSavedState = category.equals(res.getString(R.string.save_state_category));
-            this.isSimpleExperiment = category.equals(res.getString(R.string.categoryNewExperiment));
-        }
-
-        public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
-            this.preselectedBluetoothAddress = preselectedBluetoothAddress;
-        }
-
-        //The number of elements is just the number of icons. (Any of the lists should do)
-        public int getCount() {
-            return icons.size();
-        }
-
-        //We don't need to pick an object with this interface, but it has to be implemented
-        public Object getItem(int position) {
-            return null;
-        }
-
-        //The index is used as an id. That's enough, but has to be implemented
-        public long getItemId(int position) {
-            return position;
-        }
-
-        //This starts the intent for an experiment if the user clicked an experiment.
-        //It takes the index and the view that has been clicked (just for the animation)
-        public void start(int position, View v) {
-            //Create the intent and place the experiment location in it
-            Intent intent = new Intent(v.getContext(), Experiment.class);
-            intent.putExtra(EXPERIMENT_XML, xmlFiles.get(position));
-            intent.putExtra(EXPERIMENT_ISTEMP, isTemp.get(position));
-            intent.putExtra(EXPERIMENT_ISASSET, isAsset.get(position));
-            intent.putExtra(EXPERIMENT_UNAVAILABLESENSOR, unavailableSensorList.get(position));
-            if (this.preselectedBluetoothAddress != null)
-                intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, this.preselectedBluetoothAddress);
-            intent.setAction(Intent.ACTION_VIEW);
-
-            //If we are on a recent API, we can add a nice zoom animation
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
-                        0, v.getWidth(), v.getHeight());
-                v.getContext().startActivity(intent, options.toBundle());
-            } else { //old API? Just fire up the experiment.
-                v.getContext().startActivity(intent);
-            }
-        }
-
-        //Called to fill the adapter with experiment.
-        //For each experiment we need an icon, a title, a short description, the location of the
-        // file and whether it can be found as an asset or a local file.
-        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
-            //Insert it alphabetically into out list. So find the element before which the new
-            //title belongs.
-            int i;
-            for (i = 0; i < titles.size(); i++) {
-                if (titles.get(i).compareTo(title) >= 0)
-                    break;
-            }
-
-            //Now insert the experiment here
-            colors.insertElementAt(color, i);
-            icons.insertElementAt(icon, i);
-            titles.insertElementAt(title, i);
-            infos.insertElementAt(info, i);
-            xmlFiles.insertElementAt(xmlFile, i);
-            this.isTemp.insertElementAt(isTemp, i);
-            this.isAsset.insertElementAt(isAsset, i);
-            unavailableSensorList.insertElementAt(unavailableSensor, i);
-            isLinkList.insertElementAt(isLink, i);
-
-            //Notify the adapter that we changed its contents
-            this.notifyDataSetChanged();
-        }
-
-        //This mini class holds all the Android views to be displayed
-        public class Holder {
-            ImageView icon; //The icon
-            TextView title; //The title text
-            TextView info;  //The short description text
-            ImageButton menuBtn; //A button for a context menu for local experiments (if they are not an asset)
-        }
-
-        //Construct the view for an element.
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            Holder holder; //Holds all views. loaded from convertView or reconstructed
-            if(convertView == null) { //No convertView there. Let's build from scratch.
-
-                //Create the convertView from our layout and create an onClickListener
-                convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.experiment_item, null);
-                convertView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (isLinkList.get(position) != null) {
-                            try {
-                                Uri uri = Uri.parse(isLinkList.get(position));
-                                if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                    if (intent.resolveActivity(getPackageManager()) != null) {
-                                        startActivity(intent);
-                                        return;
-                                    }
-                                }
-                            } catch (Exception ignored) {
-
-                            }
-                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                            builder.setMessage("This entry is just a link, but its URL is invalid.")
-                                    .setTitle("Invalid URL")
-                                    .setPositiveButton(R.string.ok, (dialog, id) -> {
-
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        } else if (unavailableSensorList.get(position) < 0)
-                            start(position, v);
-                        else {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                            builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(unavailableSensorList.get(position)) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
-                                    .setTitle(R.string.sensorNotAvailableWarningTitle)
-                                    .setPositiveButton(R.string.ok, (dialog, id) -> {
-
-                                    })
-                                    .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), (dialog, id) -> {
-                                        Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
-                                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                        if (intent.resolveActivity(getPackageManager()) != null) {
-                                            startActivity(intent);
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-                    }
-                });
-
-                //Create our holder and set its refernces to the views
-                holder = new Holder();
-                holder.icon = convertView.findViewById(R.id.expIcon);
-                holder.title = convertView.findViewById(R.id.expTitle);
-                holder.info = convertView.findViewById(R.id.expInfo);
-                holder.menuBtn = convertView.findViewById(R.id.menuButton);
-
-                //Connect the convertView and the holder to retrieve it later
-                convertView.setTag(holder);
-            } else {
-                //There is an existing view. Retrieve its holder
-                holder = (Holder) convertView.getTag();
-            }
-
-            //Update icons and texts
-            holder.icon.setImageDrawable(icons.get(position));
-            holder.title.setText(titles.get(position));
-            holder.info.setText(infos.get(position));
-
-            if (unavailableSensorList.get(position) >= 0) {
-                holder.title.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
-                holder.info.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
-            }
-
-            //Handle the menubutton. Set it visible only for non-assets
-            if (isTemp.get(position) != null || isAsset.get(position))
-                holder.menuBtn.setVisibility(ImageView.GONE); //Asset - no menu button
-            else {
-                //No asset. Menu button visible and it needs an onClickListener
-                holder.menuBtn.setVisibility(ImageView.VISIBLE);
-                if (Helper.luminance(colors.get(position)) > 0.1)
-                    holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
-                holder.menuBtn.setOnClickListener(v -> {
-                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight), v);
-                    popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
-
-                    popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
-
-                    popup.setOnMenuItemClickListener(menuItem -> {
-                        switch (menuItem.getItemId()) {
-                            case R.id.experiment_item_share: {
-                                File file = new File(getFilesDir(), "/"+xmlFiles.get(position));
-
-                                final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
-                                final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
-                                        .setType("application/octet-stream") //mime type from the export filter
-                                        .setSubject(getString(R.string.save_state_subject))
-                                        .setStream(uri)
-                                        .getIntent()
-                                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                                List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
-                                for (ResolveInfo ri : resInfoList) {
-                                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                }
-
-                                //Create chooser
-                                Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
-                                //And finally grant permissions again for any activities created by the chooser
-                                resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
-                                for (ResolveInfo ri : resInfoList) {
-                                    if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                                    ))
-                                        continue;
-                                    grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                }
-                                //Execute this intent
-                                startActivity(chooser);
-                                return true;
-                            }
-                            case R.id.experiment_item_delete: {
-                                //Create dialog to ask the user if he REALLY wants to delete...
-                                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                                builder.setMessage(res.getString(R.string.confirmDelete))
-                                        .setTitle(R.string.confirmDeleteTitle)
-                                        .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                //Confirmed. Delete the item and reload the list
-                                                deleteFile(xmlFiles.get(position));
-                                                loadExperimentList();
-                                            }
-                                        })
-                                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                //Aborted by user. Nothing to do.
-                                            }
-                                        });
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
-                                return true;
-                            }
-                            case R.id.experiment_item_rename: {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                                final EditText edit = new EditText(parentActivity);
-                                edit.setText(titles.get(position));
-                                builder.setView(edit)
-                                        .setTitle(R.string.rename)
-                                        .setPositiveButton(R.string.rename, (dialog, id) -> {
-                                            String newName = edit.getText().toString();
-                                            if (newName.replaceAll("\\s+", "").isEmpty())
-                                                return;
-                                            //Confirmed. Rename the item and reload the list
-                                            if (isSavedState)
-                                                Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), "/phyphox/state-title", newName);
-                                            loadExperimentList();
-                                        })
-                                        .setNegativeButton(R.string.cancel, (dialog, id) -> {
-                                            //Aborted by user. Nothing to do.
-                                        });
-                                AlertDialog dialog = builder.create();
-                                dialog.show();
-                                return true;
-                            }
-
-                        }
-                        return false;
-                    });
-
-                    popup.show();
-                });
-            }
-
-            return convertView;
-        }
-    }
-
-    //The category class wraps all experiment entries and their views of a category, including the
-    //grid view and the category headline
-    private class ExperimentsInCategory {
-        final private Context parentContext; //Needed to create views
-        final public String name; //Category name (headline)
-        final private LinearLayout catLayout; //This is the base layout of the category, which will contain the headline and the gridView showing all the experiments
-        final private TextView categoryHeadline; //The TextView to display the headline
-        final private ExpandableHeightGridView experimentSubList; //The gridView holding experiment items. (See implementation below for the custom flavor "ExpandableHeightGridView")
-        final private ExperimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
-        final private Map<Integer, Integer> colorCount = new HashMap<>();
-
-        //ExpandableHeightGridView is derived from the original Android GridView.
-        //The structure of our experiment list is such that we want to scroll the entire list, which
-        //itself is structured into multiple categories showing multiple grid views. The original
-        //grid view only expands as far as it needs to and then only loads the elements it needs to
-        //show. This is a good idea for very long (or dynamically loaded) lists, but would make
-        //each category scrollable on its own, which is not what we want.
-        //ExpandableHeightGridView can be told to expand to show all elements at any time. This
-        //destroys the memory efficiency of the original grid view, but we do not expect the
-        //experiment to get so huge to need such efficiency. Also, we want to use a gridView instead
-        //of a common table to achieve lever on its ability to determine the number of columns on
-        //its own.
-        //This has been derived from: http://stackoverflow.com/questions/4523609/grid-of-images-inside-scrollview/4536955#4536955
-        private class ExpandableHeightGridView extends GridView {
-
-            boolean expanded = false; //The full expand attribute. Is it expanded?
-
-            //Constructor
-            public ExpandableHeightGridView(Context context) {
-                super(context);
-            }
-
-            //Constructor 2
-            public ExpandableHeightGridView(Context context, AttributeSet attrs) {
-                super(context, attrs);
-            }
-
-            //Constructor 3
-            public ExpandableHeightGridView(Context context, AttributeSet attrs, int defStyle) {
-                super(context, attrs, defStyle);
-            }
-
-            //Access to the expanded attribute
-            public boolean isExpanded() {
-                return expanded;
-            }
-
-            @Override
-            //The expansion is achieved by overwriting the measured height in the onMeasure event
-            public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-                if (isExpanded()) {
-                    // Calculate entire height by providing a very large height startMenuItem.
-                    // View.MEASURED_SIZE_MASK represents the largest height possible.
-                    int expandSpec = MeasureSpec.makeMeasureSpec(MEASURED_SIZE_MASK, MeasureSpec.AT_MOST);
-                    //Send our height to the super onMeasure event
-                    super.onMeasure(widthMeasureSpec, expandSpec);
-
-                    ViewGroup.LayoutParams params = getLayoutParams();
-                    params.height = getMeasuredHeight();
-                } else {
-                    //We should not expand. Just call the default onMeasure with the original parameters
-                    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-                }
-            }
-
-            //Interface to set the expanded attribute
-            public void setExpanded(boolean expanded) {
-                this.expanded = expanded;
-            }
-
-        }
-
-        //Constructor for the category class, takes a category name, the layout into which it should
-        // place its views and the calling activity (mostly to display the dialog in the onClick
-        // listener of the delete button for each element - maybe this should be restructured).
-        public ExperimentsInCategory(String name, Activity parentActivity) {
-            //Store what we need.
-            this.name = name;
-            parentContext = parentActivity;
-
-            //Create the base linear layout to hold title and list
-            catLayout = new LinearLayout(parentContext);
-            catLayout.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            lllp.setMargins(
-                    res.getDimensionPixelOffset(R.dimen.activity_horizontal_margin)-res.getDimensionPixelOffset(R.dimen.expElementMargin),
-                    0,
-                    res.getDimensionPixelOffset(R.dimen.activity_horizontal_margin)-res.getDimensionPixelOffset(R.dimen.expElementMargin),
-                    res.getDimensionPixelOffset(R.dimen.activity_vertical_margin)
-            );
-            catLayout.setLayoutParams(lllp);
-
-            //Create the headline text view
-            categoryHeadline = new TextView(parentContext);
-            LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-//            layout.setMargins(context.getDimensionPixelOffset(R.dimen.expElementMargin), 0, context.getDimensionPixelOffset(R.dimen.expElementMargin), context.getDimensionPixelOffset(R.dimen.expElementMargin));
-            categoryHeadline.setLayoutParams(layout);
-            categoryHeadline.setText(name.equals(phyphoxCat) ? res.getString(R.string.categoryPhyphoxOrg) : name);
-            categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
-            categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
-            categoryHeadline.setPadding(res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10, res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10);
-
-            //Create the gridView for the experiment items
-            experimentSubList = new ExpandableHeightGridView(parentContext);
-            experimentSubList.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
-            experimentSubList.setColumnWidth(res.getDimensionPixelOffset(R.dimen.expElementWidth));
-            experimentSubList.setNumColumns(ExpandableHeightGridView.AUTO_FIT);
-            experimentSubList.setStretchMode(ExpandableHeightGridView.STRETCH_COLUMN_WIDTH);
-            experimentSubList.setExpanded(true);
-
-            //Create the adapter and give it to the gridView
-            experiments = new ExperimentItemAdapter(parentActivity, name);
-            experimentSubList.setAdapter(experiments);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                catLayout.setElevation(res.getDimensionPixelOffset(R.dimen.expElementElevation));
-                catLayout.setClipToPadding(false);
-                catLayout.setClipChildren(false);
-                experimentSubList.setClipToPadding(false);
-                experimentSubList.setClipChildren(false);
-            }
-
-            //Add headline and experiment list to our base layout
-            catLayout.addView(categoryHeadline);
-            catLayout.addView(experimentSubList);
-        }
-
-        public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
-            experiments.setPreselectedBluetoothAddress(preselectedBluetoothAddress);
-        }
-
-        public void addToParent(LinearLayout parentLayout) {
-            //Add the layout to the layout designated by the caller
-            parentLayout.addView(catLayout);
-        }
-
-        //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
-        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
-            experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
-            Integer n = colorCount.get(color);
-            if (n == null)
-                colorCount.put(color, 1);
-            else
-                colorCount.put(color, n+1);
-            int max = 0;
-            int catColor = 0;
-            for (Map.Entry<Integer,Integer> entry : colorCount.entrySet()) {
-                if (entry.getValue() > max) {
-                    catColor = entry.getKey();
-                    max = entry.getValue();
-                }
-            }
-            categoryHeadline.setBackgroundColor(catColor);
-            if (Helper.luminance(catColor) > 0.7)
-                categoryHeadline.setTextColor(0xff000000);
-            else
-                categoryHeadline.setTextColor(0xffffffff);
-        }
-
-        //Helper to check if the name of this category matches a given string
-        public boolean hasName(String cat) {
-            return cat.equals(name);
-        }
-    }
-
-    class categoryComparator implements Comparator<ExperimentsInCategory> {
-        public int compare(ExperimentsInCategory a, ExperimentsInCategory b) {
-            if (a.name.equals(res.getString(R.string.categoryRawSensor)))
-                return -1;
-            if (b.name.equals(res.getString(R.string.categoryRawSensor)))
-                return 1;
-            if (a.name.equals(res.getString(R.string.save_state_category)))
-                return -1;
-            if (b.name.equals(res.getString(R.string.save_state_category)))
-                return 1;
-            if (a.name.equals(phyphoxCat))
-                return 1;
-            if (b.name.equals(phyphoxCat))
-                return -1;
-            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        }
-    }
-
-    //The third addExperiment function:
-    //ExperimentItemAdapter.addExperiment(...) is called by category.addExperiment(...), which in
-    //turn will be called here.
-    //This addExperiment(...) is called for each experiment found. It checks if the experiment's
-    // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, int color, Drawable image, String description, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor,  String isLink, Vector<ExperimentsInCategory> categories) {
-        //Check all categories for the category of the new experiment
-        for (ExperimentsInCategory icat : categories) {
-            if (icat.hasName(cat)) {
-                //Found it. Add the experiment and return
-                icat.addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
-                return;
-            }
-        }
-        //Category does not yet exist. Create it and add the experiment
-        categories.add(new ExperimentsInCategory(cat, this));
-        categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
-    }
 
 
     private void addInvalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
@@ -1110,85 +610,6 @@ public class ExperimentList extends AppCompatActivity {
         loadExperimentList();
     }
 
-    //This asyncTask extracts a zip file to a temporary directory
-    //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
-    protected static class handleCopyIntent extends AsyncTask<String, Void, String> {
-        private Intent intent; //The intent to read from
-        private WeakReference<ExperimentList> parent;
-        private File file = null;
-
-        //The constructor takes the intent to copy from and the parent activity to call back when finished.
-        handleCopyIntent(Intent intent, ExperimentList parent) {
-            this.intent = intent;
-            this.parent = new WeakReference<ExperimentList>(parent);
-        }
-
-        //Copying is done on a second thread...
-        protected String doInBackground(String... params) {
-            PhyphoxFile.PhyphoxStream phyphoxStream = PhyphoxFile.openXMLInputStream(intent, parent.get());
-            if (!phyphoxStream.errorMessage.isEmpty()) {
-                return phyphoxStream.errorMessage;
-            }
-
-            //Copy the input stream to a random file name
-            try {
-                //Prepare temporary directory
-                File tempPath = new File(parent.get().getFilesDir(), "temp");
-                if (!tempPath.exists()) {
-                    if (!tempPath.mkdirs())
-                        return "Could not create temporary directory to store temporary file.";
-                }
-                String[] files = tempPath.list();
-                for (String file : files) {
-                    if (!(new File(tempPath, file).delete()))
-                        return "Could not clear temporary directory for temporary file.";
-                }
-
-                //Copy the input stream to a random file name
-                try {
-                    file = new File(tempPath, UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"); //Random file name
-                    FileOutputStream output = new FileOutputStream(file);
-                    byte[] buffer = new byte[1024];
-                    int count;
-                    while ((count = phyphoxStream.inputStream.read(buffer)) != -1)
-                        output.write(buffer, 0, count);
-                    output.close();
-                    phyphoxStream.inputStream.close();
-                } catch (Exception e) {
-                    file = null;
-                    return "Error during file transfer: " + e.getMessage();
-                }
-            } catch (Exception e) {
-                file = null;
-                return "Error loading file: " + e.getMessage();
-            }
-
-            return "";
-        }
-
-        @Override
-        //Call the parent callback when we are done.
-        protected void onPostExecute(String result) {
-            if (!result.isEmpty()) {
-                parent.get().showError(result);
-                return;
-            }
-
-            if (file == null) {
-                parent.get().showError("File is null.");
-                return;
-            }
-
-            //Create an intent for this file
-            Intent intent = new Intent(parent.get(), Experiment.class);
-            intent.setData(Uri.fromFile(file));
-            intent.putExtra(EXPERIMENT_ISTEMP, "temp");
-            intent.setAction(Intent.ACTION_VIEW);
-
-            //Open the file
-            parent.get().handleIntent(intent);
-        }
-    }
 
     void showError(String error) {
         if (progress != null)
@@ -1196,78 +617,7 @@ public class ExperimentList extends AppCompatActivity {
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }
 
-    //This asyncTask extracts a zip file to a temporary directory
-    //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
-    protected static class handleZipIntent extends AsyncTask<String, Void, String> {
-        private Intent intent; //The intent to read from
-        private WeakReference<ExperimentList> parent;
-        BluetoothDevice preselectedDevice = null;
 
-        //The constructor takes the intent to copy from and the parent activity to call back when finished.
-        handleZipIntent(Intent intent, ExperimentList parent) {
-            this.intent = intent;
-            this.parent = new WeakReference<ExperimentList>(parent);
-        }
-
-        handleZipIntent(Intent intent, ExperimentList parent, BluetoothDevice preselectedDevice) {
-            this.intent = intent;
-            this.parent = new WeakReference<ExperimentList>(parent);
-            this.preselectedDevice = preselectedDevice;
-        }
-
-        //Copying is done on a second thread...
-        protected String doInBackground(String... params) {
-            PhyphoxFile.PhyphoxStream phyphoxStream = PhyphoxFile.openXMLInputStream(intent, parent.get());
-            if (!phyphoxStream.errorMessage.isEmpty()) {
-                return phyphoxStream.errorMessage;
-            }
-
-            //Copy the input stream to a random file name
-            try {
-                //Prepare temporary directory
-                File tempPath = new File(parent.get().getFilesDir(), "temp_zip");
-                if (!tempPath.exists()) {
-                    if (!tempPath.mkdirs())
-                        return "Could not create temporary directory to extract zip file.";
-                }
-                String[] files = tempPath.list();
-                for (String file : files) {
-                    if (!(new File(tempPath, file).delete()))
-                        return "Could not clear temporary directory to extract zip file.";
-                }
-
-                ZipInputStream zis = new ZipInputStream(phyphoxStream.inputStream);
-
-                ZipEntry entry;
-                byte[] buffer = new byte[2048];
-                while((entry = zis.getNextEntry()) != null) {
-                    File f = new File(tempPath, entry.getName());
-                    String canonicalPath = f.getCanonicalPath();
-                    if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
-                        return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
-                    }
-                    FileOutputStream out = new FileOutputStream(f);
-                    int size = 0;
-                    while ((size = zis.read(buffer)) > 0)
-                    {
-                        out.write(buffer, 0, size);
-                    }
-                    out.close();
-                }
-                zis.close();
-            } catch (Exception e) {
-                return "Error loading zip file: " + e.getMessage();
-            }
-
-            return "";
-        }
-
-        @Override
-        //Call the parent callback when we are done.
-        protected void onPostExecute(String result) {
-            parent.get().zipReady(result, preselectedDevice);
-        }
-    }
 
     public void zipReady(String result, BluetoothDevice preselectedDevice) {
         if (progress != null)
@@ -1347,38 +697,7 @@ public class ExperimentList extends AppCompatActivity {
         }
     }
 
-    //The BluetoothScanDialog has been written to block execution until a device is found, so we should not run it on the UI thread.
-    protected class runBluetoothScan extends AsyncTask<String, Void, BluetoothScanDialog.BluetoothDeviceInfo> {
-        private WeakReference<ExperimentList> parent;
 
-        //The constructor takes the intent to copy from and the parent activity to call back when finished.
-        runBluetoothScan(ExperimentList parent) {
-            this.parent = new WeakReference<>(parent);
-        }
-
-        //Copying is done on a second thread...
-        protected BluetoothScanDialog.BluetoothDeviceInfo doInBackground(String... params) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent.get())) {
-                showBluetoothScanError(getResources().getString(R.string.bt_android_version), true, true);
-                return null;
-            } else {
-                BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
-                if (btAdapter == null || !Bluetooth.isEnabled()) {
-                    showBluetoothScanError(getResources().getString(R.string.bt_exception_disabled), true, false);
-                    return null;
-                }
-                BluetoothScanDialog bsd = new BluetoothScanDialog(false, parent.get(), parent.get(), btAdapter);
-                return bsd.getBluetoothDevice(null, null, bluetoothDeviceNameList.keySet(), bluetoothDeviceUUIDList.keySet(), null);
-            }
-        }
-
-        @Override
-        //Call the parent callback when we are done.
-        protected void onPostExecute(BluetoothScanDialog.BluetoothDeviceInfo result) {
-            if (result != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
-        }
-    }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void loadExperimentFromBluetoothDevice(final BluetoothDevice device) {
@@ -1567,58 +886,7 @@ public class ExperimentList extends AppCompatActivity {
     }
 
 
-    protected void handleIntent(Intent intent) {
 
-
-        if (progress != null)
-            progress.dismiss();
-
-        String scheme = intent.getScheme();
-        if (scheme == null)
-            return;
-        boolean isZip = false;
-        if (scheme.equals(ContentResolver.SCHEME_FILE)) {
-            if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                //Android 6.0: No permission? Request it!
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
-                //We will stop here. If the user grants the permission, the permission callback will restart the action with the same intent
-                return;
-            }
-            Uri uri = intent.getData();
-
-            byte[] data = new byte[4];
-            InputStream is;
-            try {
-                is = this.getContentResolver().openInputStream(uri);
-                if (is.read(data, 0, 4) < 4) {
-                    Toast.makeText(this, "Error: File truncated.", Toast.LENGTH_LONG).show();
-                    return;
-                }
-            } catch (FileNotFoundException e) {
-                Toast.makeText(this, "Error: File not found.", Toast.LENGTH_LONG).show();
-                return;
-            } catch (IOException e) {
-                Toast.makeText(this, "Error: IOException.", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            isZip = (data[0] == 0x50 && data[1] == 0x4b && data[2] == 0x03 && data[3] == 0x04);
-
-            if (!isZip) {
-                //This is just a single experiment - Start the Experiment activity and let it handle the intent
-                Intent forwardedIntent = new Intent(intent);
-                forwardedIntent.setClass(this, Experiment.class);
-                this.startActivity(forwardedIntent);
-            } else {
-                //We got a zip-file. Let's see what's inside...
-                progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-                new handleZipIntent(intent, this).execute();
-            }
-        } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
-            progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-            new handleCopyIntent(intent, this).execute();
-        }
-    }
 
     protected void showNewExperimentDialog() {
         newExperimentDialogOpen = true;
@@ -1631,27 +899,7 @@ public class ExperimentList extends AppCompatActivity {
         final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
         final View backgroundDimmer = (View) findViewById(R.id.experimentListDimmer);
 
-        Animation rotate45In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate45);
-        Animation fabIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_in);
-        Animation labelIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_in);
-        Animation fadeDark = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_dark);
 
-        newExperimentButton.startAnimation(rotate45In);
-        newExperimentSimple.startAnimation(fabIn);
-        newExperimentSimpleLabel.startAnimation(labelIn);
-        newExperimentBluetooth.startAnimation(fabIn);
-        newExperimentBluetoothLabel.startAnimation(labelIn);
-        newExperimentQR.startAnimation(fabIn);
-        newExperimentQRLabel.startAnimation(labelIn);
-        backgroundDimmer.startAnimation(fadeDark);
-
-        newExperimentSimple.setClickable(true);
-        newExperimentSimpleLabel.setClickable(true);
-        newExperimentBluetooth.setClickable(true);
-        newExperimentBluetoothLabel.setClickable(true);
-        newExperimentQR.setClickable(true);
-        newExperimentQRLabel.setClickable(true);
-        backgroundDimmer.setClickable(true);
     }
 
     protected void hideNewExperimentDialog() {
@@ -1734,30 +982,6 @@ public class ExperimentList extends AppCompatActivity {
         });
     }
 
-    protected void showBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(msg)
-                .setTitle(isError ? R.string.newExperimentBluetoothErrorTitle : R.string.newExperimentBluetooth);
-        if (!isFatal) {
-            builder.setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                scanQRCode();
-                }
-            });
-        }
-        builder.setNegativeButton(res.getString(R.string.cancel), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-
-            }
-        });
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            }
-        });
-    }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     protected void showBluetoothExperimentReadError(String msg, final BluetoothDevice device) {
@@ -1907,12 +1131,7 @@ public class ExperimentList extends AppCompatActivity {
         //On Android 12 this does not hurt, but Android 12 shows its own splash method (defined with
         //specific attributes in the theme), so the classic splash screen is not shown anyways
         //before setTheme is called and we see the normal theme right away.
-        setTheme(R.style.Theme_Phyphox_DayNight);
 
-        String themePreference = PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getString(getString(R.string.setting_dark_mode_key),SettingsFragment.DARK_MODE_ON);
-        SettingsFragment.setApplicationTheme(themePreference);
 
         //Basics. Call super-constructor and inflate the layout.
         super.onCreate(savedInstanceState);
@@ -1943,29 +1162,11 @@ public class ExperimentList extends AppCompatActivity {
                             LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
                             View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
-                            //Set the credit texts, which require HTML markup
-                            TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
 
-                            SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
-                            boolean first = true;
-                            for (String line : res.getString(R.string.creditsNames).split("\\n")) {
-                                if (first)
-                                    first = false;
-                                else
-                                    creditsNamesSpannable.append("\n");
-                                creditsNamesSpannable.append(line.trim());
-                            }
-                            Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
-                            while (matcher.find()) {
-                                creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-                            }
+
+
                             tv.setText(creditsNamesSpannable);
-                            TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
-                            tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
-                            TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
-                            tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
-                            TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
-                            tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
+
 
                             //Finish alertDialog builder
                             credits.setView(creditLayout);
@@ -1993,198 +1194,14 @@ public class ExperimentList extends AppCompatActivity {
                                 }
                             return true;
                         } else if (item.getItemId() == R.id.action_helpRemote) {
-                                Uri uri = Uri.parse(res.getString(R.string.remotePhyphoxOrgURL));
-                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                    startActivity(intent);
-                                }
+
                             return true;
                         } else if (item.getItemId() == R.id.action_settings) {
                                 Intent intent = new Intent(parentActivity, Settings.class);
                                 startActivity(intent);
                                 return true;
                             } else if (item.getItemId() == R.id.action_deviceInfo) {
-                            StringBuilder sb = new StringBuilder();
 
-                            PackageInfo pInfo;
-                            try {
-                                pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
-                            } catch (Exception e) {
-                                pInfo = null;
-                            }
-
-                            if(Helper.isDarkTheme(res)){
-                                sb.append(" <font color='white'");
-                            }else{
-                                sb.append(" <font color='black'");
-                            }
-
-                            sb.append("<b>phyphox</b><br />");
-                            if (pInfo != null) {
-                                sb.append("Version: ");
-                                sb.append(pInfo.versionName);
-                                sb.append("<br />");
-                                sb.append("Build: ");
-                                sb.append(pInfo.versionCode);
-                                sb.append("<br />");
-                            } else {
-                                sb.append("Version: Unknown<br />");
-                                sb.append("Build: Unknown<br />");
-                            }
-                            sb.append("File format: ");
-                            sb.append(PhyphoxFile.phyphoxFileVersion);
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Permissions</b><br />");
-                            if (pInfo != null && pInfo.requestedPermissions != null) {
-                                for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
-                                    sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
-                                    sb.append(": ");
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                                        sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
-                                    else
-                                        sb.append("API < 16");
-                                    sb.append("<br />");
-                                }
-                            } else {
-                                if (pInfo == null)
-                                    sb.append("Unknown<br />");
-                                else
-                                    sb.append("None<br />");
-                            }
-                            sb.append("<br />");
-
-                            sb.append("<b>Device</b><br />");
-                            sb.append("Model: ");
-                            sb.append(Build.MODEL);
-                            sb.append("<br />");
-                            sb.append("Brand: ");
-                            sb.append(Build.BRAND);
-                            sb.append("<br />");
-                            sb.append("Board: ");
-                            sb.append(Build.DEVICE);
-                            sb.append("<br />");
-                            sb.append("Manufacturer: ");
-                            sb.append(Build.MANUFACTURER);
-                            sb.append("<br />");
-                            sb.append("ABIS: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
-                                    if (i > 0)
-                                        sb.append(", ");
-                                    sb.append(Build.SUPPORTED_ABIS[i]);
-                                }
-                            } else {
-                                sb.append("API < 21");
-                            }
-                            sb.append("<br />");
-                            sb.append("Base OS: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                sb.append(Build.VERSION.BASE_OS);
-                            } else {
-                                sb.append("API < 23");
-                            }
-                            sb.append("<br />");
-                            sb.append("Codename: ");
-                            sb.append(Build.VERSION.CODENAME);
-                            sb.append("<br />");
-                            sb.append("Release: ");
-                            sb.append(Build.VERSION.RELEASE);
-                            sb.append("<br />");
-                            sb.append("Patch: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                sb.append(Build.VERSION.SECURITY_PATCH);
-                            } else {
-                                sb.append("API < 23");
-                            }
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Sensors</b><br /><br />");
-                            SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-                            if (sensorManager == null) {
-                                sb.append("Unkown<br />");
-                            } else {
-                                for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
-                                    sb.append("<b>");
-                                    sb.append(res.getString(SensorInput.getDescriptionRes(sensor.getType())));
-                                    sb.append("</b> (type ");
-                                    sb.append(sensor.getType());
-                                    sb.append(")");
-                                    sb.append("<br />");
-                                    sb.append("- Name: ");
-                                    sb.append(sensor.getName());
-                                    sb.append("<br />");
-                                    sb.append("- Range: ");
-                                    sb.append(sensor.getMaximumRange());
-                                    sb.append(" ");
-                                    sb.append(SensorInput.getUnit(sensor.getType()));
-                                    sb.append("<br />");
-                                    sb.append("- Resolution: ");
-                                    sb.append(sensor.getResolution());
-                                    sb.append(" ");
-                                    sb.append(SensorInput.getUnit(sensor.getType()));
-                                    sb.append("<br />");
-                                    sb.append("- Min delay: ");
-                                    sb.append(sensor.getMinDelay());
-                                    sb.append(" µs");
-                                    sb.append("<br />");
-                                    sb.append("- Max delay: ");
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                        sb.append(sensor.getMaxDelay());
-                                    } else {
-                                        sb.append("API < 21");
-                                    }
-                                    sb.append(" µs");
-                                    sb.append("<br />");
-                                    sb.append("- Power: ");
-                                    sb.append(sensor.getPower());
-                                    sb.append(" mA");
-                                    sb.append("<br />");
-                                    sb.append("- Vendor: ");
-                                    sb.append(sensor.getVendor());
-                                    sb.append("<br />");
-                                    sb.append("- Version: ");
-                                    sb.append(sensor.getVersion());
-                                    sb.append("<br /><br />");
-                                }
-                            }
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Cameras</b><br /><br />");
-                            sb.append("<b>Depth sensors</b><br />");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                sb.append("- Depth sensors front: ");
-                                int depthFront = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
-                                sb.append(depthFront);
-                                sb.append("<br />");
-                                sb.append("- Max resolution front: ");
-                                sb.append(depthFront > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_FRONT) : "-");
-                                sb.append("<br />");
-                                sb.append("- Max frame rate front: ");
-                                sb.append(depthFront > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_FRONT) : "-");
-                                sb.append("<br />");
-                                sb.append("- Depth sensors back: ");
-                                int depthBack = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
-                                sb.append(depthBack);
-                                sb.append("<br />");
-                                sb.append("- Max resolution back: ");
-                                sb.append(depthBack > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_BACK) : "-");
-                                sb.append("<br />");
-                                sb.append("- Max frame rate back: ");
-                                sb.append(depthBack > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_BACK) : "-");
-                                sb.append("<br />");
-                            } else {
-                                sb.append("API < 23");
-                            }
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Camera 2 API</b><br />");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                sb.append(CameraHelper.getCamera2FormattedCaps(false));
-                            } else {
-                                sb.append("API < 21");
-                            }
-                            sb.append("</font>");
 
                             final Spanned text = Html.fromHtml(sb.toString());
                             ContextThemeWrapper ctw = new ContextThemeWrapper( ExperimentList.this, R.style.Theme_Phyphox_DayNight);
@@ -2226,61 +1243,6 @@ public class ExperimentList extends AppCompatActivity {
         //Setup the on-click-listener for the create-new-experiment button
         final ExperimentList thisRef = this; //Context needs to be accessed in the onClickListener
 
-        Button.OnClickListener neocl = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (newExperimentDialogOpen)
-                    hideNewExperimentDialog();
-                else
-                    showNewExperimentDialog();
-            }
-        };
-
-        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
-        final View experimentListDimmer = (View) findViewById(R.id.experimentListDimmer);
-        newExperimentButton.setOnClickListener(neocl);
-        experimentListDimmer.setOnClickListener(neocl);
-
-        Button.OnClickListener neoclSimple = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideNewExperimentDialog();
-                newExperimentDialog(thisRef);
-            }
-        };
-
-        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
-        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
-        newExperimentSimple.setOnClickListener(neoclSimple);
-        newExperimentSimpleLabel.setOnClickListener(neoclSimple);
-
-        Button.OnClickListener neoclBluetooth = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideNewExperimentDialog();
-                (new runBluetoothScan(thisRef)).execute();
-            }
-        };
-
-        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
-        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
-        newExperimentBluetooth.setOnClickListener(neoclBluetooth);
-        newExperimentBluetoothLabel.setOnClickListener(neoclBluetooth);
-
-        Button.OnClickListener neoclQR = new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideNewExperimentDialog();
-                scanQRCode();
-            }
-        };
-
-        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
-        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
-        newExperimentQR.setOnClickListener(neoclQR);
-        newExperimentQRLabel.setOnClickListener(neoclQR);
-
-        handleIntent(getIntent());
 
     }
 
@@ -2315,7 +1277,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //Check preferences if the user does not want to see warnings
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        Boolean skipWarning = settings.getBoolean("skipWarning", false);
+        boolean skipWarning = settings.getBoolean("skipWarning", false);
         if (!skipWarning) {
             adb.show(); //User did not decide to skip, so show it.
             return true;
