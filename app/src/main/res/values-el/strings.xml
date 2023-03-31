@@ -24,13 +24,14 @@
     <string name="credits">Μνεία</string>
     <string name="creditsRWTH">Η εφαρμογή phyphox® δημιουργήθηκε στο 2ο Ινστιτούτο Φυσικής στο Πανεπιστήμιο RWTH Aachen.</string>
     <string name="creditsNames">Ανάπτυξη και Ιδέα:
-\n Dr. Sebastian Staacks
-\n Ιδέα:
-\n Prof. Christoph Stampfer
-\n Προγραμματισμός:
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+\nDr. Sebastian Staacks
+\nΙδέα:
+\nProf. Christoph Stampfer
+\nΠρογραμματισμός:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">Το web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84 χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
     <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
     <string name="sensorLight">Φως</string>
