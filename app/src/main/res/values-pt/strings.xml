@@ -21,13 +21,14 @@
     <string name="info">Informações</string>
     <string name="creditsRWTH">phyphox foi criado no 2º Instituto de Física da Universidade RWTH Aachen.</string>
     <string name="creditsNames">Desenvolvimento e Conceito:
-\n Dr. Sebastian Staacks
-\n Conceito:
-\n Prof. Christoph Stampfer
-\n Programação:
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+\nDr. Sebastian Staacks
+\nConceito:
+\nProf. Christoph Stampfer
+\nProgramação:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">A interface web para acesso remoto usa a biblioteca JavaScript library \"Chart.js\" (http://chartjs.org), disponível sob a licença MIT. Para a transformada deFourier, nós usamos a biblioteca FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, no qual está disponível sob a licençaGNU General Public Licence (versão 2 ou posterior).</string>
     <string name="sensorLinearAcceleration">Aceleração Linear</string>
     <string name="sensorLight">Luz</string>
