@@ -1936,7 +1936,14 @@ public class ExperimentList extends AppCompatActivity {
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        if (item.getItemId() == R.id.action_credits) {
+                        if (item.getItemId() == R.id.action_privacy) {
+                            Uri uri = Uri.parse(res.getString(R.string.privacyPolicyURL));
+                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                            if (intent.resolveActivity(getPackageManager()) != null) {
+                                startActivity(intent);
+                            }
+                            return true;
+                        } else if (item.getItemId() == R.id.action_credits) {
                             //Create the credits as an AlertDialog
                             ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentList.this, R.style.rwth);
                             AlertDialog.Builder credits = new AlertDialog.Builder(ctw);

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/action_credits" android:title="@string/credits" android:orderInCategory="1" />
-    <item android:id="@+id/action_helpExperiments" android:title="@string/experimentsPhyphoxOrg" android:orderInCategory="2" />
-    <item android:id="@+id/action_helpFAQ" android:title="@string/faqPhyphoxOrg" android:orderInCategory="3" />
-    <item android:id="@+id/action_helpRemote" android:title="@string/remotePhyphoxOrg" android:orderInCategory="4" />
-    <item android:id="@+id/action_settings" android:title="@string/settings" android:orderInCategory="5" />
-    <item android:id="@+id/action_deviceInfo" android:title="@string/deviceInfo" android:orderInCategory="6" />
+    <item android:id="@+id/action_privacy" android:title="@string/networkVisitPrivacyURL" android:orderInCategory="1" />
+    <item android:id="@+id/action_credits" android:title="@string/credits" android:orderInCategory="2" />
+    <item android:id="@+id/action_helpExperiments" android:title="@string/experimentsPhyphoxOrg" android:orderInCategory="3" />
+    <item android:id="@+id/action_helpFAQ" android:title="@string/faqPhyphoxOrg" android:orderInCategory="4" />
+    <item android:id="@+id/action_helpRemote" android:title="@string/remotePhyphoxOrg" android:orderInCategory="5" />
+    <item android:id="@+id/action_settings" android:title="@string/settings" android:orderInCategory="6" />
+    <item android:id="@+id/action_deviceInfo" android:title="@string/deviceInfo" android:orderInCategory="7" />
 </menu>

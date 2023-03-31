@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">phyphox</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_experiment">phyphox</string>
     <string name="graph_tools_pan_and_zoom">Pan and zoom</string>
