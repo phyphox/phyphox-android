@@ -93,7 +93,15 @@
     <string name="pick_exportSets">دسته داده‌ها را برای خروجی گرفتن انتخاب کنید.</string>
     <string name="noDrawableData">بدون داده‌های قابل رسم.</string>
     <string name="categoryRawSensor">حسگرهای خام</string>
-    <string name="creditsNames">توسعه و ایده:<br/><b>Dr. Sebastian Staacks</b><br/>ایده:<br/><b>Prof. Christoph Stampfer</b><br/>طرح:<br/><b>Frank Posthoff (A.NikoPol)</b><br/>برنامه‌نویسی:<br/><b>Camilla Lummerzheim</b><br/><b>Jonas Gessner</b></string>
+    <string name="creditsNames">Development and Concept:
+\nDr. Sebastian Staacks
+\nConcept:
+\nProf. Christoph Stampfer
+\nProgramming:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">رابط وب برای دسترسی از راه دور، از کتابخانه‌‌ی جاوااسکریپت «Chart.js» که تحت مجوز MIT در دسترس‌ است، استفاده می‌کند. برای تبدیل فوریه، از کتابخانه‌ی FFTW استفاده می‌کند.</string>
     <string name="remoteServerWarning">شما در آستانه‌ فعال کردن دسترسی از راه دور به داده‌های به‌دست آمده هستید. شما تنها باید آن را در یک شبکه مورد اعتماد انجام دهید! همچنین توجه داشته باشید که دسترسی مستقیم بین دستگاه‌ها ممکن است در بسیاری از شبکه‌های شرکت یا دانشگاه امکان‌پذیر نباشد.
 \n
