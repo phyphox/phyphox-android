@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
+    <string name="creditsNames">Development and Concept:
+\nDr. Sebastian Staacks
+\nConcept:
+\nProf. Christoph Stampfer
+\nProgramming:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
 </resources>
