@@ -5,7 +5,7 @@
     android:layout_height="fill_parent"
     android:orientation="vertical"
     android:padding="10dp"
-    style="@style/phyphox">
+    style="@style/Theme.Phyphox.DayNight">
 
     <CheckBox
         android:id="@+id/timedRunEnabled"

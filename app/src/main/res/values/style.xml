@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.Phyphox.Toolbar.Light" parent="Widget.AppCompat.Toolbar">
+        <item name="backgroundColor">@color/phyphox_white_100</item>
+        <item name="elevation">8dp</item>
+    </style>
+
+    <style name="Widget.Phyphox.Toolbar.Dark" parent="Widget.AppCompat.Toolbar">
+        <item name="backgroundColor">@color/phyphox_black_80</item>
+        <item name="elevation">8dp</item>
+    </style>
+
+</resources>

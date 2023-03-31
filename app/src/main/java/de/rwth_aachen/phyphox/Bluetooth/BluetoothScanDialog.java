@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
 /**
@@ -55,6 +56,8 @@ public class BluetoothScanDialog {
     private Set<UUID> supportedUUIDFilter;
 
     private final Boolean autoConnect;
+
+    ArrayList<String> macAddresses = new ArrayList<>();
 
     public BluetoothScanDialog(Boolean autoConnect, final Activity activity, final Context context, BluetoothAdapter bta) {
         this.autoConnect = autoConnect;
@@ -198,8 +201,12 @@ public class BluetoothScanDialog {
                     }
                 } else {
                     parentActivity.runOnUiThread(() -> {
-                        listAdapter.addDevice(deviceInfo);
-                        listAdapter.notifyDataSetChanged();
+                        String macAddress = deviceInfo.device.getAddress();
+                        if (!macAddresses.contains(macAddress)) {
+                            macAddresses.add(macAddress);
+                            listAdapter.addDevice(deviceInfo);
+                            listAdapter.notifyDataSetChanged();
+                        }
                     });
                 }
             }
@@ -419,22 +426,38 @@ public class BluetoothScanDialog {
                 subViews.notSupported.setVisibility(View.VISIBLE);
             }
 
-            int color = deviceInfo.supported || deviceInfo.phyphoxService ? (deviceInfo.oneOfMany && deviceInfo.strongestSignal ? ctx.getResources().getColor(R.color.highlight) : ctx.getResources().getColor(R.color.main)) : ctx.getResources().getColor(R.color.mainDisabled);
+            int color;
+            if(deviceInfo.supported || deviceInfo.phyphoxService){
+                if(deviceInfo.oneOfMany && deviceInfo.strongestSignal){
+                   color = ctx.getResources().getColor(R.color.phyphox_primary);
+                }else{
+                    if(Helper.isDarkTheme(ctx.getResources())){
+                        color = ctx.getResources().getColor(R.color.phyphox_white_100);
+                    } else{
+                        color = ctx.getResources().getColor(R.color.phyphox_black_80);
+                    }
+                }
+            } else{
+               color = ctx.getResources().getColor(R.color.phyphox_white_50_black_50);
+            }
+
             subViews.deviceName.setTextColor(color);
 
             if (deviceInfo.lastRSSI > -30)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_4);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_4));
             else if (deviceInfo.lastRSSI > -50)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_3);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_3));
             else if (deviceInfo.lastRSSI > -70)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_2);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_2));
             else if (deviceInfo.lastRSSI > -90)
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_1);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_1));
             else
-                subViews.signalStrength.setImageResource(R.drawable.bluetooth_signal_0);
+                subViews.signalStrength.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.bluetooth_signal_0));
 
+            subViews.signalStrength.setColorFilter(Helper.getAdjustedColorForImage(ctx));
             return view;
         }
+
     }
 
     static class SubViews {

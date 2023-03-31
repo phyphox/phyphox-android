@@ -23,6 +23,31 @@
         </androidx.preference.Preference>
     </androidx.preference.PreferenceCategory>
 
+    <PreferenceCategory
+        app:isPreferenceVisible="true"
+        android:title="@string/settingGraphViewEdit">
+
+        <SeekBarPreference
+            android:max="3"
+            app:min="0"
+            android:layout="@layout/seekbar_preference_custom"
+            android:defaultValue="1"
+            android:key="graph_size_dialog"
+            />
+
+
+
+        <ListPreference
+            android:key="@string/setting_dark_mode_key"
+            android:icon="@drawable/ic_dark_mode"
+            android:summary="%s"
+            android:defaultValue="1"
+            app:useSimpleSummaryProvider="true"
+            android:title="@string/settings_theme_title"
+            />
+
+    </PreferenceCategory>
+
     <androidx.preference.PreferenceCategory android:title="@string/settingsHeadAdvanced">
         <androidx.preference.EditTextPreference
             android:key="remoteAccessPort"

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="TextAppearance.Phyphox.Medium" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:textSize">@dimen/experiment_title_font</item>
+    </style>
+
+    <style name="TextAppearance.Phyphox.Small" parent="TextAppearance.AppCompat.Small">
+        <item name="android:textSize">@dimen/experiment_info_font</item>
+    </style>
+
+</resources>

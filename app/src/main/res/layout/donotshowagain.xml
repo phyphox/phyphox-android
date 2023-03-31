@@ -26,8 +26,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@string/donotshowagain"
-        android:checked="false"
-        style="@style/experimentList">
+        android:checked="false">
     </CheckBox>
 
 </LinearLayout>

@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
@@ -21,6 +22,8 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
+
+import de.rwth_aachen.phyphox.Helper.Helper;
 
 public class PlotAreaView extends TextureView {
 
@@ -264,6 +267,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     private int gridPositionHandle;
     private int gridMatrixHandle;
+    private int gridRedColor, gridGreenColor, gridBlueColor;
     private int nGridLines = 0;
     private int nZGridLines = 0;
     int vboGrid = 0;
@@ -355,8 +359,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     final String gridFragmentShader =
             "precision mediump float;" +
+            "uniform float r;" +
+            "uniform float g;" +
+            "uniform float b;" +
             "void main () {" +
-            "   gl_FragColor = vec4(1.0, 1.0, 1.0, 0.4);" +
+            "   gl_FragColor = vec4(r, g, b, 0.4);" +
             "}";
 
     final String timeRangeShader =
@@ -414,9 +421,15 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
             "}";
 
-    PlotRenderer(Resources res) {
+    private Context ctx;
+
+    PlotRenderer(Context ctx) {
         super("PlotRenderer GL");
-        bgColor = res.getColor(R.color.backgroundExp);
+        this.ctx = ctx;
+        if(Helper.isDarkTheme(ctx.getResources()))
+            bgColor = ctx.getResources().getColor(R.color.phyphox_black_60);
+        else
+            bgColor = ctx.getResources().getColor(R.color.phyphox_white_100);
     }
 
     @Override
@@ -709,6 +722,21 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         gridPositionHandle = GLES20.glGetAttribLocation(gridProgram, "position");
         gridMatrixHandle = GLES20.glGetUniformLocation(gridProgram, "positionMatrix");
+        gridRedColor = GLES20.glGetUniformLocation(gridProgram, "r");
+        gridGreenColor = GLES20.glGetUniformLocation(gridProgram, "g");
+        gridBlueColor = GLES20.glGetUniformLocation(gridProgram, "b");
+
+        if(Helper.isDarkTheme(ctx.getResources())){
+            GLES20.glUniform1f(gridRedColor, 1.0f);
+            GLES20.glUniform1f(gridGreenColor, 1.0f);
+            GLES20.glUniform1f(gridBlueColor, 1.0f);
+        }else{
+            GLES20.glUniform1f(gridRedColor, 0.3f);
+            GLES20.glUniform1f(gridGreenColor, 0.3f);
+            GLES20.glUniform1f(gridBlueColor, 0.3f);
+        }
+
+
 
         int ref[] = new int[5];
         GLES20.glGenBuffers(5, ref, 0);
@@ -815,7 +843,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glUniformMatrix4fv(positionMatrixHandle, 1, false, graphSetup.positionMatrix, 0);
         GLES20.glUniform1i(logXYHandle, (graphSetup.logX ? 0x01 : 0x00) | (graphSetup.logY ? 0x02 : 0x00));
 
-        GLES20.glLineWidth(2.f * graphSetup.lineWidth.get(i));
+        float updatedLineWidth = Helper.getUserSelectedGraphSetting(ctx, Helper.GraphField.LINE_WIDTH);
+        GLES20.glLineWidth(updatedLineWidth * graphSetup.lineWidth.get(i));
 
         CurveData dataSet = graphSetup.dataSets.get(i);
         if (dataSet.n == 0 || (dataSet.n < 2 && !(graphSetup.style.get(i) == GraphView.Style.dots)))

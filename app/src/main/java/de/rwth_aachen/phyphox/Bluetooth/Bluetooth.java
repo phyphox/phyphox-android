@@ -37,11 +37,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.PhyphoxFile;
@@ -64,6 +66,8 @@ public class Bluetooth implements Serializable {
     public final static UUID phyphoxExperimentCharacteristicUUID = UUID.fromString("cddf0002-30f7-4671-8b43-5e40ba53514a");
     public final static UUID phyphoxExperimentControlCharacteristicUUID = UUID.fromString("cddf0003-30f7-4671-8b43-5e40ba53514a");
     public final static UUID phyphoxEventCharacteristicUUID = UUID.fromString("cddf0004-30f7-4671-8b43-5e40ba53514a");
+    private final static UUID BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
+    private final static UUID BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
 
     transient private static BluetoothAdapter btAdapter;
     public static OnExceptionRunnable errorDialog = new OnExceptionRunnable();
@@ -78,6 +82,8 @@ public class Bluetooth implements Serializable {
     public int requestMTU;
 
     BluetoothGattCharacteristic eventCharacteristic = null;
+
+    private ArrayList<ConnectedDeviceInfo> connectedDeviceInfoArrayList = new ArrayList<>();
 
     /**
      * holds data to all characteristics to add or configure once the device is connected
@@ -128,6 +134,11 @@ public class Bluetooth implements Serializable {
      */
     protected Handler mainHandler;
 
+    private static Map<String, Object> connectedDeviceInfo = new HashMap<>();
+
+    public static Map<String, Object> getConnectedDeviceInfo() {
+        return connectedDeviceInfo;
+    }
 
     /**
      * Return true if Bluetooth Low Energy is supported on the device.
@@ -172,6 +183,9 @@ public class Bluetooth implements Serializable {
         }
         return result;
     }
+
+
+    private ConnectedDeviceInfo connectedDeviceInformation = new ConnectedDeviceInfo();
 
     /**
      * Create a new Bluetooth object.
@@ -229,22 +243,23 @@ public class Bluetooth implements Serializable {
      * @throws BluetoothException if there is an error on findDevice, openConnection or process CharacteristicData
      */
     public void connect(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
+        boolean reusedDevice = false;
         if (btDevice == null) {
-            findDevice(knownDevices);
+            reusedDevice = findDevice(knownDevices);
         }
         if (btDevice == null)
             return;
         // check if a device was found and if it is already connected
         if (btGatt == null || !isConnected()) {
             openConnection();
-        }
-        if (!isConnected()) {
-            btGatt.connect();
+            if (!isConnected())
+                btGatt.connect();
         }
 
         try {
             eventCharacteristic = findCharacteristic(phyphoxEventCharacteristicUUID);
-            writeEventCharacteristic(null);
+            if (!reusedDevice)
+                writeEventCharacteristic(null);
         } catch (BluetoothException e) {
             //That's ok. Most devices do not have a phyphox event caracteristic, in which case phyphox simply will not report event.
         }
@@ -261,7 +276,7 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is disabled or if the device could not be found
      */
-    public void findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
+    public boolean findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
@@ -269,7 +284,7 @@ public class Bluetooth implements Serializable {
         //First check if we have already connected to a device with the same idString
         if (idString != null && !idString.isEmpty() && knownDevices != null && knownDevices.containsKey(idString)) {
             btDevice = knownDevices.get(idString);
-            return;
+            return true;
         }
 
         // First check paired devices - those get precedence
@@ -294,9 +309,9 @@ public class Bluetooth implements Serializable {
 
             BluetoothScanDialog bsd = new BluetoothScanDialog(autoConnect, activity, context, btAdapter);
             if (!bsd.scanPermission())
-                return;
+                return false;
             if (!bsd.locationEnabled())
-                return;
+                return false;
             BluetoothScanDialog.BluetoothDeviceInfo bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null, idString);
             if (bdi != null)
                 btDevice = bdi.device;
@@ -305,6 +320,7 @@ public class Bluetooth implements Serializable {
             //still null? Give up and complain
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_notfound), this);
         }
+        return false;
     }
 
     /**
@@ -528,7 +544,6 @@ public class Bluetooth implements Serializable {
         commandQueue.clear();
     }
 
-
     /**
      * Callback for Gatt operations.
      * The methods allow the queue to execute the next command, display errors and make sure the read data is retrieved.
@@ -541,14 +556,20 @@ public class Bluetooth implements Serializable {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
+            gatt.readRemoteRssi();
             executeNext();
             // retrieve data directly when the characteristic has changed
             byte[] data = characteristic.getValue();
             retrieveData(data, characteristic);
         }
 
+
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+
+            int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+            connectedDeviceInformation.setBatteryLabel(batteryLevel);
+
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 displayErrorMessage(context.getResources().getString(R.string.bt_fail_reading) + BluetoothException.getMessage(Bluetooth.this));
             }
@@ -581,7 +602,28 @@ public class Bluetooth implements Serializable {
         }
 
         @Override
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            super.onReadRemoteRssi(gatt, rssi, status);
+
+            int prevRssi = connectedDeviceInformation.getSignalStrength();
+            if(isNotRssiValueUpdateRequired(rssi, prevRssi) || !Experiment.bluetoothConnectionSuccessful){
+                connectedDeviceInformation.setSignalStrength(rssi);
+                return;
+            }
+
+            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(
+                    getUpdatedList(connectedDeviceInfoArrayList, gatt.getDevice().getAddress(), rssi));
+
+        }
+
+
+        @Override
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
+            if(newState == BluetoothProfile.STATE_CONNECTED) {
+                connectedDeviceInformation.setDeviceId(gatt.getDevice().getAddress());
+                connectedDeviceInformation.setDeviceName(gatt.getDevice().getName());
+            }
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 cdl.countDown();
             } else {
@@ -653,7 +695,61 @@ public class Bluetooth implements Serializable {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
+            for(BluetoothGattService service : gatt.getServices()){
+                if(service.getUuid().equals(BATTERY_UUID)){
+                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(BATTERY_LEVEL);
+                    if (characteristic != null) {
+                        btGatt.readCharacteristic(characteristic);
+                    }
+                }
+            }
             executeNext();
+        }
+
+        private boolean isNotRssiValueUpdateRequired(int rssi, int prevRssi){
+            if(rssi != prevRssi){
+                if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_FULL, ConnectedDeviceInfo.SIGNAL_HIGH)){
+                    return true;
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_HIGH, ConnectedDeviceInfo.SIGNAL_MEDIUM)){
+                    return true;
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_MEDIUM, ConnectedDeviceInfo.SIGNAL_LOW)){
+                    return true;
+                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_LOW, ConnectedDeviceInfo.NO_SIGNAL)){
+                    return true;
+                } else return prevRssi <= ConnectedDeviceInfo.NO_SIGNAL && prevRssi >= -100;
+            }
+            return false;
+        }
+
+        private ArrayList<ConnectedDeviceInfo> getUpdatedList(ArrayList<ConnectedDeviceInfo> connectedDeviceInfoArrayList, String address, int rssi){
+            connectedDeviceInformation.setSignalStrength(rssi);
+            if(connectedDeviceInfoArrayList != null){
+                boolean containesId = connectedDeviceInfoArrayList.stream()
+                        .anyMatch(
+                                value -> value.getDeviceId().equals(connectedDeviceInformation.getDeviceId()));
+
+                if(!containesId){
+                    connectedDeviceInfoArrayList.add(connectedDeviceInformation);
+                } else {
+                    int index = 0;
+                    for(ConnectedDeviceInfo device : connectedDeviceInfoArrayList){
+                        if(Objects.equals(device.getDeviceId(), address)){
+                            connectedDeviceInfoArrayList.remove(index);
+                            connectedDeviceInfoArrayList.add(index, connectedDeviceInformation);
+                        }
+                        index++;
+                    }
+                }
+            }
+            return connectedDeviceInfoArrayList;
+
+        }
+
+        private boolean hasSignalLevelChanged(int prevRssi, int rssi, int upperBound, int lowerBound){
+            boolean isValueInSignalRange = (rssi <= upperBound && rssi > lowerBound);
+            boolean isValueInPreviousSignalRange = (prevRssi <= upperBound && prevRssi > lowerBound);
+
+            return prevRssi > upperBound && isValueInSignalRange  || rssi > upperBound && isValueInPreviousSignalRange ;
         }
     }; // end of BluetoothGattCallback
 
@@ -1238,7 +1334,7 @@ public class Bluetooth implements Serializable {
                 if (message.equals("")) {
                     message = context.getResources().getString(R.string.bt_default_error_message); // set default error message
                 }
-                ContextThemeWrapper ctw = new ContextThemeWrapper(context, R.style.phyphox);
+                ContextThemeWrapper ctw = new ContextThemeWrapper(context, R.style.Theme_Phyphox_DayNight);
                 AlertDialog.Builder errorDialog = new AlertDialog.Builder(ctw);
                 LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 View neLayout = neInflater.inflate(R.layout.error_dialog, null);
@@ -1290,6 +1386,13 @@ public class Bluetooth implements Serializable {
          */
         public Runnable onSuccess;
 
+        private ConnectBluetoothDelegate delegate;
+
+        public interface ConnectBluetoothDelegate {
+            void onConnectionSuccessful(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos);
+        }
+
+
         /**
          * Try to connect all Bluetooth devices and display the error if there is one.
          *
@@ -1318,6 +1421,7 @@ public class Bluetooth implements Serializable {
          *
          * @param result error message or null if there was no error
          */
+
         @Override
         protected void onPostExecute(String result) {
             if (progress != null) {
@@ -1446,3 +1550,4 @@ public class Bluetooth implements Serializable {
     }
 
 } // end of class Bluetooth
+

@@ -26,7 +26,7 @@ import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -42,7 +42,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
-import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
@@ -77,6 +76,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.preference.PreferenceManager;
 
 import com.caverock.androidsvg.SVG;
 import com.caverock.androidsvg.SVGParseException;
@@ -113,6 +113,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
@@ -147,14 +148,10 @@ public class ExperimentList extends AppCompatActivity {
 
     ProgressDialog progress = null;
 
+    BluetoothExperimentLoader bluetoothExperimentLoader = null;
     long currentQRcrc32 = -1;
     int currentQRsize = -1;
     byte[][] currentQRdataPackets = null;
-
-    byte[] currentBluetoothData = null;
-    int currentBluetoothDataSize = 0;
-    int currentBluetoothDataIndex = 0;
-    long currentBluetoothDataCRC32 = 0;
 
     boolean newExperimentDialogOpen = false;
 
@@ -421,11 +418,8 @@ public class ExperimentList extends AppCompatActivity {
             holder.info.setText(infos.get(position));
 
             if (unavailableSensorList.get(position) >= 0) {
-                holder.title.setTextColor(res.getColor(R.color.mainDisabled));
-                holder.info.setTextColor(res.getColor(R.color.mainDisabled));
-            } else {
-                holder.title.setTextColor(res.getColor(R.color.main));
-                holder.info.setTextColor(res.getColor(R.color.main2));
+                holder.title.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
+                holder.info.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
             }
 
             //Handle the menubutton. Set it visible only for non-assets
@@ -437,7 +431,7 @@ public class ExperimentList extends AppCompatActivity {
                 if (Helper.luminance(colors.get(position)) > 0.1)
                     holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.menuBtn.setOnClickListener(v -> {
-                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox), v);
+                    android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight), v);
                     popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
 
                     popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
@@ -624,7 +618,6 @@ public class ExperimentList extends AppCompatActivity {
                     res.getDimensionPixelOffset(R.dimen.activity_vertical_margin)
             );
             catLayout.setLayoutParams(lllp);
-            catLayout.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.background));
 
             //Create the headline text view
             categoryHeadline = new TextView(parentContext);
@@ -636,8 +629,6 @@ public class ExperimentList extends AppCompatActivity {
             categoryHeadline.setText(name.equals(phyphoxCat) ? res.getString(R.string.categoryPhyphoxOrg) : name);
             categoryHeadline.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.headline_font));
             categoryHeadline.setTypeface(Typeface.DEFAULT_BOLD);
-            categoryHeadline.setBackgroundColor(ContextCompat.getColor(parentContext, R.color.highlight));
-            categoryHeadline.setTextColor(ContextCompat.getColor(parentContext, R.color.main));
             categoryHeadline.setPadding(res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10, res.getDimensionPixelOffset(R.dimen.headline_font) / 2, res.getDimensionPixelOffset(R.dimen.headline_font) / 10);
 
             //Create the gridView for the experiment items
@@ -742,11 +733,6 @@ public class ExperimentList extends AppCompatActivity {
         categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
     }
 
-    //Decode the experiment icon (base64) and return a bitmap
-    public static Bitmap decodeBase64(String input) throws IllegalArgumentException {
-        byte[] decodedByte = Base64.decode(input, 0); //Decode the base64 data to binary
-        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
-    }
 
     private void addInvalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
@@ -771,11 +757,12 @@ public class ExperimentList extends AppCompatActivity {
         String title = ""; //Experiment title
         String stateTitle = ""; //A title given by the user for a saved experiment state
         String category = ""; //Experiment category
-        int color = getResources().getColor(R.color.phyphox_color); //Icon base color
+        int color = getResources().getColor(R.color.phyphox_primary); //Icon base color
         boolean customColor = false;
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
         BaseColorDrawable image = null; //This will hold the icon
+        BaseColorDrawable imageForContributionHeadline = null; //This will hold the icon for Contribution for light theme
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             int eventType = xpp.getEventType(); //should be START_DOCUMENT
@@ -839,9 +826,15 @@ public class ExperimentList extends AppCompatActivity {
                                         //base64 encoded image. Decode it
                                         icon = xpp.nextText().trim();
                                         try {
-                                            Bitmap bitmap = decodeBase64(icon);
-                                            if (bitmap != null)
+                                            Bitmap bitmap = Helper.decodeBase64(icon);
+                                            // This bitmap will be used for the icon used in contribution headline
+                                            if(bitmap != null) {
                                                 image = new BitmapIcon(bitmap, this);
+                                                Bitmap bitmapDiffColor = Helper.changeColorOf(this, bitmap, R.color.phyphox_white_100);
+                                                if(bitmapDiffColor != null)
+                                                    imageForContributionHeadline = new BitmapIcon(bitmapDiffColor, this);
+                                            }
+
                                         } catch (IllegalArgumentException e) {
                                             Log.e("loadExperimentInfo", "Invalid icon: " + e.getMessage());
                                         }
@@ -879,7 +872,7 @@ public class ExperimentList extends AppCompatActivity {
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
                                     customColor = true;
-                                    color = Helper.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_color), getResources());
+                                    color = Helper.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_primary), getResources());
                                 }
                                 break;
                             case "input": //We just have to check if there are any sensors, which are not supported on this device
@@ -954,7 +947,7 @@ public class ExperimentList extends AppCompatActivity {
                                     unavailableSensor = R.string.bluetooth;
                                 }
                                 if (!customColor)
-                                    color = getResources().getColor(R.color.bluetooth);
+                                    color = getResources().getColor(R.color.phyphox_blue_100);
                                 break;
                         }
                         break;
@@ -1011,12 +1004,23 @@ public class ExperimentList extends AppCompatActivity {
             //Let's check the icon
             if (image == null) //No icon given. Create a TextIcon from the first three characters of the title
                 image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
-            image.setBaseColor(color);
+
 
 
             //We have all the information. Add the experiment.
-            if (categories != null)
-                addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+            BaseColorDrawable mImage;
+            if (categories != null){
+                // Following condition is for setting the proper image and its color in the Contribution Headline
+                if(category.equals("phyphox.org") && !Helper.isDarkTheme(getResources())){
+                    mImage = imageForContributionHeadline;
+                    mImage.setColorFilter( 0xff000000, PorterDuff.Mode.MULTIPLY );
+                } else {
+                    mImage = image;
+                    mImage.setBaseColor(color);
+                }
+                addExperiment(title, category, color, mImage, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+            }
+
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             addInvalidExperiment(experimentXML,  "Error loading " + experimentXML + " (XML Exception)", isTemp, isAsset, categories);
@@ -1379,298 +1383,75 @@ public class ExperimentList extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void loadExperimentFromBluetoothDevice(final BluetoothDevice device) {
         final ExperimentList parent = this;
-        currentBluetoothData = null;
-        currentBluetoothDataSize = 0;
-        currentBluetoothDataIndex = 0;
-
-        final BluetoothGatt gatt = device.connectGatt(this, false, new BluetoothGattCallback() {
-
-            private void disconnect(final BluetoothGatt gatt) {
-                //If phyphoxExperimentControlCharacteristicUUID is available, we can tell the device that we are no longer expecting the transfer by writing 0
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService != null) {
-                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
-                    if (experimentControlCharacteristic != null) {
-                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
-                        gatt.writeCharacteristic(experimentControlCharacteristic);
-                    }
-                }
-                gatt.disconnect();
-            }
-
-            BluetoothGattDescriptor descriptor = null;
-
-            @Override
-            public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
-                switch (newState) {
-                    case BluetoothProfile.STATE_CONNECTED:
-                        gatt.discoverServices();
-                        break;
-                    case BluetoothProfile.STATE_DISCONNECTED:
-                        // fall through to default
-                    default:
-                        progress.dismiss();
-                        gatt.close();
-                        return;
-                }
-            }
-
-            @Override
-            public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (could not discover services)", device);
-                }
-
-                //Find characteristic
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService == null) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no phyphox service)", device);
-                    return;
-                }
-                BluetoothGattCharacteristic experimentCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentCharacteristicUUID);
-                if (experimentCharacteristic == null) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (no experiment characteristic)", device);
-                    return;
-                }
-
-                //Enable notifications
-                if (!gatt.setCharacteristicNotification(experimentCharacteristic, true)) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (set char notification failed)", device);
-                    return;
-                }
-                descriptor = experimentCharacteristic.getDescriptor(BluetoothInput.CONFIG_DESCRIPTOR);
-                if (descriptor == null) {
-                    gatt.disconnect();
-                    showBluetoothExperimentReadError(res.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + res.getString(R.string.bt_exception_notification_enable) + " (descriptor failed)", device);
-                    return;
-                }
-
-                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                gatt.writeDescriptor(descriptor);
-            }
-
-            @Override
-            public void onCharacteristicChanged(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                if (!characteristic.getUuid().equals(Bluetooth.phyphoxExperimentCharacteristicUUID))
-                    return;
-                byte[] data = characteristic.getValue();
-
-                if (currentBluetoothData == null) {
-                    String header = new String(data);
-                    if (!header.startsWith("phyphox")) {
-                        if (descriptor != null) {
-                            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                            gatt.writeDescriptor(descriptor);
-                        }
-                        disconnect(gatt);
-                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid header)", device);
-                    }
-                    currentBluetoothDataSize = 0;
-                    currentBluetoothDataIndex = 0;
-                    for (int i = 0; i < 4; i++) {
-                        currentBluetoothDataSize <<= 8;
-                        currentBluetoothDataSize |= (data[7+i] & 0xFF);
-                    };
-                    currentBluetoothDataCRC32 = 0;
-                    for (int i = 0; i < 4; i++) {
-                        currentBluetoothDataCRC32 <<= 8;
-                        currentBluetoothDataCRC32 |= (data[7+4+i] & 0xFF);
-                    }
-
-                    if (currentBluetoothDataSize > 10e6 || currentBluetoothDataSize < 0) {
-                        disconnect(gatt);
-                        showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (invalid size in header)", device);
-                        progress.dismiss();
-                        currentBluetoothDataSize = 0;
-                    }
-
-                    currentBluetoothData = new byte[currentBluetoothDataSize];
-
-                    //From here we can estimate the progress, so let's show a determinate progress dialog instead
-                    progress.dismiss();
-                    parent.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progress = new ProgressDialog(parent);
-                            progress.setTitle(res.getString(R.string.loadingTitle));
-                            progress.setMessage(res.getString(R.string.loadingText));
-                            progress.setIndeterminate(false);
-                            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                            progress.setCancelable(true);
-                            progress.setOnCancelListener(new DialogInterface.OnCancelListener() {
+        if (bluetoothExperimentLoader == null) {
+            bluetoothExperimentLoader = new BluetoothExperimentLoader(getBaseContext(), new BluetoothExperimentLoader.BluetoothExperimentLoaderCallback() {
+                @Override
+                public void updateProgress(int transferred, int total) {
+                    if (total > 0) {
+                        if (progress.isIndeterminate()) {
+                            parent.runOnUiThread(new Runnable() {
                                 @Override
-                                public void onCancel(DialogInterface dialogInterface) {
-                                    if (descriptor != null) {
-                                        descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                                        gatt.writeDescriptor(descriptor);
-                                    }
-                                    disconnect(gatt);
+                                public void run() {
+                                    progress = new ProgressDialog(parent);
+                                    progress.setTitle(res.getString(R.string.loadingTitle));
+                                    progress.setMessage(res.getString(R.string.loadingText));
+                                    progress.setIndeterminate(false);
+                                    progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                                    progress.setCancelable(true);
+                                    progress.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                        @Override
+                                        public void onCancel(DialogInterface dialogInterface) {
+                                            if (bluetoothExperimentLoader != null)
+                                                bluetoothExperimentLoader.cancel();
+                                        }
+                                    });
+                                    progress.setProgress(transferred);
+                                    progress.setMax(total);
+                                    progress.show();
                                 }
                             });
-                            progress.setProgress(0);
-                            progress.setMax(currentBluetoothDataSize);
-                            progress.show();
-                        }
-                    });
-                } else {
-                    int size = data.length;
-
-                    if (currentBluetoothDataIndex + size > currentBluetoothDataSize)
-                        size = currentBluetoothDataSize - currentBluetoothDataIndex;
-
-                    System.arraycopy(data, 0, currentBluetoothData, currentBluetoothDataIndex, size);
-                    currentBluetoothDataIndex += size;
-
-                    progress.setProgress(currentBluetoothDataIndex);
-                    if (currentBluetoothDataIndex >= currentBluetoothDataSize) {
-                        //We are done. Check and use result
-
-                        if (descriptor != null) {
-                            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                            gatt.writeDescriptor(descriptor);
-                        }
-                        disconnect(gatt);
-
-                        if (currentBluetoothDataSize == 0) {
-                            progress.dismiss();
-                            return;
-                        }
-
-                        /*
-                        StringBuilder sb = new StringBuilder(currentBluetoothData.length * 3);
-                        for(byte b: currentBluetoothData)
-                            sb.append(String.format("%02x ", b));
-                        final String hex = sb.toString();
-
-                        for (int i = 0; i < hex.length(); i+= 48) {
-                            Log.d("TEST", hex.substring(i, Math.min(i+48, hex.length())));
-                        }
-                        */
-
-                        CRC32 crc32 = new CRC32();
-                        crc32.update(currentBluetoothData);
-                        if (crc32.getValue() != currentBluetoothDataCRC32) {
-                            showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (CRC32)", device);
-                         //   Log.d("TEST", "CRC32: Expected " + currentBluetoothDataCRC32 + " but calculated " + crc32.getValue());
-                            return;
-                        }
-
-                        File tempPath = new File(getFilesDir(), "temp_bt");
-                        if (!tempPath.exists()) {
-                            if (!tempPath.mkdirs()) {
-                                showBluetoothExperimentReadError("Could not create temporary directory to write bluetooth experiment file.", device);
-                                return;
-                            }
-                        }
-                        String[] files = tempPath.list();
-                        for (String file : files) {
-                            if (!(new File(tempPath, file).delete())) {
-                                showBluetoothExperimentReadError("Could not clear temporary directory to extract bluetooth experiment file.", device);
-                                return;
-                            }
-                        }
-
-                        if (currentBluetoothData[0] == '<'
-                            && currentBluetoothData[1] == 'p'
-                            && currentBluetoothData[2] == 'h'
-                            && currentBluetoothData[3] == 'y'
-                            && currentBluetoothData[4] == 'p'
-                            && currentBluetoothData[5] == 'h'
-                            && currentBluetoothData[6] == 'o'
-                            && currentBluetoothData[7] == 'x') {
-                            //This is just an XML file, store it
-                            File xmlFile;
-                            try {
-                                xmlFile = new File(tempPath, "bt.phyphox");
-                                FileOutputStream out = new FileOutputStream(xmlFile);
-                                out.write(currentBluetoothData);
-                                out.close();
-                            } catch (Exception e) {
-                                showBluetoothExperimentReadError("Could not write Bluetooth experiment content to phyphox file.", device);
-                                return;
-                            }
-
-                            //Create an intent for this file
-                            Intent intent = new Intent(parent, Experiment.class);
-                            intent.setData(Uri.fromFile(xmlFile));
-                            intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, device.getAddress());
-                            intent.setAction(Intent.ACTION_VIEW);
-
-                            //Open the file
-                            startActivity(intent);
                         } else {
-
-                            byte[] finalBluetoothData = inflatePartialZip(currentBluetoothData);
-
-                            File zipFile;
-                            try {
-                                zipFile = new File(tempPath, "bt.zip");
-                                FileOutputStream out = new FileOutputStream(zipFile);
-                                out.write(finalBluetoothData);
-                                out.close();
-                            } catch (Exception e) {
-                                showBluetoothExperimentReadError("Could not write Bluetooth experiment content to zip file.", device);
-                                return;
-                            }
-
-                            Intent zipIntent = new Intent(parent, Experiment.class);
-                            zipIntent.setData(Uri.fromFile(zipFile));
-                            zipIntent.setAction(Intent.ACTION_VIEW);
-                            new handleZipIntent(zipIntent, parent, device).execute();
+                            progress.setProgress(transferred);
                         }
                     }
                 }
-            }
 
-            @Override
-            public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    disconnect(gatt);
-                    showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write)", device);
-                }
-            }
-
-            @Override
-            public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    disconnect(gatt);
-                    showBluetoothExperimentReadError(res.getString(R.string.newExperimentBTReadErrorCorrupted) +  " (could not write descriptor)", device);
-                    return;
+                @Override
+                public void dismiss() {
+                    progress.dismiss();
                 }
 
-                //If phyphoxExperimentControlCharacteristicUUID is also present, the device expects us to initiate transfer by setting it to 1. This is a work-around for BLE libraries that cannot react to subscriptions
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService != null) {
-                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
-                    if (experimentControlCharacteristic != null) {
-                        experimentControlCharacteristic.setValue(1, FORMAT_UINT8, 0);
-                        gatt.writeCharacteristic(experimentControlCharacteristic);
+                @Override
+                public void error(String msg) {
+                    showBluetoothExperimentReadError(msg, device);
+                }
+
+                @Override
+                public void success(Uri experimentUri, boolean isZip) {
+                    Intent intent = new Intent(parent, Experiment.class);
+                    intent.setData(experimentUri);
+                    intent.setAction(Intent.ACTION_VIEW);
+                    if (isZip) {
+                        new ExperimentList.handleZipIntent(intent, parent, device).execute();
+                    } else {
+                        intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, device.getAddress());
+                        startActivity(intent);
                     }
                 }
-            }
-        });
-
+            });
+        }
         progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true, true, new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialogInterface) {
-                BluetoothGattService phyphoxService = gatt.getService(Bluetooth.phyphoxServiceUUID);
-                if (phyphoxService != null) {
-                    BluetoothGattCharacteristic experimentControlCharacteristic = phyphoxService.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID);
-                    if (experimentControlCharacteristic != null) {
-                        experimentControlCharacteristic.setValue(0, FORMAT_UINT8, 0);
-                        gatt.writeCharacteristic(experimentControlCharacteristic);
-                    }
-                }
-                gatt.disconnect();
-                progress.dismiss();
+                if (bluetoothExperimentLoader != null)
+                    bluetoothExperimentLoader.cancel();
             }
         });
+        bluetoothExperimentLoader.loadExperimentFromBluetoothDevice(device);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @SuppressLint("MissingPermission") //TODO: The permission is actually checked when entering the entire BLE dialog and I do not see how we could reach this part of the code if it failed. However, I cannot rule out some other mechanism of revoking permissions during an app switch or from the notifications bar (?), so a cleaner implementation might be good idea
     public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {
 
         Set<String> experiments = new HashSet<>();
@@ -2002,111 +1783,6 @@ public class ExperimentList extends AppCompatActivity {
         });
     }
 
-    private byte [] inflatePartialZip(byte [] dataReceived) {
-        byte [] zipData;
-        int totalSize = dataReceived.length;
-        if (dataReceived[totalSize-16] == 0x50 && dataReceived[totalSize-15] == 0x4b && dataReceived[totalSize-14] == 0x07 && dataReceived[totalSize-13] == 0x08) {
-            //This is a data descriptor we found at the end of the QR code data.
-            //Therefore, we did not receive a complete zip file, but a partial one that
-            // only contains a single entry and omits the local file header as well as
-            // the central directory
-            //We have to add those ourselves.
-
-            zipData = new byte[39 + totalSize - 16 + 55 + 22];
-
-            //Local file header
-            zipData[0] = 0x50; //Local file header signature
-            zipData[1] = 0x4b;
-            zipData[2] = 0x03;
-            zipData[3] = 0x04;
-            zipData[4] = 0x0a; //Version
-            zipData[5] = 0x00;
-            zipData[6] = 0x00; //General purpose flag
-            zipData[7] = 0x00;
-            zipData[8] = 0x00; //Compression method
-            zipData[9] = 0x00;
-            zipData[10] = 0x00; //modification time
-            zipData[11] = 0x00;
-            zipData[12] = 0x00; //modification date
-            zipData[13] = 0x00;
-            System.arraycopy(dataReceived, totalSize - 12, zipData, 14, 12); //CRC32, compressed size and uncompressed size
-            zipData[26] = 0x09; //File name length
-            zipData[27] = 0x00;
-            zipData[28] = 0x00; //Extra field length
-            zipData[29] = 0x00;
-            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 30, 9);
-
-            //Data (without data descriptor)
-            System.arraycopy(dataReceived, 0, zipData, 39, totalSize-16);
-
-            //Central directory
-            zipData[39 + totalSize - 16] = 0x50; //signature
-            zipData[39 + totalSize - 16 +  1] = 0x4b;
-            zipData[39 + totalSize - 16 +  2] = 0x01;
-            zipData[39 + totalSize - 16 +  3] = 0x02;
-            zipData[39 + totalSize - 16 +  4] = 0x0a; //Version made by
-            zipData[39 + totalSize - 16 +  5] = 0x00;
-            zipData[39 + totalSize - 16 +  6] = 0x0a; //Version needed
-            zipData[39 + totalSize - 16 +  7] = 0x00;
-            zipData[39 + totalSize - 16 +  8] = 0x00; //General purpose flag
-            zipData[39 + totalSize - 16 +  9] = 0x00;
-            zipData[39 + totalSize - 16 + 10] = 0x00; //Compression method
-            zipData[39 + totalSize - 16 + 11] = 0x00;
-            zipData[39 + totalSize - 16 + 12] = 0x00; //modification time
-            zipData[39 + totalSize - 16 + 13] = 0x00;
-            zipData[39 + totalSize - 16 + 14] = 0x00; //modification date
-            zipData[39 + totalSize - 16 + 15] = 0x00;
-            System.arraycopy(dataReceived, totalSize - 12, zipData, 39 + totalSize - 16 + 16, 12); //CRC32, compressed size and uncompressed size
-            zipData[39 + totalSize - 16 + 28] = 0x09; //File name length
-            zipData[39 + totalSize - 16 + 29] = 0x00;
-            zipData[39 + totalSize - 16 + 30] = 0x00; //Extra field length
-            zipData[39 + totalSize - 16 + 31] = 0x00;
-            zipData[39 + totalSize - 16 + 32] = 0x00; //File comment length
-            zipData[39 + totalSize - 16 + 33] = 0x00;
-            zipData[39 + totalSize - 16 + 34] = 0x00; //Disk number
-            zipData[39 + totalSize - 16 + 35] = 0x00;
-            zipData[39 + totalSize - 16 + 36] = 0x00; //Internal file attributes
-            zipData[39 + totalSize - 16 + 37] = 0x00;
-            zipData[39 + totalSize - 16 + 38] = 0x00; //External file attributes
-            zipData[39 + totalSize - 16 + 39] = 0x00;
-            zipData[39 + totalSize - 16 + 40] = 0x00;
-            zipData[39 + totalSize - 16 + 41] = 0x00;
-            zipData[39 + totalSize - 16 + 42] = 0x00; //Relative offset of local header
-            zipData[39 + totalSize - 16 + 43] = 0x00;
-            zipData[39 + totalSize - 16 + 44] = 0x00;
-            zipData[39 + totalSize - 16 + 45] = 0x00;
-            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 39 + totalSize - 16 + 46, 9);
-
-            //End of central directory
-            zipData[39 + totalSize - 16 + 55] = 0x50; //signature
-            zipData[39 + totalSize - 16 + 55 +  1] = 0x4b;
-            zipData[39 + totalSize - 16 + 55 +  2] = 0x05;
-            zipData[39 + totalSize - 16 + 55 +  3] = 0x06;
-            zipData[39 + totalSize - 16 + 55 +  4] = 0x00; //Disk number
-            zipData[39 + totalSize - 16 + 55 +  5] = 0x00;
-            zipData[39 + totalSize - 16 + 55 +  6] = 0x00; //Start disk number
-            zipData[39 + totalSize - 16 + 55 +  7] = 0x00;
-            zipData[39 + totalSize - 16 + 55 +  8] = 0x01; //Number of central directories on disk
-            zipData[39 + totalSize - 16 + 55 +  9] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 10] = 0x01; //Number of central directories in total
-            zipData[39 + totalSize - 16 + 55 + 11] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 12] = 0x37; //Size of central directory
-            zipData[39 + totalSize - 16 + 55 + 13] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 14] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 15] = 0x00;
-            zipData[39 + totalSize - 16 + 55 + 16] = (byte) ((long) (39 + totalSize)); //Start of central directory
-            zipData[39 + totalSize - 16 + 55 + 17] = (byte) ((long) (39 + totalSize) >> 8);
-            zipData[39 + totalSize - 16 + 55 + 18] = (byte) ((long) (39 + totalSize) >> 16);
-            zipData[39 + totalSize - 16 + 55 + 19] = (byte) ((long) (39 + totalSize) >> 24);
-            zipData[39 + totalSize - 16 + 55 + 20] = 0x00; //Comment length
-            zipData[39 + totalSize - 16 + 55 + 21] = 0x00;
-
-        } else {
-            zipData = dataReceived;
-        }
-        return zipData;
-    }
-
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
@@ -2189,8 +1865,7 @@ public class ExperimentList extends AppCompatActivity {
                         return;
                     }
 
-                    byte [] zipData = inflatePartialZip(dataReceived);
-
+                    byte [] zipData = Helper.inflatePartialZip(dataReceived);
 
                     File zipFile;
                     try {
@@ -2232,7 +1907,12 @@ public class ExperimentList extends AppCompatActivity {
         //On Android 12 this does not hurt, but Android 12 shows its own splash method (defined with
         //specific attributes in the theme), so the classic splash screen is not shown anyways
         //before setTheme is called and we see the normal theme right away.
-        setTheme(R.style.experimentList);
+        setTheme(R.style.Theme_Phyphox_DayNight);
+
+        String themePreference = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(getString(R.string.setting_dark_mode_key),SettingsFragment.DARK_MODE_ON);
+        SettingsFragment.setApplicationTheme(themePreference);
 
         //Basics. Call super-constructor and inflate the layout.
         super.onCreate(savedInstanceState);
@@ -2251,7 +1931,7 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.PopupMenuPhyphox);
+                Context wrapper = new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight);
                 PopupMenu popup = new PopupMenu(wrapper, v);
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
@@ -2331,6 +2011,12 @@ public class ExperimentList extends AppCompatActivity {
                                 pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
                             } catch (Exception e) {
                                 pInfo = null;
+                            }
+
+                            if(Helper.isDarkTheme(res)){
+                                sb.append(" <font color='white'");
+                            }else{
+                                sb.append(" <font color='black'");
                             }
 
                             sb.append("<b>phyphox</b><br />");
@@ -2498,9 +2184,11 @@ public class ExperimentList extends AppCompatActivity {
                             } else {
                                 sb.append("API < 21");
                             }
+                            sb.append("</font>");
 
                             final Spanned text = Html.fromHtml(sb.toString());
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentList.this);
+                            ContextThemeWrapper ctw = new ContextThemeWrapper( ExperimentList.this, R.style.Theme_Phyphox_DayNight);
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ctw);
                             builder.setMessage(text)
                                     .setTitle(R.string.deviceInfo)
                                     .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
@@ -2599,7 +2287,7 @@ public class ExperimentList extends AppCompatActivity {
     //Displays a warning message that some experiments might damage the phone
     private boolean displayDoNotDamageYourPhone() {
         //Use the app theme and create an AlertDialog-builder
-        ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.phyphox);
+        ContextThemeWrapper ctw = new ContextThemeWrapper( this, R.style.Theme_Phyphox_DayNight);
         AlertDialog.Builder adb = new AlertDialog.Builder(ctw);
         LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View warningLayout = adbInflater.inflate(R.layout.donotshowagain, null);
@@ -2640,7 +2328,7 @@ public class ExperimentList extends AppCompatActivity {
     //This displays a rather complex dialog to allow users to set up a simple experiment
     private void newExperimentDialog(final Context c) {
         //Build the dialog with an AlertDialog builder...
-        ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.phyphox);
+        ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.Theme_Phyphox_DayNight);
         AlertDialog.Builder neDialog = new AlertDialog.Builder(ctw);
         LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View neLayout = neInflater.inflate(R.layout.new_experiment, null);

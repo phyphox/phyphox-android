@@ -13,6 +13,10 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -22,6 +26,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -38,6 +43,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -62,14 +68,21 @@ import androidx.core.content.FileProvider;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.journeyapps.barcodescanner.BarcodeEncoder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -83,6 +96,9 @@ import java.util.UUID;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
+import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
+import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
+import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -90,7 +106,9 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
-public class Experiment extends AppCompatActivity implements View.OnClickListener, NetworkConnection.ScanDialogDismissedDelegate, NetworkConnection.NetworkConnectionDataPolicyInfoDelegate {
+public class Experiment extends AppCompatActivity implements View.OnClickListener,
+        NetworkConnection.ScanDialogDismissedDelegate,
+        NetworkConnection.NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate{
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -167,6 +185,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
+
+
+
     private void doLeaveExperiment() {
         Intent upIntent = NavUtils.getParentActivityIntent(this);
         if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
@@ -205,8 +226,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setTheme(R.style.phyphox);
-
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -220,6 +239,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 leaveExperiment();
             }
         });
+
+        updateConnectedDeviceDelegate = this;
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
@@ -414,6 +435,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
+            if(Helper.isDarkTheme(getResources())){
+                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
+            } else {
+                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
+            }
             pager = ((ViewPager)findViewById(R.id.view_pager));
             FragmentManager manager = getSupportFragmentManager();
             adapter = new ExpViewPagerAdapter(manager, this.experiment);
@@ -594,44 +620,58 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
 
                 // define onSuccess
-                if (startMeasurement) {
-                    btTask.onSuccess = new Runnable () {
-                      @Override
-                        public void run () {
-                          if (timed) {
-                              startTimedMeasurement();
-                          } else {
-                              startMeasurement();
-                          }
-                      }
-                    };
-                }
+                btTask.onSuccess = () -> {
+                    showBluetoothConnectedDeviceInfo();
+
+                    if(startMeasurement){
+                        if(timed){
+                            startTimedMeasurement();
+                        } else {
+                            startMeasurement();
+                        }
+                    }
+                };
 
                 // set attributes of errorDialog
                 Bluetooth.errorDialog.context = Experiment.this;
-                Bluetooth.errorDialog.cancel = new Runnable () {
-                    @Override
-                    public void run () {
-                        btTask.progress.dismiss();
+                Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
+                Bluetooth.errorDialog.tryAgain = () -> {
+                    // start a new task with the same attributes
+                    Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
+                    newBtTask.progress = btTask.progress;
+                    newBtTask.onSuccess = btTask.onSuccess;
+                    // show ProgressDialog again
+                    if (btTask.progress != null) {
+                        btTask.progress.show();
                     }
-                };
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                    @Override
-                    public void run() {
-                        // start a new task with the same attributes
-                        Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
-                        newBtTask.progress = btTask.progress;
-                        newBtTask.onSuccess = btTask.onSuccess;
-                        // show ProgressDialog again
-                        if (btTask.progress != null) {
-                            btTask.progress.show();
-                        }
-                        newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-                    }
+                    newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
+                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
+
                 };
                 btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
             }
         }
+    }
+    public static boolean bluetoothConnectionSuccessful = false;
+    ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
+    ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
+
+    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
+    private  RecyclerView recyclerView;
+
+    private void showBluetoothConnectedDeviceInfo(){
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view_battery);
+        if(Helper.isDarkTheme(getResources())){
+            recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
+        }else {
+            recyclerView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
+        }
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
+        recyclerView.setAdapter(deviceInfoAdapter);
+        bluetoothConnectionSuccessful = true;
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -639,7 +679,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (popupWindow != null)
             return;
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
-        View hintView = inflater.inflate(R.layout.menu_hint, null);
+        View hintView;
+        if(Helper.isDarkTheme(getResources())){
+            hintView = inflater.inflate(R.layout.menu_hint, null);
+        } else{
+            hintView = inflater.inflate(R.layout.menu_hint_light, null);
+        }
+
         TextView text = (TextView)hintView.findViewById(R.id.hint_text);
         text.setText(textRessource);
         ImageView iv = ((ImageView) hintView.findViewById(R.id.hint_arrow));
@@ -1313,7 +1359,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (!experiment.stateTitle.isEmpty()) {
                 TextView stateLabel = new TextView(builder.getContext());
                 stateLabel.setText(experiment.stateTitle);
-                stateLabel.setTextColor(res.getColor(R.color.main));
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
                 stateLabel.setLayoutParams(lp);
@@ -1322,7 +1367,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             TextView description = new TextView(builder.getContext());
             description.setText(experiment.description);
-            description.setTextColor(res.getColor(R.color.main2));
 
             ll.addView(description);
 
@@ -1339,7 +1383,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         }
                     }
                 });
-                btn.setBackgroundResource(R.drawable.background_ripple2);
                 ll.addView(btn);
             }
 
@@ -1735,13 +1778,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Start the remote server (see remoteServer class)
     private void startRemoteServer() {
-        TextView announcer = (TextView)findViewById(R.id.remoteInfo);
+        TextView tv_announcer = (TextView)findViewById(R.id.remoteInfo);
+        ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
+        FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
+        if(Helper.isDarkTheme(res)){
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_black_50));
+        } else {
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_white_80));
+        }
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                announcer.animate().translationY(announcer.getMeasuredHeight());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+                tv_announcer.animate().translationY(tv_announcer.getMeasuredHeight());
+                btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight());
+            }
             else
-                announcer.setVisibility(View.INVISIBLE);
+                fl_announcer.setVisibility(View.INVISIBLE);
             return;
         }
 
@@ -1756,20 +1808,51 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Announce this to the user as there are security concerns.
         final String addressList = RemoteServer.getAddresses(getBaseContext()).replaceAll("\\s+$", "");
         if (addressList.isEmpty())
-            announcer.setText(res.getString(R.string.remoteServerNoNetwork));
+            tv_announcer.setText(res.getString(R.string.remoteServerNoNetwork));
         else
-            announcer.setText(res.getString(R.string.remoteServerActive, addressList));
-        announcer.setVisibility(View.VISIBLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            announcer.animate().translationY(0).alpha(1.0f);
+            tv_announcer.setText(res.getString(R.string.remoteServerActive, addressList));
+        fl_announcer.setVisibility(View.VISIBLE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            btn_moreInfo.animate().translationY(0).alpha(1.0f);
+            tv_announcer.animate().translationY(0).alpha(1.0f);
+        }
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
-        lp.addRule(RelativeLayout.ABOVE, R.id.remoteInfo);
+        lp.addRule(RelativeLayout.ABOVE, R.id.fl_remoteInfo);
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
+
+        btn_moreInfo.setOnClickListener(v -> openDialogWithQrCode(addressList));
 
         //Also we want to keep the device active for remote access
         setKeepScreenOn(true);
+    }
+
+    private void openDialogWithQrCode(String serverAddress){
+        Bitmap bitmap = null;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater layoutInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+
+        View view = layoutInflater.inflate(R.layout.dialog_show_qrcode, null);
+
+        ImageView ivServerAddressQr = (ImageView) view.findViewById(R.id.img_qr_code);
+        BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+        try {
+            bitmap = barcodeEncoder.encodeBitmap(serverAddress, BarcodeFormat.QR_CODE,400,400);
+        } catch (WriterException e) {
+            Log.e("Error in QrCode", e.getMessage());
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            ivServerAddressQr.setBackground(new BitmapDrawable(getResources(), bitmap));
+        }
+
+        //TODO: Translate the text
+        builder.setTitle("For easy URL access, scan the QR code from your device.");
+        builder.setView(view).setPositiveButton("Ok", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+
     }
 
     //Stop the remote server (see remoteServer class)
@@ -1779,13 +1862,26 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         //Announce this to the user, so he knows why the webinterface stopped working.
         TextView announcer = (TextView)findViewById(R.id.remoteInfo);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        ImageView btn_moreInfo = (ImageView) findViewById(R.id.iv_remoteInfo);
+        FrameLayout fl_announcer = (FrameLayout) findViewById(R.id.fl_remoteInfo);
+        if(Helper.isDarkTheme(res)){
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_black_60));
+        } else {
+            fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight()).alpha(0.0f);
             announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
-        else
+        }
+        else{
+            btn_moreInfo.setVisibility(View.INVISIBLE);
             announcer.setVisibility(View.INVISIBLE);
+        }
+
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
+        lp.addRule(RelativeLayout.ABOVE, R.id.recycler_view_battery);
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         if (remote == null) //no server there? never mind.
@@ -1885,4 +1981,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
+    Runnable runDeviceUpdate = new Runnable() {
+        @Override
+        public void run() {
+            if(deviceInfoAdapter != null){
+                deviceInfoAdapter.update(connectedDevices);
+            }
+        }
+    };
+
+    @Override
+    public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
+        connectedDevices = connectedDeviceInfos;
+        runOnUiThread(runDeviceUpdate);
+    }
 }

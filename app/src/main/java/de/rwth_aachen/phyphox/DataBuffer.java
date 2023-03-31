@@ -440,7 +440,7 @@ public class DataBuffer implements Serializable {
             }
         }
 
-        if (experimentTimeReferenceSets == null) {
+        if (experimentTimeReferenceSets == null && !experimentTimeReference.timeMappings.isEmpty()) {
             experimentTimeReferenceSets = new ArrayList<>();
             Iterator it = getIterator();
             int lastReferenceIndex = -1;

@@ -6,4 +6,5 @@
         android:id="@+id/playhint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+    android:tint="@color/phyphox_white_90"
         app:srcCompat="@drawable/play"/>

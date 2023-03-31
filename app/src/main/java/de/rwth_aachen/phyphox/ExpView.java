@@ -7,7 +7,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.camera2.CameraCharacteristics;
@@ -17,7 +16,6 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -35,10 +33,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
-
-import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -311,7 +306,7 @@ public class ExpView implements Serializable{
             this.unit = "";
             this.factor = 1.;
             this.size = 1.;
-            this.color = res.getColor(R.color.mainExp);
+            this.color = res.getColor(R.color.phyphox_white_50_black_50);
         }
 
         //Create the formatter for the notation and precision: for example  %.2e or %.2f
@@ -514,7 +509,7 @@ public class ExpView implements Serializable{
         //Constructor takes the same arguments as the expViewElement constructor
         infoElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
-            this.color = res.getColor(R.color.mainExp);
+            this.color = res.getColor(R.color.phyphox_white_100);
         }
 
         protected void setColor(int c) {
@@ -623,7 +618,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     (int)(res.getDimension(R.dimen.info_element_font)*height));
             rootView.setLayoutParams(lllp);
-            rootView.setBackgroundColor(color);
+            //rootView.setBackgroundColor(color);
 
             //Add it to the linear layout
             ll.addView(rootView);
@@ -726,7 +721,6 @@ public class ExpView implements Serializable{
             labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
-            labelView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Create a horizontal linear layout, which seperates the right half into the edit field
             //and a textView to show the unit next to the user input
@@ -757,7 +751,6 @@ public class ExpView implements Serializable{
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             //   et.setPadding((int) labelSize / 2, 0, 0, 0);
             et.setTypeface(null, Typeface.BOLD);
-            et.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
 
             //Construct the inputType flags from our own state
             int inputType = InputType.TYPE_CLASS_NUMBER;
@@ -790,7 +783,6 @@ public class ExpView implements Serializable{
             unitView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             unitView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             unitView.setPadding(0, 0, (int) labelSize / 2, 0);
-            unitView.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
             unitView.setTypeface(null, Typeface.BOLD);
 
             //Add edit box and unit to the horizontal linear layout that makes up the right half of the row
@@ -977,7 +969,6 @@ public class ExpView implements Serializable{
 
             b.setLayoutParams(vglp);
             b.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            b.setTextColor(ContextCompat.getColor(c, R.color.mainExp));
             b.setText(this.label);
 
             //Add the button to the main linear layout passed to this function
@@ -1134,11 +1125,11 @@ public class ExpView implements Serializable{
             margin = res.getDimensionPixelSize(R.dimen.activity_vertical_margin);
 
             aspectRatio = 2.5;
-            gridColor = String.format("%08x", res.getColor(R.color.grid)).substring(2);
+            gridColor = String.format("%08x", res.getColor(R.color.phyphox_white_50_black_50)).substring(2);
             nCurves = (inputs.size()+1)/2;
 
             for (int i = 0; i < nCurves; i++) {
-                color.add(res.getColor(R.color.highlight));
+                color.add(res.getColor(R.color.phyphox_primary));
                 lineWidth.add(1.0);
                 style.add(GraphView.Style.lines);
                 mapWidth.add(0);
@@ -1629,7 +1620,8 @@ public class ExpView implements Serializable{
                                     "spanGaps: false," +
                                     "borderColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
                                     "backgroundColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2)).substring(2) + "\")," +
-                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) + "*scaleFactor," +
+                                    "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) +
+                                    "*scaleFactor," +
                                     "xAxisID: \"xaxis\"," +
                                     "yAxisID: \"yaxis\"" +
                                 "},";
@@ -1945,7 +1937,7 @@ public class ExpView implements Serializable{
             aspectRatio = 2.5;
 
             warningText = res.getString(R.string.remoteDepthGUIWarning).replace("'", "\\'");
-            this.color = res.getColor(R.color.mainExp);
+            //this.color = res.getColor(R.color.phyphox_white_100);
         }
 
         //Interface to change the height of the graph
@@ -1992,7 +1984,7 @@ public class ExpView implements Serializable{
 
             expandImage = new ImageView(c);
             expandImage.setId(ViewCompat.generateViewId());
-            expandImage.setImageResource(R.drawable.unfold_more);
+            expandImage.setImageResource(R.drawable.ic_expand_arrow);
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.setMargins(elMargin, elMargin, elMargin, elMargin);
             lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
@@ -2001,7 +1993,7 @@ public class ExpView implements Serializable{
             titleLine.addView(expandImage);
 
             collapseImage = new ImageView(c);
-            collapseImage.setImageResource(R.drawable.unfold_less);
+            collapseImage.setImageResource(R.drawable.ic_collapse_arrow);
             collapseImage.setLayoutParams(lp);
             collapseImage.setVisibility(INVISIBLE);
             titleLine.addView(collapseImage);
@@ -2232,7 +2224,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
 
-            svgView.setBackgroundColor(backgroundColor);
+            //svgView.setBackgroundColor(backgroundColor);
             if (source != null)
                 svgView.setSvgParts(source);
 

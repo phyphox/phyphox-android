@@ -1,13 +1,17 @@
 package de.rwth_aachen.phyphox;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+
+import androidx.preference.PreferenceManager;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -19,6 +23,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Vector;
+
+import de.rwth_aachen.phyphox.Helper.Helper;
 
 //The graphView class implements an Android view which displays a data graph
 
@@ -838,7 +844,7 @@ public class GraphView extends View {
     }
 
     public String getLabelAndSystemTimeRangeX(double min, double max, double systemTimeOffset) {
-        if (timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
+        if (timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0] != null && timeReferencesX[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
             int offset = TimeZone.getDefault().getRawOffset();
             int hours = offset / (60*60*1000);
             int minutes = (Math.abs(offset) / (60*1000)) % 60;
@@ -856,7 +862,7 @@ public class GraphView extends View {
     }
 
     public String getLabelAndSystemTimeRangeY(double min, double max, double systemTimeOffset) {
-        if (timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
+        if (timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0] != null && timeReferencesY[0].size() > 0 && !Double.isNaN(min) && !Double.isNaN(max)) {
             int offset = TimeZone.getDefault().getRawOffset();
             int hours = offset / (60*60*1000);
             int minutes = (Math.abs(offset) / (60*1000)) % 60;
@@ -1195,8 +1201,20 @@ public class GraphView extends View {
 
         Resources res = getResources();
 
-        paint.setTextSize(res.getDimension(R.dimen.graph_font));
-        paint.setColor(res.getColor(R.color.mainExp));
+        paint.setTextSize(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.TEXT_SIZE));
+        int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        switch (nightModelFlags){
+            case Configuration.UI_MODE_NIGHT_YES:
+                paint.setColor(res.getColor(R.color.phyphox_white_100));
+                break;
+            case Configuration.UI_MODE_NIGHT_NO:
+                paint.setColor(res.getColor(R.color.phyphox_black_80));
+                break;
+            case Configuration.UI_MODE_NIGHT_UNDEFINED:
+                paint.setColor(res.getColor(R.color.phyphox_white_100));
+                break;
+        }
         paint.setStrokeWidth(1);
         paint.setAlpha(255);
         paint.setStyle(Paint.Style.FILL);
@@ -1258,8 +1276,8 @@ public class GraphView extends View {
 
         double systemTimeOffsetX, systemTimeOffsetY;
         if (absoluteTime) {
-            systemTimeOffsetX = (timeOnX && timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0].size() > 0) ? (timeReferencesX[0].get(0).systemTime*0.001 - timeReferencesX[0].get(0).experimentTime) : 0.0;
-            systemTimeOffsetY = (timeOnY && timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0].size() > 0) ? (timeReferencesY[0].get(0).systemTime*0.001 - timeReferencesY[0].get(0).experimentTime) : 0.0;
+            systemTimeOffsetX = (timeOnX && timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0] != null && timeReferencesX[0].size() > 0) ? (timeReferencesX[0].get(0).systemTime*0.001 - timeReferencesX[0].get(0).experimentTime) : 0.0;
+            systemTimeOffsetY = (timeOnY && timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0] != null && timeReferencesY[0].size() > 0) ? (timeReferencesY[0].get(0).systemTime*0.001 - timeReferencesY[0].get(0).experimentTime) : 0.0;
         } else {
             systemTimeOffsetX = 0.0;
             systemTimeOffsetY = 0.0;
@@ -1354,8 +1372,8 @@ public class GraphView extends View {
         }
 
         //Draw rect around graph
-        paint.setColor(res.getColor(R.color.mainExp));
-        paint.setStrokeWidth(3);
+
+        paint.setStrokeWidth(Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.BORDER_WIDTH));
         paint.setAlpha(255);
         paint.setStrokeCap(Paint.Cap.SQUARE);
         paint.setStyle(Paint.Style.STROKE);

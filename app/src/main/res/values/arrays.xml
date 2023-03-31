@@ -6,4 +6,6 @@
         <item>@string/applyZoomSameUnit</item>
         <item>@string/applyZoomSameAxis</item>
     </string-array>
+
+
 </resources>

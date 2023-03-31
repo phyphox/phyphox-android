@@ -1,6 +1,11 @@
 <resources>
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="titleIconSize">40dp</dimen>
+    <!-- Icon size is customized for the home page as standard is not same as previous version.
+    previous version: there was only dark mode.
+    Now, as there is 'tint' set in the theme, the phyphox_dark image need to be added in
+    android:background instead of android:src-->
+    <dimen name="titleIconSizeCustom">45dp</dimen>
 
     <dimen name="activity_horizontal_margin">12dp</dimen>
     <dimen name="activity_horizontal_button_margin">12dp</dimen>
@@ -30,4 +35,29 @@
     <dimen name="expElementIconSize">42dp</dimen>
     <dimen name="expElementElevation">4dp</dimen>
     <dimen name="expElementMargin">1dp</dimen>
+
+    <!-- px is used instead of dp because when system font is changed,
+    the label size does not change as per the other text. Instead, it is much bigger than others.
+     Need to test in most devices to see how using px impacts as per device screen size-->
+   <dimen name="label_size_small">15px</dimen>
+   <dimen name="label_size_medium">18px</dimen>
+   <dimen name="label_size_big">19px</dimen>
+   <dimen name="label_size_bigger">21px</dimen>
+
+   <dimen name="text_size_small">12sp</dimen>
+   <dimen name="text_size_medium">14sp</dimen>
+   <dimen name="text_size_big">16sp</dimen>
+   <dimen name="text_size_bigger">17sp</dimen>
+
+   <dimen name="line_width_small">0.5dp</dimen>
+   <dimen name="line_width_medium">0.6dp</dimen>
+   <dimen name="line_width_big">1.6dp</dimen>
+   <dimen name="line_width_bigger">2.1dp</dimen>
+
+   <dimen name="border_width_small">1dp</dimen>
+   <dimen name="border_width_medium">1.4dp</dimen>
+   <dimen name="border_width_big">2dp</dimen>
+   <dimen name="border_width_bigger">2.3dp</dimen>
+
+
 </resources>

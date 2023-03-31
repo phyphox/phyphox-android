@@ -12,7 +12,7 @@ android {
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
         versionCode 1011200 //1.01.12-00
 
-        def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'it', 'ja', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
+        def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
         resConfigs locales
 
@@ -22,6 +22,8 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
         multiDexEnabled true
+
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {

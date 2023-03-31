@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This file consist of the keys or any other strings that do not require translation-->
+<resources>
+    <string name="setting_dark_mode_key">Setting Mode Key</string>
+
+    <string name="keyLinewidth">keyLineWidth</string>
+    <string name="keyFontSize">keyFontSize</string>
+    <string name="line_width">Border width</string>
+    <string name="small">Small</string>
+    <string name="medium">Medium</string>
+    <string name="big">Big</string>
+    <string name="smallValueFontSize">25</string>
+    <string name="mediumValueFontSize">30</string>
+    <string name="bigValueFontSize">40</string>
+    <string name="smallValueLineWidth">1</string>
+    <string name="mediumValueLineWidth">3</string>
+    <string name="bigValueLineWidth">8</string>
+
+</resources>

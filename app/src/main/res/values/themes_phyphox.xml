@@ -3,47 +3,57 @@
 <!-- Generated with http://android-holo-colors.com -->
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="phyphox" parent="Theme.AppCompat.NoActionBar">
+    <style name="Theme.Phyphox.DayNight" parent="Theme.Phyphox"/>
 
-        <item name="android:textColor">@color/mainExp</item>
-        <item name="android:textColorPrimary">@color/mainExp</item>
-        <item name="android:textColorSecondary">@color/mainExp</item>
-        <item name="colorAccent">@color/highlight</item>
-        <item name="android:colorAccent" tools:ignore="NewApi">@color/highlight</item>
-        <item name="android:textColorHighlight">@color/highlight</item>
+    <style name="Widget.Phyphox.DayNight" parent="Widget.Phyphox.Light"/>
 
-        <item name="colorPrimary">@color/phyphox_color</item>
-        <item name="colorPrimaryDark">@color/backgroundExp3</item>
-
+    <style name="Theme.Phyphox" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:textColor">@color/phyphox_black_60</item>
+        <item name="android:textColorPrimary">@color/phyphox_black_60</item>
+        <item name="android:textColorSecondary">@color/phyphox_black_60</item>
+        <item name="colorAccent">@color/phyphox_primary</item>
+        <item name="android:colorAccent" tools:ignore="NewApi">@color/phyphox_primary</item>
+        <item name="android:textColorHighlight">@color/phyphox_primary</item>
+        <item name="backgroundColor">@color/phyphox_white_100</item>
+        <item name="colorPrimary">@color/phyphox_primary</item>
+        <item name="colorPrimaryDark">@color/phyphox_black_80</item>
         <item name="android:textSize">@dimen/font</item>
+        <item name="itemBackground">@color/phyphox_white_90</item>
 
-        <item name="alertDialogTheme">@style/phyphoxDialog</item>
-        <item name="dialogTheme">@style/phyphoxDialog</item>
+        <!-- Provides the icon color in whole application, like in toolbar icon, settings icon.
+        But some widgets are overwritten with its specific tint, for example, in BottomNavigationView-->
+        <item name="tint">@color/phyphox_white_100</item>
 
-    </style>
+        <item name="android:windowBackground">@color/phyphox_white_100</item>
 
-    <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:textColor">@color/main</item>
-        <item name="android:textColorPrimary">@color/main</item>
-        <item name="android:textColorSecondary">@color/main2</item>
-        <item name="colorAccent">@color/highlight</item>
-        <item name="android:colorAccent" tools:ignore="NewApi">@color/highlight</item>
-        <item name="android:textColorHighlight">@color/highlight</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.Phyphox.Small</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.Phyphox.Medium</item>
 
-        <item name="colorPrimary">@color/phyphox_color</item>
-        <item name="colorPrimaryDark">@color/background3</item>
-        <item name="android:colorBackground">@color/background3</item>
+        <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
+        <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Light</item>
 
-        <item name="alertDialogTheme">@style/phyphoxDialog</item>
-        <item name="dialogTheme">@style/phyphoxDialog</item>
+        <item name="popupMenuStyle">@style/Widget.Phyphox.PopupMenu.Overflow</item>
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Light</item>
 
     </style>
 
     <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:textColor">@color/mainDialog</item>
-        <item name="colorPrimary">@color/mainDialog</item>
-        <item name="colorAccent">@color/rwth</item>
+        <item name="android:textColor">@color/phyphox_black_100</item>
+        <item name="colorPrimary">@color/phyphox_black_100</item>
+        <item name="colorAccent">@color/phyphox_rwth_primary</item>
         <item name="alertDialogTheme">@style/rwthDialog</item>
+    </style>
+
+
+    <style name="Widget.Phyphox.Light" parent="Theme.Phyphox.DayNight">
+        <item name="android:textColor">@color/phyphox_black_100</item>
+        <item name="tint">@color/phyphox_black_100</item>
+        <item name="android:tint">@color/phyphox_black_100</item>
+    </style>
+
+    <style name="Widget.Phyphox.Fab.QR" parent="Theme.Phyphox.DayNight">
+        <item name="tint">@color/phyphox_black_100</item>
     </style>
 
 </resources>

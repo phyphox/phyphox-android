@@ -2,17 +2,29 @@ package de.rwth_aachen.phyphox.Helper;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Base64;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+
+import androidx.core.content.ContextCompat;
+
+import androidx.preference.PreferenceManager;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -38,6 +50,7 @@ import javax.xml.xpath.XPathFactory;
 import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.SettingsFragment;
 
 public abstract class Helper {
 
@@ -122,27 +135,48 @@ public abstract class Helper {
             return defaultValue;
         //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
         switch(colorStr.toLowerCase()) {
-            case "orange": return res.getColor(R.color.presetOrange);
-            case "red": return res.getColor(R.color.presetRed);
-            case "magenta": return res.getColor(R.color.presetMagenta);
-            case "blue": return res.getColor(R.color.presetBlue);
-            case "green": return res.getColor(R.color.presetGreen);
-            case "yellow": return res.getColor(R.color.presetYellow);
-            case "white": return res.getColor(R.color.presetWhite);
+            case "orange": return getRequiredColor(res, R.color.phyphox_primary);
+            case "red": return getRequiredColor(res, R.color.phyphox_red);
+            case "magenta": return getRequiredColor(res, R.color.phyphox_magenta);
+            case "blue": return getRequiredColor(res, R.color.phyphox_blue_60);
+            case "green": return getRequiredColor(res, R.color.phyphox_green);
+            case "yellow": return getRequiredColor(res, R.color.phyphox_yellow);
+            case "white": return getRequiredColor(res, R.color.phyphox_white_100);
 
-            case "weakorange": return res.getColor(R.color.presetWeakOrange);
-            case "weakred": return res.getColor(R.color.presetWeakRed);
-            case "weakmagenta": return res.getColor(R.color.presetWeakMagenta);
-            case "weakblue": return res.getColor(R.color.presetWeakBlue);
-            case "weakgreen": return res.getColor(R.color.presetWeakGreen);
-            case "weakyellow": return res.getColor(R.color.presetWeakYellow);
-            case "weakwhite": return res.getColor(R.color.presetWeakWhite);
+            case "weakorange": return getRequiredColor(res, R.color.phyphox_primary_weak);
+            case "weakred": return getRequiredColor(res, R.color.phyphox_red_weak);
+            case "weakmagenta": return getRequiredColor(res, R.color.phyphox_magenta_weak);
+            case "weakblue": return getRequiredColor(res, R.color.phyphox_blue_40);
+            case "weakgreen": return getRequiredColor(res, R.color.phyphox_green_weak);
+            case "weakyellow": return getRequiredColor(res, R.color.phyphox_yellow_weak);
+            case "weakwhite": return getRequiredColor(res, R.color.phyphox_white_60);
         }
 
         //Not a constant, so it hast to be hex...
         if (colorStr.length() != 6)
             return defaultValue;
         return Integer.parseInt(colorStr, 16) | 0xff000000;
+    }
+
+    private static int getRequiredColor(Resources res, int resId){
+        if(isDarkTheme(res))
+            return res.getColor(resId);
+        else {
+            return Color.parseColor(ColorConverter.adjustableColor(res.getColor(resId)));
+        }
+    }
+
+    public static boolean isDarkTheme(Resources res){
+        int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+
+        switch (nightModelFlags){
+            case Configuration.UI_MODE_NIGHT_YES:
+            case Configuration.UI_MODE_NIGHT_UNDEFINED:
+                return true;
+            case Configuration.UI_MODE_NIGHT_NO:
+                return false;
+        }
+        return false;
     }
 
     public static void replaceTagInFile(String file, Context ctx, String tag, String newContent) {
@@ -319,5 +353,201 @@ public abstract class Helper {
             }
             callback.onSuccess(bitmap);
         }
+    }
+
+    //Decode the experiment icon (base64) and return a bitmap
+    public static Bitmap decodeBase64(String input) throws IllegalArgumentException {
+        byte[] decodedByte = Base64.decode(input, 0); //Decode the base64 data to binary
+        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length); //Interpret the binary data and return the bitmap
+    }
+
+    public static Bitmap changeColorOf(Context context,Bitmap bitmap, int colorId){
+        Bitmap mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Paint paint = new Paint();
+        ColorFilter filter = new PorterDuffColorFilter(ContextCompat.getColor(context, colorId), PorterDuff.Mode.SRC_IN);
+        paint.setColorFilter(filter);
+
+        Canvas canvas = new Canvas(mutableBitmap);
+        canvas.drawBitmap(mutableBitmap, 0, 0, paint);
+
+        return mutableBitmap;
+    }
+
+    public static ColorFilter getAdjustedColorForImage(Context context){
+        if(isDarkTheme(context.getResources())){
+           return new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.phyphox_white_100), PorterDuff.Mode.SRC_IN);
+        } else {
+            return new PorterDuffColorFilter(ContextCompat.getColor(context, R.color.phyphox_black_100), PorterDuff.Mode.SRC_IN);
+        }
+    }
+
+    private static int getResourceId(GraphField field, int size){
+        switch (field){
+            case LABEL_SIZE:
+                if(size == FieldSize.SMALL){
+                    return R.dimen.label_size_small;
+                } else if(size == FieldSize.BIG){
+                    return R.dimen.label_size_big;
+                } else if(size == FieldSize.BIGGER){
+                    return R.dimen.label_size_bigger;
+                } else{
+                    return R.dimen.label_size_medium;
+                }
+            case TEXT_SIZE:
+                if(size==FieldSize.SMALL){
+                    return R.dimen.text_size_small;
+                } else if(size==FieldSize.BIG){
+                    return R.dimen.text_size_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.text_size_bigger;
+                } else{
+                    return R.dimen.text_size_medium;
+                }
+            case LINE_WIDTH:
+                if(size==FieldSize.SMALL){
+                    return R.dimen.line_width_small;
+                } else if(size==FieldSize.BIG){
+                    return R.dimen.line_width_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.line_width_bigger;
+                } else{
+                    return R.dimen.line_width_medium;
+                }
+            case BORDER_WIDTH:
+                if(size==FieldSize.SMALL){
+                    return R.dimen.border_width_small;
+                } else if(size==FieldSize.BIG){
+                    return R.dimen.border_width_big;
+                } else if(size==FieldSize.BIGGER){
+                    return R.dimen.border_width_bigger;
+                } else{
+                    return R.dimen.border_width_medium;
+                }
+        }
+        return 0;
+    }
+
+    public static float getUserSelectedGraphSetting(Context context, GraphField field) {
+        int savedSize = PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getInt(SettingsFragment.GRAPH_SIZE_KEY, FieldSize.MEDIUM);
+        int resourceId = getResourceId(field,savedSize);
+        return context.getResources().getDimension(resourceId);
+    }
+
+    public enum GraphField {
+        LABEL_SIZE, TEXT_SIZE, LINE_WIDTH, BORDER_WIDTH
+    }
+
+    public static class FieldSize {
+        public final static int SMALL = 0;
+        public final static int MEDIUM = 1;
+        public final static int BIG = 2;
+        public final static int BIGGER = 3;
+    }
+
+    public static byte [] inflatePartialZip(byte [] dataReceived) {
+        byte [] zipData;
+        int totalSize = dataReceived.length;
+        if (dataReceived[totalSize-16] == 0x50 && dataReceived[totalSize-15] == 0x4b && dataReceived[totalSize-14] == 0x07 && dataReceived[totalSize-13] == 0x08) {
+            //This is a data descriptor we found at the end of the QR code data.
+            //Therefore, we did not receive a complete zip file, but a partial one that
+            // only contains a single entry and omits the local file header as well as
+            // the central directory
+            //We have to add those ourselves.
+
+            zipData = new byte[39 + totalSize - 16 + 55 + 22];
+
+            //Local file header
+            zipData[0] = 0x50; //Local file header signature
+            zipData[1] = 0x4b;
+            zipData[2] = 0x03;
+            zipData[3] = 0x04;
+            zipData[4] = 0x0a; //Version
+            zipData[5] = 0x00;
+            zipData[6] = 0x00; //General purpose flag
+            zipData[7] = 0x00;
+            zipData[8] = 0x00; //Compression method
+            zipData[9] = 0x00;
+            zipData[10] = 0x00; //modification time
+            zipData[11] = 0x00;
+            zipData[12] = 0x00; //modification date
+            zipData[13] = 0x00;
+            System.arraycopy(dataReceived, totalSize - 12, zipData, 14, 12); //CRC32, compressed size and uncompressed size
+            zipData[26] = 0x09; //File name length
+            zipData[27] = 0x00;
+            zipData[28] = 0x00; //Extra field length
+            zipData[29] = 0x00;
+            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 30, 9);
+
+            //Data (without data descriptor)
+            System.arraycopy(dataReceived, 0, zipData, 39, totalSize-16);
+
+            //Central directory
+            zipData[39 + totalSize - 16] = 0x50; //signature
+            zipData[39 + totalSize - 16 +  1] = 0x4b;
+            zipData[39 + totalSize - 16 +  2] = 0x01;
+            zipData[39 + totalSize - 16 +  3] = 0x02;
+            zipData[39 + totalSize - 16 +  4] = 0x0a; //Version made by
+            zipData[39 + totalSize - 16 +  5] = 0x00;
+            zipData[39 + totalSize - 16 +  6] = 0x0a; //Version needed
+            zipData[39 + totalSize - 16 +  7] = 0x00;
+            zipData[39 + totalSize - 16 +  8] = 0x00; //General purpose flag
+            zipData[39 + totalSize - 16 +  9] = 0x00;
+            zipData[39 + totalSize - 16 + 10] = 0x00; //Compression method
+            zipData[39 + totalSize - 16 + 11] = 0x00;
+            zipData[39 + totalSize - 16 + 12] = 0x00; //modification time
+            zipData[39 + totalSize - 16 + 13] = 0x00;
+            zipData[39 + totalSize - 16 + 14] = 0x00; //modification date
+            zipData[39 + totalSize - 16 + 15] = 0x00;
+            System.arraycopy(dataReceived, totalSize - 12, zipData, 39 + totalSize - 16 + 16, 12); //CRC32, compressed size and uncompressed size
+            zipData[39 + totalSize - 16 + 28] = 0x09; //File name length
+            zipData[39 + totalSize - 16 + 29] = 0x00;
+            zipData[39 + totalSize - 16 + 30] = 0x00; //Extra field length
+            zipData[39 + totalSize - 16 + 31] = 0x00;
+            zipData[39 + totalSize - 16 + 32] = 0x00; //File comment length
+            zipData[39 + totalSize - 16 + 33] = 0x00;
+            zipData[39 + totalSize - 16 + 34] = 0x00; //Disk number
+            zipData[39 + totalSize - 16 + 35] = 0x00;
+            zipData[39 + totalSize - 16 + 36] = 0x00; //Internal file attributes
+            zipData[39 + totalSize - 16 + 37] = 0x00;
+            zipData[39 + totalSize - 16 + 38] = 0x00; //External file attributes
+            zipData[39 + totalSize - 16 + 39] = 0x00;
+            zipData[39 + totalSize - 16 + 40] = 0x00;
+            zipData[39 + totalSize - 16 + 41] = 0x00;
+            zipData[39 + totalSize - 16 + 42] = 0x00; //Relative offset of local header
+            zipData[39 + totalSize - 16 + 43] = 0x00;
+            zipData[39 + totalSize - 16 + 44] = 0x00;
+            zipData[39 + totalSize - 16 + 45] = 0x00;
+            System.arraycopy("a.phyphox".getBytes(), 0, zipData, 39 + totalSize - 16 + 46, 9);
+
+            //End of central directory
+            zipData[39 + totalSize - 16 + 55] = 0x50; //signature
+            zipData[39 + totalSize - 16 + 55 +  1] = 0x4b;
+            zipData[39 + totalSize - 16 + 55 +  2] = 0x05;
+            zipData[39 + totalSize - 16 + 55 +  3] = 0x06;
+            zipData[39 + totalSize - 16 + 55 +  4] = 0x00; //Disk number
+            zipData[39 + totalSize - 16 + 55 +  5] = 0x00;
+            zipData[39 + totalSize - 16 + 55 +  6] = 0x00; //Start disk number
+            zipData[39 + totalSize - 16 + 55 +  7] = 0x00;
+            zipData[39 + totalSize - 16 + 55 +  8] = 0x01; //Number of central directories on disk
+            zipData[39 + totalSize - 16 + 55 +  9] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 10] = 0x01; //Number of central directories in total
+            zipData[39 + totalSize - 16 + 55 + 11] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 12] = 0x37; //Size of central directory
+            zipData[39 + totalSize - 16 + 55 + 13] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 14] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 15] = 0x00;
+            zipData[39 + totalSize - 16 + 55 + 16] = (byte) ((long) (39 + totalSize)); //Start of central directory
+            zipData[39 + totalSize - 16 + 55 + 17] = (byte) ((long) (39 + totalSize) >> 8);
+            zipData[39 + totalSize - 16 + 55 + 18] = (byte) ((long) (39 + totalSize) >> 16);
+            zipData[39 + totalSize - 16 + 55 + 19] = (byte) ((long) (39 + totalSize) >> 24);
+            zipData[39 + totalSize - 16 + 55 + 20] = 0x00; //Comment length
+            zipData[39 + totalSize - 16 + 55 + 21] = 0x00;
+
+        } else {
+            zipData = dataReceived;
+        }
+        return zipData;
     }
 }
