@@ -67,13 +67,14 @@
     <string name="credits">Credit</string>
     <string name="creditsRWTH">phyphox® har utvecklats på 2nd Institute of Physics vid RWTH Aachen University.</string>
     <string name="creditsNames">Utveckling och koncept:
-\n Dr. Sebastian Staacks
-\n Koncept:
-\n Prof. Christoph Stampfer
-\n Programmerin:
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+\nDr. Sebastian Staacks
+\nKoncept:
+\nProf. Christoph Stampfer
+\nProgramming:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="gpl">Phyphox® är öppen mjukvara under GNU General Public Licence. Besök http://phyphox.org för ytterligare information och tillgång till källkod. Namnet \"phyphox\" och \"RWTH Aachen\" är dock regisserade varumärken.</string>
     <string name="creditsLibs">The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later). GPS elevation data is converted from the WGS84 ellipsoid to the EGM84 geoid using EGM84 data (30\' resolution) and a ported function from the GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
     <string name="sensorLinearAcceleration">Linjär acceleration</string>
