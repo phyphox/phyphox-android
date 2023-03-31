@@ -95,13 +95,14 @@
     <string name="translationToWebsiteURL">http://phyphox.org/languages#pl</string>
     <string name="info">Info</string>
     <string name="creditsNames">Koncepcja i rozwój:
-\n Dr. Sebastian Staacks
+\nDr. Sebastian Staacks
 \nKoncepcja:
-\n Prof. Christoph Stampfer
+\nProf. Christoph Stampfer
 \nProgramowanie:
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="creditsLibs">Interfejs sieciowy do zdalnego dostępu używa JavaScript libraries \"Chart.js\" (http://chartjs.org), dostępnych w licencji MIT.
 \nSzybka tranformata Fouriera realizowana jest w oparciu o FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, która dostępna jest w licencji GNU General Public Licence (version 2 or later).</string>
     <string name="sensorTemperature">Temperatury</string>
