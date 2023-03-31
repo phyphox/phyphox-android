@@ -66,14 +66,15 @@
     <string name="info">Informasi</string>
     <string name="credits">Penghargaan</string>
     <string name="creditsRWTH">phyphox® dibuat di the 2nd Institute of Physics at the RWTH Aachen University.</string>
-    <string name="creditsNames">Konsep dan pengembangan:
-\n Dr. Sebastian Staacks
-\n Konsep:
-\n Prof. Christoph Stampfer
-\n Program:
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+    <string name="creditsNames">Development and Concept:
+\nDr. Sebastian Staacks
+\nConcept:
+\nProf. Christoph Stampfer
+\nProgramming:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="gpl">Phyphox® adalah software open source dirilis sesuai dengan GNU General Public Licence. Untuk informasi selanjutnya dan mengakses program kunjungi http://phyphox.org. \"phyphox\" dan \"RWTH Aachen\" dipatenkan.</string>
     <string name="creditsLibs">"Web-interface untuk akses jarak jauh menggunakan JavaScript library \"Chart.js\" (http://chartjs.org), merupakan hak cipta MIT. Untuk fourier transform, digunakan FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, yang tersedia sesuai GNU General Public Licence (version 2 or later). Data ketinggian GPS dikonversi dari WGS84 ellipsoid ke EGM84 geoid menggunakan data EGM84  (dengan resolusi 30\') dan menggunakan GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence)."</string>
     <string name="sensorLinearAcceleration">Percepatan linear</string>
