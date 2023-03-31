@@ -67,13 +67,14 @@
     <string name="credits">Подяки</string>
     <string name="creditsRWTH">phyphox було створено в Інституті Фізики №2 Університету Аахена.</string>
     <string name="creditsNames">Розробка і концепт:
-\n Dr. Sebastian Staacks
-\n Концепт:
-\n Prof. Christoph Stampfer
-\n Програмування:
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+\nDr. Sebastian Staacks
+\nКонцепт:
+\nProf. Christoph Stampfer
+\nПрограмування:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="gpl">Phyphox це програма з відкритим кодом, що розповсюджується згідно GNU General Public Licence. Для додаткової інформації і отримання доступу до коду відвідайте http://phyphox.org. Ти не менше, назви \"phyphox\" і \"RWTH Aachen\" є зареєстрованими торговими марками.</string>
     <string name="creditsLibs">Веб-інтерфейс для віддаленого доступу використовує JavaScript бібліотеку\"Chart.js\" (http://chartjs.org), що доступна згідно MIT ліцензії. Для перетворень Фур\'є, ми використовуємо бібліотеку FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, що доступна згідно GNU General Public Licence (версії 2 чи вище).</string>
     <string name="sensorLinearAcceleration">Лінійне прискорення</string>
