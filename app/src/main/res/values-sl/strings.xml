@@ -46,14 +46,15 @@
     <string name="warning">Opozorilo</string>
     <string name="donotshowagain">Ne prikaži več</string>
     <string name="info">Info</string>
-    <string name="creditsNames">Razvoj in koncept:
-\n Dr. Sebastian Staacks
-\n Concept:
-\n Prof. Christoph Stampfer
-\n Programming:
-\n Dominik Dorsel
-\n Jonas Gessner
-\n Camilla Lummerzheim</string>
+    <string name="creditsNames">Development and Concept:
+\nDr. Sebastian Staacks
+\nConcept:
+\nProf. Christoph Stampfer
+\nProgramming:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="sensorGyroscope">Žiroskop</string>
     <string name="sensorAccelerometer">Merilnik pospeška</string>
     <string name="sensorMagneticField">Magnetno polje</string>
