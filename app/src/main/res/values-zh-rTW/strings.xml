@@ -23,11 +23,9 @@
     <string name="info">訊息</string>
     <string name="credits">創立團隊</string>
     <string name="creditsRWTH">phyphox是由亞琛工業大學第二物理學院所開發。</string>
-    <string name="creditsNames">發展與概念：
-\nDr. Sebastian Staacks
-\n概念：
-\nProf. Christoph Stampfer
-\n程式設計：
+    <string name="creditsNames">發展與概念：Sebastian Staacks 博士
+\n概念：Christoph Stampfer 教授
+\n程式設計：Gaurav Tripathee
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
