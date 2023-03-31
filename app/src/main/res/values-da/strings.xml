@@ -64,11 +64,12 @@
     <string name="info">Info</string>
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox® blev udviklet på 2. Physikalisches Institut ved RWTH Aachen Universitet.</string>
-    <string name="creditsNames">Udvikling og koncept:
+    <string name="creditsNames">Development and Concept:
 \nDr. Sebastian Staacks
-\nKonzept:
+\nConcept:
 \nProf. Christoph Stampfer
-\nProgrammierung:
+\nProgramming:
+\nGaurav Tripathee
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
