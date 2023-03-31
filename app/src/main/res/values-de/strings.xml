@@ -365,4 +365,14 @@
     <string name="settingsProximityLock">Näherungssperre</string>
     <string name="settingsProximityLockDetail">Bildschirm ausschalten wenn der Näherungssensor ausgelöst wird um ungewünschte Eingaben (z.B. in einer Tasche) zu vermeiden.</string>
     <string name="settingsPort">Port für Fernzugriff</string>
+    <string name="settings_theme_night">Standard</string>
+    <string name="settings_theme_no_night">Heller Modus</string>
+    <string name="settings_theme_sync_setting">Systemvorgabe</string>
+    <string name="settingGraphViewEdit">Bedienoberfläche</string>
+    <string name="settingGraphSize">Graphengröße</string>
+    <string name="settingGraphSizeSubTitle">Graphen größer oder kleiner darstellen</string>
+    <string name="settings_theme_title">Dunkler Modus</string>
+    <string name="settings_mode_dark">An (Standard)</string>
+    <string name="settings_mode_no_dark">Aus</string>
+    <string name="settings_mode_dark_system">Wie System</string>
 </resources>
