@@ -80,14 +80,15 @@
     <string name="info">जानकारी</string>
     <string name="credits">आभार</string>
     <string name="creditsRWTH">phyphox® को RWTH आचेन यूनिवर्सिटी के द्वितीय भौतिक विज्ञान संस्थान में बनाया गया है।</string>
-    <string name="creditsNames">विकास और अवधारणा:
-\n डॉ सेबस्टियन स्टैक्स
-\n संकल्पना:
-\n प्रो क्रिस्टोफ Stampfer
-\n प्रोग्रामिंग:
-\n डोमिनिक डोरसेल
-\n जोनास गेस्नर
-\n कैमिला लुमेरज़ाइम</string>
+    <string name="creditsNames">Development and Concept:
+\nDr. Sebastian Staacks
+\nConcept:
+\nProf. Christoph Stampfer
+\nProgramming:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
     <string name="gpl">Phyphox® GNU जनरल पब्लिक लाइसेंस के तहत जारी किया गया ओपन सोर्स सॉफ्टवेयर है। अधिक जानकारी के लिए और इसके स्रोत कोड तक पहुंच प्राप्त करने के लिए कृपया http://phyphox.org पर जाएं। हालांकि, \"फाइफॉक्स\" और \"आरडब्ल्यूटीएच आचेन\" नाम पंजीकृत ट्रेडमार्क हैं।</string>
     <string name="creditsLibs">रिमोट एक्सेस के लिए वेब-इंटरफेस एमआईटी लाइसेंस के तहत उपलब्ध जावास्क्रिप्ट लाइब्रेरी \"चार्ट.जेएस\" (http://chartjs.org) का उपयोग करता है। फूरियर रूपांतरण के लिए, हम FFTW लाइब्रेरी (http://fftw.org), कॉपीराइट © 2003, 2007-11 मैटियो फ्रिगो, कॉपीराइट © 2003, 2007-11 मैसाचुसेट्स इंस्टीट्यूट ऑफ टेक्नोलॉजी का उपयोग करते हैं, जो जीएनयू जनरल पब्लिक के तहत उपलब्ध है लाइसेंस (संस्करण 2 या बाद का)। GPS उन्नयन डेटा को EGM84 डेटा (30\' रेजोल्यूशन) और GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 लाइसेंस) से पोर्ट किए गए फ़ंक्शन का उपयोग करके WGS84 दीर्घवृत्त से EGM84 जियोइड में परिवर्तित किया जाता है।</string>
     <string name="sensorLinearAcceleration">रैखिक त्वरण</string>
@@ -169,10 +170,10 @@
     <string name="save_state">प्रयोग की स्थिति सेव करें</string>
     <string name="save_state_category">सहेजे गए प्रयोग की स्थिति</string>
     <string name="remoteDepthGUIWarning">रिमोट इंटरफ़ेस पर LiDAR/ToF सेंसर का पूर्वावलोकन और नियंत्रण सपोर्टेड नहीं है।</string>
-    <string name="bluetooth"></string>
-    <string name="bt_exception_device_address"></string>
-    <string name="bt_exception_device_name"></string>
-    <string name="beeperStart"></string>
-    <string name="beeperStop"></string>
-    <string name="deactivate_all"></string>
+    <string name="bluetooth"/>
+    <string name="bt_exception_device_address"/>
+    <string name="bt_exception_device_name"/>
+    <string name="beeperStart"/>
+    <string name="beeperStop"/>
+    <string name="deactivate_all"/>
 </resources>
