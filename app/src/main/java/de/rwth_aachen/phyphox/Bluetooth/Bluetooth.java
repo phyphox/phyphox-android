@@ -30,6 +30,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
+import androidx.core.app.ActivityCompat;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -276,7 +277,7 @@ public class Bluetooth implements Serializable {
      *
      * @throws BluetoothException if Bluetooth is disabled or if the device could not be found
      */
-    public boolean findDevice(Map<String,BluetoothDevice> knownDevices) throws BluetoothException {
+    public boolean findDevice(Map<String, BluetoothDevice> knownDevices) throws BluetoothException {
         if (!isEnabled()) {
             throw new BluetoothException(context.getResources().getString(R.string.bt_exception_disabled), this);
         }
@@ -556,7 +557,7 @@ public class Bluetooth implements Serializable {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
-            gatt.readRemoteRssi();
+            add(new ReadRemoteRssi(gatt));
             executeNext();
             // retrieve data directly when the characteristic has changed
             byte[] data = characteristic.getValue();
@@ -567,12 +568,13 @@ public class Bluetooth implements Serializable {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
 
-            int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-            connectedDeviceInformation.setBatteryLabel(batteryLevel);
-
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 displayErrorMessage(context.getResources().getString(R.string.bt_fail_reading) + BluetoothException.getMessage(Bluetooth.this));
             }
+
+            int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+            connectedDeviceInformation.setBatteryLabel(batteryLevel);
+
             synchronized (isExecuting) {
                 isExecuting = false;
             }
@@ -606,7 +608,7 @@ public class Bluetooth implements Serializable {
             super.onReadRemoteRssi(gatt, rssi, status);
 
             int prevRssi = connectedDeviceInformation.getSignalStrength();
-            if(isNotRssiValueUpdateRequired(rssi, prevRssi) || !Experiment.bluetoothConnectionSuccessful){
+            if (isNotRssiValueUpdateRequired(rssi, prevRssi) || !Experiment.bluetoothConnectionSuccessful) {
                 connectedDeviceInformation.setSignalStrength(rssi);
                 return;
             }
@@ -660,7 +662,7 @@ public class Bluetooth implements Serializable {
         }
 
         @Override
-        public void onMtuChanged(BluetoothGatt gatt,  int mtu, int status) {
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS && mtu >= requestMTU) {
                 cdlMtu.countDown();
             } else {
@@ -695,14 +697,11 @@ public class Bluetooth implements Serializable {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
-            for(BluetoothGattService service : gatt.getServices()){
-                if(service.getUuid().equals(BATTERY_UUID)){
-                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(BATTERY_LEVEL);
-                    if (characteristic != null) {
-                        btGatt.readCharacteristic(characteristic);
-                    }
-                }
-            }
+             BluetoothGattCharacteristic characteristic = gatt.getService(BATTERY_UUID).getCharacteristic(BATTERY_LEVEL);
+             if (characteristic != null) {
+                 add(new ReadCommand(btGatt, characteristic ));
+             }
+
             executeNext();
         }
 
@@ -1042,6 +1041,42 @@ public class Bluetooth implements Serializable {
             return context.getResources().getString(R.string.bt_error_discovering);
         }
     } // end of class DiscoverCommand
+
+
+    /**
+     * Command to read Remote Rssi of a BluetoothGatt that can be queued.
+     */
+    protected class ReadRemoteRssi extends BluetoothCommand {
+
+        /**
+         * Create a new ReadRemoteRssi.
+         *
+         * @param gatt BluetoothGatt whose services should be discovered
+         */
+        public ReadRemoteRssi(BluetoothGatt gatt) {
+            super(gatt);
+        }
+
+        /**
+         * Discover services.
+         *
+         * @return true if the operation was initiated successfully.
+         */
+        @Override
+        public boolean execute() {
+            return gatt.readRemoteRssi();
+        }
+
+        /**
+         * Return the error message that should be displayed if execute() returns false
+         *
+         * @return the error message
+         */
+        @Override
+        public String getErrorMessage() {
+            return context.getResources().getString(R.string.bt_error_discovering);
+        }
+    } // end of class ReadRemoteRssi
 
     /**
      * Command to request a specific MTU size
