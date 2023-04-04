@@ -1,8 +1,13 @@
 package de.rwth_aachen.phyphox.Experiments.view;
 
+import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 import static android.content.Context.SENSOR_SERVICE;
 
+import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -12,18 +17,25 @@ import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Build;
+import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
+import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.PopupMenu;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.ExperimentList;
 import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.PhyphoxAlertBuilder;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.SensorInput;
@@ -38,7 +50,7 @@ public class ExperimentMenu extends PopupMenu {
 
         this.setOnMenuItemClickListener((OnMenuItemClickListener) item -> {
             if(item.getItemId() == R.id.action_credits){
-                //TODO createCreditDialog();
+                createCreditDialog();
                 return true;
             }
             if(item.getItemId() == R.id.action_helpExperiments){
@@ -59,23 +71,22 @@ public class ExperimentMenu extends PopupMenu {
                 return true;
             }
             if(item.getItemId() == R.id.action_deviceInfo){
-                //TODO showDeviceInfoDialog();
+                showDeviceInfoDialog();
                 return true;
             }
             return false;
         });
     }
 
-    /*
+
     private void showDeviceInfoDialog() {
         final Spanned text = Html.fromHtml(getDeviceInfoString().toString());
-
-        AlertDialog.Builder deviceInfoDialog = new PhyphoxAlertBuilder(base, R.style.Theme_Phyphox_DayNight)
+        ContextThemeWrapper ctw = new ContextThemeWrapper( base, R.style.Theme_Phyphox_DayNight);
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctw);
+        builder.setMessage(text)
                 .setTitle(R.string.deviceInfo)
-                .setMessage(text)
-                .addPositiveWithTitle(base.getString(R.string.copyToClipboard), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
                         //Copy the device info to the clipboard and notify the user
 
                         ClipboardManager cm = (ClipboardManager) base.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -83,19 +94,17 @@ public class ExperimentMenu extends PopupMenu {
                         cm.setPrimaryClip(data);
 
                         Toast.makeText(base, base.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
-
                     }
                 })
-                .addNegativeWithTitle(base.getString(R.string.close), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //Closed by user. Nothing to do.
                     }
-                }).build();
-        deviceInfoDialog.show();
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
-     */
 
     private void openLink(String uriString) {
         Uri uri = Uri.parse(uriString);
@@ -105,32 +114,50 @@ public class ExperimentMenu extends PopupMenu {
         }
     }
 
-    /*
     private void createCreditDialog() {
 
-        AlertDialog.Builder creditDialog = new PhyphoxAlertBuilder(base, R.layout.credits, R.style.Theme_Phyphox_DayNight)
-                .addTextView(R.id.creditNames)
-                .addPositiveWithTitle((String) base.getText(R.string.close), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                }).build();
+        //Create the credits as an AlertDialog
+        ContextThemeWrapper ctw = new ContextThemeWrapper(base, R.style.rwth);
+        AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
+        LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+        View creditLayout = creditsInflater.inflate(R.layout.credits, null);
 
-        TextView creditTextView = new PhyphoxAlertBuilder().getTextView();
-        if(creditTextView != null){
-            creditTextView.setText(buildSpannableString());
-            TextView tvA = (TextView) creditTextView.findViewById(R.id.creditsApache);
-            tvA.setText(Html.fromHtml(base.getString(R.string.creditsApache)));
-            TextView tvB = (TextView) creditTextView.findViewById(R.id.creditsZxing);
-            tvB.setText(Html.fromHtml(base.getString(R.string.creditsZxing)));
-            TextView tvC = (TextView) creditTextView.findViewById(R.id.creditsPahoMQTT);
-            tvC.setText(Html.fromHtml(base.getString(R.string.creditsPahoMQTT)));
+        //Set the credit texts, which require HTML markup
+        TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
+
+        SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
+        boolean first = true;
+        for (String line : base.getString(R.string.creditsNames).split("\\n")) {
+            if (first)
+                first = false;
+            else
+                creditsNamesSpannable.append("\n");
+            creditsNamesSpannable.append(line.trim());
         }
-        creditDialog.show();
+        Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
+        while (matcher.find()) {
+            creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        }
+        tv.setText(creditsNamesSpannable);
+        TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
+        tvA.setText(Html.fromHtml(base.getString(R.string.creditsApache)));
+        TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
+        tvB.setText(Html.fromHtml(base.getString(R.string.creditsZxing)));
+        TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
+        tvC.setText(Html.fromHtml(base.getString(R.string.creditsPahoMQTT)));
+
+        //Finish alertDialog builder
+        credits.setView(creditLayout);
+        credits.setPositiveButton(base.getText(R.string.close), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                //Nothing to do. Just close the thing.
+            }
+        });
+
+        //Present the dialog
+        credits.show();
     }
 
-     */
 
     private SpannableStringBuilder buildSpannableString(){
         SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();

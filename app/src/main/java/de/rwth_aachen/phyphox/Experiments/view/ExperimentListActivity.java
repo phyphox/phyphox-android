@@ -78,8 +78,6 @@ import de.rwth_aachen.phyphox.SettingsFragment;
 
 public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel> {
 
-    ExperimentItemAdapter experimentItemAdapter;
-
     private FloatingActionButton newExperimentButton;
     private FloatingActionButton newExperimentSimple;
     private FloatingActionButton newExperimentBluetooth;
@@ -101,8 +99,6 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
     LinearLayout catList;
     ScrollView sv;
 
-
-
     @NonNull
     @Override
     protected ExperimentListViewModel createViewModel() {
@@ -110,7 +106,6 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
         ExperimentViewModelFactory factory = new ExperimentViewModelFactory(getApplication(), experimentsRepository);
         return new ViewModelProvider(this, factory).get(ExperimentListViewModel.class);
     }
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -156,6 +151,7 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
     @Override
     protected void onResume() {
         super.onResume();
+        catList.removeAllViews();
         viewModel.loadExperiments();
     }
 
@@ -187,7 +183,7 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
                 Intent URLintent = new Intent(this, Experiment.class);
                 URLintent.setData(Uri.parse("phyphox://" + textResult.split("//", 2)[1]));
                 URLintent.setAction(Intent.ACTION_VIEW);
-                //TODO handleIntent(URLintent);
+                handleIntent(URLintent);
 
             } else if (textResult.startsWith("phyphox")) {
                 //The QR code contains the experiment itself. The first 13 bytes are:
@@ -317,7 +313,6 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
                 Collections.sort(categories, new CategoryComparator());
 
                 for (ExperimentsInCategory cat : categories) {
-
                     cat.addToParent(catList);
                 }
                 sv.scrollTo(0, sv.getScrollY());
@@ -344,7 +339,7 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
 
     private final Button.OnClickListener neoclQR = v -> {
         hideNewExperimentDialog();
-        CommonMethods commonMethods = new CommonMethods( getApplicationContext(), ExperimentListActivity.this);
+        CommonMethods commonMethods = new CommonMethods(ExperimentListActivity.this);
         commonMethods.scanQRCode();
     };
 
@@ -392,9 +387,7 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
         adb.setPositiveButton(getText(R.string.ok), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 //User clicked ok. Did the user decide to skip future warnings?
-                Boolean skipWarning = false;
-                if (dontShowAgain.isChecked())
-                    skipWarning = true;
+                boolean skipWarning = dontShowAgain.isChecked();
                 PhyphoxSharedPreference.setBooleanValue(ExperimentListActivity.this, PhyphoxSharedPreference.SKIP_WARNING, skipWarning);
                 //Store user decision
             }});
@@ -416,7 +409,6 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
             return;
 
         showSupportHint();
-        final boolean disabled = false;
 
         ReportingScrollView sv = ((ReportingScrollView)findViewById(R.id.experimentScroller));
         sv.setOnScrollChangedListener((scrollView, x, y, oldx, oldy) -> {
@@ -595,7 +587,7 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
                 .setTitle(isError ? R.string.newExperimentQRErrorTitle : R.string.newExperimentQR)
                 .setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        CommonMethods commonMethods = new CommonMethods( getApplicationContext(), ExperimentListActivity.this);
+                        CommonMethods commonMethods = new CommonMethods(ExperimentListActivity.this);
                         commonMethods.scanQRCode();
                     }
                 })
@@ -611,25 +603,6 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
                 dialog.show();
             }
         });
-    }
-
-    //The third addExperiment function:
-    //ExperimentItemAdapter.addExperiment(...) is called by category.addExperiment(...), which in
-    //turn will be called here.
-    //This addExperiment(...) is called for each experiment found. It checks if the experiment's
-    // category already exists and adds it to this category or creates a category for the experiment
-    private void addExpexriment(ExperimentDataModel experimentInfo, String cat, Vector<ExperimentsInCategory> categories) {
-        //Check all categories for the category of the new experiment
-        for (ExperimentsInCategory icat : categories) {
-            if (icat.hasName(cat)) {
-                //Found it. Add the experiment and return
-                icat.addExperiment(experimentInfo);
-                return;
-            }
-        }
-        //Category does not yet exist. Create it and add the experiment
-        categories.add(new ExperimentsInCategory(cat, this));
-        categories.lastElement().addExperiment(experimentInfo);
     }
 
 }
