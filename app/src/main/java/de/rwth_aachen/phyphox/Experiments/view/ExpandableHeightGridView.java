@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.view;
 
 import android.content.Context;
 import android.util.AttributeSet;

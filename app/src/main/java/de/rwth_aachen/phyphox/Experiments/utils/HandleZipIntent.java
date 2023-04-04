@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.utils;
 
 import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
 
@@ -32,14 +32,15 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import de.rwth_aachen.phyphox.Experiment;
-import de.rwth_aachen.phyphox.ExperimentList;
+import de.rwth_aachen.phyphox.Experiments.view.ExperimentsInCategory;
+import de.rwth_aachen.phyphox.Experiments.view.ExperimentListActivity;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 import de.rwth_aachen.phyphox.R;
 
 //This asyncTask extracts a zip file to a temporary directory
 //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
-class HandleZipIntent  extends AsyncTask<String, Void, String> {
+public class HandleZipIntent  extends AsyncTask<String, Void, String> {
 
 
     private Intent intent; //The intent to read from
@@ -48,7 +49,7 @@ class HandleZipIntent  extends AsyncTask<String, Void, String> {
     private ProgressDialog progress;
 
     //The constructor takes the intent to copy from and the parent activity to call back when finished.
-    HandleZipIntent(Intent intent, ExperimentListActivity parent, ProgressDialog progress) {
+    public HandleZipIntent(Intent intent, ExperimentListActivity parent, ProgressDialog progress) {
         this.intent = intent;
         this.parent = new WeakReference<ExperimentListActivity>(parent);
         this.progress = progress;
@@ -177,7 +178,7 @@ class HandleZipIntent  extends AsyncTask<String, Void, String> {
                         }
                     }
 
-                    Collections.sort(zipExperiments, new CategoryComparator(activity));
+                    Collections.sort(zipExperiments, new CategoryComparator());
 
                     for (ExperimentsInCategory cat : zipExperiments) {
                         if (preselectedDevice != null)

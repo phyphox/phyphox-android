@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.utils;
 
 import static de.rwth_aachen.phyphox.GlobalConfig.phyphoxCat;
 
@@ -6,13 +6,15 @@ import android.content.Context;
 
 import java.util.Comparator;
 
+import de.rwth_aachen.phyphox.App;
+import de.rwth_aachen.phyphox.Experiments.view.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.R;
 
-class CategoryComparator implements Comparator<ExperimentsInCategory> {
+public class CategoryComparator implements Comparator<ExperimentsInCategory> {
 
     Context context;
-    CategoryComparator(Context context){
-        this.context = context;
+    public CategoryComparator(){
+        this.context = App.getContext();
     }
     public int compare(ExperimentsInCategory a, ExperimentsInCategory b) {
         if (a.name.equals(context.getString(R.string.categoryRawSensor)))

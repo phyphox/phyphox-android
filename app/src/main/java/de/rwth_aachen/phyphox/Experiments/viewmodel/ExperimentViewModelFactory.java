@@ -1,13 +1,13 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.viewmodel;
 
 import android.app.Application;
-import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import de.rwth_aachen.phyphox.Experiments.data.repository.ExperimentsRepository;
+import de.rwth_aachen.phyphox.Experiments.viewmodel.ExperimentListViewModel;
 
 public class ExperimentViewModelFactory  implements ViewModelProvider.Factory {
 

@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.view;
 
 import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_ISASSET;
 import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_ISTEMP;
@@ -34,13 +34,12 @@ import java.util.Vector;
 
 import de.rwth_aachen.phyphox.BuildConfig;
 import de.rwth_aachen.phyphox.Experiment;
-import de.rwth_aachen.phyphox.ExperimentList;
 import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
 
-class ExperimentItemAdapter extends BaseAdapter {
+public class ExperimentItemAdapter extends BaseAdapter {
     final private Activity parentActivity; //Reference to the main activity for the alertDialog when deleting files
     final private boolean isSimpleExperiment, isSavedState;
 
@@ -130,7 +129,7 @@ class ExperimentItemAdapter extends BaseAdapter {
         isLinkList.insertElementAt(experimentInfo.getIsLink(), i);
 
         //Notify the adapter that we changed its contents
-        this.notifyDataSetChanged();
+        //this.notifyDataSetChanged();
     }
 
     //This mini class holds all the Android views to be displayed

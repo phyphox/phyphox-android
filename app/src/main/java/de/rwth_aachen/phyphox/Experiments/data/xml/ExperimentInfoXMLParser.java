@@ -4,7 +4,6 @@ import static android.content.Context.SENSOR_SERVICE;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.PorterDuff;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.util.Log;
@@ -28,7 +27,7 @@ import de.rwth_aachen.phyphox.BaseColorDrawable;
 import de.rwth_aachen.phyphox.BitmapIcon;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
-import de.rwth_aachen.phyphox.Experiments.ExperimentsInCategory;
+import de.rwth_aachen.phyphox.Experiments.view.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 import de.rwth_aachen.phyphox.GpsInput;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -252,7 +251,6 @@ public class ExperimentInfoXMLParser {
                                 unavailableSensor = R.string.location;
                             }
                             break;
-                            /** TODO
                         case "depth":
                             if (!inInput || unavailableSensor >= 0)
                                 break;
@@ -260,7 +258,7 @@ public class ExperimentInfoXMLParser {
                                 unavailableSensor = R.string.sensorDepth;
                             }
                             break;
-                             **/
+
                         case "bluetooth":
                             if ((!inInput && !inOutput) || unavailableSensor >= 0) {
                                 break;
