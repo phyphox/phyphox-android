@@ -4,6 +4,7 @@ import static android.content.Context.SENSOR_SERVICE;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.util.Log;
@@ -352,7 +353,16 @@ public class ExperimentInfoXMLParser {
 
 
         //We have all the information. Add the experiment.
-        experimentDataModel = new ExperimentDataModel( category, color, image, title, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null));
+        // Following condition is for setting the proper image and its color in the Contribution Headline
+        BaseColorDrawable mImage;
+        if(category.equals("phyphox.org") && !Helper.isDarkTheme(context.getResources())){
+            mImage = imageForContributionHeadline;
+            mImage.setColorFilter( 0xff000000, PorterDuff.Mode.MULTIPLY );
+        } else {
+            mImage = image;
+            mImage.setBaseColor(color);
+        }
+        experimentDataModel = new ExperimentDataModel( category, color, mImage, title, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null));
             //TODO addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
 
     }

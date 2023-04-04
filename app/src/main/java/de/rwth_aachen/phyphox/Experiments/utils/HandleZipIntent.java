@@ -42,7 +42,6 @@ import de.rwth_aachen.phyphox.R;
 //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
 public class HandleZipIntent  extends AsyncTask<String, Void, String> {
 
-
     private Intent intent; //The intent to read from
     private WeakReference<ExperimentListActivity> parent;
     BluetoothDevice preselectedDevice = null;
@@ -55,7 +54,7 @@ public class HandleZipIntent  extends AsyncTask<String, Void, String> {
         this.progress = progress;
     }
 
-    HandleZipIntent(Intent intent, ExperimentListActivity parent, BluetoothDevice preselectedDevice) {
+    public HandleZipIntent(Intent intent, ExperimentListActivity parent, BluetoothDevice preselectedDevice) {
         this.intent = intent;
         this.parent = new WeakReference<ExperimentListActivity>(parent);
         this.preselectedDevice = preselectedDevice;
@@ -170,7 +169,7 @@ public class HandleZipIntent  extends AsyncTask<String, Void, String> {
                         //Load details for each experiment
                         try {
                             InputStream input = new FileInputStream(file);
-                            // TODO loadExperimentInfo(input, file.getName(), "temp_zip", false, zipExperiments, null, null);
+                            //TODO loadExperimentInfo(input, file.getName(), "temp_zip", false, zipExperiments, null, null);
                             input.close();
                         } catch (IOException e) {
                             Log.e("zip", e.getMessage());

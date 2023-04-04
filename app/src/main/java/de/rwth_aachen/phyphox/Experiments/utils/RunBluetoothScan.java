@@ -80,7 +80,7 @@ public class RunBluetoothScan  extends AsyncTask<String, Void, BluetoothScanDial
         if (!isFatal) {
             builder.setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
-                    CommonMethods commonMethods = new CommonMethods( parent.get(), parent.get());
+                    CommonMethods commonMethods = new CommonMethods(parent.get());
                     commonMethods.scanQRCode();
                 }
             });
