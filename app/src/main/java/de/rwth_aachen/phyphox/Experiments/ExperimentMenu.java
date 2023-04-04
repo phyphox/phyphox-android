@@ -51,7 +51,7 @@ public class ExperimentMenu extends PopupMenu {
 
         this.setOnMenuItemClickListener((OnMenuItemClickListener) item -> {
             if(item.getItemId() == R.id.action_credits){
-                createCreditDialog();
+                //TODO createCreditDialog();
                 return true;
             }
             if(item.getItemId() == R.id.action_helpExperiments){
@@ -72,13 +72,14 @@ public class ExperimentMenu extends PopupMenu {
                 return true;
             }
             if(item.getItemId() == R.id.action_deviceInfo){
-                showDeviceInfoDialog();
+                //TODO showDeviceInfoDialog();
                 return true;
             }
             return false;
         });
     }
 
+    /*
     private void showDeviceInfoDialog() {
         final Spanned text = Html.fromHtml(getDeviceInfoString().toString());
 
@@ -107,6 +108,8 @@ public class ExperimentMenu extends PopupMenu {
         deviceInfoDialog.show();
     }
 
+     */
+
     private void openLink(String uriString) {
         Uri uri = Uri.parse(uriString);
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -115,6 +118,7 @@ public class ExperimentMenu extends PopupMenu {
         }
     }
 
+    /*
     private void createCreditDialog() {
 
         AlertDialog.Builder creditDialog = new PhyphoxAlertBuilder(base, R.layout.credits, R.style.Theme_Phyphox_DayNight)
@@ -138,6 +142,8 @@ public class ExperimentMenu extends PopupMenu {
         }
         creditDialog.show();
     }
+
+     */
 
     private SpannableStringBuilder buildSpannableString(){
         SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
@@ -174,19 +180,11 @@ public class ExperimentMenu extends PopupMenu {
 
         sb.append("<b>phyphox</b><br />");
         if (pInfo != null) {
-            sb.append("Version: ");
-            sb.append(pInfo.versionName);
-            sb.append("<br />");
-            sb.append("Build: ");
-            sb.append(pInfo.versionCode);
-            sb.append("<br />");
+            sb.append("Version: ").append(pInfo.versionName).append("<br />").append("Build: ").append(pInfo.versionCode).append("<br />");
         } else {
-            sb.append("Version: Unknown<br />");
-            sb.append("Build: Unknown<br />");
+            sb.append("Version: Unknown<br />").append("Build: Unknown<br />");
         }
-        sb.append("File format: ");
-        sb.append(PhyphoxFile.phyphoxFileVersion);
-        sb.append("<br /><br />");
+        sb.append("File format: ").append(PhyphoxFile.phyphoxFileVersion).append("<br /><br />");
 
         sb.append("<b>Permissions</b><br />");
         if (pInfo != null && pInfo.requestedPermissions != null) {

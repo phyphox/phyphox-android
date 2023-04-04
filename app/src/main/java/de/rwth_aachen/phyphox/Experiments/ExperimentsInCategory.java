@@ -15,14 +15,16 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
 //The category class wraps all experiment entries and their views of a category, including the
 //grid view and the category headline
-class ExperimentsInCategory {
+public class ExperimentsInCategory {
     final private Context parentContext; //Needed to create views
     final public String name; //Category name (headline)
     final private LinearLayout catLayout; //This is the base layout of the category, which will contain the headline and the gridView showing all the experiments
@@ -31,66 +33,7 @@ class ExperimentsInCategory {
     final private ExperimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
     final private Map<Integer, Integer> colorCount = new HashMap<>();
 
-    //ExpandableHeightGridView is derived from the original Android GridView.
-    //The structure of our experiment list is such that we want to scroll the entire list, which
-    //itself is structured into multiple categories showing multiple grid views. The original
-    //grid view only expands as far as it needs to and then only loads the elements it needs to
-    //show. This is a good idea for very long (or dynamically loaded) lists, but would make
-    //each category scrollable on its own, which is not what we want.
-    //ExpandableHeightGridView can be told to expand to show all elements at any time. This
-    //destroys the memory efficiency of the original grid view, but we do not expect the
-    //experiment to get so huge to need such efficiency. Also, we want to use a gridView instead
-    //of a common table to achieve lever on its ability to determine the number of columns on
-    //its own.
-    //This has been derived from: http://stackoverflow.com/questions/4523609/grid-of-images-inside-scrollview/4536955#4536955
-    private class ExpandableHeightGridView extends GridView {
 
-        boolean expanded = false; //The full expand attribute. Is it expanded?
-
-        //Constructor
-        public ExpandableHeightGridView(Context context) {
-            super(context);
-        }
-
-        //Constructor 2
-        public ExpandableHeightGridView(Context context, AttributeSet attrs) {
-            super(context, attrs);
-        }
-
-        //Constructor 3
-        public ExpandableHeightGridView(Context context, AttributeSet attrs, int defStyle) {
-            super(context, attrs, defStyle);
-        }
-
-        //Access to the expanded attribute
-        public boolean isExpanded() {
-            return expanded;
-        }
-
-        @Override
-        //The expansion is achieved by overwriting the measured height in the onMeasure event
-        public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            if (isExpanded()) {
-                // Calculate entire height by providing a very large height startMenuItem.
-                // View.MEASURED_SIZE_MASK represents the largest height possible.
-                int expandSpec = MeasureSpec.makeMeasureSpec(MEASURED_SIZE_MASK, MeasureSpec.AT_MOST);
-                //Send our height to the super onMeasure event
-                super.onMeasure(widthMeasureSpec, expandSpec);
-
-                ViewGroup.LayoutParams params = getLayoutParams();
-                params.height = getMeasuredHeight();
-            } else {
-                //We should not expand. Just call the default onMeasure with the original parameters
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
-        }
-
-        //Interface to set the expanded attribute
-        public void setExpanded(boolean expanded) {
-            this.expanded = expanded;
-        }
-
-    }
 
     //Constructor for the category class, takes a category name, the layout into which it should
     // place its views and the calling activity (mostly to display the dialog in the onClick
@@ -163,13 +106,13 @@ class ExperimentsInCategory {
     }
 
     //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
-    public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
-        experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
-        Integer n = colorCount.get(color);
+    public void addExperiment(ExperimentDataModel experimentInfo) {
+        experiments.addExperiment(experimentInfo);
+        Integer n = colorCount.get(experimentInfo.getColor());
         if (n == null)
-            colorCount.put(color, 1);
+            colorCount.put(experimentInfo.getColor(), 1);
         else
-            colorCount.put(color, n+1);
+            colorCount.put(experimentInfo.getColor(), n+1);
         int max = 0;
         int catColor = 0;
         for (Map.Entry<Integer,Integer> entry : colorCount.entrySet()) {
