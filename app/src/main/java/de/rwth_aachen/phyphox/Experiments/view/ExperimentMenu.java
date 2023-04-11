@@ -1,11 +1,8 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.view;
 
 import static android.content.Context.SENSOR_SERVICE;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -15,28 +12,18 @@ import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Build;
-import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AlertDialog;
-
-import org.w3c.dom.Text;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
-import de.rwth_aachen.phyphox.ExperimentList;
 import de.rwth_aachen.phyphox.Helper.Helper;
-import de.rwth_aachen.phyphox.Helper.PhyphoxAlertBuilder;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.SensorInput;
@@ -45,7 +32,7 @@ import de.rwth_aachen.phyphox.Settings;
 public class ExperimentMenu extends PopupMenu {
     Context base;
 
-    ExperimentMenu(Context base, View v){
+    public ExperimentMenu(Context base, View v){
         super(base, v);
         this.base = base;
 

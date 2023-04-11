@@ -27,7 +27,7 @@ public class ExperimentLocalDataSource implements ExperimentsDataSource.Local{
     public void getExperiments(ExperimentsRepository.LoadExperimentCallback callback) {
         // Get data from the XML parser here
         ExperimentDAO experimentDAO = new ExperimentDAO();
-        callback.onExperimentsLoaded(experimentDAO.getExperimentsFromAssest());
+        callback.onExperimentsLoaded(experimentDAO.getExperimentsFromAsset());
     }
 
 

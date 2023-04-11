@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.utils;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -34,11 +34,11 @@ import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
-import de.rwth_aachen.phyphox.ExperimentList;
+import de.rwth_aachen.phyphox.Experiments.view.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.R;
 
 //The BluetoothScanDialog has been written to block execution until a device is found, so we should not run it on the UI thread.
-class RunBluetoothScan  extends AsyncTask<String, Void, BluetoothScanDialog.BluetoothDeviceInfo> {
+public class RunBluetoothScan  extends AsyncTask<String, Void, BluetoothScanDialog.BluetoothDeviceInfo> {
     private final WeakReference<Activity> parent;
 
     private HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
@@ -46,7 +46,7 @@ class RunBluetoothScan  extends AsyncTask<String, Void, BluetoothScanDialog.Blue
 
 
     //The constructor takes the intent to copy from and the parent activity to call back when finished.
-    RunBluetoothScan(Activity parent) {
+    public RunBluetoothScan(Activity parent) {
         this.parent = new WeakReference<>(parent);
     }
 
@@ -205,7 +205,7 @@ class RunBluetoothScan  extends AsyncTask<String, Void, BluetoothScanDialog.Blue
             }
         }
 
-        Collections.sort(bluetoothExperiments, new CategoryComparator(parent));
+        Collections.sort(bluetoothExperiments, new CategoryComparator());
 
         for (ExperimentsInCategory cat : bluetoothExperiments) {
             cat.setPreselectedBluetoothAddress(device.getAddress());

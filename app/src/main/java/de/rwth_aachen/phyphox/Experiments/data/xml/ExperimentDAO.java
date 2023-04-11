@@ -41,7 +41,7 @@ public class ExperimentDAO {
         return null;
     }
 
-    public List<ExperimentDataModel> getExperimentsFromAssest() {
+    public List<ExperimentDataModel> getExperimentsFromAsset() {
         try {
             AssetManager assetManager = context.getAssets();
             final String[] experimentXMLs = assetManager.list("experiments"); //All experiments are placed in the experiments folder

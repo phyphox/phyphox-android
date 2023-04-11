@@ -7,7 +7,7 @@
     android:paddingRight="0dp"
     android:paddingTop="0dp"
     android:paddingBottom="0dp"
-    tools:context=".Experiments.ExperimentListActivity"
+    tools:context=".Experiments.view.ExperimentListActivity"
     android:id="@+id/rootExperimentList">
 
     <RelativeLayout

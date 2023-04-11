@@ -1,19 +1,17 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.viewmodel;
 
 import android.app.Application;
-import android.content.Context;
 
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import de.rwth_aachen.phyphox.BaseActivity.BaseViewModel;
 import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 import de.rwth_aachen.phyphox.Experiments.data.repository.ExperimentsRepository;
+import de.rwth_aachen.phyphox.Experiments.view.ExperimentsInCategory;
 
 public class ExperimentListViewModel extends BaseViewModel {
 

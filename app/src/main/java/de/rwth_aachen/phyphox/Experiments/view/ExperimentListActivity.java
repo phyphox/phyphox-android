@@ -1,14 +1,15 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.view;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
+import android.hardware.camera2.CameraManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,8 +37,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
@@ -50,21 +50,27 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.CRC32;
 
 import de.rwth_aachen.phyphox.BaseActivity.BaseActivity;
+import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Experiment;
-import de.rwth_aachen.phyphox.ExperimentList;
+import de.rwth_aachen.phyphox.Experiments.utils.CategoryComparator;
+import de.rwth_aachen.phyphox.Experiments.utils.CommonMethods;
+import de.rwth_aachen.phyphox.Experiments.utils.HandleZipIntent;
+import de.rwth_aachen.phyphox.Experiments.utils.RunBluetoothScan;
 import de.rwth_aachen.phyphox.Experiments.data.ExperimentDataManager;
 import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 import de.rwth_aachen.phyphox.Experiments.data.repository.ExperimentsRepository;
+import de.rwth_aachen.phyphox.Experiments.viewmodel.ExperimentListViewModel;
+import de.rwth_aachen.phyphox.Experiments.viewmodel.ExperimentViewModelFactory;
 import de.rwth_aachen.phyphox.GlobalConfig;
 import de.rwth_aachen.phyphox.Helper.Helper;
-import de.rwth_aachen.phyphox.Helper.PhyphoxAlertBuilder;
 import de.rwth_aachen.phyphox.Helper.PhyphoxSharedPreference;
 import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
 import de.rwth_aachen.phyphox.R;
@@ -92,6 +98,8 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
     long currentQRcrc32 = -1;
     int currentQRsize = -1;
     byte[][] currentQRdataPackets = null;
+    LinearLayout catList;
+    ScrollView sv;
 
 
 
@@ -117,6 +125,16 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
         setContentView(R.layout.activity_experiment_list);
 
         Activity parent = ExperimentListActivity.this;
+        catList = findViewById(R.id.experimentList);
+
+        //We want to show current availability of experiments requiring cameras
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            CameraManager cm = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraHelper.updateCameraList(cm);
+        }
+
+        //Save scroll position to restore this later
+        sv = findViewById(R.id.experimentScroller);
 
         if(displayDoNotDamageYourPhone())
             showSupportHintIfRequired();
@@ -277,22 +295,32 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
                 //Check all categories for the category of the new experiment
                 List<ExperimentsInCategory> categories = viewModel.getCategories();
                 for(ExperimentDataModel experimentDataModel: experimentDataModels){
+                    boolean isCategoryAdded = false;
                     for(ExperimentsInCategory iCat: categories){
                         if(iCat.hasName(experimentDataModel.getCategory())){
-                            //Found it. Add the experiment and return
+                            //Found it. Add the experiment
                             iCat.addExperiment(experimentDataModel);
-                            return;
+                            isCategoryAdded = true;
+                            break;
                         }
                     }
-                    //Category does not yet exist. Create it and add the experiment
-                    if(experimentDataModel.getCategory() != null){
-                        categories.add(new ExperimentsInCategory(experimentDataModel.getCategory(), ExperimentListActivity.this));
+                    if(!isCategoryAdded){
+                        //Category does not yet exist. Create it and add the experiment
+                        categories.add(new ExperimentsInCategory(
+                                experimentDataModel.getCategory(),
+                                ExperimentListActivity.this));
                         categories.get(categories.size() -1).addExperiment(experimentDataModel);
                     }
+
                 }
 
+                Collections.sort(categories, new CategoryComparator());
 
+                for (ExperimentsInCategory cat : categories) {
 
+                    cat.addToParent(catList);
+                }
+                sv.scrollTo(0, sv.getScrollY());
             }
         });
     }
@@ -507,7 +535,8 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
 
     }
 
-    protected void handleIntent(Intent intent) {
+
+    public void handleIntent(Intent intent) {
         if (progress != null)
             progress.dismiss();
 
@@ -589,7 +618,7 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(ExperimentDataModel experimentInfo, String cat, Vector<ExperimentsInCategory> categories) {
+    private void addExpexriment(ExperimentDataModel experimentInfo, String cat, Vector<ExperimentsInCategory> categories) {
         //Check all categories for the category of the new experiment
         for (ExperimentsInCategory icat : categories) {
             if (icat.hasName(cat)) {

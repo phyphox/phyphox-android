@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Experiments;
+package de.rwth_aachen.phyphox.Experiments.utils;
 
 
 import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_ISTEMP;
@@ -15,18 +15,19 @@ import java.lang.ref.WeakReference;
 import java.util.UUID;
 
 import de.rwth_aachen.phyphox.Experiment;
+import de.rwth_aachen.phyphox.Experiments.view.ExperimentListActivity;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 
 //This asyncTask extracts a zip file to a temporary directory
 //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
-class HandleCopyIntent  extends AsyncTask<String, Void, String> {
+public class HandleCopyIntent  extends AsyncTask<String, Void, String> {
     private Intent intent; //The intent to read from
     private WeakReference<ExperimentListActivity> parent;
     private File file = null;
     private ProgressDialog progress;
 
     //The constructor takes the intent to copy from and the parent activity to call back when finished.
-    HandleCopyIntent(Intent intent, ExperimentListActivity parent, ProgressDialog progress) {
+    public HandleCopyIntent(Intent intent, ExperimentListActivity parent, ProgressDialog progress) {
         this.intent = intent;
         this.parent = new WeakReference<ExperimentListActivity>(parent);
         this.progress = progress;

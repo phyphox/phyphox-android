@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox.Experiments.data.repository;
 
 import java.util.List;
 
-import de.rwth_aachen.phyphox.Experiments.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 
 public class ExperimentsRepositoryImpl implements ExperimentsRepository{
