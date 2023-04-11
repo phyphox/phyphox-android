@@ -49,6 +49,10 @@ public class ExperimentMenu extends PopupMenu {
         this.base = base;
 
         this.setOnMenuItemClickListener((OnMenuItemClickListener) item -> {
+            if(item.getItemId() == R.id.action_privacy){
+                openLink(base.getString(R.string.privacyPolicyURL));
+                return true;
+            }
             if(item.getItemId() == R.id.action_credits){
                 createCreditDialog();
                 return true;

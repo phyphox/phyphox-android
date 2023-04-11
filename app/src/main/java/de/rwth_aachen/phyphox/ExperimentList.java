@@ -127,6 +127,8 @@ import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
 
 public class ExperimentList extends AppCompatActivity {
 
+    /**
+
      //Change this to reactivate the phyphox support category hint on the next update. We set it to the version in which it is supposed to be re-enabled, so we can easily understand its meaning.
 
     //A resource reference for easy access
@@ -1629,5 +1631,7 @@ public class ExperimentList extends AppCompatActivity {
         //Finally, show the dialog
         neDialog.show();
     }
+
+    */
 
 }
