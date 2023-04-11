@@ -22,6 +22,8 @@ import de.rwth_aachen.phyphox.SensorInput;
 
 import static android.content.Context.SENSOR_SERVICE;
 
+import static de.rwth_aachen.phyphox.Helper.PhyphoxSharedPreference.PREFS_NAME;
+
 import androidx.annotation.RequiresApi;
 
 public class Metadata {
@@ -63,7 +65,7 @@ public class Metadata {
         switch (metadata) {
             case uniqueID:
                 final String settingName = "NetworkMetadataUUID";
-                SharedPreferences settings = ctx.getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME, 0);
                 String userId = settings.getString(settingName, null);
                 if (userId == null) {
                     userId = UUID.randomUUID().toString();

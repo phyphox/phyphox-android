@@ -1,5 +1,11 @@
 package de.rwth_aachen.phyphox.Experiments;
 
+import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_ISASSET;
+import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_ISTEMP;
+import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
+import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_UNAVAILABLESENSOR;
+import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_XML;
+
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.DialogInterface;
@@ -29,11 +35,10 @@ import java.util.Vector;
 import de.rwth_aachen.phyphox.BuildConfig;
 import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentList;
+import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
-public class ExperimentListAdapter {
-}
 
 class ExperimentItemAdapter extends BaseAdapter {
     final private Activity parentActivity; //Reference to the main activity for the alertDialog when deleting files
@@ -55,8 +60,8 @@ class ExperimentItemAdapter extends BaseAdapter {
     //The constructor takes the activity reference. That's all.
     public ExperimentItemAdapter(Activity parentActivity, String category) {
         this.parentActivity = parentActivity;
-        this.isSavedState = category.equals(res.getString(R.string.save_state_category));
-        this.isSimpleExperiment = category.equals(res.getString(R.string.categoryNewExperiment));
+        this.isSavedState = category.equals(parentActivity.getString(R.string.save_state_category));
+        this.isSimpleExperiment = category.equals(parentActivity.getString(R.string.categoryNewExperiment));
     }
 
     public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
@@ -104,25 +109,25 @@ class ExperimentItemAdapter extends BaseAdapter {
     //Called to fill the adapter with experiment.
     //For each experiment we need an icon, a title, a short description, the location of the
     // file and whether it can be found as an asset or a local file.
-    public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
+    public void addExperiment(ExperimentDataModel experimentInfo) {
         //Insert it alphabetically into out list. So find the element before which the new
         //title belongs.
         int i;
         for (i = 0; i < titles.size(); i++) {
-            if (titles.get(i).compareTo(title) >= 0)
+            if (titles.get(i).compareTo(experimentInfo.getTitle()) >= 0)
                 break;
         }
 
         //Now insert the experiment here
-        colors.insertElementAt(color, i);
-        icons.insertElementAt(icon, i);
-        titles.insertElementAt(title, i);
-        infos.insertElementAt(info, i);
-        xmlFiles.insertElementAt(xmlFile, i);
-        this.isTemp.insertElementAt(isTemp, i);
-        this.isAsset.insertElementAt(isAsset, i);
-        unavailableSensorList.insertElementAt(unavailableSensor, i);
-        isLinkList.insertElementAt(isLink, i);
+        colors.insertElementAt(experimentInfo.getColor(), i);
+        icons.insertElementAt(experimentInfo.getIcon(), i);
+        titles.insertElementAt(experimentInfo.getTitle(), i);
+        infos.insertElementAt(experimentInfo.getInfo(), i);
+        xmlFiles.insertElementAt(experimentInfo.getXmlFile(), i);
+        this.isTemp.insertElementAt(experimentInfo.getIsTemp(), i);
+        this.isAsset.insertElementAt(experimentInfo.isAsset(), i);
+        unavailableSensorList.insertElementAt(experimentInfo.getUnavailableSensor(), i);
+        isLinkList.insertElementAt(experimentInfo.getIsLink(), i);
 
         //Notify the adapter that we changed its contents
         this.notifyDataSetChanged();
@@ -151,8 +156,8 @@ class ExperimentItemAdapter extends BaseAdapter {
                             Uri uri = Uri.parse(isLinkList.get(position));
                             if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
                                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                if (intent.resolveActivity(getPackageManager()) != null) {
-                                    startActivity(intent);
+                                if (intent.resolveActivity(parentActivity.getPackageManager()) != null) {
+                                    parentActivity.startActivity(intent);
                                     return;
                                 }
                             }
@@ -171,16 +176,16 @@ class ExperimentItemAdapter extends BaseAdapter {
                         start(position, v);
                     else {
                         AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                        builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(unavailableSensorList.get(position)) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
+                        builder.setMessage(parentActivity.getString(R.string.sensorNotAvailableWarningText1) + " " + parentActivity.getString(unavailableSensorList.get(position)) + " " + parentActivity.getString(R.string.sensorNotAvailableWarningText2))
                                 .setTitle(R.string.sensorNotAvailableWarningTitle)
                                 .setPositiveButton(R.string.ok, (dialog, id) -> {
 
                                 })
-                                .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), (dialog, id) -> {
-                                    Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
+                                .setNeutralButton(parentActivity.getString(R.string.sensorNotAvailableWarningMoreInfo), (dialog, id) -> {
+                                    Uri uri = Uri.parse(parentActivity.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
                                     Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                    if (intent.resolveActivity(getPackageManager()) != null) {
-                                        startActivity(intent);
+                                    if (intent.resolveActivity(parentActivity.getPackageManager()) != null) {
+                                        parentActivity.startActivity(intent);
                                     }
                                 });
                         AlertDialog dialog = builder.create();
@@ -209,8 +214,8 @@ class ExperimentItemAdapter extends BaseAdapter {
         holder.info.setText(infos.get(position));
 
         if (unavailableSensorList.get(position) >= 0) {
-            holder.title.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
-            holder.info.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
+            holder.title.setTextColor(parentActivity.getResources().getColor(R.color.phyphox_white_50_black_50));
+            holder.info.setTextColor(parentActivity.getResources().getColor(R.color.phyphox_white_50_black_50));
         }
 
         //Handle the menubutton. Set it visible only for non-assets
@@ -222,7 +227,7 @@ class ExperimentItemAdapter extends BaseAdapter {
             if (Helper.luminance(colors.get(position)) > 0.1)
                 holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
             holder.menuBtn.setOnClickListener(v -> {
-                android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight), v);
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(parentActivity, R.style.Theme_Phyphox_DayNight), v);
                 popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
 
                 popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
@@ -230,46 +235,46 @@ class ExperimentItemAdapter extends BaseAdapter {
                 popup.setOnMenuItemClickListener(menuItem -> {
                     switch (menuItem.getItemId()) {
                         case R.id.experiment_item_share: {
-                            File file = new File(getFilesDir(), "/"+xmlFiles.get(position));
+                            File file = new File(parentActivity.getFilesDir(), "/"+xmlFiles.get(position));
 
-                            final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                            final Uri uri = FileProvider.getUriForFile(parentActivity.getBaseContext(), parentActivity.getPackageName() + ".exportProvider", file);
                             final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
                                     .setType("application/octet-stream") //mime type from the export filter
-                                    .setSubject(getString(R.string.save_state_subject))
+                                    .setSubject(parentActivity.getString(R.string.save_state_subject))
                                     .setStream(uri)
                                     .getIntent()
                                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
                                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                            List<ResolveInfo> resInfoList = parentActivity.getPackageManager().queryIntentActivities(intent, 0);
                             for (ResolveInfo ri : resInfoList) {
-                                grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                parentActivity.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             }
 
                             //Create chooser
-                            Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                            Intent chooser = Intent.createChooser(intent, parentActivity.getString(R.string.share_pick_share));
                             //And finally grant permissions again for any activities created by the chooser
-                            resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                            resInfoList = parentActivity.getPackageManager().queryIntentActivities(chooser, 0);
                             for (ResolveInfo ri : resInfoList) {
                                 if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
                                 ))
                                     continue;
-                                grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                parentActivity.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             }
                             //Execute this intent
-                            startActivity(chooser);
+                            parentActivity.startActivity(chooser);
                             return true;
                         }
                         case R.id.experiment_item_delete: {
                             //Create dialog to ask the user if he REALLY wants to delete...
                             AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                            builder.setMessage(res.getString(R.string.confirmDelete))
+                            builder.setMessage(parentActivity.getString(R.string.confirmDelete))
                                     .setTitle(R.string.confirmDeleteTitle)
                                     .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
                                             //Confirmed. Delete the item and reload the list
-                                            deleteFile(xmlFiles.get(position));
-                                            loadExperimentList();
+                                            //TODO: deleteFile(xmlFiles.get(position));
+                                            //TODO: loadExperimentList();
                                         }
                                     })
                                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -293,8 +298,8 @@ class ExperimentItemAdapter extends BaseAdapter {
                                             return;
                                         //Confirmed. Rename the item and reload the list
                                         if (isSavedState)
-                                            Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), "/phyphox/state-title", newName);
-                                        loadExperimentList();
+                                            Helper.replaceTagInFile(xmlFiles.get(position), parentActivity.getApplicationContext(), "/phyphox/state-title", newName);
+                                       //TODO: loadExperimentList();
                                     })
                                     .setNegativeButton(R.string.cancel, (dialog, id) -> {
                                         //Aborted by user. Nothing to do.

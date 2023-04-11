@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
@@ -78,8 +79,12 @@ public class PhyphoxAlertBuilder {
     }
 
     public PhyphoxAlertBuilder addCheckBox(int viewId){
-        this.textViewId = viewId;
+        this.checkBoxId = viewId;
         return this;
+    }
+
+    public CheckBox getCheckBox(){
+        return checkBox;
     }
 
     public PhyphoxAlertBuilder addPositiveWithTitle(String title, DialogInterface.OnClickListener positiveListener){
@@ -100,6 +105,7 @@ public class PhyphoxAlertBuilder {
         LayoutInflater adbInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View inflatedLayout = adbInflater.inflate(viewResId, null);
 
+        adb.setView(inflatedLayout);
 
         if(alertTitleId != 0){
             adb.setTitle(alertTitleId);
@@ -124,6 +130,7 @@ public class PhyphoxAlertBuilder {
             textView = (TextView) inflatedLayout.findViewById(textViewId);
             adb.setView(textView);
         }
+        adb.create();
         return adb;
     }
 
