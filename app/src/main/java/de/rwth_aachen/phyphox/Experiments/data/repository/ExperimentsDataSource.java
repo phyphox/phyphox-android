@@ -2,8 +2,9 @@ package de.rwth_aachen.phyphox.Experiments.data.repository;
 
 public interface ExperimentsDataSource {
 
-    interface Local {
+    interface Asset {
         void getExperiments(ExperimentsRepository.LoadExperimentCallback callback);
 
     }
+
 }

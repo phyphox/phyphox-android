@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox.Experiments.data.repository;
 
+import java.io.File;
 import java.util.List;
 
 import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;

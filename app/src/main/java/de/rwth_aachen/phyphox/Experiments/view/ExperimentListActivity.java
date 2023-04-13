@@ -1,9 +1,12 @@
 package de.rwth_aachen.phyphox.Experiments.view;
 
+import static de.rwth_aachen.phyphox.GlobalConfig.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothDevice;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -48,12 +51,14 @@ import com.google.zxing.integration.android.IntentResult;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.Vector;
 import java.util.zip.CRC32;
 
@@ -61,7 +66,8 @@ import de.rwth_aachen.phyphox.BaseActivity.BaseActivity;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.Experiments.utils.CategoryComparator;
-import de.rwth_aachen.phyphox.Experiments.utils.CommonMethods;
+import de.rwth_aachen.phyphox.Experiments.utils.HandleZipCallback;
+import de.rwth_aachen.phyphox.Experiments.utils.Utility;
 import de.rwth_aachen.phyphox.Experiments.utils.HandleZipIntent;
 import de.rwth_aachen.phyphox.Experiments.utils.RunBluetoothScan;
 import de.rwth_aachen.phyphox.Experiments.data.ExperimentDataManager;
@@ -289,26 +295,10 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
             @Override
             public void onChanged(List<ExperimentDataModel> experimentDataModels) {
                 //Check all categories for the category of the new experiment
-                List<ExperimentsInCategory> categories = viewModel.getCategories();
-                for(ExperimentDataModel experimentDataModel: experimentDataModels){
-                    boolean isCategoryAdded = false;
-                    for(ExperimentsInCategory iCat: categories){
-                        if(iCat.hasName(experimentDataModel.getCategory())){
-                            //Found it. Add the experiment
-                            iCat.addExperiment(experimentDataModel);
-                            isCategoryAdded = true;
-                            break;
-                        }
-                    }
-                    if(!isCategoryAdded){
-                        //Category does not yet exist. Create it and add the experiment
-                        categories.add(new ExperimentsInCategory(
-                                experimentDataModel.getCategory(),
-                                ExperimentListActivity.this));
-                        categories.get(categories.size() -1).addExperiment(experimentDataModel);
-                    }
+                catList.removeAllViews();
 
-                }
+                List<ExperimentsInCategory> categories = viewModel.getCategories();
+                createExperimentCategory(experimentDataModels, categories);;
 
                 Collections.sort(categories, new CategoryComparator());
 
@@ -318,7 +308,110 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
                 sv.scrollTo(0, sv.getScrollY());
             }
         });
+
+
+        viewModel.getZipExtractedResult().observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String result) {
+                if(result.isEmpty()){
+                    getExtractedExperiment();
+
+                } else {
+                    Toast.makeText(ExperimentListActivity.this, result, Toast.LENGTH_LONG).show();
+                }
+
+            }
+
+        });
     }
+
+    private void getExtractedExperiment() {
+        File tempPath = new File(getFilesDir(), "temp_zip");
+        final File[] files = tempPath.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.endsWith(".phyphox");
+            }
+        });
+        BluetoothDevice preselectedDevice = null;
+        if(files != null){
+            if(files.length == 0){
+                Toast.makeText(ExperimentListActivity.this, "Error: There is no valid phyphox experiment in this zip file.", Toast.LENGTH_LONG).show();
+            } else if(files.length == 1){
+                //Create an intent for this file
+                Intent intent = new Intent(ExperimentListActivity.this, Experiment.class);
+                intent.setData(Uri.fromFile(files[0]));
+                if (preselectedDevice != null)
+                    intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, preselectedDevice.getAddress());
+                intent.setAction(Intent.ACTION_VIEW);
+            } else {
+                List<ExperimentsInCategory> zipExperiments = new ArrayList<>();
+                List<ExperimentDataModel> dataModels = viewModel.loadExperimentOnZipRead(files);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(ExperimentListActivity.this);
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+                View view = inflater.inflate(R.layout.open_multipe_dialog, null);
+                builder.setView(view)
+                        .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
+                            for (File _file : files) {
+                                if (!Helper.experimentInCollection(_file, ExperimentListActivity.this))
+                                    _file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
+                            }
+                            viewModel.setExperimentsLiveData(dataModels);
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
+                AlertDialog dialog = builder.create();
+
+                ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_zip_dialog_instructions);
+
+                LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_multiple_dialog_list);
+
+                dialog.setTitle(getResources().getString(R.string.open_zip_title));
+
+                createExperimentCategory(dataModels, zipExperiments);
+
+                Collections.sort(zipExperiments, new CategoryComparator());
+
+                for (ExperimentsInCategory cat : zipExperiments) {
+                    if (preselectedDevice != null)
+                        cat.setPreselectedBluetoothAddress(preselectedDevice.getAddress());
+                    cat.addToParent(catList);
+                }
+
+                dialog.show();
+
+            }
+        }
+
+
+    }
+
+    private List<ExperimentsInCategory> createExperimentCategory(List<ExperimentDataModel> experimentDataModels, List<ExperimentsInCategory> categories) {
+        for(ExperimentDataModel experimentDataModel: experimentDataModels){
+            boolean isCategoryAdded = false;
+            for(ExperimentsInCategory iCat: categories){
+                if(iCat.hasName(experimentDataModel.getCategory())){
+                    //Found it. Add the experiment
+                    iCat.addExperiment(experimentDataModel);
+                    isCategoryAdded = true;
+                    break;
+                }
+            }
+            if(!isCategoryAdded){
+                //Category does not yet exist. Create it and add the experiment
+                categories.add(new ExperimentsInCategory(
+                        experimentDataModel.getCategory(),
+                        ExperimentListActivity.this));
+                categories.get(categories.size() -1).addExperiment(experimentDataModel);
+            }
+
+        }
+        return  categories;
+
+    }
+
 
     private final Button.OnClickListener neocl = v -> {
         if (newExperimentDialogOpen)
@@ -339,8 +432,8 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
 
     private final Button.OnClickListener neoclQR = v -> {
         hideNewExperimentDialog();
-        CommonMethods commonMethods = new CommonMethods(ExperimentListActivity.this);
-        commonMethods.scanQRCode();
+        Utility utility = new Utility(this);
+        utility.scanQRCode();
     };
 
     private void setupFloatingActionButtons() {
@@ -527,7 +620,6 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
 
     }
 
-
     public void handleIntent(Intent intent) {
         if (progress != null)
             progress.dismiss();
@@ -576,10 +668,19 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
             }
         } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
             progress = ProgressDialog.show(this, getString(R.string.loadingTitle), getString(R.string.loadingText), true);
-           new HandleZipIntent(intent, this, progress).execute();
+            HandleZipIntent handleZipIntent = new HandleZipIntent(intent, ExperimentListActivity.this, progress);
+            handleZipIntent.setCallback(new HandleZipCallback() {
+                @Override
+                public void onSuccess(String result) {
+                    if (progress != null)
+                        progress.dismiss();
+                    viewModel.setZipExtractResult(result);
+                }
+            });
+            handleZipIntent.execute();
+
         }
     }
-
 
     protected void showQRScanError(String msg, Boolean isError) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -587,7 +688,7 @@ public class ExperimentListActivity extends BaseActivity<ExperimentListViewModel
                 .setTitle(isError ? R.string.newExperimentQRErrorTitle : R.string.newExperimentQR)
                 .setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        CommonMethods commonMethods = new CommonMethods(ExperimentListActivity.this);
+                        Utility commonMethods = new Utility(ExperimentListActivity.this);
                         commonMethods.scanQRCode();
                     }
                 })

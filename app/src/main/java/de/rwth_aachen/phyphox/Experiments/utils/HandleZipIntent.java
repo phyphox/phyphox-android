@@ -47,6 +47,8 @@ public class HandleZipIntent  extends AsyncTask<String, Void, String> {
     BluetoothDevice preselectedDevice = null;
     private ProgressDialog progress;
 
+    private HandleZipCallback handleZipCallback;
+
     //The constructor takes the intent to copy from and the parent activity to call back when finished.
     public HandleZipIntent(Intent intent, ExperimentListActivity parent, ProgressDialog progress) {
         this.intent = intent;
@@ -110,11 +112,18 @@ public class HandleZipIntent  extends AsyncTask<String, Void, String> {
     @Override
     //Call the parent callback when we are done.
     protected void onPostExecute(String result) {
-        zipReady(parent.get(), result, preselectedDevice);
+        //zipReady(parent.get(), result, preselectedDevice);
+        handleZipCallback.onSuccess(result);
+
+    }
+
+    public void setCallback(HandleZipCallback callback){
+        this.handleZipCallback = callback;
     }
 
 
     public void zipReady(Activity activity, String result, BluetoothDevice preselectedDevice) {
+
             if (progress != null)
                 progress.dismiss();
             if (result.isEmpty()) {
@@ -192,4 +201,7 @@ public class HandleZipIntent  extends AsyncTask<String, Void, String> {
             }
         }
 
+
+
 }
+

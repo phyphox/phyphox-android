@@ -76,7 +76,7 @@ public class ExperimentInfoXMLParser {
     private String link = null;
 
 
-    ExperimentInfoXMLParser(InputStream input,
+    public ExperimentInfoXMLParser(InputStream input,
                             String experimentXML,
                             String isTemp,
                             boolean isAsset,
@@ -363,7 +363,6 @@ public class ExperimentInfoXMLParser {
             mImage.setBaseColor(color);
         }
         experimentDataModel = new ExperimentDataModel( category, color, mImage, title, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null));
-            //TODO addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
 
     }
 

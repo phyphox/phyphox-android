@@ -1,24 +1,18 @@
 package de.rwth_aachen.phyphox.Experiments.data.repository;
 
-import java.util.List;
-
-import de.rwth_aachen.phyphox.Experiments.data.model.ExperimentDataModel;
 import de.rwth_aachen.phyphox.Experiments.data.xml.ExperimentDAO;
-import de.rwth_aachen.phyphox.Experiments.data.xml.ExperimentInfoXMLParser;
 
-public class ExperimentLocalDataSource implements ExperimentsDataSource.Local{
+public class ExperimentAssetDataSource implements ExperimentsDataSource.Asset {
 
+    private static ExperimentAssetDataSource instance;
 
-
-    private static ExperimentLocalDataSource instance;
-
-    private ExperimentLocalDataSource(){
+    private ExperimentAssetDataSource(){
 
     }
 
-    public static ExperimentLocalDataSource getInstance(){
+    public static ExperimentAssetDataSource getInstance(){
         if(instance == null){
-            instance = new ExperimentLocalDataSource();
+            instance = new ExperimentAssetDataSource();
         }
         return instance;
     }

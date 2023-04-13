@@ -2,9 +2,12 @@ package de.rwth_aachen.phyphox.Experiments.data.xml;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -55,8 +58,9 @@ public class ExperimentDAO {
                 ExperimentInfoXMLParser parser =  new ExperimentInfoXMLParser(input, experimentXML, null,true, null, null, null);
 
                 experimentDataModels.add(parser.getExperimentDataModel());
-                //TODO loadExperimentInfo(input, experimentXML, null,true, categories, null, null);
             }
+            //getExperimentsFromTempZip();
+
         } catch (IOException e) {
             Toast.makeText(context, "Error: Could not load internal experiment list. " + e, Toast.LENGTH_LONG).show();
 
@@ -64,6 +68,34 @@ public class ExperimentDAO {
 
         return experimentDataModels;
 
+    }
+
+    public void getExperimentsFromTempZip(){
+        File tempPath = new File(context.getFilesDir(), "temp_zip");
+        if(tempPath.isDirectory()) {
+            final File[] files = tempPath.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String filename) {
+                    return filename.endsWith(".phyphox");
+                }
+            });
+
+            if (files != null & files.length > 1) {
+
+                for (File file : files) {
+                    //Load details for each experiment
+                    try {
+                        InputStream input = new FileInputStream(file);
+                        ExperimentInfoXMLParser parser = new ExperimentInfoXMLParser(input, file.getName(), "temp_zip", false, null, null, null);
+                        experimentDataModels.add(parser.getExperimentDataModel());
+                        input.close();
+                    } catch (IOException e) {
+                        Log.e("zip", e.getMessage());
+                    }
+                }
+
+            }
+        }
     }
 
 

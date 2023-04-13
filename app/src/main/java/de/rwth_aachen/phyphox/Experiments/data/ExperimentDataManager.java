@@ -1,8 +1,6 @@
 package de.rwth_aachen.phyphox.Experiments.data;
 
-import android.content.Context;
-
-import de.rwth_aachen.phyphox.Experiments.data.repository.ExperimentLocalDataSource;
+import de.rwth_aachen.phyphox.Experiments.data.repository.ExperimentAssetDataSource;
 import de.rwth_aachen.phyphox.Experiments.data.repository.ExperimentsRepository;
 import de.rwth_aachen.phyphox.Experiments.data.repository.ExperimentsRepositoryImpl;
 
@@ -23,8 +21,8 @@ public class ExperimentDataManager {
 
     public ExperimentsRepository getExperimentRepository(){
 
-        ExperimentLocalDataSource localDataSource = ExperimentLocalDataSource.getInstance();
+        ExperimentAssetDataSource assetDataSource = ExperimentAssetDataSource.getInstance();
 
-        return ExperimentsRepositoryImpl.getInstance(localDataSource);
+        return ExperimentsRepositoryImpl.getInstance(assetDataSource);
     }
 }
