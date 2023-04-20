@@ -100,6 +100,14 @@
                 android:value="de.rwth_aachen.phyphox.ExperimentList" />
         </activity>
         <activity
+            android:name="de.rwth_aachen.phyphox.Camera.CameraPreviewActivity"
+            android:label="Camera Preview"
+            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.rwth_aachen.phyphox.ExperimentList" />
+        </activity>
+        <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="unspecified"
             tools:replace="screenOrientation" />

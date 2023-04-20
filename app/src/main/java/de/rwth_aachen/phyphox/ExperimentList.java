@@ -7,12 +7,6 @@ import android.app.ActivityOptions;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothProfile;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ContentResolver;
@@ -114,15 +108,13 @@ import java.util.zip.ZipInputStream;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
-import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
+import de.rwth_aachen.phyphox.Camera.CameraPreviewActivity;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
-
-import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
 
 //ExperimentList implements the activity which lists all experiments to the user. This is the start
 //activity for this app if it is launched without an intent.
@@ -2252,7 +2244,10 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 hideNewExperimentDialog();
-                newExperimentDialog(thisRef);
+                //TODO change it
+                Intent intent = new Intent(ExperimentList.this, CameraPreviewActivity.class);
+                startActivity(intent);
+                //newExperimentDialog(thisRef);
             }
         };
 
