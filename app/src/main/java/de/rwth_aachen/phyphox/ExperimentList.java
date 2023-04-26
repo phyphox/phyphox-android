@@ -78,6 +78,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import org.opencv.android.OpenCVLoader;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -1914,6 +1915,12 @@ public class ExperimentList extends AppCompatActivity {
 
         if (!displayDoNotDamageYourPhone()) { //Show the do-not-damage-your-phone-warning
             showSupportHintIfRequired();
+        }
+
+        if (!OpenCVLoader.initDebug()) {
+            Log.d("ExperimentList", " Need to handle OpenCv initialization error" );
+        } else {
+            Log.d("ExperimentList", " OpenCV is initialized successfully" );
         }
 
         Activity parentActivity = this;
