@@ -69,7 +69,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.15";
+    public final static String phyphoxFileVersion = "1.16";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -1015,7 +1015,7 @@ public abstract class PhyphoxFile {
                     (new networkBlockParser(xpp, experiment, parent)).process();
                     break;
                 case "analysis": //Holds a number of math modules which will be executed in the order they occur
-                    experiment.analysisSleep = getDoubleAttribute("sleep", 0.02); //Time between executions
+                    experiment.analysisSleep = getDoubleAttribute("sleep", 0.0); //Time between executions
                     String dynamicSleep = getStringAttribute("dynamicSleep"); //Time between executions
                     if (dynamicSleep != null) {
                         if (experiment.getBuffer(dynamicSleep) != null)
@@ -1024,6 +1024,23 @@ public abstract class PhyphoxFile {
                             throw new phyphoxFileException("Dynamic sleep buffer " + dynamicSleep + " has not been defined as a buffer.", xpp.getLineNumber());
                     }
                     experiment.analysisOnUserInput = getBooleanAttribute("onUserInput", false); //Only execute when the user changed something?
+
+                    String requireFill = getStringAttribute("requireFill");
+                    experiment.requireFillThreshold = getIntAttribute("requireFillThreshold", 1);
+                    String requireFillDynamic = getStringAttribute("requireFillDynamic");
+                    if (requireFill != null) {
+                        if (experiment.getBuffer(requireFill) != null)
+                            experiment.requireFill = experiment.getBuffer(requireFill);
+                        else
+                            throw new phyphoxFileException("Require fill buffer " + requireFill + " has not been defined as a buffer.", xpp.getLineNumber());
+                    }
+                    if (requireFillDynamic != null) {
+                        if (experiment.getBuffer(requireFillDynamic) != null)
+                            experiment.requireFillDynamic = experiment.getBuffer(requireFillDynamic);
+                        else
+                            throw new phyphoxFileException("Require fill buffer " + requireFillDynamic + " has not been defined as a buffer.", xpp.getLineNumber());
+                    }
+
                     experiment.timedRun = getBooleanAttribute("timedRun", false);
                     experiment.timedRunStartDelay = getDoubleAttribute("timedRunStartDelay", 3.0);
                     experiment.timedRunStopDelay = getDoubleAttribute("timedRunStopDelay", 10.0);
@@ -1712,6 +1729,7 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("Need permission to record audio."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
                     }
                     experiment.micRate = getIntAttribute("rate", 48000); //Recording rate
+                    experiment.appendAudioInput = getBooleanAttribute("append", false);
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
@@ -1729,7 +1747,10 @@ public abstract class PhyphoxFile {
                         experiment.micRateOutput = "";
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
-                    experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT)/2;
+                    else
+                        experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
                     if (experiment.minBufferSize < 0) {
                         throw new phyphoxFileException("Could not initialize recording. (" + experiment.minBufferSize + ")", xpp.getLineNumber());
                     }

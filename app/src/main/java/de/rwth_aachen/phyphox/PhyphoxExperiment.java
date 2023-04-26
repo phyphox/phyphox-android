@@ -7,6 +7,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
 
 import org.w3c.dom.Attr;
@@ -84,6 +85,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     double analysisLinearTime; //Same with the current system time
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
     boolean newUserInput = true; //Will be set to true if the user changed any values
+    DataBuffer requireFill = null; //Observe this buffer and only execute analysis cycle if this buffer has enough values
+    int requireFillThreshold = 1; //Threshold fore 'requireBuffer'
+    DataBuffer requireFillDynamic = null; //Instead of using the threshold, use the last value of another buffer to control 'requireFill'
     boolean newData = true; //Will be set to true if we have fresh data to present
     boolean recordingUsed = true; //This keeps track, whether the recorded data has been used, so the next call reading from the mic can clear the old data first
 
@@ -103,6 +107,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     int micRate = 48000; //The recording rate in Hz
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
+    boolean appendAudioInput = false; //Append audio input on start of analysis cycle instead of replacing old data
 
     //Network connections
     List<NetworkConnection> networkConnections = new ArrayList<>();
@@ -201,19 +206,29 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             if (measuring) {
                 DataBuffer recording = getBuffer(micOutput);
                 final int readBufferSize = Math.max(Math.min(recording.size, 4800), minBufferSize); //The dataBuffer for the recording
-                short[] buffer = new short[readBufferSize]; //The temporary buffer to read to
-                int bytesRead = audioRecord.read(buffer, 0, readBufferSize);
+                float[] buffer = new float[readBufferSize]; //The temporary buffer to read to
+                short[] oldBuffer = new short[readBufferSize]; //Used for <23 compatibility
+                int bytesRead = 0;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    bytesRead = audioRecord.read(buffer, 0, readBufferSize, AudioRecord.READ_NON_BLOCKING);
+                else
+                    bytesRead = audioRecord.read(oldBuffer, 0, readBufferSize);
                 if (lastAnalysis != 0) { //The first recording data does not make sense, but we had to read it to clear the recording buffer...
                     dataLock.lock();
                     try {
                         if (recordingUsed) {
-                            recording.clear(false); //We only want fresh data
+                            if (!appendAudioInput)
+                                recording.clear(false); //We only want fresh data
                             if (sampleRateBuffer != null)
                                 sampleRateBuffer.append(audioRecord.getSampleRate());
                             sampleRateWritten = true;
                             recordingUsed = false;
                         }
-                        recording.append(buffer, bytesRead);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                            recording.append(buffer, bytesRead);
+                        else
+                            recording.append(oldBuffer, bytesRead);
+
                     } finally {
                         dataLock.unlock();
                     }
@@ -253,6 +268,15 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                 sensor.updateGeneratedRate();
         } else
             cycle = 0;
+
+        if (requireFill != null && lastAnalysis != 0) {
+            int threshold = requireFillThreshold;
+            if (requireFillDynamic != null && requireFillDynamic.getFilledSize() > 0)
+                threshold = (int)requireFillDynamic.value;
+            if (requireFill.getFilledSize() < threshold) {
+                return;
+            }
+        }
 
         dataLock.lock();
         analysisTime = experimentTimeReference.getExperimentTime();
@@ -452,8 +476,12 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             audioOutput.init();
 
         //Create audioTrack instance
-        if (micBufferSize > 0)
-            audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize * 2);
+        if (micBufferSize > 0) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT, micBufferSize * 2);
+            else
+                audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize * 2);
+        }
 
         //Reconnect sensors
         for (SensorInput si : inputSensors) {

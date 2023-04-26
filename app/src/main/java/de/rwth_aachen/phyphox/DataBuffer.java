@@ -7,19 +7,17 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 //Databuffer class
 //Each databuffer can be identified by a name (mapped in phyphoxExperiment class)
-//The actual databuffer is implemented as a BlockingQueue, but we keep track of a maximum size ourselves.
 
 interface BufferNotification {
     void notifyUpdate(boolean clear, boolean reset); //Notify that a buffer has changed. Also notify if the buffer has been cleared (for example during
@@ -27,7 +25,7 @@ interface BufferNotification {
 
 public class DataBuffer implements Serializable {
     public String name; //The key name
-    private BlockingQueue<Double> buffer; //The actual buffer (will be initialized as ArrayBlockingQueue which is Serializable)
+    private List<Double> buffer; //The actual buffer
     public int size; //The target size
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
@@ -61,9 +59,9 @@ public class DataBuffer implements Serializable {
         this.size = size;
         this.name = name;
         if (size > 0)
-            this.buffer = new ArrayBlockingQueue<>(size);
+            this.buffer = new ArrayList<>(size);
         else
-            this.buffer = new LinkedBlockingQueue<>();
+            this.buffer = new LinkedList<>();
         this.value = Double.NaN;
     }
 
@@ -128,7 +126,7 @@ public class DataBuffer implements Serializable {
         double last = this.value;
         this.value = value; //Update last value
         if (this.size > 0 && buffer.size()+1 > this.size) { //If the buffer becomes larger than the target size, remove the first item (queue!)
-            buffer.poll();
+            buffer.remove(0);
             min = Double.NaN;
             max = Double.NaN;
             if (floatCopy != null) {
@@ -251,8 +249,40 @@ public class DataBuffer implements Serializable {
 
     //Append a double-array with [count] entries.
     public void append(Double value[], Integer count, boolean notify) {
-        for (int i = 0; i < count; i++)
-            append(value[i], false);
+        if (staticAndSet)
+            return;
+        if (4*count < buffer.size() && (!Double.isNaN(min) || !Double.isNaN(max) || floatCopy != null || floatCopyBarValue != null || floatCopyBarAxis != null || experimentTimeReferenceSets != null)) {
+            // In these cases the buffer is connected to a view element and adding every item individually is probably faster
+            for (int i = 0; i < count; i++) {
+                append(value[i], false);
+            }
+        } else {
+            //Just dump the data into the array and make sure it does not overflow.
+            if (count > 0)
+                this.value = value[count - 1]; //Update last value
+            if (this.size > 0) {
+                if (count >= this.size) {
+                    buffer.clear();
+                    buffer.addAll(Arrays.asList(value).subList(count - this.size, count));
+                } else if (buffer.size() + count > this.size) { //If the buffer becomes larger than the target size, remove the first items (queue!)
+                    Double[] remainder = buffer.subList(count, this.size).toArray(new Double[0]);
+                    buffer.clear();
+                    buffer.addAll(Arrays.asList(remainder));
+                    buffer.addAll(Arrays.asList(value));
+                } else {
+                    buffer.addAll(Arrays.asList(value));
+                }
+            } else {
+                buffer.addAll(Arrays.asList(value));
+            }
+            min = Double.NaN;
+            max = Double.NaN;
+            floatCopy = null;
+            floatCopyBarValue = null;
+            floatCopyBarAxis = null;
+            experimentTimeReferenceSets = null;
+        }
+
         if (notify)
             notifyListeners(false, false);
     }
@@ -264,7 +294,14 @@ public class DataBuffer implements Serializable {
     //Append a short-array with [count] entries. This will be scaled to [-1:+1] and is used for audio data
     public void append(short value[], int count) {
         for (int i = 0; i < count; i++)
-            append((double)value[i]/(double)Short.MAX_VALUE, true); //Normalize to [-1:+1] and append
+            append((double)value[i]/(double)Short.MAX_VALUE, false); //Normalize to [-1:+1] and append
+        notifyListeners(false, false);
+    }
+
+    //Append a float-array with [count] entries. This is used for audio data
+    public void append(float value[], int count) {
+        for (int i = 0; i < count; i++)
+            append(value[i], false); //Normalize to [-1:+1] and append
         notifyListeners(false, false);
     }
 
@@ -338,7 +375,7 @@ public class DataBuffer implements Serializable {
             staticAndSet = true;
     }
 
-    //Retrieve the iterator of the BlockingQueue
+    //Retrieve the iterator
     public Iterator<Double> getIterator() {
         return buffer.iterator();
     }
