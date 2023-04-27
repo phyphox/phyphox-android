@@ -8,9 +8,9 @@ android {
         minSdkVersion 14
         targetSdkVersion 33
 
-        versionName "1.1.12-beta2"
+        versionName "1.1.12-beta3"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1011202 //1.01.12-02
+        versionCode 1011203 //1.01.12-03
 
         def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
@@ -75,7 +75,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat-resources:1.6.1'
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.core:core:1.9.0'
-    implementation 'androidx.fragment:fragment:1.5.6'
+    implementation 'androidx.fragment:fragment:1.5.7'
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
     //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md
