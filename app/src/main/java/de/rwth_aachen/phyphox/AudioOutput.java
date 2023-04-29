@@ -92,6 +92,8 @@ public class AudioOutput {
 
             double phaseStep = (double)f / (double)rate;
 
+            if (!Double.isFinite(phase))
+                phase = 0.0;
             for (int i = 0; i < end; i++) {
                 buffer[i] += a * sineLookup[(int)(phase * sineLookupSize) % sineLookupSize];
                 phase += phaseStep;
