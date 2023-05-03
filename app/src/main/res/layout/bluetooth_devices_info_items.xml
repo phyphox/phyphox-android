@@ -29,7 +29,6 @@
         android:id="@+id/battery_level"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/fl_remoteInfo"
         android:layout_toStartOf="@id/signal_strength"
         android:layout_toLeftOf="@+id/signal_strength"
         app:srcCompat="@drawable/battery_level_0" />
@@ -38,7 +37,6 @@
         android:id="@+id/signal_strength"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/fl_remoteInfo"
         android:layout_alignParentRight="true"
         app:srcCompat="@drawable/bluetooth_signal_na" />
 

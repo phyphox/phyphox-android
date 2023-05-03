@@ -1872,10 +1872,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
             btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight()).alpha(0.0f);
             announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
+            fl_announcer.setVisibility(View.GONE);
         }
         else{
             btn_moreInfo.setVisibility(View.INVISIBLE);
             announcer.setVisibility(View.INVISIBLE);
+            fl_announcer.setVisibility(View.GONE);
         }
 
 
