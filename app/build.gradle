@@ -81,6 +81,7 @@ dependencies {
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.core:core:1.9.0'
     implementation 'androidx.fragment:fragment:1.5.7'
+    implementation 'androidx.fragment:fragment-ktx:1.5.7'
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
     //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md

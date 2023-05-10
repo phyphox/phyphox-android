@@ -19,6 +19,7 @@ import android.text.style.MetricAffectingSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -34,6 +35,10 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.view.ViewCompat;
+import androidx.fragment.app.FragmentContainerView;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,6 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.Camera.CameraPreviewFragment;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Camera.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
@@ -69,6 +75,11 @@ public class ExpView implements Serializable{
     public static enum State {
         hidden, normal, maximized;
     }
+
+    //Remember? We are in the expView class.
+    //An experiment view has a name and holds a bunch of expViewElement instances
+    public String name;
+    public Vector<expViewElement> elements = new Vector<>();
 
     //Abstract expViewElement class defining the interface for any element of an experiment view
     public abstract class expViewElement implements Serializable, BufferNotification {
@@ -651,6 +662,7 @@ public class ExpView implements Serializable{
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         private boolean triggered = true;
+        private boolean editable = true;
 
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -691,6 +703,10 @@ public class ExpView implements Serializable{
         protected void setLimits(double min, double max) {
             this.min = min;
             this.max = max;
+        }
+
+        protected void setEditable(boolean editable){
+            this.editable = editable;
         }
 
         @Override
@@ -769,6 +785,11 @@ public class ExpView implements Serializable{
                 et.setKeyListener(DigitsKeyListener.getInstance(allowedDigits.toString()));
                 et.addTextChangedListener(new DecimalTextWatcher());
             }
+            if(!editable){
+                et.setInputType(InputType.TYPE_NULL);
+                et.setBackgroundColor(res.getColor(R.color.cardview_dark_background));
+            }
+
 
             //Start with NaN
             et.setText("NaN");
@@ -2259,8 +2280,63 @@ public class ExpView implements Serializable{
         }
     }
 
-    //Remember? We are in the expView class.
-    //An experiment view has a name and holds a bunch of expViewElement instances
-    public String name;
-    public Vector<expViewElement> elements = new Vector<>();
+    public class cameraElement extends expViewElement implements  Serializable {
+
+        private ExpViewFragment parent = null;
+        private CameraPreviewFragment cameraPreviewFragment = null;
+
+
+        protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+
+        @Override
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+           if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+               return;
+
+           super.createView(ll, c, res, parent, experiment);
+           this.parent = parent;
+
+            LayoutInflater inflater = LayoutInflater.from(c);
+            View inflateView = inflater.inflate(R.layout.camera_layout, ll, true);
+            FragmentContainerView containerView = inflateView.findViewById(R.id.fragmetContainerView);
+            cameraPreviewFragment = new CameraPreviewFragment();
+            FragmentManager fragmentManager = parent.getChildFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+            fragmentTransaction.add(containerView.getId(), cameraPreviewFragment);
+            fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+
+        }
+
+        @Override
+        protected String createViewHTML() {
+            return null;
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return null;
+        }
+
+        @Override
+        protected void maximize() {
+            super.maximize();
+        }
+
+        @Override
+        protected void restore() {
+            super.restore();
+        }
+
+        @Override
+        protected void onFragmentStop(PhyphoxExperiment experiment) {
+            super.onFragmentStop(experiment);
+
+        }
+    }
+
 }

@@ -111,7 +111,6 @@ import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
-import de.rwth_aachen.phyphox.Camera.CameraPreviewActivity;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -907,6 +906,13 @@ public class ExperimentList extends AppCompatActivity {
                                 if (!DepthInput.isAvailable()) {
                                     unavailableSensor = R.string.sensorDepth;
                                 }
+                                break;
+                            case "camera":
+                                PackageManager pm = this.getPackageManager();
+                                if(!inInput || unavailableSensor >= 0)
+                                    break;
+                                if(!pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY))
+                                    unavailableSensor = R.string.sensorCamera;
                                 break;
                             case "bluetooth":
                                 if ((!inInput && !inOutput) || unavailableSensor >= 0) {
@@ -2251,10 +2257,7 @@ public class ExperimentList extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 hideNewExperimentDialog();
-                //TODO change it
-                Intent intent = new Intent(ExperimentList.this, CameraPreviewActivity.class);
-                startActivity(intent);
-                //newExperimentDialog(thisRef);
+                newExperimentDialog(thisRef);
             }
         };
 

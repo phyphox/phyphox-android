@@ -33,11 +33,11 @@ public class PhotometricReader(private val imageEvaluation: ImageEvaluation) {
         // Convert BGR to HSV color space
         val hsv = Mat()
         val matImg: Mat = CameraHelper.imageToMat(img);
-        Imgproc.cvtColor(matImg, hsv, Imgproc.COLOR_BGR2HSV)
+        //Imgproc.cvtColor(matImg, hsv, Imgproc.COLOR_BGR2HSV)
 
         // Split HSV channels
         val channels = ArrayList<Mat>()
-        Core.split(hsv, channels)
+        Core.split(matImg, channels)
 
         // Extract the red channel
         val redChannel = channels[0]
@@ -58,9 +58,6 @@ public class PhotometricReader(private val imageEvaluation: ImageEvaluation) {
     }
 
     fun calculateAverageRedBrightness(img: Image) : Double{
-        // Load the OpenCV native library
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
-
         val matImg: Mat = CameraHelper.imageToMat(img);
 
         // Convert the image from BGR to HSV color space

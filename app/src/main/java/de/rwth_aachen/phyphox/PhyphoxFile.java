@@ -54,6 +54,7 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.Camera.CameraHelper;
+import de.rwth_aachen.phyphox.Camera.CameraInput;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
@@ -1337,7 +1338,8 @@ public abstract class PhyphoxFile {
                     newView.elements.add(infoe);
                     break;
                 }
-                case "separator": //An info element just shows some text
+                case "separator": {
+                    //An info element just shows some text
                     ExpView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
                     int c = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_60));
                     float height = (float)getDoubleAttribute("height", 0.1);
@@ -1345,6 +1347,7 @@ public abstract class PhyphoxFile {
                     separatore.setHeight(height);
                     newView.elements.add(separatore);
                     break;
+                }
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
@@ -1538,6 +1541,7 @@ public abstract class PhyphoxFile {
                     boolean signed = getBooleanAttribute("signed", true);
                     boolean decimal = getBooleanAttribute("decimal", true);
                     double defaultValue = getDoubleAttribute("default", 0.);
+                    boolean isEditable = getBooleanAttribute("editable", true);
 
                     double min = getDoubleAttribute("min", Double.NEGATIVE_INFINITY);
                     double max = getDoubleAttribute("max", Double.POSITIVE_INFINITY);
@@ -1555,6 +1559,7 @@ public abstract class PhyphoxFile {
                     ie.setDecimal(decimal); //May the user enter a decimal point (non-integer values)?
                     ie.setDefaultValue(defaultValue); //Default value before the user entered anything
                     ie.setLimits(min, max);
+                    ie.setEditable(isEditable);
                     newView.elements.add(ie);
                     break;
                 }
@@ -1586,13 +1591,21 @@ public abstract class PhyphoxFile {
                     newView.elements.add(be);
                     break;
                 }
-                case "depth-gui": //GUI for the depth input (LiDAR/ToF)
+                case "depth-gui": {
+                    //GUI for the depth input (LiDAR/ToF)
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     ExpView.depthGuiElement dge = newView.new depthGuiElement(label, null, null, parent.getResources()); //Two array inputs
                     dge.setAspectRatio(aspectRatio);
                     newView.elements.add(dge);
                     break;
-                case "svg": //A (parametric) svg image
+                }
+                case "camera-gui": {
+                    ExpView.cameraElement cameraElement = newView.new cameraElement(label, null, null, parent.getResources());
+                    newView.elements.add(cameraElement);
+                    break;
+                }
+                case "svg": {
+                    //A (parametric) svg image
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1626,6 +1639,7 @@ public abstract class PhyphoxFile {
 
                     newView.elements.add(svge);
                     break;
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
@@ -1838,6 +1852,80 @@ public abstract class PhyphoxFile {
                     }
 
                     break;
+                }
+                case "camera": {
+                    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                        throw new phyphoxFileException("Camera is only supported from API level 21 upwards (Android 5)");
+                    else {
+                        //Check for camera permission
+                        if (ContextCompat.checkSelfPermission(parent, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            //No permission? Request it (Android 6+, only)
+                            ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.CAMERA}, 0);
+                            throw new phyphoxFileException("Need permission to access the camera."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
+                        }
+
+                        String modeStr = getStringAttribute("mode");
+                        if (modeStr == null)
+                            modeStr = "closest";
+                        else
+                            modeStr = modeStr.toLowerCase();
+
+                        CameraInput.CameraExtractionMode mode;
+                        switch (modeStr) {
+                            case "closest": {
+                                mode = CameraInput.CameraExtractionMode.closest;
+                                break;
+                            }
+                            case "weighted": {
+                                mode = CameraInput.CameraExtractionMode.weighted;
+                                break;
+                            }
+                            case "average": {
+                                mode = CameraInput.CameraExtractionMode.average;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown depth extraction mode: " + modeStr, xpp.getLineNumber());
+                            }
+                        }
+
+                        double x1user = getDoubleAttribute("x1", 0.4);
+                        double x2user = getDoubleAttribute("x2", 0.6);
+                        double y1user = getDoubleAttribute("y1", 0.4);
+                        double y2user = getDoubleAttribute("y2", 0.6);
+
+                        //Careful: We will translate the user coordinate system to the camera coordinate system: x -> -y, y -> -x
+                        double x1 = 1.0 - y1user;
+                        double x2 = 1.0 - y2user;
+                        double y1 = 1.0 - x1user;
+                        double y2 = 1.0 - x2user;
+
+                        //Allowed input/output configuration
+                        ioBlockParser.ioMapping[] outputMapping = {
+                                new ioBlockParser.ioMapping() {{
+                                    name = "z";
+                                    asRequired = false;
+                                    minCount = 1;
+                                    maxCount = 1;
+                                    valueAllowed = false;
+                                }},
+                                new ioBlockParser.ioMapping() {{
+                                    name = "t";
+                                    asRequired = true;
+                                    minCount = 0;
+                                    maxCount = 1;
+                                    valueAllowed = false;
+                                }}
+                        };
+
+                        Vector<DataOutput> outputs = new Vector<>();
+                        (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
+
+                        experiment.cameraInput= new CameraInput(mode, (float) x1, (float) x2, (float) y1, (float) y2, outputs, experiment.dataLock, experiment.experimentTimeReference);
+
+                        break;
+
+                    }
                 }
                 case "bluetooth": { //A bluetooth input
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
