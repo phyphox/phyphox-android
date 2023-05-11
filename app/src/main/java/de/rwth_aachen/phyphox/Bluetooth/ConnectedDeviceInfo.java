@@ -15,10 +15,6 @@ public class ConnectedDeviceInfo {
 
     ConnectedDeviceInfo(){}
 
-    public enum SIGNAL_STRENGTH{
-        FULL_SIGNAL, HIGH, MEDIUM, LOW, NO_SIGNAL
-    }
-
     public String getDeviceId(){
         return deviceId;
     }

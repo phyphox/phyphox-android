@@ -551,6 +551,8 @@ public class Bluetooth implements Serializable {
      */
     private final BluetoothGattCallback btLeGattCallback = new BluetoothGattCallback() {
 
+        //As for some sensor device, the loop for onCharChange is too fast, which makes the UI to flicker.
+        // This count will prevent by skipping some callbacks to readRemoteRssi
         int countOnCharChanged = 0;
         final static int THRESHOLD_TO_READ_RSSI = 5;
 
