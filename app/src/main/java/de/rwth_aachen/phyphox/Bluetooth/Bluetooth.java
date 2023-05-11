@@ -30,7 +30,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
-import androidx.core.app.ActivityCompat;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -552,12 +551,21 @@ public class Bluetooth implements Serializable {
      */
     private final BluetoothGattCallback btLeGattCallback = new BluetoothGattCallback() {
 
+        int countOnCharChanged = 0;
+        final static int THRESHOLD_TO_READ_RSSI = 5;
+
+
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
-            add(new ReadRemoteRssi(gatt));
+            countOnCharChanged += 1;
+            if(countOnCharChanged == THRESHOLD_TO_READ_RSSI){
+                add(new ReadRemoteRssi(gatt));
+                countOnCharChanged = 0;
+            }
+
             executeNext();
             // retrieve data directly when the characteristic has changed
             byte[] data = characteristic.getValue();
