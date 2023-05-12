@@ -20,7 +20,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -135,10 +134,6 @@ public class Bluetooth implements Serializable {
     protected Handler mainHandler;
 
     private static Map<String, Object> connectedDeviceInfo = new HashMap<>();
-
-    public static Map<String, Object> getConnectedDeviceInfo() {
-        return connectedDeviceInfo;
-    }
 
     /**
      * Return true if Bluetooth Low Energy is supported on the device.
@@ -551,10 +546,9 @@ public class Bluetooth implements Serializable {
      */
     private final BluetoothGattCallback btLeGattCallback = new BluetoothGattCallback() {
 
-        //As for some sensor device, the loop for onCharChange is too fast, which makes the UI to flicker.
-        // This count will prevent by skipping some callbacks to readRemoteRssi
-        int countOnCharChanged = 0;
-        final static int THRESHOLD_TO_READ_RSSI = 5;
+        final static int TIME_THRESHOLD_TO_READ_RSSI = 1000; //in milliseconds, to limit the UI update
+        long previousTime = 0; // to track the time threshold to limit frequent update of UI.
+        BluetoothGattCharacteristic batteryLevelCharacteristic = null;
 
 
         @Override
@@ -562,10 +556,9 @@ public class Bluetooth implements Serializable {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
-            countOnCharChanged += 1;
-            if(countOnCharChanged == THRESHOLD_TO_READ_RSSI){
+
+            if(Experiment.isBluetoothConnectionSuccessful && updateRssi()){
                 add(new ReadRemoteRssi(gatt));
-                countOnCharChanged = 0;
             }
 
             executeNext();
@@ -617,15 +610,12 @@ public class Bluetooth implements Serializable {
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             super.onReadRemoteRssi(gatt, rssi, status);
 
-            int prevRssi = connectedDeviceInformation.getSignalStrength();
-            if (isNotRssiValueUpdateRequired(rssi, prevRssi) || !Experiment.bluetoothConnectionSuccessful) {
-                connectedDeviceInformation.setSignalStrength(rssi);
-                return;
+            ArrayList<ConnectedDeviceInfo> updatedList = getUpdatedList(connectedDeviceInfoArrayList, gatt.getDevice().getAddress(), rssi);
+            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(updatedList);
+
+            if (batteryLevelCharacteristic != null) {
+                add(new ReadCommand(btGatt, batteryLevelCharacteristic));
             }
-
-            Experiment.updateConnectedDeviceDelegate.updateConnectedDevice(
-                    getUpdatedList(connectedDeviceInfoArrayList, gatt.getDevice().getAddress(), rssi));
-
         }
 
 
@@ -707,31 +697,27 @@ public class Bluetooth implements Serializable {
             synchronized (isExecuting) {
                 isExecuting = false;
             }
-             BluetoothGattCharacteristic characteristic = gatt.getService(BATTERY_UUID).getCharacteristic(BATTERY_LEVEL);
-             if (characteristic != null) {
-                 add(new ReadCommand(btGatt, characteristic ));
+
+             batteryLevelCharacteristic = gatt.getService(BATTERY_UUID).getCharacteristic(BATTERY_LEVEL);
+             if (batteryLevelCharacteristic != null) {
+                 add(new ReadCommand(btGatt, batteryLevelCharacteristic));
              }
 
             executeNext();
         }
 
-        private boolean isNotRssiValueUpdateRequired(int rssi, int prevRssi){
-            if(rssi != prevRssi){
-                if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_FULL, ConnectedDeviceInfo.SIGNAL_HIGH)){
-                    return true;
-                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_HIGH, ConnectedDeviceInfo.SIGNAL_MEDIUM)){
-                    return true;
-                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_MEDIUM, ConnectedDeviceInfo.SIGNAL_LOW)){
-                    return true;
-                } else if(hasSignalLevelChanged(prevRssi, rssi, ConnectedDeviceInfo.SIGNAL_LOW, ConnectedDeviceInfo.NO_SIGNAL)){
-                    return true;
-                } else return prevRssi <= ConnectedDeviceInfo.NO_SIGNAL && prevRssi >= -100;
+        private boolean updateRssi(){
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - previousTime >= TIME_THRESHOLD_TO_READ_RSSI) {
+                previousTime = currentTime;
+                return true;
             }
             return false;
         }
 
         private ArrayList<ConnectedDeviceInfo> getUpdatedList(ArrayList<ConnectedDeviceInfo> connectedDeviceInfoArrayList, String address, int rssi){
             connectedDeviceInformation.setSignalStrength(rssi);
+            // updates the current item with new item.
             if(connectedDeviceInfoArrayList != null){
                 boolean containesId = connectedDeviceInfoArrayList.stream()
                         .anyMatch(
@@ -752,13 +738,6 @@ public class Bluetooth implements Serializable {
             }
             return connectedDeviceInfoArrayList;
 
-        }
-
-        private boolean hasSignalLevelChanged(int prevRssi, int rssi, int upperBound, int lowerBound){
-            boolean isValueInSignalRange = (rssi <= upperBound && rssi > lowerBound);
-            boolean isValueInPreviousSignalRange = (prevRssi <= upperBound && prevRssi > lowerBound);
-
-            return prevRssi > upperBound && isValueInSignalRange  || rssi > upperBound && isValueInPreviousSignalRange ;
         }
     }; // end of BluetoothGattCallback
 

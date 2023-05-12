@@ -610,17 +610,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         connectNetworkConnections();
     }
 
+    public static boolean isBluetoothConnectionSuccessful = false;
+
     // connects to the bluetooth devices in an async task
     // if startMeasurement is true the measurement will be started automatically once all devices are connected
     public void connectBluetoothDevices(boolean startMeasurement, final boolean timed) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
+                isBluetoothConnectionSuccessful = false;
                 // connect all bluetooth devices with an asyncTask
                 final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
                 btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
 
                 // define onSuccess
                 btTask.onSuccess = () -> {
+                    isBluetoothConnectionSuccessful = true;
                     showBluetoothConnectedDeviceInfo();
 
                     if(startMeasurement){
@@ -644,7 +648,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     if (btTask.progress != null) {
                         btTask.progress.show();
                     }
-                    newBtTask.onSuccess = this::showBluetoothConnectedDeviceInfo;
+                    newBtTask.onSuccess = () -> {
+                        isBluetoothConnectionSuccessful = true;
+                        showBluetoothConnectedDeviceInfo();
+                    };
                     newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
 
                 };
@@ -1986,7 +1993,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     Runnable runDeviceUpdate = new Runnable() {
         @Override
         public void run() {
+            Log.d("ConnectedDeivce", "runDeviceUpdate: "+connectedDevices);
             if(deviceInfoAdapter != null){
+                Log.d("ConnectedDeivce", "runDeviceUpdate: deviceInfoAdapter:  "+connectedDevices);
                 deviceInfoAdapter.update(connectedDevices);
             }
         }
@@ -1995,6 +2004,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     @Override
     public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
         connectedDevices = connectedDeviceInfos;
+        Log.d("ConnectedDeivce", "updateConnectedDevice: "+connectedDeviceInfos);
         runOnUiThread(runDeviceUpdate);
     }
 }
