@@ -16,6 +16,7 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -33,17 +34,22 @@ import android.widget.Spinner;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatEditText;
+import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.FragmentContainerView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 
+import com.google.android.material.slider.RangeSlider;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Camera.CameraPreviewFragment;
@@ -664,9 +670,12 @@ public class ExpView implements Serializable{
         private boolean triggered = true;
         private boolean editable = true;
 
+        private String label;
+
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
+            this.label = label;
             this.unit = "";
             this.factor = 1.;
         }
@@ -720,6 +729,10 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
             //Create a row holding the label and the textEdit
+            if(Objects.equals(label, "Shutter speed")){
+                ll.addView(createSlider(c));
+                return;
+            }
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -839,6 +852,16 @@ public class ExpView implements Serializable{
                 }
             });
 
+        }
+
+        private View createSlider(Context c) {
+            AppCompatSeekBar seekBar = new AppCompatSeekBar(c);
+            seekBar.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            ));
+
+            return seekBar;
         }
 
         @Override
