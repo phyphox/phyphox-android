@@ -6,6 +6,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.os.Build
+import android.util.Log
 import android.util.Size
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
@@ -49,7 +50,7 @@ class CameraViewModel(private val application: Application): ViewModel() {
     val cameraUiState: Flow<CameraUiState> = _cameraUiState
     val imageAnalysisUiState: Flow<ImageAnalysisState> = _imageAnalysisUiState
 
-    val cameraInput: CameraInput = CameraInput()
+    lateinit var cameraInput: CameraInput
 
     fun initializeCamera() {
 
@@ -116,7 +117,7 @@ class CameraViewModel(private val application: Application): ViewModel() {
 
         val cameraSelector = cameraLensToSelector(currentCameraUiState.cameraLens)
 
-        preview = setUpPreviewWithExposure(CameraMetadata.CONTROL_AE_MODE_ON, 600, 100000000,0.5f )
+        preview = setUpPreviewWithExposure(CameraMetadata.CONTROL_AE_MODE_ON)
             .setTargetResolution(Size(640, 480)) // Set the desired resolution
             .build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
@@ -185,7 +186,7 @@ class CameraViewModel(private val application: Application): ViewModel() {
 
 
     @SuppressLint("UnsafeOptInUsageError")
-    private fun setUpPreviewWithExposure(exposureState: Int, iso: Int, shutterSpeed: Long, aperture: Float ): Preview.Builder{
+    fun setUpPreviewWithExposure(exposureState: Int): Preview.Builder{
         val previewBuilder = Preview.Builder()
         val extender = Camera2Interop.Extender(previewBuilder)
 
@@ -194,10 +195,19 @@ class CameraViewModel(private val application: Application): ViewModel() {
         val exposureTimeRange = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
         val apertureRange = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)
 
+        cameraInput.apertureRange = apertureRange
+        cameraInput.shutterSpeedRange = exposureTimeRange
+        cameraInput.isoRange = sensitivityRange
+
+        var iso: Int? = cameraInput.isoCurrentValue
+        var shutterSpeed: Long? = cameraInput.shutterSpeedCurrentValue
+        var aperture: Float? = cameraInput.apertureCurrentValue
+
+
         extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, exposureState)
-        extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
-        extender.setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutterSpeed)
-        extender.setCaptureRequestOption(CaptureRequest.LENS_APERTURE, aperture)
+        if(iso != null) extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
+        if(shutterSpeed != null) extender.setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutterSpeed)
+        if(aperture !=null) extender.setCaptureRequestOption(CaptureRequest.LENS_APERTURE, aperture)
 
         return previewBuilder
     }

@@ -11,11 +11,13 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
+import android.util.Range;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -668,6 +670,9 @@ public class ExpView implements Serializable{
 
         private String label;
 
+        private PhyphoxExperiment phyphoxExperiment;
+
+
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
@@ -724,8 +729,9 @@ public class ExpView implements Serializable{
         //Create the view in Android and append it to the linear layout
         protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
-            //Create a row holding the label and the textEdit
-            if(Objects.equals(label, "Shutter speed")){
+            phyphoxExperiment = experiment;
+            //Create a row holding the label and the Seekbar
+            if(Objects.equals(label, "Shutter Speed") || Objects.equals(label, "ISO") || Objects.equals(label, "Aperture") ){
                 ll.addView(createSlider(c));
                 return;
             }
@@ -850,14 +856,73 @@ public class ExpView implements Serializable{
 
         }
 
-        private View createSlider(Context c) {
-            AppCompatSeekBar seekBar = new AppCompatSeekBar(c);
-            seekBar.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            ));
+        private LinearLayout createSlider(Context c) {
 
-            return seekBar;
+            LinearLayout layout = new LinearLayout(c);
+            layout.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setPadding(0,10,0,10);
+
+            TextView textRow = new TextView(c);
+            textRow.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            textRow.setPadding(3,3,3,3);
+            textRow.setSingleLine();
+            textRow.setText(label);
+            textRow.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
+
+            LinearLayout row = new LinearLayout(c);
+            row.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(0,10,0,10);
+
+            TextView textView = new TextView(c);
+            textView.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            textView.setPadding(3,3,3,3);
+            textView.setSingleLine();
+            textView.setText("0");
+            textView.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
+
+            AppCompatSeekBar seekBar = new AppCompatSeekBar(c);
+            LinearLayout.LayoutParams seekBarParams = new LinearLayout.LayoutParams(
+                    0, // Set width to 0
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1 // Set weight to 1 for equal distribution
+            );
+            seekBarParams.setMargins(16, 0, 16, 0);
+            seekBar.setLayoutParams(seekBarParams);
+            seekBar.setPadding(0,0,0,0);
+            seekBar.setMax(100);
+            seekBar.setProgress(60);
+
+            TextView textView1 = new TextView(c);
+            textView1.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            textView1.setPadding(3,3,3,3);
+            textView1.setGravity(Gravity.END);
+            textView1.setSingleLine();
+            textView1.setText("100");
+            textView1.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
+
+            row.addView(textView);
+            row.addView(seekBar);
+            row.addView(textView1);
+
+            layout.addView(textRow);
+            layout.addView(row);
+
+            return layout;
         }
 
         @Override
@@ -2324,6 +2389,10 @@ public class ExpView implements Serializable{
             cameraPreviewFragment = new CameraPreviewFragment();
             FragmentManager fragmentManager = parent.getChildFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+            Bundle args = new Bundle();
+            args.putSerializable("experiment", experiment);
+            cameraPreviewFragment.setArguments(args);
 
             fragmentTransaction.add(containerView.getId(), cameraPreviewFragment);
             fragmentTransaction.addToBackStack(null);

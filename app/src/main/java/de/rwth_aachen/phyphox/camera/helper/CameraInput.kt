@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox.camera.helper
 
+import android.util.Range
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
@@ -11,10 +12,10 @@ class CameraInput() {
 
     var cameraExtractionMode: CameraExtractionMode = CameraExtractionMode.average
 
-    public  var x1: Float = 0.4f
-    public var x2: Float = 0.6f
-    public var y1: Float = 0.4f
-    public var y2: Float = 0.6f
+    var x1: Float = 0.4f
+    var x2: Float = 0.6f
+    var y1: Float = 0.4f
+    var y2: Float = 0.6f
 
     var w = 0
     var h = 0
@@ -24,7 +25,17 @@ class CameraInput() {
 
     lateinit var buffers: Vector<DataOutput>
 
-    public var cameraSettings = ArrayList<SettingMode>()
+    var cameraSettings = ArrayList<SettingMode>()
+
+    var isoRange:  Range<Int>? = null
+    var isoCurrentValue: Int? = null
+
+    var shutterSpeedRange:  Range<Long>? = null
+    var shutterSpeedCurrentValue: Long? = null
+
+    var apertureRange:  FloatArray? = null
+    var apertureCurrentValue: Float? = null
+
 
     constructor(cameraExtractionMode: CameraExtractionMode,
                 x1: Float,

@@ -10,13 +10,17 @@ import android.graphics.RectF
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.camera.view.PreviewView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.slider.RangeSlider
+import com.google.android.material.slider.Slider
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
@@ -41,8 +45,8 @@ class CameraPreviewScreen(private val root: View) {
 
     private val switchLensButton = root.findViewById<ImageView>(R.id.switchLens)
 
-    var width = 1000
-    var height = 1000
+    var width = 800
+    var height = 800
 
     var transformation = Matrix()
 

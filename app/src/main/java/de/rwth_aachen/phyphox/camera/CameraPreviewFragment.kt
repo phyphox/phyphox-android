@@ -3,10 +3,7 @@ package de.rwth_aachen.phyphox.camera
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.graphics.Matrix
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,9 +12,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.camera.core.Camera
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -26,29 +20,25 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import de.rwth_aachen.phyphox.camera.helper.PhotometricReader
-import de.rwth_aachen.phyphox.camera.model.PermissionState
-import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
-import de.rwth_aachen.phyphox.MarkerOverlayView
+import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
+import de.rwth_aachen.phyphox.camera.model.PermissionState
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
+import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModelFactory
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.lang.Exception
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
-
-    var cameraInput: CameraInput = CameraInput()
 
     var width = 1000
     var height = 1000
@@ -65,6 +55,8 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
     // tracks the current view state
     private val cameraScreenViewState = MutableStateFlow(CameraScreenViewState())
 
+    private var experiment: PhyphoxExperiment? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -72,12 +64,20 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
         savedInstanceState: Bundle?
     ): View? {
 
+
         cameraViewModel = ViewModelProvider(
             this,
             CameraViewModelFactory(
                 application = requireActivity().application
             )
         )[CameraViewModel::class.java]
+
+        // Retrieve the object from the arguments
+        val args = arguments
+        if (args != null) {
+            experiment = args.getSerializable("experiment") as PhyphoxExperiment?
+            cameraViewModel.cameraInput = experiment?.cameraInput!!
+        }
 
         // initialize the permission state flow with the current camera permission status
         permissionState = MutableStateFlow(getCurrentPermissionState())
@@ -88,11 +88,6 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
                 permissionState.emit(getCurrentPermissionState())
             }
         }
-
-        cameraInput.x1 = 0.6f;
-        cameraInput.x2 = 0.4f;
-        cameraInput.y1 = 0.6f;
-        cameraInput.y2 = 0.4f;
         return inflater.inflate(R.layout.fragment_camera, container, false)
 
     }
