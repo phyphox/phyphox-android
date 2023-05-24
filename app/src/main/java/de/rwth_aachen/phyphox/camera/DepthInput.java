@@ -1,6 +1,5 @@
-package de.rwth_aachen.phyphox.Camera;
+package de.rwth_aachen.phyphox.camera;
 
-import android.app.Activity;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCaptureSession;
@@ -15,7 +14,6 @@ import android.util.Log;
 import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 

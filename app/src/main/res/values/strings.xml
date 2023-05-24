@@ -309,6 +309,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="cameraBackFacing">Back facing camera</string>
     <string name="cameraExternal">External camera</string>
 
+    <string name="camera_not_ready">Camera Not Ready</string>
+
     <string name="settingsDefault">Default</string>
 
     <string name="settings">Settings</string>

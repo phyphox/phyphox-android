@@ -1,37 +1,20 @@
-package de.rwth_aachen.phyphox.Camera;
+package de.rwth_aachen.phyphox.camera;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CaptureRequest;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.util.Range;
-import android.util.Size;
 import android.view.MotionEvent;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
-
-import androidx.annotation.RequiresApi;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 import de.rwth_aachen.phyphox.MarkerOverlayView;
 

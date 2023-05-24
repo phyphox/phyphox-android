@@ -1,23 +1,26 @@
-package de.rwth_aachen.phyphox.Camera
+package de.rwth_aachen.phyphox.camera
 
-import android.os.Build
-import org.json.JSONArray
-import org.json.JSONObject
-import org.json.JSONException
-import androidx.camera.core.ImageProxy
-import org.opencv.core.Mat
-import org.opencv.core.CvType
-import org.opencv.imgproc.Imgproc
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
-import android.hardware.camera2.*
+import android.hardware.camera2.CameraAccessException
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.media.Image
+import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.camera.core.ImageProxy
+import de.rwth_aachen.phyphox.camera.model.SettingMode
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 import org.opencv.android.Utils
+import org.opencv.core.CvType
+import org.opencv.core.Mat
+import org.opencv.imgproc.Imgproc
 import java.nio.ByteBuffer
-import java.util.HashMap
-import java.util.HashSet
+import java.util.Arrays
+
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 object CameraHelper {
@@ -241,5 +244,35 @@ object CameraHelper {
         buffer.rewind()
         bitmap.copyPixelsToBuffer(buffer)
         return image
+    }
+
+    /**
+     * Convert the array-like string to arrayList
+     * For eg: from "[a,b,c]" to [SettingMode.Iso,SettingMode.aperture,SettingMode.shutterSpeed]
+     */
+    @JvmStatic
+    fun convertInputSettingToSettingMode(inputString: String): ArrayList<SettingMode> {
+        // Remove the square brackets from the input string
+        val content = inputString.substring(1, inputString.length - 1)
+
+        // Split the string by comma and trim the elements
+        val elements =
+            content.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+                .toTypedArray()
+        for (i in elements.indices) {
+            elements[i] = elements[i].trim { it <= ' ' }
+        }
+
+        val availableCameraSettings = ArrayList(Arrays.asList(*elements))
+        val availableSettingModes: ArrayList<SettingMode> = ArrayList()
+        for (cameraSetting in availableCameraSettings) {
+            when (cameraSetting) {
+                "iso" -> availableSettingModes.add(SettingMode.ISO)
+                "shutter speed" -> availableSettingModes.add(SettingMode.SHUTTER_SPEED)
+                "aperture" -> availableSettingModes.add(SettingMode.APERTURE)
+            }
+        }
+
+        return availableSettingModes;
     }
 }

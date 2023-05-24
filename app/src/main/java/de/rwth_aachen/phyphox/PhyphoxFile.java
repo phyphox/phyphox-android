@@ -38,6 +38,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,9 +54,10 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
-import de.rwth_aachen.phyphox.Camera.CameraHelper;
-import de.rwth_aachen.phyphox.Camera.CameraInput;
-import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.CameraHelper;
+import de.rwth_aachen.phyphox.camera.CameraInput;
+import de.rwth_aachen.phyphox.camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.model.SettingMode;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttJson;
@@ -1918,10 +1920,13 @@ public abstract class PhyphoxFile {
                                 }}
                         };
 
+                        String availableCameraSettings = getStringAttribute("setting");
+                        ArrayList<SettingMode> availableSettings = CameraHelper.convertInputSettingToSettingMode(availableCameraSettings);
+
                         Vector<DataOutput> outputs = new Vector<>();
                         (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
-                        experiment.cameraInput= new CameraInput(mode, (float) x1, (float) x2, (float) y1, (float) y2, outputs, experiment.dataLock, experiment.experimentTimeReference);
+                        experiment.cameraInput= new CameraInput(mode, (float) x1, (float) x2, (float) y1, (float) y2, outputs, experiment.dataLock, experiment.experimentTimeReference, availableSettings);
 
                         break;
 

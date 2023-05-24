@@ -7,7 +7,6 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.SystemClock;
 import android.util.Log;
 
 import org.w3c.dom.Attr;
@@ -43,8 +42,8 @@ import javax.xml.transform.stream.StreamResult;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
-import de.rwth_aachen.phyphox.Camera.CameraInput;
-import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.CameraInput;
+import de.rwth_aachen.phyphox.camera.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment

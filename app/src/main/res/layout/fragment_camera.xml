@@ -18,4 +18,50 @@
         android:layout_height="wrap_content"
         />
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/switchLens"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_margin="32dp"
+        android:background="@drawable/circle_background"
+        android:padding="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_flip_camera_android"
+        />
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/permissionsRationaleContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/phyphox_black_100"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/permissionsRationale"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:textColor="@color/phyphox_white_100"
+            />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/permissionsRequestButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/phyphox_white_100"
+            android:text="Turn On"
+            android:textColor="@color/phyphox_black_100"
+             />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
 </FrameLayout>

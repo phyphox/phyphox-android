@@ -16,7 +16,6 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -34,7 +33,6 @@ import android.widget.Spinner;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.core.view.ViewCompat;
@@ -43,8 +41,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 
-import com.google.android.material.slider.RangeSlider;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +48,9 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.Camera.CameraPreviewFragment;
-import de.rwth_aachen.phyphox.Camera.DepthInput;
-import de.rwth_aachen.phyphox.Camera.DepthPreview;
+import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
+import de.rwth_aachen.phyphox.camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;

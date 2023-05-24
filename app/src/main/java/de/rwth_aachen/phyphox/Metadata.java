@@ -14,15 +14,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.UUID;
 
-import de.rwth_aachen.phyphox.Camera.CameraHelper;
-import de.rwth_aachen.phyphox.Camera.DepthInput;
-import de.rwth_aachen.phyphox.ExperimentList;
-import de.rwth_aachen.phyphox.PhyphoxFile;
-import de.rwth_aachen.phyphox.SensorInput;
+import de.rwth_aachen.phyphox.camera.CameraHelper;
+import de.rwth_aachen.phyphox.camera.DepthInput;
 
 import static android.content.Context.SENSOR_SERVICE;
-
-import androidx.annotation.RequiresApi;
 
 public class Metadata {
 
