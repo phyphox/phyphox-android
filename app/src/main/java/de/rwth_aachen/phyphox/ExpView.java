@@ -543,8 +543,8 @@ public class ExpView implements Serializable{
             //Create the text as textView
             TextView textView = new TextView(c);
             LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
 //            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, context.getDimension(R.dimen.info_element_margin), context.getDisplayMetrics());
 //            lllp.setMargins(0, margin, 0, margin);
             textView.setLayoutParams(lllp);
