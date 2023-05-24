@@ -11,18 +11,11 @@
         android:layout_height="400sp"
         app:scaleType="fillCenter"/>
 
-    <FrameLayout
-        android:id="@+id/overlayFrameLayout"
-        android:layout_gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        />
-
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/switchLens"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_margin="32dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="10dp"
         android:background="@drawable/circle_background"
         android:padding="4dp"
         app:layout_constraintBottom_toBottomOf="parent"

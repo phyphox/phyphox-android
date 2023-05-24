@@ -112,10 +112,9 @@ class CameraViewModel(private val application: Application): ViewModel() {
 
     private fun startCamera(previewView: PreviewView, cameraProvider: ProcessCameraProvider, lifecycleOwner: LifecycleOwner){
         cameraProvider.unbindAll()
+        val currentCameraUiState = _cameraUiState.value
 
-        val cameraSelector = CameraSelector.Builder()
-            .requireLensFacing(CameraSelector.LENS_FACING_BACK) //TODO support it for both lens
-            .build()
+        val cameraSelector = cameraLensToSelector(currentCameraUiState.cameraLens)
 
         preview = setUpPreviewWithExposure(CameraMetadata.CONTROL_AE_MODE_ON, 600, 100000000,0.5f )
             .setTargetResolution(Size(640, 480)) // Set the desired resolution

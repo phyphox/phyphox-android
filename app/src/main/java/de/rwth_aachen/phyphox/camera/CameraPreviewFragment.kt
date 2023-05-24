@@ -48,24 +48,10 @@ import java.lang.Exception
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
 
-    private lateinit var previewView: PreviewView
-    private var camera: Camera? = null
-    var imageAnalysis: ImageAnalysis? = null
     var cameraInput: CameraInput = CameraInput()
-
-    lateinit var overlayView: MarkerOverlayView
-    var transformation = Matrix()
-
-    var panningIndexX = 0
-    var panningIndexY = 0
 
     var width = 1000
     var height = 1000
-
-    private lateinit var cameraDevice: CameraDevice
-    private lateinit var cameraManager: CameraManager
-
-    private var photometricReader: PhotometricReader = PhotometricReader(PhotometricReader.ImageEvaluation.RedBrightness)
 
     val TAG = "CameraPreviewFragment"
     // view model for operating on the camera and capturing a photo

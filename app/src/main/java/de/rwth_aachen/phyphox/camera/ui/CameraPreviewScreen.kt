@@ -33,7 +33,6 @@ class CameraPreviewScreen(private val root: View) {
 
     val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
     private val mainFrameLayout: FrameLayout = root.findViewById(R.id.mainFrameLayout)
-    private val overlayFrameLayout: FrameLayout = root.findViewById(R.id.overlayFrameLayout)
     private val permissionsRationaleContainer: View =
         root.findViewById(R.id.permissionsRationaleContainer)
     private val permissionsRationale: TextView = root.findViewById(R.id.permissionsRationale)
@@ -52,7 +51,7 @@ class CameraPreviewScreen(private val root: View) {
 
     var cameraInput: CameraInput = CameraInput()
 
-    lateinit var overlayView: MarkerOverlayView
+    var overlayView: MarkerOverlayView
 
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
     val action: Flow<CameraUiAction> = _action
