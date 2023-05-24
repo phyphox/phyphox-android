@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.camera
+package de.rwth_aachen.phyphox.camera.helper
 
 import android.graphics.Bitmap
 import android.graphics.ImageFormat

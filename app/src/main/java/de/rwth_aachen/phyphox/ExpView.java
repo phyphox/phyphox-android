@@ -49,8 +49,8 @@ import java.util.Objects;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
-import de.rwth_aachen.phyphox.camera.DepthInput;
-import de.rwth_aachen.phyphox.camera.DepthPreview;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
+import de.rwth_aachen.phyphox.camera.depth.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;

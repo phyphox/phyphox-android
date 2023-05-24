@@ -42,8 +42,8 @@ import javax.xml.transform.stream.StreamResult;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
-import de.rwth_aachen.phyphox.camera.CameraInput;
-import de.rwth_aachen.phyphox.camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.helper.CameraInput;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment

@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.camera
+package de.rwth_aachen.phyphox.camera.helper
 
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.DataBuffer

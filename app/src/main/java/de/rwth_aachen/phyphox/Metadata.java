@@ -14,8 +14,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.UUID;
 
-import de.rwth_aachen.phyphox.camera.CameraHelper;
-import de.rwth_aachen.phyphox.camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 
 import static android.content.Context.SENSOR_SERVICE;
 

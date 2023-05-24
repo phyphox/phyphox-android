@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.camera;
+package de.rwth_aachen.phyphox.camera.depth;
 
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -27,6 +27,7 @@ import java.util.concurrent.locks.Lock;
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.DataOutput;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 
 public class DepthInput {
     public enum DepthExtractionMode {

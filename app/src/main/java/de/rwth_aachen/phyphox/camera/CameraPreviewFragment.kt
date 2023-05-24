@@ -17,12 +17,9 @@ import android.os.Bundle
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.TextureView
 import android.view.View
-import android.view.View.OnTouchListener
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
@@ -42,11 +39,12 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.common.util.concurrent.ListenableFuture
+import de.rwth_aachen.phyphox.camera.helper.PhotometricReader
 import de.rwth_aachen.phyphox.camera.model.PermissionState
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
+import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
@@ -58,7 +56,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.lang.Exception
-import java.util.concurrent.ExecutionException
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)

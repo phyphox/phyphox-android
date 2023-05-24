@@ -1,8 +1,6 @@
-package de.rwth_aachen.phyphox.camera;
+package de.rwth_aachen.phyphox.camera.depth;
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
