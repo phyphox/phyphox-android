@@ -63,7 +63,7 @@ public abstract class ColorConverter {
         if (max == min) {
             h = 0;
         } else if (max == r) {
-            h = (g - b + d * 6) / (6 * d);
+            h = (g - b + d * (g < b ? 6 : 0)) / (6 * d);
         } else if (max == g) {
             h = (b - r + d * 2) / (6 * d);
         } else {
@@ -79,8 +79,8 @@ public abstract class ColorConverter {
     private static String hsvToRgb(double h, double s, double v) {
         int r, g, b, i;
         double f, p, q, t;
-        i = (int) Math.floor(h * 6);
-        f = h * 6 - i;
+        i = (int) Math.floor(h * 6/HUE_MAX);
+        f = h * 6/HUE_MAX - i;
         p = v * (1 - s);
         q = v * (1 - f * s);
         t = v * (1 - (1 - f) * s);
