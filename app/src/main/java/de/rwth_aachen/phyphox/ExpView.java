@@ -737,6 +737,7 @@ public class ExpView implements Serializable{
             phyphoxExperiment = experiment;
             root_ll = ll;
             this.c = c;
+            layout = new LinearLayout(c);
             if(Objects.equals(label, "Shutter Speed")){
                 phyphoxExperiment.cameraInput.setShutterSpeedCurrentValue((long) defaultValue);
                 createSlider(0,0,0, false);
@@ -883,8 +884,6 @@ public class ExpView implements Serializable{
         }
 
         public void createSlider(int minValue, int maxValue, int currentValue, boolean visibility) {
-
-            layout = new LinearLayout(c);
             layout.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -976,6 +975,7 @@ public class ExpView implements Serializable{
             if(visibility) layout.setVisibility(VISIBLE);
             else layout.setVisibility(INVISIBLE);
 
+            root_ll.removeView(layout);
             root_ll.addView(layout);
 
         }
