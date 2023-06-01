@@ -10,28 +10,28 @@ import android.graphics.RectF
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatSeekBar
 import androidx.camera.view.PreviewView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.slider.RangeSlider
-import com.google.android.material.slider.Slider
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
+import de.rwth_aachen.phyphox.camera.viewstate.CameraSettingViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
-class CameraPreviewScreen(private val root: View) {
+class CameraPreviewScreen(private val root: View, private val cameraInput: CameraInput) {
 
     private val context: Context = root.context
 
@@ -43,6 +43,8 @@ class CameraPreviewScreen(private val root: View) {
     private val permissionsRequestButton: TextView =
         root.findViewById(R.id.permissionsRequestButton)
 
+    var cameraSettingSliders : MutableMap<String,AppCompatSeekBar> = HashMap()
+
     private val switchLensButton = root.findViewById<ImageView>(R.id.switchLens)
 
     var width = 800
@@ -53,7 +55,7 @@ class CameraPreviewScreen(private val root: View) {
     var panningIndexX = 0
     var panningIndexY = 0
 
-    var cameraInput: CameraInput = CameraInput()
+    //var cameraInput: CameraInput
 
     var overlayView: MarkerOverlayView
 
@@ -69,6 +71,37 @@ class CameraPreviewScreen(private val root: View) {
         switchLensButton.setOnClickListener {
             switchLens(root, it)
         }
+
+
+        cameraSettingSliders["ISO"]?.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                Log.d("CameraSetting", progress.toString())
+                //cameraInput.isoCurrentValue. = progress
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+
+        cameraSettingSliders["Shutter Speed"]?.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                Log.d("CameraSetting", progress.toString())
+                cameraInput.shutterSpeedCurrentValue = progress.toLong()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+
+        cameraSettingSliders["Aperture"]?.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                Log.d("CameraSetting", progress.toString())
+                cameraInput.apertureCurrentValue = progress.toFloat()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -213,9 +246,15 @@ class CameraPreviewScreen(private val root: View) {
         }
     }
 
+    fun prepareCameraSettings(){
+        root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            _action.emit(CameraUiAction.LoadCameraSettings)
+        }
+    }
+
     fun setCameraScreenViewState(state: CameraScreenViewState){
         setCameraPreviewScreenViewState(state.cameraPreviewScreenViewState)
-        //setCameraSettingViewState(state.cameraSettingViewState)
+        setCameraSettingViewState(state.cameraSettingViewState)
 
     }
 
@@ -225,18 +264,18 @@ class CameraPreviewScreen(private val root: View) {
     }
 
 
-    /**
+
     private fun setCameraSettingViewState(state: CameraSettingViewState){
-        isoSlider.isVisible = state.isoSliderViewState.isVisible
-        isoSlider.isEnabled = state.isoSliderViewState.isEnabled
+        cameraSettingSliders["ISO"]?.isVisible = state.isoSliderViewState.isVisible
+        cameraSettingSliders["ISO"]?.isEnabled = state.isoSliderViewState.isEnabled
 
-        shutterSpeedSlider.isVisible = state.shutterSpeedSliderViewState.isVisible
-        shutterSpeedSlider.isEnabled = state.shutterSpeedSliderViewState.isEnabled
+        cameraSettingSliders["Shutter Speed"]?.isVisible = state.shutterSpeedSliderViewState.isVisible
+        cameraSettingSliders["Shutter Speed"]?.isEnabled = state.shutterSpeedSliderViewState.isEnabled
 
-        apertureSlider.isVisible = state.apertureSliderViewState.isVisible
-        apertureSlider.isEnabled = state.apertureSliderViewState.isEnabled
+        cameraSettingSliders["Aperture"]?.isVisible = state.apertureSliderViewState.isVisible
+        cameraSettingSliders["Aperture"]?.isEnabled = state.apertureSliderViewState.isEnabled
     }
-    */
+
 
 
 }

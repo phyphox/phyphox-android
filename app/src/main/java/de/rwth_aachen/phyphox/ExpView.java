@@ -17,7 +17,7 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
-import android.util.Range;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -31,6 +31,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -668,9 +669,13 @@ public class ExpView implements Serializable{
         private boolean triggered = true;
         private boolean editable = true;
 
-        private String label;
+        public String label;
 
         private PhyphoxExperiment phyphoxExperiment;
+
+        private LinearLayout root_ll;
+        private Context c;
+        public AppCompatSeekBar seekBar;
 
 
         //No special constructor. Just some defaults.
@@ -730,9 +735,21 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
             phyphoxExperiment = experiment;
-            //Create a row holding the label and the Seekbar
-            if(Objects.equals(label, "Shutter Speed") || Objects.equals(label, "ISO") || Objects.equals(label, "Aperture") ){
-                ll.addView(createSlider(c));
+            root_ll = ll;
+            this.c = c;
+            if(Objects.equals(label, "Shutter Speed")){
+                phyphoxExperiment.cameraInput.setShutterSpeedCurrentValue((long) defaultValue);
+                createSlider(0,0,0, false);
+                return;
+            }
+            if(Objects.equals(label, "ISO")){
+                phyphoxExperiment.cameraInput.setIsoCurrentValue((int) defaultValue);
+                createSlider(0,0,0, false);
+                return;
+            }
+            if(Objects.equals(label, "Aperture")){
+                phyphoxExperiment.cameraInput.setApertureCurrentValue((float) defaultValue);
+                createSlider(0,0,0, false);
                 return;
             }
             LinearLayout row = new LinearLayout(c);
@@ -833,7 +850,7 @@ public class ExpView implements Serializable{
             rootView.setFocusableInTouchMode(true);
 
             //Add the row to the main linear layout passed to this function
-            ll.addView(rootView);
+            root_ll.addView(rootView);
 
             //Add a listener to the edit box to keep track of the focus
             et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -856,9 +873,18 @@ public class ExpView implements Serializable{
 
         }
 
-        private LinearLayout createSlider(Context c) {
+        LinearLayout layout;
 
-            LinearLayout layout = new LinearLayout(c);
+        public void removeSlider(){
+            if(layout != null){
+                layout.removeAllViews();
+            }
+
+        }
+
+        public void createSlider(int minValue, int maxValue, int currentValue, boolean visibility) {
+
+            layout = new LinearLayout(c);
             layout.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -889,10 +915,10 @@ public class ExpView implements Serializable{
             ));
             textView.setPadding(3,3,3,3);
             textView.setSingleLine();
-            textView.setText("0");
+            textView.setText(String.valueOf(minValue));
             textView.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
 
-            AppCompatSeekBar seekBar = new AppCompatSeekBar(c);
+            seekBar = new AppCompatSeekBar(c);
             LinearLayout.LayoutParams seekBarParams = new LinearLayout.LayoutParams(
                     0, // Set width to 0
                     LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -901,8 +927,33 @@ public class ExpView implements Serializable{
             seekBarParams.setMargins(16, 0, 16, 0);
             seekBar.setLayoutParams(seekBarParams);
             seekBar.setPadding(0,0,0,0);
-            seekBar.setMax(100);
-            seekBar.setProgress(60);
+            seekBar.setMax(maxValue);
+            seekBar.setProgress(currentValue);
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    Log.d("CameraSetting", progress + "");
+                    if(Objects.equals(label, "Shutter Speed")){
+                        phyphoxExperiment.cameraInput.setShutterSpeedCurrentValue((long) progress);
+                    }
+                    if(Objects.equals(label, "ISO")){
+                        phyphoxExperiment.cameraInput.setIsoCurrentValue(progress);
+                    }
+                    if(Objects.equals(label, "Aperture")){
+                        phyphoxExperiment.cameraInput.setApertureCurrentValue((float) progress);
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
 
             TextView textView1 = new TextView(c);
             textView1.setLayoutParams(new ViewGroup.LayoutParams(
@@ -912,7 +963,7 @@ public class ExpView implements Serializable{
             textView1.setPadding(3,3,3,3);
             textView1.setGravity(Gravity.END);
             textView1.setSingleLine();
-            textView1.setText("100");
+            textView1.setText(String.valueOf(maxValue));
             textView1.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
 
             row.addView(textView);
@@ -922,7 +973,11 @@ public class ExpView implements Serializable{
             layout.addView(textRow);
             layout.addView(row);
 
-            return layout;
+            if(visibility) layout.setVisibility(VISIBLE);
+            else layout.setVisibility(INVISIBLE);
+
+            root_ll.addView(layout);
+
         }
 
         @Override

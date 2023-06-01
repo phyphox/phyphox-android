@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
@@ -14,15 +15,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.view.doOnLayout
+import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import de.rwth_aachen.phyphox.ExpView
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
-import de.rwth_aachen.phyphox.camera.helper.CameraInput
+import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
@@ -77,6 +80,7 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
         if (args != null) {
             experiment = args.getSerializable("experiment") as PhyphoxExperiment?
             cameraViewModel.cameraInput = experiment?.cameraInput!!
+            cameraViewModel.phyphoxExperiment = experiment!!
         }
 
         // initialize the permission state flow with the current camera permission status
@@ -95,7 +99,7 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        cameraPreviewScreen = CameraPreviewScreen(view)
+        cameraPreviewScreen = CameraPreviewScreen(view, experiment?.cameraInput!!)
 
         lifecycleScope.launch {
             cameraScreenViewState.collectLatest {
@@ -123,6 +127,10 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
 
                         }
                         is CameraUiAction.SelectAndChangeCameraSetting -> Unit
+                        is CameraUiAction.LoadCameraSettings -> {
+                            slidersViewSetup()
+                        }
+                        is CameraUiAction.ReloadCameraSettings -> Unit
                     }
             }
         }
@@ -161,6 +169,7 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
 
                when (cameraUiState.cameraState){
                    CameraState.NOT_READY -> {
+                       Log.d(TAG, " CameraState.NOT_READY")
                        cameraScreenViewState.emit(
                            cameraScreenViewState.value
                                .updateCameraScreen {
@@ -176,17 +185,49 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
                        cameraViewModel.initializeCamera()
                    }
                    CameraState.READY -> {
+                       Log.d(TAG, " CameraState.READY")
                        cameraPreviewScreen.previewView.doOnLayout {
                            cameraPreviewScreen.setUpOverlay()
                            cameraViewModel.startCameraPreviewView(
                                cameraPreviewScreen.previewView,
-                               lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner
+                               lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, false
                            )
-
                        }
                        cameraScreenViewState.emit(
                            cameraScreenViewState.value
-                               .updateCameraScreen {s ->
+                               .updateCameraScreen { s ->
+                                   s.showCameraControls()
+                                       .enableSwitchLens(true)
+                               }
+                       )
+                       //cameraViewModel.cameraSettingLoadingSuccess()
+
+                   }
+                   CameraState.PREVIEW_IN_BACKGROUND -> Unit
+                   CameraState.PREVIEW_STOPPED -> Unit
+               }
+
+               when (cameraUiState.cameraSettingState) {
+                   CameraSettingState.NOT_READY -> {
+                       Log.d(TAG, " CameraSettingState.NOT_READY")
+                       if(cameraUiState.availableSettings.isNotEmpty())
+                           cameraPreviewScreen.prepareCameraSettings()
+                   }
+                   CameraSettingState.LOADING -> {
+                       Log.d(TAG, " CameraSettingState.LOADING")
+                       cameraPreviewScreen.previewView.doOnLayout {
+                           cameraPreviewScreen.setUpOverlay()
+                           cameraViewModel.startCameraPreviewView(
+                               cameraPreviewScreen.previewView,
+                               lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, true
+                           )
+                       }
+                   }
+                   CameraSettingState.LOADED -> {
+                       Log.d(TAG, " CameraSettingState.LOADED")
+                       cameraScreenViewState.emit(
+                           cameraScreenViewState.value
+                               .updateCameraScreen { s ->
                                    s.showCameraControls()
                                        .enableSwitchLens(true)
                                }
@@ -197,8 +238,10 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
                                }
                        )
                    }
-                   CameraState.PREVIEW_IN_BACKGROUND -> Unit
-                   CameraState.PREVIEW_STOPPED -> Unit
+                   CameraSettingState.LOADING_FAILED -> Unit
+                   CameraSettingState.RELOADING -> Unit
+                   CameraSettingState.RELOADING_FAILED -> Unit
+
                }
 
            }
@@ -240,6 +283,20 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
 
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
         TODO("Not yet implemented")
+    }
+
+    fun slidersViewSetup(){
+        cameraPreviewScreen.cameraSettingSliders.clear()
+        experiment?.experimentViews?.elementAt(0)?.elements?.forEach {
+            if(it.javaClass == ExpView.editElement::class.java){
+                val editElement = it as ExpView.editElement
+                cameraPreviewScreen.cameraSettingSliders[editElement.label] = editElement.seekBar
+            }
+        }
+
+        if(cameraPreviewScreen.cameraSettingSliders.isNotEmpty()){
+            cameraViewModel.showCameraSetting()
+        }
     }
 
 }

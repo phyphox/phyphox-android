@@ -1926,7 +1926,15 @@ public abstract class PhyphoxFile {
                         Vector<DataOutput> outputs = new Vector<>();
                         (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
-                        experiment.cameraInput= new CameraInput(mode, (float) x1, (float) x2, (float) y1, (float) y2, outputs, experiment.dataLock, experiment.experimentTimeReference, availableSettings);
+                        experiment.cameraInput= new CameraInput(mode,
+                                (float) x1,
+                                (float) x2,
+                                (float) y1,
+                                (float) y2,
+                                outputs,
+                                experiment.dataLock,
+                                experiment.experimentTimeReference,
+                                availableSettings);
 
                         break;
 

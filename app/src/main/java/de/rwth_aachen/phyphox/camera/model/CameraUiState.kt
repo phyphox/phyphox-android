@@ -13,7 +13,8 @@ data class CameraUiState  constructor(
     val cameraState: CameraState = CameraState.NOT_READY,
     val availableSettings: List<SettingMode> = emptyList(),
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
-    val cameraLens: Int = LENS_FACING_BACK
+    val cameraLens: Int = LENS_FACING_BACK,
+    val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY
 )
 
 /**
@@ -31,6 +32,15 @@ enum class SettingMode {
     ISO,
     SHUTTER_SPEED,
     APERTURE
+}
+
+enum class CameraSettingState{
+    NOT_READY,
+    LOADING,
+    LOADED,
+    RELOADING,
+    LOADING_FAILED,
+    RELOADING_FAILED,
 }
 
 
