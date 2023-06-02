@@ -122,50 +122,6 @@ public abstract class Helper {
         return score;
     }
 
-    public static float luminance(int c) {
-        float r = ((c & 0xff0000) >> 16)/255f;
-        float g = ((c & 0xff00) >> 8)/255f;
-        float b = (c & 0xff)/255f;
-        return 0.2126f*(float)Math.pow((r+0.055f)/1.055f, 2.4f) + 0.7152f*(float)Math.pow((g+0.055f)/1.055f, 2.4f) + 0.0722f*(float)Math.pow((b+0.055f)/1.055f, 2.4f);
-    }
-
-    //Translate RGB values or pre-defined names into integer representations
-    public static int parseColor(String colorStr, int defaultValue, Resources res) {
-        if (colorStr == null)
-            return defaultValue;
-        //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
-        switch(colorStr.toLowerCase()) {
-            case "orange": return getRequiredColor(res, R.color.phyphox_primary);
-            case "red": return getRequiredColor(res, R.color.phyphox_red);
-            case "magenta": return getRequiredColor(res, R.color.phyphox_magenta);
-            case "blue": return getRequiredColor(res, R.color.phyphox_blue_60);
-            case "green": return getRequiredColor(res, R.color.phyphox_green);
-            case "yellow": return getRequiredColor(res, R.color.phyphox_yellow);
-            case "white": return getRequiredColor(res, R.color.phyphox_white_100);
-
-            case "weakorange": return getRequiredColor(res, R.color.phyphox_primary_weak);
-            case "weakred": return getRequiredColor(res, R.color.phyphox_red_weak);
-            case "weakmagenta": return getRequiredColor(res, R.color.phyphox_magenta_weak);
-            case "weakblue": return getRequiredColor(res, R.color.phyphox_blue_40);
-            case "weakgreen": return getRequiredColor(res, R.color.phyphox_green_weak);
-            case "weakyellow": return getRequiredColor(res, R.color.phyphox_yellow_weak);
-            case "weakwhite": return getRequiredColor(res, R.color.phyphox_white_60);
-        }
-
-        //Not a constant, so it hast to be hex...
-        if (colorStr.length() != 6)
-            return defaultValue;
-        return Integer.parseInt(colorStr, 16) | 0xff000000;
-    }
-
-    private static int getRequiredColor(Resources res, int resId){
-        if(isDarkTheme(res))
-            return res.getColor(resId);
-        else {
-            return Color.parseColor(ColorConverter.adjustableColor(res.getColor(resId)));
-        }
-    }
-
     public static boolean isDarkTheme(Resources res){
         int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 

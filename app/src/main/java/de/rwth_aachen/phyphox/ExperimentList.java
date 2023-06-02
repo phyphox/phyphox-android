@@ -120,6 +120,7 @@ import de.rwth_aachen.phyphox.Camera.CameraHelper;
 import de.rwth_aachen.phyphox.Camera.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
 
 import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
@@ -251,7 +252,7 @@ public class ExperimentList extends AppCompatActivity {
         private String preselectedBluetoothAddress = null;
 
         //Experiment data
-        Vector<Integer> colors = new Vector<>(); //List of icons for each experiment
+        Vector<RGB> colors = new Vector<>(); //List of colors for each experiment
         Vector<Drawable> icons = new Vector<>(); //List of icons for each experiment
         Vector<String> titles = new Vector<>(); //List of titles for each experiment
         Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
@@ -313,7 +314,7 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(int color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
+        public void addExperiment(RGB color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
@@ -428,8 +429,8 @@ public class ExperimentList extends AppCompatActivity {
             else {
                 //No asset. Menu button visible and it needs an onClickListener
                 holder.menuBtn.setVisibility(ImageView.VISIBLE);
-                if (Helper.luminance(colors.get(position)) > 0.1)
-                    holder.menuBtn.setColorFilter(colors.get(position), android.graphics.PorterDuff.Mode.SRC_IN);
+                if (colors.get(position).luminance() > 0.1)
+                    holder.menuBtn.setColorFilter(colors.get(position).intColor(), android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.menuBtn.setOnClickListener(v -> {
                     android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight), v);
                     popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
@@ -534,7 +535,7 @@ public class ExperimentList extends AppCompatActivity {
         final private TextView categoryHeadline; //The TextView to display the headline
         final private ExpandableHeightGridView experimentSubList; //The gridView holding experiment items. (See implementation below for the custom flavor "ExpandableHeightGridView")
         final private ExperimentItemAdapter experiments; //Instance of the adapter to fill the gridView (implementation above)
-        final private Map<Integer, Integer> colorCount = new HashMap<>();
+        final private Map<RGB, Integer> colorCount = new HashMap<>();
 
         //ExpandableHeightGridView is derived from the original Android GridView.
         //The structure of our experiment list is such that we want to scroll the entire list, which
@@ -668,7 +669,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
-        public void addExperiment(String exp, int color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
+        public void addExperiment(String exp, RGB color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
             experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
             Integer n = colorCount.get(color);
             if (n == null)
@@ -676,18 +677,19 @@ public class ExperimentList extends AppCompatActivity {
             else
                 colorCount.put(color, n+1);
             int max = 0;
-            int catColor = 0;
-            for (Map.Entry<Integer,Integer> entry : colorCount.entrySet()) {
-                if (entry.getValue() > max) {
-                    catColor = entry.getKey();
-                    max = entry.getValue();
+            RGB catColor = new RGB(0);
+            if (hasName(phyphoxCat)) {
+                catColor = (new RGB(0xffffff)).autoLightColor(res);
+            } else {
+                for (Map.Entry<RGB, Integer> entry : colorCount.entrySet()) {
+                    if (entry.getValue() > max) {
+                        catColor = entry.getKey();
+                        max = entry.getValue();
+                    }
                 }
             }
-            categoryHeadline.setBackgroundColor(catColor);
-            if (Helper.luminance(catColor) > 0.7)
-                categoryHeadline.setTextColor(0xff000000);
-            else
-                categoryHeadline.setTextColor(0xffffffff);
+            categoryHeadline.setBackgroundColor(catColor.intColor());
+            categoryHeadline.setTextColor(catColor.overlayTextColor().intColor());
         }
 
         //Helper to check if the name of this category matches a given string
@@ -719,7 +721,7 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, int color, Drawable image, String description, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor,  String isLink, Vector<ExperimentsInCategory> categories) {
+    private void addExperiment(String exp, String cat, RGB color, Drawable image, String description, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor,  String isLink, Vector<ExperimentsInCategory> categories) {
         //Check all categories for the category of the new experiment
         for (ExperimentsInCategory icat : categories) {
             if (icat.hasName(cat)) {
@@ -738,7 +740,7 @@ public class ExperimentList extends AppCompatActivity {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
         Log.e("list:loadExperiment", message);
         if (categories != null)
-            addExperiment(xmlFile, getString(R.string.unknown), 0xffff0000, new TextIcon("!", this), message, xmlFile, isTemp, isAsset, -1, null, categories);
+            addExperiment(xmlFile, getString(R.string.unknown), new RGB(0xffff0000), new TextIcon("!", this), message, xmlFile, isTemp, isAsset, -1, null, categories);
     }
 
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
@@ -757,12 +759,11 @@ public class ExperimentList extends AppCompatActivity {
         String title = ""; //Experiment title
         String stateTitle = ""; //A title given by the user for a saved experiment state
         String category = ""; //Experiment category
-        int color = getResources().getColor(R.color.phyphox_primary); //Icon base color
+        RGB color = new RGB(getResources().getColor(R.color.phyphox_primary)); //Icon base color
         boolean customColor = false;
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
         String description = ""; //First line of the experiment's descriptions as a short info
         BaseColorDrawable image = null; //This will hold the icon
-        BaseColorDrawable imageForContributionHeadline = null; //This will hold the icon for Contribution for light theme
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
             int eventType = xpp.getEventType(); //should be START_DOCUMENT
@@ -830,9 +831,6 @@ public class ExperimentList extends AppCompatActivity {
                                             // This bitmap will be used for the icon used in contribution headline
                                             if(bitmap != null) {
                                                 image = new BitmapIcon(bitmap, this);
-                                                Bitmap bitmapDiffColor = Helper.changeColorOf(this, bitmap, R.color.phyphox_white_100);
-                                                if(bitmapDiffColor != null)
-                                                    imageForContributionHeadline = new BitmapIcon(bitmapDiffColor, this);
                                             }
 
                                         } catch (IllegalArgumentException e) {
@@ -872,7 +870,7 @@ public class ExperimentList extends AppCompatActivity {
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
                                     customColor = true;
-                                    color = Helper.parseColor(xpp.nextText().trim(), getResources().getColor(R.color.phyphox_primary), getResources());
+                                    color = RGB.fromPhyphoxString(xpp.nextText().trim(), getResources(), new RGB(getResources().getColor(R.color.phyphox_primary)));
                                 }
                                 break;
                             case "input": //We just have to check if there are any sensors, which are not supported on this device
@@ -947,7 +945,7 @@ public class ExperimentList extends AppCompatActivity {
                                     unavailableSensor = R.string.bluetooth;
                                 }
                                 if (!customColor)
-                                    color = getResources().getColor(R.color.phyphox_blue_100);
+                                    color = new RGB(getResources().getColor(R.color.phyphox_blue_100));
                                 break;
                         }
                         break;
@@ -1008,17 +1006,9 @@ public class ExperimentList extends AppCompatActivity {
 
 
             //We have all the information. Add the experiment.
-            BaseColorDrawable mImage;
-            if (categories != null){
-                // Following condition is for setting the proper image and its color in the Contribution Headline
-                if(category.equals("phyphox.org") && !Helper.isDarkTheme(getResources())){
-                    mImage = imageForContributionHeadline;
-                    mImage.setColorFilter( 0xff000000, PorterDuff.Mode.MULTIPLY );
-                } else {
-                    mImage = image;
-                    mImage.setBaseColor(color);
-                }
-                addExperiment(title, category, color, mImage, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+            image.setBaseColor(color);
+            if (categories != null) {
+                addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
             }
 
 
