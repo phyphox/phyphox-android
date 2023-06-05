@@ -57,6 +57,8 @@ import de.rwth_aachen.phyphox.camera.depth.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener;
+import de.rwth_aachen.phyphox.camera.model.SettingMode;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
 // specific way to show the results of an element.
@@ -676,6 +678,7 @@ public class ExpView implements Serializable{
         private LinearLayout root_ll;
         private Context c;
         public AppCompatSeekBar seekBar;
+        public SettingChangeListener settingChangeListener;
 
 
         //No special constructor. Just some defaults.
@@ -933,13 +936,13 @@ public class ExpView implements Serializable{
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     Log.d("CameraSetting", progress + "");
                     if(Objects.equals(label, "Shutter Speed")){
-                        phyphoxExperiment.cameraInput.setShutterSpeedCurrentValue((long) progress);
+                        settingChangeListener.onProgressChange(SettingMode.SHUTTER_SPEED, progress);
                     }
                     if(Objects.equals(label, "ISO")){
-                        phyphoxExperiment.cameraInput.setIsoCurrentValue(progress);
+                        settingChangeListener.onProgressChange(SettingMode.ISO, progress);
                     }
                     if(Objects.equals(label, "Aperture")){
-                        phyphoxExperiment.cameraInput.setApertureCurrentValue((float) progress);
+                        settingChangeListener.onProgressChange(SettingMode.APERTURE, progress);
                     }
                 }
 
@@ -973,7 +976,7 @@ public class ExpView implements Serializable{
             layout.addView(row);
 
             if(visibility) layout.setVisibility(VISIBLE);
-            else layout.setVisibility(INVISIBLE);
+            else layout.setVisibility(View.GONE);
 
             root_ll.removeView(layout);
             root_ll.addView(layout);
@@ -2423,6 +2426,7 @@ public class ExpView implements Serializable{
 
         private ExpViewFragment parent = null;
         private CameraPreviewFragment cameraPreviewFragment = null;
+        private boolean exposure = true;
 
 
         protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -2445,6 +2449,7 @@ public class ExpView implements Serializable{
             FragmentManager fragmentManager = parent.getChildFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
+            experiment.cameraInput.setAutoExposure(exposure);
             Bundle args = new Bundle();
             args.putSerializable("experiment", experiment);
             cameraPreviewFragment.setArguments(args);
@@ -2453,6 +2458,10 @@ public class ExpView implements Serializable{
             fragmentTransaction.addToBackStack(null);
             fragmentTransaction.commit();
 
+        }
+
+        public void setExposure(boolean exposure) {
+            this.exposure = exposure;
         }
 
         @Override

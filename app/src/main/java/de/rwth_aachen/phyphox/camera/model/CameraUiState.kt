@@ -31,7 +31,8 @@ enum class SettingMode {
     NONE,
     ISO,
     SHUTTER_SPEED,
-    APERTURE
+    APERTURE,
+    AUTO_EXPOSURE
 }
 
 enum class CameraSettingState{

@@ -15,7 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.view.doOnLayout
-import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -25,11 +24,15 @@ import androidx.lifecycle.repeatOnLifecycle
 import de.rwth_aachen.phyphox.ExpView
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper.toFraction
+import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
 import de.rwth_aachen.phyphox.camera.model.PermissionState
+import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModelFactory
@@ -38,6 +41,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlin.collections.forEach
+import kotlin.collections.isNotEmpty
+import kotlin.collections.set
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -127,10 +133,24 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
 
                         }
                         is CameraUiAction.SelectAndChangeCameraSetting -> Unit
-                        is CameraUiAction.LoadCameraSettings -> {
-                            slidersViewSetup()
+                        is CameraUiAction.LoadCameraSettings -> Unit
+                        is CameraUiAction.ReloadCameraSettings -> {
+                            cameraViewModel.reloadCameraWithNewSetting(action.settingMode, action.currentValue)
                         }
-                        is CameraUiAction.ReloadCameraSettings -> Unit
+                        is CameraUiAction.ChangeCameraSettingValue -> {
+                            if(action.settingMode == SettingMode.ISO){
+                                cameraViewModel.cameraInput.isoCurrentValue = action.value.toInt()
+                            }
+                            if(action.settingMode == SettingMode.SHUTTER_SPEED){
+                                cameraViewModel.cameraInput.shutterSpeedCurrentValue = CameraHelper.stringToNanoseconds(action.value)
+                            }
+
+                            cameraViewModel.restartCamera()
+                        }
+                        is CameraUiAction.ChangeAutoExposure -> {
+                            cameraViewModel.cameraInput.autoExposure = action.autoExposure
+                            cameraViewModel.restartCamera()
+                        }
                     }
             }
         }
@@ -183,6 +203,7 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
                                }
                        )
                        cameraViewModel.initializeCamera()
+                       cameraPreviewScreen.slidersViewSetup(experiment)
                    }
                    CameraState.READY -> {
                        Log.d(TAG, " CameraState.READY")
@@ -190,7 +211,7 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
                            cameraPreviewScreen.setUpOverlay()
                            cameraViewModel.startCameraPreviewView(
                                cameraPreviewScreen.previewView,
-                               lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, false
+                               lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, cameraViewModel.cameraInput.autoExposure
                            )
                        }
                        cameraScreenViewState.emit(
@@ -210,27 +231,19 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
                when (cameraUiState.cameraSettingState) {
                    CameraSettingState.NOT_READY -> {
                        Log.d(TAG, " CameraSettingState.NOT_READY")
-                       if(cameraUiState.availableSettings.isNotEmpty())
-                           cameraPreviewScreen.prepareCameraSettings()
                    }
                    CameraSettingState.LOADING -> {
                        Log.d(TAG, " CameraSettingState.LOADING")
-                       cameraPreviewScreen.previewView.doOnLayout {
-                           cameraPreviewScreen.setUpOverlay()
-                           cameraViewModel.startCameraPreviewView(
-                               cameraPreviewScreen.previewView,
-                               lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, true
-                           )
-                       }
+                       cameraViewModel.startCameraPreviewView(
+                           cameraPreviewScreen.previewView,
+                           lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, cameraViewModel.cameraInput.autoExposure
+                       )
+
                    }
                    CameraSettingState.LOADED -> {
                        Log.d(TAG, " CameraSettingState.LOADED")
                        cameraScreenViewState.emit(
                            cameraScreenViewState.value
-                               .updateCameraScreen { s ->
-                                   s.showCameraControls()
-                                       .enableSwitchLens(true)
-                               }
                                .updateCameraSetting {
                                    it.isoSliderVisibility(true)
                                    it.shutterSpeedSliderVisibility(true)
@@ -285,18 +298,5 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
         TODO("Not yet implemented")
     }
 
-    fun slidersViewSetup(){
-        cameraPreviewScreen.cameraSettingSliders.clear()
-        experiment?.experimentViews?.elementAt(0)?.elements?.forEach {
-            if(it.javaClass == ExpView.editElement::class.java){
-                val editElement = it as ExpView.editElement
-                cameraPreviewScreen.cameraSettingSliders[editElement.label] = editElement.seekBar
-            }
-        }
-
-        if(cameraPreviewScreen.cameraSettingSliders.isNotEmpty()){
-            cameraViewModel.showCameraSetting()
-        }
-    }
 
 }

@@ -36,6 +36,8 @@ class CameraInput() {
     var apertureRange:  FloatArray? = null
     var apertureCurrentValue: Float? = null
 
+    var autoExposure: Boolean = true
+
 
     constructor(cameraExtractionMode: CameraExtractionMode,
                 x1: Float,

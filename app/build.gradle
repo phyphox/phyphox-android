@@ -93,6 +93,8 @@ dependencies {
     //https://bigbadaboom.github.io/androidsvg/release_notes.html
     implementation 'com.caverock:androidsvg:1.4'
 
+    implementation 'com.google.code.gson:gson:2.8.8'
+
     //Automated screenshot generation
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'tools.fastlane:screengrab:2.0.0'

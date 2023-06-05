@@ -1602,7 +1602,10 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "camera-gui": {
+                    boolean exposure = getBooleanAttribute("auto_exposure", true);
+
                     ExpView.cameraElement cameraElement = newView.new cameraElement(label, null, null, parent.getResources());
+                    cameraElement.setExposure(exposure);
                     newView.elements.add(cameraElement);
                     break;
                 }

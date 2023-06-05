@@ -10,6 +10,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.ImageProxy
+import com.google.gson.Gson
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import org.json.JSONArray
 import org.json.JSONException
@@ -20,6 +21,8 @@ import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import java.nio.ByteBuffer
 import java.util.Arrays
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -275,4 +278,93 @@ object CameraHelper {
 
         return availableSettingModes;
     }
+
+    data class Fraction(val numerator: Long, val denominator: Long)
+
+
+    fun BigDecimal.toFraction(): Fraction {
+        var num = this
+        var den = BigDecimal.ONE
+        var maxDenominator = BigDecimal(10).pow(12) // Set the maximum denominator
+
+        while (num.remainder(BigDecimal.ONE).abs() > BigDecimal.ZERO) {
+            num *= BigDecimal(10)
+            den *= BigDecimal(10)
+            if (den > maxDenominator)
+                break
+        }
+
+        val gcd = num.toBigInteger().gcd(den.toBigInteger())
+        num /= BigDecimal(gcd)
+        den /= BigDecimal(gcd)
+
+        return Fraction(num.toLong(), den.toLong())
+    }
+
+    fun convertNanoSecondToSecond(value: Long) : Fraction {
+        val seconds = BigDecimal(value).divide(BigDecimal.valueOf(1_000_000_000), 10, RoundingMode.HALF_UP)
+        val fraction = seconds.toFraction()
+        var denominator = fraction.denominator / fraction.numerator
+        if (denominator >= 1_000L) {
+            denominator = (denominator.toDouble() / 1000).toLong() * 1000
+        }
+        return Fraction(1, denominator)
+    }
+
+    fun fractionToNanoseconds(fraction: Fraction): Long{
+        val numerator = fraction.numerator * 1_000_000_000L
+        val denominator = fraction.denominator
+        return numerator / denominator
+    }
+
+    fun shutterSpeedRange(min: Long, max: Long) : List<Fraction>{
+        val shutterSpeedRange = listOf<Fraction>(
+            Fraction(1, 1),
+            Fraction(1, 2),
+            Fraction(1, 4),
+            Fraction(1, 8),
+            Fraction(1, 15),
+            Fraction(1, 30),
+            Fraction(1, 60),
+            Fraction(1, 125),
+            Fraction(1, 250),
+            Fraction(1, 500),
+            Fraction(1, 1000),
+            Fraction(1, 2000),
+            Fraction(1, 4000),
+            Fraction(1, 8000),
+            )
+
+        val filteredShutterSpeedRange = shutterSpeedRange.filter {
+            fractionToNanoseconds(it) in min..max
+        }
+
+        return filteredShutterSpeedRange
+
+    }
+
+    fun isoRange(min: Int, max: Int): List<Int>{
+        val isoRange = listOf<Int>(
+            25,50,100,200,400,800,1600,3200,6400,9600,12800, 25600, 51200
+        )
+
+        val filteredIsoRange = isoRange.filter {
+            it in min..max
+        }
+        Log.d("CAMERAHELPER", filteredIsoRange.size.toString())
+        return filteredIsoRange
+    }
+
+    fun stringToNanoseconds(value: String): Long{
+        val parts = value.split("/").map {
+            it.toLong()
+        }
+        val fraction: Fraction = Fraction(parts[0], parts[1])
+        return fractionToNanoseconds(fraction)
+    }
+
+
+
+
+
 }

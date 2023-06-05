@@ -2,6 +2,9 @@ package de.rwth_aachen.phyphox.camera.viewstate
 
 data class CameraPreviewScreenViewState(
     val shutterButtonViewState: ShutterButtonViewState = ShutterButtonViewState(),
+    val isoButtonViewState: IsoButtonViewState = IsoButtonViewState(),
+    val apertureSliderViewState: ApertureSliderViewState = ApertureSliderViewState(),
+    val autoExposureViewState: AutoExposureViewState = AutoExposureViewState(),
     val switchLensButtonViewState: SwitchLensButtonViewState = SwitchLensButtonViewState()
 ) {
     fun hideCameraControls(): CameraPreviewScreenViewState =
@@ -13,6 +16,8 @@ data class CameraPreviewScreenViewState(
     fun showCameraControls(): CameraPreviewScreenViewState =
         copy(
             shutterButtonViewState = shutterButtonViewState.copy(isVisible = true),
+            isoButtonViewState = isoButtonViewState.copy(isVisible = true),
+            apertureSliderViewState = apertureSliderViewState.copy(isVisible = true),
             switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = true),
         )
 
@@ -22,14 +27,34 @@ data class CameraPreviewScreenViewState(
     fun enableSwitchLens(isEnabled: Boolean): CameraPreviewScreenViewState =
         copy(switchLensButtonViewState = switchLensButtonViewState.copy(isEnabled = isEnabled))
 
-}
 
-data class ShutterButtonViewState(
-    val isVisible: Boolean = false,
-    val isEnabled: Boolean = false
-)
+
+}
 
 data class SwitchLensButtonViewState(
     val isVisible: Boolean = false,
     val isEnabled: Boolean = false
+)
+
+data class ShutterButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false,
+    val value: String = ""
+)
+
+data class IsoButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false,
+    val value: String = ""
+)
+
+data class ApertureButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false,
+    val value: String = ""
+)
+
+data class AutoExposureViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false
 )

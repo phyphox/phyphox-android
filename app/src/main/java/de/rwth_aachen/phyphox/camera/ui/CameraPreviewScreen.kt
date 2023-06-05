@@ -3,27 +3,42 @@ package de.rwth_aachen.phyphox.camera.ui
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
+import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.RectF
+import android.os.Build
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.RadioButton
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatSeekBar
 import androidx.camera.view.PreviewView
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import de.rwth_aachen.phyphox.ExpView
 import de.rwth_aachen.phyphox.MarkerOverlayView
+import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
+import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener
+import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
+import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraSettingViewState
@@ -31,9 +46,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
+
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraPreviewScreen(private val root: View, private val cameraInput: CameraInput) {
 
     private val context: Context = root.context
+
+    val TAG = "CameraPreviewScreen"
 
     val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
     private val mainFrameLayout: FrameLayout = root.findViewById(R.id.mainFrameLayout)
@@ -46,6 +65,19 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     var cameraSettingSliders : MutableMap<String,AppCompatSeekBar> = HashMap()
 
     private val switchLensButton = root.findViewById<ImageView>(R.id.switchLens)
+    private val imageIso = root.findViewById<ImageView>(R.id.imageIso)
+    private val imageShutter = root.findViewById<ImageView>(R.id.imageShutter)
+    private val imageAperture = root.findViewById<ImageView>(R.id.imageAperture)
+    private val imageAutoExposure = root.findViewById<ImageView>(R.id.imageAutoExposure)
+
+    private val currentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
+    private val currentShutterValue = root.findViewById<TextView>(R.id.textCurrentShutter)
+    private val currentApertureValue = root.findViewById<TextView>(R.id.textCurrentAperture)
+    private val autoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
+
+    private val buttonClick = AlphaAnimation(1f, 0.4f)
+
+    private var autoExposureOff: Boolean = true
 
     var width = 800
     var height = 800
@@ -72,36 +104,102 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             switchLens(root, it)
         }
 
+        //val nanoseconds = 279_590_625L
+        val nanoseconds = 26_503L
+        val fraction = CameraHelper.convertNanoSecondToSecond(nanoseconds)
+        val numerator = fraction.numerator
+        val denominator = fraction.denominator
+        Log.d(TAG, "$nanoseconds nanoseconds is equal to $numerator / $denominator seconds.")
 
-        cameraSettingSliders["ISO"]?.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                Log.d("CameraSetting", progress.toString())
-                //cameraInput.isoCurrentValue. = progress
+        val shutterSpeedRange = CameraHelper.shutterSpeedRange(26_503L, 279_590_625L).map {
+            "" + it.numerator + "/"+ it.denominator
+        }
+        val isoRange = CameraHelper.isoRange(47, 11906).map {
+            it.toString()
+        }
+
+        autoExposureOff = cameraInput.autoExposure
+
+        cameraInput.shutterSpeedCurrentValue?.let {
+            val fraction = CameraHelper.convertNanoSecondToSecond(it)
+
+            currentShutterValue.text = "" + fraction.numerator + "/"+ fraction.denominator
+        }
+        currentApertureValue.text = cameraInput.apertureCurrentValue.toString()
+
+        imageIso.setOnClickListener {
+            it.startAnimation(buttonClick)
+            val buttonLocation = IntArray(2)
+            it.getLocationInWindow(buttonLocation)
+            showCustomDialog(it, buttonLocation,isoRange, SettingMode.ISO)
+        }
+
+        imageShutter.setOnClickListener {
+            it.startAnimation(buttonClick)
+            val buttonLocation = IntArray(2)
+            it.getLocationInWindow(buttonLocation)
+            showCustomDialog(it, buttonLocation, shutterSpeedRange, SettingMode.SHUTTER_SPEED)
+        }
+
+        imageAperture.setOnClickListener {
+            it.startAnimation(buttonClick)
+            val buttonLocation = IntArray(2)
+            it.getLocationInWindow(buttonLocation)
+            showCustomDialog(it, buttonLocation, arrayListOf("1.4"), SettingMode.APERTURE)
+        }
+
+        if(autoExposureOff) {
+            autoExposureStatus.text = "Off"
+            imageAutoExposure.setBackgroundColor(Color.TRANSPARENT)
+            imageIso.setBackgroundColor(Color.TRANSPARENT)
+            imageIso.isClickable = true
+            imageShutter.isClickable = true
+            imageAperture.isClickable = true
+            imageShutter.setBackgroundColor(Color.TRANSPARENT)
+            imageAperture.setBackgroundColor(Color.TRANSPARENT)
+            autoExposureStatus.text = "Off"
+        } else {
+            autoExposureStatus.text = "On"
+            imageAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            autoExposureStatus.text = "On"
+            imageIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageIso.isClickable = false
+            imageShutter.isClickable = false
+            imageAperture.isClickable = false
+        }
+        imageAutoExposure.setOnClickListener {
+            autoExposureOff = !autoExposureOff
+            if(autoExposureOff) {
+                //imageAutoExposure.isEnabled = true
+                imageAutoExposure.setBackgroundColor(Color.TRANSPARENT)
+                imageIso.setBackgroundColor(Color.TRANSPARENT)
+                imageIso.isClickable = true
+                imageShutter.isClickable = true
+                imageAperture.isClickable = true
+                imageShutter.setBackgroundColor(Color.TRANSPARENT)
+                imageAperture.setBackgroundColor(Color.TRANSPARENT)
+                autoExposureStatus.text = "Off"
+            } else {
+                //imageAutoExposure.isEnabled = false
+                imageAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+                autoExposureStatus.text = "On"
+                imageIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+                imageShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+                imageAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+                imageIso.isClickable = false
+                imageShutter.isClickable = false
+                imageAperture.isClickable = false
             }
+            //imageAutoExposure.isEnabled = false
+            it.startAnimation(buttonClick)
 
-            override fun onStartTrackingTouch(seekBar: SeekBar) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar) {}
-        })
-
-        cameraSettingSliders["Shutter Speed"]?.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                Log.d("CameraSetting", progress.toString())
-                cameraInput.shutterSpeedCurrentValue = progress.toLong()
+            root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                _action.emit(CameraUiAction.ChangeAutoExposure(autoExposureOff))
             }
+        }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar) {}
-        })
-
-        cameraSettingSliders["Aperture"]?.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                Log.d("CameraSetting", progress.toString())
-                cameraInput.apertureCurrentValue = progress.toFloat()
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar) {}
-        })
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -230,6 +328,12 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
+    private fun onClickCameraSetting(settingMode: SettingMode, value: String){
+        root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            _action.emit(CameraUiAction.ChangeCameraSettingValue(settingMode, value))
+        }
+    }
+
     private fun switchLens(root: View, switchLensButton: View) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.SwitchCameraClick)
@@ -246,12 +350,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
     }
 
-    fun prepareCameraSettings(){
-        root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-            _action.emit(CameraUiAction.LoadCameraSettings)
-        }
-    }
-
     fun setCameraScreenViewState(state: CameraScreenViewState){
         setCameraPreviewScreenViewState(state.cameraPreviewScreenViewState)
         setCameraSettingViewState(state.cameraSettingViewState)
@@ -262,7 +360,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         switchLensButton.isEnabled = state.switchLensButtonViewState.isEnabled
         switchLensButton.isVisible = state.switchLensButtonViewState.isVisible
     }
-
 
 
     private fun setCameraSettingViewState(state: CameraSettingViewState){
@@ -276,6 +373,131 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         cameraSettingSliders["Aperture"]?.isEnabled = state.apertureSliderViewState.isEnabled
     }
 
+    private val settingChangeListener = object : SettingChangeListener {
+        override fun onProgressChange(settingMode: SettingMode, value: Int) {
+            root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                _action.emit(CameraUiAction.ReloadCameraSettings(settingMode, value))
+            }
+        }
+    }
+
+    fun slidersViewSetup(phyphoxExperiment: PhyphoxExperiment?) {
+        cameraSettingSliders.clear()
+        phyphoxExperiment?.experimentViews?.elementAt(0)?.elements?.forEach {
+            if (it.javaClass == ExpView.editElement::class.java) {
+                val editElement = it as ExpView.editElement
+                cameraSettingSliders[editElement.label] = editElement.seekBar
+                if (editElement.settingChangeListener == null) {
+                    editElement.settingChangeListener = settingChangeListener
+                }
+            }
+        }
+    }
+
+    private fun showCustomDialog(view: View, buttonLocation: IntArray, dataList: List<String>, settingMode: SettingMode) {
+
+        if(dataList.isEmpty() || dataList.size == 1){
+            return
+        }
+
+        val dialogView = LayoutInflater.from(view.context).inflate(R.layout.custom_camera_setting_dialog, null)
+
+        val dialog = Dialog(dialogView.context)
+        dialog.setContentView(dialogView)
+        dialog.setCancelable(true)
+
+        val window = dialog.window
+        //window?.setLayout(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        val dialogLayoutParams = WindowManager.LayoutParams().apply {
+            copyFrom(window?.attributes)
+            width = WindowManager.LayoutParams.WRAP_CONTENT
+            height = WindowManager.LayoutParams.WRAP_CONTENT
+            x = buttonLocation[0] - 450
+            y = buttonLocation[1] - 900
+        }
+        window?.attributes = dialogLayoutParams
+
+        val settingChangeListener = object: SettingChooseListener {
+            override fun onSettingClicked(value: String) {
+                onClickCameraSetting(settingMode, value)
+                if(settingMode == SettingMode.ISO){
+                    cameraInput.isoCurrentValue?.let {
+                        currentIsoValue.text = it.toString()
+
+                    }
+                }
+                if(settingMode == SettingMode.SHUTTER_SPEED){
+                    cameraInput.shutterSpeedCurrentValue?.let {
+                        val fraction = CameraHelper.convertNanoSecondToSecond(it)
+                        currentShutterValue.text = "" + fraction.numerator + "/"+ fraction.denominator
+                    }
+                }
 
 
+            }
+        }
+
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(context)
+
+        recyclerView.adapter = ChooseCameraSettingValueAdapter(dataList, settingChangeListener)
+
+        dialog.show()
+
+    }
+
+}
+
+// Custom RecyclerView Adapter
+private class ChooseCameraSettingValueAdapter(
+    private val dataList: List<String>,
+    private val settingChooseListener: SettingChooseListener) : RecyclerView.Adapter<ChooseCameraSettingValueAdapter.ViewHolder>() {
+
+    private val buttonClick = AlphaAnimation(1f, 0.4f)
+    private var selectedPosition = RecyclerView.NO_POSITION
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.camera_setting_item, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val item = dataList[position]
+        holder.textView.text = item
+        holder.textView.animation = buttonClick
+
+        holder.radioButton.text = item
+
+        holder.radioButton.isChecked = position == selectedPosition
+        holder.radioButton.setOnClickListener {
+            selectedPosition = holder.adapterPosition
+            notifyItemChanged(selectedPosition)
+            settingChooseListener.onSettingClicked(dataList[position])
+        }
+
+        holder.radioButton.setOnCheckedChangeListener { buttonView, isChecked ->
+            if(isChecked)
+            {
+                selectedPosition =  position;
+            }
+            else{
+                selectedPosition = -1;
+            }
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return dataList.size
+    }
+
+    // ViewHolder class
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var textView: TextView
+        var radioButton: RadioButton
+        init {
+            textView =  itemView.findViewById<TextView>(R.id.textSettings)
+            radioButton = itemView.findViewById(R.id.radio_button)
+        }
+
+    }
 }
