@@ -125,7 +125,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
             currentShutterValue.text = "" + fraction.numerator + "/"+ fraction.denominator
         }
-        currentApertureValue.text = cameraInput.apertureCurrentValue.toString()
+        currentApertureValue.text = "f/"+cameraInput.apertureCurrentValue.toString()
 
         imageIso.setOnClickListener {
             it.startAnimation(buttonClick)
@@ -413,7 +413,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             width = WindowManager.LayoutParams.WRAP_CONTENT
             height = WindowManager.LayoutParams.WRAP_CONTENT
             x = buttonLocation[0] - 450
-            y = buttonLocation[1] - 900
+            y = buttonLocation[1] - 750
         }
         window?.attributes = dialogLayoutParams
 
@@ -432,8 +432,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                         currentShutterValue.text = "" + fraction.numerator + "/"+ fraction.denominator
                     }
                 }
-
-
             }
         }
 
@@ -454,7 +452,7 @@ private class ChooseCameraSettingValueAdapter(
     private val settingChooseListener: SettingChooseListener) : RecyclerView.Adapter<ChooseCameraSettingValueAdapter.ViewHolder>() {
 
     private val buttonClick = AlphaAnimation(1f, 0.4f)
-    private var selectedPosition = RecyclerView.NO_POSITION
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.camera_setting_item, parent, false)
@@ -475,15 +473,6 @@ private class ChooseCameraSettingValueAdapter(
             settingChooseListener.onSettingClicked(dataList[position])
         }
 
-        holder.radioButton.setOnCheckedChangeListener { buttonView, isChecked ->
-            if(isChecked)
-            {
-                selectedPosition =  position;
-            }
-            else{
-                selectedPosition = -1;
-            }
-        }
     }
 
     override fun getItemCount(): Int {
