@@ -14,7 +14,8 @@ data class CameraUiState  constructor(
     val availableSettings: List<SettingMode> = emptyList(),
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
     val cameraLens: Int = LENS_FACING_BACK,
-    val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY
+    val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY,
+    val autoExposure: Boolean = true
 )
 
 /**

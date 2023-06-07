@@ -10,8 +10,6 @@ import java.util.concurrent.locks.Lock
 
 class CameraInput() {
 
-    var cameraExtractionMode: CameraExtractionMode = CameraExtractionMode.average
-
     var x1: Float = 0.4f
     var x2: Float = 0.6f
     var y1: Float = 0.4f

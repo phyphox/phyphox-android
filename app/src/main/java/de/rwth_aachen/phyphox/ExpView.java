@@ -57,6 +57,7 @@ import de.rwth_aachen.phyphox.camera.depth.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener;
 import de.rwth_aachen.phyphox.camera.model.SettingMode;
 
@@ -2451,7 +2452,7 @@ public class ExpView implements Serializable{
 
             experiment.cameraInput.setAutoExposure(exposure);
             Bundle args = new Bundle();
-            args.putSerializable("experiment", experiment);
+            args.putSerializable(CameraHelper.EXPERIMENT_ARG, experiment);
             cameraPreviewFragment.setArguments(args);
 
             fragmentTransaction.add(containerView.getId(), cameraPreviewFragment);

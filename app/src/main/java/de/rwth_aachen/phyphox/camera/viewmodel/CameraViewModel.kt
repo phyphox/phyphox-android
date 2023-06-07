@@ -110,7 +110,6 @@ class CameraViewModel(private val application: Application): ViewModel() {
         }, ContextCompat.getMainExecutor(application))
     }
 
-
     private fun cameraLensToSelector(@CameraSelector.LensFacing lensFacing: Int): CameraSelector =
         when (lensFacing) {
             CameraSelector.LENS_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
@@ -178,6 +177,20 @@ class CameraViewModel(private val application: Application): ViewModel() {
         }
     }
 
+    fun changeExposure(autoExposure: Boolean){
+        val currentCameraUiState = _cameraUiState.value
+        val newAutoExposure = currentCameraUiState.copy(autoExposure = autoExposure)
+
+        viewModelScope.launch {
+            _cameraUiState.emit(
+                newAutoExposure.copy(
+                    cameraState = CameraState.NOT_READY,
+                )
+            )
+        }
+
+    }
+
     fun restartCamera() {
         val currentCameraUiState = _cameraUiState.value
         viewModelScope.launch {
@@ -228,7 +241,6 @@ class CameraViewModel(private val application: Application): ViewModel() {
         }
 
     }
-
 
     @SuppressLint("UnsafeOptInUsageError")
     fun setUpPreviewWithExposure(withExposure: Boolean): Preview.Builder{

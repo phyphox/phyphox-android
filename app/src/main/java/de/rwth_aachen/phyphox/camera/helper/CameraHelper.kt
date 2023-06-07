@@ -28,6 +28,9 @@ import java.math.RoundingMode
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 object CameraHelper {
     private var cameraList: MutableMap<String, CameraCharacteristics>? = null
+    @JvmField
+    val EXPERIMENT_ARG = "experiment"
+
     @JvmStatic
     fun updateCameraList(cm: CameraManager) {
         cameraList = HashMap()

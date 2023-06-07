@@ -21,12 +21,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import de.rwth_aachen.phyphox.ExpView
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
-import de.rwth_aachen.phyphox.camera.helper.CameraHelper.toFraction
-import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
@@ -41,31 +38,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlin.collections.forEach
-import kotlin.collections.isNotEmpty
-import kotlin.collections.set
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
-
-    var width = 1000
-    var height = 1000
-
+class CameraPreviewFragment : Fragment(), TextureView.SurfaceTextureListener {
     val TAG = "CameraPreviewFragment"
-    // view model for operating on the camera and capturing a photo
+
+    // view model for operating on the camera and analysis of an image
     private lateinit var cameraViewModel: CameraViewModel
 
     // monitors changes in camera permission state
     private lateinit var permissionState: MutableStateFlow<PermissionState>
 
+    // handles all the UI elements for camera preview
     private lateinit var cameraPreviewScreen: CameraPreviewScreen
 
-    // tracks the current view state
+    //tracks the current view state
     private val cameraScreenViewState = MutableStateFlow(CameraScreenViewState())
 
+    //holds experiment info/object
     private var experiment: PhyphoxExperiment? = null
-
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,18 +65,20 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
         savedInstanceState: Bundle?
     ): View? {
 
-
-        cameraViewModel = ViewModelProvider(
-            this,
-            CameraViewModelFactory(
-                application = requireActivity().application
-            )
-        )[CameraViewModel::class.java]
+        cameraViewModel =
+            ViewModelProvider(
+                this,
+                CameraViewModelFactory(application = requireActivity().application)
+            )[CameraViewModel::class.java]
 
         // Retrieve the object from the arguments
         val args = arguments
         if (args != null) {
-            experiment = args.getSerializable("experiment") as PhyphoxExperiment?
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                experiment = args.getSerializable(CameraHelper.EXPERIMENT_ARG, PhyphoxExperiment::class.java)
+            } else {
+                experiment = args.getSerializable(CameraHelper.EXPERIMENT_ARG) as PhyphoxExperiment?
+            }
             cameraViewModel.cameraInput = experiment?.cameraInput!!
             cameraViewModel.phyphoxExperiment = experiment!!
         }
@@ -94,7 +88,7 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                // check the current permission state every time upon the activity is resumed
+                // check the current permission state every time upon the fragment is resumed
                 permissionState.emit(getCurrentPermissionState())
             }
         }
@@ -123,41 +117,48 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
             }
 
         lifecycleScope.launch {
-            cameraPreviewScreen.action.collectLatest {action ->
-                    when(action) {
-                        is CameraUiAction.SwitchCameraClick -> {
-                            cameraViewModel.switchCamera()
-                        }
-                        is CameraUiAction.RequestPermissionClick -> {
-                            requestPermissionsLauncher.launch(Manifest.permission.CAMERA)
+            cameraPreviewScreen.action.collectLatest { action ->
+                when (action) {
+                    is CameraUiAction.SwitchCameraClick -> cameraViewModel.switchCamera()
 
-                        }
-                        is CameraUiAction.SelectAndChangeCameraSetting -> Unit
-                        is CameraUiAction.LoadCameraSettings -> Unit
-                        is CameraUiAction.ReloadCameraSettings -> {
-                            cameraViewModel.reloadCameraWithNewSetting(action.settingMode, action.currentValue)
-                        }
-                        is CameraUiAction.ChangeCameraSettingValue -> {
-                            if(action.settingMode == SettingMode.ISO){
-                                cameraViewModel.cameraInput.isoCurrentValue = action.value.toInt()
-                            }
-                            if(action.settingMode == SettingMode.SHUTTER_SPEED){
-                                cameraViewModel.cameraInput.shutterSpeedCurrentValue = CameraHelper.stringToNanoseconds(action.value)
-                            }
+                    is CameraUiAction.RequestPermissionClick -> {
+                        requestPermissionsLauncher.launch(Manifest.permission.CAMERA)
 
-                            cameraViewModel.restartCamera()
-                        }
-                        is CameraUiAction.ChangeAutoExposure -> {
-                            cameraViewModel.cameraInput.autoExposure = action.autoExposure
-                            cameraViewModel.restartCamera()
-                        }
                     }
+
+                    is CameraUiAction.SelectAndChangeCameraSetting -> Unit
+                    is CameraUiAction.LoadCameraSettings -> Unit
+                    is CameraUiAction.ReloadCameraSettings -> {
+                        cameraViewModel.reloadCameraWithNewSetting(
+                            action.settingMode,
+                            action.currentValue
+                        )
+                    }
+
+                    is CameraUiAction.ChangeCameraSettingValue -> {
+                        if (action.settingMode == SettingMode.ISO) {
+                            cameraViewModel.cameraInput.isoCurrentValue = action.value.toInt()
+                        }
+                        if (action.settingMode == SettingMode.SHUTTER_SPEED) {
+                            cameraViewModel.cameraInput.shutterSpeedCurrentValue =
+                                CameraHelper.stringToNanoseconds(action.value)
+                        }
+
+                        cameraViewModel.restartCamera()
+                    }
+
+                    is CameraUiAction.ChangeAutoExposure -> {
+                        cameraViewModel.changeExposure(action.autoExposure)
+                        //cameraViewModel.cameraInput.autoExposure = action.autoExposure
+                        //cameraViewModel.restartCamera()
+                    }
+                }
             }
         }
 
         lifecycleScope.launch {
-            cameraViewModel.imageAnalysisUiState.collectLatest {state ->
-                when(state) {
+            cameraViewModel.imageAnalysisUiState.collectLatest { state ->
+                when (state) {
                     ImageAnalysisState.ImageAnalysisNotReady -> {}
                     ImageAnalysisState.ImageAnalysisReady -> {}
                     ImageAnalysisState.ImageAnalysisStarted -> {}
@@ -171,14 +172,15 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
         }
 
 
-        lifecycleScope.launch{
-           permissionState.combine(cameraViewModel.cameraUiState) { permissionState, cameraUiState ->
-               Pair(permissionState, cameraUiState)
-           }.collectLatest {(permissionState, cameraUiState) ->
-                when(permissionState) {
+        lifecycleScope.launch {
+            permissionState.combine(cameraViewModel.cameraUiState) { permissionState, cameraUiState ->
+                Pair(permissionState, cameraUiState)
+            }.collectLatest { (permissionState, cameraUiState) ->
+                when (permissionState) {
                     PermissionState.Granted -> {
                         cameraPreviewScreen.hidePermissionsRequest()
                     }
+
                     is PermissionState.Denied -> {
                         if (cameraUiState.cameraState != CameraState.PREVIEW_STOPPED) {
                             cameraPreviewScreen.showPermissionsRequest(permissionState.shouldShowRational)
@@ -187,77 +189,90 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
                     }
                 }
 
-               when (cameraUiState.cameraState){
-                   CameraState.NOT_READY -> {
-                       Log.d(TAG, " CameraState.NOT_READY")
-                       cameraScreenViewState.emit(
-                           cameraScreenViewState.value
-                               .updateCameraScreen {
-                                   it.showCameraControls()
-                                       .enableSwitchLens(false)
-                               }
-                               .updateCameraSetting {
-                                   it.isoSliderVisibility(false)
-                                   it.shutterSpeedSliderVisibility(false)
-                                   it.apertureSliderVisibility(false)
-                               }
-                       )
-                       cameraViewModel.initializeCamera()
-                       cameraPreviewScreen.slidersViewSetup(experiment)
-                   }
-                   CameraState.READY -> {
-                       Log.d(TAG, " CameraState.READY")
-                       cameraPreviewScreen.previewView.doOnLayout {
-                           cameraPreviewScreen.setUpOverlay()
-                           cameraViewModel.startCameraPreviewView(
-                               cameraPreviewScreen.previewView,
-                               lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, cameraViewModel.cameraInput.autoExposure
-                           )
-                       }
-                       cameraScreenViewState.emit(
-                           cameraScreenViewState.value
-                               .updateCameraScreen { s ->
-                                   s.showCameraControls()
-                                       .enableSwitchLens(true)
-                               }
-                       )
-                       //cameraViewModel.cameraSettingLoadingSuccess()
+                when (cameraUiState.cameraState) {
+                    CameraState.NOT_READY -> {
+                        Log.d(TAG, " CameraState.NOT_READY")
+                        cameraScreenViewState.emit(
+                            cameraScreenViewState.value
+                                .updateCameraScreen {
+                                    it.showCameraControls()
+                                        .enableSwitchLens(false)
+                                }
+                                .updateCameraSetting {
+                                    it.isoSliderVisibility(false)
+                                    it.shutterSpeedSliderVisibility(false)
+                                    it.apertureSliderVisibility(false)
+                                }
+                        )
+                        cameraViewModel.initializeCamera()
+                        cameraPreviewScreen.slidersViewSetup(experiment)
+                    }
 
-                   }
-                   CameraState.PREVIEW_IN_BACKGROUND -> Unit
-                   CameraState.PREVIEW_STOPPED -> Unit
-               }
+                    CameraState.READY -> {
+                        Log.d(TAG, " CameraState.READY")
+                        cameraPreviewScreen.previewView.doOnLayout {
+                            cameraPreviewScreen.setUpOverlay()
+                            cameraViewModel.startCameraPreviewView(
+                                cameraPreviewScreen.previewView,
+                                lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner,
+                                cameraUiState.autoExposure
+                            )
+                        }
+                        cameraScreenViewState.emit(
+                            cameraScreenViewState.value
+                                .updateCameraScreen { s ->
+                                    s.showCameraControls()
+                                        .enableSwitchLens(true)
+                                        .enableAutoFocus(cameraUiState.autoExposure)
+                                }
+                                .updateCameraSetting {
+                                    it.isoSliderVisibility(true)
+                                    it.shutterSpeedSliderVisibility(true)
+                                    it.apertureSliderVisibility(true)
+                                }
+                        )
+                        //cameraViewModel.cameraSettingLoadingSuccess()
 
-               when (cameraUiState.cameraSettingState) {
-                   CameraSettingState.NOT_READY -> {
-                       Log.d(TAG, " CameraSettingState.NOT_READY")
-                   }
-                   CameraSettingState.LOADING -> {
-                       Log.d(TAG, " CameraSettingState.LOADING")
-                       cameraViewModel.startCameraPreviewView(
-                           cameraPreviewScreen.previewView,
-                           lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner, cameraViewModel.cameraInput.autoExposure
-                       )
+                    }
 
-                   }
-                   CameraSettingState.LOADED -> {
-                       Log.d(TAG, " CameraSettingState.LOADED")
-                       cameraScreenViewState.emit(
-                           cameraScreenViewState.value
-                               .updateCameraSetting {
-                                   it.isoSliderVisibility(true)
-                                   it.shutterSpeedSliderVisibility(true)
-                                   it.apertureSliderVisibility(true)
-                               }
-                       )
-                   }
-                   CameraSettingState.LOADING_FAILED -> Unit
-                   CameraSettingState.RELOADING -> Unit
-                   CameraSettingState.RELOADING_FAILED -> Unit
+                    CameraState.PREVIEW_IN_BACKGROUND -> Unit
+                    CameraState.PREVIEW_STOPPED -> Unit
+                }
 
-               }
+                when (cameraUiState.cameraSettingState) {
+                    CameraSettingState.NOT_READY -> {
+                        Log.d(TAG, " CameraSettingState.NOT_READY")
+                    }
 
-           }
+                    CameraSettingState.LOADING -> {
+                        Log.d(TAG, " CameraSettingState.LOADING")
+                        cameraViewModel.startCameraPreviewView(
+                            cameraPreviewScreen.previewView,
+                            lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner,
+                            cameraViewModel.cameraInput.autoExposure
+                        )
+
+                    }
+
+                    CameraSettingState.LOADED -> {
+                        Log.d(TAG, " CameraSettingState.LOADED")
+                        cameraScreenViewState.emit(
+                            cameraScreenViewState.value
+                                .updateCameraSetting {
+                                    it.isoSliderVisibility(true)
+                                    it.shutterSpeedSliderVisibility(true)
+                                    it.apertureSliderVisibility(true)
+                                }
+                        )
+                    }
+
+                    CameraSettingState.LOADING_FAILED -> Unit
+                    CameraSettingState.RELOADING -> Unit
+                    CameraSettingState.RELOADING_FAILED -> Unit
+
+                }
+
+            }
         }
 
     }
@@ -269,7 +284,8 @@ class CameraPreviewFragment : Fragment() , TextureView.SurfaceTextureListener {
 
 
     private fun getCurrentPermissionState(): PermissionState {
-        val status = ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+        val status =
+            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
         return if (status == PackageManager.PERMISSION_GRANTED) {
             PermissionState.Granted
         } else {

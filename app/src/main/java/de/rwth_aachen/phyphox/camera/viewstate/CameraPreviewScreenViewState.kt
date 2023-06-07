@@ -27,7 +27,8 @@ data class CameraPreviewScreenViewState(
     fun enableSwitchLens(isEnabled: Boolean): CameraPreviewScreenViewState =
         copy(switchLensButtonViewState = switchLensButtonViewState.copy(isEnabled = isEnabled))
 
-
+    fun enableAutoFocus(isEnabled: Boolean) : CameraPreviewScreenViewState =
+        copy(autoExposureViewState = autoExposureViewState.copy(isEnabled = isEnabled ))
 
 }
 
