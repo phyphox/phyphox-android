@@ -26,13 +26,13 @@ class CameraInput() {
     var cameraSettings = ArrayList<SettingMode>()
 
     var isoRange:  Range<Int>? = null
-    var isoCurrentValue: Int? = null
+    var isoCurrentValue: Int = 0
 
     var shutterSpeedRange:  Range<Long>? = null
-    var shutterSpeedCurrentValue: Long? = null
+    var shutterSpeedCurrentValue: Long = 0
 
     var apertureRange:  FloatArray? = null
-    var apertureCurrentValue: Float? = null
+    var apertureCurrentValue: Float = 0.0f
 
     var autoExposure: Boolean = true
 

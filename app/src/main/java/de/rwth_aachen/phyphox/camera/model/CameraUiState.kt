@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox.camera.model
 
 import android.os.Build
+import android.util.Range
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 import java.lang.Exception
@@ -15,7 +16,7 @@ data class CameraUiState  constructor(
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
     val cameraLens: Int = LENS_FACING_BACK,
     val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY,
-    val autoExposure: Boolean = true
+    val autoExposure: Boolean = true,
 )
 
 /**
@@ -27,6 +28,16 @@ enum class CameraState {
     PREVIEW_IN_BACKGROUND,
     PREVIEW_STOPPED
 }
+
+data class CameraSettingValueState(
+    val currentIsoValue: Int = 1,
+    val currentShutterValue: Long = 1L,
+    val currentApertureValue: Float = 1.0f,
+    val isoRange:  Range<Int>? =  null,
+    var shutterSpeedRange:  Range<Long>? = null,
+    var apertureRange:  FloatArray? = null
+
+)
 
 enum class SettingMode {
     NONE,
@@ -43,6 +54,7 @@ enum class CameraSettingState{
     RELOADING,
     LOADING_FAILED,
     RELOADING_FAILED,
+    VALUE_UPDATED
 }
 
 

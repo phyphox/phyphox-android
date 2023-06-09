@@ -14,12 +14,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.RadioButton
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatSeekBar
@@ -37,7 +35,9 @@ import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
+import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
+import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
@@ -68,23 +68,23 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     //image buttons
     private val switchLensButton = root.findViewById<ImageView>(R.id.switchLens)
-    private val imageIso = root.findViewById<ImageView>(R.id.imageIso)
-    private val imageShutter = root.findViewById<ImageView>(R.id.imageShutter)
-    private val imageAperture = root.findViewById<ImageView>(R.id.imageAperture)
-    private val imageAutoExposure = root.findViewById<ImageView>(R.id.imageAutoExposure)
+    private val imageViewIso = root.findViewById<ImageView>(R.id.imageIso)
+    private val imageViewShutter = root.findViewById<ImageView>(R.id.imageShutter)
+    private val imageViewAperture = root.findViewById<ImageView>(R.id.imageAperture)
+    private val imageViewAutoExposure = root.findViewById<ImageView>(R.id.imageAutoExposure)
 
     // text views
-    private val currentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
-    private val currentShutterValue = root.findViewById<TextView>(R.id.textCurrentShutter)
-    private val currentApertureValue = root.findViewById<TextView>(R.id.textCurrentAperture)
-    private val autoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
+    private val textViewCurrentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
+    private val textViewCurrentShutterValue = root.findViewById<TextView>(R.id.textCurrentShutter)
+    private val textViewCurrentApertureValue = root.findViewById<TextView>(R.id.textCurrentAperture)
+    private val textViewAutoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
 
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
 
     private var selectedPosition = RecyclerView.NO_POSITION
 
-    private var autoExposureOff: Boolean = true
+    private var autoExposure: Boolean = true
 
     var width = 800
     var height = 800
@@ -115,68 +115,19 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         val denominator = fraction.denominator
         Log.d(TAG, "$nanoseconds nanoseconds is equal to $numerator / $denominator seconds.")
 
-        val shutterSpeedRange = CameraHelper.shutterSpeedRange(26_503L, 279_590_625L).map {
-            "" + it.numerator + "/" + it.denominator
-        }
-        val isoRange = CameraHelper.isoRange(47, 11906).map {
-            it.toString()
-        }
-
-        autoExposureOff = cameraInput.autoExposure
+        autoExposure = cameraInput.autoExposure
 
         cameraInput.shutterSpeedCurrentValue?.let {
             val fraction = CameraHelper.convertNanoSecondToSecond(it)
 
-            currentShutterValue.text = "" + fraction.numerator + "/" + fraction.denominator
+            textViewCurrentShutterValue.text = "" + fraction.numerator + "/" + fraction.denominator
         }
-        currentApertureValue.text = "f/" + cameraInput.apertureCurrentValue.toString()
+        textViewCurrentApertureValue.text = "f/" + cameraInput.apertureCurrentValue.toString()
 
-        imageIso.setOnClickListener {
-            it.startAnimation(buttonClick)
-            val buttonLocation = IntArray(2)
-            it.getLocationInWindow(buttonLocation)
-            showCustomDialog(it, buttonLocation, isoRange, SettingMode.ISO)
-        }
-
-        imageShutter.setOnClickListener {
-            it.startAnimation(buttonClick)
-            val buttonLocation = IntArray(2)
-            it.getLocationInWindow(buttonLocation)
-            showCustomDialog(it, buttonLocation, shutterSpeedRange, SettingMode.SHUTTER_SPEED)
-        }
-
-        imageAperture.setOnClickListener {
-            it.startAnimation(buttonClick)
-            val buttonLocation = IntArray(2)
-            it.getLocationInWindow(buttonLocation)
-            showCustomDialog(it, buttonLocation, arrayListOf("1.4"), SettingMode.APERTURE)
-        }
-
-        if (autoExposureOff) {
-            autoExposureStatus.text = "Off"
-            imageAutoExposure.setBackgroundColor(Color.TRANSPARENT)
-            imageIso.setBackgroundColor(Color.TRANSPARENT)
-            imageIso.isClickable = true
-            imageShutter.isClickable = true
-            imageAperture.isClickable = true
-            imageShutter.setBackgroundColor(Color.TRANSPARENT)
-            imageAperture.setBackgroundColor(Color.TRANSPARENT)
-            autoExposureStatus.text = "Off"
-        } else {
-            autoExposureStatus.text = "On"
-            imageAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            autoExposureStatus.text = "On"
-            imageIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageIso.isClickable = false
-            imageShutter.isClickable = false
-            imageAperture.isClickable = false
-        }
-        imageAutoExposure.setOnClickListener {
-            it.startAnimation(buttonClick)
-            onSettingClicked(SettingMode.AUTO_EXPOSURE)
-        }
+        imageViewIso.setOnClickListener { onSettingClicked(SettingMode.ISO, it) }
+        imageViewShutter.setOnClickListener { onSettingClicked(SettingMode.SHUTTER_SPEED, it) }
+        imageViewAperture.setOnClickListener { onSettingClicked(SettingMode.APERTURE, it) }
+        imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE, it) }
 
     }
 
@@ -329,16 +280,29 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
     }
 
-    private fun onSettingClicked(settingMode: SettingMode){
+    private fun onSettingClicked(settingMode: SettingMode, view: View){
+        Log.d(TAG, settingMode.name)
+        val buttonLocation = IntArray(2)
+        view.startAnimation(buttonClick)
+        view.getLocationInWindow(buttonLocation)
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             when (settingMode){
                 SettingMode.NONE -> TODO()
-                SettingMode.ISO -> TODO()
-                SettingMode.SHUTTER_SPEED -> TODO()
-                SettingMode.APERTURE -> TODO()
+                SettingMode.ISO -> {
+                    val isoRange = CameraHelper.isoRange(47, 11906).map { it.toString() }
+                    showCustomDialog(view, buttonLocation, isoRange, SettingMode.ISO)
+                }
+                SettingMode.SHUTTER_SPEED -> {
+                    val shutterSpeedRange = CameraHelper.shutterSpeedRange(26_503L, 279_590_625L)
+                        .map { "" + it.numerator + "/" + it.denominator }
+                    showCustomDialog(view, buttonLocation, shutterSpeedRange, settingMode)
+                }
+                SettingMode.APERTURE -> {
+                    showCustomDialog(view, buttonLocation, arrayListOf("1.4"), settingMode)
+                }
                 SettingMode.AUTO_EXPOSURE -> {
-                    autoExposureOff = !autoExposureOff
-                    _action.emit(CameraUiAction.ChangeAutoExposure(autoExposureOff))
+                    autoExposure = !autoExposure
+                    _action.emit(CameraUiAction.ChangeAutoExposure(autoExposure))
                 }
             }
         }
@@ -346,7 +310,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     fun setCameraScreenViewState(state: CameraScreenViewState) {
         setCameraPreviewScreenViewState(state.cameraPreviewScreenViewState)
-        setCameraSettingViewState(state.cameraSettingViewState)
+        setCameraSettingViewState(state.cameraPreviewScreenViewState)
 
     }
 
@@ -356,38 +320,51 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         setCameraExposureViewState(state)
     }
 
-    private fun setCameraSettingViewState(state: CameraSettingViewState) {
-        imageIso.isVisible = state.isoSliderViewState.isVisible
-        imageIso.isEnabled = state.isoSliderViewState.isEnabled
+    private fun setCameraSettingViewState(state: CameraPreviewScreenViewState) {
+        imageViewIso.isVisible = state.isoButtonViewState.isVisible
+        imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
 
-        imageShutter.isVisible = state.shutterSpeedSliderViewState.isVisible
-        imageShutter.isEnabled = state.shutterSpeedSliderViewState.isEnabled
+        imageViewShutter.isVisible = state.shutterButtonViewState.isVisible
+        imageViewShutter.isEnabled = state.shutterButtonViewState.isEnabled
 
-        imageAperture.isVisible = state.apertureSliderViewState.isVisible
-        imageAperture.isEnabled = state.apertureSliderViewState.isEnabled
+        imageViewAperture.isVisible = state.apertureButtonViewState.isVisible
+        imageViewAperture.isEnabled = state.apertureButtonViewState.isEnabled
 
     }
 
+    fun setCameraSettingButtonValue(state: CameraSettingValueState){
+        if(state.currentIsoValue != 0) textViewCurrentIsoValue.text = state.currentIsoValue.toString()
+        if(state.currentShutterValue != 0L) {
+            val fraction = CameraHelper.convertNanoSecondToSecond(state.currentShutterValue)
+            textViewCurrentShutterValue.text = "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
+        }
+        if(state.currentApertureValue != 0.0f) textViewCurrentApertureValue.text = state.currentApertureValue.toString()
+
+
+    }
+
+
     private fun setCameraExposureViewState(state: CameraPreviewScreenViewState){
         if(state.autoExposureViewState.isEnabled){
-            imageAutoExposure.setBackgroundColor(Color.TRANSPARENT)
-            imageIso.setBackgroundColor(Color.TRANSPARENT)
-            imageIso.isClickable = true
-            imageShutter.isClickable = true
-            imageAperture.isClickable = true
-            imageShutter.setBackgroundColor(Color.TRANSPARENT)
-            imageAperture.setBackgroundColor(Color.TRANSPARENT)
-            autoExposureStatus.text = "Off"
+            Log.d(TAG, "setCameraSxposure: True")
+            imageViewAutoExposure.setBackgroundColor(Color.TRANSPARENT)
+            imageViewIso.setBackgroundColor(Color.TRANSPARENT)
+            imageViewIso.isClickable = true
+            imageViewShutter.isClickable = true
+            imageViewAperture.isClickable = true
+            imageViewShutter.setBackgroundColor(Color.TRANSPARENT)
+            imageViewAperture.setBackgroundColor(Color.TRANSPARENT)
+            textViewAutoExposureStatus.text = "Off"
         } else {
-            //imageAutoExposure.isEnabled = false
-            imageAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            autoExposureStatus.text = "On"
-            imageIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageIso.isClickable = false
-            imageShutter.isClickable = false
-            imageAperture.isClickable = false
+            Log.d(TAG, "setCameraSxposure")
+            imageViewAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            textViewAutoExposureStatus.text = "On"
+            imageViewIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageViewShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageViewAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageViewIso.isClickable = false
+            imageViewShutter.isClickable = false
+            imageViewAperture.isClickable = false
         }
     }
 
@@ -418,6 +395,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         dataList: List<String>,
         settingMode: SettingMode
     ) {
+        Log.d(TAG, "showCustomDialog")
 
         if (dataList.isEmpty() || dataList.size == 1) {
             return
@@ -431,7 +409,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         dialog.setCancelable(true)
 
         val window = dialog.window
-        //window?.setLayout(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         val dialogLayoutParams = WindowManager.LayoutParams().apply {
             copyFrom(window?.attributes)
             width = WindowManager.LayoutParams.WRAP_CONTENT
@@ -445,19 +422,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             override fun onSettingClicked(value: String, position: Int) {
                 onClickCameraSetting(settingMode, value)
                 selectedPosition = position
-                if (settingMode == SettingMode.ISO) {
-                    cameraInput.isoCurrentValue?.let {
-                        currentIsoValue.text = it.toString()
-
-                    }
-                }
-                if (settingMode == SettingMode.SHUTTER_SPEED) {
-                    cameraInput.shutterSpeedCurrentValue?.let {
-                        val fraction = CameraHelper.convertNanoSecondToSecond(it)
-                        currentShutterValue.text =
-                            "" + fraction.numerator + "/" + fraction.denominator
-                    }
-                }
+                dialog.dismiss()
             }
         }
 
