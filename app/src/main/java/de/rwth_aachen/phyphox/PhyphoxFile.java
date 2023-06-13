@@ -1603,9 +1603,11 @@ public abstract class PhyphoxFile {
                 }
                 case "camera-gui": {
                     boolean exposure = getBooleanAttribute("auto_exposure", true);
+                    String level = getStringAttribute("exposure_adjustment_level");
 
                     ExpView.cameraElement cameraElement = newView.new cameraElement(label, null, null, parent.getResources());
                     cameraElement.setExposure(exposure);
+                    cameraElement.setExposureAdjustmentLevel(level);
                     newView.elements.add(cameraElement);
                     break;
                 }

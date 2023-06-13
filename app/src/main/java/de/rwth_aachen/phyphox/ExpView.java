@@ -2428,6 +2428,7 @@ public class ExpView implements Serializable{
         private ExpViewFragment parent = null;
         private CameraPreviewFragment cameraPreviewFragment = null;
         private boolean exposure = true;
+        private String exposureAdjustmentLevel = "1";
 
 
         protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -2451,6 +2452,7 @@ public class ExpView implements Serializable{
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
             experiment.cameraInput.setAutoExposure(exposure);
+            experiment.cameraInput.setExposureAdjustmentLevel(exposureAdjustmentLevel);
             Bundle args = new Bundle();
             args.putSerializable(CameraHelper.EXPERIMENT_ARG, experiment);
             cameraPreviewFragment.setArguments(args);
@@ -2463,6 +2465,10 @@ public class ExpView implements Serializable{
 
         public void setExposure(boolean exposure) {
             this.exposure = exposure;
+        }
+
+        public void setExposureAdjustmentLevel(String level){
+            this.exposureAdjustmentLevel = level;
         }
 
         @Override

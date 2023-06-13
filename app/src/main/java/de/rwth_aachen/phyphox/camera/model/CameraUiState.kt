@@ -37,7 +37,8 @@ data class CameraSettingValueState(
     var shutterSpeedRange:  List<String>? = emptyList(),
     var apertureRange:  List<String>? = emptyList(),
     val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY,
-    val settingMode: SettingMode = SettingMode.NONE
+    val settingMode: SettingMode = SettingMode.NONE,
+    val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC
 
     )
 
@@ -47,6 +48,12 @@ enum class SettingMode {
     SHUTTER_SPEED,
     APERTURE,
     AUTO_EXPOSURE
+}
+
+enum class CameraSettingLevel {
+    BASIC, // auto exposure ON (Level 1)
+    INTERMEDIATE, // auto exposure OFF, only adjust exposure (Level 2)
+    ADVANCE // auto exposure OFF, can adjust ISO, Shutter Speed and Aperture (Level 3)
 }
 
 enum class CameraSettingState{

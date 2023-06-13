@@ -29,6 +29,7 @@ import de.rwth_aachen.phyphox.ExpView
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
+import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraState
@@ -110,7 +111,12 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 currentApertureValue = cameraInput.apertureCurrentValue,
                 currentIsoValue = cameraInput.isoCurrentValue,
                 currentShutterValue = cameraInput.shutterSpeedCurrentValue,
-                autoExposure = cameraInput.autoExposure
+                autoExposure = cameraInput.autoExposure,
+                cameraSettingLevel = when (cameraInput.exposureAdjustmentLevel) {
+                    "1" -> CameraSettingLevel.BASIC
+                    "2" -> CameraSettingLevel.INTERMEDIATE
+                    else -> CameraSettingLevel.ADVANCE
+                }
             )
             _cameraSettingValueState.emit(newCameraUiState)
         }

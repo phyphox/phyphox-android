@@ -193,7 +193,6 @@ class CameraPreviewFragment : Fragment() {
                                 }
                         )
                         cameraViewModel.initializeCamera()
-                        //cameraPreviewScreen.slidersViewSetup(experiment)
                     }
 
                     CameraState.READY -> {
@@ -229,6 +228,7 @@ class CameraPreviewFragment : Fragment() {
                     CameraSettingState.LOADING -> Unit
                     CameraSettingState.LOADED -> {
                         cameraPreviewScreen.setCameraSettingText(cameraSettingState)
+                        cameraPreviewScreen.setImageVisibility(cameraSettingState)
                     }
                     CameraSettingState.LOADING_FAILED -> Unit
                     CameraSettingState.RELOADING -> Unit

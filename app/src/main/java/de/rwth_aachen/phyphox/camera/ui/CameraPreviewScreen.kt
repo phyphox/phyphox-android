@@ -10,12 +10,15 @@ import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.RectF
+import android.opengl.Visibility
 import android.os.Build
 import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
@@ -43,6 +46,7 @@ import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
+import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.SettingMode
@@ -52,6 +56,7 @@ import de.rwth_aachen.phyphox.camera.viewstate.CameraSettingViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import org.apache.poi.hssf.util.HSSFColor.GOLD
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -171,8 +176,54 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
         textViewCurrentApertureValue.text = "f/".plus(cameraSettingState.currentApertureValue.toString())
 
+    }
 
+    //TODO start from here next time, need to make the exposure level work
+    fun setImageVisibility(cameraSettingState: CameraSettingValueState){
+        if(cameraSettingState.cameraSettingLevel == CameraSettingLevel.BASIC) {
+            imageViewIso.visibility = GONE
+            textViewCurrentIsoValue.visibility = GONE
 
+            imageViewAperture.visibility = GONE
+            textViewCurrentApertureValue.visibility = GONE
+
+            imageViewShutter.visibility = GONE
+            textViewCurrentShutterValue.visibility = GONE
+
+            autoExposure = true
+            imageViewAutoExposure.isClickable = false
+            textViewAutoExposureStatus.text = "On"
+        }
+        else if (cameraSettingState.cameraSettingLevel == CameraSettingLevel.INTERMEDIATE){
+            imageViewIso.visibility = VISIBLE
+            textViewCurrentIsoValue.visibility = VISIBLE
+            textViewCurrentIsoValue.text = "Exposure"
+
+            imageViewAperture.visibility = GONE
+            textViewCurrentApertureValue.visibility = GONE
+
+            imageViewShutter.visibility = GONE
+            textViewCurrentShutterValue.visibility = GONE
+
+            autoExposure = true
+            imageViewAutoExposure.isClickable = true
+            textViewAutoExposureStatus.text = "Off"
+
+        }
+        else {
+            imageViewIso.visibility = VISIBLE
+            textViewCurrentIsoValue.visibility = VISIBLE
+
+            imageViewAperture.visibility = VISIBLE
+            textViewCurrentApertureValue.visibility = VISIBLE
+
+            imageViewShutter.visibility = VISIBLE
+            textViewCurrentShutterValue.visibility = VISIBLE
+
+            autoExposure = true
+            imageViewAutoExposure.isClickable = true
+            textViewAutoExposureStatus.text = "Off"
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")

@@ -36,6 +36,8 @@ class CameraInput() {
 
     var autoExposure: Boolean = true
 
+    var exposureAdjustmentLevel: String = "1"
+
 
     constructor(cameraExtractionMode: CameraExtractionMode,
                 x1: Float,
