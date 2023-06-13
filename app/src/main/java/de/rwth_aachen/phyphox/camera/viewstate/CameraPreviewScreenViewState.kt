@@ -1,11 +1,14 @@
 package de.rwth_aachen.phyphox.camera.viewstate
 
+import de.rwth_aachen.phyphox.camera.model.SettingMode
+
 data class CameraPreviewScreenViewState(
     val shutterButtonViewState: ShutterButtonViewState = ShutterButtonViewState(),
     val isoButtonViewState: IsoButtonViewState = IsoButtonViewState(),
     val apertureButtonViewState: ApertureButtonViewState = ApertureButtonViewState(),
     val autoExposureViewState: AutoExposureViewState = AutoExposureViewState(),
-    val switchLensButtonViewState: SwitchLensButtonViewState = SwitchLensButtonViewState()
+    val switchLensButtonViewState: SwitchLensButtonViewState = SwitchLensButtonViewState(),
+    val adjustSettingSeekbarViewState : AdjustSettingSeekbar = AdjustSettingSeekbar()
 ) {
     fun hideCameraControls(): CameraPreviewScreenViewState =
         copy(
@@ -45,6 +48,13 @@ data class CameraPreviewScreenViewState(
     fun enableAutoFocus(isEnabled: Boolean) : CameraPreviewScreenViewState =
         copy(autoExposureViewState = autoExposureViewState.copy(isEnabled = isEnabled ))
 
+    fun changeSettingSeekbar(isVisible: Boolean, maxValue: Int, minValue: Int, currentValue: Int ) : CameraPreviewScreenViewState=
+        copy(adjustSettingSeekbarViewState = adjustSettingSeekbarViewState.copy(
+            isVisible = isVisible,
+            maxValue = maxValue,
+            minValue = minValue,
+            currentValue = currentValue
+        ))
 }
 
 data class SwitchLensButtonViewState(
@@ -70,4 +80,12 @@ data class ApertureButtonViewState(
 data class AutoExposureViewState(
     val isEnabled: Boolean = false,
     val isVisible: Boolean = false
+)
+
+data class AdjustSettingSeekbar(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false,
+    val maxValue: Int = 0,
+    val minValue: Int = 0,
+    val currentValue: Int = 0,
 )

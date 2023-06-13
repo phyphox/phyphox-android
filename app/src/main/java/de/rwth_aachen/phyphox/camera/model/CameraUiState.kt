@@ -15,7 +15,6 @@ data class CameraUiState  constructor(
     val availableSettings: List<SettingMode> = emptyList(),
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
     val cameraLens: Int = LENS_FACING_BACK,
-    val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY,
     val autoExposure: Boolean = true,
 )
 
@@ -33,11 +32,14 @@ data class CameraSettingValueState(
     val currentIsoValue: Int = 1,
     val currentShutterValue: Long = 1L,
     val currentApertureValue: Float = 1.0f,
-    val isoRange:  Range<Int>? =  null,
-    var shutterSpeedRange:  Range<Long>? = null,
-    var apertureRange:  FloatArray? = null
+    val autoExposure: Boolean = true,
+    val isoRange: List<String>? =  emptyList(),
+    var shutterSpeedRange:  List<String>? = emptyList(),
+    var apertureRange:  List<String>? = emptyList(),
+    val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY,
+    val settingMode: SettingMode = SettingMode.NONE
 
-)
+    )
 
 enum class SettingMode {
     NONE,
@@ -54,6 +56,8 @@ enum class CameraSettingState{
     RELOADING,
     LOADING_FAILED,
     RELOADING_FAILED,
+    LOADING_VALUE,
+    LOAD_VALUE,
     VALUE_UPDATED
 }
 

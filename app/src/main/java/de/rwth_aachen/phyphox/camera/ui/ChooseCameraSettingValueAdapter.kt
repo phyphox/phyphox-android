@@ -1,5 +1,8 @@
 package de.rwth_aachen.phyphox.camera.ui
 
+import android.content.Context
+import android.graphics.Color
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,37 +14,39 @@ import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 
 class ChooseCameraSettingValueAdapter(
-    private val dataList: List<String>,
+    private val dataList: List<String>?,
     private val settingChooseListener: SettingChooseListener,
     private var selectedPosition: Int
 ) : RecyclerView.Adapter<ChooseCameraSettingValueAdapter.ViewHolder>() {
 
     private val buttonClick = AlphaAnimation(1f, 0.4f)
+    private lateinit var context: Context
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        context = parent.context
         val view =
-            LayoutInflater.from(parent.context).inflate(R.layout.camera_setting_item, parent, false)
+            LayoutInflater.from(context).inflate(R.layout.camera_setting_item, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = dataList[position]
+        val item = dataList?.get(position)
         holder.textView.text = item
+        if (selectedPosition == holder.adapterPosition) {
+            holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_primary))
+        }
         holder.textView.animation = buttonClick
 
-        holder.radioButton.text = item
-
-        holder.radioButton.isChecked = position == selectedPosition
-        holder.radioButton.setOnClickListener {
+        holder.textView.setOnClickListener {
             selectedPosition = holder.adapterPosition
             notifyItemChanged(selectedPosition)
-            settingChooseListener.onSettingClicked(dataList[position], position)
+            settingChooseListener.onSettingClicked(dataList?.get(position) ?: "", position)
         }
 
     }
 
     override fun getItemCount(): Int {
-        return dataList.size
+        return dataList?.size!!
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

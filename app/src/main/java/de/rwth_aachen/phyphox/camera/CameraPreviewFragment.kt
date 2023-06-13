@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox.camera
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Camera
 import android.graphics.SurfaceTexture
 import android.os.Build
 import android.os.Bundle
@@ -29,6 +30,7 @@ import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
 import de.rwth_aachen.phyphox.camera.model.PermissionState
+import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModelFactory
@@ -97,6 +99,7 @@ class CameraPreviewFragment : Fragment() {
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -127,15 +130,10 @@ class CameraPreviewFragment : Fragment() {
 
                     }
                     is CameraUiAction.SelectAndChangeCameraSetting -> Unit
-                    is CameraUiAction.LoadCameraSettings -> Unit
-                    is CameraUiAction.ReloadCameraSettings -> {
-                        cameraViewModel.reloadCameraWithNewSetting(
-                            action.settingMode,
-                            action.currentValue
-                        )
+                    is CameraUiAction.CameraSettingClick -> {
+                        cameraViewModel.openCameraSettingValue(action.settingMode)
                     }
                     is CameraUiAction.ChangeCameraSettingValue -> {
-                        Log.d(TAG, "ChangeCameraSettingValue")
                         cameraViewModel.updateCameraSettingValue(action.value, action.settingMode)
                     }
                     is CameraUiAction.ChangeAutoExposure -> {
@@ -192,7 +190,6 @@ class CameraPreviewFragment : Fragment() {
                                 .updateCameraScreen {
                                     it.showCameraControls()
                                         .enableSwitchLens(false)
-                                        .showCameraControls()
                                 }
                         )
                         cameraViewModel.initializeCamera()
@@ -202,11 +199,10 @@ class CameraPreviewFragment : Fragment() {
                     CameraState.READY -> {
                         Log.d(TAG, " CameraState.READY")
                         cameraPreviewScreen.previewView.doOnLayout {
-                            cameraPreviewScreen.setUpOverlay()
                             cameraViewModel.startCameraPreviewView(
                                 cameraPreviewScreen.previewView,
                                 lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner,
-                                cameraUiState.autoExposure
+                                cameraSettingState.autoExposure
                             )
                         }
                         cameraScreenViewState.emit(
@@ -215,7 +211,7 @@ class CameraPreviewFragment : Fragment() {
                                     Log.d(TAG, " UpdateCameraScreen")
                                     s.showCameraControls()
                                         .enableSwitchLens(true)
-                                        .enableAutoFocus(cameraUiState.autoExposure)
+                                        .enableAutoFocus(cameraSettingState.autoExposure)
                                         .enableCameraControls()
                                 }
                         )
@@ -226,15 +222,39 @@ class CameraPreviewFragment : Fragment() {
                     CameraState.PREVIEW_STOPPED -> Unit
                 }
 
-                when (cameraUiState.cameraSettingState) {
-                    CameraSettingState.NOT_READY -> Unit
+                when (cameraSettingState.cameraSettingState) {
+                    CameraSettingState.NOT_READY -> {
+                        cameraViewModel.setUpExposureValue()
+                    }
                     CameraSettingState.LOADING -> Unit
-                    CameraSettingState.LOADED -> Unit
+                    CameraSettingState.LOADED -> {
+                        cameraPreviewScreen.setCameraSettingText(cameraSettingState)
+                    }
                     CameraSettingState.LOADING_FAILED -> Unit
                     CameraSettingState.RELOADING -> Unit
                     CameraSettingState.RELOADING_FAILED -> Unit
+                    CameraSettingState.LOADING_VALUE -> {
+                            if(cameraSettingState.settingMode == SettingMode.ISO){
+                                val currentValue = cameraSettingState.isoRange?.map { it.toInt() }?.let {
+                                    CameraHelper.findIsoNearestNumber(cameraSettingState.currentIsoValue, it)
+                                }
+                                cameraPreviewScreen.showCustomDialog(cameraSettingState.isoRange, cameraSettingState.settingMode, currentValue.toString())
+                            }
+
+                            if(cameraSettingState.settingMode == SettingMode.SHUTTER_SPEED){
+                                val fraction = CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
+                                val numerator = fraction.numerator
+                                val denominator = fraction.denominator
+                                val currentValue = "$numerator/$denominator"
+                                cameraPreviewScreen.showCustomDialog(cameraSettingState.shutterSpeedRange, cameraSettingState.settingMode, currentValue)
+                            }
+
+                            if (cameraSettingState.settingMode == SettingMode.APERTURE)
+                                cameraPreviewScreen.showCustomDialog(cameraSettingState.apertureRange, cameraSettingState.settingMode, cameraSettingState.currentApertureValue.toString())
+
+                    }
+                    CameraSettingState.LOAD_VALUE -> Unit
                     CameraSettingState.VALUE_UPDATED -> {
-                        Log.d(TAG, "VALUE_UPDATED")
                         cameraPreviewScreen.setCameraSettingButtonValue(cameraSettingState)
                     }
 

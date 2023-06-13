@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.camera.helper
 
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
+import android.hardware.Camera
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -10,7 +11,6 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.ImageProxy
-import com.google.gson.Gson
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import org.json.JSONArray
 import org.json.JSONException
@@ -19,10 +19,10 @@ import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
-import java.nio.ByteBuffer
-import java.util.Arrays
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.nio.ByteBuffer
+import java.util.Arrays
 
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -314,7 +314,7 @@ object CameraHelper {
         return Fraction(1, denominator)
     }
 
-    fun fractionToNanoseconds(fraction: Fraction): Long{
+    private fun fractionToNanoseconds(fraction: Fraction): Long{
         val numerator = fraction.numerator * 1_000_000_000L
         val denominator = fraction.denominator
         return numerator / denominator
@@ -354,15 +354,30 @@ object CameraHelper {
         val filteredIsoRange = isoRange.filter {
             it in min..max
         }
-        Log.d("CAMERAHELPER", filteredIsoRange.size.toString())
+
         return filteredIsoRange
+    }
+
+    fun findIsoNearestNumber(input: Int, numbers: List<Int>): Int{
+        var nearestNumber = numbers[0]
+        var difference = Math.abs(input - nearestNumber)
+
+        for (number in numbers) {
+            val currentDifference = Math.abs(input - number)
+            if (currentDifference < difference) {
+                difference = currentDifference
+                nearestNumber = number
+            }
+        }
+
+        return nearestNumber
     }
 
     fun stringToNanoseconds(value: String): Long{
         val parts = value.split("/").map {
             it.toLong()
         }
-        val fraction: Fraction = Fraction(parts[0], parts[1])
+        val fraction = Fraction(parts[0], parts[1])
         return fractionToNanoseconds(fraction)
     }
 
