@@ -6,14 +6,9 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.os.Build
-import android.util.Log
-import android.util.Size
-import android.view.View
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.AppCompatSeekBar
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
-import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -25,11 +20,11 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.common.util.concurrent.ListenableFuture
-import de.rwth_aachen.phyphox.ExpView
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
+import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraState
@@ -40,7 +35,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
-import kotlin.math.log
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraViewModel(private val application: Application) : ViewModel() {
@@ -102,6 +96,17 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             )
 
             _cameraUiState.emit(newCameraUiState)
+        }
+    }
+
+    fun cameraInitialized(){
+        viewModelScope.launch {
+            val currentCameraUiState = _cameraUiState.value
+            _cameraUiState.emit(
+                currentCameraUiState.copy(
+                    cameraState = CameraState.LOADED
+                )
+            )
         }
     }
 
@@ -361,6 +366,24 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                settingMode = settingMode
 
            ))
+        }
+    }
+
+    fun updateViewStateOfRecyclerView(recyclerViewShown: Boolean){
+        val currentCameraSettingState = _cameraSettingValueState.value
+        viewModelScope.launch {
+            _cameraSettingValueState.emit(currentCameraSettingState.copy(
+                cameraSettingRecyclerState = if (recyclerViewShown) CameraSettingRecyclerState.SHOWN else CameraSettingRecyclerState.HIDDEN,
+            ))
+        }
+    }
+
+    fun cameraSettingOpened(){
+        val currentCameraSettingState = _cameraSettingValueState.value
+        viewModelScope.launch {
+            _cameraSettingValueState.emit(currentCameraSettingState.copy(
+                cameraSettingState = CameraSettingState.LOAD_FINISHED,
+            ))
         }
     }
 

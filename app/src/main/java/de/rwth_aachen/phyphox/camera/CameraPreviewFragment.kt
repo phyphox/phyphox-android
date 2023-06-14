@@ -1,15 +1,11 @@
 package de.rwth_aachen.phyphox.camera
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.graphics.Camera
-import android.graphics.SurfaceTexture
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +22,7 @@ import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
+import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
@@ -77,7 +74,8 @@ class CameraPreviewFragment : Fragment() {
         val args = arguments
         if (args != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                experiment = args.getSerializable(CameraHelper.EXPERIMENT_ARG, PhyphoxExperiment::class.java)
+                experiment =
+                    args.getSerializable(CameraHelper.EXPERIMENT_ARG, PhyphoxExperiment::class.java)
             } else {
                 experiment = args.getSerializable(CameraHelper.EXPERIMENT_ARG) as PhyphoxExperiment?
             }
@@ -108,6 +106,7 @@ class CameraPreviewFragment : Fragment() {
 
         lifecycleScope.launch {
             cameraScreenViewState.collectLatest {
+                Log.d(TAG, "inside cameraScreenViewstate")
                 cameraPreviewScreen.setCameraScreenViewState(state = it)
             }
         }
@@ -130,15 +129,22 @@ class CameraPreviewFragment : Fragment() {
                         requestPermissionsLauncher.launch(Manifest.permission.CAMERA)
 
                     }
+
                     is CameraUiAction.SelectAndChangeCameraSetting -> Unit
                     is CameraUiAction.CameraSettingClick -> {
                         cameraViewModel.openCameraSettingValue(action.settingMode)
                     }
-                    is CameraUiAction.ChangeCameraSettingValue -> {
+
+                    is CameraUiAction.UpdateCameraExposureSettingValue -> {
                         cameraViewModel.updateCameraSettingValue(action.value, action.settingMode)
                     }
-                    is CameraUiAction.ChangeAutoExposure -> {
+
+                    is CameraUiAction.UpdateAutoExposure -> {
                         cameraViewModel.changeExposure(action.autoExposure)
+                    }
+
+                    is CameraUiAction.ExposureSettingValueSelected -> {
+                        cameraViewModel.cameraSettingOpened()
                     }
                 }
             }
@@ -169,8 +175,8 @@ class CameraPreviewFragment : Fragment() {
                     // TODO manage the permission
                     is PermissionState.Denied -> {
                         //if (cameraViewModel.cameraUiState != CameraState.PREVIEW_STOPPED) {
-                         //   cameraPreviewScreen.showPermissionsRequest(permissionState.shouldShowRational)
-                         //   return@collectLatest
+                        //   cameraPreviewScreen.showPermissionsRequest(permissionState.shouldShowRational)
+                        //   return@collectLatest
                         //}
                     }
                 }
@@ -216,9 +222,11 @@ class CameraPreviewFragment : Fragment() {
                                 }
                         )
                         cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
+                        cameraViewModel.cameraInitialized()
 
                     }
 
+                    CameraState.LOADED -> Unit
                     CameraState.PREVIEW_IN_BACKGROUND -> Unit
                     CameraState.PREVIEW_STOPPED -> Unit
                 }
@@ -227,6 +235,7 @@ class CameraPreviewFragment : Fragment() {
                     CameraSettingState.NOT_READY -> {
                         cameraViewModel.setUpExposureValue()
                     }
+
                     CameraSettingState.LOADING -> Unit
                     CameraSettingState.LOADED -> {
                         cameraPreviewScreen.setCameraSettingText(cameraSettingState)
@@ -240,35 +249,82 @@ class CameraPreviewFragment : Fragment() {
                             }
                         )
                     }
+
                     CameraSettingState.LOADING_FAILED -> Unit
                     CameraSettingState.RELOADING -> Unit
                     CameraSettingState.RELOADING_FAILED -> Unit
                     CameraSettingState.LOADING_VALUE -> {
-                            if(cameraSettingState.settingMode == SettingMode.ISO){
-                                val currentValue = cameraSettingState.isoRange?.map { it.toInt() }?.let {
-                                    CameraHelper.findIsoNearestNumber(cameraSettingState.currentIsoValue, it)
+                        if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.HIDDEN) {
+                            cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = true)
+                        } else {
+                            cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = false)
+                            cameraPreviewScreen.recyclerLoadingFinished()
+                            return@collectLatest
+                        }
+
+                        if (cameraSettingState.settingMode == SettingMode.ISO) {
+                            val currentValue =
+                                cameraSettingState.isoRange?.map { it.toInt() }?.let {
+                                    CameraHelper.findIsoNearestNumber(
+                                        cameraSettingState.currentIsoValue,
+                                        it
+                                    )
                                 }
-                                cameraPreviewScreen.showCustomDialog(cameraSettingState.isoRange, cameraSettingState.settingMode, currentValue.toString())
-                            }
+                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
+                                cameraSettingState.isoRange,
+                                cameraSettingState.settingMode,
+                                currentValue.toString()
+                            )
+                        }
 
-                            if(cameraSettingState.settingMode == SettingMode.SHUTTER_SPEED){
-                                val fraction = CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
-                                val numerator = fraction.numerator
-                                val denominator = fraction.denominator
-                                val currentValue = "$numerator/$denominator"
-                                cameraPreviewScreen.showCustomDialog(cameraSettingState.shutterSpeedRange, cameraSettingState.settingMode, currentValue)
-                            }
+                        if (cameraSettingState.settingMode == SettingMode.SHUTTER_SPEED) {
+                            val fraction =
+                                CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
+                            val numerator = fraction.numerator
+                            val denominator = fraction.denominator
+                            val currentValue = "$numerator/$denominator"
+                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
+                                cameraSettingState.shutterSpeedRange,
+                                cameraSettingState.settingMode,
+                                currentValue
+                            )
+                        }
 
-                            if (cameraSettingState.settingMode == SettingMode.APERTURE)
-                                cameraPreviewScreen.showCustomDialog(cameraSettingState.apertureRange, cameraSettingState.settingMode, cameraSettingState.currentApertureValue.toString())
+                        if (cameraSettingState.settingMode == SettingMode.APERTURE)
+                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
+                                cameraSettingState.apertureRange,
+                                cameraSettingState.settingMode,
+                                cameraSettingState.currentApertureValue.toString()
+                            )
 
-                            if(cameraSettingState.settingMode == SettingMode.EXPOSURE)
-                                cameraPreviewScreen.showCustomDialog(cameraSettingState.exposureRange, cameraSettingState.settingMode, cameraSettingState.currentExposureValue.toString())
+                        if (cameraSettingState.settingMode == SettingMode.EXPOSURE)
+                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
+                                cameraSettingState.exposureRange,
+                                cameraSettingState.settingMode,
+                                cameraSettingState.currentExposureValue.toString()
+                            )
 
                     }
+
                     CameraSettingState.LOAD_VALUE -> Unit
                     CameraSettingState.VALUE_UPDATED -> {
+                        cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
+                            it.hideRecyclerView()
+                        })
+                        cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = false)
                         cameraPreviewScreen.setCameraSettingButtonValue(cameraSettingState)
+                    }
+
+                    CameraSettingState.LOAD_FINISHED -> {
+                        if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN) {
+                            cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
+                                it.showRecyclerView()
+                            })
+                        } else {
+                            cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
+                                it.hideRecyclerView()
+                            })
+                        }
                     }
 
                 }

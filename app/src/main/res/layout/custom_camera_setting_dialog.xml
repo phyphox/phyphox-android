@@ -4,12 +4,6 @@
     android:background="@color/phyphox_black_100"
     android:padding="8dp">
 
-    <!-- RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="horizontal"
-        />
+
 
 </RelativeLayout>

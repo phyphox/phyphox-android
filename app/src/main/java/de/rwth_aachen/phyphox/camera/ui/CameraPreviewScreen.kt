@@ -3,33 +3,25 @@ package de.rwth_aachen.phyphox.camera.ui
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
-import android.app.ActionBar
-import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.RectF
-import android.opengl.Visibility
 import android.os.Build
 import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.GONE
-import android.view.View.VISIBLE
-import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
-import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
-import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.AppCompatSeekBar
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.camera.core.CameraSelector.LENS_FACING_BACK
+import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
@@ -38,29 +30,20 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import de.rwth_aachen.phyphox.ExpView
 import de.rwth_aachen.phyphox.MarkerOverlayView
-import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
-import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
-import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
-import de.rwth_aachen.phyphox.camera.viewstate.CameraSettingViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import org.apache.poi.hssf.util.HSSFColor.GOLD
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.CameraSelector.LENS_FACING_BACK
-import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -103,7 +86,13 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
     private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
 
-    private val seekbarSettingValue = root.findViewById<AppCompatSeekBar>(R.id.seekbar_setting_value)
+    private val recyclerView = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
+
+    private var isoButtonClicked = false
+    private var shutterSpeedButtonClicked = false
+    private var apertureButtonClicked = false
+    private var exposureButtonClicked = false
+    private var autoExposure: Boolean = true
 
     private lateinit var dialogView : View
 
@@ -112,8 +101,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val buttonLocation = IntArray(2)
 
     private var selectedPosition = RecyclerView.NO_POSITION
-
-    private var autoExposure: Boolean = true
 
     var width = 0
     var height = 0
@@ -131,6 +118,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     init {
 
+        // work around to get the height of preview view by delaying it so that the view is first laid
         val viewTreeObserver = previewView.viewTreeObserver
         viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
             override fun onGlobalLayout() {
@@ -156,24 +144,28 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
+            isoButtonClicked = !isoButtonClicked
             onSettingClicked(SettingMode.ISO, it) }
 
         imageViewShutter.setOnClickListener {
             dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
+            shutterSpeedButtonClicked = !shutterSpeedButtonClicked
             onSettingClicked(SettingMode.SHUTTER_SPEED, it) }
 
         imageViewAperture.setOnClickListener {
             dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
+            apertureButtonClicked = !apertureButtonClicked
             onSettingClicked(SettingMode.APERTURE, it) }
 
         imageViewExposure.setOnClickListener {
             dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
+            exposureButtonClicked = !exposureButtonClicked
             onSettingClicked(SettingMode.EXPOSURE, it)
         }
 
@@ -323,9 +315,9 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
-    private fun onClickCameraSetting(settingMode: SettingMode, value: String) {
+    private fun onClickCameraExposureSetting(settingMode: SettingMode, value: String) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-            _action.emit(CameraUiAction.ChangeCameraSettingValue(settingMode, value))
+            _action.emit(CameraUiAction.UpdateCameraExposureSettingValue(settingMode, value))
         }
     }
 
@@ -355,7 +347,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                 SettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
                 SettingMode.AUTO_EXPOSURE -> {
                     autoExposure = !autoExposure
-                    _action.emit(CameraUiAction.ChangeAutoExposure(autoExposure))
+                    _action.emit(CameraUiAction.UpdateAutoExposure(autoExposure))
                 }
             }
         }
@@ -364,7 +356,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     fun setCameraScreenViewState(state: CameraScreenViewState) {
         setCameraPreviewScreenViewState(state.cameraPreviewScreenViewState)
         setCameraSettingViewState(state.cameraPreviewScreenViewState)
-        setCameraSettingSeekbarViewState(state.cameraPreviewScreenViewState)
+        setCameraSettingRecyclerViewState(state.cameraPreviewScreenViewState)
         setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
     }
 
@@ -376,6 +368,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     }
 
     private fun setCameraSettingViewState(state: CameraPreviewScreenViewState) {
+        Log.d(TAG, "setCameraSettingViewState")
         imageViewIso.isVisible = state.isoButtonViewState.isVisible
         imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
 
@@ -387,6 +380,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
+    /**
     private fun setCameraSettingSeekbarViewState(state: CameraPreviewScreenViewState){
         seekbarSettingValue.isVisible = state.adjustSettingSeekbarViewState.isVisible
         seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue
@@ -403,14 +397,20 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue + state.adjustSettingSeekbarViewState.minValue
         }
     }
+    */
 
     private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState){
+        Log.d(TAG, "setCameraExposureControlViewState")
         lnrSwitchLens.isVisible = state.switchLensButtonViewState.isEnabled
         lnrIso.isVisible = state.isoButtonViewState.isVisible
         lnrShutter.isVisible = state.shutterButtonViewState.isVisible
         lnrAperture.isVisible = state.apertureButtonViewState.isVisible
         lnrExposure.isVisible = state.exposureViewState.isVisible
         lnrAutoExposure.isVisible = state.autoExposureViewState.isVisible
+    }
+
+    private fun setCameraSettingRecyclerViewState(state: CameraPreviewScreenViewState){
+        recyclerView.isVisible = state.cameraSettingRecyclerViewState.isOpened
     }
 
     fun setCameraSettingButtonValue(state: CameraSettingValueState){
@@ -457,7 +457,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
     }
 
-    fun showCustomDialog(
+    fun showRecyclerViewForExposureSetting(
         dataList: List<String>?,
         settingMode: SettingMode,
         currentValue: String
@@ -472,32 +472,15 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             return
         }
 
-        val dialog = Dialog(dialogView.context)
-
-        dialog.setContentView(dialogView)
-        dialog.setCancelable(true)
-        dialog.window?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-
-        val window = dialog.window
-        val dialogLayoutParams = WindowManager.LayoutParams().apply {
-            copyFrom(window?.attributes)
-            width = WindowManager.LayoutParams.MATCH_PARENT
-            height = WindowManager.LayoutParams.WRAP_CONTENT
-            y = buttonLocation[1]-980 // TODO need to fix this hard coded value
-        }
-        window?.attributes = dialogLayoutParams
-
         val settingChangeListener = object : SettingChooseListener {
             override fun onSettingClicked(value: String, position: Int) {
-                onClickCameraSetting(settingMode, value)
+                onClickCameraExposureSetting(settingMode, value)
                 selectedPosition = position
-                dialog.dismiss()
             }
         }
 
         val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
 
-        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.layoutManager = mLayoutManager
         recyclerView.itemAnimator = DefaultItemAnimator()
 
@@ -506,12 +489,19 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         recyclerView.adapter =
             ChooseCameraSettingValueAdapter(dataList, settingChangeListener, selectedPosition)
 
+        // TODO need to improvise this workaround
         recyclerView.postDelayed(Runnable {
             recyclerView.scrollToPosition(selectedPosition)
         }, 100)
 
-        dialog.show()
+        recyclerLoadingFinished()
 
+    }
+
+    fun recyclerLoadingFinished(){
+        root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            _action.emit(CameraUiAction.ExposureSettingValueSelected)
+        }
     }
 
 }

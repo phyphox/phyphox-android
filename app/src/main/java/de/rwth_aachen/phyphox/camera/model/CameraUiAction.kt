@@ -7,7 +7,8 @@ sealed class CameraUiAction {
     object SwitchCameraClick : CameraUiAction()
     data class CameraSettingClick(val view: View, val settingMode: SettingMode) : CameraUiAction()
     data class SelectAndChangeCameraSetting(val extension: Int, val value: Int) : CameraUiAction()
-    data class ChangeCameraSettingValue(val settingMode: SettingMode, val value: String) : CameraUiAction()
-    data class ChangeAutoExposure(val autoExposure: Boolean): CameraUiAction()
+    data class UpdateCameraExposureSettingValue(val settingMode: SettingMode, val value: String) : CameraUiAction()
+    data class UpdateAutoExposure(val autoExposure: Boolean): CameraUiAction()
+    object ExposureSettingValueSelected : CameraUiAction()
 
 }
