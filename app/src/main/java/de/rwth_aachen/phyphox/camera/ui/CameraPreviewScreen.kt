@@ -76,7 +76,11 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val permissionsRequestButton: TextView =
         root.findViewById(R.id.permissionsRequestButton)
 
-    var cameraSettingSliders: MutableMap<String, AppCompatSeekBar> = HashMap()
+    private val lnrIso = root.findViewById<LinearLayoutCompat>(R.id.lnrImageIso)
+    private val lnrShutter = root.findViewById<LinearLayoutCompat>(R.id.lnrImageShutter)
+    private val lnrAperture = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAperture)
+    private val lnrAutoExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAutoExposure)
+    private val lnrExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageExposure)
 
     //image buttons
     private val switchLensButton = root.findViewById<ImageView>(R.id.switchLens)
@@ -84,17 +88,18 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val imageViewShutter = root.findViewById<ImageView>(R.id.imageShutter)
     private val imageViewAperture = root.findViewById<ImageView>(R.id.imageAperture)
     private val imageViewAutoExposure = root.findViewById<ImageView>(R.id.imageAutoExposure)
+    private val imageViewExposure = root.findViewById<ImageView>(R.id.imageExposure)
 
     // text views
     private val textViewCurrentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
     private val textViewCurrentShutterValue = root.findViewById<TextView>(R.id.textCurrentShutter)
     private val textViewCurrentApertureValue = root.findViewById<TextView>(R.id.textCurrentAperture)
     private val textViewAutoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
+    private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
 
     private val seekbarSettingValue = root.findViewById<AppCompatSeekBar>(R.id.seekbar_setting_value)
-    private val linearTextLabel = root.findViewById<LinearLayoutCompat>(R.id.linearTextLabel)
 
-    lateinit var dialogView : View
+    private lateinit var dialogView : View
 
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
@@ -176,54 +181,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
         textViewCurrentApertureValue.text = "f/".plus(cameraSettingState.currentApertureValue.toString())
 
-    }
-
-    //TODO start from here next time, need to make the exposure level work
-    fun setImageVisibility(cameraSettingState: CameraSettingValueState){
-        if(cameraSettingState.cameraSettingLevel == CameraSettingLevel.BASIC) {
-            imageViewIso.visibility = GONE
-            textViewCurrentIsoValue.visibility = GONE
-
-            imageViewAperture.visibility = GONE
-            textViewCurrentApertureValue.visibility = GONE
-
-            imageViewShutter.visibility = GONE
-            textViewCurrentShutterValue.visibility = GONE
-
-            autoExposure = true
-            imageViewAutoExposure.isClickable = false
-            textViewAutoExposureStatus.text = "On"
-        }
-        else if (cameraSettingState.cameraSettingLevel == CameraSettingLevel.INTERMEDIATE){
-            imageViewIso.visibility = VISIBLE
-            textViewCurrentIsoValue.visibility = VISIBLE
-            textViewCurrentIsoValue.text = "Exposure"
-
-            imageViewAperture.visibility = GONE
-            textViewCurrentApertureValue.visibility = GONE
-
-            imageViewShutter.visibility = GONE
-            textViewCurrentShutterValue.visibility = GONE
-
-            autoExposure = true
-            imageViewAutoExposure.isClickable = true
-            textViewAutoExposureStatus.text = "Off"
-
-        }
-        else {
-            imageViewIso.visibility = VISIBLE
-            textViewCurrentIsoValue.visibility = VISIBLE
-
-            imageViewAperture.visibility = VISIBLE
-            textViewCurrentApertureValue.visibility = VISIBLE
-
-            imageViewShutter.visibility = VISIBLE
-            textViewCurrentShutterValue.visibility = VISIBLE
-
-            autoExposure = true
-            imageViewAutoExposure.isClickable = true
-            textViewAutoExposureStatus.text = "Off"
-        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -388,12 +345,11 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun setCameraScreenViewState(state: CameraScreenViewState) {
         setCameraPreviewScreenViewState(state.cameraPreviewScreenViewState)
         setCameraSettingViewState(state.cameraPreviewScreenViewState)
         setCameraSettingSeekbarViewState(state.cameraPreviewScreenViewState)
-
+        setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
     }
 
     private fun setCameraPreviewScreenViewState(state: CameraPreviewScreenViewState) {
@@ -414,12 +370,29 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun setCameraSettingSeekbarViewState(state: CameraPreviewScreenViewState){
         seekbarSettingValue.isVisible = state.adjustSettingSeekbarViewState.isVisible
         seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue
-        seekbarSettingValue.min = state.adjustSettingSeekbarViewState.minValue
         seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            seekbarSettingValue.min = state.adjustSettingSeekbarViewState.minValue
+        } else {
+            /** From https://stackoverflow.com/questions/20762001/how-to-set-seekbar-min-and-max-value
+             * For example, suppose you have data values from -50 to 100 you want to display on the SeekBar.
+             * Set the SeekBar's maximum to be 150 (100-(-50)),
+             * then subtract 50 from the raw value to get the number you should use when setting the bar position.
+             */
+            seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue - state.adjustSettingSeekbarViewState.minValue
+            seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue + state.adjustSettingSeekbarViewState.minValue
+        }
+    }
+
+    private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState){
+        lnrIso.isVisible = state.isoButtonViewState.isVisible
+        lnrShutter.isVisible = state.shutterButtonViewState.isVisible
+        lnrAperture.isVisible = state.apertureButtonViewState.isVisible
+        lnrExposure.isVisible = state.exposureViewState.isVisible
+        lnrAutoExposure.isVisible = state.autoExposureViewState.isVisible
     }
 
     fun setCameraSettingButtonValue(state: CameraSettingValueState){

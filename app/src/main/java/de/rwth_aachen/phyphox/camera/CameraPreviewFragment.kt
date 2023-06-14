@@ -25,6 +25,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
+import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
@@ -228,7 +229,15 @@ class CameraPreviewFragment : Fragment() {
                     CameraSettingState.LOADING -> Unit
                     CameraSettingState.LOADED -> {
                         cameraPreviewScreen.setCameraSettingText(cameraSettingState)
-                        cameraPreviewScreen.setImageVisibility(cameraSettingState)
+                        cameraScreenViewState.emit(
+                            cameraScreenViewState.value.updateCameraScreen {
+                                when (cameraSettingState.cameraSettingLevel) {
+                                    CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
+                                    CameraSettingLevel.INTERMEDIATE -> it.enableIntermediateExposureControl()
+                                    else -> it.enableAdvanceExposureControl()
+                                }
+                            }
+                        )
                     }
                     CameraSettingState.LOADING_FAILED -> Unit
                     CameraSettingState.RELOADING -> Unit
