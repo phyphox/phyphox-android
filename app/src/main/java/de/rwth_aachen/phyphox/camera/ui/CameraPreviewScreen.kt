@@ -80,6 +80,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val permissionsRequestButton: TextView =
         root.findViewById(R.id.permissionsRequestButton)
 
+    private val lnrSwitchLens = root.findViewById<LinearLayoutCompat>(R.id.lnrSwitchLens)
     private val lnrIso = root.findViewById<LinearLayoutCompat>(R.id.lnrImageIso)
     private val lnrShutter = root.findViewById<LinearLayoutCompat>(R.id.lnrImageShutter)
     private val lnrAperture = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAperture)
@@ -404,6 +405,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     }
 
     private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState){
+        lnrSwitchLens.isVisible = state.switchLensButtonViewState.isEnabled
         lnrIso.isVisible = state.isoButtonViewState.isVisible
         lnrShutter.isVisible = state.shutterButtonViewState.isVisible
         lnrAperture.isVisible = state.apertureButtonViewState.isVisible
@@ -423,9 +425,9 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     fun setCameraSwitchInfo(state: CameraUiState){
         if(state.cameraLens == LENS_FACING_FRONT) {
-            textViewLens.text = "Front"
+            textViewLens.text = context.getText(R.string.cameraFront)
         } else if(state.cameraLens == LENS_FACING_BACK){
-            textViewLens.text = "Back"
+            textViewLens.text = context.getText(R.string.cameraBack)
         }
     }
 
@@ -440,10 +442,10 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             imageViewShutter.setBackgroundColor(Color.TRANSPARENT)
             imageViewAperture.setBackgroundColor(Color.TRANSPARENT)
             imageViewExposure.setBackgroundColor(Color.TRANSPARENT)
-            textViewAutoExposureStatus.text = "Off"
+            textViewAutoExposureStatus.text = context.getText(R.string.off)
         } else {
             imageViewAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            textViewAutoExposureStatus.text = "On"
+            textViewAutoExposureStatus.text = context.getText(R.string.on)
             imageViewIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
             imageViewShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
             imageViewAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))

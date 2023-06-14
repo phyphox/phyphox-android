@@ -182,17 +182,6 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     }
 
-    private fun setUpDefaultPreviewBuilder(): Preview.Builder {
-        return Preview.Builder().setTargetResolution(Size(640, 480))
-    }
-
-    fun stopPreview() {
-        preview.setSurfaceProvider(null)
-        viewModelScope.launch {
-            _cameraUiState.emit(_cameraUiState.value.copy(cameraState = CameraState.PREVIEW_STOPPED))
-        }
-    }
-
     fun switchCamera() {
         val currentCameraUiState = _cameraUiState.value
         if (currentCameraUiState.cameraState == CameraState.READY) {
@@ -313,7 +302,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     @SuppressLint("UnsafeOptInUsageError")
     fun setUpPreviewWithExposure(withExposure: Boolean): Preview.Builder {
         if (!withExposure) {
-            return setUpDefaultPreviewBuilder()
+            return Preview.Builder()
         }
 
         val previewBuilder = Preview.Builder()
@@ -323,7 +312,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
         when(cameraSettingValueState.cameraSettingLevel){
             CameraSettingLevel.BASIC -> {
-                return setUpDefaultPreviewBuilder()
+                return Preview.Builder()
             }
             CameraSettingLevel.INTERMEDIATE -> {
                 extender.setCaptureRequestOption(

@@ -306,8 +306,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="depthAggregationModeWeighted">Weighted</string>
 
     <string name="cameraFrontFacing">Front facing camera</string>
+    <string name="cameraFront">Front</string>
     <string name="cameraBackFacing">Back facing camera</string>
+    <string name="cameraBack">Back</string>
     <string name="cameraExternal">External camera</string>
+    <string name="off">Off</string>
+    <string name="on">On</string>
 
     <string name="camera_not_ready">Camera Not Ready</string>
 
