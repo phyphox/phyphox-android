@@ -193,7 +193,7 @@
         android:id="@+id/recyclerViewCameraSetting"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="1dp"
         android:scrollbars="horizontal"
         app:layout_constraintTop_toBottomOf="@id/cameraSetting"
         app:layout_constraintLeft_toLeftOf="parent"

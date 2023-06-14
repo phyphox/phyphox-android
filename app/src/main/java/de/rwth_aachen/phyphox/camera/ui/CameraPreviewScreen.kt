@@ -7,7 +7,9 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Point
+import android.graphics.PorterDuff
 import android.graphics.RectF
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
 import android.util.Log
@@ -16,9 +18,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
@@ -28,6 +32,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.rwth_aachen.phyphox.MarkerOverlayView
@@ -169,7 +174,9 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             onSettingClicked(SettingMode.EXPOSURE, it)
         }
 
-        imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE, it) }
+        imageViewAutoExposure.setOnClickListener {
+            Log.d(TAG, "auto clicked..")
+            onSettingClicked(SettingMode.AUTO_EXPOSURE, it) }
 
 
     }
@@ -346,6 +353,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                 SettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
                 SettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
                 SettingMode.AUTO_EXPOSURE -> {
+                    Log.d(TAG, "auto exposure clicked")
                     autoExposure = !autoExposure
                     _action.emit(CameraUiAction.UpdateAutoExposure(autoExposure))
                 }
@@ -433,28 +441,54 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     private fun setCameraExposureViewState(state: CameraPreviewScreenViewState){
         if(state.autoExposureViewState.isEnabled){
-            imageViewAutoExposure.setBackgroundColor(Color.TRANSPARENT)
-            imageViewIso.setBackgroundColor(Color.TRANSPARENT)
+            Log.d(TAG, "setcameraexposure")
+            imageViewAutoExposure.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_autofocus))
+            imageViewIso.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_camera_iso))
+            imageViewShutter.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.baseline_shutter_speed_24))
+            imageViewAperture.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_camera_aperture))
+            imageViewExposure.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_exposure))
             imageViewIso.isClickable = true
             imageViewShutter.isClickable = true
             imageViewAperture.isClickable = true
             imageViewExposure.isClickable = true
-            imageViewShutter.setBackgroundColor(Color.TRANSPARENT)
-            imageViewAperture.setBackgroundColor(Color.TRANSPARENT)
-            imageViewExposure.setBackgroundColor(Color.TRANSPARENT)
             textViewAutoExposureStatus.text = context.getText(R.string.off)
         } else {
-            imageViewAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            textViewAutoExposureStatus.text = context.getText(R.string.on)
-            imageViewIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageViewShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageViewAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
-            imageViewExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageViewAutoExposure.setImageDrawable(makeImageLookDisabled(SettingMode.AUTO_EXPOSURE ))
+            imageViewIso.setImageDrawable(makeImageLookDisabled(SettingMode.ISO))
+            imageViewShutter.setImageDrawable(makeImageLookDisabled(SettingMode.SHUTTER_SPEED))
+            imageViewAperture.setImageDrawable(makeImageLookDisabled(SettingMode.APERTURE))
+            imageViewExposure.setImageDrawable(makeImageLookDisabled(SettingMode.EXPOSURE))
             imageViewIso.isClickable = false
             imageViewShutter.isClickable = false
             imageViewAperture.isClickable = false
             imageViewExposure.isClickable = false
+            textViewAutoExposureStatus.text = context.getText(R.string.on)
         }
+    }
+
+    private fun makeImageLookDisabled(settingMode: SettingMode): Drawable? {
+        //imageView.isEnabled = false
+        val res: Drawable? = when (settingMode) {
+            SettingMode.ISO ->
+                AppCompatResources.getDrawable(context,R.drawable.ic_camera_iso)
+
+            SettingMode.SHUTTER_SPEED ->
+                AppCompatResources.getDrawable(context,R.drawable.baseline_shutter_speed_24)
+
+            SettingMode.APERTURE ->
+                AppCompatResources.getDrawable(context,R.drawable.ic_camera_aperture)
+
+            SettingMode.EXPOSURE ->
+                AppCompatResources.getDrawable(context,R.drawable.ic_camera_aperture)
+
+            SettingMode.AUTO_EXPOSURE ->
+                AppCompatResources.getDrawable(context,R.drawable.ic_autofocus)
+
+            else -> return null
+        }
+        res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+        return res
+
     }
 
     fun showRecyclerViewForExposureSetting(
@@ -480,6 +514,14 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        val dividerItemDecoration = DividerItemDecoration(
+            recyclerView.context,
+            mLayoutManager.orientation
+        )
+
+        AppCompatResources.getDrawable(context, R.drawable.custom_line_seperator)
+            ?.let { dividerItemDecoration.setDrawable(it) }
+        recyclerView.addItemDecoration(dividerItemDecoration)
 
         recyclerView.layoutManager = mLayoutManager
         recyclerView.itemAnimator = DefaultItemAnimator()

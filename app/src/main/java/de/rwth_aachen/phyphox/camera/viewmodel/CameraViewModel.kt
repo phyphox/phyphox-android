@@ -189,7 +189,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     fun switchCamera() {
         val currentCameraUiState = _cameraUiState.value
-        if (currentCameraUiState.cameraState == CameraState.READY) {
+        if (currentCameraUiState.cameraState == CameraState.LOADED) {
             // To switch the camera lens, there has to be at least 2 camera lenses
             if (currentCameraUiState.availableCameraLens.size == 1) return
 
