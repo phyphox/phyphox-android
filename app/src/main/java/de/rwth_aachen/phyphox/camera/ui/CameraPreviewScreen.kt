@@ -49,6 +49,7 @@ import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
+import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
@@ -57,6 +58,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.apache.poi.hssf.util.HSSFColor.GOLD
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraSelector.LENS_FACING_BACK
+import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -96,6 +100,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val textViewCurrentApertureValue = root.findViewById<TextView>(R.id.textCurrentAperture)
     private val textViewAutoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
     private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
+    private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
 
     private val seekbarSettingValue = root.findViewById<AppCompatSeekBar>(R.id.seekbar_setting_value)
 
@@ -365,6 +370,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private fun setCameraPreviewScreenViewState(state: CameraPreviewScreenViewState) {
         switchLensButton.isEnabled = state.switchLensButtonViewState.isEnabled
         switchLensButton.isVisible = state.switchLensButtonViewState.isVisible
+
         setCameraExposureViewState(state)
     }
 
@@ -413,9 +419,15 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
         if(state.currentApertureValue != 0.0f) textViewCurrentApertureValue.text = state.currentApertureValue.toString()
         if(state.currentExposureValue != 0) textViewExposureStatus.text = state.currentExposureValue.toString()
-
     }
 
+    fun setCameraSwitchInfo(state: CameraUiState){
+        if(state.cameraLens == LENS_FACING_FRONT) {
+            textViewLens.text = "Front"
+        } else if(state.cameraLens == LENS_FACING_BACK){
+            textViewLens.text = "Back"
+        }
+    }
 
     private fun setCameraExposureViewState(state: CameraPreviewScreenViewState){
         if(state.autoExposureViewState.isEnabled){

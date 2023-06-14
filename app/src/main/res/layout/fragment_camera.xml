@@ -27,14 +27,32 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/switchLens"
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/lnrSwitchLens"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="30dp"
+            android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:padding="4dp"
-            app:srcCompat="@drawable/ic_flip_camera_android" />
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/switchLens"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="5dp"
+                app:srcCompat="@drawable/ic_flip_camera_android" />
+
+            <TextView
+                android:id="@+id/textSwitchLens"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/phyphox_white_100"
+                android:textSize="11sp" />
+
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrImageAutoExposure"

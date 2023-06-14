@@ -215,6 +215,7 @@ class CameraPreviewFragment : Fragment() {
                                         .enableCameraControls()
                                 }
                         )
+                        cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
 
                     }
 
