@@ -32,10 +32,12 @@ data class CameraSettingValueState(
     val currentIsoValue: Int = 1,
     val currentShutterValue: Long = 1L,
     val currentApertureValue: Float = 1.0f,
+    val currentExposureValue: Int = 0,
     val autoExposure: Boolean = true,
     val isoRange: List<String>? =  emptyList(),
     var shutterSpeedRange:  List<String>? = emptyList(),
     var apertureRange:  List<String>? = emptyList(),
+    var exposureRange: List<String>? = emptyList(),
     val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY,
     val settingMode: SettingMode = SettingMode.NONE,
     val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC
@@ -47,6 +49,7 @@ enum class SettingMode {
     ISO,
     SHUTTER_SPEED,
     APERTURE,
+    EXPOSURE,
     AUTO_EXPOSURE
 }
 

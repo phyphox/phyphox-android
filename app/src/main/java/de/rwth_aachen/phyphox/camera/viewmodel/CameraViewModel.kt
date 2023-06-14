@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
+import kotlin.math.log
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraViewModel(private val application: Application) : ViewModel() {
@@ -111,6 +112,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 currentApertureValue = cameraInput.apertureCurrentValue,
                 currentIsoValue = cameraInput.isoCurrentValue,
                 currentShutterValue = cameraInput.shutterSpeedCurrentValue,
+                currentExposureValue = cameraInput.currentExposureValue,
                 autoExposure = cameraInput.autoExposure,
                 cameraSettingLevel = when (cameraInput.exposureAdjustmentLevel) {
                     "1" -> CameraSettingLevel.BASIC
@@ -284,11 +286,22 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     apertureRange_?.map { it.toString() }
             }
 
+        val exposureLower =  cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.lower
+        val exposureUpper =  cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.upper
+        val exposureRange = if (exposureLower != null && exposureUpper != null) {
+            (exposureLower..exposureUpper).step(1).toList().map { it.toString() }
+        } else {
+            emptyList()
+        }
+
+        //val exposureStep = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP)
+
         val currentCameraUiState = _cameraSettingValueState.value
         val newCameraUiState = currentCameraUiState.copy(
             apertureRange = apertureRange,
             shutterSpeedRange = shutterSpeedRange,
             isoRange = isoRange,
+            exposureRange = exposureRange,
             cameraSettingState = CameraSettingState.LOADED
         )
 
@@ -307,25 +320,48 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         val extender = Camera2Interop.Extender(previewBuilder)
 
         val cameraSettingValueState = _cameraSettingValueState.value
-        val iso: Int = cameraSettingValueState.currentIsoValue
-        val shutterSpeed: Long = cameraSettingValueState.currentShutterValue
-        val aperture: Float = cameraSettingValueState.currentApertureValue
 
-        extender.setCaptureRequestOption(
-            CaptureRequest.CONTROL_AE_MODE,
-            CameraMetadata.CONTROL_AE_MODE_OFF
-        )
-        if (iso != 0) extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
-        if (shutterSpeed != 0L) extender.setCaptureRequestOption(
-            CaptureRequest.SENSOR_EXPOSURE_TIME,
-            shutterSpeed
-        )
-        if (aperture != 0.0f) extender.setCaptureRequestOption(
-            CaptureRequest.LENS_APERTURE,
-            aperture
-        )
+        when(cameraSettingValueState.cameraSettingLevel){
+            CameraSettingLevel.BASIC -> {
+                return setUpDefaultPreviewBuilder()
+            }
+            CameraSettingLevel.INTERMEDIATE -> {
+                extender.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CameraMetadata.CONTROL_AE_MODE_ON
+                )
 
-        return previewBuilder
+                val exposure: Int = cameraSettingValueState.currentExposureValue
+
+                extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, exposure)
+
+                return previewBuilder
+            }
+            CameraSettingLevel.ADVANCE -> {
+                extender.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CameraMetadata.CONTROL_AE_MODE_OFF
+                )
+
+                val iso: Int = cameraSettingValueState.currentIsoValue
+                val shutterSpeed: Long = cameraSettingValueState.currentShutterValue
+                val aperture: Float = cameraSettingValueState.currentApertureValue
+
+                if (iso != 0) extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
+                if (shutterSpeed != 0L) extender.setCaptureRequestOption(
+                    CaptureRequest.SENSOR_EXPOSURE_TIME,
+                    shutterSpeed
+                )
+                if (aperture != 0.0f) extender.setCaptureRequestOption(
+                    CaptureRequest.LENS_APERTURE,
+                    aperture
+                )
+
+                return previewBuilder
+            }
+        }
+
+
     }
 
     fun openCameraSettingValue(settingMode: SettingMode){
@@ -349,9 +385,14 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 currentIsoValue = value.toInt(),
                 cameraSettingState = CameraSettingState.VALUE_UPDATED
             )
-        } else {
+        } else if(settingMode == SettingMode.SHUTTER_SPEED) {
             currentCameraSettingState.copy(
                 currentShutterValue = CameraHelper.stringToNanoseconds(value),
+                cameraSettingState = CameraSettingState.VALUE_UPDATED
+            )
+        } else {
+            currentCameraSettingState.copy(
+                currentExposureValue = value.toInt(),
                 cameraSettingState = CameraSettingState.VALUE_UPDATED
             )
         }

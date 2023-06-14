@@ -261,6 +261,9 @@ class CameraPreviewFragment : Fragment() {
                             if (cameraSettingState.settingMode == SettingMode.APERTURE)
                                 cameraPreviewScreen.showCustomDialog(cameraSettingState.apertureRange, cameraSettingState.settingMode, cameraSettingState.currentApertureValue.toString())
 
+                            if(cameraSettingState.settingMode == SettingMode.EXPOSURE)
+                                cameraPreviewScreen.showCustomDialog(cameraSettingState.exposureRange, cameraSettingState.settingMode, cameraSettingState.currentExposureValue.toString())
+
                     }
                     CameraSettingState.LOAD_VALUE -> Unit
                     CameraSettingState.VALUE_UPDATED -> {

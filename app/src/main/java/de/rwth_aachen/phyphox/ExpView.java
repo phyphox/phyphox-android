@@ -744,17 +744,21 @@ public class ExpView implements Serializable{
             layout = new LinearLayout(c);
             if(Objects.equals(label, "Shutter Speed")){
                 phyphoxExperiment.cameraInput.setShutterSpeedCurrentValue((long) defaultValue);
-                createSlider(0,0,0, false);
+                //createSlider(0,0,0, false);
                 return;
             }
             if(Objects.equals(label, "ISO")){
                 phyphoxExperiment.cameraInput.setIsoCurrentValue((int) defaultValue);
-                createSlider(0,0,0, false);
+                //createSlider(0,0,0, false);
                 return;
             }
             if(Objects.equals(label, "Aperture")){
                 phyphoxExperiment.cameraInput.setApertureCurrentValue((float) defaultValue);
-                createSlider(0,0,0, false);
+                //createSlider(0,0,0, false);
+                return;
+            }
+            if(Objects.equals(label, "Exposure")){
+                phyphoxExperiment.cameraInput.setCurrentExposureValue((int) defaultValue);
                 return;
             }
             LinearLayout row = new LinearLayout(c);

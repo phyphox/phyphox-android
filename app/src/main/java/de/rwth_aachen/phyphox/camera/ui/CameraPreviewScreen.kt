@@ -164,6 +164,13 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             it.getLocationInWindow(buttonLocation)
             onSettingClicked(SettingMode.APERTURE, it) }
 
+        imageViewExposure.setOnClickListener {
+            dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
+            it.startAnimation(buttonClick)
+            it.getLocationInWindow(buttonLocation)
+            onSettingClicked(SettingMode.EXPOSURE, it)
+        }
+
         imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE, it) }
 
 
@@ -180,6 +187,8 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         textViewCurrentShutterValue.text = "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
 
         textViewCurrentApertureValue.text = "f/".plus(cameraSettingState.currentApertureValue.toString())
+
+        textViewExposureStatus.text = cameraSettingState.currentExposureValue.toString()
 
     }
 
@@ -337,6 +346,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                 SettingMode.ISO -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
                 SettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
                 SettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
+                SettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
                 SettingMode.AUTO_EXPOSURE -> {
                     autoExposure = !autoExposure
                     _action.emit(CameraUiAction.ChangeAutoExposure(autoExposure))
@@ -402,6 +412,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             textViewCurrentShutterValue.text = "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
         }
         if(state.currentApertureValue != 0.0f) textViewCurrentApertureValue.text = state.currentApertureValue.toString()
+        if(state.currentExposureValue != 0) textViewExposureStatus.text = state.currentExposureValue.toString()
 
     }
 
@@ -413,8 +424,10 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             imageViewIso.isClickable = true
             imageViewShutter.isClickable = true
             imageViewAperture.isClickable = true
+            imageViewExposure.isClickable = true
             imageViewShutter.setBackgroundColor(Color.TRANSPARENT)
             imageViewAperture.setBackgroundColor(Color.TRANSPARENT)
+            imageViewExposure.setBackgroundColor(Color.TRANSPARENT)
             textViewAutoExposureStatus.text = "Off"
         } else {
             imageViewAutoExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
@@ -422,9 +435,11 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             imageViewIso.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
             imageViewShutter.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
             imageViewAperture.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
+            imageViewExposure.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_50_black_50))
             imageViewIso.isClickable = false
             imageViewShutter.isClickable = false
             imageViewAperture.isClickable = false
+            imageViewExposure.isClickable = false
         }
     }
 

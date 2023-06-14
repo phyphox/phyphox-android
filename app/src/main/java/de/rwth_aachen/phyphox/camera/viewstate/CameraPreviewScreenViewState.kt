@@ -78,7 +78,7 @@ data class CameraPreviewScreenViewState(
             isoButtonViewState = isoButtonViewState.copy(isVisible = true),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = true),
             autoExposureViewState = autoExposureViewState.copy(isVisible = true),
-            exposureViewState = exposureViewState.copy(isVisible = true)
+            exposureViewState = exposureViewState.copy(isVisible = false)
         )
 }
 
