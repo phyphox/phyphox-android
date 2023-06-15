@@ -320,6 +320,7 @@ object CameraHelper {
         return numerator / denominator
     }
 
+    // TODO create the range mathematically and in loop
     fun shutterSpeedRange(min: Long, max: Long) : List<Fraction>{
         val shutterSpeedRange = listOf<Fraction>(
             Fraction(1, 1),
@@ -348,7 +349,7 @@ object CameraHelper {
 
     fun isoRange(min: Int, max: Int): List<Int>{
         val isoRange = listOf<Int>(
-            25,50,100,200,400,800,1600,3200,6400,9600,12800, 25600, 51200
+            25,50,100,200,400,800,1600,3200,6400,12800, 25600, 51200
         )
 
         val filteredIsoRange = isoRange.filter {

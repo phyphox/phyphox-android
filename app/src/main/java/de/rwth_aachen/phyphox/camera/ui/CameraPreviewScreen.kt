@@ -18,7 +18,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -28,6 +27,7 @@ import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -87,7 +87,8 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val textViewCurrentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
     private val textViewCurrentShutterValue = root.findViewById<TextView>(R.id.textCurrentShutter)
     private val textViewCurrentApertureValue = root.findViewById<TextView>(R.id.textCurrentAperture)
-    private val textViewAutoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
+    private val textViewAutoExposureStatus =
+        root.findViewById<TextView>(R.id.textAutoExposureStatus)
     private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
     private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
 
@@ -99,7 +100,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private var exposureButtonClicked = false
     private var autoExposure: Boolean = true
 
-    private lateinit var dialogView : View
+    private lateinit var dialogView: View
 
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
@@ -146,52 +147,60 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         imageViewIso.setOnClickListener {
-            dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
+            dialogView =
+                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             isoButtonClicked = !isoButtonClicked
-            onSettingClicked(SettingMode.ISO, it) }
+            onSettingClicked(SettingMode.ISO, it)
+        }
 
         imageViewShutter.setOnClickListener {
-            dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
+            dialogView =
+                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             shutterSpeedButtonClicked = !shutterSpeedButtonClicked
-            onSettingClicked(SettingMode.SHUTTER_SPEED, it) }
+            onSettingClicked(SettingMode.SHUTTER_SPEED, it)
+        }
 
         imageViewAperture.setOnClickListener {
-            dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
+            dialogView =
+                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             apertureButtonClicked = !apertureButtonClicked
-            onSettingClicked(SettingMode.APERTURE, it) }
+            onSettingClicked(SettingMode.APERTURE, it)
+        }
 
         imageViewExposure.setOnClickListener {
-            dialogView = LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
+            dialogView =
+                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             exposureButtonClicked = !exposureButtonClicked
             onSettingClicked(SettingMode.EXPOSURE, it)
         }
 
-        imageViewAutoExposure.setOnClickListener {
-            Log.d(TAG, "auto clicked..")
-            onSettingClicked(SettingMode.AUTO_EXPOSURE, it) }
+        imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE, it) }
 
 
     }
 
-    fun setCameraSettingText(cameraSettingState: CameraSettingValueState){
+    fun setCameraSettingText(cameraSettingState: CameraSettingValueState) {
         autoExposure = cameraSettingState.autoExposure
 
         val isoValue = cameraSettingState.isoRange?.map { it.toInt() }
             ?.let { CameraHelper.findIsoNearestNumber(cameraSettingState.currentIsoValue, it) }
         textViewCurrentIsoValue.text = isoValue.toString()
 
-        val fraction = CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
-        textViewCurrentShutterValue.text = "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
+        val fraction =
+            CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
+        textViewCurrentShutterValue.text =
+            "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
 
-        textViewCurrentApertureValue.text = "f/".plus(cameraSettingState.currentApertureValue.toString())
+        textViewCurrentApertureValue.text =
+            "f/".plus(cameraSettingState.currentApertureValue.toString())
 
         textViewExposureStatus.text = cameraSettingState.currentExposureValue.toString()
 
@@ -344,19 +353,39 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
     }
 
-    private fun onSettingClicked(settingMode: SettingMode, view: View){
+    private fun onSettingClicked(settingMode: SettingMode, view: View) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-            when (settingMode){
+            when (settingMode) {
                 SettingMode.NONE -> Unit
-                SettingMode.ISO -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
-                SettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
-                SettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
-                SettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(view, settingMode))
-                SettingMode.AUTO_EXPOSURE -> {
-                    Log.d(TAG, "auto exposure clicked")
-                    autoExposure = !autoExposure
-                    _action.emit(CameraUiAction.UpdateAutoExposure(autoExposure))
-                }
+                SettingMode.ISO -> _action.emit(
+                    CameraUiAction.CameraSettingClick(
+                        view,
+                        settingMode
+                    )
+                )
+
+                SettingMode.SHUTTER_SPEED -> _action.emit(
+                    CameraUiAction.CameraSettingClick(
+                        view,
+                        settingMode
+                    )
+                )
+
+                SettingMode.APERTURE -> _action.emit(
+                    CameraUiAction.CameraSettingClick(
+                        view,
+                        settingMode
+                    )
+                )
+
+                SettingMode.EXPOSURE -> _action.emit(
+                    CameraUiAction.CameraSettingClick(
+                        view,
+                        settingMode
+                    )
+                )
+
+                SettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
             }
         }
     }
@@ -390,24 +419,24 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     /**
     private fun setCameraSettingSeekbarViewState(state: CameraPreviewScreenViewState){
-        seekbarSettingValue.isVisible = state.adjustSettingSeekbarViewState.isVisible
-        seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue
-        seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            seekbarSettingValue.min = state.adjustSettingSeekbarViewState.minValue
-        } else {
-            /** From https://stackoverflow.com/questions/20762001/how-to-set-seekbar-min-and-max-value
-             * For example, suppose you have data values from -50 to 100 you want to display on the SeekBar.
-             * Set the SeekBar's maximum to be 150 (100-(-50)),
-             * then subtract 50 from the raw value to get the number you should use when setting the bar position.
-             */
-            seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue - state.adjustSettingSeekbarViewState.minValue
-            seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue + state.adjustSettingSeekbarViewState.minValue
-        }
-    }
+    seekbarSettingValue.isVisible = state.adjustSettingSeekbarViewState.isVisible
+    seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue
+    seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    seekbarSettingValue.min = state.adjustSettingSeekbarViewState.minValue
+    } else {
+    /** From https://stackoverflow.com/questions/20762001/how-to-set-seekbar-min-and-max-value
+     * For example, suppose you have data values from -50 to 100 you want to display on the SeekBar.
+     * Set the SeekBar's maximum to be 150 (100-(-50)),
+     * then subtract 50 from the raw value to get the number you should use when setting the bar position.
     */
+    seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue - state.adjustSettingSeekbarViewState.minValue
+    seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue + state.adjustSettingSeekbarViewState.minValue
+    }
+    }
+     */
 
-    private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState){
+    private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState) {
         Log.d(TAG, "setCameraExposureControlViewState")
         lnrSwitchLens.isVisible = state.switchLensButtonViewState.isEnabled
         lnrIso.isVisible = state.isoButtonViewState.isVisible
@@ -417,77 +446,104 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         lnrAutoExposure.isVisible = state.autoExposureViewState.isVisible
     }
 
-    private fun setCameraSettingRecyclerViewState(state: CameraPreviewScreenViewState){
+    private fun setCameraSettingRecyclerViewState(state: CameraPreviewScreenViewState) {
         recyclerView.isVisible = state.cameraSettingRecyclerViewState.isOpened
     }
 
-    fun setCameraSettingButtonValue(state: CameraSettingValueState){
-        if(state.currentIsoValue != 0) textViewCurrentIsoValue.text = state.currentIsoValue.toString()
-        if(state.currentShutterValue != 0L) {
+    fun setCameraSettingButtonValue(state: CameraSettingValueState) {
+        if (state.currentIsoValue != 0) textViewCurrentIsoValue.text =
+            state.currentIsoValue.toString()
+        if (state.currentShutterValue != 0L) {
             val fraction = CameraHelper.convertNanoSecondToSecond(state.currentShutterValue)
-            textViewCurrentShutterValue.text = "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
+            textViewCurrentShutterValue.text =
+                "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
         }
-        if(state.currentApertureValue != 0.0f) textViewCurrentApertureValue.text = state.currentApertureValue.toString()
-        if(state.currentExposureValue != 0) textViewExposureStatus.text = state.currentExposureValue.toString()
+        if (state.currentApertureValue != 0.0f) textViewCurrentApertureValue.text =
+            state.currentApertureValue.toString()
+        if (state.currentExposureValue != 0) textViewExposureStatus.text =
+            state.currentExposureValue.toString()
     }
 
-    fun setCameraSwitchInfo(state: CameraUiState){
-        if(state.cameraLens == LENS_FACING_FRONT) {
+    fun setCameraSwitchInfo(state: CameraUiState) {
+        if (state.cameraLens == LENS_FACING_FRONT) {
             textViewLens.text = context.getText(R.string.cameraFront)
-        } else if(state.cameraLens == LENS_FACING_BACK){
+        } else if (state.cameraLens == LENS_FACING_BACK) {
             textViewLens.text = context.getText(R.string.cameraBack)
         }
     }
 
-    private fun setCameraExposureViewState(state: CameraPreviewScreenViewState){
-        if(state.autoExposureViewState.isEnabled){
-            Log.d(TAG, "setcameraexposure")
-            imageViewAutoExposure.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_autofocus))
-            imageViewIso.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_camera_iso))
-            imageViewShutter.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.baseline_shutter_speed_24))
-            imageViewAperture.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_camera_aperture))
-            imageViewExposure.setImageDrawable(AppCompatResources.getDrawable(context,R.drawable.ic_exposure))
-            imageViewIso.isClickable = true
-            imageViewShutter.isClickable = true
-            imageViewAperture.isClickable = true
-            imageViewExposure.isClickable = true
-            textViewAutoExposureStatus.text = context.getText(R.string.off)
-        } else {
-            imageViewAutoExposure.setImageDrawable(makeImageLookDisabled(SettingMode.AUTO_EXPOSURE ))
-            imageViewIso.setImageDrawable(makeImageLookDisabled(SettingMode.ISO))
-            imageViewShutter.setImageDrawable(makeImageLookDisabled(SettingMode.SHUTTER_SPEED))
-            imageViewAperture.setImageDrawable(makeImageLookDisabled(SettingMode.APERTURE))
-            imageViewExposure.setImageDrawable(makeImageLookDisabled(SettingMode.EXPOSURE))
-            imageViewIso.isClickable = false
-            imageViewShutter.isClickable = false
-            imageViewAperture.isClickable = false
-            imageViewExposure.isClickable = false
-            textViewAutoExposureStatus.text = context.getText(R.string.on)
-        }
+    // From the ViewState, update the state of the ImageView and TexTView of Exposure Setting UI
+    private fun setCameraExposureViewState(state: CameraPreviewScreenViewState) {
+        val autoExposureEnabled = state.autoExposureViewState.isEnabled
+
+        imageViewIso.setImageDrawable(getDrawableAsSettingState(SettingMode.ISO, autoExposureEnabled))
+        imageViewShutter.setImageDrawable(getDrawableAsSettingState(SettingMode.SHUTTER_SPEED, autoExposureEnabled))
+        imageViewAperture.setImageDrawable(getDrawableAsSettingState(SettingMode.APERTURE, autoExposureEnabled))
+        imageViewExposure.setImageDrawable(getDrawableAsSettingState(SettingMode.EXPOSURE, autoExposureEnabled))
+
+        setTextViewAsExposureSetting(SettingMode.ISO, autoExposureEnabled)
+        setTextViewAsExposureSetting(SettingMode.SHUTTER_SPEED, autoExposureEnabled)
+        setTextViewAsExposureSetting(SettingMode.APERTURE, autoExposureEnabled)
+        setTextViewAsExposureSetting(SettingMode.EXPOSURE, autoExposureEnabled)
+        setTextViewAsExposureSetting(SettingMode.AUTO_EXPOSURE, autoExposureEnabled)
     }
 
-    private fun makeImageLookDisabled(settingMode: SettingMode): Drawable? {
-        //imageView.isEnabled = false
-        val res: Drawable? = when (settingMode) {
-            SettingMode.ISO ->
-                AppCompatResources.getDrawable(context,R.drawable.ic_camera_iso)
+    // From the exposure setting mode and auto exposure mode, set the click-ability of an image view
+    // and return the drawable property of the image view
+    private fun getDrawableAsSettingState(
+        settingMode: SettingMode,
+        autoExposureEnabled: Boolean
+    ): Drawable? {
 
-            SettingMode.SHUTTER_SPEED ->
-                AppCompatResources.getDrawable(context,R.drawable.baseline_shutter_speed_24)
+        val imageViewMap = mapOf(
+            SettingMode.ISO to imageViewIso,
+            SettingMode.SHUTTER_SPEED to imageViewShutter,
+            SettingMode.APERTURE to imageViewAperture,
+            SettingMode.EXPOSURE to imageViewExposure
+        )
 
-            SettingMode.APERTURE ->
-                AppCompatResources.getDrawable(context,R.drawable.ic_camera_aperture)
+        val imageView = imageViewMap[settingMode]
+        imageView?.isClickable = autoExposureEnabled
 
-            SettingMode.EXPOSURE ->
-                AppCompatResources.getDrawable(context,R.drawable.ic_camera_aperture)
-
-            SettingMode.AUTO_EXPOSURE ->
-                AppCompatResources.getDrawable(context,R.drawable.ic_autofocus)
-
-            else -> return null
+        val resId = when (settingMode) {
+            SettingMode.ISO -> R.drawable.ic_camera_iso
+            SettingMode.SHUTTER_SPEED -> R.drawable.baseline_shutter_speed_24
+            SettingMode.APERTURE -> R.drawable.ic_camera_aperture
+            SettingMode.EXPOSURE -> R.drawable.ic_exposure
+            SettingMode.AUTO_EXPOSURE -> R.drawable.ic_autofocus
+            SettingMode.NONE -> R.drawable.ic_empty
         }
-        res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+
+        val res = AppCompatResources.getDrawable(context, resId)
+
+        if (!autoExposureEnabled) res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+
         return res
+    }
+
+    // From the exposure setting mode and auto exposure mode,
+    // set the TextView color and alter the text in the Auto Exposure as per exposure setting state
+    private fun setTextViewAsExposureSetting(
+        settingMode: SettingMode,
+        autoExposureEnabled: Boolean){
+
+        val textViewMap = mapOf(
+            SettingMode.ISO to textViewCurrentIsoValue,
+            SettingMode.SHUTTER_SPEED to textViewCurrentShutterValue,
+            SettingMode.APERTURE to textViewCurrentApertureValue,
+            SettingMode.EXPOSURE to textViewExposureStatus,
+            SettingMode.AUTO_EXPOSURE to textViewAutoExposureStatus
+        )
+
+        val inactiveTextColor = Color.GRAY
+        val activeTextColor = ContextCompat.getColor(context, R.color.phyphox_white_100)
+
+        val textView = textViewMap[settingMode]
+
+        if(textView == textViewAutoExposureStatus)
+            textView?.text = context.getText(if (autoExposureEnabled) R.string.off else R.string.on)
+        else
+            textView?.setTextColor(if (autoExposureEnabled) activeTextColor else inactiveTextColor)
 
     }
 
@@ -502,7 +558,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             return
         }
 
-        if(!this::dialogView.isInitialized){
+        if (!this::dialogView.isInitialized) {
             return
         }
 
@@ -540,7 +596,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
-    fun recyclerLoadingFinished(){
+    fun recyclerLoadingFinished() {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.ExposureSettingValueSelected)
         }

@@ -99,7 +99,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
-    fun cameraInitialized(){
+    fun cameraInitialized() {
         viewModelScope.launch {
             val currentCameraUiState = _cameraUiState.value
             _cameraUiState.emit(
@@ -261,27 +261,29 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         // from the cameraCharacteristic, shutter speed range is acquired which is in the form of of Range<Long>,
         // which is then mapped into List<String>
         val shutterSpeedRange =
-            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE).let {
-                shutterSpeedRange_ ->
+            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
+                .let { shutterSpeedRange_ ->
                     shutterSpeedRange_?.lower?.let { lower ->
                         shutterSpeedRange_.upper?.let { upper ->
                             CameraHelper.shutterSpeedRange(lower, upper)
                                 .map { "" + it.numerator + "/" + it.denominator }
                         }
-                 }
+                    }
 
-            }
+                }
 
         // from the cameraCharacteristic, aperture range is acquired which is in the form of of FloatArray,
         // which is then mapped into List<String>
         val apertureRange =
-            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES).let {
-                apertureRange_ ->
+            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)
+                .let { apertureRange_ ->
                     apertureRange_?.map { it.toString() }
-            }
+                }
 
-        val exposureLower =  cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.lower
-        val exposureUpper =  cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.upper
+        val exposureLower =
+            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.lower
+        val exposureUpper =
+            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.upper
         val exposureRange = if (exposureLower != null && exposureUpper != null) {
             (exposureLower..exposureUpper).step(1).toList().map { it.toString() }
         } else {
@@ -315,10 +317,11 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
         val cameraSettingValueState = _cameraSettingValueState.value
 
-        when(cameraSettingValueState.cameraSettingLevel){
+        when (cameraSettingValueState.cameraSettingLevel) {
             CameraSettingLevel.BASIC -> {
                 return Preview.Builder()
             }
+
             CameraSettingLevel.INTERMEDIATE -> {
                 extender.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AE_MODE,
@@ -327,10 +330,18 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
                 val exposure: Int = cameraSettingValueState.currentExposureValue
 
-                extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, exposure)
+                extender.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AE_LOCK,
+                    true
+                )
+                extender.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
+                    exposure
+                )
 
                 return previewBuilder
             }
+
             CameraSettingLevel.ADVANCE -> {
                 extender.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AE_MODE,
@@ -341,7 +352,10 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 val shutterSpeed: Long = cameraSettingValueState.currentShutterValue
                 val aperture: Float = cameraSettingValueState.currentApertureValue
 
-                if (iso != 0) extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
+                if (iso != 0) extender.setCaptureRequestOption(
+                    CaptureRequest.SENSOR_SENSITIVITY,
+                    iso
+                )
                 if (shutterSpeed != 0L) extender.setCaptureRequestOption(
                     CaptureRequest.SENSOR_EXPOSURE_TIME,
                     shutterSpeed
@@ -358,32 +372,38 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     }
 
-    fun openCameraSettingValue(settingMode: SettingMode){
+    fun openCameraSettingValue(settingMode: SettingMode) {
         val currentCameraSettingState = _cameraSettingValueState.value
         viewModelScope.launch {
-           _cameraSettingValueState.emit(currentCameraSettingState.copy(
-               cameraSettingState = CameraSettingState.LOADING_VALUE,
-               settingMode = settingMode
+            _cameraSettingValueState.emit(
+                currentCameraSettingState.copy(
+                    cameraSettingState = CameraSettingState.LOADING_VALUE,
+                    settingMode = settingMode
 
-           ))
+                )
+            )
         }
     }
 
-    fun updateViewStateOfRecyclerView(recyclerViewShown: Boolean){
+    fun updateViewStateOfRecyclerView(recyclerViewShown: Boolean) {
         val currentCameraSettingState = _cameraSettingValueState.value
         viewModelScope.launch {
-            _cameraSettingValueState.emit(currentCameraSettingState.copy(
-                cameraSettingRecyclerState = if (recyclerViewShown) CameraSettingRecyclerState.SHOWN else CameraSettingRecyclerState.HIDDEN,
-            ))
+            _cameraSettingValueState.emit(
+                currentCameraSettingState.copy(
+                    cameraSettingRecyclerState = if (recyclerViewShown) CameraSettingRecyclerState.SHOWN else CameraSettingRecyclerState.HIDDEN,
+                )
+            )
         }
     }
 
-    fun cameraSettingOpened(){
+    fun cameraSettingOpened() {
         val currentCameraSettingState = _cameraSettingValueState.value
         viewModelScope.launch {
-            _cameraSettingValueState.emit(currentCameraSettingState.copy(
-                cameraSettingState = CameraSettingState.LOAD_FINISHED,
-            ))
+            _cameraSettingValueState.emit(
+                currentCameraSettingState.copy(
+                    cameraSettingState = CameraSettingState.LOAD_FINISHED,
+                )
+            )
         }
     }
 
@@ -397,7 +417,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 currentIsoValue = value.toInt(),
                 cameraSettingState = CameraSettingState.VALUE_UPDATED
             )
-        } else if(settingMode == SettingMode.SHUTTER_SPEED) {
+        } else if (settingMode == SettingMode.SHUTTER_SPEED) {
             currentCameraSettingState.copy(
                 currentShutterValue = CameraHelper.stringToNanoseconds(value),
                 cameraSettingState = CameraSettingState.VALUE_UPDATED
