@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">फाईफॉक्स</string>
+    <string name="app_name">फीफॉक्स</string>
     <string name="action_settings">सेटिंग्स</string>
     <string name="title_activity_experiment">फाईफॉक्स</string>
     <string name="graph_tools_pan_and_zoom">ऊँगली से ज़ूम</string>
