@@ -4,10 +4,12 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.PorterDuff
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -100,8 +102,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private var exposureButtonClicked = false
     private var autoExposure: Boolean = true
 
-    private lateinit var dialogView: View
-
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
     private val buttonLocation = IntArray(2)
@@ -147,8 +147,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         imageViewIso.setOnClickListener {
-            dialogView =
-                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             isoButtonClicked = !isoButtonClicked
@@ -156,8 +154,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         imageViewShutter.setOnClickListener {
-            dialogView =
-                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             shutterSpeedButtonClicked = !shutterSpeedButtonClicked
@@ -165,8 +161,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         imageViewAperture.setOnClickListener {
-            dialogView =
-                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             apertureButtonClicked = !apertureButtonClicked
@@ -174,8 +168,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         imageViewExposure.setOnClickListener {
-            dialogView =
-                LayoutInflater.from(it.context).inflate(R.layout.custom_camera_setting_dialog, null)
             it.startAnimation(buttonClick)
             it.getLocationInWindow(buttonLocation)
             exposureButtonClicked = !exposureButtonClicked
@@ -476,10 +468,30 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private fun setCameraExposureViewState(state: CameraPreviewScreenViewState) {
         val autoExposureEnabled = state.autoExposureViewState.isEnabled
 
-        imageViewIso.setImageDrawable(getDrawableAsSettingState(SettingMode.ISO, autoExposureEnabled))
-        imageViewShutter.setImageDrawable(getDrawableAsSettingState(SettingMode.SHUTTER_SPEED, autoExposureEnabled))
-        imageViewAperture.setImageDrawable(getDrawableAsSettingState(SettingMode.APERTURE, autoExposureEnabled))
-        imageViewExposure.setImageDrawable(getDrawableAsSettingState(SettingMode.EXPOSURE, autoExposureEnabled))
+        imageViewIso.setImageDrawable(
+            getDrawableAsSettingState(
+                SettingMode.ISO,
+                autoExposureEnabled
+            )
+        )
+        imageViewShutter.setImageDrawable(
+            getDrawableAsSettingState(
+                SettingMode.SHUTTER_SPEED,
+                autoExposureEnabled
+            )
+        )
+        imageViewAperture.setImageDrawable(
+            getDrawableAsSettingState(
+                SettingMode.APERTURE,
+                autoExposureEnabled
+            )
+        )
+        imageViewExposure.setImageDrawable(
+            getDrawableAsSettingState(
+                SettingMode.EXPOSURE,
+                autoExposureEnabled
+            )
+        )
 
         setTextViewAsExposureSetting(SettingMode.ISO, autoExposureEnabled)
         setTextViewAsExposureSetting(SettingMode.SHUTTER_SPEED, autoExposureEnabled)
@@ -525,7 +537,8 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     // set the TextView color and alter the text in the Auto Exposure as per exposure setting state
     private fun setTextViewAsExposureSetting(
         settingMode: SettingMode,
-        autoExposureEnabled: Boolean){
+        autoExposureEnabled: Boolean
+    ) {
 
         val textViewMap = mapOf(
             SettingMode.ISO to textViewCurrentIsoValue,
@@ -540,25 +553,22 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
         val textView = textViewMap[settingMode]
 
-        if(textView == textViewAutoExposureStatus)
+        if (textView == textViewAutoExposureStatus)
             textView?.text = context.getText(if (autoExposureEnabled) R.string.off else R.string.on)
         else
             textView?.setTextColor(if (autoExposureEnabled) activeTextColor else inactiveTextColor)
 
     }
 
+    // From the Exposure list, Exposure mode and current selected value, show list of the
+    // exposure value in RecyclerView and react to the click event to update the current selected value.
+    // When the Exposure list is empty or with only 1 value, do not create and show RecyclerView.
     fun showRecyclerViewForExposureSetting(
         dataList: List<String>?,
         settingMode: SettingMode,
         currentValue: String
     ) {
-        Log.d(TAG, "showCustomDialog")
-
-        if (dataList?.isEmpty() == true || dataList?.size == 1) {
-            return
-        }
-
-        if (!this::dialogView.isInitialized) {
+        if (dataList.isNullOrEmpty() || dataList.size == 1) {
             return
         }
 
@@ -569,28 +579,28 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             }
         }
 
-        val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        val dividerItemDecoration = DividerItemDecoration(
-            recyclerView.context,
-            mLayoutManager.orientation
-        )
+        with(recyclerView) {
 
-        AppCompatResources.getDrawable(context, R.drawable.custom_line_seperator)
-            ?.let { dividerItemDecoration.setDrawable(it) }
-        recyclerView.addItemDecoration(dividerItemDecoration)
+            val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            val dividerItemDecoration = DividerItemDecoration(context, mLayoutManager.orientation)
 
-        recyclerView.layoutManager = mLayoutManager
-        recyclerView.itemAnimator = DefaultItemAnimator()
+            AppCompatResources.getDrawable(context, R.drawable.custom_line_seperator)
+                ?.let { dividerItemDecoration.setDrawable(it) }
+            recyclerView.addItemDecoration(dividerItemDecoration)
 
-        selectedPosition = dataList?.indexOf(currentValue)!!
+            layoutManager = mLayoutManager
+            itemAnimator = DefaultItemAnimator()
 
-        recyclerView.adapter =
-            ChooseCameraSettingValueAdapter(dataList, settingChangeListener, selectedPosition)
+            selectedPosition = dataList.indexOf(currentValue)
 
-        // TODO need to improvise this workaround
-        recyclerView.postDelayed(Runnable {
-            recyclerView.scrollToPosition(selectedPosition)
-        }, 100)
+            adapter =
+                ChooseCameraSettingValueAdapter(dataList, settingChangeListener, selectedPosition)
+
+            // TODO need to improvise this workaround
+            recyclerView.postDelayed(Runnable {
+                recyclerView.scrollToPosition(selectedPosition)
+            }, 100)
+        }
 
         recyclerLoadingFinished()
 

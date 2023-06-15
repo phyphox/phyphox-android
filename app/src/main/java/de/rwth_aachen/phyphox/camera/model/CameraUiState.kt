@@ -37,6 +37,7 @@ data class CameraSettingValueState(
     var shutterSpeedRange:  List<String>? = emptyList(),
     var apertureRange:  List<String>? = emptyList(),
     var exposureRange: List<String>? = emptyList(),
+    var exposureStep: Float = 0F,
     val cameraSettingState : CameraSettingState = CameraSettingState.NOT_READY,
     val settingMode: SettingMode = SettingMode.NONE,
     val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC,

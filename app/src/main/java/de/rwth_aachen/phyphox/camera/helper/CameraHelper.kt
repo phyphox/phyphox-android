@@ -382,6 +382,24 @@ object CameraHelper {
         return fractionToNanoseconds(fraction)
     }
 
+    fun exposureRange(min: Int, max: Int, step: Float): List<Int>{
+
+        val exposureValues = mutableListOf<Int>()
+        for (value in min..max){
+            val exposureCompensation = value*step
+            exposureValues.add(exposureCompensation.toInt())
+        }
+
+        return exposureValues.distinct()
+    }
+
+    fun getActualValueFromExposureCompensation(exposureCompensation: Int, step: Float): Int {
+        return (exposureCompensation/ step).toInt()
+
+    }
+
+
+
 
 
 

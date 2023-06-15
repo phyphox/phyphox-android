@@ -254,6 +254,9 @@ class CameraPreviewFragment : Fragment() {
                     CameraSettingState.RELOADING -> Unit
                     CameraSettingState.RELOADING_FAILED -> Unit
                     CameraSettingState.LOADING_VALUE -> {
+
+                        // When clicking an Exposure setting, hide or show the RecyclerView, which is
+                        // showing the list of Exposure values to select from.
                         if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.HIDDEN) {
                             cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = true)
                         } else {
@@ -262,50 +265,45 @@ class CameraPreviewFragment : Fragment() {
                             return@collectLatest
                         }
 
-                        if (cameraSettingState.settingMode == SettingMode.ISO) {
-                            val currentValue =
-                                cameraSettingState.isoRange?.map { it.toInt() }?.let {
+                        // Get the current organized Exposure value as per the Exposure Mode,
+                        // which is mapped from the raw value provided by camera API
+                        val currentValue = when (cameraSettingState.settingMode) {
+                            SettingMode.ISO -> cameraSettingState.isoRange?.map { it.toInt() }
+                                ?.let { isoRange ->
                                     CameraHelper.findIsoNearestNumber(
                                         cameraSettingState.currentIsoValue,
-                                        it
+                                        isoRange
                                     )
                                 }
-                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
-                                cameraSettingState.isoRange,
-                                cameraSettingState.settingMode,
-                                currentValue.toString()
-                            )
+
+                            SettingMode.SHUTTER_SPEED -> {
+                                val fraction =
+                                    CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
+                                "${fraction.numerator}/${fraction.denominator}"
+                            }
+
+                            SettingMode.APERTURE -> cameraSettingState.currentApertureValue
+                            SettingMode.EXPOSURE ->
+                                CameraHelper.getActualValueFromExposureCompensation(
+                                    cameraSettingState.currentExposureValue, cameraSettingState.exposureStep)
+                            else -> ""
+                        }.toString()
+
+
+                        val exposureSettingRange = when (cameraSettingState.settingMode) {
+                            SettingMode.ISO -> cameraSettingState.isoRange
+                            SettingMode.SHUTTER_SPEED -> cameraSettingState.shutterSpeedRange
+                            SettingMode.APERTURE -> cameraSettingState.apertureRange
+                            SettingMode.EXPOSURE -> cameraSettingState.exposureRange
+                            else -> emptyList()
                         }
 
-                        if (cameraSettingState.settingMode == SettingMode.SHUTTER_SPEED) {
-                            val fraction =
-                                CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
-                            val numerator = fraction.numerator
-                            val denominator = fraction.denominator
-                            val currentValue = "$numerator/$denominator"
-                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
-                                cameraSettingState.shutterSpeedRange,
-                                cameraSettingState.settingMode,
-                                currentValue
-                            )
-                        }
-
-                        if (cameraSettingState.settingMode == SettingMode.APERTURE)
-                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
-                                cameraSettingState.apertureRange,
-                                cameraSettingState.settingMode,
-                                cameraSettingState.currentApertureValue.toString()
-                            )
-
-                        if (cameraSettingState.settingMode == SettingMode.EXPOSURE)
-                            cameraPreviewScreen.showRecyclerViewForExposureSetting(
-                                cameraSettingState.exposureRange,
-                                cameraSettingState.settingMode,
-                                cameraSettingState.currentExposureValue.toString()
-                            )
-
+                        cameraPreviewScreen.showRecyclerViewForExposureSetting(
+                            exposureSettingRange,
+                            cameraSettingState.settingMode,
+                            currentValue
+                        )
                     }
-
                     CameraSettingState.LOAD_VALUE -> Unit
                     CameraSettingState.VALUE_UPDATED -> {
                         cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {

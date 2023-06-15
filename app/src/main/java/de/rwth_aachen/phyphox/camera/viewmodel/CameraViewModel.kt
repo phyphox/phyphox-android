@@ -6,6 +6,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
@@ -280,17 +281,21 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     apertureRange_?.map { it.toString() }
                 }
 
+        var exposureStep = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP)?.toFloat()
+        if(exposureStep == null)
+            exposureStep = 1F
+        
         val exposureLower =
             cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.lower
         val exposureUpper =
             cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.upper
-        val exposureRange = if (exposureLower != null && exposureUpper != null) {
-            (exposureLower..exposureUpper).step(1).toList().map { it.toString() }
-        } else {
+
+        val exposureRange = if (exposureLower != null && exposureUpper != null)
+            CameraHelper.exposureRange(exposureLower, exposureUpper, exposureStep).map { it.toString() }
+         else {
             emptyList()
         }
 
-        //val exposureStep = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP)
 
         val currentCameraUiState = _cameraSettingValueState.value
         val newCameraUiState = currentCameraUiState.copy(
@@ -298,6 +303,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             shutterSpeedRange = shutterSpeedRange,
             isoRange = isoRange,
             exposureRange = exposureRange,
+            exposureStep = exposureStep,
             cameraSettingState = CameraSettingState.LOADED
         )
 
