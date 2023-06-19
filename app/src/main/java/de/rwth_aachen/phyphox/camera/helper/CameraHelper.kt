@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox.camera.helper
 
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
-import android.hardware.Camera
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -23,6 +22,8 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.nio.ByteBuffer
 import java.util.Arrays
+import kotlin.math.pow
+import kotlin.math.round
 
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -382,18 +383,22 @@ object CameraHelper {
         return fractionToNanoseconds(fraction)
     }
 
-    fun exposureRange(min: Int, max: Int, step: Float): List<Int>{
+    // returns the list of exposure values which are divisible by 5 only, so 4.0, 3.5, 3.0 and so on
+    fun getExposureValuesFromRange(min: Int, max: Int, step: Float): List<Float>{
 
-        val exposureValues = mutableListOf<Int>()
+        val exposureValues = mutableListOf<Float>()
         for (value in min..max){
             val exposureCompensation = value*step
-            exposureValues.add(exposureCompensation.toInt())
+            val decimalPLaces = 1
+            val powerOf10 = 10.0f.pow(decimalPLaces)
+            val roundedNumber = round(exposureCompensation * powerOf10) / powerOf10
+            exposureValues.add(roundedNumber)
         }
 
-        return exposureValues.distinct()
+        return exposureValues.filter { (it * 10).toInt() % 5 == 0 }
     }
 
-    fun getActualValueFromExposureCompensation(exposureCompensation: Int, step: Float): Int {
+    fun getActualValueFromExposureCompensation(exposureCompensation: Float, step: Float): Int {
         return (exposureCompensation/ step).toInt()
 
     }

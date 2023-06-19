@@ -406,7 +406,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     }
 
     private fun setCameraSettingRecyclerViewState(state: CameraPreviewScreenViewState) {
-        recyclerView.isVisible = state.cameraSettingRecyclerViewState.isOpened
+        //recyclerView.isVisible = state.cameraSettingRecyclerViewState.isOpened
     }
 
     fun setCameraSettingButtonValue(state: CameraSettingValueState) {
@@ -419,7 +419,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
         if (state.currentApertureValue != 0.0f) textViewCurrentApertureValue.text =
             state.currentApertureValue.toString()
-        if (state.currentExposureValue != 0) textViewExposureStatus.text =
+        if (state.currentExposureValue != 0.0f) textViewExposureStatus.text =
             state.currentExposureValue.toString()
     }
 

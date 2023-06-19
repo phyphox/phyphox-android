@@ -33,7 +33,7 @@ class CameraInput() {
 
     var autoExposure: Boolean = true
 
-    var currentExposureValue: Int = 0
+    var currentExposureValue: Float = 0F
 
     var exposureAdjustmentLevel: String = "1"
 

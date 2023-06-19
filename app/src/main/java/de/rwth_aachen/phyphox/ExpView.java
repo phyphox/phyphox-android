@@ -758,7 +758,7 @@ public class ExpView implements Serializable{
                 return;
             }
             if(Objects.equals(label, "Exposure")){
-                phyphoxExperiment.cameraInput.setCurrentExposureValue((int) defaultValue);
+                phyphoxExperiment.cameraInput.setCurrentExposureValue((float) defaultValue);
                 return;
             }
             LinearLayout row = new LinearLayout(c);

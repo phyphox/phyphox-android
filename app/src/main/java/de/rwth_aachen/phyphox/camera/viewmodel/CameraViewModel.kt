@@ -284,14 +284,14 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         var exposureStep = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP)?.toFloat()
         if(exposureStep == null)
             exposureStep = 1F
-        
+
         val exposureLower =
             cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.lower
         val exposureUpper =
             cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.upper
 
         val exposureRange = if (exposureLower != null && exposureUpper != null)
-            CameraHelper.exposureRange(exposureLower, exposureUpper, exposureStep).map { it.toString() }
+            CameraHelper.getExposureValuesFromRange(exposureLower, exposureUpper, exposureStep).map { it.toString() }
          else {
             emptyList()
         }
@@ -334,7 +334,10 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     CameraMetadata.CONTROL_AE_MODE_ON
                 )
 
-                val exposure: Int = cameraSettingValueState.currentExposureValue
+                val exposure: Int = CameraHelper.getActualValueFromExposureCompensation(cameraSettingValueState.currentExposureValue, cameraSettingValueState.exposureStep )
+
+                Log.d(TAG, "converted Exposure: "+exposure)
+                Log.d(TAG, "beofer Exposure: "+cameraSettingValueState.currentExposureValue)
 
                 extender.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AE_LOCK,
@@ -430,7 +433,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             )
         } else {
             currentCameraSettingState.copy(
-                currentExposureValue = value.toInt(),
+                currentExposureValue = value.toFloat(),
                 cameraSettingState = CameraSettingState.VALUE_UPDATED
             )
         }
