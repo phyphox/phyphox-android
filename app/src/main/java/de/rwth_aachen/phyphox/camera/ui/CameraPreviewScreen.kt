@@ -4,18 +4,15 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.PorterDuff
-import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
@@ -104,7 +101,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
-    private val buttonLocation = IntArray(2)
+    private var clickedButton: View? = null
 
     private var selectedPosition = RecyclerView.NO_POSITION
 
@@ -147,34 +144,30 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         imageViewIso.setOnClickListener {
-            it.startAnimation(buttonClick)
-            it.getLocationInWindow(buttonLocation)
+            clickedButton = it
             isoButtonClicked = !isoButtonClicked
-            onSettingClicked(SettingMode.ISO, it)
+            onSettingClicked(SettingMode.ISO)
         }
 
         imageViewShutter.setOnClickListener {
-            it.startAnimation(buttonClick)
-            it.getLocationInWindow(buttonLocation)
+            clickedButton = it
             shutterSpeedButtonClicked = !shutterSpeedButtonClicked
-            onSettingClicked(SettingMode.SHUTTER_SPEED, it)
+            onSettingClicked(SettingMode.SHUTTER_SPEED)
         }
 
         imageViewAperture.setOnClickListener {
-            it.startAnimation(buttonClick)
-            it.getLocationInWindow(buttonLocation)
+            clickedButton = it
             apertureButtonClicked = !apertureButtonClicked
-            onSettingClicked(SettingMode.APERTURE, it)
+            onSettingClicked(SettingMode.APERTURE)
         }
 
         imageViewExposure.setOnClickListener {
-            it.startAnimation(buttonClick)
-            it.getLocationInWindow(buttonLocation)
+            clickedButton = it
             exposureButtonClicked = !exposureButtonClicked
-            onSettingClicked(SettingMode.EXPOSURE, it)
+            onSettingClicked(SettingMode.EXPOSURE)
         }
 
-        imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE, it) }
+        imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE) }
 
 
     }
@@ -345,34 +338,30 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
     }
 
-    private fun onSettingClicked(settingMode: SettingMode, view: View) {
+    private fun onSettingClicked(settingMode: SettingMode) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             when (settingMode) {
                 SettingMode.NONE -> Unit
                 SettingMode.ISO -> _action.emit(
                     CameraUiAction.CameraSettingClick(
-                        view,
                         settingMode
                     )
                 )
 
                 SettingMode.SHUTTER_SPEED -> _action.emit(
                     CameraUiAction.CameraSettingClick(
-                        view,
                         settingMode
                     )
                 )
 
                 SettingMode.APERTURE -> _action.emit(
                     CameraUiAction.CameraSettingClick(
-                        view,
                         settingMode
                     )
                 )
 
                 SettingMode.EXPOSURE -> _action.emit(
                     CameraUiAction.CameraSettingClick(
-                        view,
                         settingMode
                     )
                 )
@@ -382,22 +371,21 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
     }
 
+    // Setup all the view state of the UI shown in the camera preview.
     fun setCameraScreenViewState(state: CameraScreenViewState) {
-        setCameraPreviewScreenViewState(state.cameraPreviewScreenViewState)
-        setCameraSettingViewState(state.cameraPreviewScreenViewState)
+        setSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
+        setCameraExposureViewState(state.cameraPreviewScreenViewState)
+        //setCameraSettingViewState(state.cameraPreviewScreenViewState)
         setCameraSettingRecyclerViewState(state.cameraPreviewScreenViewState)
         setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
     }
 
-    private fun setCameraPreviewScreenViewState(state: CameraPreviewScreenViewState) {
-        switchLensButton.isEnabled = state.switchLensButtonViewState.isEnabled
-        switchLensButton.isVisible = state.switchLensButtonViewState.isVisible
-
-        setCameraExposureViewState(state)
+    private fun setSwitchLensButtonViewState(state: CameraPreviewScreenViewState) {
+        lnrSwitchLens.isEnabled = state.switchLensButtonViewState.isEnabled
+        lnrSwitchLens.isVisible = state.switchLensButtonViewState.isVisible
     }
 
     private fun setCameraSettingViewState(state: CameraPreviewScreenViewState) {
-        Log.d(TAG, "setCameraSettingViewState")
         imageViewIso.isVisible = state.isoButtonViewState.isVisible
         imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
 
@@ -409,28 +397,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
-    /**
-    private fun setCameraSettingSeekbarViewState(state: CameraPreviewScreenViewState){
-    seekbarSettingValue.isVisible = state.adjustSettingSeekbarViewState.isVisible
-    seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue
-    seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-    seekbarSettingValue.min = state.adjustSettingSeekbarViewState.minValue
-    } else {
-    /** From https://stackoverflow.com/questions/20762001/how-to-set-seekbar-min-and-max-value
-     * For example, suppose you have data values from -50 to 100 you want to display on the SeekBar.
-     * Set the SeekBar's maximum to be 150 (100-(-50)),
-     * then subtract 50 from the raw value to get the number you should use when setting the bar position.
-    */
-    seekbarSettingValue.max = state.adjustSettingSeekbarViewState.maxValue - state.adjustSettingSeekbarViewState.minValue
-    seekbarSettingValue.progress = state.adjustSettingSeekbarViewState.currentValue + state.adjustSettingSeekbarViewState.minValue
-    }
-    }
-     */
-
     private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState) {
-        Log.d(TAG, "setCameraExposureControlViewState")
-        lnrSwitchLens.isVisible = state.switchLensButtonViewState.isEnabled
         lnrIso.isVisible = state.isoButtonViewState.isVisible
         lnrShutter.isVisible = state.shutterButtonViewState.isVisible
         lnrAperture.isVisible = state.apertureButtonViewState.isVisible
@@ -579,6 +546,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             }
         }
 
+        clickedButton?.startAnimation(buttonClick)
         with(recyclerView) {
 
             val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)

@@ -9,14 +9,8 @@ data class CameraPreviewScreenViewState(
     val exposureViewState: ExposureViewState = ExposureViewState(),
     val autoExposureViewState: AutoExposureViewState = AutoExposureViewState(),
     val switchLensButtonViewState: SwitchLensButtonViewState = SwitchLensButtonViewState(),
-    val adjustSettingSeekbarViewState : AdjustSettingSeekbar = AdjustSettingSeekbar(),
     val cameraSettingRecyclerViewState : CameraSettingRecyclerView = CameraSettingRecyclerView()
 ) {
-    fun hideCameraControls(): CameraPreviewScreenViewState =
-        copy(
-            shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
-            switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = false),
-        )
 
     fun showCameraControls(): CameraPreviewScreenViewState =
         copy(
@@ -24,6 +18,17 @@ data class CameraPreviewScreenViewState(
             isoButtonViewState = isoButtonViewState.copy(isVisible = true),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = true),
             switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = true),
+            exposureViewState = exposureViewState.copy(isVisible = true),
+            autoExposureViewState = autoExposureViewState.copy(isVisible = true)
+        )
+
+    fun hideCameraControls(): CameraPreviewScreenViewState =
+        copy(
+            shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
+            isoButtonViewState = isoButtonViewState.copy(isVisible = false),
+            apertureButtonViewState = apertureButtonViewState.copy(isVisible = false),
+            exposureViewState = exposureViewState.copy(isVisible = false),
+            autoExposureViewState = autoExposureViewState.copy(isVisible = false)
         )
 
     fun enableCameraControls(): CameraPreviewScreenViewState =
@@ -41,22 +46,16 @@ data class CameraPreviewScreenViewState(
             apertureButtonViewState = apertureButtonViewState.copy(isEnabled = false),
             switchLensButtonViewState = switchLensButtonViewState.copy(isEnabled = false),
         )
-    fun enableCameraShutter(isEnabled: Boolean): CameraPreviewScreenViewState =
-        copy(shutterButtonViewState = shutterButtonViewState.copy(isEnabled = isEnabled))
 
-    fun enableSwitchLens(isEnabled: Boolean): CameraPreviewScreenViewState =
-        copy(switchLensButtonViewState = switchLensButtonViewState.copy(isEnabled = isEnabled))
+    fun showSwitchLens(isVisible: Boolean): CameraPreviewScreenViewState =
+        copy(switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = isVisible))
 
     fun enableAutoFocus(isEnabled: Boolean) : CameraPreviewScreenViewState =
         copy(autoExposureViewState = autoExposureViewState.copy(isEnabled = isEnabled ))
 
-    fun changeSettingSeekbar(isVisible: Boolean, maxValue: Int, minValue: Int, currentValue: Int ) : CameraPreviewScreenViewState=
-        copy(adjustSettingSeekbarViewState = adjustSettingSeekbarViewState.copy(
-            isVisible = isVisible,
-            maxValue = maxValue,
-            minValue = minValue,
-            currentValue = currentValue
-        ))
+    fun enableExposure(isEnabled: Boolean) : CameraPreviewScreenViewState =
+        copy(exposureViewState = exposureViewState.copy(isVisible = isEnabled ))
+
 
     fun enableBasicExposureControl() : CameraPreviewScreenViewState =
         copy(shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
@@ -121,14 +120,6 @@ data class ExposureViewState(
 data class AutoExposureViewState(
     val isEnabled: Boolean = false,
     val isVisible: Boolean = false
-)
-
-data class AdjustSettingSeekbar(
-    val isEnabled: Boolean = false,
-    val isVisible: Boolean = false,
-    val maxValue: Int = 0,
-    val minValue: Int = 0,
-    val currentValue: Int = 0,
 )
 
 data class CameraSettingRecyclerView(

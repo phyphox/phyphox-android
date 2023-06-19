@@ -106,7 +106,10 @@ class CameraPreviewFragment : Fragment() {
 
         lifecycleScope.launch {
             cameraScreenViewState.collectLatest {
-                Log.d(TAG, "inside cameraScreenViewstate")
+                Log.d(TAG, "CameraScreenViewState")
+                Log.d(TAG, it.cameraPreviewScreenViewState.exposureViewState.toString())
+                Log.d(TAG, it.cameraPreviewScreenViewState.autoExposureViewState.toString())
+                Log.d(TAG, ":::::")
                 cameraPreviewScreen.setCameraScreenViewState(state = it)
             }
         }
@@ -195,8 +198,7 @@ class CameraPreviewFragment : Fragment() {
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value
                                 .updateCameraScreen {
-                                    it.showCameraControls()
-                                        .enableSwitchLens(false)
+                                    it.hideCameraControls()
                                 }
                         )
                         cameraViewModel.initializeCamera()
@@ -214,11 +216,8 @@ class CameraPreviewFragment : Fragment() {
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value
                                 .updateCameraScreen { s ->
-                                    Log.d(TAG, " UpdateCameraScreen")
-                                    s.showCameraControls()
-                                        .enableSwitchLens(true)
+                                        s.showSwitchLens(true)
                                         .enableAutoFocus(cameraSettingState.autoExposure)
-                                        .enableCameraControls()
                                 }
                         )
                         cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
@@ -241,6 +240,8 @@ class CameraPreviewFragment : Fragment() {
                         cameraPreviewScreen.setCameraSettingText(cameraSettingState)
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value.updateCameraScreen {
+                                it.showCameraControls()
+
                                 when (cameraSettingState.cameraSettingLevel) {
                                     CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
                                     CameraSettingLevel.INTERMEDIATE -> it.enableIntermediateExposureControl()
