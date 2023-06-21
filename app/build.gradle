@@ -93,7 +93,7 @@ dependencies {
     //https://bigbadaboom.github.io/androidsvg/release_notes.html
     implementation 'com.caverock:androidsvg:1.4'
 
-    implementation 'com.google.code.gson:gson:2.8.8'
+    implementation 'androidx.recyclerview:recyclerview-selection:1.1.0'
 
     //Automated screenshot generation
     androidTestImplementation 'junit:junit:4.13.2'
@@ -111,6 +111,8 @@ dependencies {
     implementation "androidx.camera:camera-camera2:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
     implementation "androidx.camera:camera-view:${camerax_version}"
+
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
     implementation project(":opencvsdk")
 }

@@ -2,11 +2,14 @@ package de.rwth_aachen.phyphox.camera.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.graphics.Rect
+import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.os.Build
 import android.util.Log
+import android.util.Size
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
@@ -17,6 +20,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toRect
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +28,8 @@ import com.google.common.util.concurrent.ListenableFuture
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
+import de.rwth_aachen.phyphox.camera.helper.ImageAnalyser
+import de.rwth_aachen.phyphox.camera.helper.PhotometricReader
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
@@ -31,11 +37,14 @@ import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
+import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
+import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraViewModel(private val application: Application) : ViewModel() {
@@ -43,25 +52,29 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     val TAG = "CameraViewModel"
     private lateinit var cameraProviderListenableFuture: ListenableFuture<ProcessCameraProvider>
     private lateinit var cameraProvider: ProcessCameraProvider
+    val cameraExecutor = Executors.newSingleThreadExecutor()
 
     private var camera: Camera? = null
 
     private lateinit var preview: Preview
     private lateinit var imageAnalysis: ImageAnalysis
+    private var photometricReader : PhotometricReader = PhotometricReader();
 
     private val _cameraUiState: MutableStateFlow<CameraUiState> = MutableStateFlow(CameraUiState())
     private val _cameraSettingValueState: MutableStateFlow<CameraSettingValueState> =
         MutableStateFlow(CameraSettingValueState())
-    private val _imageAnalysisUiState: MutableStateFlow<ImageAnalysisState> = MutableStateFlow(
-        ImageAnalysisState.ImageAnalysisNotReady
+    private val _imageAnalysisValueState: MutableStateFlow<ImageAnalysisValueState> = MutableStateFlow(
+        ImageAnalysisValueState()
     )
 
     val cameraUiState: Flow<CameraUiState> = _cameraUiState
     val cameraSettingValueState: Flow<CameraSettingValueState> = _cameraSettingValueState
-    val imageAnalysisUiState: Flow<ImageAnalysisState> = _imageAnalysisUiState
+    val imageAnalysisUiState: Flow<ImageAnalysisValueState> = _imageAnalysisValueState
 
     lateinit var cameraInput: CameraInput
     lateinit var phyphoxExperiment: PhyphoxExperiment
+
+    val imageAnalyser: ImageAnalyser = ImageAnalyser(this)
 
     fun initializeCamera() {
 
@@ -130,6 +143,17 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
+    fun setUpCameraDimension(height: Int, width: Int){
+        viewModelScope.launch {
+            _cameraUiState.emit(
+                _cameraUiState.value.copy(
+                    cameraHeight = height,
+                    cameraWidth = width
+                )
+            )
+        }
+    }
+
     @SuppressLint("UnsafeOptInUsageError")
     fun startCameraPreviewView(
         previewView: PreviewView,
@@ -175,7 +199,10 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
         imageAnalysis = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setTargetResolution(Size(5,5))
             .build()
+
+        imageAnalysis.setAnalyzer(cameraExecutor, imageAnalyser)
 
         camera = cameraProvider.bindToLifecycle(
             lifecycleOwner,
@@ -185,6 +212,11 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         )
 
         setUpExposureValue()
+
+    }
+
+    fun getCameraRect(): Rect{
+       return _cameraUiState.value.cameraPassepartout
 
     }
 
@@ -208,7 +240,9 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                         cameraState = CameraState.NOT_READY,
                     )
                 )
-                _imageAnalysisUiState.emit(ImageAnalysisState.ImageAnalysisNotReady)
+                _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
+                    imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
+                ))
             }
         }
     }
@@ -229,19 +263,42 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     }
 
-    fun startAnalysis() {
+    fun imageAnalysisPrepared() {
         viewModelScope.launch {
-            _imageAnalysisUiState.emit(ImageAnalysisState.ImageAnalysisStarted)
+            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
+                imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_READY
+            ))
         }
 
-        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(application)) { image ->
-            //val value = image.image?.let { photometricReader.calculateAvgRedBrightness(it) }
-            //Log.d("Image value", value.toString() )
+    }
 
-            image.close()
+    fun imageAnalysisStarted(){
+        viewModelScope.launch {
+            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
+                imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_STARTED
+            ))
         }
+    }
 
+    fun imageAnalysisFinished(){
+        viewModelScope.launch {
+            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
+                imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_FINISHED
+            ))
+        }
+    }
 
+    fun updateImageAnalysisLuminance(luminance: Double, currentTime: Long){
+        viewModelScope.launch {
+            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
+                luminance = luminance,
+                currentTimeStamp = currentTime
+            ))
+        }
+    }
+
+    fun getLumnicanceValue(): Double{
+        return _imageAnalysisValueState.value.luminance
     }
 
     fun setUpExposureValue() {
@@ -446,6 +503,36 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             )
         }
 
+    }
+
+    fun updateCameraOverlayValue() {
+        val height = _cameraUiState.value.cameraHeight
+        val width = _cameraUiState.value.cameraWidth
+
+        val xmin: Float = Math.min(cameraInput.x1, cameraInput.x2)
+        val xmax: Float = Math.max(cameraInput.x1, cameraInput.x2)
+        val ymin: Float = Math.min(cameraInput.y1, cameraInput.y2)
+        val ymax: Float = Math.max(cameraInput.y1, cameraInput.y2)
+
+        val inner = RectF(
+            (1.0f - ymax) * width,
+            xmin * height,
+            (1.0f - ymin) * width,
+            xmax * height
+        )
+
+        viewModelScope.launch {
+            _cameraUiState.emit(
+                _cameraUiState.value.copy(
+                    cameraPassepartout = inner.toRect(),
+                    overlayUpdateState = OverlayUpdateState.UPDATE
+            ))
+        }
+
+    }
+
+    fun overlayUpdated(){
+        viewModelScope.launch { _cameraUiState.emit(_cameraUiState.value.copy(overlayUpdateState = OverlayUpdateState.UPDATE_DONE)) }
     }
 
 }

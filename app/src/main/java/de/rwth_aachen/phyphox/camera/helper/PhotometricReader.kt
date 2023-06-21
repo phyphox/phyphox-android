@@ -9,7 +9,7 @@ import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class PhotometricReader(private val imageEvaluation: ImageEvaluation) {
+public class PhotometricReader() {
 
     enum class ImageEvaluation {
         AverageLuminosity, RedBrightness, BlueBrightness, GreenBrightness,

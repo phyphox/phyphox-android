@@ -9,5 +9,5 @@ interface SettingChangeListener {
 }
 
 interface SettingChooseListener {
-    fun onSettingClicked(value: String, position: Int)
+    fun onSettingClicked(value: String)
 }

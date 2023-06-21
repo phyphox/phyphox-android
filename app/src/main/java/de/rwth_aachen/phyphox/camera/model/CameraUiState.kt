@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox.camera.model
 
+import android.graphics.Rect
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
@@ -14,6 +15,11 @@ data class CameraUiState  constructor(
     val availableSettings: List<SettingMode> = emptyList(),
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
     val cameraLens: Int = LENS_FACING_BACK,
+    val cameraHeight: Int = 0,
+    val cameraWidth: Int = 0,
+    // This holds the cropped image which is cropped by the user through the overlayView.
+    val cameraPassepartout: Rect = Rect(),
+    val overlayUpdateState: OverlayUpdateState = OverlayUpdateState.NO_UPDATE
 )
 
 /**
@@ -26,6 +32,13 @@ enum class CameraState {
     PREVIEW_IN_BACKGROUND,
     PREVIEW_STOPPED
 }
+
+enum class OverlayUpdateState {
+    NO_UPDATE,
+    UPDATE,
+    UPDATE_DONE
+}
+
 
 data class CameraSettingValueState(
     val currentIsoValue: Int = 1,
@@ -79,14 +92,16 @@ enum class CameraSettingState{
 }
 
 
-/**
- * Defines the various states during the image analysis process
- */
-sealed class ImageAnalysisState {
-    object ImageAnalysisNotReady : ImageAnalysisState()
-    object ImageAnalysisReady : ImageAnalysisState()
-    object ImageAnalysisStarted : ImageAnalysisState()
-    object ImageAnalysisFinished : ImageAnalysisState()
-    data class ImageAnalysisFailed(val exception: Exception) : ImageAnalysisState()
+data class ImageAnalysisValueState(
+    val currentTimeStamp: Long = 0L,
+    val luminance : Double = 0.0,
+    val imageAnalysisState: ImageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
+)
 
+enum class ImageAnalysisState{
+    IMAGE_ANALYSIS_NOT_READY,
+    IMAGE_ANALYSIS_READY,
+    IMAGE_ANALYSIS_STARTED,
+    IMAGE_ANALYSIS_FINISHED,
+    IMAGE_ANALYSIS_FAILED
 }

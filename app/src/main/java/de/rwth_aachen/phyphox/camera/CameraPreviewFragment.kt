@@ -27,6 +27,9 @@ import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
+import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
+import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
+import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.PermissionState
 import de.rwth_aachen.phyphox.camera.model.SettingMode
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
@@ -106,10 +109,6 @@ class CameraPreviewFragment : Fragment() {
 
         lifecycleScope.launch {
             cameraScreenViewState.collectLatest {
-                Log.d(TAG, "CameraScreenViewState")
-                Log.d(TAG, it.cameraPreviewScreenViewState.exposureViewState.toString())
-                Log.d(TAG, it.cameraPreviewScreenViewState.autoExposureViewState.toString())
-                Log.d(TAG, ":::::")
                 cameraPreviewScreen.setCameraScreenViewState(state = it)
             }
         }
@@ -149,21 +148,57 @@ class CameraPreviewFragment : Fragment() {
                     is CameraUiAction.ExposureSettingValueSelected -> {
                         cameraViewModel.cameraSettingOpened()
                     }
+
+                    is CameraUiAction.UpdateOverlay -> {
+                        cameraViewModel.updateCameraOverlayValue()
+                    }
+
+                    is CameraUiAction.UpdateCameraDimension -> {
+                        cameraViewModel.setUpCameraDimension(action.height, action.width)
+                    }
+
+                    is CameraUiAction.OverlayUpdateDone -> {
+                        cameraViewModel.overlayUpdated()
+                    }
                 }
             }
         }
 
         lifecycleScope.launch {
-            cameraViewModel.imageAnalysisUiState.collectLatest { state ->
-                when (state) {
-                    ImageAnalysisState.ImageAnalysisNotReady -> {}
-                    ImageAnalysisState.ImageAnalysisReady -> {}
-                    ImageAnalysisState.ImageAnalysisStarted -> {}
-                    ImageAnalysisState.ImageAnalysisFinished -> {}
-                    ImageAnalysisState.ImageAnalysisFailed(Exception("")) -> {
+            cameraViewModel.imageAnalyser.action.collectLatest {action: ImageAnalysisUIAction ->
+
+                when(action){
+                    is ImageAnalysisUIAction.UpdateLuminaceValue -> {
+                        Log.d(TAG, "ImageAnalysisUIAction.UpdateLuminaceValue" )
                     }
 
-                    else -> {}
+                }
+
+            }
+        }
+
+
+        lifecycleScope.launch {
+            cameraViewModel.imageAnalysisUiState.collectLatest { value: ImageAnalysisValueState ->
+
+                when(value.imageAnalysisState){
+                    ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY -> {
+                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY" )
+                    }
+                    ImageAnalysisState.IMAGE_ANALYSIS_READY -> {
+                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_READY" )
+                    }
+                    ImageAnalysisState.IMAGE_ANALYSIS_STARTED -> {
+                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_STARTED" )
+                        Log.d(TAG, cameraViewModel.getLumnicanceValue().toString() )
+
+                    }
+                    ImageAnalysisState.IMAGE_ANALYSIS_FINISHED -> {
+                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_FINISHED" )
+                    }
+                    ImageAnalysisState.IMAGE_ANALYSIS_FAILED -> {
+                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_FAILED" )
+                    }
                 }
             }
         }
@@ -191,6 +226,7 @@ class CameraPreviewFragment : Fragment() {
             cameraViewModel.cameraUiState.combine(cameraViewModel.cameraSettingValueState) { cameraUiState, cameraSettingState ->
                 Pair(cameraUiState, cameraSettingState)
             }.collectLatest { (cameraUiState, cameraSettingState) ->
+
 
                 when (cameraUiState.cameraState) {
                     CameraState.NOT_READY -> {
@@ -222,6 +258,7 @@ class CameraPreviewFragment : Fragment() {
                         )
                         cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
                         cameraViewModel.cameraInitialized()
+                        cameraViewModel.imageAnalysisPrepared()
 
                     }
 
@@ -328,6 +365,16 @@ class CameraPreviewFragment : Fragment() {
 
                 }
 
+                when(cameraUiState.overlayUpdateState){
+                    OverlayUpdateState.NO_UPDATE -> Unit
+                    OverlayUpdateState.UPDATE -> {
+                        Log.d(TAG, "OverlayUpdateState.UPDATE")
+                        cameraPreviewScreen.updateOverlay(cameraUiState)
+                    }
+                    OverlayUpdateState.UPDATE_DONE -> {
+                        Log.d(TAG, "OverlayUpdateState.UPDATE_DONE")
+                    }
+                }
             }
         }
 
@@ -346,6 +393,11 @@ class CameraPreviewFragment : Fragment() {
                 )
             )
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraViewModel.cameraExecutor.shutdown()
     }
 
 }

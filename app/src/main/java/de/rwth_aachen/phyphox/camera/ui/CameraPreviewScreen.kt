@@ -27,9 +27,15 @@ import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toRect
+import androidx.core.graphics.toRectF
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.selection.SelectionPredicates
+import androidx.recyclerview.selection.SelectionTracker
+import androidx.recyclerview.selection.StableIdKeyProvider
+import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -105,9 +111,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     private var selectedPosition = RecyclerView.NO_POSITION
 
-    var width = 0
-    var height = 0
-
     var transformation = Matrix()
 
     var panningIndexX = 0
@@ -121,21 +124,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     init {
 
-        // work around to get the height of preview view by delaying it so that the view is first laid
-        val viewTreeObserver = previewView.viewTreeObserver
-        viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                // This callback will be triggered when the layout is complete
-                Handler().postDelayed({
-                    width = previewView.width
-                    height = previewView.height
-                    setUpOverlay()
-                }, 200)
-
-                // Remove the listener to avoid multiple callbacks
-                previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-            }
-        })
+        initializeAndSetupCameraDimension()
 
         setFrameTouchOnListener()
 
@@ -172,6 +161,30 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
+    private fun initializeAndSetupCameraDimension(){
+        // work around to get the height of preview view by delaying it so that the view is first laid
+        val viewTreeObserver = previewView.viewTreeObserver
+        viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                // This callback will be triggered when the layout is complete
+                Handler().postDelayed({
+                    val width = previewView.width
+                    val height = previewView.height
+                    mainFrameLayout.removeView(overlayView)
+                    mainFrameLayout.addView(overlayView, width, height)
+                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                        _action.emit(CameraUiAction.UpdateCameraDimension(previewView.height, previewView.width))
+                    }
+                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                        _action.emit(CameraUiAction.UpdateOverlay)
+                    }
+                }, 200)
+                // Remove the listener to avoid multiple callbacks
+                previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+            }
+        })
+    }
+
     fun setCameraSettingText(cameraSettingState: CameraSettingValueState) {
         autoExposure = cameraSettingState.autoExposure
 
@@ -205,7 +218,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    Log.d("CameraPreviewFramgment", "ACTION_DOWN")
                     val d11: Float =
                         (x - cameraInput.x1) * (x - cameraInput.x1) + (y - cameraInput.y1) * (y - cameraInput.y1)
                     val d12: Float =
@@ -238,7 +250,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    Log.d("CameraPreviewFramgment", "ACTION_MOVE")
                     if (panningIndexX == 1) {
                         cameraInput.x1 = x
                     } else if (panningIndexX == 2) {
@@ -251,12 +262,13 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                         cameraInput.y2 = y
                     }
 
-                    updateOverlay()
+                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                        _action.emit(CameraUiAction.UpdateOverlay)
+                    }
 
                 }
 
                 MotionEvent.ACTION_UP -> {
-                    Log.d("CameraPreviewFramgment", "ACTION_UP")
                     v.performClick()
                 }
             }
@@ -264,23 +276,12 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         })
     }
 
-    private fun updateOverlay() {
-        //TODO dynamic assigning of the width and height
-        val xmin: Float = Math.min(cameraInput.x1, cameraInput.x2)
-        val xmax: Float = Math.max(cameraInput.x1, cameraInput.x2)
-        val ymin: Float = Math.min(cameraInput.y1, cameraInput.y2)
-        val ymax: Float = Math.max(cameraInput.y1, cameraInput.y2)
-        val inner = RectF(
-            (1.0f - ymax) * width,
-            xmin * height,
-            (1.0f - ymin) * width,
-            xmax * height
-        )
-        val outer = RectF(0f, 0f, width.toFloat(), height.toFloat())
+    fun updateOverlay(cameraUiState: CameraUiState) {
+
+        val inner = cameraUiState.cameraPassepartout.toRectF()
+        val outer = RectF(0f, 0f, cameraUiState.cameraWidth.toFloat(), cameraUiState.cameraHeight.toFloat())
         transformation.mapRect(inner)
         transformation.mapRect(outer)
-        val off = IntArray(2)
-        val off2 = IntArray(2)
         val points: Array<Point?>?
         if (true) {
             points = arrayOfNulls(4)
@@ -292,6 +293,10 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         overlayView.setClipRect(outer)
         overlayView.setPassepartout(inner)
         overlayView.update(null, points)
+
+        root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            _action.emit(CameraUiAction.OverlayUpdateDone)
+        }
     }
 
     fun hidePermissionsRequest() {
@@ -307,13 +312,6 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             permissionsRationale.text =
                 "Allow CameraX Extensions access to your camera to try camera extensions."
         }
-    }
-
-    fun setUpOverlay() {
-        mainFrameLayout.removeView(overlayView)
-        mainFrameLayout.addView(overlayView, width, height)
-        updateOverlay()
-
     }
 
     private fun onClickCameraExposureSetting(settingMode: SettingMode, value: String) {
@@ -540,9 +538,8 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         val settingChangeListener = object : SettingChooseListener {
-            override fun onSettingClicked(value: String, position: Int) {
+            override fun onSettingClicked(value: String) {
                 onClickCameraExposureSetting(settingMode, value)
-                selectedPosition = position
             }
         }
 
@@ -559,15 +556,45 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             layoutManager = mLayoutManager
             itemAnimator = DefaultItemAnimator()
 
+            val adapter =
+                ChooseCameraSettingValueAdapter(dataList, settingChangeListener)
+
+            recyclerView.adapter = adapter
+
+            val selectionTracker = SelectionTracker.Builder(
+                "mySelection",
+                this,
+                MyKeyProvider(adapter),
+                MyItemDetailsLookup(this),
+                StorageStrategy.createLongStorage()
+            ).withSelectionPredicate(SelectionPredicates.createSelectSingleAnything()).build()
+
+            adapter.tracker= selectionTracker
+
             selectedPosition = dataList.indexOf(currentValue)
 
-            adapter =
-                ChooseCameraSettingValueAdapter(dataList, settingChangeListener, selectedPosition)
+
+            Log.d(TAG,selectedPosition.toString())
+            adapter.selectInitialItem(selectedPosition)
+
+            selectionTracker.addObserver(object : SelectionTracker.SelectionObserver<Long>(){
+                override fun onSelectionChanged() {
+                    val nItems: Int = selectionTracker.selection.size()
+
+                    if(nItems > 0){
+                        Log.d(TAG, "$nItems items selected")
+
+                    } else {
+                        Log.d(TAG, "RVSelection")
+                    }
+                }
+            })
 
             // TODO need to improvise this workaround
             recyclerView.postDelayed(Runnable {
                 recyclerView.scrollToPosition(selectedPosition)
             }, 100)
+
         }
 
         recyclerLoadingFinished()
