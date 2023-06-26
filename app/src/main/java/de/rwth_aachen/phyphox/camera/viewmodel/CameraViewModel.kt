@@ -288,7 +288,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
-    fun updateImageAnalysisLuminance(luminance: Double, currentTime: Long){
+    fun updateImageAnalysisLuminance(luminance: Double, currentTime: Double){
         viewModelScope.launch {
             _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
                 luminance = luminance,

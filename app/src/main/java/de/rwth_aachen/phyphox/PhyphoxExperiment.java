@@ -388,6 +388,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             depthInput.stop();
 
+        if (cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            cameraInput.stop();
+
         for (NetworkConnection networkConnection : networkConnections)
             networkConnection.stop();
 
@@ -441,6 +444,10 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             depthInput.start();
+
+        if (cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            cameraInput.start();
+
 
         //Playback
         if (audioOutput != null) {

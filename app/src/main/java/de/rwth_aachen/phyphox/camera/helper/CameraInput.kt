@@ -1,10 +1,10 @@
 package de.rwth_aachen.phyphox.camera.helper
 
-import android.util.Range
-import de.rwth_aachen.phyphox.camera.model.SettingMode
+import android.util.Log
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
+import de.rwth_aachen.phyphox.camera.model.SettingMode
 import java.util.Vector
 import java.util.concurrent.locks.Lock
 
@@ -37,6 +37,10 @@ class CameraInput() {
 
     var exposureAdjustmentLevel: String = "1"
 
+    var measuring = false
+
+    lateinit var experimentTimeReference: ExperimentTimeReference
+
 
     constructor(cameraExtractionMode: CameraExtractionMode,
                 x1: Float,
@@ -52,8 +56,18 @@ class CameraInput() {
         this.x2 = x2
         this.y1 = y1
         this.y2 = y2
-        this.buffers = buffers
         this.cameraSettings = cameraSettings
+
+        this.experimentTimeReference = experimentTimeReference
+
+        //Store the buffer references if any
+
+        //Store the buffer references if any
+        if (buffers == null) return
+
+        if (buffers.size > 0 && buffers[0] != null) dataZ = buffers[0].buffer
+        if (buffers.size > 1 && buffers[1] != null) dataT = buffers[1].buffer
+
 
     }
 
@@ -61,6 +75,15 @@ class CameraInput() {
         average, closest, weighted
     }
 
+
+    fun start() {
+
+        measuring = true
+    }
+
+    fun stop() {
+        measuring = false
+    }
 
 
 

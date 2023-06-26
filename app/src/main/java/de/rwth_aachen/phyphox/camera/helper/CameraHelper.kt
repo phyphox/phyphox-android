@@ -383,6 +383,7 @@ object CameraHelper {
         return fractionToNanoseconds(fraction)
     }
 
+    // TODO think about how to manage the steps
     // returns the list of exposure values which are divisible by 5 only, so 4.0, 3.5, 3.0 and so on
     fun getExposureValuesFromRange(min: Int, max: Int, step: Float): List<Float>{
 

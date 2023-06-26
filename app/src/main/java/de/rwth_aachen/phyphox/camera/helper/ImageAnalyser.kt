@@ -1,28 +1,17 @@
 package de.rwth_aachen.phyphox.camera.helper
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.graphics.ImageFormat
 import android.graphics.Rect
-import android.graphics.YuvImage
 import android.media.Image
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.camera.core.internal.utils.ImageUtil
-import androidx.lifecycle.viewModelScope
-import de.rwth_aachen.phyphox.camera.model.CameraUiAction
-import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
-import org.apache.poi.ss.util.ImageUtils
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
@@ -47,48 +36,61 @@ class ImageAnalyser(val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyz
     }
 
     override fun analyze(image: ImageProxy) {
-        cameraViewModel.imageAnalysisStarted()
-        val mediaImage = image.image
-        image.imageInfo.rotationDegrees
-        image.setCropRect(
-            Rect(
-                cameraViewModel.getCameraRect().left,
-                cameraViewModel.getCameraRect().top,
-                cameraViewModel.getCameraRect().right,
-                cameraViewModel.getCameraRect().bottom
+
+        if(cameraViewModel.cameraInput.measuring){
+
+            cameraViewModel.imageAnalysisStarted()
+            val mediaImage = image.image
+            image.imageInfo.rotationDegrees
+            image.setCropRect(
+                Rect(
+                    cameraViewModel.getCameraRect().left,
+                    cameraViewModel.getCameraRect().top,
+                    cameraViewModel.getCameraRect().right,
+                    cameraViewModel.getCameraRect().bottom
+                )
             )
-        )
 
-        val currentTimestamp = System.currentTimeMillis()
+            val currentTimestamp = System.currentTimeMillis()
+            val t: Double = cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(currentTimestamp)
 
-        // Calculate the average luma no more often than every second
-        if (currentTimestamp - lastAnalyzedTimestamp >=
-            TimeUnit.SECONDS.toMillis(1)
-        ) {
-            if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {
-                // Since format in ImageAnalysis is YUV, image.planes[0]
-                // contains the Y (luminance) plane
-                val buffer = mediaImage.planes[0].buffer
+            // Calculate the average luma no more often than every second
+            if (currentTimestamp - lastAnalyzedTimestamp >=
+                TimeUnit.SECONDS.toMillis(1)
+            ) {
+                if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {
+                    // Since format in ImageAnalysis is YUV, image.planes[0]
+                    // contains the Y (luminance) plane
+                    val buffer = mediaImage.planes[0].buffer
 
-                val data = croppedNV21(mediaImage, cameraViewModel.getCameraRect())
+                    val data = croppedNV21(mediaImage, cameraViewModel.getCameraRect())
 
-                val pixels = data.map { it.toInt() and 0xFF }
-                Log.d("CameraXApp", "Pixel Size: ${pixels.size}")
+                    val pixels = data.map { it.toInt() and 0xFF }
+                    Log.d("CameraXApp", "Pixel Size: ${pixels.size}")
 
-                // Compute average luminance for the image
-                val luma = pixels.average()
+                    // Compute average luminance for the image
+                    val luma = pixels.average()
 
-                cameraViewModel.updateImageAnalysisLuminance(luma, currentTimestamp)
+                    cameraViewModel.updateImageAnalysisLuminance(luma, t)
 
-                // Update timestamp of last analyzed frame
-                lastAnalyzedTimestamp = currentTimestamp
+                    if (cameraViewModel.cameraInput.dataZ != null) cameraViewModel.cameraInput.dataZ.append(luma) //Given in millimeters, but phyphox uses meter
+
+                    if (cameraViewModel.cameraInput.dataT != null) {
+                        cameraViewModel.cameraInput.dataT.append(t)
+                    }
+
+                    // Update timestamp of last analyzed frame
+                    lastAnalyzedTimestamp = currentTimestamp
+                }
             }
+            cameraViewModel.imageAnalysisFinished()
         }
         image.close()
-        cameraViewModel.imageAnalysisFinished()
     }
 
+    // TODO check the avaibility and access of different frame rates
 
+    // TODO look for OpenGL
 
     // from here https://stackoverflow.com/questions/63390243/is-there-a-way-to-crop-image-imageproxy-before-passing-to-mlkits-analyzer
     private fun croppedNV21(mediaImage: Image, cropRect: Rect): ByteArray {
