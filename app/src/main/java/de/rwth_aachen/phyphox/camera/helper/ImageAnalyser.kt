@@ -52,7 +52,7 @@ class ImageAnalyser(val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyz
             )
 
             val currentTimestamp = System.currentTimeMillis()
-            val t: Double = cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(currentTimestamp)
+            val t: Double = cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(mediaImage?.timestamp!!)
 
             // Calculate the average luma no more often than every second
             if (currentTimestamp - lastAnalyzedTimestamp >=
@@ -66,7 +66,9 @@ class ImageAnalyser(val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyz
                     val data = croppedNV21(mediaImage, cameraViewModel.getCameraRect())
 
                     val pixels = data.map { it.toInt() and 0xFF }
-                    Log.d("CameraXApp", "Pixel Size: ${pixels.size}")
+                    //Log.d("CameraXApp", "Pixel Size: ${pixels.size}")
+
+                    Log.d("CameraXApp", PhotometricReader().calculateAvgRedBrightness(mediaImage).toString())
 
                     // Compute average luminance for the image
                     val luma = pixels.average()

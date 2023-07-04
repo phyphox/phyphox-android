@@ -161,6 +161,9 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     }
 
+    var width : Int = 0
+    var height: Int = 0
+
     private fun initializeAndSetupCameraDimension(){
         // work around to get the height of preview view by delaying it so that the view is first laid
         val viewTreeObserver = previewView.viewTreeObserver
@@ -168,8 +171,8 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             override fun onGlobalLayout() {
                 // This callback will be triggered when the layout is complete
                 Handler().postDelayed({
-                    val width = previewView.width
-                    val height = previewView.height
+                    width = previewView.width
+                    height = previewView.height
                     mainFrameLayout.removeView(overlayView)
                     mainFrameLayout.addView(overlayView, width, height)
                     root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
@@ -213,8 +216,8 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             val invert = Matrix()
             transformation.invert(invert)
             invert.mapPoints(touch)
-            val x: Float = touch[1] / 1000f // TODO getHeight instead
-            val y: Float = 1.0f - touch[0] / 1000f
+            val x: Float = touch[1] / height
+            val y: Float = 1.0f - touch[0] / width
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {

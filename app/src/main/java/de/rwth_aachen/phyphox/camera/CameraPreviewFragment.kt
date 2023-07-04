@@ -293,7 +293,7 @@ class CameraPreviewFragment : Fragment() {
                     CameraSettingState.RELOADING_FAILED -> Unit
                     CameraSettingState.LOADING_VALUE -> {
 
-                        // When clicking an Exposure setting, hide or show the RecyclerView, which is
+                        // When clicking an Exposure settings, hide or show the RecyclerView, which is
                         // showing the list of Exposure values to select from.
                         if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.HIDDEN) {
                             cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = true)
