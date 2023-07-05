@@ -65,16 +65,17 @@
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/imageAutoExposure"
                 android:layout_width="25dp"
-                android:layout_height="25dp"
+                android:layout_height="20dp"
                 android:layout_gravity="center"
-                android:layout_marginTop="5dp"
-                app:srcCompat="@drawable/ic_autofocus" />
+                android:layout_marginTop="8dp"
+                app:srcCompat="@drawable/ic_auto_exposure" />
 
             <TextView
                 android:id="@+id/textAutoExposureStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:layout_marginTop="2dp"
                 android:textColor="@color/phyphox_white_100"
                 android:textSize="11sp" />
 

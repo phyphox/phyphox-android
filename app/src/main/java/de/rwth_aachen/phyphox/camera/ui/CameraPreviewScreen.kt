@@ -27,14 +27,12 @@ import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.toRect
 import androidx.core.graphics.toRectF
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.selection.SelectionPredicates
 import androidx.recyclerview.selection.SelectionTracker
-import androidx.recyclerview.selection.StableIdKeyProvider
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -490,7 +488,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
             SettingMode.SHUTTER_SPEED -> R.drawable.baseline_shutter_speed_24
             SettingMode.APERTURE -> R.drawable.ic_camera_aperture
             SettingMode.EXPOSURE -> R.drawable.ic_exposure
-            SettingMode.AUTO_EXPOSURE -> R.drawable.ic_autofocus
+            SettingMode.AUTO_EXPOSURE -> R.drawable.ic_auto_exposure
             SettingMode.NONE -> R.drawable.ic_empty
         }
 
