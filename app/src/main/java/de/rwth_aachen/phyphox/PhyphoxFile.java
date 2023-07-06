@@ -1880,15 +1880,15 @@ public abstract class PhyphoxFile {
                         CameraInput.CameraExtractionMode mode;
                         switch (modeStr) {
                             case "closest": {
-                                mode = CameraInput.CameraExtractionMode.closest;
+                                mode = CameraInput.CameraExtractionMode.Closest;
                                 break;
                             }
                             case "weighted": {
-                                mode = CameraInput.CameraExtractionMode.weighted;
+                                mode = CameraInput.CameraExtractionMode.Weighted;
                                 break;
                             }
                             case "average": {
-                                mode = CameraInput.CameraExtractionMode.average;
+                                mode = CameraInput.CameraExtractionMode.Average;
                                 break;
                             }
                             default: {

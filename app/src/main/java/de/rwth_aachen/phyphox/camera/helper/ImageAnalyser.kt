@@ -16,11 +16,11 @@ import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class ImageAnalyser(val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyzer {
+class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyzer {
 
     private var lastAnalyzedTimestamp = 0L
 
-    // observable to observe the action performed
+    // Observable to observe the action performed
     private val _action: MutableSharedFlow<ImageAnalysisUIAction> = MutableSharedFlow()
     val action: Flow<ImageAnalysisUIAction> = _action
 
@@ -35,30 +35,25 @@ class ImageAnalyser(val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyz
         return data // Return the byte array
     }
 
+    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
 
-        if(cameraViewModel.cameraInput.measuring){
+        if (cameraViewModel.cameraInput.measuring) {
 
             cameraViewModel.imageAnalysisStarted()
             val mediaImage = image.image
-            image.imageInfo.rotationDegrees
-            image.setCropRect(
-                Rect(
-                    cameraViewModel.getCameraRect().left,
-                    cameraViewModel.getCameraRect().top,
-                    cameraViewModel.getCameraRect().right,
-                    cameraViewModel.getCameraRect().bottom
-                )
-            )
 
             val currentTimestamp = System.currentTimeMillis()
-            val t: Double = cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(mediaImage?.timestamp!!)
+            val t: Double =
+                cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(
+                    mediaImage?.timestamp!!
+                )
 
             // Calculate the average luma no more often than every second
             if (currentTimestamp - lastAnalyzedTimestamp >=
                 TimeUnit.SECONDS.toMillis(1)
             ) {
-                if (mediaImage != null && mediaImage.format == ImageFormat.YUV_420_888) {
+                if (mediaImage.format == ImageFormat.YUV_420_888) {
                     // Since format in ImageAnalysis is YUV, image.planes[0]
                     // contains the Y (luminance) plane
                     val buffer = mediaImage.planes[0].buffer
@@ -66,20 +61,19 @@ class ImageAnalyser(val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyz
                     val data = croppedNV21(mediaImage, cameraViewModel.getCameraRect())
 
                     val pixels = data.map { it.toInt() and 0xFF }
-                    //Log.d("CameraXApp", "Pixel Size: ${pixels.size}")
 
-                    Log.d("CameraXApp", PhotometricReader().calculateAvgRedBrightness(mediaImage).toString())
+                    Log.d(
+                        "CameraXApp",
+                        PhotometricReader().calculateAvgRedBrightness(mediaImage).toString()
+                    )
 
                     // Compute average luminance for the image
                     val luma = pixels.average()
 
                     cameraViewModel.updateImageAnalysisLuminance(luma, t)
 
-                    if (cameraViewModel.cameraInput.dataZ != null) cameraViewModel.cameraInput.dataZ.append(luma) //Given in millimeters, but phyphox uses meter
-
-                    if (cameraViewModel.cameraInput.dataT != null) {
-                        cameraViewModel.cameraInput.dataT.append(t)
-                    }
+                    cameraViewModel.cameraInput.dataZ.append(luma)
+                    cameraViewModel.cameraInput.dataT.append(t)
 
                     // Update timestamp of last analyzed frame
                     lastAnalyzedTimestamp = currentTimestamp
@@ -91,7 +85,6 @@ class ImageAnalyser(val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyz
     }
 
     // TODO check the avaibility and access of different frame rates
-
     // TODO look for OpenGL
 
     // from here https://stackoverflow.com/questions/63390243/is-there-a-way-to-crop-image-imageproxy-before-passing-to-mlkits-analyzer

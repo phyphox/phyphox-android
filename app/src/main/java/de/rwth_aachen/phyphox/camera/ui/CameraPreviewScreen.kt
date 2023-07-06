@@ -12,6 +12,8 @@ import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
+import android.transition.Slide
+import android.transition.Visibility
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -38,6 +40,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.slider.Slider
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
@@ -47,15 +50,20 @@ import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.SettingMode
+import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class CameraPreviewScreen(private val root: View, private val cameraInput: CameraInput) {
+class CameraPreviewScreen(
+        private val root: View,
+        private val cameraInput: CameraInput,
+        private val cameraViewModel: CameraViewModel) {
 
     private val context: Context = root.context
 
@@ -63,6 +71,8 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
     val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
     private val mainFrameLayout: ConstraintLayout = root.findViewById(R.id.mainFrameLayout)
+
+    private val zoomSlider : Slider = root.findViewById(R.id.zoomSlider)
 
     // permissions
     private val permissionsRationaleContainer: View =
@@ -85,6 +95,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     private val imageViewAperture = root.findViewById<ImageView>(R.id.imageAperture)
     private val imageViewAutoExposure = root.findViewById<ImageView>(R.id.imageAutoExposure)
     private val imageViewExposure = root.findViewById<ImageView>(R.id.imageExposure)
+    private val imageZoom = root.findViewById<ImageView>(R.id.imageZoom)
 
     // text views
     private val textViewCurrentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
@@ -119,6 +130,10 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
     val action: Flow<CameraUiAction> = _action
+
+    var lockOverlayMovement = true
+
+    var showZoomSlider = false
 
     init {
 
@@ -155,6 +170,25 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
         }
 
         imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE) }
+
+        imageZoom.setOnClickListener {
+            zoomSlider.visibility = View.VISIBLE
+            if(showZoomSlider){
+                zoomSlider.visibility = View.GONE
+            }
+            showZoomSlider = !showZoomSlider
+        }
+
+
+        zoomSlider.addOnChangeListener { slider, value, fromUser ->
+            Log.d(TAG, "addOnChangeListener")
+            Log.d(TAG, "onStartTrackingTouch slider ${value}")
+            cameraViewModel.camera?.cameraControl?.setLinearZoom(value/ 100f)
+        }
+
+        zoomSlider.setLabelFormatter {value: Float ->
+            value.roundToInt().toString()
+        }
 
 
     }
@@ -219,6 +253,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    Log.d("previewView", "frame down")
                     val d11: Float =
                         (x - cameraInput.x1) * (x - cameraInput.x1) + (y - cameraInput.y1) * (y - cameraInput.y1)
                     val d12: Float =
@@ -251,6 +286,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                 }
 
                 MotionEvent.ACTION_MOVE -> {
+                    Log.d("previewView", "frame move")
                     if (panningIndexX == 1) {
                         cameraInput.x1 = x
                     } else if (panningIndexX == 2) {
@@ -270,6 +306,7 @@ class CameraPreviewScreen(private val root: View, private val cameraInput: Camer
                 }
 
                 MotionEvent.ACTION_UP -> {
+                    Log.d("previewView", "frame up")
                     v.performClick()
                 }
             }

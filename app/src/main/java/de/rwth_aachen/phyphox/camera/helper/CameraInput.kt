@@ -1,6 +1,5 @@
 package de.rwth_aachen.phyphox.camera.helper
 
-import android.util.Log
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
@@ -10,37 +9,34 @@ import java.util.concurrent.locks.Lock
 
 class CameraInput() {
 
-    var x1: Float = 0.4f
-    var x2: Float = 0.6f
-    var y1: Float = 0.4f
-    var y2: Float = 0.6f
+    // Represents the ratio of the overlay in camera preview to the actual size of the preview
+    var x1: Float = 0f
+    var x2: Float = 0f
+    var y1: Float = 0f
+    var y2: Float = 0f
 
-    var w = 0
-    var h = 0
-
+    // Holds and release the image analysis value (z) and time value (t) from data buffer
     lateinit var dataZ: DataBuffer
     lateinit var dataT: DataBuffer
 
+    // List of buffers (variables) that is provided in the xml
     lateinit var buffers: Vector<DataOutput>
 
+    // List of camera setting that is available to control the camera sensor
     var cameraSettings = ArrayList<SettingMode>()
 
+    // Holds initial value provided in xml
     var isoCurrentValue: Int = 0
-
     var shutterSpeedCurrentValue: Long = 0
-
     var apertureCurrentValue: Float = 0.0f
-
     var autoExposure: Boolean = true
-
     var currentExposureValue: Float = 0F
-
     var exposureAdjustmentLevel: String = "1"
 
+    // Status of the play and pause for image analysis
     var measuring = false
 
     lateinit var experimentTimeReference: ExperimentTimeReference
-
 
     constructor(cameraExtractionMode: CameraExtractionMode,
                 x1: Float,
@@ -57,34 +53,24 @@ class CameraInput() {
         this.y1 = y1
         this.y2 = y2
         this.cameraSettings = cameraSettings
-
+        this.buffers = buffers
         this.experimentTimeReference = experimentTimeReference
-
-        //Store the buffer references if any
-
-        //Store the buffer references if any
-        if (buffers == null) return
 
         if (buffers.size > 0 && buffers[0] != null) dataZ = buffers[0].buffer
         if (buffers.size > 1 && buffers[1] != null) dataT = buffers[1].buffer
 
-
     }
 
     enum class CameraExtractionMode {
-        average, closest, weighted
+        Average, Closest, Weighted
     }
 
-
     fun start() {
-
         measuring = true
     }
 
     fun stop() {
         measuring = false
     }
-
-
 
 }

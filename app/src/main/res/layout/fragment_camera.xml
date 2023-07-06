@@ -15,6 +15,18 @@
         app:scaleType="fillCenter"
         tools:layout_editor_absoluteX="0dp" />
 
+    <com.google.android.material.slider.Slider
+        android:id="@+id/zoomSlider"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:valueFrom="0.0"
+        android:orientation="vertical"
+        android:valueTo="100.0"
+        android:theme="@style/MaterialSeekbarTheme"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/cameraSetting"
+        />
+
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/cameraSetting"
         android:layout_width="match_parent"
@@ -67,7 +79,7 @@
                 android:layout_width="25dp"
                 android:layout_height="20dp"
                 android:layout_gravity="center"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="10dp"
                 app:srcCompat="@drawable/ic_auto_exposure" />
 
             <TextView
@@ -120,8 +132,9 @@
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/imageIso"
                 android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_height="25dp"
                 android:layout_gravity="center"
+                android:layout_marginTop="5dp"
                 app:srcCompat="@drawable/ic_camera_iso" />
 
             <TextView
@@ -145,9 +158,10 @@
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/imageShutter"
                 android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_height="25dp"
                 android:layout_gravity="center"
                 android:layout_weight="1"
+                android:layout_marginTop="5dp"
                 app:srcCompat="@drawable/baseline_shutter_speed_24" />
 
             <TextView
@@ -172,13 +186,41 @@
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/imageAperture"
                 android:layout_width="20dp"
-                android:layout_height="30dp"
+                android:layout_height="25dp"
                 android:layout_gravity="center"
+                android:layout_marginTop="5dp"
                 android:layout_weight="1"
                 app:srcCompat="@drawable/ic_camera_aperture" />
 
             <TextView
                 android:id="@+id/textCurrentAperture"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/phyphox_white_100"
+                android:textSize="11sp" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/lnrZoom"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageZoom"
+                android:layout_width="30dp"
+                android:layout_height="25dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="5dp"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/ic_zoom" />
+
+            <TextView
+                android:id="@+id/textCurrentZoom"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -200,6 +242,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         />
+
 
 
     <androidx.appcompat.widget.LinearLayoutCompat

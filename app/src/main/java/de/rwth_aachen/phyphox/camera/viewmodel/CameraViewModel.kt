@@ -54,7 +54,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     private lateinit var cameraProvider: ProcessCameraProvider
     val cameraExecutor = Executors.newSingleThreadExecutor()
 
-    private var camera: Camera? = null
+    var camera: Camera? = null
 
     private lateinit var preview: Preview
     private lateinit var imageAnalysis: ImageAnalysis
@@ -210,6 +210,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             preview,
             imageAnalysis
         )
+
+        camera?.cameraControl?.setLinearZoom(0f)
 
         setUpExposureValue()
 
