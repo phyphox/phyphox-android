@@ -56,6 +56,7 @@ import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import java.lang.IllegalArgumentException
 import kotlin.math.roundToInt
 
 
@@ -87,6 +88,7 @@ class CameraPreviewScreen(
     private val lnrAperture = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAperture)
     private val lnrAutoExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAutoExposure)
     private val lnrExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageExposure)
+    private val lnrColorCode = root.findViewById<LinearLayoutCompat>(R.id.llColorCode)
 
     //image buttons
     private val switchLensButton = root.findViewById<ImageView>(R.id.switchLens)
@@ -105,6 +107,7 @@ class CameraPreviewScreen(
         root.findViewById<TextView>(R.id.textAutoExposureStatus)
     private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
     private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
+    private val tvColorCode = root.findViewById<TextView>(R.id.tvColorCode)
 
     private val recyclerView = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
 
@@ -643,6 +646,23 @@ class CameraPreviewScreen(
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.ExposureSettingValueSelected)
         }
+    }
+
+
+    fun setColorCodeText(colorCode: String) {
+        if(colorCode == ""){
+            lnrColorCode.visibility = View.GONE
+        } else {
+            lnrColorCode.visibility = View.VISIBLE
+            try {
+                tvColorCode.setText(colorCode)
+                lnrColorCode.setBackgroundColor(Color.parseColor("#$colorCode"))
+            }catch (e : IllegalArgumentException){
+                tvColorCode.setText(colorCode +": "+e)
+                Log.e(TAG, "ColorCode $e")
+            }
+        }
+
     }
 
 }

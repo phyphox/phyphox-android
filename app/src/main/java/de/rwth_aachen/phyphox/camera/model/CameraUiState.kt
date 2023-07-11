@@ -95,6 +95,7 @@ enum class CameraSettingState{
 data class ImageAnalysisValueState(
     val currentTimeStamp: Double = 0.0,
     val luminance : Double = 0.0,
+    val colorCode: String = "",
     val imageAnalysisState: ImageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
 )
 

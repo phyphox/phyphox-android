@@ -197,9 +197,13 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             it.setSurfaceProvider(previewView.surfaceProvider)
         }
 
+        var outputFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888
+        if(cameraInput.cameraFeature == CameraInput.PhyphoxCameraFeature.ColorDetector){
+            outputFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888
+        }
         imageAnalysis = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setTargetResolution(Size(5,5))
+            .setOutputImageFormat(outputFormat)
             .build()
 
         imageAnalysis.setAnalyzer(cameraExecutor, imageAnalyser)
@@ -299,8 +303,20 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
+    fun updateImageAnalysisColor(colorCode: String){
+        viewModelScope.launch {
+            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
+                colorCode = colorCode
+            ))
+        }
+    }
+
     fun getLumnicanceValue(): Double{
         return _imageAnalysisValueState.value.luminance
+    }
+
+    fun getColorCode(): String {
+        return _imageAnalysisValueState.value.colorCode
     }
 
     fun setUpExposureValue() {

@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.camera.helper
 
 import android.media.Image
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import org.opencv.core.Core
 import org.opencv.core.Mat
@@ -54,6 +55,24 @@ public class PhotometricReader() {
         println("Average blue brightness: ${blueBrightness}")
 
         return redBrightness.`val`[0]
+    }
+
+    fun convertYuvToRgb(img: Image) {
+        val matImg: Mat = CameraHelper.imageToMat(img);
+
+        // Convert the image from BGR to HSV color space
+        //val rgb = Mat()
+        //Imgproc.cvtColor(matImg, rgb, Imgproc.COLOR_YUV2RGB )
+
+
+
+
+        val rbg = matImg.get(1000,1000)
+
+        Log.d("PhotometricReader ", "hex code : "+Integer.toHexString(154))
+        Log.d("PhotometricReader ", "red: "+rbg[0])
+        Log.d("PhotometricReader ", "green: "+rbg[1])
+        Log.d("PhotometricReader ", "blue: "+rbg[2])
     }
 
     fun calculateAverageRedBrightness(img: Image) : Double{

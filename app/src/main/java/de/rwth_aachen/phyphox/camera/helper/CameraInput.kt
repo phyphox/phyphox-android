@@ -25,13 +25,14 @@ class CameraInput() {
     // List of camera setting that is available to control the camera sensor
     var cameraSettings = ArrayList<SettingMode>()
 
-    // Holds initial value provided in xml
-    var isoCurrentValue: Int = 0
-    var shutterSpeedCurrentValue: Long = 0
-    var apertureCurrentValue: Float = 0.0f
+    // Holds initial value provided in xml,
+    var isoCurrentValue: Int = 1
+    var shutterSpeedCurrentValue: Long = 1
+    var apertureCurrentValue: Float = 1.0f
     var autoExposure: Boolean = true
-    var currentExposureValue: Float = 0F
+    var currentExposureValue: Float = 1F
     var exposureAdjustmentLevel: String = "1"
+    lateinit var cameraFeature : PhyphoxCameraFeature
 
     // Status of the play and pause for image analysis
     var measuring = false
@@ -46,7 +47,8 @@ class CameraInput() {
                 buffers: Vector<DataOutput>,
                 lock: Lock,
                 experimentTimeReference: ExperimentTimeReference,
-                cameraSettings: ArrayList<SettingMode>) : this() {
+                cameraSettings: ArrayList<SettingMode>,
+                cameraFeature: PhyphoxCameraFeature) : this() {
 
         this.x1 = x1
         this.x2 = x2
@@ -55,6 +57,7 @@ class CameraInput() {
         this.cameraSettings = cameraSettings
         this.buffers = buffers
         this.experimentTimeReference = experimentTimeReference
+        this.cameraFeature = cameraFeature
 
         if (buffers.size > 0 && buffers[0] != null) dataZ = buffers[0].buffer
         if (buffers.size > 1 && buffers[1] != null) dataT = buffers[1].buffer
@@ -63,6 +66,10 @@ class CameraInput() {
 
     enum class CameraExtractionMode {
         Average, Closest, Weighted
+    }
+
+    enum class PhyphoxCameraFeature {
+        Photometric, ColorDetector
     }
 
     fun start() {

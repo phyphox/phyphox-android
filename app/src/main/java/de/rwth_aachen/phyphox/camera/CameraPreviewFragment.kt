@@ -191,6 +191,8 @@ class CameraPreviewFragment : Fragment() {
                     ImageAnalysisState.IMAGE_ANALYSIS_STARTED -> {
                         Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_STARTED" )
                         Log.d(TAG, cameraViewModel.getLumnicanceValue().toString() )
+                        Log.d(TAG, "ColorCode: " + cameraViewModel.getColorCode())
+                        cameraPreviewScreen.setColorCodeText(cameraViewModel.getColorCode())
 
                     }
                     ImageAnalysisState.IMAGE_ANALYSIS_FINISHED -> {

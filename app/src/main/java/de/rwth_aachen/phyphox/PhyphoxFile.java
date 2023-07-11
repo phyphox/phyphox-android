@@ -1892,7 +1892,27 @@ public abstract class PhyphoxFile {
                                 break;
                             }
                             default: {
-                                throw new phyphoxFileException("Unknown depth extraction mode: " + modeStr, xpp.getLineNumber());
+                                throw new phyphoxFileException("Unknown camera extraction mode: " + modeStr, xpp.getLineNumber());
+                            }
+                        }
+
+                        String featureStr = getStringAttribute("feature");
+                        if(featureStr == null)
+                            featureStr = "photometric";
+                        else featureStr = featureStr.toLowerCase();
+
+                        CameraInput.PhyphoxCameraFeature feature;
+                        switch (featureStr){
+                            case "photometric": {
+                                feature = CameraInput.PhyphoxCameraFeature.Photometric;
+                                break;
+                            }
+                            case "color_detector": {
+                                feature = CameraInput.PhyphoxCameraFeature.ColorDetector;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown feature name: " + featureStr, xpp.getLineNumber());
                             }
                         }
 
@@ -1939,7 +1959,8 @@ public abstract class PhyphoxFile {
                                 outputs,
                                 experiment.dataLock,
                                 experiment.experimentTimeReference,
-                                availableSettings);
+                                availableSettings,
+                                feature);
 
                         break;
 
