@@ -54,4 +54,8 @@
         <item name="android:tint">@color/phyphox_white_100</item>
     </style>
 
+    <style name="support_phyphox_hint_root" parent="Theme.Phyphox.Dark">
+        <item name="backgroundColor">@color/phyphox_black_80</item>
+    </style>
+
 </resources>

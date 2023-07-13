@@ -142,7 +142,7 @@ public class ExperimentList extends AppCompatActivity {
 
     //Name of support category
     static final String phyphoxCat = "phyphox.org";
-    static final String phyphoxCatHintRelease = "1.1.9"; //Change this to reactivate the phyphox support category hint on the next update. We set it to the version in which it is supposed to be re-enabled, so we can easily understand its meaning.
+    static final String phyphoxCatHintRelease = "1.1.12"; //Change this to reactivate the phyphox support category hint on the next update. We set it to the version in which it is supposed to be re-enabled, so we can easily understand its meaning.
 
     //A resource reference for easy access
     private Resources res;
@@ -212,7 +212,7 @@ public class ExperimentList extends AppCompatActivity {
 
     private void showSupportHintIfRequired() {
         try {
-            if (!getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS).versionName.equals(phyphoxCatHintRelease))
+            if (!getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS).versionName.split("-")[0].equals(phyphoxCatHintRelease))
                 return;
         } catch (Exception e) {
             return;
