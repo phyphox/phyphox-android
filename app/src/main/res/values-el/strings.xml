@@ -362,4 +362,14 @@
     <string name="settingsProximityLock">Κλείδωμα εγγύτητας</string>
     <string name="settingsProximityLockDetail">Απενεργοποίηση της οθόνης όταν ενεργοποιείται ο αισθητήρας εγγύτητας για την αποφυγή ακούσιων καταγραφών, για παράδειγμα από την τσέπη.</string>
     <string name="settingsPort">Θύρα απομακρυσμένης πρόσβασης</string>
+    <string name="settings_theme_night">Προεπιλογή</string>
+    <string name="settings_theme_no_night">Ανοιχτόχρωμο θέμα</string>
+    <string name="settings_theme_sync_setting">Όμοιο με το σύστημα</string>
+    <string name="settingGraphViewEdit">Περιβάλλον χρήστη</string>
+    <string name="settingGraphSize">Μέγεθος γραφήματος</string>
+    <string name="settingGraphSizeSubTitle">Μικρότερο ή μεγαλύτερο μέγεθος γραφήματος</string>
+    <string name="settings_theme_title">Σκουρόχρωμο θέμα</string>
+    <string name="settings_mode_dark">Οn (Προεπιλογή)</string>
+    <string name="settings_mode_no_dark">Off</string>
+    <string name="settings_mode_dark_system">Όμοιο με το σύστημα</string>
 </resources>
