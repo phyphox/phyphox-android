@@ -1726,12 +1726,13 @@ public class ExperimentList extends AppCompatActivity {
 
     protected void showBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final ExperimentList thisRef = this;
         builder.setMessage(msg)
                 .setTitle(isError ? R.string.newExperimentBluetoothErrorTitle : R.string.newExperimentBluetooth);
         if (!isFatal) {
             builder.setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
-                scanQRCode();
+                    (new runBluetoothScan(thisRef)).execute();
                 }
             });
         }
