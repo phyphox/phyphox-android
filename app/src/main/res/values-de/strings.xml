@@ -375,4 +375,5 @@
     <string name="settings_mode_dark">An (Standard)</string>
     <string name="settings_mode_no_dark">Aus</string>
     <string name="settings_mode_dark_system">Wie System</string>
+    <string name="privacyPolicyURL">https://phyphox.org/datenschutz</string>
 </resources>
