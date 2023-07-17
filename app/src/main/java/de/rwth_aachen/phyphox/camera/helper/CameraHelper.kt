@@ -405,9 +405,76 @@ object CameraHelper {
     }
 
 
+    fun computeZoomRatios(ratios: MutableList<Int>, min_zoom: Float, max_zoom: Float): Int {
+        val zoom_value_1x: Int
 
+        // prepare zoom rations > 1x
+        // set 20 steps per 2x factor
+        val scale_factor_c = 1.0352649238413775043477881942112
+        val zoom_ratios_above_one: MutableList<Int> = java.util.ArrayList()
+        var zoom = scale_factor_c
+        while (zoom < max_zoom - 1.0e-5f) {
+            val zoom_ratio = (zoom * 100).toInt()
+            zoom_ratios_above_one.add(zoom_ratio)
+            zoom *= scale_factor_c
+        }
+        val max_zoom_ratio = (max_zoom * 100).toInt()
+        if (zoom_ratios_above_one.size == 0 || zoom_ratios_above_one[zoom_ratios_above_one.size - 1] != max_zoom_ratio) {
+            zoom_ratios_above_one.add(max_zoom_ratio)
+        }
+        val n_steps_above_one = zoom_ratios_above_one.size
 
+        // now populate full zoom ratios
 
+        // add minimum zoom
+        ratios.add((min_zoom * 100).toInt())
+        if (ratios[0] / 100.0f < min_zoom) {
+            // fix for rounding down to less than the min_zoom
+            // e.g. if min_zoom = 0.666, we'd have stored a zoom ratio of 66 which then would
+            // convert back to 0.66
+            ratios[0] = ratios[0] + 1
+        }
+        if (ratios[0] < 100) {
+            val n_steps_below_one = Math.max(1, n_steps_above_one / 5)
+            // if the min zoom is < 1.0, we add multiple entries for 1x zoom, when using the zoom
+            // seekbar it's easy for the user to zoom to exactly 1x
+            val n_steps_one = Math.max(1, n_steps_above_one / 10)
 
+            // add rest of zoom values < 1.0f
+            zoom = min_zoom.toDouble()
+            val scale_factor =
+                Math.pow((1.0f / min_zoom).toDouble(), 1.0 / n_steps_below_one.toDouble())
+
+            for (i in 0 until n_steps_below_one - 1) {
+                zoom *= scale_factor
+                val zoom_ratio = (zoom * 100).toInt()
+                if (zoom_ratio > ratios[0]) {
+                    // on some devices (e.g., Pixel 6 Pro), the second entry would equal the first entry, due to the rounding fix above
+                    ratios.add(zoom_ratio)
+                }
+            }
+
+            // add values for 1.0f (we add repeated values so for cameras with min_zoom < 1x, the zoom seekbar will snap to 1x)
+            zoom_value_1x = ratios.size
+            for (i in 0 until n_steps_one) ratios.add(100)
+        } else {
+            zoom_value_1x = 0
+        }
+
+        // add zoom values > 1.0f
+        val n_steps_power_two = Math.max(1, (0.5f + n_steps_above_one / 15.0f).toInt())
+
+        for (zoom_ratio in zoom_ratios_above_one) {
+            ratios.add(zoom_ratio)
+            if (zoom_ratio != zoom_ratios_above_one[zoom_ratios_above_one.size - 1] && zoom_ratio % 100 == 0) {
+                val zoom_ratio_int = zoom_ratio / 100
+                if (zoom_ratio_int != 0 && zoom_ratio_int and zoom_ratio_int - 1 == 0) {
+                    // is power of 2 that isn't the max zoom
+                    for (i in 0 until n_steps_power_two - 1) ratios.add(zoom_ratio)
+                }
+            }
+        }
+        return zoom_value_1x
+    }
 
 }

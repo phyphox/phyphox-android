@@ -56,7 +56,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     var camera: Camera? = null
 
-    private lateinit var preview: Preview
+    lateinit var preview: Preview
     private lateinit var imageAnalysis: ImageAnalysis
     private var photometricReader : PhotometricReader = PhotometricReader();
 
@@ -215,8 +215,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             imageAnalysis
         )
 
-        camera?.cameraControl?.setLinearZoom(0f)
-
+        cameraInitialized()
+        setupZoomControl()
         setUpExposureValue()
 
     }
@@ -551,6 +551,26 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     fun overlayUpdated(){
         viewModelScope.launch { _cameraUiState.emit(_cameraUiState.value.copy(overlayUpdateState = OverlayUpdateState.UPDATE_DONE)) }
+    }
+
+    fun setupZoomControl(){
+
+        val zoomStateValue = camera?.cameraInfo?.zoomState?.value
+
+        val maxZoomRatio =  zoomStateValue?.maxZoomRatio ?: 1f
+        val minZoomRatio =  zoomStateValue?.minZoomRatio ?: 1f
+        val zoomRatio =  zoomStateValue?.zoomRatio ?: 1f
+        val linearZoom =  zoomStateValue?.linearZoom ?: 1f
+
+        viewModelScope.launch {
+            _cameraSettingValueState.emit(_cameraSettingValueState.value.copy(
+                cameraMinZoomRatio = minZoomRatio,
+                cameraMaxZoomRatio = maxZoomRatio,
+                cameraZoomRatio = zoomRatio,
+                cameraLinearRatio = linearZoom
+            ))
+        }
+
     }
 
 }

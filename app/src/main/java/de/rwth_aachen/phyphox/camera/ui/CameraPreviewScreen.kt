@@ -20,6 +20,8 @@ import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
@@ -183,16 +185,19 @@ class CameraPreviewScreen(
         }
 
 
+
+    }
+
+    fun setupZoomControl(cameraSettingState: CameraSettingValueState){
+
+
         zoomSlider.addOnChangeListener { slider, value, fromUser ->
-            Log.d(TAG, "addOnChangeListener")
-            Log.d(TAG, "onStartTrackingTouch slider ${value}")
-            cameraViewModel.camera?.cameraControl?.setLinearZoom(value/ 100f)
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(cameraSettingState.cameraMaxZoomRatio - value)
         }
 
         zoomSlider.setLabelFormatter {value: Float ->
             value.roundToInt().toString()
         }
-
 
     }
 

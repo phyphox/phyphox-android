@@ -54,7 +54,11 @@ data class CameraSettingValueState(
     val cameraSettingState: CameraSettingState = CameraSettingState.NOT_READY,
     val settingMode: SettingMode = SettingMode.NONE,
     val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC,
-    val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.HIDDEN
+    val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.HIDDEN,
+    val cameraMaxZoomRatio: Float = 0.0f,
+    val cameraMinZoomRatio: Float = 0.0f,
+    val cameraZoomRatio: Float = 0.0f,
+    val cameraLinearRatio: Float = 0.0f
 
     )
 

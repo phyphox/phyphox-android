@@ -259,12 +259,14 @@ class CameraPreviewFragment : Fragment() {
                                 }
                         )
                         cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
-                        cameraViewModel.cameraInitialized()
                         cameraViewModel.imageAnalysisPrepared()
 
                     }
 
-                    CameraState.LOADED -> Unit
+                    CameraState.LOADED -> {
+                        cameraPreviewScreen.setupZoomControl(
+                            cameraSettingState)
+                    }
                     CameraState.PREVIEW_IN_BACKGROUND -> Unit
                     CameraState.PREVIEW_STOPPED -> Unit
                 }

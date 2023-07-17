@@ -20,6 +20,7 @@ import org.opencv.core.TermCriteria
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import kotlin.experimental.and
+import kotlin.math.sqrt
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
