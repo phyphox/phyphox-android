@@ -176,4 +176,13 @@
     <string name="beeperStart"/>
     <string name="beeperStop"/>
     <string name="deactivate_all"/>
+    <string name="save_state_message">आप अपने डेटा सहित इस प्रयोग की स्थिति को अपने संग्रह में सहेज सकते हैं या इसे किसी थर्ड पार्टी ऐप के साथ साझा कर सकते हैं।</string>
+    <string name="save_state_title">शीर्षक</string>
+    <string name="save_state_save">संग्रह</string>
+    <string name="save_state_share">साझा करें</string>
+    <string name="save_state_subject">फ़िफोक्स के लिए प्रयोग अवस्था</string>
+    <string name="save_state_default_title">मापन</string>
+    <string name="save_state_success">आपके संग्रह में अवस्था को सहेजा गया |</string>
+    <string name="open_zip_title">प्रयोगों के एक सेट को खोलना |</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
 </resources>
