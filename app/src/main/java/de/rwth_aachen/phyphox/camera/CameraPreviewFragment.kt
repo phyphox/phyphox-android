@@ -264,8 +264,7 @@ class CameraPreviewFragment : Fragment() {
                     }
 
                     CameraState.LOADED -> {
-                        cameraPreviewScreen.setupZoomControl(
-                            cameraSettingState)
+                        cameraPreviewScreen.setupZoomControl(cameraSettingState)
                     }
                     CameraState.PREVIEW_IN_BACKGROUND -> Unit
                     CameraState.PREVIEW_STOPPED -> Unit

@@ -15,36 +15,24 @@
         app:scaleType="fillCenter"
         tools:layout_editor_absoluteX="0dp" />
 
-    <com.google.android.material.slider.Slider
-        android:id="@+id/zoomSlider"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:valueFrom="0.0"
-        android:orientation="vertical"
-        android:valueTo="100.0"
-        android:theme="@style/MaterialSeekbarTheme"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/cameraSetting"
-        />
-
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/cameraSetting"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/phyphox_black_100"
-       android:gravity="center_horizontal"
         android:elevation="5dp"
+        android:gravity="center_horizontal"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/preview_view"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent">
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/preview_view">
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrSwitchLens"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -69,9 +57,9 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrImageAutoExposure"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -86,8 +74,8 @@
                 android:id="@+id/textAutoExposureStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:layout_marginTop="2dp"
+                android:gravity="center"
                 android:textColor="@color/phyphox_white_100"
                 android:textSize="11sp" />
 
@@ -97,9 +85,9 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrImageExposure"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -124,9 +112,9 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrImageIso"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -150,9 +138,9 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrImageShutter"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -160,8 +148,8 @@
                 android:layout_width="30dp"
                 android:layout_height="25dp"
                 android:layout_gravity="center"
-                android:layout_weight="1"
                 android:layout_marginTop="5dp"
+                android:layout_weight="1"
                 app:srcCompat="@drawable/baseline_shutter_speed_24" />
 
             <TextView
@@ -178,9 +166,9 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrImageAperture"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -205,9 +193,9 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrZoom"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
@@ -232,38 +220,112 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/zoomControl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/cameraSetting"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/zoomButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonWideAngle"
+                android:layout_width="60dp"
+                android:layout_height="35dp"
+                android:layout_margin="3dp"
+                android:text="0.5x"
+                android:textSize="9sp"
+                android:theme="@style/MaterialButtonTheme"
+                app:cornerRadius="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonDefaultZoom"
+                android:layout_width="60dp"
+                android:layout_height="35dp"
+                android:layout_margin="3dp"
+                android:text="1x"
+                android:textSize="9sp"
+                android:theme="@style/MaterialButtonTheme"
+                app:cornerRadius="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonZoomTimesTwo"
+                android:layout_width="60dp"
+                android:layout_height="35dp"
+                android:layout_margin="3dp"
+                android:text="2x"
+                android:textSize="9sp"
+                android:theme="@style/MaterialButtonTheme"
+                app:cornerRadius="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonTimesFive"
+                android:layout_width="60dp"
+                android:layout_height="35dp"
+                android:layout_margin="3dp"
+                android:text="5x"
+                android:textSize="9sp"
+                android:theme="@style/MaterialButtonTheme"
+                app:cornerRadius="20dp" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/zoomSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:theme="@style/MaterialSeekbarTheme"
+            android:valueFrom="0.0"
+            android:valueTo="100.0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/zoomButton" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewCameraSetting"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="1dp"
         android:scrollbars="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/cameraSetting"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        />
+        app:layout_constraintTop_toBottomOf="@id/cameraSetting" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/llColorCode"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        app:layout_constraintTop_toBottomOf="@id/recyclerViewCameraSetting"
+        android:background="@color/phyphox_primary"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:visibility="gone"
-        android:background="@color/phyphox_primary">
+        app:layout_constraintTop_toBottomOf="@id/recyclerViewCameraSetting">
 
         <TextView
             android:id="@+id/tvColorCode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="Hello there"/>
+            android:text="Hello there" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
-
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/permissionsRationaleContainer"

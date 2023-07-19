@@ -12,16 +12,14 @@ import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
-import android.transition.Slide
-import android.transition.Visibility
+
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
-import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
+
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
@@ -42,6 +40,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
@@ -59,14 +58,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import java.lang.IllegalArgumentException
-import kotlin.math.roundToInt
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraPreviewScreen(
-        private val root: View,
-        private val cameraInput: CameraInput,
-        private val cameraViewModel: CameraViewModel) {
+    private val root: View,
+    private val cameraInput: CameraInput,
+    private val cameraViewModel: CameraViewModel
+) {
 
     private val context: Context = root.context
 
@@ -75,7 +74,8 @@ class CameraPreviewScreen(
     val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
     private val mainFrameLayout: ConstraintLayout = root.findViewById(R.id.mainFrameLayout)
 
-    private val zoomSlider : Slider = root.findViewById(R.id.zoomSlider)
+    private val zoomSlider: Slider = root.findViewById(R.id.zoomSlider)
+    private val zoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
 
     // permissions
     private val permissionsRationaleContainer: View =
@@ -113,6 +113,11 @@ class CameraPreviewScreen(
 
     private val recyclerView = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
 
+    private val buttonWiderAngle: MaterialButton = root.findViewById(R.id.buttonWideAngle)
+    private val buttonDefaultZoom: MaterialButton = root.findViewById(R.id.buttonDefaultZoom)
+    private val buttonZoomTwoTimes: MaterialButton = root.findViewById(R.id.buttonZoomTimesTwo)
+    private val buttonZoomFiveTimes: MaterialButton = root.findViewById(R.id.buttonTimesFive)
+
     private var isoButtonClicked = false
     private var shutterSpeedButtonClicked = false
     private var apertureButtonClicked = false
@@ -127,6 +132,9 @@ class CameraPreviewScreen(
 
     var transformation = Matrix()
 
+    var width: Int = 0
+    var height: Int = 0
+
     var panningIndexX = 0
     var panningIndexY = 0
 
@@ -135,8 +143,6 @@ class CameraPreviewScreen(
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
     val action: Flow<CameraUiAction> = _action
-
-    var lockOverlayMovement = true
 
     var showZoomSlider = false
 
@@ -177,34 +183,106 @@ class CameraPreviewScreen(
         imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE) }
 
         imageZoom.setOnClickListener {
-            zoomSlider.visibility = View.VISIBLE
-            if(showZoomSlider){
-                zoomSlider.visibility = View.GONE
+            zoomControl.visibility = View.VISIBLE
+            if (showZoomSlider) {
+                zoomControl.visibility = View.GONE
             }
             showZoomSlider = !showZoomSlider
         }
 
+    }
 
+    fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
+        val zoomRatio = cameraSettingState.cameraZoomRatioConverted
+
+        zoomSlider.valueFrom = 0.0f
+        zoomSlider.valueTo = (zoomRatio.size - 1.0f)
+        zoomSlider.value = zoomRatio.indexOf(1.0f).toFloat()
+
+        changeZoomButtonColor(SelectedZoomButton.Default)
+
+        zoomSlider.addOnChangeListener { _, value, _ ->
+            if (zoomRatio.size != 0) {
+                val mappedValue = zoomRatio[value.toInt()]
+                cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
+                when (mappedValue) {
+                    zoomRatio.first() -> changeZoomButtonColor(SelectedZoomButton.WiderAngle)
+                    1.0f -> changeZoomButtonColor(SelectedZoomButton.Default)
+                    2.0f -> changeZoomButtonColor(SelectedZoomButton.TwoTimes)
+                    5.0f -> changeZoomButtonColor(SelectedZoomButton.FiveTimes)
+                    else -> changeZoomButtonColor(SelectedZoomButton.None)
+                }
+            }
+        }
+
+        zoomSlider.setLabelFormatter { value: Float ->
+            if (zoomRatio.size != 0) {
+                val mappedValue = zoomRatio[value.toInt()]
+                (mappedValue).toString() + "x"
+            } else {
+                value.toString()
+            }
+        }
+
+        if (zoomRatio.first() < 1.0) {
+            buttonWiderAngle.visibility = View.VISIBLE
+        } else {
+            buttonWiderAngle.visibility = View.GONE
+        }
+
+        buttonWiderAngle.setOnClickListener {
+            changeZoomButtonColor(SelectedZoomButton.None)
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(cameraSettingState.cameraMinZoomRatio)
+            zoomSlider.value = zoomRatio.indexOf(zoomRatio.first()).toFloat()
+            changeZoomButtonColor(SelectedZoomButton.WiderAngle)
+        }
+
+        buttonDefaultZoom.setOnClickListener {
+            changeZoomButtonColor(SelectedZoomButton.None)
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(1.0f)
+            zoomSlider.value = zoomRatio.indexOf(1.0f).toFloat()
+            changeZoomButtonColor(SelectedZoomButton.Default)
+        }
+
+        buttonZoomTwoTimes.setOnClickListener {
+            changeZoomButtonColor(SelectedZoomButton.None)
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(2.0f)
+            zoomSlider.value = zoomRatio.indexOf(2.0f).toFloat()
+            changeZoomButtonColor(SelectedZoomButton.TwoTimes)
+        }
+
+        buttonZoomFiveTimes.setOnClickListener {
+            changeZoomButtonColor(SelectedZoomButton.None)
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(5.0f)
+            zoomSlider.value = zoomRatio.indexOf(5.0f).toFloat()
+            changeZoomButtonColor(SelectedZoomButton.FiveTimes)
+        }
 
     }
 
-    fun setupZoomControl(cameraSettingState: CameraSettingValueState){
-
-
-        zoomSlider.addOnChangeListener { slider, value, fromUser ->
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(cameraSettingState.cameraMaxZoomRatio - value)
-        }
-
-        zoomSlider.setLabelFormatter {value: Float ->
-            value.roundToInt().toString()
+    private fun changeZoomButtonColor(selectedButton: SelectedZoomButton) {
+        val activeColor = context.resources.getColor(R.color.phyphox_primary)
+        val inactiveColor = context.resources.getColor(R.color.phyphox_black_100)
+        when (selectedButton) {
+            SelectedZoomButton.WiderAngle -> buttonWiderAngle.setBackgroundColor(activeColor)
+            SelectedZoomButton.Default -> buttonDefaultZoom.setBackgroundColor(activeColor)
+            SelectedZoomButton.TwoTimes -> buttonZoomTwoTimes.setBackgroundColor(activeColor)
+            SelectedZoomButton.FiveTimes -> buttonZoomFiveTimes.setBackgroundColor(activeColor)
+            SelectedZoomButton.None -> {
+                buttonWiderAngle.setBackgroundColor(inactiveColor)
+                buttonDefaultZoom.setBackgroundColor(inactiveColor)
+                buttonZoomTwoTimes.setBackgroundColor(inactiveColor)
+                buttonZoomFiveTimes.setBackgroundColor(inactiveColor)
+            }
         }
 
     }
 
-    var width : Int = 0
-    var height: Int = 0
+    enum class SelectedZoomButton {
+        WiderAngle, Default, TwoTimes, FiveTimes, None
+    }
 
-    private fun initializeAndSetupCameraDimension(){
+    private fun initializeAndSetupCameraDimension() {
         // work around to get the height of preview view by delaying it so that the view is first laid
         val viewTreeObserver = previewView.viewTreeObserver
         viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
@@ -216,7 +294,12 @@ class CameraPreviewScreen(
                     mainFrameLayout.removeView(overlayView)
                     mainFrameLayout.addView(overlayView, width, height)
                     root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-                        _action.emit(CameraUiAction.UpdateCameraDimension(previewView.height, previewView.width))
+                        _action.emit(
+                            CameraUiAction.UpdateCameraDimension(
+                                previewView.height,
+                                previewView.width
+                            )
+                        )
                     }
                     root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
                         _action.emit(CameraUiAction.UpdateOverlay)
@@ -325,7 +408,8 @@ class CameraPreviewScreen(
     fun updateOverlay(cameraUiState: CameraUiState) {
 
         val inner = cameraUiState.cameraPassepartout.toRectF()
-        val outer = RectF(0f, 0f, cameraUiState.cameraWidth.toFloat(), cameraUiState.cameraHeight.toFloat())
+        val outer =
+            RectF(0f, 0f, cameraUiState.cameraWidth.toFloat(), cameraUiState.cameraHeight.toFloat())
         transformation.mapRect(inner)
         transformation.mapRect(outer)
         val points: Array<Point?>?
@@ -615,19 +699,19 @@ class CameraPreviewScreen(
                 StorageStrategy.createLongStorage()
             ).withSelectionPredicate(SelectionPredicates.createSelectSingleAnything()).build()
 
-            adapter.tracker= selectionTracker
+            adapter.tracker = selectionTracker
 
             selectedPosition = dataList.indexOf(currentValue)
 
 
-            Log.d(TAG,selectedPosition.toString())
+            Log.d(TAG, selectedPosition.toString())
             adapter.selectInitialItem(selectedPosition)
 
-            selectionTracker.addObserver(object : SelectionTracker.SelectionObserver<Long>(){
+            selectionTracker.addObserver(object : SelectionTracker.SelectionObserver<Long>() {
                 override fun onSelectionChanged() {
                     val nItems: Int = selectionTracker.selection.size()
 
-                    if(nItems > 0){
+                    if (nItems > 0) {
                         Log.d(TAG, "$nItems items selected")
 
                     } else {
@@ -655,15 +739,15 @@ class CameraPreviewScreen(
 
 
     fun setColorCodeText(colorCode: String) {
-        if(colorCode == ""){
+        if (colorCode == "") {
             lnrColorCode.visibility = View.GONE
         } else {
             lnrColorCode.visibility = View.VISIBLE
             try {
                 tvColorCode.setText(colorCode)
                 lnrColorCode.setBackgroundColor(Color.parseColor("#$colorCode"))
-            }catch (e : IllegalArgumentException){
-                tvColorCode.setText(colorCode +": "+e)
+            } catch (e: IllegalArgumentException) {
+                tvColorCode.setText(colorCode + ": " + e)
                 Log.e(TAG, "ColorCode $e")
             }
         }

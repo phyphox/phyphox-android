@@ -58,8 +58,8 @@ data class CameraSettingValueState(
     val cameraMaxZoomRatio: Float = 0.0f,
     val cameraMinZoomRatio: Float = 0.0f,
     val cameraZoomRatio: Float = 0.0f,
-    val cameraLinearRatio: Float = 0.0f
-
+    val cameraLinearRatio: Float = 0.0f,
+    val cameraZoomRatioConverted: MutableList<Float> = mutableListOf()
     )
 
 enum class SettingMode {

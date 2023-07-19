@@ -553,21 +553,23 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         viewModelScope.launch { _cameraUiState.emit(_cameraUiState.value.copy(overlayUpdateState = OverlayUpdateState.UPDATE_DONE)) }
     }
 
-    fun setupZoomControl(){
-
+    private fun setupZoomControl(){
         val zoomStateValue = camera?.cameraInfo?.zoomState?.value
 
         val maxZoomRatio =  zoomStateValue?.maxZoomRatio ?: 1f
-        val minZoomRatio =  zoomStateValue?.minZoomRatio ?: 1f
+        val minZoomRatio =  zoomStateValue?.minZoomRatio ?: 0f
         val zoomRatio =  zoomStateValue?.zoomRatio ?: 1f
         val linearZoom =  zoomStateValue?.linearZoom ?: 1f
+
+        val ratios: MutableList<Float> = CameraHelper.computeZoomRatios(minZoomRatio, maxZoomRatio)
 
         viewModelScope.launch {
             _cameraSettingValueState.emit(_cameraSettingValueState.value.copy(
                 cameraMinZoomRatio = minZoomRatio,
                 cameraMaxZoomRatio = maxZoomRatio,
                 cameraZoomRatio = zoomRatio,
-                cameraLinearRatio = linearZoom
+                cameraLinearRatio = linearZoom,
+                cameraZoomRatioConverted = ratios
             ))
         }
 
