@@ -194,6 +194,10 @@ class CameraPreviewScreen(
 
     fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
         val zoomRatio = cameraSettingState.cameraZoomRatioConverted
+        if(zoomRatio.isEmpty()){
+            // while loading camera, zoomRatio might be null
+            return
+        }
 
         zoomSlider.valueFrom = 0.0f
         zoomSlider.valueTo = (zoomRatio.size - 1.0f)
@@ -202,6 +206,10 @@ class CameraPreviewScreen(
         changeZoomButtonColor(SelectedZoomButton.Default)
 
         zoomSlider.addOnChangeListener { _, value, _ ->
+            if(zoomRatio.size < value) {
+                // in some devices, the front camera sometime gives the value larger then ratio
+                return@addOnChangeListener
+            }
             if (zoomRatio.size != 0) {
                 val mappedValue = zoomRatio[value.toInt()]
                 cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
