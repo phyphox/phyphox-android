@@ -94,6 +94,7 @@ dependencies {
     implementation 'com.caverock:androidsvg:1.4'
 
     implementation 'androidx.recyclerview:recyclerview-selection:1.1.0'
+    testImplementation 'junit:junit:4.12'
 
     //Automated screenshot generation
     androidTestImplementation 'junit:junit:4.13.2'

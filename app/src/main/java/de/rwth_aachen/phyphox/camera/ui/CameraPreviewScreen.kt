@@ -16,6 +16,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
@@ -33,9 +34,6 @@ import androidx.core.graphics.toRectF
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.selection.SelectionPredicates
-import androidx.recyclerview.selection.SelectionTracker
-import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -111,21 +109,18 @@ class CameraPreviewScreen(
     private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
     private val tvColorCode = root.findViewById<TextView>(R.id.tvColorCode)
 
-    private val recyclerView = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
+    private val recyclerViewExposureSetting = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
 
     private val buttonWiderAngle: MaterialButton = root.findViewById(R.id.buttonWideAngle)
     private val buttonDefaultZoom: MaterialButton = root.findViewById(R.id.buttonDefaultZoom)
     private val buttonZoomTwoTimes: MaterialButton = root.findViewById(R.id.buttonZoomTimesTwo)
     private val buttonZoomFiveTimes: MaterialButton = root.findViewById(R.id.buttonTimesFive)
 
-    private var isoButtonClicked = false
-    private var shutterSpeedButtonClicked = false
-    private var apertureButtonClicked = false
-    private var exposureButtonClicked = false
     private var autoExposure: Boolean = true
 
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
+    private val buttonClick1 = AlphaAnimation(1f, 0.0f)
     private var clickedButton: View? = null
 
     private var selectedPosition = RecyclerView.NO_POSITION
@@ -144,7 +139,8 @@ class CameraPreviewScreen(
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
     val action: Flow<CameraUiAction> = _action
 
-    var showZoomSlider = false
+    private var showZoomSlider = false
+
 
     init {
 
@@ -157,26 +153,26 @@ class CameraPreviewScreen(
         }
 
         imageViewIso.setOnClickListener {
+            setUpZoomVisibility()
             clickedButton = it
-            isoButtonClicked = !isoButtonClicked
             onSettingClicked(SettingMode.ISO)
         }
 
         imageViewShutter.setOnClickListener {
+            setUpZoomVisibility()
             clickedButton = it
-            shutterSpeedButtonClicked = !shutterSpeedButtonClicked
             onSettingClicked(SettingMode.SHUTTER_SPEED)
         }
 
         imageViewAperture.setOnClickListener {
+            setUpZoomVisibility()
             clickedButton = it
-            apertureButtonClicked = !apertureButtonClicked
             onSettingClicked(SettingMode.APERTURE)
         }
 
         imageViewExposure.setOnClickListener {
+            setUpZoomVisibility()
             clickedButton = it
-            exposureButtonClicked = !exposureButtonClicked
             onSettingClicked(SettingMode.EXPOSURE)
         }
 
@@ -184,6 +180,9 @@ class CameraPreviewScreen(
 
         imageZoom.setOnClickListener {
             zoomControl.visibility = View.VISIBLE
+            if(recyclerViewExposureSetting.isVisible){
+                recyclerViewExposureSetting.visibility = View.GONE
+            }
             if (showZoomSlider) {
                 zoomControl.visibility = View.GONE
             }
@@ -192,6 +191,11 @@ class CameraPreviewScreen(
 
     }
 
+    private fun setUpZoomVisibility(){
+        if(zoomControl.isVisible){
+            zoomControl.visibility = View.GONE
+        }
+    }
     fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
         val zoomRatio = cameraSettingState.cameraZoomRatioConverted
         if(zoomRatio.isEmpty()){
@@ -319,7 +323,7 @@ class CameraPreviewScreen(
         })
     }
 
-    fun setCameraSettingText(cameraSettingState: CameraSettingValueState) {
+    fun setCurrentValueInExposureSettingTextView(cameraSettingState: CameraSettingValueState) {
         autoExposure = cameraSettingState.autoExposure
 
         val isoValue = cameraSettingState.isoRange?.map { it.toInt() }
@@ -478,30 +482,10 @@ class CameraPreviewScreen(
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             when (settingMode) {
                 SettingMode.NONE -> Unit
-                SettingMode.ISO -> _action.emit(
-                    CameraUiAction.CameraSettingClick(
-                        settingMode
-                    )
-                )
-
-                SettingMode.SHUTTER_SPEED -> _action.emit(
-                    CameraUiAction.CameraSettingClick(
-                        settingMode
-                    )
-                )
-
-                SettingMode.APERTURE -> _action.emit(
-                    CameraUiAction.CameraSettingClick(
-                        settingMode
-                    )
-                )
-
-                SettingMode.EXPOSURE -> _action.emit(
-                    CameraUiAction.CameraSettingClick(
-                        settingMode
-                    )
-                )
-
+                SettingMode.ISO -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                SettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                SettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                SettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
                 SettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
             }
         }
@@ -521,18 +505,6 @@ class CameraPreviewScreen(
         lnrSwitchLens.isVisible = state.switchLensButtonViewState.isVisible
     }
 
-    private fun setCameraSettingViewState(state: CameraPreviewScreenViewState) {
-        imageViewIso.isVisible = state.isoButtonViewState.isVisible
-        imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
-
-        imageViewShutter.isVisible = state.shutterButtonViewState.isVisible
-        imageViewShutter.isEnabled = state.shutterButtonViewState.isEnabled
-
-        imageViewAperture.isVisible = state.apertureButtonViewState.isVisible
-        imageViewAperture.isEnabled = state.apertureButtonViewState.isEnabled
-
-    }
-
     private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState) {
         lnrIso.isVisible = state.isoButtonViewState.isVisible
         lnrShutter.isVisible = state.shutterButtonViewState.isVisible
@@ -542,7 +514,7 @@ class CameraPreviewScreen(
     }
 
     private fun setCameraSettingRecyclerViewState(state: CameraPreviewScreenViewState) {
-        //recyclerView.isVisible = state.cameraSettingRecyclerViewState.isOpened
+        recyclerViewExposureSetting.isVisible = state.cameraSettingRecyclerViewState.isOpened
     }
 
     fun setCameraSettingButtonValue(state: CameraSettingValueState) {
@@ -663,10 +635,12 @@ class CameraPreviewScreen(
 
     }
 
-    // From the Exposure list, Exposure mode and current selected value, show list of the
-    // exposure value in RecyclerView and react to the click event to update the current selected value.
-    // When the Exposure list is empty or with only 1 value, do not create and show RecyclerView.
-    fun showRecyclerViewForExposureSetting(
+    /**
+     * From the Exposure setting list, mode and current selected value; show list of the
+     * exposure value in RecyclerView and react to the click event to update the current selected value.
+     * When the Exposure list is empty or with only 1 value, do not create and show RecyclerView.
+    */
+    fun populateAndShowExposureSettingValue(
         dataList: List<String>?,
         settingMode: SettingMode,
         currentValue: String
@@ -677,60 +651,32 @@ class CameraPreviewScreen(
 
         val settingChangeListener = object : SettingChooseListener {
             override fun onSettingClicked(value: String) {
+                Log.d(TAG, value)
                 onClickCameraExposureSetting(settingMode, value)
             }
         }
 
         clickedButton?.startAnimation(buttonClick)
-        with(recyclerView) {
+        with(recyclerViewExposureSetting) {
 
             val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             val dividerItemDecoration = DividerItemDecoration(context, mLayoutManager.orientation)
 
             AppCompatResources.getDrawable(context, R.drawable.custom_line_seperator)
                 ?.let { dividerItemDecoration.setDrawable(it) }
-            recyclerView.addItemDecoration(dividerItemDecoration)
+            recyclerViewExposureSetting.addItemDecoration(dividerItemDecoration)
 
             layoutManager = mLayoutManager
             itemAnimator = DefaultItemAnimator()
 
             val adapter =
-                ChooseCameraSettingValueAdapter(dataList, settingChangeListener)
+                ChooseCameraSettingValueAdapter(dataList, settingChangeListener, currentValue)
 
-            recyclerView.adapter = adapter
-
-            val selectionTracker = SelectionTracker.Builder(
-                "mySelection",
-                this,
-                MyKeyProvider(adapter),
-                MyItemDetailsLookup(this),
-                StorageStrategy.createLongStorage()
-            ).withSelectionPredicate(SelectionPredicates.createSelectSingleAnything()).build()
-
-            adapter.tracker = selectionTracker
+            recyclerViewExposureSetting.adapter = adapter
 
             selectedPosition = dataList.indexOf(currentValue)
-
-
-            Log.d(TAG, selectedPosition.toString())
-            adapter.selectInitialItem(selectedPosition)
-
-            selectionTracker.addObserver(object : SelectionTracker.SelectionObserver<Long>() {
-                override fun onSelectionChanged() {
-                    val nItems: Int = selectionTracker.selection.size()
-
-                    if (nItems > 0) {
-                        Log.d(TAG, "$nItems items selected")
-
-                    } else {
-                        Log.d(TAG, "RVSelection")
-                    }
-                }
-            })
-
-            // TODO need to improvise this workaround
-            recyclerView.postDelayed(Runnable {
-                recyclerView.scrollToPosition(selectedPosition)
+            recyclerViewExposureSetting.postDelayed(Runnable {
+                recyclerViewExposureSetting.scrollToPosition(selectedPosition)
             }, 100)
 
         }
@@ -744,7 +690,6 @@ class CameraPreviewScreen(
             _action.emit(CameraUiAction.ExposureSettingValueSelected)
         }
     }
-
 
     fun setColorCodeText(colorCode: String) {
         if (colorCode == "") {

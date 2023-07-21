@@ -4,7 +4,6 @@ import android.graphics.Rect
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
-import java.lang.Exception
 
 /**
  * Defines the current UI state of the camera
@@ -51,7 +50,7 @@ data class CameraSettingValueState(
     var apertureRange:  List<String>? = emptyList(),
     var exposureRange: List<String>? = emptyList(),
     var exposureStep: Float = 0F,
-    val cameraSettingState: CameraSettingState = CameraSettingState.NOT_READY,
+    val exposureSettingState: ExposureSettingState = ExposureSettingState.NOT_READY,
     val settingMode: SettingMode = SettingMode.NONE,
     val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC,
     val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.HIDDEN,
@@ -82,15 +81,11 @@ enum class CameraSettingRecyclerState {
     HIDDEN
 }
 
-enum class CameraSettingState{
+enum class ExposureSettingState{
     NOT_READY,
-    LOADING,
     LOADED,
-    RELOADING,
     LOADING_FAILED,
-    RELOADING_FAILED,
-    LOADING_VALUE,
-    LOAD_VALUE,
+    LOAD_LIST,
     VALUE_UPDATED,
     LOAD_FINISHED
 }

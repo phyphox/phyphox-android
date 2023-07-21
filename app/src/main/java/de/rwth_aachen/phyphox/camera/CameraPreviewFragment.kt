@@ -23,7 +23,7 @@ import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
-import de.rwth_aachen.phyphox.camera.model.CameraSettingState
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
@@ -127,73 +127,57 @@ class CameraPreviewFragment : Fragment() {
                 when (action) {
                     is CameraUiAction.SwitchCameraClick -> cameraViewModel.switchCamera()
 
-                    is CameraUiAction.RequestPermissionClick -> {
+                    is CameraUiAction.RequestPermissionClick ->
                         requestPermissionsLauncher.launch(Manifest.permission.CAMERA)
-
-                    }
 
                     is CameraUiAction.SelectAndChangeCameraSetting -> Unit
                     is CameraUiAction.CameraSettingClick -> {
                         cameraViewModel.openCameraSettingValue(action.settingMode)
                     }
 
-                    is CameraUiAction.UpdateCameraExposureSettingValue -> {
+                    is CameraUiAction.UpdateCameraExposureSettingValue ->
                         cameraViewModel.updateCameraSettingValue(action.value, action.settingMode)
-                    }
 
-                    is CameraUiAction.UpdateAutoExposure -> {
+                    is CameraUiAction.UpdateAutoExposure ->
                         cameraViewModel.changeExposure(action.autoExposure)
-                    }
 
-                    is CameraUiAction.ExposureSettingValueSelected -> {
+                    is CameraUiAction.ExposureSettingValueSelected ->
                         cameraViewModel.cameraSettingOpened()
-                    }
 
-                    is CameraUiAction.UpdateOverlay -> {
+                    is CameraUiAction.UpdateOverlay ->
                         cameraViewModel.updateCameraOverlayValue()
-                    }
 
-                    is CameraUiAction.UpdateCameraDimension -> {
+                    is CameraUiAction.UpdateCameraDimension ->
                         cameraViewModel.setUpCameraDimension(action.height, action.width)
-                    }
 
-                    is CameraUiAction.OverlayUpdateDone -> {
+                    is CameraUiAction.OverlayUpdateDone ->
                         cameraViewModel.overlayUpdated()
-                    }
                 }
             }
         }
 
         lifecycleScope.launch {
             cameraViewModel.imageAnalyser.action.collectLatest {action: ImageAnalysisUIAction ->
-
                 when(action){
                     is ImageAnalysisUIAction.UpdateLuminaceValue -> {
                         Log.d(TAG, "ImageAnalysisUIAction.UpdateLuminaceValue" )
                     }
-
                 }
-
             }
         }
 
-
         lifecycleScope.launch {
             cameraViewModel.imageAnalysisUiState.collectLatest { value: ImageAnalysisValueState ->
-
                 when(value.imageAnalysisState){
-                    ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY -> {
+                    ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY ->
                         Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY" )
-                    }
-                    ImageAnalysisState.IMAGE_ANALYSIS_READY -> {
+                    ImageAnalysisState.IMAGE_ANALYSIS_READY ->
                         Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_READY" )
-                    }
                     ImageAnalysisState.IMAGE_ANALYSIS_STARTED -> {
                         Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_STARTED" )
                         Log.d(TAG, cameraViewModel.getLumnicanceValue().toString() )
                         Log.d(TAG, "ColorCode: " + cameraViewModel.getColorCode())
                         cameraPreviewScreen.setColorCodeText(cameraViewModel.getColorCode())
-
                     }
                     ImageAnalysisState.IMAGE_ANALYSIS_FINISHED -> {
                         Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_FINISHED" )
@@ -229,7 +213,6 @@ class CameraPreviewFragment : Fragment() {
                 Pair(cameraUiState, cameraSettingState)
             }.collectLatest { (cameraUiState, cameraSettingState) ->
 
-
                 when (cameraUiState.cameraState) {
                     CameraState.NOT_READY -> {
                         Log.d(TAG, " CameraState.NOT_READY")
@@ -241,7 +224,6 @@ class CameraPreviewFragment : Fragment() {
                         )
                         cameraViewModel.initializeCamera()
                     }
-
                     CameraState.READY -> {
                         Log.d(TAG, " CameraState.READY")
                         cameraPreviewScreen.previewView.doOnLayout {
@@ -262,7 +244,6 @@ class CameraPreviewFragment : Fragment() {
                         cameraViewModel.imageAnalysisPrepared()
 
                     }
-
                     CameraState.LOADED -> {
                         cameraPreviewScreen.setupZoomControl(cameraSettingState)
                     }
@@ -270,38 +251,30 @@ class CameraPreviewFragment : Fragment() {
                     CameraState.PREVIEW_STOPPED -> Unit
                 }
 
-                when (cameraSettingState.cameraSettingState) {
-                    CameraSettingState.NOT_READY -> {
-                        cameraViewModel.setUpExposureValue()
-                    }
-
-                    CameraSettingState.LOADING -> Unit
-                    CameraSettingState.LOADED -> {
-                        cameraPreviewScreen.setCameraSettingText(cameraSettingState)
+                when (cameraSettingState.exposureSettingState) {
+                    ExposureSettingState.NOT_READY -> cameraViewModel.loadAndSetupExposureSettingRanges()
+                    ExposureSettingState.LOADED -> {
+                        cameraPreviewScreen.setCurrentValueInExposureSettingTextView(cameraSettingState)
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value.updateCameraScreen {
-                                it.showCameraControls()
-
+                                it.showSwitchLensControl()
                                 when (cameraSettingState.cameraSettingLevel) {
                                     CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
                                     CameraSettingLevel.INTERMEDIATE -> it.enableIntermediateExposureControl()
-                                    else -> it.enableAdvanceExposureControl()
+                                    CameraSettingLevel.ADVANCE -> it.enableAdvanceExposureControl()
                                 }
                             }
                         )
                     }
-
-                    CameraSettingState.LOADING_FAILED -> Unit
-                    CameraSettingState.RELOADING -> Unit
-                    CameraSettingState.RELOADING_FAILED -> Unit
-                    CameraSettingState.LOADING_VALUE -> {
+                    ExposureSettingState.LOADING_FAILED -> Unit
+                    ExposureSettingState.LOAD_LIST -> {
 
                         // When clicking an Exposure settings, hide or show the RecyclerView, which is
                         // showing the list of Exposure values to select from.
                         if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.HIDDEN) {
-                            cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = true)
+                            cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = true)
                         } else {
-                            cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = false)
+                            cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
                             cameraPreviewScreen.recyclerLoadingFinished()
                             return@collectLatest
                         }
@@ -339,22 +312,18 @@ class CameraPreviewFragment : Fragment() {
                             else -> emptyList()
                         }
 
-                        cameraPreviewScreen.showRecyclerViewForExposureSetting(
+                        cameraPreviewScreen.populateAndShowExposureSettingValue(
                             exposureSettingRange,
                             cameraSettingState.settingMode,
                             currentValue
                         )
                     }
-                    CameraSettingState.LOAD_VALUE -> Unit
-                    CameraSettingState.VALUE_UPDATED -> {
-                        cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
-                            it.hideRecyclerView()
-                        })
-                        cameraViewModel.updateViewStateOfRecyclerView(recyclerViewShown = false)
+                    ExposureSettingState.VALUE_UPDATED -> {
+                        //cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen { it.hideRecyclerView() })
+                        //cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
                         cameraPreviewScreen.setCameraSettingButtonValue(cameraSettingState)
                     }
-
-                    CameraSettingState.LOAD_FINISHED -> {
+                    ExposureSettingState.LOAD_FINISHED -> {
                         if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN) {
                             cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
                                 it.showRecyclerView()
@@ -370,13 +339,8 @@ class CameraPreviewFragment : Fragment() {
 
                 when(cameraUiState.overlayUpdateState){
                     OverlayUpdateState.NO_UPDATE -> Unit
-                    OverlayUpdateState.UPDATE -> {
-                        Log.d(TAG, "OverlayUpdateState.UPDATE")
-                        cameraPreviewScreen.updateOverlay(cameraUiState)
-                    }
-                    OverlayUpdateState.UPDATE_DONE -> {
-                        Log.d(TAG, "OverlayUpdateState.UPDATE_DONE")
-                    }
+                    OverlayUpdateState.UPDATE -> cameraPreviewScreen.updateOverlay(cameraUiState)
+                    OverlayUpdateState.UPDATE_DONE -> Unit
                 }
             }
         }

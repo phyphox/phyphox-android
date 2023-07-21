@@ -1,7 +1,5 @@
 package de.rwth_aachen.phyphox.camera.viewstate
 
-import de.rwth_aachen.phyphox.camera.model.SettingMode
-
 data class CameraPreviewScreenViewState(
     val shutterButtonViewState: ShutterButtonViewState = ShutterButtonViewState(),
     val isoButtonViewState: IsoButtonViewState = IsoButtonViewState(),
@@ -12,15 +10,8 @@ data class CameraPreviewScreenViewState(
     val cameraSettingRecyclerViewState : CameraSettingRecyclerView = CameraSettingRecyclerView()
 ) {
 
-    fun showCameraControls(): CameraPreviewScreenViewState =
-        copy(
-            shutterButtonViewState = shutterButtonViewState.copy(isVisible = true),
-            isoButtonViewState = isoButtonViewState.copy(isVisible = true),
-            apertureButtonViewState = apertureButtonViewState.copy(isVisible = true),
-            switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = true),
-            exposureViewState = exposureViewState.copy(isVisible = true),
-            autoExposureViewState = autoExposureViewState.copy(isVisible = true)
-        )
+    fun showSwitchLensControl(): CameraPreviewScreenViewState =
+        copy(switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = true))
 
     fun hideCameraControls(): CameraPreviewScreenViewState =
         copy(
@@ -58,7 +49,8 @@ data class CameraPreviewScreenViewState(
 
 
     fun enableBasicExposureControl() : CameraPreviewScreenViewState =
-        copy(shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
+        copy(
+            shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
             isoButtonViewState = isoButtonViewState.copy(isVisible = false),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = false),
             autoExposureViewState = autoExposureViewState.copy(isVisible = false),
@@ -66,7 +58,8 @@ data class CameraPreviewScreenViewState(
         )
 
     fun enableIntermediateExposureControl(): CameraPreviewScreenViewState =
-        copy(shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
+        copy(
+            shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
             isoButtonViewState = isoButtonViewState.copy(isVisible = false),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = false),
             autoExposureViewState = autoExposureViewState.copy(isVisible = true),
@@ -74,7 +67,8 @@ data class CameraPreviewScreenViewState(
         )
 
     fun enableAdvanceExposureControl(): CameraPreviewScreenViewState =
-        copy(shutterButtonViewState = shutterButtonViewState.copy(isVisible = true),
+        copy(
+            shutterButtonViewState = shutterButtonViewState.copy(isVisible = true),
             isoButtonViewState = isoButtonViewState.copy(isVisible = true),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = true),
             autoExposureViewState = autoExposureViewState.copy(isVisible = true),
