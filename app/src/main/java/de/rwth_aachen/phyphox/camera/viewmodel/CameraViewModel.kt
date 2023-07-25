@@ -197,6 +197,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             it.setSurfaceProvider(previewView.surfaceProvider)
         }
 
+        //TODO manage the output format
         var outputFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888
         if(cameraInput.cameraFeature == CameraInput.PhyphoxCameraFeature.ColorDetector){
             outputFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888
@@ -432,6 +433,9 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     CameraMetadata.CONTROL_AE_MODE_OFF
                 )
 
+                //TODO white balance
+
+                /**
                 extender.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AWB_LOCK,
                     true
@@ -445,6 +449,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 extender.setCaptureRequestOption(
                     CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(1.0f, 0.0f,  0.0f, 1.0f )
                 )
+                */
 
 
                 val iso: Int = cameraSettingValueState.currentIsoValue

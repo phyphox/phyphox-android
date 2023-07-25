@@ -3,7 +3,6 @@ package de.rwth_aachen.phyphox.camera.helper
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.media.Image
-import android.media.Image.Plane
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -13,14 +12,8 @@ import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import org.opencv.core.Core
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.core.TermCriteria
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
-import kotlin.experimental.and
-import kotlin.math.sqrt
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -45,34 +38,160 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
     }
 
     var count = 0
+
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
 
         if (cameraViewModel.cameraInput.measuring) {
-
             cameraViewModel.imageAnalysisStarted()
             if (cameraViewModel.cameraInput.cameraFeature == CameraInput.PhyphoxCameraFeature.Photometric) {
-                analyseImage(image)
-            } else if (cameraViewModel.cameraInput.cameraFeature == CameraInput.PhyphoxCameraFeature.ColorDetector) {
-                val currentTimestamp = System.currentTimeMillis()
-                count += 1
-                // Calculate the average luma no more often than every second
-                if (currentTimestamp - lastAnalyzedTimestamp >=
-                    TimeUnit.SECONDS.toMillis(1)
-                ) {
-
-                    detectColor(image)
-
-                    Log.d("PhotometricReader", count.toString())
-                    count = 0
-
-                    lastAnalyzedTimestamp = currentTimestamp
-                }
+                //analyseLuminosity(image.image!!)
+                //analyseImage(image)
+                analyseBrightness(image.image!!)
             }
-
             cameraViewModel.imageAnalysisFinished()
         }
+
         image.close()
+    }
+
+    //TODO
+    // 1) crop and analyse the brightness of an image. (check if cropped or not (Done), check the validity of brightness (Done))
+    // 2) crashing when RGB2HSV is executed (done, RGBA"RGB and then RGB2HSV)
+    // 3) check the resolution of the image passed
+    // 4) time variable is not working, thus graph not plotted well. (DONE)
+    // 5) add white balance values and let user choose the value and update the camera as per the selection.
+
+    private fun analyseBrightness(mediaImage: Image) {
+        // Image is in YUV format, so first it is converted into RBGA bytearray
+        // Since the image.timestamp is only provided in YUV, so right not the format we get is in YUV
+        //TODO need to find a better way
+        val rgbaData = convertIntArrayToByteArray(convertYUV420ToRGBA(mediaImage))
+
+        val croppedArray = photometricReader.cropByteArray(
+            rgbaData,
+            cameraViewModel.getCameraRect().width(),
+            cameraViewModel.getCameraRect().height(),
+            cameraViewModel.getCameraRect()
+        )
+
+        val brightness =
+            photometricReader.calculateAvgBrightness(croppedArray, cameraViewModel.getCameraRect())
+
+        // 63 is the value when there is full dark, so substracting with 60
+        val brightnessPercentage = (((brightness - 60.0)/ 255.0) * 100.0)
+
+        val t: Double =
+            cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(
+                mediaImage.timestamp)
+
+        cameraViewModel.updateImageAnalysisLuminance(brightnessPercentage, t)
+        cameraViewModel.cameraInput.dataZ.append(brightnessPercentage)
+        cameraViewModel.cameraInput.dataT.append(t)
+
+    }
+
+    private fun convertIntArrayToByteArray(intArray: IntArray): ByteArray {
+        val byteArray = ByteArray(intArray.size * 4) // Each element is 4 bytes (RGBA)
+        var byteIndex = 0
+
+        for (colorValue in intArray) {
+            byteArray[byteIndex++] = (colorValue shr 24 and 0xFF).toByte() // Alpha channel
+            byteArray[byteIndex++] = (colorValue shr 16 and 0xFF).toByte() // Red channel
+            byteArray[byteIndex++] = (colorValue shr 8 and 0xFF).toByte()  // Green channel
+            byteArray[byteIndex++] = (colorValue and 0xFF).toByte()       // Blue channel
+        }
+
+        return byteArray
+    }
+
+    fun convertYUV420ToRGBA(image: Image): IntArray {
+        val width = image.width
+        val height = image.height
+
+        val planes = image.planes
+        val yuvBytesY = planes[0].buffer // Y plane
+        val yuvBytesU = planes[1].buffer // U plane
+        val yuvBytesV = planes[2].buffer // V plane
+
+        val strideY = planes[0].rowStride
+        val strideU = planes[1].rowStride
+        val strideV = planes[2].rowStride
+
+        val pixelStrideU = planes[1].pixelStride
+        val pixelStrideV = planes[2].pixelStride
+
+        val rgbData = IntArray(width * height)
+        var rgbIndex = 0
+
+        for (y in 0 until height) {
+            val offsetY = y * strideY
+            val offsetU = (y / 2) * strideU
+            val offsetV = (y / 2) * strideV
+
+            for (x in 0 until width) {
+                val uvOffset = x / 2 * pixelStrideU + offsetU
+
+                val yValue = (yuvBytesY.get(offsetY + x).toInt() and 0xFF)
+                val uValue = (yuvBytesU.get(uvOffset).toInt() and 0xFF)
+                val vValue = (yuvBytesV.get(uvOffset).toInt() and 0xFF)
+
+                // YUV to RGB conversion
+                val c = yValue - 16
+                val d = uValue - 128
+                val e = vValue - 128
+
+                val r = (298 * c + 409 * e + 128) shr 8
+                val g = (298 * c - 100 * d - 208 * e + 128) shr 8
+                val b = (298 * c + 516 * d + 128) shr 8
+
+                val clampedR = r.coerceIn(0, 255)
+                val clampedG = g.coerceIn(0, 255)
+                val clampedB = b.coerceIn(0, 255)
+
+                rgbData[rgbIndex++] = 0xFF shl 24 or (clampedR shl 16) or (clampedG shl 8) or clampedB
+            }
+        }
+
+        return rgbData
+    }
+
+    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+    private fun analyseLuminosity(mediaImage: Image) {
+
+        val currentTimestamp = System.currentTimeMillis()
+        val t: Double =
+            cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(
+                mediaImage.timestamp
+            )
+
+        // Calculate the average luma no more often than every second
+        if (currentTimestamp - lastAnalyzedTimestamp >=
+            TimeUnit.SECONDS.toMillis(1)
+        ) {
+            val buffer = mediaImage.planes[0].buffer
+
+            Log.d("CameraXApp", cameraViewModel.getCameraRect().toString())
+
+            // TODO when using croppedArray, the result value is 0
+            val croppedArray = photometricReader.cropByteArray(
+                buffer?.toByteArray()!!,
+                cameraViewModel.getCameraRect().width(),
+                cameraViewModel.getCameraRect().height(),
+                cameraViewModel.getCameraRect()
+            )
+
+            val pixels = buffer.toByteArray().map { it.toInt() and 0xFF }
+            val luma = pixels.average()
+
+            Log.d("CameraXApp", luma.toString())
+
+            cameraViewModel.updateImageAnalysisLuminance(luma, t)
+            cameraViewModel.cameraInput.dataZ.append(luma)
+            cameraViewModel.cameraInput.dataT.append(t)
+
+            lastAnalyzedTimestamp = currentTimestamp
+        }
     }
 
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
@@ -82,7 +201,7 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
 
         val buffer1 = mediaImage.planes?.get(0)?.buffer
 
-        val croppedArray = cropByteArray(
+        val croppedArray = photometricReader.cropByteArray(
             buffer1?.toByteArray()!!,
             cameraViewModel.getCameraRect().width(),
             cameraViewModel.getCameraRect().height(),
@@ -112,28 +231,10 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
 
         }
 
-        Log.d("PhotometricReader", "redByte: distinct " + redByte.distinct())
-        Log.d("PhotometricReader", "redByte: max " + redByte.max())
-        Log.d("PhotometricReader", "redByte: min " + redByte.min())
-        Log.d("PhotometricReader", "red average: " + redByte.average())
-        Log.d("PhotometricReader", "..................")
-
-        Log.d("PhotometricReader", "greenByte: distinct " + greenByte.distinct())
-        Log.d("PhotometricReader", "greenByte: max " + greenByte.max())
-        Log.d("PhotometricReader", "greenByte: min " + greenByte.min())
-        Log.d("PhotometricReader", "green average: " + greenByte.average())
-        Log.d("PhotometricReader", "..................")
-
-        Log.d("PhotometricReader", "blueByte: distinct " + blueByte.distinct())
-        Log.d("PhotometricReader", "blueByte: max " + blueByte.max())
-        Log.d("PhotometricReader", "blueByte: min " + blueByte.min())
-        Log.d("PhotometricReader", "blue average: " + blueByte.average())
-        Log.d("PhotometricReader", "..................")
-
         // TODO need to fix the retreivel of pixel to show the correct color
-        val normalizeRed = redByte.copyOfRange(1,10).random().toInt() + 128
-        val normalizeGreen = greenByte.copyOfRange(1,10).random().toInt() + 128
-        val normalizeBlue = blueByte.copyOfRange(1,10).random().toInt() + 128
+        val normalizeRed = redByte.copyOfRange(1, 10).random().toInt() + 128
+        val normalizeGreen = greenByte.copyOfRange(1, 10).random().toInt() + 128
+        val normalizeBlue = blueByte.copyOfRange(1, 10).random().toInt() + 128
 
         val colorCode = Integer.toHexString(normalizeRed.and(0xFF)) +
                 Integer.toHexString(normalizeGreen.and(0xFF)) +
@@ -144,71 +245,6 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
         cameraViewModel.updateImageAnalysisColor(colorCode)
 
     }
-    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
-    private fun analyseImage(image: ImageProxy) {
-        val mediaImage = image.image
-
-        val currentTimestamp = System.currentTimeMillis()
-        val t: Double =
-            cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(
-                mediaImage?.timestamp!!
-            )
-
-        // Calculate the average luma no more often than every second
-        if (currentTimestamp - lastAnalyzedTimestamp >=
-            TimeUnit.SECONDS.toMillis(1)
-        ) {
-            if (mediaImage.format == ImageFormat.YUV_420_888) {
-                // Since format in ImageAnalysis is YUV, image.planes[0]
-                // contains the Y (luminance) plane
-                val buffer = mediaImage.planes[0].buffer
-
-                val data = croppedNV21(mediaImage, cameraViewModel.getCameraRect())
-
-                val pixels = data.map { it.toInt() and 0xFF }
-
-                Log.d(
-                    "CameraXApp",
-                    PhotometricReader().calculateAvgRedBrightness(mediaImage).toString()
-                )
-
-                // Compute average luminance for the image
-                val luma = pixels.average()
-
-                cameraViewModel.updateImageAnalysisLuminance(luma, t)
-
-                cameraViewModel.cameraInput.dataZ.append(luma)
-                cameraViewModel.cameraInput.dataT.append(t)
-
-                // Update timestamp of last analyzed frame
-                lastAnalyzedTimestamp = currentTimestamp
-            }
-        }
-    }
-
-    private fun cropByteArray(rgbaArray: ByteArray, width: Int, height: Int, cropRect: Rect): ByteArray {
-        val croppedWidth = cropRect.width()
-        val croppedHeight = cropRect.height()
-        val croppedArray = ByteArray(croppedWidth * croppedHeight * 4) // 4 bytes per pixel (RGBA)
-
-        for (y in 0 until croppedHeight) {
-            for (x in 0 until croppedWidth) {
-                val croppedIndex =
-                    (y * croppedWidth + x) * 4 // Calculate the index in the cropped array
-                val originalIndex =
-                    ((y + cropRect.top) * width + (x + cropRect.left)) * 4 // Calculate the index in the original array
-
-                // Copy RGBA values from original array to cropped array
-                croppedArray[croppedIndex] = rgbaArray[originalIndex] // Red
-                croppedArray[croppedIndex + 1] = rgbaArray[originalIndex + 1] // Green
-                croppedArray[croppedIndex + 2] = rgbaArray[originalIndex + 2] // Blue
-                croppedArray[croppedIndex + 3] = rgbaArray[originalIndex + 3] // Alpha
-            }
-        }
-
-        return croppedArray
-    }
-
 
     // TODO check the avaibility and access of different frame rates
     // TODO look for OpenGL
@@ -242,7 +278,6 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
                 i++
             }
         }
-
         return croppedArray
     }
 

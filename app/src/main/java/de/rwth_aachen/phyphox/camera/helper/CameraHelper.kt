@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.camera.helper
 
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
+import android.graphics.Rect
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -204,6 +205,18 @@ object CameraHelper {
             }
         }
         return json.toString()
+    }
+
+    fun byteArrayToMat(byteArray: ByteArray, cameraRect: Rect) : Mat{
+
+        val width = cameraRect.width()
+        val height = cameraRect.height()
+
+        val mat = Mat(height , width, CvType.CV_8UC1)
+        mat.put(0, 0, byteArray)
+        //Imgproc.cvtColor(mat, mat, Imgproc.COLOR_YUV2RGBA_YV12)
+
+        return mat
     }
 
     fun imageToMat(image: Image): Mat {
