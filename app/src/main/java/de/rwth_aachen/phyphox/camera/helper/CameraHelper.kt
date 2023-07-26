@@ -6,12 +6,13 @@ import android.graphics.Rect
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.ImageProxy
-import de.rwth_aachen.phyphox.camera.model.SettingMode
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -271,7 +272,7 @@ object CameraHelper {
      * For eg: from "[a,b,c]" to [SettingMode.Iso,SettingMode.aperture,SettingMode.shutterSpeed]
      */
     @JvmStatic
-    fun convertInputSettingToSettingMode(inputString: String): ArrayList<SettingMode> {
+    fun convertInputSettingToSettingMode(inputString: String): ArrayList<ExposureSettingMode> {
         // Remove the square brackets from the input string
         val content = inputString.substring(1, inputString.length - 1)
 
@@ -284,12 +285,12 @@ object CameraHelper {
         }
 
         val availableCameraSettings = ArrayList(Arrays.asList(*elements))
-        val availableSettingModes: ArrayList<SettingMode> = ArrayList()
+        val availableSettingModes: ArrayList<ExposureSettingMode> = ArrayList()
         for (cameraSetting in availableCameraSettings) {
             when (cameraSetting) {
-                "iso" -> availableSettingModes.add(SettingMode.ISO)
-                "shutter speed" -> availableSettingModes.add(SettingMode.SHUTTER_SPEED)
-                "aperture" -> availableSettingModes.add(SettingMode.APERTURE)
+                "iso" -> availableSettingModes.add(ExposureSettingMode.ISO)
+                "shutter speed" -> availableSettingModes.add(ExposureSettingMode.SHUTTER_SPEED)
+                "aperture" -> availableSettingModes.add(ExposureSettingMode.APERTURE)
             }
         }
 
@@ -468,6 +469,91 @@ object CameraHelper {
 
         return zoomRatio
 
+    }
+
+
+    fun convertTemperatureToRggb(temperature_kelvin: Int): FloatArray {
+        val temperature = temperature_kelvin / 100.0f
+        var red: Float
+        var green: Float
+        var blue: Float
+        if (temperature <= 66) {
+            red = 255f
+        } else {
+            red = temperature - 60
+            red = (329.698727446 * Math.pow(red.toDouble(), -0.1332047592)).toFloat()
+            if (red < 0) red = 0f
+            if (red > 255) red = 255f
+        }
+        if (temperature <= 66) {
+            green = temperature
+            green = (99.4708025861 * Math.log(green.toDouble()) - 161.1195681661).toFloat()
+            if (green < 0) green = 0f
+            if (green > 255) green = 255f
+        } else {
+            green = temperature - 60
+            green = (288.1221695283 * Math.pow(green.toDouble(), -0.0755148492)).toFloat()
+            if (green < 0) green = 0f
+            if (green > 255) green = 255f
+        }
+        if (temperature >= 66) blue = 255f else if (temperature <= 19) blue = 0f else {
+            blue = temperature - 10
+            blue = (138.5177312231 * Math.log(blue.toDouble()) - 305.0447927307).toFloat()
+            if (blue < 0) blue = 0f
+            if (blue > 255) blue = 255f
+        }
+
+        red = red / 255.0f
+        green = green / 255.0f
+        blue = blue / 255.0f
+        red = RGBtoGain(red)
+        green = RGBtoGain(green)
+        blue = RGBtoGain(blue)
+
+        return floatArrayOf(red, green / 2, green / 2, blue)
+    }
+
+    private fun RGBtoGain(value: Float): Float {
+        var value = value
+        val max_gain_c = 10.0f
+        if (value < 1.0e-5f) {
+            return max_gain_c
+        }
+        value = 1.0f / value
+        value = Math.min(max_gain_c, value)
+        return value
+    }
+
+    fun getWhiteBalanceTemperatureList() : MutableList<Int> {
+        return mutableListOf(3000, 4000, 5000, 6000, 6600, 7000, 8000, 9000, 10000 , 12000, 15000)
+    }
+
+    fun getWhiteBalanceModes(): MutableList<Int> {
+        return mutableListOf(
+            CaptureRequest.CONTROL_AWB_MODE_OFF,
+            CaptureRequest.CONTROL_AWB_MODE_AUTO,
+            CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT,
+            CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT,
+            CaptureRequest.CONTROL_AWB_MODE_WARM_FLUORESCENT,
+            CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT,
+            CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT,
+            CaptureRequest.CONTROL_AWB_MODE_TWILIGHT,
+            CaptureRequest.CONTROL_AWB_MODE_SHADE
+        )
+    }
+
+    fun getWhiteBalanceNames() : MutableList<String> {
+        return mutableListOf(
+            "Manual",
+            "Auto",
+            "Incandescent",
+            "Fluorescent",
+            "Warm Fluorescent",
+            "Daylight",
+            "Cloudy Daylight",
+            "Twilight",
+            "Shade"
+        )
     }
 
 }

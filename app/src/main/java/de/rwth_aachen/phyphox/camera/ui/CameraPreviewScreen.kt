@@ -16,7 +16,6 @@ import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.OnTouchListener
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
@@ -35,10 +34,10 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.slider.LabelFormatter
 import com.google.android.material.slider.Slider
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
@@ -48,7 +47,7 @@ import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.CameraUiState
-import de.rwth_aachen.phyphox.camera.model.SettingMode
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
@@ -73,6 +72,7 @@ class CameraPreviewScreen(
     private val mainFrameLayout: ConstraintLayout = root.findViewById(R.id.mainFrameLayout)
 
     private val zoomSlider: Slider = root.findViewById(R.id.zoomSlider)
+    private val whiteBalanceSlider: Slider = root.findViewById(R.id.whiteBalanceSlider)
     private val zoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
 
     // permissions
@@ -89,6 +89,7 @@ class CameraPreviewScreen(
     private val lnrAutoExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAutoExposure)
     private val lnrExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageExposure)
     private val lnrColorCode = root.findViewById<LinearLayoutCompat>(R.id.llColorCode)
+    private val lnrWhiteBalance = root.findViewById<LinearLayoutCompat>(R.id.lnrWhiteBalance)
 
     //image buttons
     private val switchLensButton = root.findViewById<ImageView>(R.id.switchLens)
@@ -98,6 +99,7 @@ class CameraPreviewScreen(
     private val imageViewAutoExposure = root.findViewById<ImageView>(R.id.imageAutoExposure)
     private val imageViewExposure = root.findViewById<ImageView>(R.id.imageExposure)
     private val imageZoom = root.findViewById<ImageView>(R.id.imageZoom)
+    private val imageWhiteBalance = root.findViewById<ImageView>(R.id.imageWhiteBalance)
 
     // text views
     private val textViewCurrentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
@@ -140,6 +142,7 @@ class CameraPreviewScreen(
     val action: Flow<CameraUiAction> = _action
 
     private var showZoomSlider = false
+    private var showWhiteBalanceSlider = false
 
 
     init {
@@ -153,49 +156,116 @@ class CameraPreviewScreen(
         }
 
         imageViewIso.setOnClickListener {
-            setUpZoomVisibility()
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
-            onSettingClicked(SettingMode.ISO)
+            onSettingClicked(ExposureSettingMode.ISO)
         }
 
         imageViewShutter.setOnClickListener {
-            setUpZoomVisibility()
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
-            onSettingClicked(SettingMode.SHUTTER_SPEED)
+            onSettingClicked(ExposureSettingMode.SHUTTER_SPEED)
         }
 
         imageViewAperture.setOnClickListener {
-            setUpZoomVisibility()
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
-            onSettingClicked(SettingMode.APERTURE)
+            onSettingClicked(ExposureSettingMode.APERTURE)
         }
 
         imageViewExposure.setOnClickListener {
-            setUpZoomVisibility()
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
-            onSettingClicked(SettingMode.EXPOSURE)
+            onSettingClicked(ExposureSettingMode.EXPOSURE)
         }
 
-        imageViewAutoExposure.setOnClickListener { onSettingClicked(SettingMode.AUTO_EXPOSURE) }
+        imageViewAutoExposure.setOnClickListener { onSettingClicked(ExposureSettingMode.AUTO_EXPOSURE) }
 
         imageZoom.setOnClickListener {
-            zoomControl.visibility = View.VISIBLE
-            if(recyclerViewExposureSetting.isVisible){
-                recyclerViewExposureSetting.visibility = View.GONE
-            }
-            if (showZoomSlider) {
-                zoomControl.visibility = View.GONE
-            }
-            showZoomSlider = !showZoomSlider
+            setCameraSettingsVisibility(CameraSettingsView.ZoomSliderView)
+        }
+
+        imageWhiteBalance.setOnClickListener {
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
+            clickedButton = it
+            onSettingClicked(ExposureSettingMode.WHITE_BALANCE)
         }
 
     }
 
-    private fun setUpZoomVisibility(){
-        if(zoomControl.isVisible){
-            zoomControl.visibility = View.GONE
+    //TODO
+    // 1) Change the color of slider stick to some gradient color as in the system camera
+    // 2) In addition to manual, also add the recycler view that contains all the individual modes.
+    // 3)
+
+    private fun setCameraSettingsVisibility(cameraSettingsView: CameraSettingsView){
+        when (cameraSettingsView) {
+            CameraSettingsView.ExposureSettingListView -> {
+                if(zoomControl.isVisible){
+                    zoomControl.visibility = View.GONE
+                }
+                if(whiteBalanceSlider.isVisible){
+                    whiteBalanceSlider.visibility = View.GONE
+                }
+                clickedButton?.startAnimation(buttonClick)
+            }
+            CameraSettingsView.ZoomSliderView -> {
+                if(recyclerViewExposureSetting.isVisible){
+                    recyclerViewExposureSetting.visibility = View.GONE
+                }
+                if(whiteBalanceSlider.isVisible){
+                    whiteBalanceSlider.visibility = View.GONE
+                }
+
+                zoomControl.visibility = View.VISIBLE
+                if (showZoomSlider) {
+                    zoomControl.visibility = View.GONE
+                }
+                showZoomSlider = !showZoomSlider
+
+            }
         }
+
     }
+
+    private enum class CameraSettingsView {
+        ExposureSettingListView, ZoomSliderView
+    }
+
+    fun setUpWhiteBalanceControl(cameraSettingState: CameraSettingValueState){
+        val wbRange = cameraSettingState.cameraWhiteBalanceManualRange
+        if(wbRange.isEmpty())
+            return
+
+        whiteBalanceSlider.valueFrom = 0.0f
+        whiteBalanceSlider.valueTo = 10.0f
+        whiteBalanceSlider.stepSize = 1.0f
+        whiteBalanceSlider.value = 5.0f
+
+        whiteBalanceSlider.addOnChangeListener { slider, value, fromUser ->
+            var selectedValue =  when (value) {
+                0.0f ->  CameraHelper.convertTemperatureToRggb(3000)
+                1.0f -> CameraHelper.convertTemperatureToRggb(4000)
+                2.0f -> CameraHelper.convertTemperatureToRggb(5000)
+                3.0f -> CameraHelper.convertTemperatureToRggb(6000)
+                4.0f -> CameraHelper.convertTemperatureToRggb(7000)
+                5.0f -> CameraHelper.convertTemperatureToRggb(8000)
+                6.0f -> CameraHelper.convertTemperatureToRggb(9000)
+                7.0f -> CameraHelper.convertTemperatureToRggb(10000)
+                8.0f -> CameraHelper.convertTemperatureToRggb(12000)
+                9.0f -> CameraHelper.convertTemperatureToRggb(14000)
+                10.0f -> CameraHelper.convertTemperatureToRggb(15000)
+                else -> floatArrayOf()
+
+            }
+
+            //TODO when clicked, update the value
+            //cameraViewModel.updateCurrentWhiteBalanceValue(selectedValue)
+
+        }
+
+    }
+
     fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
         val zoomRatio = cameraSettingState.cameraZoomRatioConverted
         if(zoomRatio.isEmpty()){
@@ -456,7 +526,7 @@ class CameraPreviewScreen(
         }
     }
 
-    private fun onClickCameraExposureSetting(settingMode: SettingMode, value: String) {
+    private fun onClickCameraExposureSetting(settingMode: ExposureSettingMode, value: String) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.UpdateCameraExposureSettingValue(settingMode, value))
         }
@@ -478,15 +548,16 @@ class CameraPreviewScreen(
         }
     }
 
-    private fun onSettingClicked(settingMode: SettingMode) {
+    private fun onSettingClicked(settingMode: ExposureSettingMode) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             when (settingMode) {
-                SettingMode.NONE -> Unit
-                SettingMode.ISO -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                SettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                SettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                SettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                SettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
+                ExposureSettingMode.NONE -> Unit
+                ExposureSettingMode.ISO -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                ExposureSettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                ExposureSettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                ExposureSettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                ExposureSettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
+                ExposureSettingMode.WHITE_BALANCE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
             }
         }
     }
@@ -531,6 +602,15 @@ class CameraPreviewScreen(
             state.currentExposureValue.toString()
     }
 
+    fun setWhiteBalanceSliderVisibility(state: CameraSettingValueState){
+        if(state.cameraCurrentWhiteBalanceMode == 0){
+            whiteBalanceSlider.visibility = View.VISIBLE
+        } else {
+            whiteBalanceSlider.visibility = View.GONE
+        }
+
+    }
+
     fun setCameraSwitchInfo(state: CameraUiState) {
         if (state.cameraLens == LENS_FACING_FRONT) {
             textViewLens.text = context.getText(R.string.cameraFront)
@@ -545,60 +625,61 @@ class CameraPreviewScreen(
 
         imageViewIso.setImageDrawable(
             getDrawableAsSettingState(
-                SettingMode.ISO,
+                ExposureSettingMode.ISO,
                 autoExposureEnabled
             )
         )
         imageViewShutter.setImageDrawable(
             getDrawableAsSettingState(
-                SettingMode.SHUTTER_SPEED,
+                ExposureSettingMode.SHUTTER_SPEED,
                 autoExposureEnabled
             )
         )
         imageViewAperture.setImageDrawable(
             getDrawableAsSettingState(
-                SettingMode.APERTURE,
+                ExposureSettingMode.APERTURE,
                 autoExposureEnabled
             )
         )
         imageViewExposure.setImageDrawable(
             getDrawableAsSettingState(
-                SettingMode.EXPOSURE,
+                ExposureSettingMode.EXPOSURE,
                 autoExposureEnabled
             )
         )
 
-        setTextViewAsExposureSetting(SettingMode.ISO, autoExposureEnabled)
-        setTextViewAsExposureSetting(SettingMode.SHUTTER_SPEED, autoExposureEnabled)
-        setTextViewAsExposureSetting(SettingMode.APERTURE, autoExposureEnabled)
-        setTextViewAsExposureSetting(SettingMode.EXPOSURE, autoExposureEnabled)
-        setTextViewAsExposureSetting(SettingMode.AUTO_EXPOSURE, autoExposureEnabled)
+        setTextViewAsExposureSetting(ExposureSettingMode.ISO, autoExposureEnabled)
+        setTextViewAsExposureSetting(ExposureSettingMode.SHUTTER_SPEED, autoExposureEnabled)
+        setTextViewAsExposureSetting(ExposureSettingMode.APERTURE, autoExposureEnabled)
+        setTextViewAsExposureSetting(ExposureSettingMode.EXPOSURE, autoExposureEnabled)
+        setTextViewAsExposureSetting(ExposureSettingMode.AUTO_EXPOSURE, autoExposureEnabled)
     }
 
     // From the exposure setting mode and auto exposure mode, set the click-ability of an image view
     // and return the drawable property of the image view
     private fun getDrawableAsSettingState(
-        settingMode: SettingMode,
+        settingMode: ExposureSettingMode,
         autoExposureEnabled: Boolean
     ): Drawable? {
 
         val imageViewMap = mapOf(
-            SettingMode.ISO to imageViewIso,
-            SettingMode.SHUTTER_SPEED to imageViewShutter,
-            SettingMode.APERTURE to imageViewAperture,
-            SettingMode.EXPOSURE to imageViewExposure
+            ExposureSettingMode.ISO to imageViewIso,
+            ExposureSettingMode.SHUTTER_SPEED to imageViewShutter,
+            ExposureSettingMode.APERTURE to imageViewAperture,
+            ExposureSettingMode.EXPOSURE to imageViewExposure
         )
 
         val imageView = imageViewMap[settingMode]
         imageView?.isClickable = autoExposureEnabled
 
         val resId = when (settingMode) {
-            SettingMode.ISO -> R.drawable.ic_camera_iso
-            SettingMode.SHUTTER_SPEED -> R.drawable.baseline_shutter_speed_24
-            SettingMode.APERTURE -> R.drawable.ic_camera_aperture
-            SettingMode.EXPOSURE -> R.drawable.ic_exposure
-            SettingMode.AUTO_EXPOSURE -> R.drawable.ic_auto_exposure
-            SettingMode.NONE -> R.drawable.ic_empty
+            ExposureSettingMode.ISO -> R.drawable.ic_camera_iso
+            ExposureSettingMode.SHUTTER_SPEED -> R.drawable.baseline_shutter_speed_24
+            ExposureSettingMode.APERTURE -> R.drawable.ic_camera_aperture
+            ExposureSettingMode.EXPOSURE -> R.drawable.ic_exposure
+            ExposureSettingMode.AUTO_EXPOSURE -> R.drawable.ic_auto_exposure
+            ExposureSettingMode.WHITE_BALANCE -> R.drawable.ic_temperature
+            ExposureSettingMode.NONE -> R.drawable.ic_empty
         }
 
         val res = AppCompatResources.getDrawable(context, resId)
@@ -611,16 +692,16 @@ class CameraPreviewScreen(
     // From the exposure setting mode and auto exposure mode,
     // set the TextView color and alter the text in the Auto Exposure as per exposure setting state
     private fun setTextViewAsExposureSetting(
-        settingMode: SettingMode,
+        settingMode: ExposureSettingMode,
         autoExposureEnabled: Boolean
     ) {
 
         val textViewMap = mapOf(
-            SettingMode.ISO to textViewCurrentIsoValue,
-            SettingMode.SHUTTER_SPEED to textViewCurrentShutterValue,
-            SettingMode.APERTURE to textViewCurrentApertureValue,
-            SettingMode.EXPOSURE to textViewExposureStatus,
-            SettingMode.AUTO_EXPOSURE to textViewAutoExposureStatus
+            ExposureSettingMode.ISO to textViewCurrentIsoValue,
+            ExposureSettingMode.SHUTTER_SPEED to textViewCurrentShutterValue,
+            ExposureSettingMode.APERTURE to textViewCurrentApertureValue,
+            ExposureSettingMode.EXPOSURE to textViewExposureStatus,
+            ExposureSettingMode.AUTO_EXPOSURE to textViewAutoExposureStatus
         )
 
         val inactiveTextColor = Color.GRAY
@@ -639,14 +720,19 @@ class CameraPreviewScreen(
      * From the Exposure setting list, mode and current selected value; show list of the
      * exposure value in RecyclerView and react to the click event to update the current selected value.
      * When the Exposure list is empty or with only 1 value, do not create and show RecyclerView.
+     * Also, show the white balance list when the white balance button is triggered
     */
-    fun populateAndShowExposureSettingValue(
+    fun populateAndShowCameraSettingValue(
         dataList: List<String>?,
-        settingMode: SettingMode,
+        settingMode: ExposureSettingMode,
         currentValue: String
     ) {
         if (dataList.isNullOrEmpty() || dataList.size == 1) {
             return
+        }
+
+        if(settingMode == ExposureSettingMode.WHITE_BALANCE && currentValue == "Manual"){
+            whiteBalanceSlider.visibility = View.VISIBLE
         }
 
         val settingChangeListener = object : SettingChooseListener {
@@ -656,16 +742,9 @@ class CameraPreviewScreen(
             }
         }
 
-        clickedButton?.startAnimation(buttonClick)
         with(recyclerViewExposureSetting) {
 
             val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            val dividerItemDecoration = DividerItemDecoration(context, mLayoutManager.orientation)
-
-            AppCompatResources.getDrawable(context, R.drawable.custom_line_seperator)
-                ?.let { dividerItemDecoration.setDrawable(it) }
-            recyclerViewExposureSetting.addItemDecoration(dividerItemDecoration)
-
             layoutManager = mLayoutManager
             itemAnimator = DefaultItemAnimator()
 

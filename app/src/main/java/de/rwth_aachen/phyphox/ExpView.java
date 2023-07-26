@@ -59,7 +59,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener;
-import de.rwth_aachen.phyphox.camera.model.SettingMode;
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
 // specific way to show the results of an element.
@@ -941,13 +941,13 @@ public class ExpView implements Serializable{
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     Log.d("CameraSetting", progress + "");
                     if(Objects.equals(label, "Shutter Speed")){
-                        settingChangeListener.onProgressChange(SettingMode.SHUTTER_SPEED, progress);
+                        settingChangeListener.onProgressChange(ExposureSettingMode.SHUTTER_SPEED, progress);
                     }
                     if(Objects.equals(label, "ISO")){
-                        settingChangeListener.onProgressChange(SettingMode.ISO, progress);
+                        settingChangeListener.onProgressChange(ExposureSettingMode.ISO, progress);
                     }
                     if(Objects.equals(label, "Aperture")){
-                        settingChangeListener.onProgressChange(SettingMode.APERTURE, progress);
+                        settingChangeListener.onProgressChange(ExposureSettingMode.APERTURE, progress);
                     }
                 }
 

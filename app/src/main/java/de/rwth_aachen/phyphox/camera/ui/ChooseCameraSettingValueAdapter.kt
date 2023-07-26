@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.selection.ItemDetailsLookup
 import androidx.recyclerview.selection.ItemKeyProvider
 import androidx.recyclerview.selection.SelectionTracker
@@ -42,7 +43,7 @@ class ChooseCameraSettingValueAdapter(
         if (trackSelectedItem[item] == true) {
             holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_primary))
         } else {
-            holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_black_100))
+            holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_black_50))
         }
 
         holder.textView.animation = buttonClick
@@ -66,9 +67,11 @@ class ChooseCameraSettingValueAdapter(
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var textView: TextView
+        var cardViewTextSetting: CardView
 
         init {
             textView = itemView.findViewById(R.id.textSettings)
+            cardViewTextSetting = itemView.findViewById(R.id.cardViewTextSetting)
         }
     }
 }

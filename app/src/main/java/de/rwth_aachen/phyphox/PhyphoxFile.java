@@ -57,7 +57,7 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.helper.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
-import de.rwth_aachen.phyphox.camera.model.SettingMode;
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttJson;
@@ -1946,7 +1946,7 @@ public abstract class PhyphoxFile {
                         };
 
                         String availableCameraSettings = getStringAttribute("setting");
-                        ArrayList<SettingMode> availableSettings = CameraHelper.convertInputSettingToSettingMode(availableCameraSettings);
+                        ArrayList<ExposureSettingMode> availableSettings = CameraHelper.convertInputSettingToSettingMode(availableCameraSettings);
 
                         Vector<DataOutput> outputs = new Vector<>();
                         (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs

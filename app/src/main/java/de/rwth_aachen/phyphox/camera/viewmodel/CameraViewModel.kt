@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.camera.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.graphics.Paint.Cap
 import android.graphics.Rect
 import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
@@ -39,7 +40,7 @@ import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
-import de.rwth_aachen.phyphox.camera.model.SettingMode
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -96,9 +97,9 @@ class CameraViewModel(private val application: Application) : ViewModel() {
              */
 
             val availableSettings = listOf(
-                SettingMode.ISO,
-                SettingMode.SHUTTER_SPEED,
-                SettingMode.APERTURE
+                ExposureSettingMode.ISO,
+                ExposureSettingMode.SHUTTER_SPEED,
+                ExposureSettingMode.APERTURE
             ).filter {
                 cameraInput.cameraSettings.contains(it)
             }
@@ -374,9 +375,9 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             emptyList()
         }
 
-        Log.d(TAG, "CONTROL_AWB_AVAILABLE_MODES: "+ cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)?.filter { true })
-       // Log.d(TAG, "CONTROL_MAX_REGIONS_AWB" +cameraInfo?.getCameraCharacteristic(CameraCharacteristics.WB).toString())
-        Log.d(TAG, "CONTROL_AWB_LOCK_AVAILABLE" +cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE).toString())
+        val awbAvailableModes = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES) ?: intArrayOf()
+        val maxRegionsAWB = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB) ?: 0
+        var awbLockAvailable = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE)
 
 
         val currentCameraUiState = _cameraSettingValueState.value
@@ -386,7 +387,10 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             isoRange = isoRange,
             exposureRange = exposureRange,
             exposureStep = exposureStep,
-            exposureSettingState = ExposureSettingState.LOADED
+            exposureSettingState = ExposureSettingState.LOADED,
+            cameraMaxRegionAWB =  maxRegionsAWB,
+            cameraWhiteBalanceModes = if(maxRegionsAWB == 0) awbAvailableModes.filter { it > 0 } else awbAvailableModes.map { it },
+
         )
 
         viewModelScope.launch {
@@ -433,25 +437,6 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     CameraMetadata.CONTROL_AE_MODE_OFF
                 )
 
-                //TODO white balance
-
-                /**
-                extender.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AWB_LOCK,
-                    true
-                )
-
-
-                extender.setCaptureRequestOption(
-                    CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
-                )
-
-                extender.setCaptureRequestOption(
-                    CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(1.0f, 0.0f,  0.0f, 1.0f )
-                )
-                */
-
-
                 val iso: Int = cameraSettingValueState.currentIsoValue
                 val shutterSpeed: Long = cameraSettingValueState.currentShutterValue
                 val aperture: Float = cameraSettingValueState.currentApertureValue
@@ -469,13 +454,40 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     aperture
                 )
 
+                setupWhiteBalance(cameraSettingValueState, extender)
+
                 return previewBuilder
             }
         }
 
     }
 
-    fun openCameraSettingValue(settingMode: SettingMode) {
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    private fun setupWhiteBalance(cameraSettingValueState: CameraSettingValueState, extender:  Camera2Interop.Extender<Preview> ){
+        val currentMode = cameraSettingValueState.cameraCurrentWhiteBalanceMode
+        val currentValue = cameraSettingValueState.cameraCurrentWhiteBalanceValue
+
+        Log.d(TAG, cameraSettingValueState.cameraWhiteBalanceModes.toString())
+        when(currentMode) {
+            0 -> {
+                extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
+                extender.setCaptureRequestOption(
+                    CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
+                )
+                if(currentValue.size == 4){
+                    extender.setCaptureRequestOption(
+                        CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(currentValue[0], currentValue[1],  currentValue[2], currentValue[3])
+                    )
+                }
+            }
+            1 -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, 1)
+
+            else -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, currentMode)
+
+        }
+    }
+
+    fun openCameraSettingValue(settingMode: ExposureSettingMode) {
         val currentCameraSettingState = _cameraSettingValueState.value
         viewModelScope.launch {
             _cameraSettingValueState.emit(
@@ -510,22 +522,39 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
-    fun updateCameraSettingValue(value: String, settingMode: SettingMode) {
+    fun updateCurrentWhiteBalanceValue(value: FloatArray){
+        val currentCameraSettingState = _cameraSettingValueState.value
+        viewModelScope.launch {
+            _cameraSettingValueState.emit(
+                currentCameraSettingState.copy(
+                    cameraCurrentWhiteBalanceValue = value,
+                    exposureSettingState = ExposureSettingState.VALUE_UPDATED
+                )
+            )
+        }
+    }
+
+    fun updateCameraSettingValue(value: String, settingMode: ExposureSettingMode) {
 
         val currentCameraSettingState = _cameraSettingValueState.value
         val currentCameraUiState = _cameraUiState.value
 
-        val newCameraSettingState: CameraSettingValueState = if (settingMode == SettingMode.ISO) {
+        val newCameraSettingState: CameraSettingValueState = if (settingMode == ExposureSettingMode.ISO) {
             currentCameraSettingState.copy(
                 currentIsoValue = value.toInt(),
                 exposureSettingState = ExposureSettingState.VALUE_UPDATED
             )
-        } else if (settingMode == SettingMode.SHUTTER_SPEED) {
+        } else if (settingMode == ExposureSettingMode.SHUTTER_SPEED) {
             currentCameraSettingState.copy(
                 currentShutterValue = CameraHelper.stringToNanoseconds(value),
                 exposureSettingState = ExposureSettingState.VALUE_UPDATED
             )
-        } else {
+        } else if(settingMode == ExposureSettingMode.WHITE_BALANCE){
+            currentCameraSettingState.copy(
+                cameraCurrentWhiteBalanceMode = CameraHelper.getWhiteBalanceNames().indexOf(value),
+                exposureSettingState = ExposureSettingState.VALUE_UPDATED
+            )
+        }else {
             currentCameraSettingState.copy(
                 currentExposureValue = value.toFloat(),
                 exposureSettingState = ExposureSettingState.VALUE_UPDATED

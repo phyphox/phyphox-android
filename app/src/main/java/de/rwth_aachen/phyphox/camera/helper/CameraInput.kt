@@ -3,7 +3,7 @@ package de.rwth_aachen.phyphox.camera.helper
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
-import de.rwth_aachen.phyphox.camera.model.SettingMode
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
 import java.util.Vector
 import java.util.concurrent.locks.Lock
 
@@ -23,7 +23,7 @@ class CameraInput() {
     lateinit var buffers: Vector<DataOutput>
 
     // List of camera setting that is available to control the camera sensor
-    var cameraSettings = ArrayList<SettingMode>()
+    var cameraSettings = ArrayList<ExposureSettingMode>()
 
     // Holds initial value provided in xml,
     var isoCurrentValue: Int = 1
@@ -47,7 +47,7 @@ class CameraInput() {
                 buffers: Vector<DataOutput>,
                 lock: Lock,
                 experimentTimeReference: ExperimentTimeReference,
-                cameraSettings: ArrayList<SettingMode>,
+                cameraSettings: ArrayList<ExposureSettingMode>,
                 cameraFeature: PhyphoxCameraFeature) : this() {
 
         this.x1 = x1

@@ -4,6 +4,7 @@ import android.graphics.Rect
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 
 /**
  * Defines the current UI state of the camera
@@ -11,7 +12,7 @@ import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 data class CameraUiState  constructor(
     val cameraState: CameraState = CameraState.NOT_READY,
-    val availableSettings: List<SettingMode> = emptyList(),
+    val availableSettings: List<ExposureSettingMode> = emptyList(),
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
     val cameraLens: Int = LENS_FACING_BACK,
     val cameraHeight: Int = 0,
@@ -38,36 +39,49 @@ enum class OverlayUpdateState {
     UPDATE_DONE
 }
 
-
-data class CameraSettingValueState(
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+data class CameraSettingValueState  constructor(
     val currentIsoValue: Int = 1,
-    val currentShutterValue: Long = 1L,
-    val currentApertureValue: Float = 1.0f,
-    val currentExposureValue: Float = 0.0f,
-    val autoExposure: Boolean = true,
     val isoRange: List<String>? =  emptyList(),
+
+    val currentShutterValue: Long = 1L,
     var shutterSpeedRange:  List<String>? = emptyList(),
+
+    val currentApertureValue: Float = 1.0f,
     var apertureRange:  List<String>? = emptyList(),
+
+    val currentExposureValue: Float = 0.0f,
     var exposureRange: List<String>? = emptyList(),
+
+    val autoExposure: Boolean = true,
     var exposureStep: Float = 0F,
     val exposureSettingState: ExposureSettingState = ExposureSettingState.NOT_READY,
-    val settingMode: SettingMode = SettingMode.NONE,
+    val settingMode: ExposureSettingMode = ExposureSettingMode.NONE,
+
     val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC,
     val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.HIDDEN,
+
     val cameraMaxZoomRatio: Float = 0.0f,
     val cameraMinZoomRatio: Float = 0.0f,
     val cameraZoomRatio: Float = 0.0f,
     val cameraLinearRatio: Float = 0.0f,
-    val cameraZoomRatioConverted: MutableList<Float> = mutableListOf()
+    val cameraZoomRatioConverted: MutableList<Float> = mutableListOf(),
+
+    val cameraMaxRegionAWB: Int = 0,
+    val cameraWhiteBalanceManualRange: List<Int> = CameraHelper.getWhiteBalanceTemperatureList(),
+    val cameraWhiteBalanceModes: List<Int> = CameraHelper.getWhiteBalanceModes(),
+    val cameraCurrentWhiteBalanceValue: FloatArray = CameraHelper.convertTemperatureToRggb(15000),
+    val cameraCurrentWhiteBalanceMode : Int = 1
     )
 
-enum class SettingMode {
+enum class ExposureSettingMode {
     NONE,
     ISO,
     SHUTTER_SPEED,
     APERTURE,
     EXPOSURE,
-    AUTO_EXPOSURE
+    AUTO_EXPOSURE,
+    WHITE_BALANCE
 }
 
 enum class CameraSettingLevel {

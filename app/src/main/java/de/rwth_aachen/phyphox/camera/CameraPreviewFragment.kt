@@ -31,7 +31,7 @@ import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.PermissionState
-import de.rwth_aachen.phyphox.camera.model.SettingMode
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModelFactory
@@ -246,6 +246,7 @@ class CameraPreviewFragment : Fragment() {
                     }
                     CameraState.LOADED -> {
                         cameraPreviewScreen.setupZoomControl(cameraSettingState)
+                        cameraPreviewScreen.setUpWhiteBalanceControl(cameraSettingState)
                     }
                     CameraState.PREVIEW_IN_BACKGROUND -> Unit
                     CameraState.PREVIEW_STOPPED -> Unit
@@ -282,7 +283,7 @@ class CameraPreviewFragment : Fragment() {
                         // Get the current organized Exposure value as per the Exposure Mode,
                         // which is mapped from the raw value provided by camera API
                         val currentValue = when (cameraSettingState.settingMode) {
-                            SettingMode.ISO -> cameraSettingState.isoRange?.map { it.toInt() }
+                            ExposureSettingMode.ISO -> cameraSettingState.isoRange?.map { it.toInt() }
                                 ?.let { isoRange ->
                                     CameraHelper.findIsoNearestNumber(
                                         cameraSettingState.currentIsoValue,
@@ -290,29 +291,37 @@ class CameraPreviewFragment : Fragment() {
                                     )
                                 }
 
-                            SettingMode.SHUTTER_SPEED -> {
+                            ExposureSettingMode.SHUTTER_SPEED -> {
                                 val fraction =
                                     CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
                                 "${fraction.numerator}/${fraction.denominator}"
                             }
 
-                            SettingMode.APERTURE -> cameraSettingState.currentApertureValue
-                            SettingMode.EXPOSURE ->
+                            ExposureSettingMode.APERTURE -> cameraSettingState.currentApertureValue
+                            ExposureSettingMode.EXPOSURE ->
                                 CameraHelper.getActualValueFromExposureCompensation(
                                     cameraSettingState.currentExposureValue, cameraSettingState.exposureStep)
+                            ExposureSettingMode.WHITE_BALANCE -> CameraHelper.getWhiteBalanceNames().get(cameraSettingState.cameraCurrentWhiteBalanceMode)
                             else -> ""
                         }.toString()
 
 
                         val exposureSettingRange = when (cameraSettingState.settingMode) {
-                            SettingMode.ISO -> cameraSettingState.isoRange
-                            SettingMode.SHUTTER_SPEED -> cameraSettingState.shutterSpeedRange
-                            SettingMode.APERTURE -> cameraSettingState.apertureRange
-                            SettingMode.EXPOSURE -> cameraSettingState.exposureRange
+                            ExposureSettingMode.ISO -> cameraSettingState.isoRange
+                            ExposureSettingMode.SHUTTER_SPEED -> cameraSettingState.shutterSpeedRange
+                            ExposureSettingMode.APERTURE -> cameraSettingState.apertureRange
+                            ExposureSettingMode.EXPOSURE -> cameraSettingState.exposureRange
+                            ExposureSettingMode.WHITE_BALANCE ->CameraHelper.getWhiteBalanceNames()
+                                /**
+                                if(cameraSettingState.cameraMaxRegionAWB == 0)
+                                    CameraHelper.getWhiteBalanceNames().filter { it != "Manual"  }
+                                else
+                                CameraHelper.getWhiteBalanceNames()
+                                */
                             else -> emptyList()
                         }
 
-                        cameraPreviewScreen.populateAndShowExposureSettingValue(
+                        cameraPreviewScreen.populateAndShowCameraSettingValue(
                             exposureSettingRange,
                             cameraSettingState.settingMode,
                             currentValue
@@ -322,6 +331,7 @@ class CameraPreviewFragment : Fragment() {
                         //cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen { it.hideRecyclerView() })
                         //cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
                         cameraPreviewScreen.setCameraSettingButtonValue(cameraSettingState)
+                        cameraPreviewScreen.setWhiteBalanceSliderVisibility(cameraSettingState)
                     }
                     ExposureSettingState.LOAD_FINISHED -> {
                         if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN) {
