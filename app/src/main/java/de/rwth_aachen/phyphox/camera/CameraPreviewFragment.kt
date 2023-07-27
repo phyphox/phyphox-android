@@ -311,13 +311,11 @@ class CameraPreviewFragment : Fragment() {
                             ExposureSettingMode.SHUTTER_SPEED -> cameraSettingState.shutterSpeedRange
                             ExposureSettingMode.APERTURE -> cameraSettingState.apertureRange
                             ExposureSettingMode.EXPOSURE -> cameraSettingState.exposureRange
-                            ExposureSettingMode.WHITE_BALANCE ->CameraHelper.getWhiteBalanceNames()
-                                /**
+                            ExposureSettingMode.WHITE_BALANCE ->
                                 if(cameraSettingState.cameraMaxRegionAWB == 0)
                                     CameraHelper.getWhiteBalanceNames().filter { it != "Manual"  }
                                 else
                                 CameraHelper.getWhiteBalanceNames()
-                                */
                             else -> emptyList()
                         }
 

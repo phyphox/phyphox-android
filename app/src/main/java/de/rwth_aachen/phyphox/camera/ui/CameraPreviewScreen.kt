@@ -12,14 +12,12 @@ import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
-
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
-
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
@@ -37,7 +35,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.slider.LabelFormatter
 import com.google.android.material.slider.Slider
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
@@ -54,7 +51,6 @@ import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import java.lang.IllegalArgumentException
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -122,7 +118,6 @@ class CameraPreviewScreen(
 
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
-    private val buttonClick1 = AlphaAnimation(1f, 0.0f)
     private var clickedButton: View? = null
 
     private var selectedPosition = RecyclerView.NO_POSITION
@@ -142,7 +137,6 @@ class CameraPreviewScreen(
     val action: Flow<CameraUiAction> = _action
 
     private var showZoomSlider = false
-    private var showWhiteBalanceSlider = false
 
 
     init {
@@ -192,12 +186,6 @@ class CameraPreviewScreen(
         }
 
     }
-
-    //TODO
-    // 1) Change the color of slider stick to some gradient color as in the system camera
-    // 2) In addition to manual, also add the recycler view that contains all the individual modes.
-    // 3)
-
     private fun setCameraSettingsVisibility(cameraSettingsView: CameraSettingsView){
         when (cameraSettingsView) {
             CameraSettingsView.ExposureSettingListView -> {
@@ -239,30 +227,32 @@ class CameraPreviewScreen(
 
         whiteBalanceSlider.valueFrom = 0.0f
         whiteBalanceSlider.valueTo = 10.0f
-        whiteBalanceSlider.stepSize = 1.0f
         whiteBalanceSlider.value = 5.0f
 
-        whiteBalanceSlider.addOnChangeListener { slider, value, fromUser ->
-            var selectedValue =  when (value) {
-                0.0f ->  CameraHelper.convertTemperatureToRggb(3000)
-                1.0f -> CameraHelper.convertTemperatureToRggb(4000)
-                2.0f -> CameraHelper.convertTemperatureToRggb(5000)
-                3.0f -> CameraHelper.convertTemperatureToRggb(6000)
-                4.0f -> CameraHelper.convertTemperatureToRggb(7000)
-                5.0f -> CameraHelper.convertTemperatureToRggb(8000)
-                6.0f -> CameraHelper.convertTemperatureToRggb(9000)
-                7.0f -> CameraHelper.convertTemperatureToRggb(10000)
-                8.0f -> CameraHelper.convertTemperatureToRggb(12000)
-                9.0f -> CameraHelper.convertTemperatureToRggb(14000)
-                10.0f -> CameraHelper.convertTemperatureToRggb(15000)
-                else -> floatArrayOf()
 
-            }
+        //TODO while using descrete slider, there is lots of callback inside the changeListener, and thus update is sending error
+        // and while using continues slider, the issue is gone but need to implement the change continuosly.
+        /**
+        whiteBalanceSlider.addOnChangeListener { _, value, fromUser ->
 
-            //TODO when clicked, update the value
-            //cameraViewModel.updateCurrentWhiteBalanceValue(selectedValue)
+                val selectedValue =  when (value) {
+                    0.0f ->  CameraHelper.convertTemperatureToRggb(3000)
+                    1.0f -> CameraHelper.convertTemperatureToRggb(4000)
+                    2.0f -> CameraHelper.convertTemperatureToRggb(5000)
+                    3.0f -> CameraHelper.convertTemperatureToRggb(6000)
+                    4.0f -> CameraHelper.convertTemperatureToRggb(7000)
+                    5.0f -> CameraHelper.convertTemperatureToRggb(8000)
+                    6.0f -> CameraHelper.convertTemperatureToRggb(9000)
+                    7.0f -> CameraHelper.convertTemperatureToRggb(10000)
+                    8.0f -> CameraHelper.convertTemperatureToRggb(12000)
+                    9.0f -> CameraHelper.convertTemperatureToRggb(14000)
+                    10.0f -> CameraHelper.convertTemperatureToRggb(15000)
+                    else -> floatArrayOf()
+                }
+            cameraViewModel.updateCurrentWhiteBalanceValue(selectedValue)
 
         }
+        */
 
     }
 

@@ -470,7 +470,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         Log.d(TAG, cameraSettingValueState.cameraWhiteBalanceModes.toString())
         when(currentMode) {
             0 -> {
-                extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
+                //extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
                 extender.setCaptureRequestOption(
                     CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
                 )
