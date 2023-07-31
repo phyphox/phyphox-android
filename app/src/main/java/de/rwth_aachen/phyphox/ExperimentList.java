@@ -2360,6 +2360,7 @@ public class ExperimentList extends AppCompatActivity {
         final CheckBox nePressure = (CheckBox) neLayout.findViewById(R.id.nePressure);
         final CheckBox neProximity = (CheckBox) neLayout.findViewById(R.id.neProximity);
         final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
+        final CheckBox neCamera = (CheckBox) neLayout.findViewById(R.id.neCamera);
 
         //Setup the dialog builder...
         neRate.addTextChangedListener(new DecimalTextWatcher());
@@ -2394,7 +2395,8 @@ public class ExperimentList extends AppCompatActivity {
                 boolean pressure = nePressure.isChecked();
                 boolean prox = neProximity.isChecked();
                 boolean temp = neTemperature.isChecked();
-                if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp)) {
+                boolean camera = neCamera.isChecked();
+                if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp || camera)) {
                     acc = true;
                     Toast.makeText(ExperimentList.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
                 }
@@ -2471,6 +2473,15 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<container size=\"0\">temp_time</container>").getBytes());
                         output.write(("<container size=\"0\">temp</container>").getBytes());
                     }
+                    if (camera){
+                        output.write(("<container size=\"0\">xmm</container>").getBytes());
+                        output.write(("<container size=\"0\">x</container>").getBytes());
+                        output.write(("<container size=\"0\">t</container>").getBytes());
+                        output.write(("<container size=\"0\">tout</container>").getBytes());
+                        output.write(("<container size=\"0\">tout1</container>").getBytes());
+                        output.write(("<container size=\"0\">xout</container>").getBytes());
+                        output.write(("<container size=\"0\">xout1</container>").getBytes());
+                    }
                     output.write("</data-containers>".getBytes());
 
                     //Inputs for each sensor
@@ -2495,9 +2506,22 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<sensor type=\"proximity\" rate=\"" + rate + "\" ><output component=\"x\">prox</output><output component=\"t\">prox_time</output></sensor>").getBytes());
                     if (temp)
                         output.write(("<sensor type=\"temperature\" rate=\"" + rate + "\" ><output component=\"x\">temp</output><output component=\"t\">temp_time</output></sensor>").getBytes());
+                    if(camera){
+                        // Write Input
+                        output.write(("<camera x1=\"" + 0.4 +
+                                "\" x2=\"" + 0.6  +
+                                "\" y1=\"" + 0.4  +
+                                "\" y2=\"" + 0.6  +
+                                "\" mode=\"average\" " +
+                                " feature=\"photometric\" " +
+                                " setting=\"[iso, shutter speed, aperture]\" >" +
+                                "<output component=\"z\">x</output>" +
+                                "<output component=\"t\">t" +
+                                "</output>" +
+                                "</camera>").getBytes());
+                    }
                     output.write("</input>".getBytes());
 
-                    //Views for each sensor
                     output.write("<views>".getBytes());
                     if (acc) {
                         output.write("<view label=\"Accelerometer\">".getBytes());
@@ -2564,6 +2588,43 @@ public class ExperimentList extends AppCompatActivity {
                         output.write("<view label=\"Temperature\">".getBytes());
                         output.write(("<graph label=\"Temperature\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
                         output.write("</view>".getBytes());
+                    }
+                    if(camera){
+                        String xmlCode  = "<view label=\"Settings\">\n"
+                                + "    <info label=\"Tap onto the preview and drag to change the area of the image that is taken into account to evaluate the image. You can also choose different setting to setup the image within the area.\"/>\n"
+                                + "    <separator height=\"1\"/>\n"
+                                + "    <camera-gui label=\"Preview\" auto_exposure = \"true\" exposure_adjustment_level=\"3\" />\n"
+                                + "    <separator height=\"1\"/>\n"
+                                + "    <separator color=\"white\"/>\n"
+                                + "    <edit label=\"Shutter Speed\" unit=\"[[unit_short_second]]\" default=\"2000000\" editable = \"true\">\n"
+                                + "        <output>tout</output>\n"
+                                + "    </edit>\n"
+                                + "    <edit label=\"ISO\" unit=\"[[unit_short_second]]\" default=\"1000.0\" editable = \"true\">\n"
+                                + "        <output>tout1</output>\n"
+                                + "    </edit>\n"
+                                + "    <edit label=\"Aperture\" unit=\"[[unit_short_second]]\" default=\"1.4\" editable = \"true\">\n"
+                                + "        <output>xout</output>\n"
+                                + "    </edit>\n"
+                                + "    <edit label=\"Exposure\" unit=\"[[unit_short_second]]\" default=\"0\" editable = \"true\">\n"
+                                + "        <output>xout1</output>\n"
+                                + "    </edit>\n"
+                                + "</view>";
+
+                        output.write(xmlCode.getBytes());
+
+                        String xmlCode1 = "<view label= \"Simple\">\n"
+                                + "    <value label=\"Average Luminosity\" size=\"2\" unit=\"[[unit_short_luminance]]\">\n"
+                                + "        <input>x</input>\n"
+                                + "    </value>\n"
+                                + "\n"
+                                + "    <graph label=\"Luminosity\" partialUpdate=\"true\" labelX=\"[[quantity_short_time]]\" labelY=\"[[quantity_short_luminance]]\" unitX=\"[[unit_short_second]]\" unitY=\"[[unit_short_luminance]]\">\n"
+                                + "        <input axis=\"x\" lineWidth=\"2\">t</input>\n"
+                                + "        <input axis=\"y\">x</input>\n"
+                                + "    </graph>\n"
+                                + "\n"
+                                + "</view>";
+
+                        output.write(xmlCode1.getBytes());
                     }
                     output.write("</views>".getBytes());
 
@@ -2642,6 +2703,18 @@ public class ExperimentList extends AppCompatActivity {
                         output.write("<data name=\"Time (s)\">temp_time</data>".getBytes());
                         output.write("<data name=\"Temperature (°C)\">temp</data>".getBytes());
                         output.write("</set>".getBytes());
+                    }
+                    if(camera){
+                        String export = "<set name=\"Data\">\n"
+                                + "    <data name=\"t\">t</data>\n"
+                                + "    <data name=\"z\">x</data>\n"
+                                + "</set>\n"
+                                + "<set name=\"LOESS\">\n"
+                                + "    <data name=\"t\">tout</data>\n"
+                                + "    <data name=\"z\">xout</data>\n"
+                                + "</set>";
+
+                        output.write(export.getBytes());
                     }
                     output.write("</export>".getBytes());
 
