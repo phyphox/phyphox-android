@@ -69,7 +69,7 @@ class CameraInput() {
     }
 
     enum class PhyphoxCameraFeature {
-        Photometric, ColorDetector
+        Photometric, ColorDetector, Brightness, Lunimosity
     }
 
     fun start() {

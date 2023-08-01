@@ -71,13 +71,6 @@ class CameraPreviewScreen(
     private val whiteBalanceSlider: Slider = root.findViewById(R.id.whiteBalanceSlider)
     private val zoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
 
-    // permissions
-    private val permissionsRationaleContainer: View =
-        root.findViewById(R.id.permissionsRationaleContainer)
-    private val permissionsRationale: TextView = root.findViewById(R.id.permissionsRationale)
-    private val permissionsRequestButton: TextView =
-        root.findViewById(R.id.permissionsRequestButton)
-
     private val lnrSwitchLens = root.findViewById<LinearLayoutCompat>(R.id.lnrSwitchLens)
     private val lnrIso = root.findViewById<LinearLayoutCompat>(R.id.lnrImageIso)
     private val lnrShutter = root.findViewById<LinearLayoutCompat>(R.id.lnrImageShutter)
@@ -101,8 +94,7 @@ class CameraPreviewScreen(
     private val textViewCurrentIsoValue = root.findViewById<TextView>(R.id.textCurrentIso)
     private val textViewCurrentShutterValue = root.findViewById<TextView>(R.id.textCurrentShutter)
     private val textViewCurrentApertureValue = root.findViewById<TextView>(R.id.textCurrentAperture)
-    private val textViewAutoExposureStatus =
-        root.findViewById<TextView>(R.id.textAutoExposureStatus)
+    private val textViewAutoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
     private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
     private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
     private val tvColorCode = root.findViewById<TextView>(R.id.tvColorCode)
@@ -137,7 +129,6 @@ class CameraPreviewScreen(
     val action: Flow<CameraUiAction> = _action
 
     private var showZoomSlider = false
-
 
     init {
 
@@ -498,21 +489,6 @@ class CameraPreviewScreen(
 
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.OverlayUpdateDone)
-        }
-    }
-
-    fun hidePermissionsRequest() {
-        permissionsRationaleContainer.isVisible = false
-    }
-
-    fun showPermissionsRequest(shouldShowRationale: Boolean) {
-        permissionsRationaleContainer.isVisible = true
-        if (shouldShowRationale) {
-            permissionsRationale.text =
-                "You can\\'t use camera extensions unless CameraX Extensions has access to your camera."
-        } else {
-            permissionsRationale.text =
-                "Allow CameraX Extensions access to your camera to try camera extensions."
         }
     }
 

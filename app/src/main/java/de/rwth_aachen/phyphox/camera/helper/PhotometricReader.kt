@@ -43,29 +43,54 @@ class PhotometricReader() {
         val channels = ArrayList<Mat>()
         Core.split(hsv, channels)
 
+        val hueChannel = channels[0]
+        val saturationChannel = channels[1]
         val valueChannel = channels[2]
         val meanValue = Core.mean(valueChannel)
+
+        //Log.d(TAG, "heu: " +Core.mean(hueChannel).`val`.get(0))
+        //Log.d(TAG, "saturation: " +Core.mean(saturationChannel).`val`.get(0))
+        Log.d(TAG, "value: " +Core.mean(valueChannel).`val`.get(0))
 
         return meanValue.`val`.get(0)
 
     }
 
-    fun convertYuvToRgb(img: Image) {
-        val matImg: Mat = CameraHelper.imageToMat(img);
+    fun calculateAvgBrightnessFromRGB(byteArray: ByteArray, rect: Rect): Double {
+        val hsv = Mat()
+        val rgbImage = Mat()
+        val matImg: Mat = CameraHelper.byteArrayToMat(byteArray, rect )
 
-        // Convert the image from BGR to HSV color space
-        //val rgb = Mat()
-        //Imgproc.cvtColor(matImg, rgb, Imgproc.COLOR_YUV2RGB )
+        //Imgproc.cvtColor(matImg, rgbImage, Imgproc.COLOR_RGBA2RGB)
 
+        val channels = ArrayList<Mat>()
+        Core.split(matImg, channels)
 
+        for (channel in channels){
+            Log.d(TAG, "rgb: " +Core.mean(channel).`val`.get(0))
+        }
+        Log.d(TAG, "gray: ....")
+        return 0.0
+    }
 
+    fun calculateBrightnessFromGraScale(byteArray: ByteArray, rect: Rect) : Double {
 
-        val rbg = matImg.get(1000,1000)
+        val hsv = Mat()
+        val grayImage = Mat()
+        val matImg: Mat = CameraHelper.byteArrayToMat(byteArray, rect )
 
-        Log.d("PhotometricReader ", "hex code : "+Integer.toHexString(154))
-        Log.d("PhotometricReader ", "red: "+rbg[0])
-        Log.d("PhotometricReader ", "green: "+rbg[1])
-        Log.d("PhotometricReader ", "blue: "+rbg[2])
+        Imgproc.cvtColor(matImg, grayImage, Imgproc.COLOR_RGBA2RGB)
+        Imgproc.cvtColor(grayImage, hsv, Imgproc.COLOR_RGB2GRAY)
+
+        val channels = ArrayList<Mat>()
+        Core.split(hsv, channels)
+
+        for (channel in channels){
+            Log.d(TAG, "gray: " +Core.mean(channel).`val`.get(0))
+        }
+        Log.d(TAG, "gray: ....")
+        return 0.0
+
     }
 
     fun calculateAverageRedBrightness(img: Image) : Double{

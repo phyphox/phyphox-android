@@ -22,22 +22,6 @@ data class CameraPreviewScreenViewState(
             autoExposureViewState = autoExposureViewState.copy(isVisible = false)
         )
 
-    fun enableCameraControls(): CameraPreviewScreenViewState =
-        copy(
-            shutterButtonViewState = shutterButtonViewState.copy(isEnabled = true),
-            isoButtonViewState = isoButtonViewState.copy(isEnabled = true),
-            apertureButtonViewState = apertureButtonViewState.copy(isEnabled = true),
-            switchLensButtonViewState = switchLensButtonViewState.copy(isEnabled = true),
-        )
-
-    fun disableCameraControls(): CameraPreviewScreenViewState =
-        copy(
-            shutterButtonViewState = shutterButtonViewState.copy(isEnabled = false),
-            isoButtonViewState = isoButtonViewState.copy(isEnabled = false),
-            apertureButtonViewState = apertureButtonViewState.copy(isEnabled = false),
-            switchLensButtonViewState = switchLensButtonViewState.copy(isEnabled = false),
-        )
-
     fun showSwitchLens(isVisible: Boolean): CameraPreviewScreenViewState =
         copy(switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = isVisible))
 

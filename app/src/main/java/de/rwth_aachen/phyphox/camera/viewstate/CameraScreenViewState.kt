@@ -9,7 +9,4 @@ data class CameraScreenViewState(
     fun updateCameraScreen(block: (cameraPreviewScreenViewState: CameraPreviewScreenViewState) -> CameraPreviewScreenViewState): CameraScreenViewState =
         copy(cameraPreviewScreenViewState = block(cameraPreviewScreenViewState))
 
-    fun updateCameraSetting(block: (cameraSettingViewState: CameraSettingViewState) -> CameraSettingViewState) : CameraScreenViewState =
-        copy(cameraSettingViewState = block(cameraSettingViewState))
-
 }

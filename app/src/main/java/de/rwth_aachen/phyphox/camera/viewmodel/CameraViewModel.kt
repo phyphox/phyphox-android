@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -53,13 +54,12 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     val TAG = "CameraViewModel"
     private lateinit var cameraProviderListenableFuture: ListenableFuture<ProcessCameraProvider>
     private lateinit var cameraProvider: ProcessCameraProvider
-    val cameraExecutor = Executors.newSingleThreadExecutor()
+    val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     var camera: Camera? = null
 
     lateinit var preview: Preview
     private lateinit var imageAnalysis: ImageAnalysis
-    private var photometricReader : PhotometricReader = PhotometricReader();
 
     private val _cameraUiState: MutableStateFlow<CameraUiState> = MutableStateFlow(CameraUiState())
     private val _cameraSettingValueState: MutableStateFlow<CameraSettingValueState> =
@@ -114,7 +114,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
-    fun cameraInitialized() {
+    private fun cameraInitialized() {
         viewModelScope.launch {
             val currentCameraUiState = _cameraUiState.value
             _cameraUiState.emit(
@@ -217,6 +217,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             imageAnalysis
         )
 
+
         cameraInitialized()
         setupZoomControl()
         loadAndSetupExposureSettingRanges()
@@ -311,10 +312,6 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 colorCode = colorCode
             ))
         }
-    }
-
-    fun getLumnicanceValue(): Double{
-        return _imageAnalysisValueState.value.luminance
     }
 
     fun getColorCode(): String {

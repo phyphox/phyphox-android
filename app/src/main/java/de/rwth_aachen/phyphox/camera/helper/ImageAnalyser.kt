@@ -55,13 +55,6 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
         image.close()
     }
 
-    //TODO
-    // 1) crop and analyse the brightness of an image. (check if cropped or not (Done), check the validity of brightness (Done))
-    // 2) crashing when RGB2HSV is executed (done, RGBA"RGB and then RGB2HSV)
-    // 3) check the resolution of the image passed
-    // 4) time variable is not working, thus graph not plotted well. (DONE)
-    // 5) add white balance values and let user choose the value and update the camera as per the selection.
-
     private fun analyseBrightness(mediaImage: Image) {
         // Image is in YUV format, so first it is converted into RBGA bytearray
         // Since the image.timestamp is only provided in YUV, so right not the format we get is in YUV
@@ -75,6 +68,7 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
             cameraViewModel.getCameraRect()
         )
 
+        //photometricReader.calculateAvgBrightnessFromRGB(croppedArray, cameraViewModel.getCameraRect())
         val brightness =
             photometricReader.calculateAvgBrightness(croppedArray, cameraViewModel.getCameraRect())
 
@@ -159,39 +153,27 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
     private fun analyseLuminosity(mediaImage: Image) {
 
-        val currentTimestamp = System.currentTimeMillis()
+        val rgbaData = convertIntArrayToByteArray(convertYUV420ToRGBA(mediaImage))
+
+        val croppedArray = photometricReader.cropByteArray(
+            rgbaData,
+            cameraViewModel.getCameraRect().width(),
+            cameraViewModel.getCameraRect().height(),
+            cameraViewModel.getCameraRect()
+        )
+
+        val pixels = croppedArray.map { it.toInt() and 0xFF }
+        val luma = pixels.average()
+
         val t: Double =
             cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(
                 mediaImage.timestamp
             )
 
-        // Calculate the average luma no more often than every second
-        if (currentTimestamp - lastAnalyzedTimestamp >=
-            TimeUnit.SECONDS.toMillis(1)
-        ) {
-            val buffer = mediaImage.planes[0].buffer
+        cameraViewModel.updateImageAnalysisLuminance(luma, t)
+        cameraViewModel.cameraInput.dataZ.append(luma)
+        cameraViewModel.cameraInput.dataT.append(t)
 
-            Log.d("CameraXApp", cameraViewModel.getCameraRect().toString())
-
-            // TODO when using croppedArray, the result value is 0
-            val croppedArray = photometricReader.cropByteArray(
-                buffer?.toByteArray()!!,
-                cameraViewModel.getCameraRect().width(),
-                cameraViewModel.getCameraRect().height(),
-                cameraViewModel.getCameraRect()
-            )
-
-            val pixels = buffer.toByteArray().map { it.toInt() and 0xFF }
-            val luma = pixels.average()
-
-            Log.d("CameraXApp", luma.toString())
-
-            cameraViewModel.updateImageAnalysisLuminance(luma, t)
-            cameraViewModel.cameraInput.dataZ.append(luma)
-            cameraViewModel.cameraInput.dataT.append(t)
-
-            lastAnalyzedTimestamp = currentTimestamp
-        }
     }
 
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)

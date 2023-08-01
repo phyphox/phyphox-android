@@ -30,7 +30,6 @@ import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
-import de.rwth_aachen.phyphox.camera.model.PermissionState
 import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
@@ -46,11 +45,8 @@ import kotlinx.coroutines.launch
 class CameraPreviewFragment : Fragment() {
     val TAG = "CameraPreviewFragment"
 
-    // view model for operating on the camera and analysis of an image
+    // view model to setup and update camera
     private lateinit var cameraViewModel: CameraViewModel
-
-    // monitors changes in camera permission state
-    private lateinit var permissionState: MutableStateFlow<PermissionState>
 
     // handles all the UI elements for camera preview
     private lateinit var cameraPreviewScreen: CameraPreviewScreen
@@ -88,15 +84,6 @@ class CameraPreviewFragment : Fragment() {
 
         cameraViewModel.initializeCameraSettingValue()
 
-        // initialize the permission state flow with the current camera permission status
-        permissionState = MutableStateFlow(getCurrentPermissionState())
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                // check the current permission state every time upon the fragment is resumed
-                permissionState.emit(getCurrentPermissionState())
-            }
-        }
         return inflater.inflate(R.layout.fragment_camera, container, false)
 
     }
@@ -113,24 +100,13 @@ class CameraPreviewFragment : Fragment() {
             }
         }
 
-        val requestPermissionsLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-                if (isGranted) {
-                    lifecycleScope.launch { permissionState.emit(PermissionState.Granted) }
-                } else {
-                    lifecycleScope.launch { permissionState.emit(PermissionState.Denied(true)) }
-                }
-            }
+
 
         lifecycleScope.launch {
             cameraPreviewScreen.action.collectLatest { action ->
                 when (action) {
                     is CameraUiAction.SwitchCameraClick -> cameraViewModel.switchCamera()
 
-                    is CameraUiAction.RequestPermissionClick ->
-                        requestPermissionsLauncher.launch(Manifest.permission.CAMERA)
-
-                    is CameraUiAction.SelectAndChangeCameraSetting -> Unit
                     is CameraUiAction.CameraSettingClick -> {
                         cameraViewModel.openCameraSettingValue(action.settingMode)
                     }
@@ -157,52 +133,28 @@ class CameraPreviewFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            cameraViewModel.imageAnalyser.action.collectLatest {action: ImageAnalysisUIAction ->
-                when(action){
-                    is ImageAnalysisUIAction.UpdateLuminaceValue -> {
-                        Log.d(TAG, "ImageAnalysisUIAction.UpdateLuminaceValue" )
-                    }
+            cameraViewModel.imageAnalyser.action.collectLatest { action: ImageAnalysisUIAction ->
+                when (action) {
+                    is ImageAnalysisUIAction.UpdateLuminaceValue -> Unit
                 }
             }
         }
 
         lifecycleScope.launch {
             cameraViewModel.imageAnalysisUiState.collectLatest { value: ImageAnalysisValueState ->
-                when(value.imageAnalysisState){
-                    ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY ->
-                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY" )
-                    ImageAnalysisState.IMAGE_ANALYSIS_READY ->
-                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_READY" )
+                when (value.imageAnalysisState) {
+                    ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY -> Unit
+
+                    ImageAnalysisState.IMAGE_ANALYSIS_READY -> Unit
+
                     ImageAnalysisState.IMAGE_ANALYSIS_STARTED -> {
-                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_STARTED" )
-                        Log.d(TAG, cameraViewModel.getLumnicanceValue().toString() )
-                        Log.d(TAG, "ColorCode: " + cameraViewModel.getColorCode())
+                        // set hex code text when color is detected
                         cameraPreviewScreen.setColorCodeText(cameraViewModel.getColorCode())
                     }
-                    ImageAnalysisState.IMAGE_ANALYSIS_FINISHED -> {
-                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_FINISHED" )
-                    }
-                    ImageAnalysisState.IMAGE_ANALYSIS_FAILED -> {
-                        Log.d(TAG, "ImageAnalysisState.IMAGE_ANALYSIS_FAILED" )
-                    }
-                }
-            }
-        }
 
-        lifecycleScope.launch {
-            permissionState.collectLatest { permissionState ->
-                when (permissionState) {
-                    PermissionState.Granted -> {
-                        cameraPreviewScreen.hidePermissionsRequest()
-                    }
+                    ImageAnalysisState.IMAGE_ANALYSIS_FINISHED -> Unit
 
-                    // TODO manage the permission
-                    is PermissionState.Denied -> {
-                        //if (cameraViewModel.cameraUiState != CameraState.PREVIEW_STOPPED) {
-                        //   cameraPreviewScreen.showPermissionsRequest(permissionState.shouldShowRational)
-                        //   return@collectLatest
-                        //}
-                    }
+                    ImageAnalysisState.IMAGE_ANALYSIS_FAILED -> Unit
                 }
             }
         }
@@ -215,7 +167,6 @@ class CameraPreviewFragment : Fragment() {
 
                 when (cameraUiState.cameraState) {
                     CameraState.NOT_READY -> {
-                        Log.d(TAG, " CameraState.NOT_READY")
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value
                                 .updateCameraScreen {
@@ -224,8 +175,8 @@ class CameraPreviewFragment : Fragment() {
                         )
                         cameraViewModel.initializeCamera()
                     }
+
                     CameraState.READY -> {
-                        Log.d(TAG, " CameraState.READY")
                         cameraPreviewScreen.previewView.doOnLayout {
                             cameraViewModel.startCameraPreviewView(
                                 cameraPreviewScreen.previewView,
@@ -236,7 +187,7 @@ class CameraPreviewFragment : Fragment() {
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value
                                 .updateCameraScreen { s ->
-                                        s.showSwitchLens(true)
+                                    s.showSwitchLens(true)
                                         .enableAutoFocus(cameraSettingState.autoExposure)
                                 }
                         )
@@ -244,10 +195,12 @@ class CameraPreviewFragment : Fragment() {
                         cameraViewModel.imageAnalysisPrepared()
 
                     }
+
                     CameraState.LOADED -> {
                         cameraPreviewScreen.setupZoomControl(cameraSettingState)
                         cameraPreviewScreen.setUpWhiteBalanceControl(cameraSettingState)
                     }
+
                     CameraState.PREVIEW_IN_BACKGROUND -> Unit
                     CameraState.PREVIEW_STOPPED -> Unit
                 }
@@ -255,7 +208,9 @@ class CameraPreviewFragment : Fragment() {
                 when (cameraSettingState.exposureSettingState) {
                     ExposureSettingState.NOT_READY -> cameraViewModel.loadAndSetupExposureSettingRanges()
                     ExposureSettingState.LOADED -> {
-                        cameraPreviewScreen.setCurrentValueInExposureSettingTextView(cameraSettingState)
+                        cameraPreviewScreen.setCurrentValueInExposureSettingTextView(
+                            cameraSettingState
+                        )
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value.updateCameraScreen {
                                 it.showSwitchLensControl()
@@ -267,6 +222,7 @@ class CameraPreviewFragment : Fragment() {
                             }
                         )
                     }
+
                     ExposureSettingState.LOADING_FAILED -> Unit
                     ExposureSettingState.LOAD_LIST -> {
 
@@ -300,8 +256,13 @@ class CameraPreviewFragment : Fragment() {
                             ExposureSettingMode.APERTURE -> cameraSettingState.currentApertureValue
                             ExposureSettingMode.EXPOSURE ->
                                 CameraHelper.getActualValueFromExposureCompensation(
-                                    cameraSettingState.currentExposureValue, cameraSettingState.exposureStep)
-                            ExposureSettingMode.WHITE_BALANCE -> CameraHelper.getWhiteBalanceNames().get(cameraSettingState.cameraCurrentWhiteBalanceMode)
+                                    cameraSettingState.currentExposureValue,
+                                    cameraSettingState.exposureStep
+                                )
+
+                            ExposureSettingMode.WHITE_BALANCE -> CameraHelper.getWhiteBalanceNames()
+                                .get(cameraSettingState.cameraCurrentWhiteBalanceMode)
+
                             else -> ""
                         }.toString()
 
@@ -312,10 +273,11 @@ class CameraPreviewFragment : Fragment() {
                             ExposureSettingMode.APERTURE -> cameraSettingState.apertureRange
                             ExposureSettingMode.EXPOSURE -> cameraSettingState.exposureRange
                             ExposureSettingMode.WHITE_BALANCE ->
-                                if(cameraSettingState.cameraMaxRegionAWB == 0)
-                                    CameraHelper.getWhiteBalanceNames().filter { it != "Manual"  }
+                                if (cameraSettingState.cameraMaxRegionAWB == 0)
+                                    CameraHelper.getWhiteBalanceNames().filter { it != "Manual" }
                                 else
-                                CameraHelper.getWhiteBalanceNames()
+                                    CameraHelper.getWhiteBalanceNames()
+
                             else -> emptyList()
                         }
 
@@ -325,12 +287,14 @@ class CameraPreviewFragment : Fragment() {
                             currentValue
                         )
                     }
+
                     ExposureSettingState.VALUE_UPDATED -> {
                         //cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen { it.hideRecyclerView() })
                         //cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
                         cameraPreviewScreen.setCameraSettingButtonValue(cameraSettingState)
                         cameraPreviewScreen.setWhiteBalanceSliderVisibility(cameraSettingState)
                     }
+
                     ExposureSettingState.LOAD_FINISHED -> {
                         if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN) {
                             cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
@@ -345,7 +309,7 @@ class CameraPreviewFragment : Fragment() {
 
                 }
 
-                when(cameraUiState.overlayUpdateState){
+                when (cameraUiState.overlayUpdateState) {
                     OverlayUpdateState.NO_UPDATE -> Unit
                     OverlayUpdateState.UPDATE -> cameraPreviewScreen.updateOverlay(cameraUiState)
                     OverlayUpdateState.UPDATE_DONE -> Unit
@@ -353,21 +317,6 @@ class CameraPreviewFragment : Fragment() {
             }
         }
 
-    }
-
-    private fun getCurrentPermissionState(): PermissionState {
-        val status =
-            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
-        return if (status == PackageManager.PERMISSION_GRANTED) {
-            PermissionState.Granted
-        } else {
-            PermissionState.Denied(
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    requireActivity(),
-                    Manifest.permission.CAMERA
-                )
-            )
-        }
     }
 
     override fun onDestroy() {
