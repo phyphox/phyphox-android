@@ -362,4 +362,15 @@
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
     <string name="common_musical_note_g7">G7</string>
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
+    <string name="settings_theme_night">მათავარი რეჟიმი</string>
+    <string name="settings_theme_no_night">ნათელი რეჟიმი</string>
+    <string name="settings_theme_sync_setting">სისტემასთან სინქრონირება</string>
+    <string name="settingGraphViewEdit">მომხმარებლის ინტერფეისი</string>
+    <string name="settingGraphSize">გრაფიკის ზომა</string>
+    <string name="settingGraphSizeSubTitle">დააპატარავე ან გაზარდე გრაფიკი</string>
+    <string name="settings_theme_title">ბნელი რეჟიმი</string>
+    <string name="settings_mode_dark">ჩართული (მთავარი)</string>
+    <string name="settings_mode_no_dark">გამორთული</string>
+    <string name="settings_mode_dark_system">როგორც სისტემა</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
 </resources>
