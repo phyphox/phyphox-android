@@ -152,11 +152,13 @@ class CameraPreviewScreen(
             onSettingClicked(ExposureSettingMode.SHUTTER_SPEED)
         }
 
+        /**
         imageViewAperture.setOnClickListener {
             setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
             onSettingClicked(ExposureSettingMode.APERTURE)
         }
+        */
 
         imageViewExposure.setOnClickListener {
             setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
