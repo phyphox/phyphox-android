@@ -58,10 +58,23 @@ public class DataBuffer implements Serializable {
         this.experimentTimeReference = experimentTimeReference;
         this.size = size;
         this.name = name;
-        if (size > 0)
-            this.buffer = new ArrayList<>(size);
-        else
-            this.buffer = new LinkedList<>();
+
+        //Note on the choice of LinkedList over ArrayList
+        //For data acquisition during an experiment we require the ability to append data
+        //consistently fast, which fails for the ArrayList if it needs to be extended and copied to
+        //a new memory block. Hence, for a long time, phyphox used LinkedList for unlimited buffers
+        //and ArrayList for ones with a fixed size. However, ArrayList is also problematic for the
+        //fixed sized ones, because if the first element needs to be removed with inflowing data,
+        //the entire array needs to be shifted, which again takes a lot of time.
+        //Therefore, both situations now use the LinkedArray.
+        //A faster alternative for fixed-size buffers could be an ArrayList as a ring buffer (i.e.
+        //with a moving index pointing to the start and a filled size to keep track of the number
+        //of elements which wrap around at the end), but this complicated several implementations
+        //below, which would need separate versions for both buffer times. At this point, this does
+        //not seem necessary.
+
+        this.buffer = new LinkedList<>();
+
         this.value = Double.NaN;
     }
 
