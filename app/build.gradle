@@ -8,7 +8,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 33
 
-        versionName "1.1.12-beta6"
+        versionName "1.1.12-beta7"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
         versionCode 1011206 //1.01.12-06
 
