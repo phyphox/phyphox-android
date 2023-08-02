@@ -60,4 +60,9 @@
         <item name="backgroundColor">@color/phyphox_white_80</item>
     </style>
 
+    <style name="Widget.Phyphox.BottomNavigationView" parent="Widget.Phyphox.Light">
+        <item name="tint">@null</item> <!-- The tint would override the dynamic highlight of the selected item -->
+        <item name="android:tint">@null</item>
+    </style>
+
 </resources>
