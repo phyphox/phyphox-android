@@ -98,6 +98,7 @@ class CameraPreviewScreen(
     private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
     private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
     private val tvColorCode = root.findViewById<TextView>(R.id.tvColorCode)
+    private val textWhiteBalance = root.findViewById<TextView>(R.id.textWhiteBalance)
 
     private val recyclerViewExposureSetting = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
 
@@ -280,6 +281,7 @@ class CameraPreviewScreen(
             }
         }
 
+
         zoomSlider.setLabelFormatter { value: Float ->
             if (zoomRatio.size != 0) {
                 val mappedValue = zoomRatio[value.toInt()]
@@ -392,6 +394,8 @@ class CameraPreviewScreen(
             "f/".plus(cameraSettingState.currentApertureValue.toString())
 
         textViewExposureStatus.text = cameraSettingState.currentExposureValue.toString()
+
+        textWhiteBalance.text = CameraHelper.getWhiteBalanceNames()[cameraSettingState.cameraCurrentWhiteBalanceMode]
 
     }
 

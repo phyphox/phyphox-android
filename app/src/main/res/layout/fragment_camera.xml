@@ -233,14 +233,15 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="5dp"
                 android:layout_weight="1"
-                app:srcCompat="@drawable/ic_temperature" />
+                app:srcCompat="@drawable/ic_white_balance" />
 
             <TextView
                 android:id="@+id/textWhiteBalance"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="WB"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:textColor="@color/phyphox_white_100"
                 android:textSize="11sp" />
 
@@ -371,37 +372,6 @@
             android:layout_gravity="center_horizontal"
             android:text="Hello there" />
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/permissionsRationaleContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/phyphox_black_100"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="32dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/permissionsRationale"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:gravity="center"
-            android:textColor="@color/phyphox_white_100" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/permissionsRequestButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/phyphox_white_100"
-            android:text="Turn On"
-            android:textColor="@color/phyphox_black_100" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
