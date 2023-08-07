@@ -556,4 +556,22 @@ object CameraHelper {
         )
     }
 
+    fun getAvailableOpticalZoomList(maxOpticalZoom: Float?): MutableList<Int> {
+        if(maxOpticalZoom != null) {
+            if (maxOpticalZoom == 1.0f)
+                return mutableListOf()
+
+            if (maxOpticalZoom < 4f)
+                return mutableListOf(1, 2)
+
+            if (maxOpticalZoom < 8f)
+                return mutableListOf(1, 2, 5)
+
+            if (maxOpticalZoom < 15f)
+                return mutableListOf(1, 2, 5, 10)
+        }
+
+        return mutableListOf()
+    }
+
 }

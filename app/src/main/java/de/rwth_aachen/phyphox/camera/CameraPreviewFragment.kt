@@ -1,23 +1,16 @@
 package de.rwth_aachen.phyphox.camera
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
@@ -186,17 +179,41 @@ class CameraPreviewFragment : Fragment() {
                         }
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value
-                                .updateCameraScreen { s ->
-                                    s.showSwitchLens(true)
+                                .updateCameraScreen { cameraScreen ->
+                                    cameraScreen
+                                        .showSwitchLens(true)
                                         .enableAutoFocus(cameraSettingState.autoExposure)
+
                                 }
                         )
                         cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
                         cameraViewModel.imageAnalysisPrepared()
 
+
                     }
 
                     CameraState.LOADED -> {
+                        cameraScreenViewState.emit(
+                            cameraScreenViewState.value.updateCameraScreen { cameraScreen ->
+                                val opticalZooms =
+                                    CameraHelper.getAvailableOpticalZoomList(cameraSettingState.cameraMaxOpticalZoom)
+
+                                val widerAngleAvailable = cameraSettingState.cameraMinZoomRatio < 1.0f
+                                val defaultZoom = opticalZooms.isNotEmpty()
+                                val twoTimesZoomAvailable = opticalZooms.contains(2)
+                                val fiveTimesZoomAvailable = opticalZooms.contains(5)
+                                val tenTimesZoomAvailable = opticalZooms.contains(10)
+
+                                cameraScreen.setupOpticalZoomButtonVisibility(
+                                    widerAngleAvailable,
+                                    defaultZoom,
+                                    twoTimesZoomAvailable,
+                                    fiveTimesZoomAvailable,
+                                    tenTimesZoomAvailable
+                                )
+
+                            }
+                        )
                         cameraPreviewScreen.setupZoomControl(cameraSettingState)
                         cameraPreviewScreen.setUpWhiteBalanceControl(cameraSettingState)
                     }

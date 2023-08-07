@@ -275,7 +275,8 @@
                 android:layout_height="35dp"
                 android:layout_margin="3dp"
                 android:text="0.5x"
-                android:textSize="9sp"
+                android:textSize="11sp"
+                android:visibility="gone"
                 android:theme="@style/MaterialButtonTheme"
                 app:cornerRadius="20dp" />
 
@@ -285,7 +286,8 @@
                 android:layout_height="35dp"
                 android:layout_margin="3dp"
                 android:text="1x"
-                android:textSize="9sp"
+                android:textSize="11sp"
+                android:visibility="gone"
                 android:theme="@style/MaterialButtonTheme"
                 app:cornerRadius="20dp" />
 
@@ -295,7 +297,8 @@
                 android:layout_height="35dp"
                 android:layout_margin="3dp"
                 android:text="2x"
-                android:textSize="9sp"
+                android:textSize="11sp"
+                android:visibility="gone"
                 android:theme="@style/MaterialButtonTheme"
                 app:cornerRadius="20dp" />
 
@@ -305,7 +308,19 @@
                 android:layout_height="35dp"
                 android:layout_margin="3dp"
                 android:text="5x"
-                android:textSize="9sp"
+                android:textSize="11sp"
+                android:visibility="gone"
+                android:theme="@style/MaterialButtonTheme"
+                app:cornerRadius="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonTimesTen"
+                android:layout_width="60dp"
+                android:layout_height="35dp"
+                android:layout_margin="3dp"
+                android:text="10x"
+                android:textSize="11sp"
+                android:visibility="gone"
                 android:theme="@style/MaterialButtonTheme"
                 app:cornerRadius="20dp" />
 

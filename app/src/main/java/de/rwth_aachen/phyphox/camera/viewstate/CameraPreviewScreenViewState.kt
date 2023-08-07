@@ -7,7 +7,13 @@ data class CameraPreviewScreenViewState(
     val exposureViewState: ExposureViewState = ExposureViewState(),
     val autoExposureViewState: AutoExposureViewState = AutoExposureViewState(),
     val switchLensButtonViewState: SwitchLensButtonViewState = SwitchLensButtonViewState(),
-    val cameraSettingRecyclerViewState : CameraSettingRecyclerView = CameraSettingRecyclerView()
+    val cameraSettingRecyclerViewState : CameraSettingRecyclerView = CameraSettingRecyclerView(),
+
+    val widerAngleButtonViewState: WiderAngleZoomButtonViewState = WiderAngleZoomButtonViewState(),
+    val defaultButtonViewState: DefaultZoomButtonViewState = DefaultZoomButtonViewState(),
+    val twoTimesButtonViewState: TwoTimesZoomButtonViewState = TwoTimesZoomButtonViewState(),
+    val fiveTimesButtonViewState: FiveTimesZoomButtonViewState = FiveTimesZoomButtonViewState(),
+    val tenTimesButtonViewState: TenTimesZoomButtonViewState = TenTimesZoomButtonViewState(),
 ) {
 
     fun showSwitchLensControl(): CameraPreviewScreenViewState =
@@ -68,6 +74,22 @@ data class CameraPreviewScreenViewState(
             isOpened = false
         ))
 
+    fun setupOpticalZoomButtonVisibility(
+        showWiderAngle: Boolean,
+        showDefault: Boolean,
+        showTwoTimes: Boolean,
+        shoeFiveTimes: Boolean,
+        shoeTenTimes: Boolean
+    ): CameraPreviewScreenViewState =
+        copy(
+            widerAngleButtonViewState = widerAngleButtonViewState.copy(isVisible = showWiderAngle),
+            defaultButtonViewState = defaultButtonViewState.copy(isVisible = showDefault),
+            twoTimesButtonViewState = twoTimesButtonViewState.copy(isVisible = showTwoTimes),
+            fiveTimesButtonViewState = fiveTimesButtonViewState.copy(isVisible = shoeFiveTimes),
+            tenTimesButtonViewState = tenTimesButtonViewState.copy(isVisible = shoeTenTimes),
+
+            )
+
 }
 
 data class SwitchLensButtonViewState(
@@ -102,4 +124,29 @@ data class AutoExposureViewState(
 
 data class CameraSettingRecyclerView(
     val isOpened: Boolean = false,
+)
+
+data class WiderAngleZoomButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false
+)
+
+data class DefaultZoomButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false
+)
+
+data class TwoTimesZoomButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false
+)
+
+data class FiveTimesZoomButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false
+)
+
+data class TenTimesZoomButtonViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false
 )

@@ -217,10 +217,9 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             imageAnalysis
         )
 
-
-        cameraInitialized()
         setupZoomControl()
         loadAndSetupExposureSettingRanges()
+        cameraInitialized()
 
     }
 
@@ -597,14 +596,17 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     fun overlayUpdated(){
         viewModelScope.launch { _cameraUiState.emit(_cameraUiState.value.copy(overlayUpdateState = OverlayUpdateState.UPDATE_DONE)) }
     }
-
-    private fun setupZoomControl(){
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    private fun  setupZoomControl(){
+        val cameraInfo = camera?.cameraInfo?.let { Camera2CameraInfo.from(it) }
         val zoomStateValue = camera?.cameraInfo?.zoomState?.value
 
         val maxZoomRatio =  zoomStateValue?.maxZoomRatio ?: 1f
         val minZoomRatio =  zoomStateValue?.minZoomRatio ?: 0f
         val zoomRatio =  zoomStateValue?.zoomRatio ?: 1f
         val linearZoom =  zoomStateValue?.linearZoom ?: 1f
+
+        val maxOpticalZoom: FloatArray? = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
 
         val ratios: MutableList<Float> = CameraHelper.computeZoomRatios(minZoomRatio, maxZoomRatio)
 
@@ -614,7 +616,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 cameraMaxZoomRatio = maxZoomRatio,
                 cameraZoomRatio = zoomRatio,
                 cameraLinearRatio = linearZoom,
-                cameraZoomRatioConverted = ratios
+                cameraZoomRatioConverted = ratios,
+                cameraMaxOpticalZoom = maxOpticalZoom?.last()
             ))
         }
 

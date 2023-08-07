@@ -51,6 +51,8 @@ import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -106,6 +108,7 @@ class CameraPreviewScreen(
     private val buttonDefaultZoom: MaterialButton = root.findViewById(R.id.buttonDefaultZoom)
     private val buttonZoomTwoTimes: MaterialButton = root.findViewById(R.id.buttonZoomTimesTwo)
     private val buttonZoomFiveTimes: MaterialButton = root.findViewById(R.id.buttonTimesFive)
+    private val buttonZoomTenTimes: MaterialButton = root.findViewById(R.id.buttonTimesTen)
 
     private var autoExposure: Boolean = true
 
@@ -276,6 +279,7 @@ class CameraPreviewScreen(
                     1.0f -> changeZoomButtonColor(SelectedZoomButton.Default)
                     2.0f -> changeZoomButtonColor(SelectedZoomButton.TwoTimes)
                     5.0f -> changeZoomButtonColor(SelectedZoomButton.FiveTimes)
+                    10.0f -> changeZoomButtonColor(SelectedZoomButton.TenTimes)
                     else -> changeZoomButtonColor(SelectedZoomButton.None)
                 }
             }
@@ -297,6 +301,9 @@ class CameraPreviewScreen(
             buttonWiderAngle.visibility = View.GONE
         }
 
+        val df = DecimalFormat("#.#")
+        df.roundingMode = RoundingMode.FLOOR
+        buttonWiderAngle.text = df.format(cameraSettingState.cameraMinZoomRatio) +"x"
         buttonWiderAngle.setOnClickListener {
             changeZoomButtonColor(SelectedZoomButton.None)
             cameraViewModel.camera?.cameraControl?.setZoomRatio(cameraSettingState.cameraMinZoomRatio)
@@ -325,6 +332,13 @@ class CameraPreviewScreen(
             changeZoomButtonColor(SelectedZoomButton.FiveTimes)
         }
 
+        buttonZoomTenTimes.setOnClickListener {
+            changeZoomButtonColor(SelectedZoomButton.None)
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(10.0f)
+            zoomSlider.value = zoomRatio.indexOf(10.0f).toFloat()
+            changeZoomButtonColor(SelectedZoomButton.TenTimes)
+        }
+
     }
 
     private fun changeZoomButtonColor(selectedButton: SelectedZoomButton) {
@@ -335,18 +349,20 @@ class CameraPreviewScreen(
             SelectedZoomButton.Default -> buttonDefaultZoom.setBackgroundColor(activeColor)
             SelectedZoomButton.TwoTimes -> buttonZoomTwoTimes.setBackgroundColor(activeColor)
             SelectedZoomButton.FiveTimes -> buttonZoomFiveTimes.setBackgroundColor(activeColor)
+            SelectedZoomButton.TenTimes -> buttonZoomFiveTimes.setBackgroundColor(activeColor)
             SelectedZoomButton.None -> {
                 buttonWiderAngle.setBackgroundColor(inactiveColor)
                 buttonDefaultZoom.setBackgroundColor(inactiveColor)
                 buttonZoomTwoTimes.setBackgroundColor(inactiveColor)
                 buttonZoomFiveTimes.setBackgroundColor(inactiveColor)
+                buttonZoomTenTimes.setBackgroundColor(inactiveColor)
             }
         }
 
     }
 
     enum class SelectedZoomButton {
-        WiderAngle, Default, TwoTimes, FiveTimes, None
+        WiderAngle, Default, TwoTimes, FiveTimes, TenTimes, None
     }
 
     private fun initializeAndSetupCameraDimension() {
@@ -538,7 +554,7 @@ class CameraPreviewScreen(
     fun setCameraScreenViewState(state: CameraScreenViewState) {
         setSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
         setCameraExposureViewState(state.cameraPreviewScreenViewState)
-        //setCameraSettingViewState(state.cameraPreviewScreenViewState)
+        setZoomButtonVisibility(state.cameraPreviewScreenViewState)
         setCameraSettingRecyclerViewState(state.cameraPreviewScreenViewState)
         setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
     }
@@ -572,6 +588,14 @@ class CameraPreviewScreen(
             state.currentApertureValue.toString()
         if (state.currentExposureValue != 0.0f) textViewExposureStatus.text =
             state.currentExposureValue.toString()
+    }
+
+    private fun setZoomButtonVisibility(state: CameraPreviewScreenViewState) {
+        buttonWiderAngle.isVisible = state.widerAngleButtonViewState.isVisible
+        buttonDefaultZoom.isVisible = state.defaultButtonViewState.isVisible
+        buttonZoomTwoTimes.isVisible = state.twoTimesButtonViewState.isVisible
+        buttonZoomFiveTimes.isVisible = state.fiveTimesButtonViewState.isVisible
+        buttonZoomTenTimes.isVisible = state.tenTimesButtonViewState.isVisible
     }
 
     fun setWhiteBalanceSliderVisibility(state: CameraSettingValueState){
