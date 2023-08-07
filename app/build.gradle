@@ -8,9 +8,9 @@ android {
         minSdkVersion 14
         targetSdkVersion 33
 
-        versionName "1.1.12-beta7"
+        versionName "1.1.12"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1011207 //1.01.12-07
+        versionCode 1011208 //1.01.12-08
 
         def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
@@ -61,7 +61,7 @@ android {
 
     useLibrary 'org.apache.http.legacy'
     namespace 'de.rwth_aachen.phyphox'
-    testNamespace 'your.package.name'
+    testNamespace 'de.rwth_aachen.phyphoxTest'
 }
 
 dependencies {
@@ -89,7 +89,7 @@ dependencies {
 
     //Automated screenshot generation
     androidTestImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'tools.fastlane:screengrab:2.0.0'
+    androidTestImplementation 'tools.fastlane:screengrab:2.1.1'
     androidTestImplementation 'androidx.test:rules:1.5.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

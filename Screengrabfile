@@ -2,5 +2,5 @@ app_package_name 'de.rwth_aachen.phyphox'
 use_tests_in_packages ['de.rwth_aachen.phyphox']
 app_apk_path 'app/build/outputs/apk/screenshot/debug/app-screenshot-debug.apk'
 tests_apk_path 'app/build/outputs/apk/androidTest/screenshot/debug/app-screenshot-debug-androidTest.apk'
-locales ["cs", "de", "el", "en", "es", "fr", "it", "ja", "nl", "pl", "pt", "ru", "sr", "tr", "vi", "zh-CN", "zh-TW"]
+locales ["cs", "de", "el", "en", "es", "fr", "hi", "it", "ja", "ka", "nl", "pl", "pt", "ru", "sr", "tr", "vi", "zh-CN", "zh-TW"]
 clear_previous_screenshots true
