@@ -181,7 +181,7 @@
     <string name="pick_exportFormat">ამოირჩიე მონაცემების ფორმატი.</string>
     <string name="noDrawableData">არარის დახატვადი მონაცემები.</string>
     <string name="categoryNewExperiment">მარტივი ექსპერიმენტები</string>
-    <string name="categoryRawSensor">სენსორის მონაცემები</string>
+    <string name="categoryRawSensor">დაუმუშავებელი სენსორები</string>
     <string name="categoryPhyphoxOrg">წვლილი შეიტანეთ ფაიფოქსში</string>
     <string name="categoryPhyphoxOrgHint">ფაიფოქსის დასახმარებლად ახალი ფუნქციებია სიის ბოლოს.</string>
     <string name="experimentinfo_hint">შეამოწმეთ ექსპერიმენტის ინფორმაცია, იმისათვის რომ გაერკვეთ ექპერიმენტში.</string>
