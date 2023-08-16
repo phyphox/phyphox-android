@@ -364,12 +364,13 @@
     <string name="settingsPort">Θύρα απομακρυσμένης πρόσβασης</string>
     <string name="settings_theme_night">Προεπιλογή</string>
     <string name="settings_theme_no_night">Ανοιχτόχρωμο θέμα</string>
-    <string name="settings_theme_sync_setting">Όμοιο με το σύστημα</string>
+    <string name="settings_theme_sync_setting">Όμοιο με του συστήματος</string>
     <string name="settingGraphViewEdit">Περιβάλλον χρήστη</string>
     <string name="settingGraphSize">Μέγεθος γραφήματος</string>
-    <string name="settingGraphSizeSubTitle">Μικρότερο ή μεγαλύτερο μέγεθος γραφήματος</string>
+    <string name="settingGraphSizeSubTitle">Μεταβολή μεγέθους γραφήματος</string>
     <string name="settings_theme_title">Σκουρόχρωμο θέμα</string>
     <string name="settings_mode_dark">Οn (Προεπιλογή)</string>
     <string name="settings_mode_no_dark">Off</string>
     <string name="settings_mode_dark_system">Όμοιο με το σύστημα</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
 </resources>
