@@ -260,15 +260,17 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     //Start the data aquisition by registering a listener for this sensor.
     public void start() {
-        if (sensor == null)
-            return;
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)) {
             if (calibrated)
                 this.type = Sensor.TYPE_MAGNETIC_FIELD;
             else
                 this.type = Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED;
         }
+
+        sensor = findSensor();
+
+        if (sensor == null)
+            return;
 
         //Reset averaging
         this.lastReading = 0;
