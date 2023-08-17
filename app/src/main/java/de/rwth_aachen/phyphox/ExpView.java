@@ -2448,9 +2448,10 @@ public class ExpView implements Serializable{
            super.createView(ll, c, res, parent, experiment);
            this.parent = parent;
 
-            LayoutInflater inflater = LayoutInflater.from(c);
-            View inflateView = inflater.inflate(R.layout.camera_layout, ll, true);
-            FragmentContainerView containerView = inflateView.findViewById(R.id.fragmetContainerView);
+
+           // LayoutInflater inflater = LayoutInflater.from(c);
+            //View inflateView = inflater.inflate(R.layout.camera_layout, ll, true);
+            //FragmentContainerView containerView = inflateView.findViewById(R.id.fragmetContainerView);
             cameraPreviewFragment = new CameraPreviewFragment();
             FragmentManager fragmentManager = parent.getChildFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -2461,7 +2462,8 @@ public class ExpView implements Serializable{
             args.putSerializable(CameraHelper.EXPERIMENT_ARG, experiment);
             cameraPreviewFragment.setArguments(args);
 
-            fragmentTransaction.add(containerView.getId(), cameraPreviewFragment);
+            //Log.d("ExpViewFragment", "createView ExpView id: "+containerView.getId());
+            fragmentTransaction.add(ll.getId(), cameraPreviewFragment);
             fragmentTransaction.addToBackStack(null);
             fragmentTransaction.commit();
 

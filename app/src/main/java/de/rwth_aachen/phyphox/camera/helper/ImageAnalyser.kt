@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysis.Analyzer {
 
+    private var TAG = "ImageAnalyser"
     private var lastAnalyzedTimestamp = 0L
     private var photometricReader: PhotometricReader = PhotometricReader()
 
@@ -74,6 +75,8 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
 
         // 63 is the value when there is full dark, so substracting with 60
         val brightnessPercentage = (((brightness - 60.0)/ 255.0) * 100.0)
+
+        Log.d(TAG, "brightnessPercentage: "+brightnessPercentage)
 
         val t: Double =
             cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(

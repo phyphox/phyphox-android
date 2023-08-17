@@ -1,14 +1,19 @@
 package de.rwth_aachen.phyphox.camera
 
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import de.rwth_aachen.phyphox.PhyphoxExperiment
@@ -16,14 +21,17 @@ import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
+import de.rwth_aachen.phyphox.camera.model.ExposureSettingState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
+import de.rwth_aachen.phyphox.camera.service.CameraCallback
+import de.rwth_aachen.phyphox.camera.service.CameraServiceLiveData
+import de.rwth_aachen.phyphox.camera.service.ImageAnalyseService
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModelFactory
@@ -50,11 +58,17 @@ class CameraPreviewFragment : Fragment() {
     //holds experiment info/object
     private var experiment: PhyphoxExperiment? = null
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        if(isMyServiceRunning(ImageAnalyseService::class.java)){
+            val intent = Intent(context, ImageAnalyseService::class.java)
+            context?.stopService(intent)
+        }
 
         cameraViewModel =
             ViewModelProvider(
@@ -166,16 +180,13 @@ class CameraPreviewFragment : Fragment() {
                                     it.hideCameraControls()
                                 }
                         )
+                        Log.d(TAG, "NOT_READY" )
                         cameraViewModel.initializeCamera()
                     }
 
                     CameraState.READY -> {
                         cameraPreviewScreen.previewView.doOnLayout {
-                            cameraViewModel.startCameraPreviewView(
-                                cameraPreviewScreen.previewView,
-                                lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner,
-                                cameraSettingState.autoExposure
-                            )
+                            startCameraService(cameraPreviewScreen.previewView)
                         }
                         cameraScreenViewState.emit(
                             cameraScreenViewState.value
@@ -218,8 +229,7 @@ class CameraPreviewFragment : Fragment() {
                         cameraPreviewScreen.setUpWhiteBalanceControl(cameraSettingState)
                     }
 
-                    CameraState.PREVIEW_IN_BACKGROUND -> Unit
-                    CameraState.PREVIEW_STOPPED -> Unit
+                    else -> {}
                 }
 
                 when (cameraSettingState.exposureSettingState) {
@@ -336,9 +346,42 @@ class CameraPreviewFragment : Fragment() {
 
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraViewModel.cameraExecutor.shutdown()
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "OnStop")
+        val intent = Intent(context, ImageAnalyseService::class.java)
+        context?.startService(intent)
+        //cameraViewModel.restartCameraPreview()
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "OnDestroy")
+        cameraViewModel.cameraExecutor.shutdown()
+        if(isMyServiceRunning(ImageAnalyseService::class.java)){
+            val intent = Intent(context, ImageAnalyseService::class.java)
+            context?.stopService(intent)
+        }
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
+        val manager = context?.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
+        for (service in manager!!.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun startCameraService(previewView: PreviewView) {
+        // Start the service
+        val serviceIntent = Intent(requireContext(), ImageAnalyseService::class.java)
+        context?.startService(serviceIntent)
+        Log.d("CameraServiceLiveData", "startCameraService")
+        CameraServiceLiveData.getInstance().postCustomObject(previewView);
+    }
 }

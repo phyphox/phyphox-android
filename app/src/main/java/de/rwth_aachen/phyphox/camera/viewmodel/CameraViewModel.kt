@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox.camera.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.graphics.Paint.Cap
 import android.graphics.Rect
 import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
@@ -41,8 +40,11 @@ import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
+import de.rwth_aachen.phyphox.camera.service.ImageAnalyseService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
@@ -82,7 +84,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         viewModelScope.launch {
             val currentCameraUiState = _cameraUiState.value
 
-            cameraProviderListenableFuture = ProcessCameraProvider.getInstance(application)
+            //cameraProviderListenableFuture = ProcessCameraProvider.getInstance(application)
             val availableCameraLens =
                 listOf(
                     CameraSelector.LENS_FACING_BACK,
@@ -162,18 +164,21 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         withExposure: Boolean
     ) {
 
-        cameraProviderListenableFuture.addListener({
-            try {
-                cameraProvider = cameraProviderListenableFuture.get()
-                (cameraProvider as ProcessCameraProvider?)?.let {
-                    startCamera(previewView, it, lifecycleOwner, withExposure)
+        viewModelScope.launch {
+            cameraProviderListenableFuture.addListener({
+                try {
+                    cameraProvider = cameraProviderListenableFuture.get()
+                    (cameraProvider as ProcessCameraProvider?)?.let {
+                        startCamera(previewView, it, lifecycleOwner, withExposure)
+                    }
+                } catch (e:  ExecutionException) {
+                    e.printStackTrace()
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
                 }
-            } catch (e: ExecutionException) {
-                e.printStackTrace()
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
-            }
-        }, ContextCompat.getMainExecutor(application))
+            }, ContextCompat.getMainExecutor(application))
+        }
+
     }
 
     private fun cameraLensToSelector(@CameraSelector.LensFacing lensFacing: Int): CameraSelector =
@@ -252,6 +257,20 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
                 ))
             }
+        }
+    }
+
+    fun restartCameraPreview(){
+
+    }
+
+    fun runPreviewInBackground(){
+        viewModelScope.launch {
+            _cameraUiState.emit(
+                _cameraUiState.value.copy(
+                    cameraState = CameraState.PREVIEW_IN_BACKGROUND,
+                )
+            )
         }
     }
 
