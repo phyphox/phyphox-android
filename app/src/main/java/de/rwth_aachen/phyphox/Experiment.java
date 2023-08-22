@@ -437,6 +437,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
             pager = ((ViewPager)findViewById(R.id.view_pager));
             FragmentManager manager = getSupportFragmentManager();
+            // Setting page limit will retain the viewpager from reloading the view from view-model.
+            // Can continue showing camera value in other fragment tabs and also fixes the occasional crash while switching tabs.
+            pager.setOffscreenPageLimit(experiment.experimentViews.size());
+
             adapter = new ExpViewPagerAdapter(manager, this.experiment);
             pager.setAdapter(adapter);
             tabLayout.setupWithViewPager(pager);
