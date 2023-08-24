@@ -407,7 +407,7 @@ class CameraPreviewScreen(
             "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
 
         textViewCurrentApertureValue.text =
-            "f/".plus(cameraSettingState.currentApertureValue.toString())
+            "f/".plus(cameraSettingState.apertureRange?.get(0))
 
         textViewExposureStatus.text = cameraSettingState.currentExposureValue.toString()
 
@@ -566,7 +566,9 @@ class CameraPreviewScreen(
 
     private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState) {
         lnrIso.isVisible = state.isoButtonViewState.isVisible
+        imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
         lnrShutter.isVisible = state.shutterButtonViewState.isVisible
+        imageViewShutter.isEnabled = state.shutterButtonViewState.isEnabled
         lnrAperture.isVisible = state.apertureButtonViewState.isVisible
         lnrExposure.isVisible = state.exposureViewState.isVisible
         lnrAutoExposure.isVisible = state.autoExposureViewState.isVisible
@@ -584,8 +586,8 @@ class CameraPreviewScreen(
             textViewCurrentShutterValue.text =
                 "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
         }
-        if (state.currentApertureValue != 0.0f) textViewCurrentApertureValue.text =
-            state.currentApertureValue.toString()
+        if (state.apertureRange?.size!! > 0) textViewCurrentApertureValue.text =
+            state.apertureRange!![0]
         if (state.currentExposureValue != 0.0f) textViewExposureStatus.text =
             state.currentExposureValue.toString()
     }
@@ -617,46 +619,49 @@ class CameraPreviewScreen(
 
     // From the ViewState, update the state of the ImageView and TexTView of Exposure Setting UI
     private fun setCameraExposureViewState(state: CameraPreviewScreenViewState) {
-        val autoExposureEnabled = state.autoExposureViewState.isEnabled
 
         imageViewIso.setImageDrawable(
             getDrawableAsSettingState(
                 ExposureSettingMode.ISO,
-                autoExposureEnabled
+                state
             )
         )
         imageViewShutter.setImageDrawable(
             getDrawableAsSettingState(
                 ExposureSettingMode.SHUTTER_SPEED,
-                autoExposureEnabled
+                state
             )
         )
         imageViewAperture.setImageDrawable(
             getDrawableAsSettingState(
                 ExposureSettingMode.APERTURE,
-                autoExposureEnabled
+                state
             )
         )
         imageViewExposure.setImageDrawable(
             getDrawableAsSettingState(
                 ExposureSettingMode.EXPOSURE,
-                autoExposureEnabled
+                state
             )
         )
 
-        setTextViewAsExposureSetting(ExposureSettingMode.ISO, autoExposureEnabled)
-        setTextViewAsExposureSetting(ExposureSettingMode.SHUTTER_SPEED, autoExposureEnabled)
-        setTextViewAsExposureSetting(ExposureSettingMode.APERTURE, autoExposureEnabled)
-        setTextViewAsExposureSetting(ExposureSettingMode.EXPOSURE, autoExposureEnabled)
-        setTextViewAsExposureSetting(ExposureSettingMode.AUTO_EXPOSURE, autoExposureEnabled)
+        setTextViewAsExposureSetting(ExposureSettingMode.ISO, state)
+        setTextViewAsExposureSetting(ExposureSettingMode.SHUTTER_SPEED, state)
+        setTextViewAsExposureSetting(ExposureSettingMode.APERTURE, state)
+        setTextViewAsExposureSetting(ExposureSettingMode.EXPOSURE, state)
+        setTextViewAsExposureSetting(ExposureSettingMode.AUTO_EXPOSURE, state)
     }
 
     // From the exposure setting mode and auto exposure mode, set the click-ability of an image view
     // and return the drawable property of the image view
     private fun getDrawableAsSettingState(
         settingMode: ExposureSettingMode,
-        autoExposureEnabled: Boolean
+        state: CameraPreviewScreenViewState
     ): Drawable? {
+
+        val autoExposureEnabled = state.autoExposureViewState.isEnabled
+        val isoEnabled = state.isoButtonViewState.isEnabled
+        val shutterSpeedEnabled = state.shutterButtonViewState.isEnabled
 
         val imageViewMap = mapOf(
             ExposureSettingMode.ISO to imageViewIso,
@@ -681,6 +686,8 @@ class CameraPreviewScreen(
         val res = AppCompatResources.getDrawable(context, resId)
 
         if (!autoExposureEnabled) res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+        if (!isoEnabled) res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+        if (!shutterSpeedEnabled) res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
 
         return res
     }
@@ -689,8 +696,11 @@ class CameraPreviewScreen(
     // set the TextView color and alter the text in the Auto Exposure as per exposure setting state
     private fun setTextViewAsExposureSetting(
         settingMode: ExposureSettingMode,
-        autoExposureEnabled: Boolean
+        state: CameraPreviewScreenViewState
     ) {
+        val autoExposureEnabled = state.autoExposureViewState.isEnabled
+        val isoEnabled = state.isoButtonViewState.isEnabled
+        val shutterSpeedEnabled = state.shutterButtonViewState.isEnabled
 
         val textViewMap = mapOf(
             ExposureSettingMode.ISO to textViewCurrentIsoValue,
@@ -705,10 +715,16 @@ class CameraPreviewScreen(
 
         val textView = textViewMap[settingMode]
 
+        if (textView == textViewCurrentIsoValue)
+            textView?.setTextColor(if (isoEnabled) activeTextColor else inactiveTextColor)
+        if (textView == textViewCurrentShutterValue)
+            textView?.setTextColor(if (shutterSpeedEnabled) activeTextColor else inactiveTextColor)
+        if (textView == textViewCurrentApertureValue)
+            textView?.setTextColor(inactiveTextColor)
+
         if (textView == textViewAutoExposureStatus)
             textView?.text = context.getText(if (autoExposureEnabled) R.string.off else R.string.on)
-        else
-            textView?.setTextColor(if (autoExposureEnabled) activeTextColor else inactiveTextColor)
+
 
     }
 

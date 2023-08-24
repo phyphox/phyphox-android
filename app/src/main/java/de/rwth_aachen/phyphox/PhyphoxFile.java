@@ -1602,12 +1602,8 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "camera-gui": {
-                    boolean exposure = getBooleanAttribute("auto_exposure", true);
-                    String level = getStringAttribute("exposure_adjustment_level");
 
                     ExpView.cameraElement cameraElement = newView.new cameraElement(label, null, null, parent.getResources());
-                    cameraElement.setExposure(exposure);
-                    cameraElement.setExposureAdjustmentLevel(level);
                     newView.elements.add(cameraElement);
                     break;
                 }
@@ -1871,30 +1867,10 @@ public abstract class PhyphoxFile {
                             throw new phyphoxFileException("Need permission to access the camera."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
                         }
 
-                        String modeStr = getStringAttribute("mode");
-                        if (modeStr == null)
-                            modeStr = "closest";
-                        else
-                            modeStr = modeStr.toLowerCase();
+                        boolean autoExposure = getBooleanAttribute("auto_exposure", true);
+                        int exposureAdjustmentLevel = getIntAttribute("exposure_adjustment_level", 1);
+                        String editableSettings = getStringAttribute("editable");
 
-                        CameraInput.CameraExtractionMode mode;
-                        switch (modeStr) {
-                            case "closest": {
-                                mode = CameraInput.CameraExtractionMode.Closest;
-                                break;
-                            }
-                            case "weighted": {
-                                mode = CameraInput.CameraExtractionMode.Weighted;
-                                break;
-                            }
-                            case "average": {
-                                mode = CameraInput.CameraExtractionMode.Average;
-                                break;
-                            }
-                            default: {
-                                throw new phyphoxFileException("Unknown camera extraction mode: " + modeStr, xpp.getLineNumber());
-                            }
-                        }
 
                         String featureStr = getStringAttribute("feature");
                         if(featureStr == null)
@@ -1929,29 +1905,21 @@ public abstract class PhyphoxFile {
 
                         //Allowed input/output configuration
                         ioBlockParser.ioMapping[] outputMapping = {
-                                new ioBlockParser.ioMapping() {{
-                                    name = "z";
-                                    asRequired = false;
-                                    minCount = 1;
-                                    maxCount = 1;
-                                    valueAllowed = false;
-                                }},
-                                new ioBlockParser.ioMapping() {{
-                                    name = "t";
-                                    asRequired = true;
-                                    minCount = 0;
-                                    maxCount = 1;
-                                    valueAllowed = false;
-                                }}
+                                new ioBlockParser.ioMapping() {{name = "z"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "exposure"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                         };
 
-                        String availableCameraSettings = getStringAttribute("setting");
-                        ArrayList<ExposureSettingMode> availableSettings = CameraHelper.convertInputSettingToSettingMode(availableCameraSettings);
+                        //String availableCameraSettings = getStringAttribute("setting");
+                        //ArrayList<ExposureSettingMode> availableSettings = CameraHelper.convertInputSettingToSettingMode(availableCameraSettings);
 
                         Vector<DataOutput> outputs = new Vector<>();
                         (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
-                        experiment.cameraInput= new CameraInput(mode,
+                        experiment.cameraInput= new CameraInput(
                                 (float) x1,
                                 (float) x2,
                                 (float) y1,
@@ -1959,8 +1927,10 @@ public abstract class PhyphoxFile {
                                 outputs,
                                 experiment.dataLock,
                                 experiment.experimentTimeReference,
-                                availableSettings,
-                                feature);
+                                feature,
+                                autoExposure,
+                                exposureAdjustmentLevel,
+                                editableSettings);
 
                         break;
 

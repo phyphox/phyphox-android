@@ -47,20 +47,25 @@ data class CameraPreviewScreenViewState(
             exposureViewState = exposureViewState.copy(isVisible = false)
         )
 
-    fun enableIntermediateExposureControl(): CameraPreviewScreenViewState =
+    fun enableIntermediateExposureControl(
+        isExposureEnable: Boolean
+    ): CameraPreviewScreenViewState =
         copy(
             shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
             isoButtonViewState = isoButtonViewState.copy(isVisible = false),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = false),
             autoExposureViewState = autoExposureViewState.copy(isVisible = true),
-            exposureViewState = exposureViewState.copy(isVisible = true)
+            exposureViewState = exposureViewState.copy(isVisible = true, isEnabled = isExposureEnable)
         )
 
-    fun enableAdvanceExposureControl(): CameraPreviewScreenViewState =
+    fun enableAdvanceExposureControl(
+        isIsoEnable: Boolean,
+        isShutterSpeedEnable: Boolean,
+        ): CameraPreviewScreenViewState =
         copy(
-            shutterButtonViewState = shutterButtonViewState.copy(isVisible = true),
-            isoButtonViewState = isoButtonViewState.copy(isVisible = true),
-            apertureButtonViewState = apertureButtonViewState.copy(isVisible = false),
+            shutterButtonViewState = shutterButtonViewState.copy(isVisible = true, isEnabled = isShutterSpeedEnable),
+            isoButtonViewState = isoButtonViewState.copy(isVisible = true, isEnabled = isIsoEnable),
+            apertureButtonViewState = apertureButtonViewState.copy(isVisible = true),
             autoExposureViewState = autoExposureViewState.copy(isVisible = true),
             exposureViewState = exposureViewState.copy(isVisible = false)
         )

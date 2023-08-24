@@ -80,6 +80,12 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
                 mediaImage.timestamp)
 
         cameraViewModel.updateImageAnalysisLuminance(brightnessPercentage, t)
+
+        Log.d("Test", "aperture:"+cameraViewModel.cameraInput.apertureDataBuffer.value.toString())
+        Log.d("Test", "iso:"+cameraViewModel.cameraInput.isoDataBuffer.value.toString())
+        Log.d("Test", "shutter:"+cameraViewModel.cameraInput.shutterSpeedDataBuffer.value.toString())
+        Log.d("Test", "exposure:"+cameraViewModel.cameraInput.exposureDataBuffer.value.toString())
+
         cameraViewModel.cameraInput.dataZ.append(brightnessPercentage)
         cameraViewModel.cameraInput.dataT.append(t)
 

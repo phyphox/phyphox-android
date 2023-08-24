@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.camera
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -92,8 +93,6 @@ class CameraPreviewFragment : Fragment() {
                 cameraPreviewScreen.setCameraScreenViewState(state = it)
             }
         }
-
-
 
         lifecycleScope.launch {
             cameraPreviewScreen.action.collectLatest { action ->
@@ -189,7 +188,6 @@ class CameraPreviewFragment : Fragment() {
                         cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
                         cameraViewModel.imageAnalysisPrepared()
 
-
                     }
 
                     CameraState.LOADED -> {
@@ -229,12 +227,18 @@ class CameraPreviewFragment : Fragment() {
                             cameraSettingState
                         )
                         cameraScreenViewState.emit(
-                            cameraScreenViewState.value.updateCameraScreen {
+                            cameraScreenViewState.value.updateCameraScreen { it ->
                                 it.showSwitchLensControl()
                                 when (cameraSettingState.cameraSettingLevel) {
                                     CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
-                                    CameraSettingLevel.INTERMEDIATE -> it.enableIntermediateExposureControl()
-                                    CameraSettingLevel.ADVANCE -> it.enableAdvanceExposureControl()
+                                    CameraSettingLevel.INTERMEDIATE -> it.enableIntermediateExposureControl(true)
+                                    CameraSettingLevel.ADVANCE -> {
+
+                                        val isoEnable = cameraUiState.editableCameraSettings.contains("iso")
+                                        val isoShutter = cameraUiState.editableCameraSettings.contains("shutter_speed")
+
+                                        it.enableAdvanceExposureControl(isoEnable, isoShutter)
+                                    }
                                 }
                             }
                         )

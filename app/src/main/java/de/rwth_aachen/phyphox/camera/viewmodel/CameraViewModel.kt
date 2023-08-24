@@ -96,18 +96,11 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             }
              */
 
-            val availableSettings = listOf(
-                ExposureSettingMode.ISO,
-                ExposureSettingMode.SHUTTER_SPEED,
-                ExposureSettingMode.APERTURE
-            ).filter {
-                cameraInput.cameraSettings.contains(it)
-            }
 
             val newCameraUiState = currentCameraUiState.copy(
                 cameraState = CameraState.READY,
-                availableSettings = availableSettings,
-                availableCameraLens = availableCameraLens
+                availableCameraLens = availableCameraLens,
+                editableCameraSettings = cameraInput.editableSetting
             )
 
             _cameraUiState.emit(newCameraUiState)
@@ -135,8 +128,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 currentExposureValue = cameraInput.currentExposureValue,
                 autoExposure = cameraInput.autoExposure,
                 cameraSettingLevel = when (cameraInput.exposureAdjustmentLevel) {
-                    "1" -> CameraSettingLevel.BASIC
-                    "2" -> CameraSettingLevel.INTERMEDIATE
+                    1 -> CameraSettingLevel.BASIC
+                    2 -> CameraSettingLevel.INTERMEDIATE
                     else -> CameraSettingLevel.ADVANCE
                 }
             )
@@ -425,6 +418,9 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     exposure
                 )
 
+                cameraInput.exposureDataBuffer.clear(true)
+                cameraInput.exposureDataBuffer.append(exposure.toDouble())
+
                 return previewBuilder
             }
             CameraSettingLevel.ADVANCE -> {
@@ -449,6 +445,15 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     CaptureRequest.LENS_APERTURE,
                     aperture
                 )
+
+                cameraInput.shutterSpeedDataBuffer.clear(true)
+                cameraInput.exposureDataBuffer.append(shutterSpeed.toDouble())
+
+                cameraInput.isoDataBuffer.clear(true)
+                cameraInput.isoDataBuffer.append(iso.toDouble())
+
+                cameraInput.apertureDataBuffer.clear(true)
+                cameraInput.apertureDataBuffer.append(aperture.toDouble())
 
                 setupWhiteBalance(cameraSettingValueState, extender)
 
@@ -535,26 +540,31 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         val currentCameraSettingState = _cameraSettingValueState.value
         val currentCameraUiState = _cameraUiState.value
 
-        val newCameraSettingState: CameraSettingValueState = if (settingMode == ExposureSettingMode.ISO) {
-            currentCameraSettingState.copy(
-                currentIsoValue = value.toInt(),
-                exposureSettingState = ExposureSettingState.VALUE_UPDATED
-            )
-        } else if (settingMode == ExposureSettingMode.SHUTTER_SPEED) {
-            currentCameraSettingState.copy(
-                currentShutterValue = CameraHelper.stringToNanoseconds(value),
-                exposureSettingState = ExposureSettingState.VALUE_UPDATED
-            )
-        } else if(settingMode == ExposureSettingMode.WHITE_BALANCE){
-            currentCameraSettingState.copy(
-                cameraCurrentWhiteBalanceMode = CameraHelper.getWhiteBalanceNames().indexOf(value),
-                exposureSettingState = ExposureSettingState.VALUE_UPDATED
-            )
-        }else {
-            currentCameraSettingState.copy(
-                currentExposureValue = value.toFloat(),
-                exposureSettingState = ExposureSettingState.VALUE_UPDATED
-            )
+        val newCameraSettingState: CameraSettingValueState = when (settingMode) {
+            ExposureSettingMode.ISO -> {
+                currentCameraSettingState.copy(
+                    currentIsoValue = value.toInt(),
+                    exposureSettingState = ExposureSettingState.VALUE_UPDATED
+                )
+            }
+            ExposureSettingMode.SHUTTER_SPEED -> {
+                currentCameraSettingState.copy(
+                    currentShutterValue = CameraHelper.stringToNanoseconds(value),
+                    exposureSettingState = ExposureSettingState.VALUE_UPDATED
+                )
+            }
+            ExposureSettingMode.WHITE_BALANCE -> {
+                currentCameraSettingState.copy(
+                    cameraCurrentWhiteBalanceMode = CameraHelper.getWhiteBalanceNames().indexOf(value),
+                    exposureSettingState = ExposureSettingState.VALUE_UPDATED
+                )
+            }
+            else -> {
+                currentCameraSettingState.copy(
+                    currentExposureValue = value.toFloat(),
+                    exposureSettingState = ExposureSettingState.VALUE_UPDATED
+                )
+            }
         }
         viewModelScope.launch {
             _cameraSettingValueState.emit(newCameraSettingState)

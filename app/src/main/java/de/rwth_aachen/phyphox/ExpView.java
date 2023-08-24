@@ -741,26 +741,7 @@ public class ExpView implements Serializable{
             phyphoxExperiment = experiment;
             root_ll = ll;
             this.c = c;
-            layout = new LinearLayout(c);
-            if(Objects.equals(label, "Shutter Speed")){
-                phyphoxExperiment.cameraInput.setShutterSpeedCurrentValue((long) defaultValue);
-                //createSlider(0,0,0, false);
-                return;
-            }
-            if(Objects.equals(label, "ISO")){
-                phyphoxExperiment.cameraInput.setIsoCurrentValue((int) defaultValue);
-                //createSlider(0,0,0, false);
-                return;
-            }
-            if(Objects.equals(label, "Aperture")){
-                phyphoxExperiment.cameraInput.setApertureCurrentValue((float) defaultValue);
-                //createSlider(0,0,0, false);
-                return;
-            }
-            if(Objects.equals(label, "Exposure")){
-                phyphoxExperiment.cameraInput.setCurrentExposureValue((float) defaultValue);
-                return;
-            }
+
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -806,7 +787,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.7f)); //Most of the right half
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            //   et.setPadding((int) labelSize / 2, 0, 0, 0);
+
             et.setTypeface(null, Typeface.BOLD);
 
             //Construct the inputType flags from our own state
@@ -862,129 +843,18 @@ public class ExpView implements Serializable{
             root_ll.addView(rootView);
 
             //Add a listener to the edit box to keep track of the focus
-            et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                public void onFocusChange(View v, boolean hasFocus) {
-                    focused = hasFocus;
-                    if (!hasFocus) {
-                        setValue(getValue()); //Write back the value actually used...
-                        triggered = true;
-                    }
+            et.setOnFocusChangeListener((v, hasFocus) -> {
+                focused = hasFocus;
+                if (!hasFocus) {
+                    setValue(getValue()); //Write back the value actually used...
+                    triggered = true;
                 }
             });
 
-            et.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    et.clearFocus();
-                    return true;
-                }
+            et.setOnEditorActionListener((textView, i, keyEvent) -> {
+                et.clearFocus();
+                return true;
             });
-
-        }
-
-        LinearLayout layout;
-
-        public void removeSlider(){
-            if(layout != null){
-                layout.removeAllViews();
-            }
-
-        }
-
-        public void createSlider(int minValue, int maxValue, int currentValue, boolean visibility) {
-            layout.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-            layout.setOrientation(LinearLayout.VERTICAL);
-            layout.setPadding(0,10,0,10);
-
-            TextView textRow = new TextView(c);
-            textRow.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            textRow.setPadding(3,3,3,3);
-            textRow.setSingleLine();
-            textRow.setText(label);
-            textRow.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
-
-            LinearLayout row = new LinearLayout(c);
-            row.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setPadding(0,10,0,10);
-
-            TextView textView = new TextView(c);
-            textView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            textView.setPadding(3,3,3,3);
-            textView.setSingleLine();
-            textView.setText(String.valueOf(minValue));
-            textView.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
-
-            seekBar = new AppCompatSeekBar(c);
-            LinearLayout.LayoutParams seekBarParams = new LinearLayout.LayoutParams(
-                    0, // Set width to 0
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    1 // Set weight to 1 for equal distribution
-            );
-            seekBarParams.setMargins(16, 0, 16, 0);
-            seekBar.setLayoutParams(seekBarParams);
-            seekBar.setPadding(0,0,0,0);
-            seekBar.setMax(maxValue);
-            seekBar.setProgress(currentValue);
-            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    Log.d("CameraSetting", progress + "");
-                    if(Objects.equals(label, "Shutter Speed")){
-                        settingChangeListener.onProgressChange(ExposureSettingMode.SHUTTER_SPEED, progress);
-                    }
-                    if(Objects.equals(label, "ISO")){
-                        settingChangeListener.onProgressChange(ExposureSettingMode.ISO, progress);
-                    }
-                    if(Objects.equals(label, "Aperture")){
-                        settingChangeListener.onProgressChange(ExposureSettingMode.APERTURE, progress);
-                    }
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
-            });
-
-            TextView textView1 = new TextView(c);
-            textView1.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            textView1.setPadding(3,3,3,3);
-            textView1.setGravity(Gravity.END);
-            textView1.setSingleLine();
-            textView1.setText(String.valueOf(maxValue));
-            textView1.setTextColor(c.getResources().getColor(R.color.phyphox_white_50_black_50));
-
-            row.addView(textView);
-            row.addView(seekBar);
-            row.addView(textView1);
-
-            layout.addView(textRow);
-            layout.addView(row);
-
-            if(visibility) layout.setVisibility(VISIBLE);
-            else layout.setVisibility(View.GONE);
-
-            root_ll.removeView(layout);
-            root_ll.addView(layout);
 
         }
 
@@ -2455,8 +2325,6 @@ public class ExpView implements Serializable{
             FragmentManager fragmentManager = parent.getChildFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-            experiment.cameraInput.setAutoExposure(exposure);
-            experiment.cameraInput.setExposureAdjustmentLevel(exposureAdjustmentLevel);
             Bundle args = new Bundle();
             args.putSerializable(CameraHelper.EXPERIMENT_ARG, experiment);
             cameraPreviewFragment.setArguments(args);
