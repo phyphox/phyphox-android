@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox.camera.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.graphics.Paint.Cap
 import android.graphics.Rect
 import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
@@ -30,7 +29,6 @@ import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.helper.ImageAnalyser
-import de.rwth_aachen.phyphox.camera.helper.PhotometricReader
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
 import de.rwth_aachen.phyphox.camera.model.ExposureSettingState
@@ -100,7 +98,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             val newCameraUiState = currentCameraUiState.copy(
                 cameraState = CameraState.READY,
                 availableCameraLens = availableCameraLens,
-                editableCameraSettings = cameraInput.editableSetting
+                editableCameraSettings = cameraInput.lockedSettings
             )
 
             _cameraUiState.emit(newCameraUiState)

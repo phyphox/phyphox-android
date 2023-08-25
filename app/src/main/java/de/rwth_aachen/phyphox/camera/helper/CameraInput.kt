@@ -40,7 +40,7 @@ class CameraInput() {
     var currentExposureValue: Float = 0.0f
     var exposureAdjustmentLevel: Int = 1
     lateinit var cameraFeature : PhyphoxCameraFeature
-    var editableSetting = mutableListOf<String>()
+    var lockedSettings: MutableMap<String,String>? = mutableMapOf()
 
     // Status of the play and pause for image analysis
     var measuring = false
@@ -58,7 +58,7 @@ class CameraInput() {
                 cameraFeature: PhyphoxCameraFeature,
                 autoExposure: Boolean,
                 exposureAdjustmentLevel: Int,
-                editableSetting: String) : this() {
+                lockedSettings: String?) : this() {
 
         this.x1 = x1
         this.x2 = x2
@@ -70,12 +70,25 @@ class CameraInput() {
         this.autoExposure = autoExposure
         this.exposureAdjustmentLevel = exposureAdjustmentLevel
 
-        // convert string -> "[shutter,exposure]" to mutable list
-        this.editableSetting = editableSetting
-            .trim('[', ']')
-            .split(", ")
-            .map { it.trim() }
-            .toMutableList()
+        // convert string -> "shutter=1/60,exposure=0.0" to map
+        val lockedSettingsChar = lockedSettings?.split(",")
+        lockedSettingsChar?.let { chars ->
+            for(pair in chars){
+                val (key, value) = pair.split("=")
+                this.lockedSettings?.set(key.trim(), value.trim())
+            }
+        }
+
+
+        /*
+        * Lock the camera settings:
+        * case 1: can be empty or the element is not there at all
+        * case 2: can be one or 4 settings (for now fixed)
+        * case 3: values can be empty so need to handle it as well
+        * case 4: should handle - shutter_speed, aperture(?), iso, exposure,
+        *
+        * */
+
 
         shutterSpeedCurrentValue = CameraHelper.stringToNanoseconds("1/60")
 

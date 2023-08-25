@@ -14,7 +14,7 @@ data class CameraUiState  constructor(
     val cameraState: CameraState = CameraState.NOT_READY,
     val availableSettings: List<ExposureSettingMode> = emptyList(),
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
-    val editableCameraSettings: MutableList<String> = mutableListOf(),
+    val editableCameraSettings: MutableMap<String, String>? = mutableMapOf(),
     val cameraLens: Int = LENS_FACING_BACK,
     val cameraHeight: Int = 0,
     val cameraWidth: Int = 0,

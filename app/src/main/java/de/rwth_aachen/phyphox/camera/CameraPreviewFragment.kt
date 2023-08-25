@@ -234,10 +234,10 @@ class CameraPreviewFragment : Fragment() {
                                     CameraSettingLevel.INTERMEDIATE -> it.enableIntermediateExposureControl(true)
                                     CameraSettingLevel.ADVANCE -> {
 
-                                        val isoEnable = cameraUiState.editableCameraSettings.contains("iso")
-                                        val isoShutter = cameraUiState.editableCameraSettings.contains("shutter_speed")
+                                        val isoLocked = cameraUiState.editableCameraSettings?.contains("iso")
+                                        val shutterLocked = cameraUiState.editableCameraSettings?.contains("shutter_speed")
 
-                                        it.enableAdvanceExposureControl(isoEnable, isoShutter)
+                                        it.enableAdvanceExposureControl(isoLocked == null, shutterLocked == null)
                                     }
                                 }
                             }

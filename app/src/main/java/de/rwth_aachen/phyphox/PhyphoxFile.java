@@ -1869,8 +1869,7 @@ public abstract class PhyphoxFile {
 
                         boolean autoExposure = getBooleanAttribute("auto_exposure", true);
                         int exposureAdjustmentLevel = getIntAttribute("exposure_adjustment_level", 1);
-                        String editableSettings = getStringAttribute("editable");
-
+                        String lockedSetting = getStringAttribute("locked");
 
                         String featureStr = getStringAttribute("feature");
                         if(featureStr == null)
@@ -1930,7 +1929,7 @@ public abstract class PhyphoxFile {
                                 feature,
                                 autoExposure,
                                 exposureAdjustmentLevel,
-                                editableSettings);
+                                lockedSetting.isEmpty() ? null : lockedSetting);
 
                         break;
 
