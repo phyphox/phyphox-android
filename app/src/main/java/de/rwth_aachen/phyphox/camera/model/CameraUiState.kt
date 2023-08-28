@@ -2,6 +2,8 @@ package de.rwth_aachen.phyphox.camera.model
 
 import android.graphics.Rect
 import android.os.Build
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
@@ -29,9 +31,7 @@ data class CameraUiState  constructor(
 enum class CameraState {
     NOT_READY,
     READY,
-    LOADED,
-    PREVIEW_IN_BACKGROUND,
-    PREVIEW_STOPPED
+    LOADED
 }
 
 enum class OverlayUpdateState {
@@ -121,3 +121,15 @@ enum class ImageAnalysisState{
     IMAGE_ANALYSIS_FINISHED,
     IMAGE_ANALYSIS_FAILED
 }
+
+
+data class ImageButtonViewState(
+    val imageView: ImageView,
+    val drawableResId: Int,
+    val isEnabled: Boolean
+)
+
+data class TextViewCameraSettingViewState(
+    val textView: TextView,
+    val isEnabled: Boolean
+)

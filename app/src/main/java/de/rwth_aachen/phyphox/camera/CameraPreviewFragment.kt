@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox.camera
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -39,16 +38,16 @@ import kotlinx.coroutines.launch
 class CameraPreviewFragment : Fragment() {
     val TAG = "CameraPreviewFragment"
 
-    // view model to setup and update camera
+    /* view model to setup and update camera */
     private lateinit var cameraViewModel: CameraViewModel
 
-    // handles all the UI elements for camera preview
+    /* handles all the UI elements for camera preview */
     private lateinit var cameraPreviewScreen: CameraPreviewScreen
 
-    //tracks the current view state
+    /* tracks the current view state */
     private val cameraScreenViewState = MutableStateFlow(CameraScreenViewState())
 
-    //holds experiment info/object
+    /* holds all the experiment information */
     private var experiment: PhyphoxExperiment? = null
 
     override fun onCreateView(
@@ -90,7 +89,7 @@ class CameraPreviewFragment : Fragment() {
 
         lifecycleScope.launch {
             cameraScreenViewState.collectLatest {
-                cameraPreviewScreen.setCameraScreenViewState(state = it)
+                cameraPreviewScreen.updateCameraScreenViewState(state = it)
             }
         }
 
@@ -153,189 +152,193 @@ class CameraPreviewFragment : Fragment() {
 
 
         lifecycleScope.launch {
-            cameraViewModel.cameraUiState.combine(cameraViewModel.cameraSettingValueState) { cameraUiState, cameraSettingState ->
-                Pair(cameraUiState, cameraSettingState)
-            }.collectLatest { (cameraUiState, cameraSettingState) ->
+            cameraViewModel
+                .cameraUiState
+                .combine(cameraViewModel.cameraSettingValueState)
+                { cameraUiState, cameraSettingState -> Pair(cameraUiState, cameraSettingState) }
+                .collectLatest { (cameraUiState, cameraSettingState) ->
 
-                when (cameraUiState.cameraState) {
-                    CameraState.NOT_READY -> {
-                        cameraScreenViewState.emit(
-                            cameraScreenViewState.value
-                                .updateCameraScreen {
-                                    it.hideCameraControls()
-                                }
-                        )
-                        cameraViewModel.initializeCamera()
-                    }
+                    when (cameraUiState.cameraState) {
+                        CameraState.NOT_READY -> cameraViewModel.initializeCamera()
 
-                    CameraState.READY -> {
-                        cameraPreviewScreen.previewView.doOnLayout {
-                            cameraViewModel.startCameraPreviewView(
-                                cameraPreviewScreen.previewView,
-                                lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner,
-                                cameraSettingState.autoExposure
-                            )
-                        }
-                        cameraScreenViewState.emit(
-                            cameraScreenViewState.value
-                                .updateCameraScreen { cameraScreen ->
-                                    cameraScreen
-                                        .showSwitchLens(true)
-                                        .enableAutoFocus(cameraSettingState.autoExposure)
-
-                                }
-                        )
-                        cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
-                        cameraViewModel.imageAnalysisPrepared()
-
-                    }
-
-                    CameraState.LOADED -> {
-                        cameraScreenViewState.emit(
-                            cameraScreenViewState.value.updateCameraScreen { cameraScreen ->
-                                val opticalZooms =
-                                    CameraHelper.getAvailableOpticalZoomList(cameraSettingState.cameraMaxOpticalZoom)
-
-                                val widerAngleAvailable = cameraSettingState.cameraMinZoomRatio < 1.0f
-                                val defaultZoom = opticalZooms.isNotEmpty()
-                                val twoTimesZoomAvailable = opticalZooms.contains(2)
-                                val fiveTimesZoomAvailable = opticalZooms.contains(5)
-                                val tenTimesZoomAvailable = opticalZooms.contains(10)
-
-                                cameraScreen.setupOpticalZoomButtonVisibility(
-                                    widerAngleAvailable,
-                                    defaultZoom,
-                                    twoTimesZoomAvailable,
-                                    fiveTimesZoomAvailable,
-                                    tenTimesZoomAvailable
+                        CameraState.READY -> {
+                            cameraPreviewScreen.previewView.doOnLayout {
+                                cameraViewModel.startCameraPreviewView(
+                                    cameraPreviewScreen.previewView,
+                                    lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner,
+                                    cameraSettingState.autoExposure
                                 )
-
                             }
-                        )
-                        cameraPreviewScreen.setupZoomControl(cameraSettingState)
-                        cameraPreviewScreen.setUpWhiteBalanceControl(cameraSettingState)
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen { cameraScreen ->
+                                        cameraScreen
+                                            .showSwitchLens(true)
+                                            .enableAutoFocus(cameraSettingState.autoExposure)
+
+                                    }
+                            )
+                            cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
+                            cameraViewModel.cameraReady()
+
+                        }
+
+                        CameraState.LOADED -> {
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen { cameraScreen ->
+                                    val opticalZooms =
+                                        CameraHelper.getAvailableOpticalZoomList(cameraSettingState.cameraMaxOpticalZoom)
+
+                                    cameraScreen.setupOpticalZoomButtonVisibility(
+                                        cameraSettingState.cameraMinZoomRatio < 1.0f,
+                                        opticalZooms.isNotEmpty(),
+                                        opticalZooms.contains(2),
+                                        opticalZooms.contains(5),
+                                        opticalZooms.contains(10)
+                                    )
+
+                                }
+                            )
+                            cameraPreviewScreen.setupZoomControl(cameraSettingState)
+                            cameraPreviewScreen.setUpWhiteBalanceControl(cameraSettingState)
+                        }
+
                     }
 
-                    CameraState.PREVIEW_IN_BACKGROUND -> Unit
-                    CameraState.PREVIEW_STOPPED -> Unit
-                }
+                    when (cameraSettingState.exposureSettingState) {
+                        ExposureSettingState.NOT_READY -> cameraViewModel.loadAndSetupExposureSettingRanges()
 
-                when (cameraSettingState.exposureSettingState) {
-                    ExposureSettingState.NOT_READY -> cameraViewModel.loadAndSetupExposureSettingRanges()
-                    ExposureSettingState.LOADED -> {
-                        cameraPreviewScreen.setCurrentValueInExposureSettingTextView(
-                            cameraSettingState
-                        )
-                        cameraScreenViewState.emit(
-                            cameraScreenViewState.value.updateCameraScreen { it ->
-                                it.showSwitchLensControl()
-                                when (cameraSettingState.cameraSettingLevel) {
-                                    CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
-                                    CameraSettingLevel.INTERMEDIATE -> it.enableIntermediateExposureControl(true)
-                                    CameraSettingLevel.ADVANCE -> {
+                        ExposureSettingState.LOADED -> {
+                            cameraPreviewScreen.setCurrentValueInCameraSettingTextView(cameraSettingState)
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen { it ->
+                                    it.showSwitchLensControl()
 
-                                        val isoLocked = cameraUiState.editableCameraSettings?.contains("iso")
-                                        val shutterLocked = cameraUiState.editableCameraSettings?.contains("shutter_speed")
+                                    when (cameraSettingState.cameraSettingLevel) {
+                                        CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
 
-                                        it.enableAdvanceExposureControl(isoLocked == null, shutterLocked == null)
+                                        CameraSettingLevel.INTERMEDIATE -> {
+                                            val exposureLocked =
+                                                cameraUiState.editableCameraSettings?.contains("exposure") ?: false
+
+                                            // if exposure is locked, then disable the exposure click
+                                            if (cameraSettingState.autoExposure)
+                                                it.enableIntermediateExposureControl(exposureLocked)
+                                            else
+                                                it.enableIntermediateExposureControl(exposureLocked)
+                                                    .setCameraSettingsClickability(false)
+                                        }
+
+                                        CameraSettingLevel.ADVANCE -> {
+
+                                            val isoLocked =
+                                                cameraUiState.editableCameraSettings?.contains("iso") ?: false
+
+                                            val shutterLocked =
+                                                cameraUiState.editableCameraSettings?.contains("shutter_speed") ?: false
+
+                                            if (cameraSettingState.autoExposure)
+                                                it.enableAdvanceExposureControl(isoLocked, shutterLocked)
+                                            else
+                                                it.enableAdvanceExposureControl(isoLocked, shutterLocked)
+                                                    .setCameraSettingsClickability(false)
+                                        }
                                     }
                                 }
-                            }
-                        )
-                    }
-
-                    ExposureSettingState.LOADING_FAILED -> Unit
-                    ExposureSettingState.LOAD_LIST -> {
-
-                        // When clicking an Exposure settings, hide or show the RecyclerView, which is
-                        // showing the list of Exposure values to select from.
-                        if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.HIDDEN) {
-                            cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = true)
-                        } else {
-                            cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
-                            cameraPreviewScreen.recyclerLoadingFinished()
-                            return@collectLatest
+                            )
                         }
 
-                        // Get the current organized Exposure value as per the Exposure Mode,
-                        // which is mapped from the raw value provided by camera API
-                        val currentValue = when (cameraSettingState.settingMode) {
-                            ExposureSettingMode.ISO -> cameraSettingState.isoRange?.map { it.toInt() }
-                                ?.let { isoRange ->
-                                    CameraHelper.findIsoNearestNumber(
-                                        cameraSettingState.currentIsoValue,
-                                        isoRange
-                                    )
+                        ExposureSettingState.LOADING_FAILED -> Unit
+                        ExposureSettingState.LOAD_LIST -> {
+
+                            // When clicking an Exposure settings, hide or show the RecyclerView, which is
+                            // showing the list of Exposure values to select from.
+                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.HIDDEN) {
+                                cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = true)
+                            } else {
+                                cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
+                                cameraPreviewScreen.recyclerLoadingFinished()
+                                return@collectLatest
+                            }
+
+                            // Get the current organized Exposure value as per the Exposure Mode,
+                            // which is mapped from the raw value provided by camera API
+                            val currentValue = when (cameraSettingState.settingMode) {
+                                ExposureSettingMode.ISO -> cameraSettingState.isoRange?.map { it.toInt() }
+                                    ?.let { isoRange ->
+                                        CameraHelper.findIsoNearestNumber(
+                                            cameraSettingState.currentIsoValue,
+                                            isoRange
+                                        )
+                                    }
+
+                                ExposureSettingMode.SHUTTER_SPEED -> {
+                                    val fraction =
+                                        CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
+                                    "${fraction.numerator}/${fraction.denominator}"
                                 }
 
-                            ExposureSettingMode.SHUTTER_SPEED -> {
-                                val fraction =
-                                    CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
-                                "${fraction.numerator}/${fraction.denominator}"
+                                ExposureSettingMode.APERTURE -> cameraSettingState.currentApertureValue
+
+                                ExposureSettingMode.EXPOSURE ->
+                                    CameraHelper.getActualValueFromExposureCompensation(
+                                        cameraSettingState.currentExposureValue,
+                                        cameraSettingState.exposureStep
+                                    )
+
+                                ExposureSettingMode.WHITE_BALANCE -> CameraHelper.getWhiteBalanceNames()
+                                    .get(cameraSettingState.cameraCurrentWhiteBalanceMode)
+
+                                else -> ""
+                            }.toString()
+
+
+                            val exposureSettingRange = when (cameraSettingState.settingMode) {
+                                ExposureSettingMode.ISO -> cameraSettingState.isoRange
+                                ExposureSettingMode.SHUTTER_SPEED -> cameraSettingState.shutterSpeedRange
+                                ExposureSettingMode.APERTURE -> cameraSettingState.apertureRange
+                                ExposureSettingMode.EXPOSURE -> cameraSettingState.exposureRange
+                                ExposureSettingMode.WHITE_BALANCE ->
+                                    if (cameraSettingState.cameraMaxRegionAWB == 0)
+                                        CameraHelper.getWhiteBalanceNames()
+                                            .filter { it != "Manual" }
+                                    else
+                                        CameraHelper.getWhiteBalanceNames()
+
+                                else -> emptyList()
                             }
 
-                            ExposureSettingMode.APERTURE -> cameraSettingState.currentApertureValue
-                            ExposureSettingMode.EXPOSURE ->
-                                CameraHelper.getActualValueFromExposureCompensation(
-                                    cameraSettingState.currentExposureValue,
-                                    cameraSettingState.exposureStep
-                                )
-
-                            ExposureSettingMode.WHITE_BALANCE -> CameraHelper.getWhiteBalanceNames()
-                                .get(cameraSettingState.cameraCurrentWhiteBalanceMode)
-
-                            else -> ""
-                        }.toString()
-
-
-                        val exposureSettingRange = when (cameraSettingState.settingMode) {
-                            ExposureSettingMode.ISO -> cameraSettingState.isoRange
-                            ExposureSettingMode.SHUTTER_SPEED -> cameraSettingState.shutterSpeedRange
-                            ExposureSettingMode.APERTURE -> cameraSettingState.apertureRange
-                            ExposureSettingMode.EXPOSURE -> cameraSettingState.exposureRange
-                            ExposureSettingMode.WHITE_BALANCE ->
-                                if (cameraSettingState.cameraMaxRegionAWB == 0)
-                                    CameraHelper.getWhiteBalanceNames().filter { it != "Manual" }
-                                else
-                                    CameraHelper.getWhiteBalanceNames()
-
-                            else -> emptyList()
+                            cameraPreviewScreen.populateAndShowCameraSettingValue(
+                                exposureSettingRange,
+                                cameraSettingState.settingMode,
+                                currentValue
+                            )
                         }
 
-                        cameraPreviewScreen.populateAndShowCameraSettingValue(
-                            exposureSettingRange,
-                            cameraSettingState.settingMode,
-                            currentValue
-                        )
-                    }
-
-                    ExposureSettingState.VALUE_UPDATED -> {
-                        //cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen { it.hideRecyclerView() })
-                        //cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
-                        cameraPreviewScreen.setCameraSettingButtonValue(cameraSettingState)
-                        cameraPreviewScreen.setWhiteBalanceSliderVisibility(cameraSettingState)
-                    }
-
-                    ExposureSettingState.LOAD_FINISHED -> {
-                        if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN) {
-                            cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
-                                it.showRecyclerView()
-                            })
-                        } else {
-                            cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
-                                it.hideRecyclerView()
-                            })
+                        ExposureSettingState.VALUE_UPDATED -> {
+                            cameraPreviewScreen.setCameraSettingButtonValue(cameraSettingState)
+                            cameraPreviewScreen.setWhiteBalanceSliderVisibility(cameraSettingState)
                         }
+
+                        ExposureSettingState.LOAD_FINISHED -> {
+                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN) {
+                                cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
+                                    it.showRecyclerView()
+                                })
+                            } else {
+                                cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
+                                    it.hideRecyclerView()
+                                })
+                            }
+                        }
+
                     }
 
+                    when (cameraUiState.overlayUpdateState) {
+                        OverlayUpdateState.NO_UPDATE -> Unit
+                        OverlayUpdateState.UPDATE -> cameraPreviewScreen.updateOverlay(cameraUiState)
+                        OverlayUpdateState.UPDATE_DONE -> Unit
+                    }
                 }
-
-                when (cameraUiState.overlayUpdateState) {
-                    OverlayUpdateState.NO_UPDATE -> Unit
-                    OverlayUpdateState.UPDATE -> cameraPreviewScreen.updateOverlay(cameraUiState)
-                    OverlayUpdateState.UPDATE_DONE -> Unit
-                }
-            }
         }
 
     }

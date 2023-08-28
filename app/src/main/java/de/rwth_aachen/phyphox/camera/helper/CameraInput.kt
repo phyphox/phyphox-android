@@ -5,11 +5,13 @@ import androidx.annotation.RequiresApi
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
 import java.util.Vector
 import java.util.concurrent.locks.Lock
 import kotlin.properties.Delegates
 
+/*
+* Takes the essential input from the PhyphoxExperiment which are provided from XML.
+* */
 class CameraInput() {
 
     // Represents the ratio of the overlay in camera preview to the actual size of the preview
@@ -29,9 +31,6 @@ class CameraInput() {
     // List of buffers (variables) that is provided in the xml
     lateinit var buffers: Vector<DataOutput>
 
-    // List of camera setting that is available to control the camera sensor
-    var cameraSettings = ArrayList<ExposureSettingMode>()
-
     var autoExposure: Boolean = true
 
     var isoCurrentValue: Int = 100
@@ -39,8 +38,8 @@ class CameraInput() {
     var apertureCurrentValue: Float = 1.0f
     var currentExposureValue: Float = 0.0f
     var exposureAdjustmentLevel: Int = 1
-    lateinit var cameraFeature : PhyphoxCameraFeature
-    var lockedSettings: MutableMap<String,String>? = mutableMapOf()
+    lateinit var cameraFeature: PhyphoxCameraFeature
+    var lockedSettings: MutableMap<String, String>? = mutableMapOf()
 
     // Status of the play and pause for image analysis
     var measuring = false
@@ -48,17 +47,19 @@ class CameraInput() {
     lateinit var experimentTimeReference: ExperimentTimeReference
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    constructor(x1: Float,
-                x2: Float,
-                y1: Float,
-                y2: Float,
-                buffers: Vector<DataOutput>,
-                lock: Lock,
-                experimentTimeReference: ExperimentTimeReference,
-                cameraFeature: PhyphoxCameraFeature,
-                autoExposure: Boolean,
-                exposureAdjustmentLevel: Int,
-                lockedSettings: String?) : this() {
+    constructor(
+        x1: Float,
+        x2: Float,
+        y1: Float,
+        y2: Float,
+        buffers: Vector<DataOutput>,
+        lock: Lock,
+        experimentTimeReference: ExperimentTimeReference,
+        cameraFeature: PhyphoxCameraFeature,
+        autoExposure: Boolean,
+        exposureAdjustmentLevel: Int,
+        lockedSettings: String?
+    ) : this() {
 
         this.x1 = x1
         this.x2 = x2
@@ -70,27 +71,6 @@ class CameraInput() {
         this.autoExposure = autoExposure
         this.exposureAdjustmentLevel = exposureAdjustmentLevel
 
-        // convert string -> "shutter=1/60,exposure=0.0" to map
-        val lockedSettingsChar = lockedSettings?.split(",")
-        lockedSettingsChar?.let { chars ->
-            for(pair in chars){
-                val (key, value) = pair.split("=")
-                this.lockedSettings?.set(key.trim(), value.trim())
-            }
-        }
-
-
-        /*
-        * Lock the camera settings:
-        * case 1: can be empty or the element is not there at all
-        * case 2: can be one or 4 settings (for now fixed)
-        * case 3: values can be empty so need to handle it as well
-        * case 4: should handle - shutter_speed, aperture(?), iso, exposure,
-        *
-        * */
-
-
-        shutterSpeedCurrentValue = CameraHelper.stringToNanoseconds("1/60")
 
         if (buffers.size > 0 && buffers[0] != null) dataZ = buffers[0].buffer
         if (buffers.size > 1 && buffers[1] != null) dataT = buffers[1].buffer
@@ -99,6 +79,8 @@ class CameraInput() {
         if (buffers.size > 3 && buffers[3] != null) isoDataBuffer = buffers[3].buffer
         if (buffers.size > 4 && buffers[4] != null) apertureDataBuffer = buffers[4].buffer
         if (buffers.size > 5 && buffers[5] != null) exposureDataBuffer = buffers[5].buffer
+
+        setDefaultCameraSettingValueIfAvailable(lockedSettings)
 
     }
 
@@ -112,6 +94,45 @@ class CameraInput() {
 
     fun stop() {
         measuring = false
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    fun setDefaultCameraSettingValueIfAvailable(setting: String?) {
+        parseMapFromString(setting)
+
+        shutterSpeedCurrentValue = CameraHelper.stringToNanoseconds("1/60")
+
+        lockedSettings?.get("iso")?.takeIf(String::isNotEmpty)?.toIntOrNull()?.let {
+            isoCurrentValue = it
+        }
+
+        lockedSettings?.get("shutter_speed")?.takeIf(String::isNotEmpty)?.let {
+            shutterSpeedCurrentValue = CameraHelper.stringToNanoseconds(it)
+        }
+
+        lockedSettings?.get("exposure")?.takeIf(String::isNotEmpty)?.toFloatOrNull()?.let {
+            currentExposureValue = it
+        }
+
+    }
+
+    /*
+   * Input as String = "shutter_speed=1/60, iso=100"
+   * Output as Map<String,String> = {shutter_speed = 1/60, iso = 100}
+   * */
+    private fun parseMapFromString(setting: String?) {
+        val lockedSettingsChar = setting?.split(",")
+        lockedSettingsChar?.let { chars ->
+            for (pair in chars) {
+                // User might not provide the default value
+                if (!pair.contains("=")) {
+                    this.lockedSettings?.set(key = pair.trim(), value = "")
+                } else {
+                    val (key, value) = pair.split("=")
+                    this.lockedSettings?.set(key.trim(), value.trim())
+                }
+            }
+        }
     }
 
 }

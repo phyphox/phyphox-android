@@ -34,6 +34,14 @@ data class CameraPreviewScreenViewState(
     fun enableAutoFocus(isEnabled: Boolean) : CameraPreviewScreenViewState =
         copy(autoExposureViewState = autoExposureViewState.copy(isEnabled = isEnabled ))
 
+    fun setCameraSettingsClickability(isEnabled: Boolean) : CameraPreviewScreenViewState =
+        copy(
+            shutterButtonViewState = shutterButtonViewState.copy(isEnabled = isEnabled),
+            isoButtonViewState = isoButtonViewState.copy(isEnabled = isEnabled),
+            apertureButtonViewState = apertureButtonViewState.copy(isEnabled = isEnabled),
+            exposureViewState = exposureViewState.copy(isEnabled = isEnabled),
+        )
+
     fun enableExposure(isEnabled: Boolean) : CameraPreviewScreenViewState =
         copy(exposureViewState = exposureViewState.copy(isVisible = isEnabled ))
 
@@ -47,24 +55,24 @@ data class CameraPreviewScreenViewState(
             exposureViewState = exposureViewState.copy(isVisible = false)
         )
 
-    fun enableIntermediateExposureControl(
-        isExposureEnable: Boolean
+    fun  enableIntermediateExposureControl(
+        isExposureLocked: Boolean
     ): CameraPreviewScreenViewState =
         copy(
             shutterButtonViewState = shutterButtonViewState.copy(isVisible = false),
             isoButtonViewState = isoButtonViewState.copy(isVisible = false),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = false),
             autoExposureViewState = autoExposureViewState.copy(isVisible = true),
-            exposureViewState = exposureViewState.copy(isVisible = true, isEnabled = isExposureEnable)
+            exposureViewState = exposureViewState.copy(isVisible = true, isEnabled = !isExposureLocked)
         )
 
     fun enableAdvanceExposureControl(
-        isIsoEnable: Boolean,
-        isShutterSpeedEnable: Boolean,
+        isIsoLocked: Boolean,
+        isShutterSpeedLocked: Boolean,
         ): CameraPreviewScreenViewState =
         copy(
-            shutterButtonViewState = shutterButtonViewState.copy(isVisible = true, isEnabled = isShutterSpeedEnable),
-            isoButtonViewState = isoButtonViewState.copy(isVisible = true, isEnabled = isIsoEnable),
+            shutterButtonViewState = shutterButtonViewState.copy(isVisible = true, isEnabled = !isShutterSpeedLocked),
+            isoButtonViewState = isoButtonViewState.copy(isVisible = true, isEnabled = !isIsoLocked),
             apertureButtonViewState = apertureButtonViewState.copy(isVisible = true, isEnabled = false),
             autoExposureViewState = autoExposureViewState.copy(isVisible = true),
             exposureViewState = exposureViewState.copy(isVisible = false)
@@ -83,15 +91,15 @@ data class CameraPreviewScreenViewState(
         showWiderAngle: Boolean,
         showDefault: Boolean,
         showTwoTimes: Boolean,
-        shoeFiveTimes: Boolean,
-        shoeTenTimes: Boolean
+        showFiveTimes: Boolean,
+        showTenTimes: Boolean
     ): CameraPreviewScreenViewState =
         copy(
             widerAngleButtonViewState = widerAngleButtonViewState.copy(isVisible = showWiderAngle),
             defaultButtonViewState = defaultButtonViewState.copy(isVisible = showDefault),
             twoTimesButtonViewState = twoTimesButtonViewState.copy(isVisible = showTwoTimes),
-            fiveTimesButtonViewState = fiveTimesButtonViewState.copy(isVisible = shoeFiveTimes),
-            tenTimesButtonViewState = tenTimesButtonViewState.copy(isVisible = shoeTenTimes),
+            fiveTimesButtonViewState = fiveTimesButtonViewState.copy(isVisible = showFiveTimes),
+            tenTimesButtonViewState = tenTimesButtonViewState.copy(isVisible = showTenTimes),
 
             )
 

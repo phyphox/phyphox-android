@@ -9,7 +9,6 @@ import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.PorterDuff
 import android.graphics.RectF
-import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
 import android.util.Log
@@ -45,6 +44,8 @@ import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
+import de.rwth_aachen.phyphox.camera.model.ImageButtonViewState
+import de.rwth_aachen.phyphox.camera.model.TextViewCameraSettingViewState
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
@@ -285,7 +286,6 @@ class CameraPreviewScreen(
             }
         }
 
-
         zoomSlider.setLabelFormatter { value: Float ->
             if (zoomRatio.size != 0) {
                 val mappedValue = zoomRatio[value.toInt()]
@@ -301,45 +301,41 @@ class CameraPreviewScreen(
             buttonWiderAngle.visibility = View.GONE
         }
 
-        val df = DecimalFormat("#.#")
-        df.roundingMode = RoundingMode.FLOOR
-        buttonWiderAngle.text = df.format(cameraSettingState.cameraMinZoomRatio) +"x"
-        buttonWiderAngle.setOnClickListener {
-            changeZoomButtonColor(SelectedZoomButton.None)
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(cameraSettingState.cameraMinZoomRatio)
-            zoomSlider.value = zoomRatio.indexOf(zoomRatio.first()).toFloat()
-            changeZoomButtonColor(SelectedZoomButton.WiderAngle)
-        }
+        buttonWiderAngle.text = DecimalFormat("#.#")
+                .apply { roundingMode = RoundingMode.FLOOR }
+                .format(cameraSettingState.cameraMinZoomRatio)
+                .plus("x")
 
-        buttonDefaultZoom.setOnClickListener {
-            changeZoomButtonColor(SelectedZoomButton.None)
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(1.0f)
-            zoomSlider.value = zoomRatio.indexOf(1.0f).toFloat()
-            changeZoomButtonColor(SelectedZoomButton.Default)
-        }
-
-        buttonZoomTwoTimes.setOnClickListener {
-            changeZoomButtonColor(SelectedZoomButton.None)
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(2.0f)
-            zoomSlider.value = zoomRatio.indexOf(2.0f).toFloat()
-            changeZoomButtonColor(SelectedZoomButton.TwoTimes)
-        }
-
-        buttonZoomFiveTimes.setOnClickListener {
-            changeZoomButtonColor(SelectedZoomButton.None)
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(5.0f)
-            zoomSlider.value = zoomRatio.indexOf(5.0f).toFloat()
-            changeZoomButtonColor(SelectedZoomButton.FiveTimes)
-        }
-
-        buttonZoomTenTimes.setOnClickListener {
-            changeZoomButtonColor(SelectedZoomButton.None)
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(10.0f)
-            zoomSlider.value = zoomRatio.indexOf(10.0f).toFloat()
-            changeZoomButtonColor(SelectedZoomButton.TenTimes)
-        }
+        setZoomButtonClickListener(cameraSettingState.cameraMinZoomRatio, SelectedZoomButton.WiderAngle, zoomRatio)
+        setZoomButtonClickListener(1.0f, SelectedZoomButton.Default,  zoomRatio)
+        setZoomButtonClickListener(2.0f, SelectedZoomButton.TwoTimes,  zoomRatio)
+        setZoomButtonClickListener(5.0f, SelectedZoomButton.FiveTimes,  zoomRatio)
+        setZoomButtonClickListener(10.0f, SelectedZoomButton.TenTimes,  zoomRatio)
 
     }
+
+    private fun setZoomButtonClickListener(
+        zoomRatioValue: Float,
+        selectedButton: SelectedZoomButton,
+        zoomRatio: MutableList<Float>
+    ) {
+
+        val buttons = mapOf(
+            SelectedZoomButton.WiderAngle to buttonWiderAngle,
+            SelectedZoomButton.Default to buttonDefaultZoom,
+            SelectedZoomButton.TwoTimes to buttonZoomTwoTimes,
+            SelectedZoomButton.FiveTimes to buttonZoomFiveTimes,
+            SelectedZoomButton.TenTimes to buttonZoomTenTimes
+        )
+
+        buttons[selectedButton]?.setOnClickListener {
+            changeZoomButtonColor(SelectedZoomButton.None)
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(zoomRatioValue)
+            zoomSlider.value = zoomRatio.indexOf(zoomRatioValue).toFloat()
+            changeZoomButtonColor(selectedButton)
+        }
+    }
+
 
     private fun changeZoomButtonColor(selectedButton: SelectedZoomButton) {
         val activeColor = context.resources.getColor(R.color.phyphox_primary)
@@ -394,24 +390,28 @@ class CameraPreviewScreen(
         })
     }
 
-    fun setCurrentValueInExposureSettingTextView(cameraSettingState: CameraSettingValueState) {
+    fun setCurrentValueInCameraSettingTextView(cameraSettingState: CameraSettingValueState) {
         autoExposure = cameraSettingState.autoExposure
 
-        val isoValue = cameraSettingState.isoRange?.map { it.toInt() }
-            ?.let { CameraHelper.findIsoNearestNumber(cameraSettingState.currentIsoValue, it) }
-        textViewCurrentIsoValue.text = isoValue.toString()
+        with(cameraSettingState) {
 
-        val fraction =
-            CameraHelper.convertNanoSecondToSecond(cameraSettingState.currentShutterValue)
-        textViewCurrentShutterValue.text =
-            "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
+            textViewCurrentIsoValue.text = isoRange?.map { it.toInt() }?.let {
+                CameraHelper.findIsoNearestNumber(cameraSettingState.currentIsoValue, it)
+            }.toString()
 
-        textViewCurrentApertureValue.text =
-            "f/".plus(cameraSettingState.apertureRange?.get(0))
+            textViewCurrentShutterValue.text =
+                CameraHelper.convertNanoSecondToSecond(currentShutterValue)
+                    .let { fraction ->
+                        "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
+                    }
 
-        textViewExposureStatus.text = cameraSettingState.currentExposureValue.toString()
+            textViewCurrentApertureValue.text = "f/".plus(apertureRange?.get(0))
 
-        textWhiteBalance.text = CameraHelper.getWhiteBalanceNames()[cameraSettingState.cameraCurrentWhiteBalanceMode]
+            textViewExposureStatus.text = currentExposureValue.toString()
+
+            textWhiteBalance.text =
+                CameraHelper.getWhiteBalanceNames()[cameraCurrentWhiteBalanceMode]
+        }
 
     }
 
@@ -550,16 +550,16 @@ class CameraPreviewScreen(
         }
     }
 
-    // Setup all the view state of the UI shown in the camera preview.
-    fun setCameraScreenViewState(state: CameraScreenViewState) {
-        setSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
-        setCameraExposureViewState(state.cameraPreviewScreenViewState)
+    /* Setup all the view state of the UI shown in the camera preview. */
+    fun updateCameraScreenViewState(state: CameraScreenViewState) {
+        updateSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
+        updateCameraExposureViewState(state.cameraPreviewScreenViewState)
         setZoomButtonVisibility(state.cameraPreviewScreenViewState)
         setCameraSettingRecyclerViewState(state.cameraPreviewScreenViewState)
         setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
     }
 
-    private fun setSwitchLensButtonViewState(state: CameraPreviewScreenViewState) {
+    private fun updateSwitchLensButtonViewState(state: CameraPreviewScreenViewState) {
         lnrSwitchLens.isEnabled = state.switchLensButtonViewState.isEnabled
         lnrSwitchLens.isVisible = state.switchLensButtonViewState.isVisible
     }
@@ -567,10 +567,16 @@ class CameraPreviewScreen(
     private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState) {
         lnrIso.isVisible = state.isoButtonViewState.isVisible
         imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
+
         lnrShutter.isVisible = state.shutterButtonViewState.isVisible
         imageViewShutter.isEnabled = state.shutterButtonViewState.isEnabled
+
         lnrAperture.isVisible = state.apertureButtonViewState.isVisible
+        imageViewAperture.isEnabled = state.apertureButtonViewState.isEnabled
+
         lnrExposure.isVisible = state.exposureViewState.isVisible
+        imageViewExposure.isEnabled = state.exposureViewState.isEnabled
+
         lnrAutoExposure.isVisible = state.autoExposureViewState.isVisible
     }
 
@@ -617,115 +623,51 @@ class CameraPreviewScreen(
         }
     }
 
-    // From the ViewState, update the state of the ImageView and TexTView of Exposure Setting UI
-    private fun setCameraExposureViewState(state: CameraPreviewScreenViewState) {
+    /* From the ViewState, update the state of the ImageView and TextView of Camera Setting UI */
+    private fun updateCameraExposureViewState(state: CameraPreviewScreenViewState) {
 
-        imageViewIso.setImageDrawable(
-            getDrawableAsSettingState(
-                ExposureSettingMode.ISO,
-                state
-            )
-        )
-        imageViewShutter.setImageDrawable(
-            getDrawableAsSettingState(
-                ExposureSettingMode.SHUTTER_SPEED,
-                state
-            )
-        )
-        imageViewAperture.setImageDrawable(
-            getDrawableAsSettingState(
-                ExposureSettingMode.APERTURE,
-                state
-            )
-        )
-        imageViewExposure.setImageDrawable(
-            getDrawableAsSettingState(
-                ExposureSettingMode.EXPOSURE,
-                state
-            )
-        )
-
-        setTextViewAsExposureSetting(ExposureSettingMode.ISO, state)
-        setTextViewAsExposureSetting(ExposureSettingMode.SHUTTER_SPEED, state)
-        setTextViewAsExposureSetting(ExposureSettingMode.APERTURE, state)
-        setTextViewAsExposureSetting(ExposureSettingMode.EXPOSURE, state)
-        setTextViewAsExposureSetting(ExposureSettingMode.AUTO_EXPOSURE, state)
-    }
-
-    // From the exposure setting mode and auto exposure mode, set the click-ability of an image view
-    // and return the drawable property of the image view
-    private fun getDrawableAsSettingState(
-        settingMode: ExposureSettingMode,
-        state: CameraPreviewScreenViewState
-    ): Drawable? {
-
-        val autoExposureEnabled = state.autoExposureViewState.isEnabled
-        val isoEnabled = state.isoButtonViewState.isEnabled
-        val shutterSpeedEnabled = state.shutterButtonViewState.isEnabled
-
-        val imageViewMap = mapOf(
-            ExposureSettingMode.ISO to imageViewIso,
-            ExposureSettingMode.SHUTTER_SPEED to imageViewShutter,
-            ExposureSettingMode.APERTURE to imageViewAperture,
-            ExposureSettingMode.EXPOSURE to imageViewExposure
-        )
-
-        val imageView = imageViewMap[settingMode]
-        imageView?.isClickable = autoExposureEnabled
-
-        val resId = when (settingMode) {
-            ExposureSettingMode.ISO -> R.drawable.ic_camera_iso
-            ExposureSettingMode.SHUTTER_SPEED -> R.drawable.baseline_shutter_speed_24
-            ExposureSettingMode.APERTURE -> R.drawable.ic_camera_aperture
-            ExposureSettingMode.EXPOSURE -> R.drawable.ic_exposure
-            ExposureSettingMode.AUTO_EXPOSURE -> R.drawable.ic_auto_exposure
-            ExposureSettingMode.WHITE_BALANCE -> R.drawable.ic_temperature
-            ExposureSettingMode.NONE -> R.drawable.ic_empty
+        listOf(
+            ImageButtonViewState(imageViewExposure, R.drawable.ic_exposure, state.exposureViewState.isEnabled),
+            ImageButtonViewState(imageViewIso, R.drawable.ic_camera_iso, state.isoButtonViewState.isEnabled),
+            ImageButtonViewState(imageViewShutter, R.drawable.baseline_shutter_speed_24, state.shutterButtonViewState.isEnabled),
+            ImageButtonViewState(imageViewAperture, R.drawable.ic_camera_aperture, false)
+        ).forEach {
+                viewState -> setImageViewDrawable(viewState)
         }
 
-        val res = AppCompatResources.getDrawable(context, resId)
+        textViewAutoExposureStatus.text =
+            context.getText(if (state.autoExposureViewState.isEnabled) R.string.off else R.string.on)
 
-        if (!autoExposureEnabled) res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
-        if (!isoEnabled) res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
-        if (!shutterSpeedEnabled) res?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+        listOf(
+            TextViewCameraSettingViewState(textViewCurrentIsoValue, state.isoButtonViewState.isEnabled),
+            TextViewCameraSettingViewState(textViewCurrentShutterValue, state.shutterButtonViewState.isEnabled),
+            TextViewCameraSettingViewState(textViewCurrentApertureValue, state.apertureButtonViewState.isEnabled),
+            TextViewCameraSettingViewState(textViewExposureStatus, state.exposureViewState.isEnabled),
+        ).forEach { viewState ->
+            setTextViewColor(viewState, state.autoExposureViewState.isEnabled)
+        }
 
-        return res
     }
 
-    // From the exposure setting mode and auto exposure mode,
-    // set the TextView color and alter the text in the Auto Exposure as per exposure setting state
-    private fun setTextViewAsExposureSetting(
-        settingMode: ExposureSettingMode,
-        state: CameraPreviewScreenViewState
-    ) {
-        val autoExposureEnabled = state.autoExposureViewState.isEnabled
-        val isoEnabled = state.isoButtonViewState.isEnabled
-        val shutterSpeedEnabled = state.shutterButtonViewState.isEnabled
 
-        val textViewMap = mapOf(
-            ExposureSettingMode.ISO to textViewCurrentIsoValue,
-            ExposureSettingMode.SHUTTER_SPEED to textViewCurrentShutterValue,
-            ExposureSettingMode.APERTURE to textViewCurrentApertureValue,
-            ExposureSettingMode.EXPOSURE to textViewExposureStatus,
-            ExposureSettingMode.AUTO_EXPOSURE to textViewAutoExposureStatus
-        )
+    private fun setImageViewDrawable(viewState: ImageButtonViewState) {
+        val drawable = AppCompatResources.getDrawable(context, viewState.drawableResId)
+        if (!viewState.isEnabled) {
+            drawable?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+        }
+        viewState.imageView.setImageDrawable(drawable)
+    }
 
-        val inactiveTextColor = Color.GRAY
+    private fun setTextViewColor(viewState: TextViewCameraSettingViewState, autoExposureEnabled: Boolean){
+        val inactiveTextColor = ContextCompat.getColor(context, R.color.phyphox_white_50_black_50)
         val activeTextColor = ContextCompat.getColor(context, R.color.phyphox_white_100)
 
-        val textView = textViewMap[settingMode]
+        if(!autoExposureEnabled){
+            viewState.textView.setTextColor(inactiveTextColor)
+            return
+        }
 
-        if (textView == textViewCurrentIsoValue)
-            textView?.setTextColor(if (isoEnabled) activeTextColor else inactiveTextColor)
-        if (textView == textViewCurrentShutterValue)
-            textView?.setTextColor(if (shutterSpeedEnabled) activeTextColor else inactiveTextColor)
-        if (textView == textViewCurrentApertureValue)
-            textView?.setTextColor(inactiveTextColor)
-
-        if (textView == textViewAutoExposureStatus)
-            textView?.text = context.getText(if (autoExposureEnabled) R.string.off else R.string.on)
-
-
+        viewState.textView.setTextColor(if (viewState.isEnabled) activeTextColor else inactiveTextColor)
     }
 
     /**

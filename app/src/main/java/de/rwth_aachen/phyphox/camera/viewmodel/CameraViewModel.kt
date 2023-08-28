@@ -87,14 +87,6 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     CameraSelector.LENS_FACING_FRONT
                 )
 
-            /**
-            .filter { lensFacing ->
-            //TODO check null
-            cameraProvider.hasCamera(cameraLensToSelector(lensFacing))
-            }
-             */
-
-
             val newCameraUiState = currentCameraUiState.copy(
                 cameraState = CameraState.READY,
                 availableCameraLens = availableCameraLens,
@@ -262,7 +254,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     }
 
-    fun imageAnalysisPrepared() {
+    fun cameraReady() {
         viewModelScope.launch {
             _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
                 imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_READY
