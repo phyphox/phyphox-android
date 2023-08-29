@@ -38,7 +38,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -57,7 +56,6 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.helper.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttJson;
@@ -1879,6 +1877,11 @@ public abstract class PhyphoxFile {
                             featureStr = "photometric";
                         else featureStr = featureStr.toLowerCase();
 
+                        String analysisStr = getStringAttribute("analysis");
+                        if(analysisStr == null){
+                            analysisStr = "luminance";
+                        } else analysisStr = analysisStr.toLowerCase();
+
                         CameraInput.PhyphoxCameraFeature feature;
                         switch (featureStr){
                             case "photometric": {
@@ -1891,6 +1894,21 @@ public abstract class PhyphoxFile {
                             }
                             default: {
                                 throw new phyphoxFileException("Unknown feature name: " + featureStr, xpp.getLineNumber());
+                            }
+                        }
+
+                        CameraInput.PhyphoxCameraAnalysis cameraAnalysis;
+                        switch (analysisStr){
+                            case "luminance":{
+                                cameraAnalysis = CameraInput.PhyphoxCameraAnalysis.Luminance;
+                                break;
+                            }
+                            case "brightness":{
+                                cameraAnalysis = CameraInput.PhyphoxCameraAnalysis.Brightness;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown feature name: " + analysisStr, xpp.getLineNumber());
                             }
                         }
 
@@ -1907,7 +1925,8 @@ public abstract class PhyphoxFile {
 
                         //Allowed input/output configuration
                         ioBlockParser.ioMapping[] outputMapping = {
-                                new ioBlockParser.ioMapping() {{name = "z"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "lumen_z"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "bright_z"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
@@ -1930,6 +1949,7 @@ public abstract class PhyphoxFile {
                                 experiment.dataLock,
                                 experiment.experimentTimeReference,
                                 feature,
+                                cameraAnalysis,
                                 autoExposure,
                                 exposureAdjustmentLevel,
                                 lockedSetting.isEmpty() ? null : lockedSetting);

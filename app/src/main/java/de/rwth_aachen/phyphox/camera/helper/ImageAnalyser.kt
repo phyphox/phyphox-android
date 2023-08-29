@@ -27,8 +27,7 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
     val action: Flow<ImageAnalysisUIAction> = _action
 
     /**
-     * Helper extension function used to extract a byte array from an
-     * image plane buffer
+     * Helper extension function used to extract a byte array from an image plane buffer
      */
     private fun ByteBuffer.toByteArray(): ByteArray {
         rewind()    // Rewind the buffer to zero
@@ -37,27 +36,34 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
         return data // Return the byte array
     }
 
-    var count = 0
-
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
+        val mediaImage =  image.image ?: return
+
+        val cameraAnalysis = cameraViewModel.cameraInput.cameraAnalysis
+        val cameraFeature = cameraViewModel.cameraInput.cameraFeature
 
         if (cameraViewModel.cameraInput.measuring) {
             cameraViewModel.imageAnalysisStarted()
-            if (cameraViewModel.cameraInput.cameraFeature == CameraInput.PhyphoxCameraFeature.Photometric) {
-                //analyseLuminosity(image.image!!)
-                //analyseImage(image)
-                analyseBrightness(image.image!!)
+
+            when(cameraFeature){
+                CameraInput.PhyphoxCameraFeature.Photometric ->
+                    when(cameraAnalysis){
+                        CameraInput.PhyphoxCameraAnalysis.Brightness -> analyseBrightness(mediaImage)
+                        CameraInput.PhyphoxCameraAnalysis.Luminance -> analyseLuminosity(mediaImage)
+                    }
+                CameraInput.PhyphoxCameraFeature.ColorDetector -> detectColor(image)
+                else -> Unit
             }
+
             cameraViewModel.imageAnalysisFinished()
         }
-
         image.close()
     }
 
     private fun analyseBrightness(mediaImage: Image) {
-        // Image is in YUV format, so first it is converted into RBGA bytearray
-        // Since the image.timestamp is only provided in YUV, so right not the format we get is in YUV
+        /** Image is in YUV format, so first it is converted into RBGA bytearray
+         Since the image.timestamp is only provided in YUV */
         //TODO need to find a better way
         val rgbaData = convertIntArrayToByteArray(convertYUV420ToRGBA(mediaImage))
 
@@ -68,7 +74,6 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
             cameraViewModel.getCameraRect()
         )
 
-        //photometricReader.calculateAvgBrightnessFromRGB(croppedArray, cameraViewModel.getCameraRect())
         val brightness =
             photometricReader.calculateAvgBrightness(croppedArray, cameraViewModel.getCameraRect())
 
@@ -81,12 +86,7 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
 
         cameraViewModel.updateImageAnalysisLuminance(brightnessPercentage, t)
 
-        Log.d("Test", "aperture:"+cameraViewModel.cameraInput.apertureDataBuffer.value.toString())
-        Log.d("Test", "iso:"+cameraViewModel.cameraInput.isoDataBuffer.value.toString())
-        Log.d("Test", "shutter:"+cameraViewModel.cameraInput.shutterSpeedDataBuffer.value.toString())
-        Log.d("Test", "exposure:"+cameraViewModel.cameraInput.exposureDataBuffer.value.toString())
-
-        cameraViewModel.cameraInput.dataZ.append(brightnessPercentage)
+        cameraViewModel.cameraInput.dataBrightZ.append(brightnessPercentage)
         cameraViewModel.cameraInput.dataT.append(t)
 
     }
@@ -177,7 +177,7 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
             )
 
         cameraViewModel.updateImageAnalysisLuminance(luma, t)
-        cameraViewModel.cameraInput.dataZ.append(luma)
+        cameraViewModel.cameraInput.dataLumenZ.append(luma)
         cameraViewModel.cameraInput.dataT.append(t)
 
     }
@@ -234,8 +234,6 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
 
     }
 
-    // TODO check the avaibility and access of different frame rates
-    // TODO look for OpenGL
 
     // from here https://stackoverflow.com/questions/63390243/is-there-a-way-to-crop-image-imageproxy-before-passing-to-mlkits-analyzer
     private fun croppedNV21(mediaImage: Image, cropRect: Rect): ByteArray {
