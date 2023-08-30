@@ -146,14 +146,14 @@ class CameraPreviewScreen(
         }
 
         imageViewIso.setOnClickListener {
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             onSettingClicked(ExposureSettingMode.ISO)
         }
 
         imageViewShutter.setOnClickListener {
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             onSettingClicked(ExposureSettingMode.SHUTTER_SPEED)
         }
 
@@ -166,47 +166,41 @@ class CameraPreviewScreen(
         */
 
         imageViewExposure.setOnClickListener {
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             onSettingClicked(ExposureSettingMode.EXPOSURE)
         }
 
         imageViewAutoExposure.setOnClickListener { onSettingClicked(ExposureSettingMode.AUTO_EXPOSURE) }
 
         imageZoom.setOnClickListener {
+            clickedButton = it
             setCameraSettingsVisibility(CameraSettingsView.ZoomSliderView)
         }
 
         imageWhiteBalance.setOnClickListener {
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             clickedButton = it
+            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
             onSettingClicked(ExposureSettingMode.WHITE_BALANCE)
         }
 
     }
     private fun setCameraSettingsVisibility(cameraSettingsView: CameraSettingsView){
+        clickedButton?.startAnimation(buttonClick)
         when (cameraSettingsView) {
             CameraSettingsView.ExposureSettingListView -> {
-                if(zoomControl.isVisible){
-                    zoomControl.visibility = View.GONE
-                }
-                if(whiteBalanceSlider.isVisible){
-                    whiteBalanceSlider.visibility = View.GONE
-                }
-                clickedButton?.startAnimation(buttonClick)
+                if(zoomControl.isVisible) zoomControl.visibility = View.GONE
+
+                if(whiteBalanceSlider.isVisible) whiteBalanceSlider.visibility = View.GONE
             }
             CameraSettingsView.ZoomSliderView -> {
-                if(recyclerViewExposureSetting.isVisible){
-                    recyclerViewExposureSetting.visibility = View.GONE
-                }
-                if(whiteBalanceSlider.isVisible){
-                    whiteBalanceSlider.visibility = View.GONE
-                }
+                if(recyclerViewExposureSetting.isVisible) recyclerViewExposureSetting.visibility = View.GONE
+
+                if(whiteBalanceSlider.isVisible) whiteBalanceSlider.visibility = View.GONE
 
                 zoomControl.visibility = View.VISIBLE
-                if (showZoomSlider) {
-                    zoomControl.visibility = View.GONE
-                }
+                if (showZoomSlider) zoomControl.visibility = View.GONE
+
                 showZoomSlider = !showZoomSlider
 
             }
