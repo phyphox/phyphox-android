@@ -35,6 +35,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
+import de.rwth_aachen.phyphox.ExpViewFragment
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
@@ -411,7 +412,7 @@ class CameraPreviewScreen(
 
     @SuppressLint("ClickableViewAccessibility")
     fun setFrameTouchOnListener() {
-        mainFrameLayout.setOnTouchListener(View.OnTouchListener { v, event ->
+        overlayView.setOnTouchListener(View.OnTouchListener { v, event ->
 
             val touch = floatArrayOf(event.x, event.y)
 
@@ -423,7 +424,7 @@ class CameraPreviewScreen(
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    Log.d("previewView", "frame down")
+                    cameraViewModel.scrollable.disableScrollable()
                     val d11: Float =
                         (x - cameraInput.x1) * (x - cameraInput.x1) + (y - cameraInput.y1) * (y - cameraInput.y1)
                     val d12: Float =
@@ -450,13 +451,11 @@ class CameraPreviewScreen(
                     } else {
                         panningIndexX = 0
                         panningIndexY = 0
-
                     }
 
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    Log.d("previewView", "frame move")
                     if (panningIndexX == 1) {
                         cameraInput.x1 = x
                     } else if (panningIndexX == 2) {
@@ -476,7 +475,7 @@ class CameraPreviewScreen(
                 }
 
                 MotionEvent.ACTION_UP -> {
-                    Log.d("previewView", "frame up")
+                    cameraViewModel.scrollable.enableScrollable()
                     v.performClick()
                 }
             }

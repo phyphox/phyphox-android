@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.common.util.concurrent.ListenableFuture
 import de.rwth_aachen.phyphox.PhyphoxExperiment
+import de.rwth_aachen.phyphox.camera.Scrollable
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.helper.ImageAnalyser
@@ -74,6 +75,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     lateinit var phyphoxExperiment: PhyphoxExperiment
 
     val imageAnalyser: ImageAnalyser = ImageAnalyser(this)
+
+    lateinit var scrollable : Scrollable
 
     fun initializeCamera() {
 

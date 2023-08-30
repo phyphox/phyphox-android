@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.io.Serializable
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -49,6 +50,8 @@ class CameraPreviewFragment : Fragment() {
 
     /* holds all the experiment information */
     private var experiment: PhyphoxExperiment? = null
+
+    lateinit var scrollable : Scrollable
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,11 +71,16 @@ class CameraPreviewFragment : Fragment() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 experiment =
                     args.getSerializable(CameraHelper.EXPERIMENT_ARG, PhyphoxExperiment::class.java)
+                scrollable =
+                    args.getSerializable(CameraHelper.EXPERIMENT_SCROLL_ARG, Scrollable::class.java)!!
             } else {
                 experiment = args.getSerializable(CameraHelper.EXPERIMENT_ARG) as PhyphoxExperiment?
+                scrollable =
+                    args.getSerializable(CameraHelper.EXPERIMENT_SCROLL_ARG) as Scrollable
             }
             cameraViewModel.cameraInput = experiment?.cameraInput!!
             cameraViewModel.phyphoxExperiment = experiment!!
+            cameraViewModel.scrollable = scrollable
         }
 
         cameraViewModel.initializeCameraSettingValue()
@@ -350,5 +358,12 @@ class CameraPreviewFragment : Fragment() {
         super.onDestroy()
         cameraViewModel.cameraExecutor.shutdown()
     }
+
+}
+
+interface Scrollable: Serializable {
+    fun enableScrollable()
+
+    fun disableScrollable()
 
 }

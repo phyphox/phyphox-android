@@ -33,6 +33,8 @@ object CameraHelper {
     private var cameraList: MutableMap<String, CameraCharacteristics>? = null
     @JvmField
     val EXPERIMENT_ARG = "experiment"
+    @JvmField
+    val EXPERIMENT_SCROLL_ARG = "experiment_scroll"
 
     @JvmStatic
     fun updateCameraList(cm: CameraManager) {

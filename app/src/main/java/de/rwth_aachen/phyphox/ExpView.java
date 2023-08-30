@@ -17,7 +17,6 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -31,7 +30,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -48,10 +46,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
+import de.rwth_aachen.phyphox.camera.Scrollable;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
@@ -59,7 +57,6 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener;
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
 // specific way to show the results of an element.
@@ -2301,8 +2298,18 @@ public class ExpView implements Serializable{
 
         private ExpViewFragment parent = null;
         private CameraPreviewFragment cameraPreviewFragment = null;
-        private boolean exposure = true;
-        private String exposureAdjustmentLevel = "1";
+
+        Scrollable scrollable = new Scrollable() {
+            @Override
+            public void enableScrollable() {
+                parent.enableScrolling();
+            }
+
+            @Override
+            public void disableScrollable() {
+                parent.disableScrolling();
+            }
+        };
 
 
         protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -2327,20 +2334,13 @@ public class ExpView implements Serializable{
 
             Bundle args = new Bundle();
             args.putSerializable(CameraHelper.EXPERIMENT_ARG, experiment);
+            args.putSerializable(CameraHelper.EXPERIMENT_SCROLL_ARG, scrollable);
             cameraPreviewFragment.setArguments(args);
 
             fragmentTransaction.add(containerView.getId(), cameraPreviewFragment);
             fragmentTransaction.addToBackStack(null);
             fragmentTransaction.commit();
 
-        }
-
-        public void setExposure(boolean exposure) {
-            this.exposure = exposure;
-        }
-
-        public void setExposureAdjustmentLevel(String level){
-            this.exposureAdjustmentLevel = level;
         }
 
         @Override
