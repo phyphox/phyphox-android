@@ -361,6 +361,12 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         val maxRegionsAWB = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB) ?: 0
         var awbLockAvailable = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE)
 
+        val sensorPhysicalSize = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)
+        cameraInput.sensorPixelHeight.clear(true)
+        cameraInput.sensorPixelHeight.append(sensorPhysicalSize?.height?.toDouble() ?: 0.0)
+        cameraInput.sensorPixelWidth.clear(true)
+        cameraInput.sensorPixelWidth.append(sensorPhysicalSize?.width?.toDouble() ?: 0.0)
+
 
         val currentCameraUiState = _cameraSettingValueState.value
         val newCameraUiState = currentCameraUiState.copy(
@@ -375,8 +381,18 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
         )
 
+
         viewModelScope.launch {
             _cameraSettingValueState.emit(newCameraUiState)
+        }
+
+        viewModelScope.launch {
+            _cameraUiState.emit(
+                _cameraUiState.value.copy(
+                    physicalSensorPixelHeight = sensorPhysicalSize?.height ?: 0.0f,
+                    physicalSensorPixelWidth =  sensorPhysicalSize?.width ?: 0.0f
+                )
+            )
         }
     }
 

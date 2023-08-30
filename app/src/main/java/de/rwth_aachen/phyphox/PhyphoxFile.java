@@ -1931,7 +1931,9 @@ public abstract class PhyphoxFile {
                                 new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                                new ioBlockParser.ioMapping() {{name = "exposure"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
+                                new ioBlockParser.ioMapping() {{name = "exposure"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "sensor_pixel_height"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "sensor_pixel_width"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                         };
 
                         //String availableCameraSettings = getStringAttribute("setting");

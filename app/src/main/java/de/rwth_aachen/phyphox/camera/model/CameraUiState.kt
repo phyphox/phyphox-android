@@ -22,7 +22,10 @@ data class CameraUiState  constructor(
     val cameraWidth: Int = 0,
     // This holds the cropped image which is cropped by the user through the overlayView.
     val cameraPassepartout: Rect = Rect(),
-    val overlayUpdateState: OverlayUpdateState = OverlayUpdateState.NO_UPDATE
+    val overlayUpdateState: OverlayUpdateState = OverlayUpdateState.NO_UPDATE,
+
+    val physicalSensorPixelHeight: Float = 0.0f,
+    val physicalSensorPixelWidth: Float = 0.0f,
 )
 
 /**

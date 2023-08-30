@@ -28,6 +28,8 @@ class CameraInput() {
     lateinit var isoDataBuffer: DataBuffer
     lateinit var apertureDataBuffer: DataBuffer
     lateinit var exposureDataBuffer: DataBuffer
+    lateinit var sensorPixelHeight: DataBuffer
+    lateinit var sensorPixelWidth: DataBuffer
 
     // List of buffers (variables) that is provided in the xml
     lateinit var buffers: Vector<DataOutput>
@@ -84,6 +86,9 @@ class CameraInput() {
         if (buffers.size > 3 && buffers[3] != null) isoDataBuffer = buffers[4].buffer
         if (buffers.size > 4 && buffers[4] != null) apertureDataBuffer = buffers[5].buffer
         if (buffers.size > 5 && buffers[5] != null) exposureDataBuffer = buffers[6].buffer
+
+        if (buffers.size > 5 && buffers[5] != null) sensorPixelHeight = buffers[7].buffer
+        if (buffers.size > 5 && buffers[5] != null) sensorPixelWidth = buffers[8].buffer
 
         setDefaultCameraSettingValueIfAvailable(lockedSettings)
 
