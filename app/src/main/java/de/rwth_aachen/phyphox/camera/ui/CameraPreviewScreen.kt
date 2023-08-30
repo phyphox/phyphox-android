@@ -391,7 +391,7 @@ class CameraPreviewScreen(
     }
 
     fun setCurrentValueInCameraSettingTextView(cameraSettingState: CameraSettingValueState) {
-        autoExposure = cameraSettingState.autoExposure
+        autoExposure = cameraSettingState.disabledAutoExposure
 
         with(cameraSettingState) {
 

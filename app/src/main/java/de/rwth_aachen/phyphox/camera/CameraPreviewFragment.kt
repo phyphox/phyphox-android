@@ -166,14 +166,14 @@ class CameraPreviewFragment : Fragment() {
                                 cameraViewModel.startCameraPreviewView(
                                     cameraPreviewScreen.previewView,
                                     lifecycleOwner = this@CameraPreviewFragment as LifecycleOwner,
-                                    cameraSettingState.autoExposure
+                                    cameraSettingState.disabledAutoExposure
                                 )
                             }
                             cameraScreenViewState.emit(
                                 cameraScreenViewState.value.updateCameraScreen { cameraScreen ->
                                         cameraScreen
                                             .showSwitchLens(true)
-                                            .enableAutoFocus(cameraSettingState.autoExposure)
+                                            .enableAutoFocus(cameraSettingState.disabledAutoExposure)
 
                                     }
                             )
@@ -221,7 +221,7 @@ class CameraPreviewFragment : Fragment() {
                                                 cameraUiState.editableCameraSettings?.contains("exposure") ?: false
 
                                             // if exposure is locked, then disable the exposure click
-                                            if (cameraSettingState.autoExposure)
+                                            if (cameraSettingState.disabledAutoExposure)
                                                 it.enableIntermediateExposureControl(exposureLocked)
                                             else
                                                 it.enableIntermediateExposureControl(exposureLocked)
@@ -236,7 +236,7 @@ class CameraPreviewFragment : Fragment() {
                                             val shutterLocked =
                                                 cameraUiState.editableCameraSettings?.contains("shutter_speed") ?: false
 
-                                            if (cameraSettingState.autoExposure)
+                                            if (cameraSettingState.disabledAutoExposure)
                                                 it.enableAdvanceExposureControl(isoLocked, shutterLocked)
                                             else
                                                 it.enableAdvanceExposureControl(isoLocked, shutterLocked)
@@ -320,7 +320,10 @@ class CameraPreviewFragment : Fragment() {
                         }
 
                         ExposureSettingState.LOAD_FINISHED -> {
-                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN) {
+                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN
+                                &&
+                                cameraSettingState.disabledAutoExposure
+                            ) {
                                 cameraScreenViewState.emit(cameraScreenViewState.value.updateCameraScreen {
                                     it.showRecyclerView()
                                 })

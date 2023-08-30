@@ -54,7 +54,7 @@ data class CameraSettingValueState  constructor(
     val currentExposureValue: Float = 0.0f,
     var exposureRange: List<String>? = emptyList(),
 
-    val autoExposure: Boolean = true,
+    val disabledAutoExposure: Boolean = true,
     var exposureStep: Float = 0F,
     val exposureSettingState: ExposureSettingState = ExposureSettingState.NOT_READY,
     val settingMode: ExposureSettingMode = ExposureSettingMode.NONE,

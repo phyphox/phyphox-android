@@ -116,7 +116,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 currentIsoValue = cameraInput.isoCurrentValue,
                 currentShutterValue = cameraInput.shutterSpeedCurrentValue,
                 currentExposureValue = cameraInput.currentExposureValue,
-                autoExposure = cameraInput.autoExposure,
+                disabledAutoExposure = cameraInput.autoExposure,
                 cameraSettingLevel = when (cameraInput.exposureAdjustmentLevel) {
                     1 -> CameraSettingLevel.BASIC
                     2 -> CameraSettingLevel.INTERMEDIATE
@@ -247,7 +247,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             )
             _cameraSettingValueState.emit(
                 _cameraSettingValueState.value.copy(
-                    autoExposure = autoExposure
+                    disabledAutoExposure = autoExposure
                 )
             )
         }
