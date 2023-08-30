@@ -252,7 +252,7 @@ class CameraPreviewFragment : Fragment() {
 
                             // When clicking an Exposure settings, hide or show the RecyclerView, which is
                             // showing the list of Exposure values to select from.
-                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.HIDDEN) {
+                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.TO_HIDE) {
                                 cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = true)
                             } else {
                                 cameraViewModel.updateViewStateOfRecyclerView(showRecyclerview = false)
@@ -320,7 +320,7 @@ class CameraPreviewFragment : Fragment() {
                         }
 
                         ExposureSettingState.LOAD_FINISHED -> {
-                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.SHOWN
+                            if (cameraSettingState.cameraSettingRecyclerState == CameraSettingRecyclerState.TO_SHOW
                                 &&
                                 cameraSettingState.disabledAutoExposure
                             ) {

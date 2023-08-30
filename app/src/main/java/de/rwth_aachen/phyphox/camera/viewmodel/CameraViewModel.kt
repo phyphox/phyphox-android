@@ -496,7 +496,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             _cameraSettingValueState.emit(
                 currentCameraSettingState.copy(
                     exposureSettingState = ExposureSettingState.LOAD_FINISHED,
-                    cameraSettingRecyclerState = if (showRecyclerview) CameraSettingRecyclerState.SHOWN else CameraSettingRecyclerState.HIDDEN,
+                    cameraSettingRecyclerState = if (showRecyclerview) CameraSettingRecyclerState.TO_SHOW else CameraSettingRecyclerState.TO_HIDE,
                 )
             )
         }

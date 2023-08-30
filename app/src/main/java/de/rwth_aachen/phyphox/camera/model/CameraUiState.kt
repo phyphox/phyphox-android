@@ -60,7 +60,7 @@ data class CameraSettingValueState  constructor(
     val settingMode: ExposureSettingMode = ExposureSettingMode.NONE,
 
     val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC,
-    val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.HIDDEN,
+    val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.TO_HIDE,
 
     val cameraMaxZoomRatio: Float = 0.0f,
     val cameraMinZoomRatio: Float = 0.0f,
@@ -93,8 +93,8 @@ enum class CameraSettingLevel {
 }
 
 enum class CameraSettingRecyclerState {
-    SHOWN,
-    HIDDEN
+    TO_SHOW,
+    TO_HIDE
 }
 
 enum class ExposureSettingState{
