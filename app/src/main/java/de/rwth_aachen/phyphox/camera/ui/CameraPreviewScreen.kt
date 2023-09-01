@@ -301,7 +301,7 @@ class CameraPreviewScreen(
                 .format(cameraSettingState.cameraMinZoomRatio)
                 .plus("x")
 
-        setZoomButtonClickListener(cameraSettingState.cameraMinZoomRatio, SelectedZoomButton.WiderAngle, zoomRatio)
+        setZoomButtonClickListener(zoomRatio.first(), SelectedZoomButton.WiderAngle, zoomRatio)
         setZoomButtonClickListener(1.0f, SelectedZoomButton.Default,  zoomRatio)
         setZoomButtonClickListener(2.0f, SelectedZoomButton.TwoTimes,  zoomRatio)
         setZoomButtonClickListener(5.0f, SelectedZoomButton.FiveTimes,  zoomRatio)
@@ -326,6 +326,8 @@ class CameraPreviewScreen(
         buttons[selectedButton]?.setOnClickListener {
             changeZoomButtonColor(SelectedZoomButton.None)
             cameraViewModel.camera?.cameraControl?.setZoomRatio(zoomRatioValue)
+            Log.d(TAG, "minimum value: "+zoomRatioValue)
+            Log.d(TAG, "zoomSlider.value: "+zoomRatio.indexOf(zoomRatioValue).toFloat())
             zoomSlider.value = zoomRatio.indexOf(zoomRatioValue).toFloat()
             changeZoomButtonColor(selectedButton)
         }
@@ -684,7 +686,6 @@ class CameraPreviewScreen(
 
         val settingChangeListener = object : SettingChooseListener {
             override fun onSettingClicked(value: String) {
-                Log.d(TAG, value)
                 onClickCameraExposureSetting(settingMode, value)
             }
         }
@@ -727,7 +728,6 @@ class CameraPreviewScreen(
                 lnrColorCode.setBackgroundColor(Color.parseColor("#$colorCode"))
             } catch (e: IllegalArgumentException) {
                 tvColorCode.setText(colorCode + ": " + e)
-                Log.e(TAG, "ColorCode $e")
             }
         }
 
