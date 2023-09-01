@@ -205,6 +205,15 @@ class CameraPreviewFragment : Fragment() {
 
                                 }
                             )
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen { cameraSetting ->
+                                    cameraSetting
+                                        .hideIso(cameraSettingState.isoRange != null)
+                                        .hideAperture(cameraSettingState.apertureRange != null)
+                                        .hideShutterSpeed(cameraSettingState.shutterSpeedRange != null)
+                                }
+                            )
+
                             cameraPreviewScreen.setupZoomControl(cameraSettingState)
                             cameraPreviewScreen.setUpWhiteBalanceControl(cameraSettingState)
                         }

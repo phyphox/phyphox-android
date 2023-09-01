@@ -132,7 +132,7 @@ class CameraPreviewScreen(
     var overlayView: MarkerOverlayView = MarkerOverlayView(context)
 
     /* To delay the reading of height and width of previewView. */
-    var longerDelay = 700L
+    var longerDelay = 800L
     var shorterDelay = 100L
 
     // observable to observe the action performed
