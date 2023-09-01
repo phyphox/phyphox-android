@@ -26,6 +26,7 @@ import java.nio.ByteBuffer
 import java.util.Arrays
 import kotlin.math.pow
 import kotlin.math.round
+import kotlin.math.roundToInt
 
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -420,57 +421,36 @@ object CameraHelper {
 
     }
 
-
     /**
      * From the range given, compute the list that will be used for zoom ratio
      * Input: Min and Max zoom ratio, eg: min: 0.5, max: 30.0
      * Output: [0.5,0,6,...., 9.9, 10, 11, 12,...., 29, 30]
      */
-    fun computeZoomRatios(min_zoom:Float, max_zoom: Float): MutableList<Float>{
-        val zoomRatio : MutableList<Float> = mutableListOf()
+    fun computeZoomRatios(minZoom: Float, maxZoom: Float): MutableList<Float> {
 
-        for (ratio in 0 until max_zoom.toInt()){
+        val zoomRatios = mutableListOf<Float>()
 
-            // start and end range to calculate the 1 digit arrays between them [0, 0.1, 0.2, ...,0,9,1]
-            val start = ratio * 10
-            val end = (ratio + 1) * 10
+        val acceptableDecimalValueMin = 0.1f
+        val acceptableDecimalValueMax = 10.0f
 
-            if(end == (max_zoom * 10).toInt()){
-                // add the last value as the last value will not be included in loop
-                zoomRatio.add(end/10f)
-                break
-            }
+        val roundedMinValue = (minZoom * 10.0f).roundToInt() / 10.0f
 
-            if(start >= 100){
-                //TODO
-                // Discuss whether the distance between, for eg., 9.1 - 9.2 and 10 - 11 should be same?
-                /**
-                for(value in 0 until 5){
-                    zoomRatio.add(start/10f)
-                }
-                */
-                zoomRatio.add(start/10f)
-                // if the value is greater than 100 (10.0), continue adding only the int (11, 12,..)
-                continue
-            }
+        val minRatio = (roundedMinValue.coerceAtLeast(acceptableDecimalValueMin) * 10).toInt()
+        val maxRatio = (maxZoom.coerceAtMost(acceptableDecimalValueMax) * 10).toInt()
 
-            for (innerRatio in start..end){
-                if(innerRatio/10f < (min_zoom - 0.1) || innerRatio == end ){
-                    // the start of the the loop is from 0,
-                    // so do not add value that is  smaller then the minimum zoom value
-                    // Or, do not add end value as it will be added in next iteration's start value
-                    continue
-                }
+        for (ratio in minRatio until maxRatio + 1) {
+            zoomRatios.add(ratio / 10f)
+        }
 
-                zoomRatio.add(innerRatio/10f)
-
+        if (maxZoom > acceptableDecimalValueMax) {
+            for (intZoom in (acceptableDecimalValueMax.toInt() + 1)..maxZoom.toInt()) {
+                zoomRatios.add(intZoom.toFloat())
             }
         }
-        // Log.d doesnot work with test, so System.out.print is used
-        System.out.print("zoom ratio: " +zoomRatio.filter { it >= 0.0 }.toString())
 
-        return zoomRatio
+        System.out.print("zoom ratio : " +zoomRatios.filter { it >= 0.0 }.toString())
 
+        return zoomRatios
     }
 
 

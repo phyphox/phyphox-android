@@ -224,12 +224,23 @@ class CameraPreviewScreen(
 
     }
 
+    data class ZoomButtonInfo(val zoomValue: Float, val button: SelectedZoomButton)
+
     fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
         val zoomRatio = cameraSettingState.cameraZoomRatioConverted
+
         if(zoomRatio.isEmpty()){
             // while loading camera, zoomRatio might be null
             return
         }
+
+        val zoomButtons = listOf(
+            ZoomButtonInfo(zoomRatio.first(), SelectedZoomButton.WiderAngle),
+            ZoomButtonInfo(1.0f, SelectedZoomButton.Default),
+            ZoomButtonInfo(2.0f, SelectedZoomButton.TwoTimes),
+            ZoomButtonInfo(5.0f, SelectedZoomButton.FiveTimes),
+            ZoomButtonInfo(10.0f, SelectedZoomButton.TenTimes)
+        )
 
         zoomSlider.valueFrom = 0.0f
         zoomSlider.valueTo = (zoomRatio.size - 1.0f)
@@ -238,50 +249,28 @@ class CameraPreviewScreen(
         changeZoomButtonColor(SelectedZoomButton.Default)
 
         zoomSlider.addOnChangeListener { _, value, _ ->
-            if(zoomRatio.size < value) {
-                // in some devices, the front camera sometime gives the value larger then ratio
-                return@addOnChangeListener
-            }
-            if (zoomRatio.size != 0) {
-                val mappedValue = zoomRatio[value.toInt()]
-                cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
-                when (mappedValue) {
-                    zoomRatio.first() -> changeZoomButtonColor(SelectedZoomButton.WiderAngle)
-                    1.0f -> changeZoomButtonColor(SelectedZoomButton.Default)
-                    2.0f -> changeZoomButtonColor(SelectedZoomButton.TwoTimes)
-                    5.0f -> changeZoomButtonColor(SelectedZoomButton.FiveTimes)
-                    10.0f -> changeZoomButtonColor(SelectedZoomButton.TenTimes)
-                    else -> changeZoomButtonColor(SelectedZoomButton.None)
-                }
-            }
+
+            val mappedValue = zoomRatio.getOrElse(value.toInt()) { 1.0f }
+            cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
+            val selectedButton = zoomButtons.firstOrNull { it.zoomValue == mappedValue }?.button ?: SelectedZoomButton.None
+            changeZoomButtonColor(selectedButton)
         }
 
         zoomSlider.setLabelFormatter { value: Float ->
-            if (zoomRatio.size != 0) {
-                val mappedValue = zoomRatio[value.toInt()]
-                (mappedValue).toString() + "x"
-            } else {
-                value.toString()
-            }
+            val mappedValue = zoomRatio.getOrElse(value.toInt()) { value }
+            "${mappedValue}x"
         }
 
-        if (zoomRatio.first() < 1.0) {
-            buttonWiderAngle.visibility = View.VISIBLE
-        } else {
-            buttonWiderAngle.visibility = View.GONE
-        }
+        buttonWiderAngle.visibility = if (zoomRatio.first() < 1.0) View.VISIBLE else View.GONE
 
         buttonWiderAngle.text = DecimalFormat("#.#")
                 .apply { roundingMode = RoundingMode.FLOOR }
                 .format(cameraSettingState.cameraMinZoomRatio)
                 .plus("x")
 
-        setZoomButtonClickListener(zoomRatio.first(), SelectedZoomButton.WiderAngle, zoomRatio)
-        setZoomButtonClickListener(1.0f, SelectedZoomButton.Default,  zoomRatio)
-        setZoomButtonClickListener(2.0f, SelectedZoomButton.TwoTimes,  zoomRatio)
-        setZoomButtonClickListener(5.0f, SelectedZoomButton.FiveTimes,  zoomRatio)
-        setZoomButtonClickListener(10.0f, SelectedZoomButton.TenTimes,  zoomRatio)
-
+        zoomButtons.forEach { (zoomValue, button) ->
+            setZoomButtonClickListener(zoomValue, button, zoomRatio)
+        }
     }
 
     private fun setZoomButtonClickListener(
