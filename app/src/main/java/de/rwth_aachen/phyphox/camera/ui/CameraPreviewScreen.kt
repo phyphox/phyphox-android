@@ -10,7 +10,9 @@ import android.graphics.Point
 import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.os.Build
+import android.os.Build.VERSION
 import android.os.Handler
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
@@ -128,6 +130,10 @@ class CameraPreviewScreen(
     var panningIndexY = 0
 
     var overlayView: MarkerOverlayView = MarkerOverlayView(context)
+
+    /* To delay the reading of height and width of previewView. */
+    var longerDelay = 700L
+    var shorterDelay = 100L
 
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
@@ -339,7 +345,8 @@ class CameraPreviewScreen(
                     root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
                         _action.emit(CameraUiAction.UpdateOverlay)
                     }
-                }, 200)
+
+                }, if(VERSION.SDK_INT <= Build.VERSION_CODES.P) longerDelay else shorterDelay)
                 // Remove the listener to avoid multiple callbacks
                 previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
             }
@@ -373,7 +380,7 @@ class CameraPreviewScreen(
 
     @SuppressLint("ClickableViewAccessibility")
     fun setFrameTouchOnListener() {
-        overlayView.setOnTouchListener(View.OnTouchListener { v, event ->
+        overlayView.setOnTouchListener { v, event ->
 
             val touch = floatArrayOf(event.x, event.y)
 
@@ -385,7 +392,9 @@ class CameraPreviewScreen(
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    /*Scrollable is disabled while updating overlay because the drag is interrupted by scroll event*/
                     cameraViewModel.scrollable.disableScrollable()
+
                     val d11: Float =
                         (x - cameraInput.x1) * (x - cameraInput.x1) + (y - cameraInput.y1) * (y - cameraInput.y1)
                     val d12: Float =
@@ -417,17 +426,11 @@ class CameraPreviewScreen(
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    if (panningIndexX == 1) {
-                        cameraInput.x1 = x
-                    } else if (panningIndexX == 2) {
-                        cameraInput.x2 = x
-                    }
+                    if (panningIndexX == 1) cameraInput.x1 = x
+                    else if (panningIndexX == 2) cameraInput.x2 = x
 
-                    if (panningIndexY == 1) {
-                        cameraInput.y1 = y
-                    } else if (panningIndexY == 2) {
-                        cameraInput.y2 = y
-                    }
+                    if (panningIndexY == 1) cameraInput.y1 = y
+                    else if (panningIndexY == 2) cameraInput.y2 = y
 
                     root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
                         _action.emit(CameraUiAction.UpdateOverlay)
@@ -441,7 +444,7 @@ class CameraPreviewScreen(
                 }
             }
             true
-        })
+        }
     }
 
     fun updateOverlay(cameraUiState: CameraUiState) {

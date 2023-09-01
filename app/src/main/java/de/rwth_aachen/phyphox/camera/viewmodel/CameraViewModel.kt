@@ -592,7 +592,11 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     }
 
     fun overlayUpdated(){
-        viewModelScope.launch { _cameraUiState.emit(_cameraUiState.value.copy(overlayUpdateState = OverlayUpdateState.UPDATE_DONE)) }
+        viewModelScope.launch {
+            _cameraUiState.emit(_cameraUiState.value.copy(
+                overlayUpdateState = OverlayUpdateState.UPDATE_DONE
+            ))
+        }
     }
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     private fun  setupZoomControl(){
