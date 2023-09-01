@@ -12,7 +12,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.ImageProxy
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
+import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -275,7 +275,7 @@ object CameraHelper {
      * For eg: from "[a,b,c]" to [SettingMode.Iso,SettingMode.aperture,SettingMode.shutterSpeed]
      */
     @JvmStatic
-    fun convertInputSettingToSettingMode(inputString: String): ArrayList<ExposureSettingMode> {
+    fun convertInputSettingToSettingMode(inputString: String): ArrayList<CameraSettingMode> {
         // Remove the square brackets from the input string
         val content = inputString.substring(1, inputString.length - 1)
 
@@ -288,12 +288,12 @@ object CameraHelper {
         }
 
         val availableCameraSettings = ArrayList(Arrays.asList(*elements))
-        val availableSettingModes: ArrayList<ExposureSettingMode> = ArrayList()
+        val availableSettingModes: ArrayList<CameraSettingMode> = ArrayList()
         for (cameraSetting in availableCameraSettings) {
             when (cameraSetting) {
-                "iso" -> availableSettingModes.add(ExposureSettingMode.ISO)
-                "shutter speed" -> availableSettingModes.add(ExposureSettingMode.SHUTTER_SPEED)
-                "aperture" -> availableSettingModes.add(ExposureSettingMode.APERTURE)
+                "iso" -> availableSettingModes.add(CameraSettingMode.ISO)
+                "shutter speed" -> availableSettingModes.add(CameraSettingMode.SHUTTER_SPEED)
+                "aperture" -> availableSettingModes.add(CameraSettingMode.APERTURE)
             }
         }
 

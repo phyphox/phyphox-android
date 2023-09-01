@@ -1,9 +1,9 @@
 package de.rwth_aachen.phyphox.camera.helper
 
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
+import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 
 interface SettingChangeListener {
-    fun onProgressChange(settingMode: ExposureSettingMode, value: Int)
+    fun onProgressChange(settingMode: CameraSettingMode, value: Int)
 
 }
 

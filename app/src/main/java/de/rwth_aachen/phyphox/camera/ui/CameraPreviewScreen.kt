@@ -11,7 +11,6 @@ import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.os.Build
 import android.os.Handler
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
@@ -35,7 +34,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
-import de.rwth_aachen.phyphox.ExpViewFragment
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
@@ -44,9 +42,10 @@ import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.CameraUiState
-import de.rwth_aachen.phyphox.camera.model.ExposureSettingMode
+import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.ImageButtonViewState
 import de.rwth_aachen.phyphox.camera.model.TextViewCameraSettingViewState
+import de.rwth_aachen.phyphox.camera.model.ZoomButtonInfo
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
@@ -149,13 +148,13 @@ class CameraPreviewScreen(
         imageViewIso.setOnClickListener {
             clickedButton = it
             setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
-            onSettingClicked(ExposureSettingMode.ISO)
+            onSettingClicked(CameraSettingMode.ISO)
         }
 
         imageViewShutter.setOnClickListener {
             clickedButton = it
             setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
-            onSettingClicked(ExposureSettingMode.SHUTTER_SPEED)
+            onSettingClicked(CameraSettingMode.SHUTTER_SPEED)
         }
 
         /**
@@ -169,10 +168,10 @@ class CameraPreviewScreen(
         imageViewExposure.setOnClickListener {
             clickedButton = it
             setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
-            onSettingClicked(ExposureSettingMode.EXPOSURE)
+            onSettingClicked(CameraSettingMode.EXPOSURE)
         }
 
-        imageViewAutoExposure.setOnClickListener { onSettingClicked(ExposureSettingMode.AUTO_EXPOSURE) }
+        imageViewAutoExposure.setOnClickListener { onSettingClicked(CameraSettingMode.AUTO_EXPOSURE) }
 
         imageZoom.setOnClickListener {
             clickedButton = it
@@ -182,7 +181,7 @@ class CameraPreviewScreen(
         imageWhiteBalance.setOnClickListener {
             clickedButton = it
             setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
-            onSettingClicked(ExposureSettingMode.WHITE_BALANCE)
+            onSettingClicked(CameraSettingMode.WHITE_BALANCE)
         }
 
     }
@@ -223,8 +222,6 @@ class CameraPreviewScreen(
         whiteBalanceSlider.value = 5.0f
 
     }
-
-    data class ZoomButtonInfo(val zoomValue: Float, val button: SelectedZoomButton)
 
     fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
         val zoomRatio = cameraSettingState.cameraZoomRatioConverted
@@ -471,7 +468,7 @@ class CameraPreviewScreen(
         }
     }
 
-    private fun onClickCameraExposureSetting(settingMode: ExposureSettingMode, value: String) {
+    private fun onClickCameraExposureSetting(settingMode: CameraSettingMode, value: String) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.UpdateCameraExposureSettingValue(settingMode, value))
         }
@@ -493,16 +490,16 @@ class CameraPreviewScreen(
         }
     }
 
-    private fun onSettingClicked(settingMode: ExposureSettingMode) {
+    private fun onSettingClicked(settingMode: CameraSettingMode) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             when (settingMode) {
-                ExposureSettingMode.NONE -> Unit
-                ExposureSettingMode.ISO -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                ExposureSettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                ExposureSettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                ExposureSettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                ExposureSettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
-                ExposureSettingMode.WHITE_BALANCE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                CameraSettingMode.NONE -> Unit
+                CameraSettingMode.ISO -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                CameraSettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                CameraSettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                CameraSettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                CameraSettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
+                CameraSettingMode.WHITE_BALANCE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
             }
         }
     }
@@ -628,21 +625,18 @@ class CameraPreviewScreen(
     }
 
     /**
-     * From the Exposure setting list, mode and current selected value; show list of the
-     * exposure value in RecyclerView and react to the click event to update the current selected value.
-     * When the Exposure list is empty or with only 1 value, do not create and show RecyclerView.
-     * Also, show the white balance list when the white balance button is triggered
+     * Camera Setting includes: ISO, ShutterSpeed, Exposure and White Balance
     */
-    fun populateAndShowCameraSettingValue(
+    fun populateAndShowCameraSettingValueIntoRecyclerView(
         dataList: List<String>?,
-        settingMode: ExposureSettingMode,
+        settingMode: CameraSettingMode,
         currentValue: String
     ) {
         if (dataList.isNullOrEmpty() || dataList.size == 1) {
             return
         }
 
-        if(settingMode == ExposureSettingMode.WHITE_BALANCE && currentValue == "Manual"){
+        if(settingMode == CameraSettingMode.WHITE_BALANCE && currentValue == "Manual"){
             whiteBalanceSlider.visibility = View.VISIBLE
         }
 
@@ -658,16 +652,12 @@ class CameraPreviewScreen(
             layoutManager = mLayoutManager
             itemAnimator = DefaultItemAnimator()
 
-            val adapter =
+            recyclerViewExposureSetting.adapter =
                 ChooseCameraSettingValueAdapter(dataList, settingChangeListener, currentValue)
 
-            recyclerViewExposureSetting.adapter = adapter
-
             selectedPosition = dataList.indexOf(currentValue)
-            recyclerViewExposureSetting.postDelayed(Runnable {
-                recyclerViewExposureSetting.scrollToPosition(selectedPosition)
-            }, 100)
-
+            recyclerViewExposureSetting.postDelayed({
+                recyclerViewExposureSetting.scrollToPosition(selectedPosition) }, 100)
         }
 
         recyclerLoadingFinished()
@@ -676,7 +666,7 @@ class CameraPreviewScreen(
 
     fun recyclerLoadingFinished() {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-            _action.emit(CameraUiAction.ExposureSettingValueSelected)
+            _action.emit(CameraUiAction.CameraSettingValueSelected)
         }
     }
 

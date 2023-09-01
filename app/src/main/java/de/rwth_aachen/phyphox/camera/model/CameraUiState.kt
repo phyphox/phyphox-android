@@ -14,7 +14,7 @@ import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 data class CameraUiState  constructor(
     val cameraState: CameraState = CameraState.NOT_READY,
-    val availableSettings: List<ExposureSettingMode> = emptyList(),
+    val availableSettings: List<CameraSettingMode> = emptyList(),
     val availableCameraLens: List<Int> = listOf(LENS_FACING_BACK),
     val editableCameraSettings: MutableMap<String, String>? = mutableMapOf(),
     val cameraLens: Int = LENS_FACING_BACK,
@@ -42,97 +42,3 @@ enum class OverlayUpdateState {
     UPDATE,
     UPDATE_DONE
 }
-
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-data class CameraSettingValueState  constructor(
-    val currentIsoValue: Int = 1,
-    val isoRange: List<String>? =  emptyList(),
-
-    val currentShutterValue: Long = 1L,
-    var shutterSpeedRange:  List<String>? = emptyList(),
-
-    val currentApertureValue: Float = 1.0f,
-    var apertureRange:  List<String>? = emptyList(),
-
-    val currentExposureValue: Float = 0.0f,
-    var exposureRange: List<String>? = emptyList(),
-
-    val disabledAutoExposure: Boolean = true,
-    var exposureStep: Float = 0F,
-    val exposureSettingState: ExposureSettingState = ExposureSettingState.NOT_READY,
-    val settingMode: ExposureSettingMode = ExposureSettingMode.NONE,
-
-    val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC,
-    val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.TO_HIDE,
-
-    val cameraMaxZoomRatio: Float = 0.0f,
-    val cameraMinZoomRatio: Float = 0.0f,
-    val cameraZoomRatio: Float = 0.0f,
-    val cameraLinearRatio: Float = 0.0f,
-    val cameraZoomRatioConverted: MutableList<Float> = mutableListOf(),
-    val  cameraMaxOpticalZoom: Float? = 1.0f,
-
-    val cameraMaxRegionAWB: Int = 0,
-    val cameraWhiteBalanceManualRange: List<Int> = CameraHelper.getWhiteBalanceTemperatureList(),
-    val cameraCurrentWhiteBalanceManualValue: FloatArray = CameraHelper.convertTemperatureToRggb(15000),
-    val cameraWhiteBalanceModes: List<Int> = CameraHelper.getWhiteBalanceModes().keys.toList(),
-    val cameraCurrentWhiteBalanceMode : Int = 1
-    )
-
-enum class ExposureSettingMode {
-    NONE,
-    ISO,
-    SHUTTER_SPEED,
-    APERTURE,
-    EXPOSURE,
-    AUTO_EXPOSURE,
-    WHITE_BALANCE
-}
-
-enum class CameraSettingLevel {
-    BASIC, // auto exposure ON (Level 1)
-    INTERMEDIATE, // auto exposure OFF, only adjust exposure (Level 2)
-    ADVANCE // auto exposure OFF, can adjust ISO, Shutter Speed and Aperture (Level 3)
-}
-
-enum class CameraSettingRecyclerState {
-    TO_SHOW,
-    TO_HIDE
-}
-
-enum class ExposureSettingState{
-    NOT_READY,
-    LOADED,
-    LOADING_FAILED,
-    LOAD_LIST,
-    VALUE_UPDATED,
-    LOAD_FINISHED
-}
-
-
-data class ImageAnalysisValueState(
-    val currentTimeStamp: Double = 0.0,
-    val luminance : Double = 0.0,
-    val colorCode: String = "",
-    val imageAnalysisState: ImageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
-)
-
-enum class ImageAnalysisState{
-    IMAGE_ANALYSIS_NOT_READY,
-    IMAGE_ANALYSIS_READY,
-    IMAGE_ANALYSIS_STARTED,
-    IMAGE_ANALYSIS_FINISHED,
-    IMAGE_ANALYSIS_FAILED
-}
-
-
-data class ImageButtonViewState(
-    val imageView: ImageView,
-    val drawableResId: Int,
-    val isEnabled: Boolean
-)
-
-data class TextViewCameraSettingViewState(
-    val textView: TextView,
-    val isEnabled: Boolean
-)
