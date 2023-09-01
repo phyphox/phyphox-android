@@ -222,31 +222,6 @@ class CameraPreviewScreen(
         whiteBalanceSlider.valueTo = 10.0f
         whiteBalanceSlider.value = 5.0f
 
-
-        //TODO while using descrete slider, there is lots of callback inside the changeListener, and thus update is sending error
-        // and while using continues slider, the issue is gone but need to implement the change continuosly.
-        /**
-        whiteBalanceSlider.addOnChangeListener { _, value, fromUser ->
-
-                val selectedValue =  when (value) {
-                    0.0f ->  CameraHelper.convertTemperatureToRggb(3000)
-                    1.0f -> CameraHelper.convertTemperatureToRggb(4000)
-                    2.0f -> CameraHelper.convertTemperatureToRggb(5000)
-                    3.0f -> CameraHelper.convertTemperatureToRggb(6000)
-                    4.0f -> CameraHelper.convertTemperatureToRggb(7000)
-                    5.0f -> CameraHelper.convertTemperatureToRggb(8000)
-                    6.0f -> CameraHelper.convertTemperatureToRggb(9000)
-                    7.0f -> CameraHelper.convertTemperatureToRggb(10000)
-                    8.0f -> CameraHelper.convertTemperatureToRggb(12000)
-                    9.0f -> CameraHelper.convertTemperatureToRggb(14000)
-                    10.0f -> CameraHelper.convertTemperatureToRggb(15000)
-                    else -> floatArrayOf()
-                }
-            cameraViewModel.updateCurrentWhiteBalanceValue(selectedValue)
-
-        }
-        */
-
     }
 
     fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
@@ -326,8 +301,6 @@ class CameraPreviewScreen(
         buttons[selectedButton]?.setOnClickListener {
             changeZoomButtonColor(SelectedZoomButton.None)
             cameraViewModel.camera?.cameraControl?.setZoomRatio(zoomRatioValue)
-            Log.d(TAG, "minimum value: "+zoomRatioValue)
-            Log.d(TAG, "zoomSlider.value: "+zoomRatio.indexOf(zoomRatioValue).toFloat())
             zoomSlider.value = zoomRatio.indexOf(zoomRatioValue).toFloat()
             changeZoomButtonColor(selectedButton)
         }

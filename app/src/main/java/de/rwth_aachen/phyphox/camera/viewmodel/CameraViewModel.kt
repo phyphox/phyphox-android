@@ -377,7 +377,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             exposureStep = exposureStep,
             exposureSettingState = ExposureSettingState.LOADED,
             cameraMaxRegionAWB =  maxRegionsAWB,
-            cameraWhiteBalanceModes = if(maxRegionsAWB == 0) awbAvailableModes.filter { it > 0 } else awbAvailableModes.map { it },
+            cameraWhiteBalanceModes = awbAvailableModes.map { it },
 
         )
 

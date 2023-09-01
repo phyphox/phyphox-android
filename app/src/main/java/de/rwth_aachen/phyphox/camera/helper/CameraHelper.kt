@@ -546,7 +546,6 @@ object CameraHelper {
 
     fun getWhiteBalanceNames() : MutableList<String> {
         return mutableListOf(
-            "Manual",
             "Auto",
             "Incandescent",
             "Fluorescent",
