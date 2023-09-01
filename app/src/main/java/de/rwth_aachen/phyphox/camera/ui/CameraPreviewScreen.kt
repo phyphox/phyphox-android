@@ -380,7 +380,7 @@ class CameraPreviewScreen(
             textViewExposureStatus.text = currentExposureValue.toString()
 
             textWhiteBalance.text =
-                CameraHelper.getWhiteBalanceNames()[cameraCurrentWhiteBalanceMode]
+                CameraHelper.getWhiteBalanceModes()[cameraCurrentWhiteBalanceMode]
         }
 
     }

@@ -9,7 +9,6 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
@@ -184,14 +183,9 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             it.setSurfaceProvider(previewView.surfaceProvider)
         }
 
-        //TODO manage the output format
-        var outputFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888
-        if(cameraInput.cameraFeature == CameraInput.PhyphoxCameraFeature.ColorDetector){
-            outputFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888
-        }
         imageAnalysis = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(outputFormat)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
             .build()
 
         imageAnalysis.setAnalyzer(cameraExecutor, imageAnalyser)
@@ -377,7 +371,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             exposureStep = exposureStep,
             exposureSettingState = ExposureSettingState.LOADED,
             cameraMaxRegionAWB =  maxRegionsAWB,
-            cameraWhiteBalanceModes = awbAvailableModes.map { it },
+            cameraWhiteBalanceModes = CameraHelper.getWhiteBalanceModes().filter { awbAvailableModes.contains(it.key) }.keys.toList()
 
         )
 
@@ -433,27 +427,15 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 return previewBuilder
             }
             CameraSettingLevel.ADVANCE -> {
-                extender.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CameraMetadata.CONTROL_AE_MODE_OFF
-                )
+                extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
 
                 val iso: Int = cameraSettingValueState.currentIsoValue
                 val shutterSpeed: Long = cameraSettingValueState.currentShutterValue
                 val aperture: Float = cameraSettingValueState.currentApertureValue
 
-                if (iso != 0) extender.setCaptureRequestOption(
-                    CaptureRequest.SENSOR_SENSITIVITY,
-                    iso
-                )
-                if (shutterSpeed != 0L) extender.setCaptureRequestOption(
-                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    shutterSpeed
-                )
-                if (aperture != 0.0f) extender.setCaptureRequestOption(
-                    CaptureRequest.LENS_APERTURE,
-                    aperture
-                )
+                if (iso != 0) extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
+                if (shutterSpeed != 0L) extender.setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutterSpeed)
+                if (aperture != 0.0f) extender.setCaptureRequestOption(CaptureRequest.LENS_APERTURE, aperture)
 
                 cameraInput.shutterSpeedDataBuffer.clear(true)
                 cameraInput.exposureDataBuffer.append(shutterSpeed.toDouble())
@@ -475,9 +457,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     private fun setupWhiteBalance(cameraSettingValueState: CameraSettingValueState, extender:  Camera2Interop.Extender<Preview> ){
         val currentMode = cameraSettingValueState.cameraCurrentWhiteBalanceMode
-        val currentValue = cameraSettingValueState.cameraCurrentWhiteBalanceValue
+        val currentValue = cameraSettingValueState.cameraCurrentWhiteBalanceManualValue
 
-        Log.d(TAG, cameraSettingValueState.cameraWhiteBalanceModes.toString())
         when(currentMode) {
             0 -> {
                 //extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
@@ -490,8 +471,6 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     )
                 }
             }
-            1 -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, 1)
-
             else -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, currentMode)
 
         }
@@ -537,7 +516,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         viewModelScope.launch {
             _cameraSettingValueState.emit(
                 currentCameraSettingState.copy(
-                    cameraCurrentWhiteBalanceValue = value,
+                    cameraCurrentWhiteBalanceManualValue = value,
                     exposureSettingState = ExposureSettingState.VALUE_UPDATED
                 )
             )
@@ -564,7 +543,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             }
             ExposureSettingMode.WHITE_BALANCE -> {
                 currentCameraSettingState.copy(
-                    cameraCurrentWhiteBalanceMode = CameraHelper.getWhiteBalanceNames().indexOf(value),
+                    cameraCurrentWhiteBalanceMode = CameraHelper.getWhiteBalanceModes().filter { value == it.value }.keys.first(),
                     exposureSettingState = ExposureSettingState.VALUE_UPDATED
                 )
             }

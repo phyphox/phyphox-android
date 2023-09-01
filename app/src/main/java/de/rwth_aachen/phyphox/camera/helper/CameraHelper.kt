@@ -530,30 +530,18 @@ object CameraHelper {
         return mutableListOf(3000, 4000, 5000, 6000, 6600, 7000, 8000, 9000, 10000 , 12000, 15000)
     }
 
-    fun getWhiteBalanceModes(): MutableList<Int> {
-        return mutableListOf(
-            CaptureRequest.CONTROL_AWB_MODE_OFF,
-            CaptureRequest.CONTROL_AWB_MODE_AUTO,
-            CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT,
-            CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT,
-            CaptureRequest.CONTROL_AWB_MODE_WARM_FLUORESCENT,
-            CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT,
-            CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT,
-            CaptureRequest.CONTROL_AWB_MODE_TWILIGHT,
-            CaptureRequest.CONTROL_AWB_MODE_SHADE
-        )
-    }
-
-    fun getWhiteBalanceNames() : MutableList<String> {
-        return mutableListOf(
-            "Auto",
-            "Incandescent",
-            "Fluorescent",
-            "Warm Fluorescent",
-            "Daylight",
-            "Cloudy Daylight",
-            "Twilight",
-            "Shade"
+    fun getWhiteBalanceModes(): MutableMap<Int, String> {
+        return mutableMapOf(
+            /*Currently, Manual is ignored*/
+            CaptureRequest.CONTROL_AWB_MODE_OFF to "Manual",
+            CaptureRequest.CONTROL_AWB_MODE_AUTO to "Auto",
+            CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT to "Incandescent",
+            CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT to "Fluorescent",
+            CaptureRequest.CONTROL_AWB_MODE_WARM_FLUORESCENT to "Warm Fluorescent",
+            CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT to "Daylight",
+            CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT to "Cloudy Daylight",
+            CaptureRequest.CONTROL_AWB_MODE_TWILIGHT to "Twilight",
+            CaptureRequest.CONTROL_AWB_MODE_SHADE to "Shade"
         )
     }
 

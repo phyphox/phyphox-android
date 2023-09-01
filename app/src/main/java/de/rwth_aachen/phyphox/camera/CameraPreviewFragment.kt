@@ -106,9 +106,8 @@ class CameraPreviewFragment : Fragment() {
                 when (action) {
                     is CameraUiAction.SwitchCameraClick -> cameraViewModel.switchCamera()
 
-                    is CameraUiAction.CameraSettingClick -> {
+                    is CameraUiAction.CameraSettingClick ->
                         cameraViewModel.openCameraSettingValue(action.settingMode)
-                    }
 
                     is CameraUiAction.UpdateCameraExposureSettingValue ->
                         cameraViewModel.updateCameraSettingValue(action.value, action.settingMode)
@@ -293,8 +292,8 @@ class CameraPreviewFragment : Fragment() {
                                         cameraSettingState.exposureStep
                                     )
 
-                                ExposureSettingMode.WHITE_BALANCE -> CameraHelper
-                                    .getWhiteBalanceNames()[cameraSettingState.cameraCurrentWhiteBalanceMode]
+                                ExposureSettingMode.WHITE_BALANCE ->
+                                    CameraHelper.getWhiteBalanceModes().getValue(cameraSettingState.cameraCurrentWhiteBalanceMode)
 
                                 else -> ""
                             }.toString()
@@ -305,7 +304,12 @@ class CameraPreviewFragment : Fragment() {
                                 ExposureSettingMode.SHUTTER_SPEED -> cameraSettingState.shutterSpeedRange
                                 ExposureSettingMode.APERTURE -> cameraSettingState.apertureRange
                                 ExposureSettingMode.EXPOSURE -> cameraSettingState.exposureRange
-                                ExposureSettingMode.WHITE_BALANCE -> CameraHelper.getWhiteBalanceNames()
+                                ExposureSettingMode.WHITE_BALANCE ->
+                                    CameraHelper.getWhiteBalanceModes().filter {
+                                        cameraSettingState.cameraWhiteBalanceModes.contains(it.key)
+                                    }.values.toList().filter {
+                                        it != "Manual"
+                                    }
                                 else -> emptyList()
                             }
 

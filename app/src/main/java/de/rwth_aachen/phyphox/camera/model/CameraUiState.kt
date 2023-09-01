@@ -74,9 +74,9 @@ data class CameraSettingValueState  constructor(
 
     val cameraMaxRegionAWB: Int = 0,
     val cameraWhiteBalanceManualRange: List<Int> = CameraHelper.getWhiteBalanceTemperatureList(),
-    val cameraWhiteBalanceModes: List<Int> = CameraHelper.getWhiteBalanceModes(),
-    val cameraCurrentWhiteBalanceValue: FloatArray = CameraHelper.convertTemperatureToRggb(15000),
-    val cameraCurrentWhiteBalanceMode : Int = 0
+    val cameraCurrentWhiteBalanceManualValue: FloatArray = CameraHelper.convertTemperatureToRggb(15000),
+    val cameraWhiteBalanceModes: List<Int> = CameraHelper.getWhiteBalanceModes().keys.toList(),
+    val cameraCurrentWhiteBalanceMode : Int = 1
     )
 
 enum class ExposureSettingMode {
