@@ -530,10 +530,10 @@ object CameraHelper {
             if (maxOpticalZoom == 1.0f)
                 return mutableListOf()
 
-            if (maxOpticalZoom < 4f)
+            if (maxOpticalZoom < 5f)
                 return mutableListOf(1, 2)
 
-            if (maxOpticalZoom < 8f)
+            if (maxOpticalZoom < 10f)
                 return mutableListOf(1, 2, 5)
 
             if (maxOpticalZoom < 15f)
