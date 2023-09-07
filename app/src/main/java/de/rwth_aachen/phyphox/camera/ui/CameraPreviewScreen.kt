@@ -133,7 +133,7 @@ class CameraPreviewScreen(
 
     /* To delay the reading of height and width of previewView. */
     var longerDelay = 800L
-    var shorterDelay = 100L
+    var shorterDelay = 300L
 
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()

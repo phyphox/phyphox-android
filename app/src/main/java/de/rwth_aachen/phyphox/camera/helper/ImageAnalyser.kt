@@ -46,6 +46,11 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
         if (cameraViewModel.cameraInput.measuring) {
             cameraViewModel.imageAnalysisStarted()
 
+            // Just to test both in same experiment
+            analyseBrightness(mediaImage)
+            analyseLuminosity(mediaImage)
+
+            /*
             when(cameraFeature){
                 CameraInput.PhyphoxCameraFeature.Photometric ->
                     when(cameraAnalysis){
@@ -55,6 +60,7 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
                 CameraInput.PhyphoxCameraFeature.ColorDetector -> detectColor(image)
                 else -> Unit
             }
+             */
 
             cameraViewModel.imageAnalysisFinished()
         }
