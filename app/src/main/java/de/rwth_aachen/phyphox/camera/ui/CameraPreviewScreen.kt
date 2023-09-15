@@ -15,7 +15,9 @@ import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import android.view.ViewTreeObserver.OnPreDrawListener
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
@@ -132,9 +134,8 @@ class CameraPreviewScreen(
 
     var overlayView: MarkerOverlayView = MarkerOverlayView(context)
 
-    /* To delay the reading of height and width of previewView. */
-    var longerDelay = 800L
-    var shorterDelay = 300L
+    lateinit var viewTreeObserver : ViewTreeObserver
+    var onViewTreeListenerRemoved = false
 
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
@@ -325,13 +326,12 @@ class CameraPreviewScreen(
         WiderAngle, Default, TwoTimes, FiveTimes, TenTimes, None
     }
 
+
     private fun initializeAndSetupCameraDimension() {
-        // work around to get the height of preview view by delaying it so that the view is first laid
-        val viewTreeObserver = previewView.viewTreeObserver
+        viewTreeObserver = previewView.viewTreeObserver
         viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
             override fun onGlobalLayout() {
-                // This callback will be triggered when the layout is complete
-                Handler().postDelayed({
+                if (previewView.width > 0 && previewView.height > 0) {
                     width = previewView.width
                     height = previewView.height
                     mainFrameLayout.removeView(overlayView)
@@ -348,9 +348,9 @@ class CameraPreviewScreen(
                         _action.emit(CameraUiAction.UpdateOverlay)
                     }
 
-                }, if(VERSION.SDK_INT <= Build.VERSION_CODES.P) longerDelay else shorterDelay)
-                // Remove the listener to avoid multiple callbacks
-                previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                }
             }
         })
     }
