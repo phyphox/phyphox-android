@@ -238,14 +238,6 @@ class CameraPreviewScreen(
             return
         }
 
-        /**
-        val listenableZoomRatio: ListenableFuture<Void>? = cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
-
-        if(listenableZoomRatio?.isDone?.or(listenableZoomRatio.isCancelled) != true){
-        listenableZoomRatio?.cancel(true)
-        }
-         **/
-
         val zoomButtons = listOf(
             ZoomButtonInfo(zoomRatio.first(), SelectedZoomButton.WiderAngle),
             ZoomButtonInfo(1.0f, SelectedZoomButton.Default),
