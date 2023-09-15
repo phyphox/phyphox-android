@@ -36,6 +36,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
+import com.google.common.util.concurrent.ListenableFuture
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
@@ -237,6 +238,14 @@ class CameraPreviewScreen(
             return
         }
 
+        /**
+        val listenableZoomRatio: ListenableFuture<Void>? = cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
+
+        if(listenableZoomRatio?.isDone?.or(listenableZoomRatio.isCancelled) != true){
+        listenableZoomRatio?.cancel(true)
+        }
+         **/
+
         val zoomButtons = listOf(
             ZoomButtonInfo(zoomRatio.first(), SelectedZoomButton.WiderAngle),
             ZoomButtonInfo(1.0f, SelectedZoomButton.Default),
@@ -254,9 +263,10 @@ class CameraPreviewScreen(
         zoomSlider.addOnChangeListener { _, value, _ ->
 
             val mappedValue = zoomRatio.getOrElse(value.toInt()) { 1.0f }
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
+            val listenableZoomRatio: ListenableFuture<Void>? = cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
             val selectedButton = zoomButtons.firstOrNull { it.zoomValue == mappedValue }?.button ?: SelectedZoomButton.None
             changeZoomButtonColor(selectedButton)
+            listenableZoomRatio?.cancel(true) // fix for zoom lagging
         }
 
         zoomSlider.setLabelFormatter { value: Float ->
