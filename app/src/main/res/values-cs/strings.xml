@@ -215,4 +215,5 @@
     <string name="common_direction_short_south_east">JV</string>
     <string name="common_direction_short_north_west">SZ</string>
     <string name="common_direction_short_south_west">JZ</string>
+    <string name="settings">Nastavení</string>
 </resources>
