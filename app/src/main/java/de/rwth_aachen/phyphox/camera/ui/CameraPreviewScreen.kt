@@ -75,6 +75,9 @@ class CameraPreviewScreen(
     val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
     private val mainFrameLayout: ConstraintLayout = root.findViewById(R.id.mainFrameLayout)
 
+    private val buttonMaximize: ImageView = root.findViewById(R.id.imageMaximize)
+    private val buttonMinimize: ImageView = root.findViewById(R.id.imageMinimize)
+
     private val zoomSlider: Slider = root.findViewById(R.id.zoomSlider)
     private val whiteBalanceSlider: Slider = root.findViewById(R.id.whiteBalanceSlider)
     private val zoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
@@ -134,20 +137,37 @@ class CameraPreviewScreen(
 
     var overlayView: MarkerOverlayView = MarkerOverlayView(context)
 
-    lateinit var viewTreeObserver : ViewTreeObserver
-    var onViewTreeListenerRemoved = false
-
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
     val action: Flow<CameraUiAction> = _action
 
     private var showZoomSlider = false
 
+    var resizableState = ResizableViewModuleState.Normal
+    var resizeButtonClicked = true
+
     init {
 
         initializeAndSetupCameraDimension()
 
         setFrameTouchOnListener()
+
+        buttonMaximize.setOnClickListener {
+            resizeButtonClicked = true
+            buttonMinimize.visibility = View.VISIBLE
+            buttonMaximize.visibility = View.GONE
+            resizableState = ResizableViewModuleState.Exclusive
+            initializeAndSetupCameraDimension()
+        }
+
+        buttonMinimize.setOnClickListener {
+            resizeButtonClicked = true
+            buttonMinimize.visibility = View.GONE
+            buttonMaximize.visibility = View.VISIBLE
+            resizableState = ResizableViewModuleState.Normal
+            initializeAndSetupCameraDimension()
+
+        }
 
         switchLensButton.setOnClickListener {
             switchLens(root, it)
@@ -215,6 +235,11 @@ class CameraPreviewScreen(
         }
 
     }
+
+    enum class ResizableViewModuleState {
+        Normal, Exclusive, Hidden
+    }
+
 
     private enum class CameraSettingsView {
         ExposureSettingListView, ZoomSliderView
@@ -328,28 +353,50 @@ class CameraPreviewScreen(
 
 
     private fun initializeAndSetupCameraDimension() {
-        viewTreeObserver = previewView.viewTreeObserver
-        viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+        previewView.viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 if (previewView.width > 0 && previewView.height > 0) {
                     width = previewView.width
                     height = previewView.height
-                    mainFrameLayout.removeView(overlayView)
-                    mainFrameLayout.addView(overlayView, width, height)
-                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-                        _action.emit(
-                            CameraUiAction.UpdateCameraDimension(
-                                previewView.height,
-                                previewView.width
-                            )
-                        )
+                    Log.d("STUPID", "width: "+width)
+                    Log.d("STUPID", "height: "+height)
+                    if(resizeButtonClicked){
+                        Log.d("STUPID", "inside width: "+width)
+                        Log.d("STUPID", "inside height: "+height)
+                        when (resizableState) {
+                            ResizableViewModuleState.Normal -> {
+                                width /= 2
+                                 height /= 2
+                            }
+                            ResizableViewModuleState.Exclusive -> {
+                                width *= 2
+                                height *= 2
+                            }
+                            else -> {
+                                width = 0
+                                height = 0
+                            }
+                        }
                     }
+
+                    val layoutParams = previewView.layoutParams
+                    layoutParams.width = width
+                    layoutParams.height = height
+                    previewView.layoutParams = layoutParams
+
+                    previewView.removeView(overlayView)
+                    previewView.addView(overlayView, width, height)
+
+                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                        _action.emit(CameraUiAction.UpdateCameraDimension(height, width))
+                    }
+
                     root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
                         _action.emit(CameraUiAction.UpdateOverlay)
                     }
 
-                    viewTreeObserver.removeOnGlobalLayoutListener(this)
-
+                    previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    resizeButtonClicked = false
                 }
             }
         })

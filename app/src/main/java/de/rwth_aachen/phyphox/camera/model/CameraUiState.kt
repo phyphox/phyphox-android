@@ -2,11 +2,8 @@ package de.rwth_aachen.phyphox.camera.model
 
 import android.graphics.Rect
 import android.os.Build
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
-import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 
 /**
  * Defines the current UI state of the camera
@@ -34,7 +31,7 @@ data class CameraUiState  constructor(
 enum class CameraState {
     NOT_READY,
     READY,
-    LOADED
+    LOADING
 }
 
 enum class OverlayUpdateState {

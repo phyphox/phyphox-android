@@ -6,13 +6,67 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/llPreviewMinMaxControl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="10dp"
+        android:weightSum="10"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <FrameLayout
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_weight="1">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageMaximize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/ic_expand_arrow" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageMinimize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                app:srcCompat="@drawable/ic_collapse_arrow" />
+
+        </FrameLayout>
+
+
+        <TextView
+            android:id="@+id/text2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_weight="8"
+            android:gravity="center"
+            android:text="@string/camera_preview"/>
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:visibility="invisible"
+            android:layout_weight="1" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
     <androidx.camera.view.PreviewView
         android:id="@+id/preview_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="0dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/llPreviewMinMaxControl"
         app:scaleType="fillCenter"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
         tools:layout_editor_absoluteX="0dp" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -25,6 +79,7 @@
         android:orientation="horizontal"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="10dp"
         app:layout_constraintTop_toBottomOf="@id/preview_view">
 
         <androidx.appcompat.widget.LinearLayoutCompat

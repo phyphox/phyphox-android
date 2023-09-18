@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.camera
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -189,7 +190,7 @@ class CameraPreviewFragment : Fragment() {
 
                         }
 
-                        CameraState.LOADED -> {
+                        CameraState.LOADING -> {
                             cameraScreenViewState.emit(
                                 cameraScreenViewState.value.updateCameraScreen { cameraScreen ->
                                     val opticalZooms =
