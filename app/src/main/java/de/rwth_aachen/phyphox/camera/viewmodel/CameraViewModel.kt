@@ -9,6 +9,7 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
@@ -104,7 +105,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             val currentCameraUiState = _cameraUiState.value
             _cameraUiState.emit(
                 currentCameraUiState.copy(
-                    cameraState = CameraState.LOADED
+                    cameraState = CameraState.LOADING
                 )
             )
         }
@@ -210,7 +211,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     fun switchCamera() {
         val currentCameraUiState = _cameraUiState.value
-        if (currentCameraUiState.cameraState == CameraState.LOADED) {
+        if (currentCameraUiState.cameraState == CameraState.LOADING) {
             // To switch the camera lens, there has to be at least 2 camera lenses
             if (currentCameraUiState.availableCameraLens.size == 1) return
 

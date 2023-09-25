@@ -312,6 +312,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="cameraExternal">External camera</string>
     <string name="off">Off</string>
     <string name="on">On</string>
+    <string name="camera_preview">Camera Preview</string>
 
     <string name="camera_not_ready">Camera Not Ready</string>
 
