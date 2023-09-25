@@ -19,6 +19,7 @@ import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.ViewTreeObserver.OnPreDrawListener
 import android.view.animation.AlphaAnimation
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -74,6 +75,7 @@ class CameraPreviewScreen(
 
     val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
     private val mainFrameLayout: ConstraintLayout = root.findViewById(R.id.mainFrameLayout)
+    private val frameLayoutPreviewView: FrameLayout = root.findViewById(R.id.fl_preview_view)
 
     private val buttonMaximize: ImageView = root.findViewById(R.id.imageMaximize)
     private val buttonMinimize: ImageView = root.findViewById(R.id.imageMinimize)
@@ -358,11 +360,8 @@ class CameraPreviewScreen(
                 if (previewView.width > 0 && previewView.height > 0) {
                     width = previewView.width
                     height = previewView.height
-                    Log.d("STUPID", "width: "+width)
-                    Log.d("STUPID", "height: "+height)
+
                     if(resizeButtonClicked){
-                        Log.d("STUPID", "inside width: "+width)
-                        Log.d("STUPID", "inside height: "+height)
                         when (resizableState) {
                             ResizableViewModuleState.Normal -> {
                                 width /= 2
@@ -384,8 +383,9 @@ class CameraPreviewScreen(
                     layoutParams.height = height
                     previewView.layoutParams = layoutParams
 
-                    previewView.removeView(overlayView)
-                    previewView.addView(overlayView, width, height)
+                    frameLayoutPreviewView.removeView(overlayView)
+                    overlayView.layoutParams = layoutParams
+                    frameLayoutPreviewView.addView(overlayView)
 
                     root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
                         _action.emit(CameraUiAction.UpdateCameraDimension(height, width))

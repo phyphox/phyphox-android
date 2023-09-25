@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainFrameLayout"
+    android:layout_gravity="center"
+    android:foregroundGravity="center_horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -39,7 +41,6 @@
 
         </FrameLayout>
 
-
         <TextView
             android:id="@+id/text2"
             android:layout_width="match_parent"
@@ -58,16 +59,26 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/preview_view"
+    <FrameLayout
+        android:id="@+id/fl_preview_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@id/llPreviewMinMaxControl"
-        app:scaleType="fillCenter"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        tools:layout_editor_absoluteX="0dp" />
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/llPreviewMinMaxControl"
+        >
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/preview_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+            android:layout_gravity="center_horizontal"
+            app:scaleType="fillCenter"
+            tools:layout_editor_absoluteX="0dp" />
+
+    </FrameLayout>
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/cameraSetting"
@@ -80,7 +91,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@id/preview_view">
+        app:layout_constraintTop_toBottomOf="@id/fl_preview_view">
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/lnrSwitchLens"
