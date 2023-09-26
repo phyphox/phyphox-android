@@ -431,8 +431,9 @@ class CameraPreviewScreen(
     fun setFrameTouchOnListener() {
         overlayView.setOnTouchListener { v, event ->
 
-            val touch = floatArrayOf(event.x, event.y)
+            if (resizableState == ResizableViewModuleState.Normal) return@setOnTouchListener false
 
+            val touch = floatArrayOf(event.x, event.y)
             val invert = Matrix()
             transformation.invert(invert)
             invert.mapPoints(touch)
@@ -503,16 +504,19 @@ class CameraPreviewScreen(
             RectF(0f, 0f, cameraUiState.cameraWidth.toFloat(), cameraUiState.cameraHeight.toFloat())
         transformation.mapRect(inner)
         transformation.mapRect(outer)
-        val points: Array<Point?>?
-        if (true) {
-            points = arrayOfNulls(4)
-            points[0] = Point(Math.round(inner.left), Math.round(inner.top))
-            points[1] = Point(Math.round(inner.right), Math.round(inner.top))
-            points[2] = Point(Math.round(inner.left), Math.round(inner.bottom))
-            points[3] = Point(Math.round(inner.right), Math.round(inner.bottom))
-        } else points = null
+        var points: Array<Point?>?
+
         overlayView.setClipRect(outer)
         overlayView.setPassepartout(inner)
+
+        points = arrayOfNulls(4)
+        points[0] = Point(Math.round(inner.left), Math.round(inner.top))
+        points[1] = Point(Math.round(inner.right), Math.round(inner.top))
+        points[2] = Point(Math.round(inner.left), Math.round(inner.bottom))
+        points[3] = Point(Math.round(inner.right), Math.round(inner.bottom))
+
+        if (resizableState == ResizableViewModuleState.Normal) points = null
+
         overlayView.update(null, points)
 
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
