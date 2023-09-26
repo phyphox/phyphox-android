@@ -84,6 +84,7 @@ class CameraPreviewScreen(
     private val whiteBalanceSlider: Slider = root.findViewById(R.id.whiteBalanceSlider)
     private val zoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
 
+    private val lnrCameraSetting: LinearLayoutCompat = root.findViewById(R.id.cameraSetting)
     private val lnrSwitchLens = root.findViewById<LinearLayoutCompat>(R.id.lnrSwitchLens)
     private val lnrIso = root.findViewById<LinearLayoutCompat>(R.id.lnrImageIso)
     private val lnrShutter = root.findViewById<LinearLayoutCompat>(R.id.lnrImageShutter)
@@ -245,6 +246,20 @@ class CameraPreviewScreen(
 
     private enum class CameraSettingsView {
         ExposureSettingListView, ZoomSliderView
+    }
+
+    fun getCameraSettingsVisibility(): Boolean {
+        return when (cameraInput.showControls) {
+            CameraInput.PhyphoxShowCameraControls.FullViewOnly -> {
+                when (resizableState) {
+                    ResizableViewModuleState.Normal -> return false
+                    ResizableViewModuleState.Exclusive -> return true
+                    else -> false
+                }
+            }
+            CameraInput.PhyphoxShowCameraControls.Always -> true
+            CameraInput.PhyphoxShowCameraControls.Never -> false
+        }
     }
 
     fun setUpWhiteBalanceControl(cameraSettingState: CameraSettingValueState){
@@ -562,11 +577,16 @@ class CameraPreviewScreen(
 
     /* Setup all the view state of the UI shown in the camera preview. */
     fun updateCameraScreenViewState(state: CameraScreenViewState) {
+        updateCameraSettingsLinearLayoutViewState(state.cameraPreviewScreenViewState)
         updateSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
         updateCameraExposureViewState(state.cameraPreviewScreenViewState)
         setZoomButtonVisibility(state.cameraPreviewScreenViewState)
         setCameraSettingRecyclerViewState(state.cameraPreviewScreenViewState)
         setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
+    }
+
+    private fun updateCameraSettingsLinearLayoutViewState(state: CameraPreviewScreenViewState){
+        lnrCameraSetting.isVisible = state.cameraSettingLinearLayoutViewState.isVisible
     }
 
     private fun updateSwitchLensButtonViewState(state: CameraPreviewScreenViewState) {

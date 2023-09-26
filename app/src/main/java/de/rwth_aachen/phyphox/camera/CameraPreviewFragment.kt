@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
+import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
@@ -167,7 +168,14 @@ class CameraPreviewFragment : Fragment() {
                 .collectLatest { (cameraUiState, cameraSettingState) ->
 
                     when (cameraUiState.cameraState) {
-                        CameraState.NOT_READY -> cameraViewModel.initializeCamera()
+                        CameraState.NOT_READY -> {
+                            cameraViewModel.initializeCamera()
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen {
+                                   it.setCameraSettingsVisibility(cameraPreviewScreen.getCameraSettingsVisibility())
+                                }
+                            )
+                        }
 
                         CameraState.READY -> {
                             cameraPreviewScreen.previewView.doOnLayout {
@@ -352,7 +360,14 @@ class CameraPreviewFragment : Fragment() {
 
                     when (cameraUiState.overlayUpdateState) {
                         OverlayUpdateState.NO_UPDATE -> Unit
-                        OverlayUpdateState.UPDATE -> cameraPreviewScreen.updateOverlay(cameraUiState)
+                        OverlayUpdateState.UPDATE -> {
+                            cameraPreviewScreen.updateOverlay(cameraUiState)
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen {
+                                    it.setCameraSettingsVisibility(cameraPreviewScreen.getCameraSettingsVisibility())
+                                }
+                            )
+                        }
                         OverlayUpdateState.UPDATE_DONE -> Unit
                     }
                 }

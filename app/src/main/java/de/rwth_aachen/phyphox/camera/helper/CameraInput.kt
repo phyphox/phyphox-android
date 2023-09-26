@@ -34,6 +34,7 @@ class CameraInput() {
     // List of buffers (variables) that is provided in the xml
     lateinit var buffers: Vector<DataOutput>
 
+    var showControls: PhyphoxShowCameraControls = PhyphoxShowCameraControls.FullViewOnly
     var autoExposure: Boolean = true
 
     var isoCurrentValue: Int = 100
@@ -59,6 +60,7 @@ class CameraInput() {
         buffers: Vector<DataOutput>,
         lock: Lock,
         experimentTimeReference: ExperimentTimeReference,
+        showCameraControls: PhyphoxShowCameraControls,
         cameraFeature: PhyphoxCameraFeature,
         cameraAnalysis: PhyphoxCameraAnalysis,
         autoExposure: Boolean,
@@ -72,6 +74,7 @@ class CameraInput() {
         this.y2 = y2
         this.buffers = buffers
         this.experimentTimeReference = experimentTimeReference
+        this.showControls = showCameraControls
         this.cameraFeature = cameraFeature
         this.cameraAnalysis = cameraAnalysis
         this.autoExposure = autoExposure
@@ -100,6 +103,10 @@ class CameraInput() {
 
     enum class PhyphoxCameraAnalysis {
         Luminance, Brightness
+    }
+
+    enum class  PhyphoxShowCameraControls {
+        Always, Never, FullViewOnly
     }
 
     fun start() {

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.Camera;
 import android.hardware.camera2.CameraManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
@@ -1865,12 +1866,16 @@ public abstract class PhyphoxFile {
                             throw new phyphoxFileException("Need permission to access the camera."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
                         }
 
+                        String showControls = getStringAttribute("show_controls");
+                        if(showControls == null) {showControls = ""; }
+                        else { showControls.toLowerCase(); }
+
                         boolean autoExposure = getBooleanAttribute("auto_exposure", true);
+
                         int exposureAdjustmentLevel = getIntAttribute("exposure_adjustment_level", 1);
+
                         String lockedSetting = getStringAttribute("locked");
-                        if(lockedSetting == null){
-                            lockedSetting = "";
-                        }
+                        if(lockedSetting == null) lockedSetting = "";
 
                         String featureStr = getStringAttribute("feature");
                         if(featureStr == null)
@@ -1881,6 +1886,23 @@ public abstract class PhyphoxFile {
                         if(analysisStr == null){
                             analysisStr = "luminance";
                         } else analysisStr = analysisStr.toLowerCase();
+
+                        CameraInput.PhyphoxShowCameraControls showCameraControls;
+                        switch (showControls){
+                            case "always":{
+                                showCameraControls = CameraInput.PhyphoxShowCameraControls.Always;
+                                break;
+                            } case "never": {
+                                showCameraControls = CameraInput.PhyphoxShowCameraControls.Never;
+                                break;
+                            } case "full_view_only": {
+                                showCameraControls = CameraInput.PhyphoxShowCameraControls.FullViewOnly;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown show controls name: " + featureStr, xpp.getLineNumber());
+                            }
+                        }
 
                         CameraInput.PhyphoxCameraFeature feature;
                         switch (featureStr){
@@ -1908,7 +1930,7 @@ public abstract class PhyphoxFile {
                                 break;
                             }
                             default: {
-                                throw new phyphoxFileException("Unknown feature name: " + analysisStr, xpp.getLineNumber());
+                                throw new phyphoxFileException("Unknown analysis name: " + analysisStr, xpp.getLineNumber());
                             }
                         }
 
@@ -1950,6 +1972,7 @@ public abstract class PhyphoxFile {
                                 outputs,
                                 experiment.dataLock,
                                 experiment.experimentTimeReference,
+                                showCameraControls,
                                 feature,
                                 cameraAnalysis,
                                 autoExposure,

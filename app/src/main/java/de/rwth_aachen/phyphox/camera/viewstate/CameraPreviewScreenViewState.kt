@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox.camera.viewstate
 
 data class CameraPreviewScreenViewState(
+    val cameraSettingLinearLayoutViewState: CameraSettingLinearLayoutViewState = CameraSettingLinearLayoutViewState(),
     val shutterButtonViewState: ShutterButtonViewState = ShutterButtonViewState(),
     val isoButtonViewState: IsoButtonViewState = IsoButtonViewState(),
     val apertureButtonViewState: ApertureButtonViewState = ApertureButtonViewState(),
@@ -15,6 +16,9 @@ data class CameraPreviewScreenViewState(
     val fiveTimesButtonViewState: FiveTimesZoomButtonViewState = FiveTimesZoomButtonViewState(),
     val tenTimesButtonViewState: TenTimesZoomButtonViewState = TenTimesZoomButtonViewState(),
 ) {
+
+    fun setCameraSettingsVisibility(isVisible: Boolean): CameraPreviewScreenViewState =
+        copy(cameraSettingLinearLayoutViewState = cameraSettingLinearLayoutViewState.copy(isVisible = isVisible))
 
     fun showSwitchLensControl(): CameraPreviewScreenViewState =
         copy(switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = true))
@@ -111,6 +115,11 @@ data class CameraPreviewScreenViewState(
             )
 
 }
+
+data class CameraSettingLinearLayoutViewState(
+    val isVisible: Boolean = true,
+    val isEnabled: Boolean = true
+)
 
 data class SwitchLensButtonViewState(
     val isVisible: Boolean = false,
