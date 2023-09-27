@@ -15,7 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
-import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
@@ -26,6 +25,7 @@ import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
+import de.rwth_aachen.phyphox.camera.model.ShowCameraSettingController
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModelFactory
@@ -107,6 +107,14 @@ class CameraPreviewFragment : Fragment() {
             cameraPreviewScreen.action.collectLatest { action ->
                 when (action) {
                     is CameraUiAction.SwitchCameraClick -> cameraViewModel.switchCamera()
+
+                    is CameraUiAction.ZoomClicked -> {
+                        if(cameraPreviewScreen.zoomClicked){
+                            cameraViewModel.showZoomController()
+                        } else {
+                            cameraViewModel.hideAllController()
+                        }
+                    }
 
                     is CameraUiAction.CameraSettingClick ->
                         cameraViewModel.openCameraSettingValue(action.settingMode)
@@ -190,7 +198,6 @@ class CameraPreviewFragment : Fragment() {
                                         cameraScreen
                                             .showSwitchLens(true)
                                             .enableAutoFocus(cameraSettingState.disabledAutoExposure)
-
                                     }
                             )
                             cameraPreviewScreen.setCameraSwitchInfo(cameraUiState)
@@ -369,6 +376,37 @@ class CameraPreviewFragment : Fragment() {
                             )
                         }
                         OverlayUpdateState.UPDATE_DONE -> Unit
+                    }
+
+                    when(cameraSettingState.setCameraSettingVisibility){
+                        ShowCameraSettingController.HIDE_ALL -> {
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen {
+                                    it.setCameraRecyclerViewExposureControllerVisibility(false)
+                                        .setCameraZoomControllerVisibility(false)
+                                        .setCameraWhiteBalanceControllerVisibility(false)
+                                }
+                            )
+                        }
+                        ShowCameraSettingController.SHOW_EXPOSURE_SETTING_RECYCLER_LIST -> {
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen {
+                                    it.setCameraRecyclerViewExposureControllerVisibility(cameraPreviewScreen.recyclerViewClicked)
+                                        .setCameraZoomControllerVisibility(false)
+                                        .setCameraWhiteBalanceControllerVisibility(false)
+                                }
+                            )
+                        }
+                        ShowCameraSettingController.SHOW_WHITE_BALANCE_SLIDER -> Unit
+                        ShowCameraSettingController.SHOW_ZOOM_SLIDER -> {
+                            cameraScreenViewState.emit(
+                                cameraScreenViewState.value.updateCameraScreen {
+                                    it.setCameraRecyclerViewExposureControllerVisibility(false)
+                                        .setCameraZoomControllerVisibility(true)
+                                        .setCameraWhiteBalanceControllerVisibility(false)
+                                }
+                            )
+                        }
                     }
                 }
         }

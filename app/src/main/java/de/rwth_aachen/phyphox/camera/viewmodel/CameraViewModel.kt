@@ -9,7 +9,6 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
@@ -40,6 +39,7 @@ import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
 import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
+import de.rwth_aachen.phyphox.camera.model.ShowCameraSettingController
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -232,7 +232,32 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
                     imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
                 ))
+                _cameraSettingValueState.emit(
+                    _cameraSettingValueState.value.copy(
+                        setCameraSettingVisibility = ShowCameraSettingController.HIDE_ALL
+                    )
+                )
             }
+        }
+    }
+
+    fun showZoomController(){
+        viewModelScope.launch {
+            _cameraSettingValueState.emit(
+                _cameraSettingValueState.value.copy(
+                    setCameraSettingVisibility = ShowCameraSettingController.SHOW_ZOOM_SLIDER
+                )
+            )
+        }
+    }
+
+    fun hideAllController(){
+        viewModelScope.launch {
+            _cameraSettingValueState.emit(
+                _cameraSettingValueState.value.copy(
+                    setCameraSettingVisibility = ShowCameraSettingController.HIDE_ALL
+                )
+            )
         }
     }
 
@@ -245,7 +270,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
             )
             _cameraSettingValueState.emit(
                 _cameraSettingValueState.value.copy(
-                    disabledAutoExposure = autoExposure
+                    disabledAutoExposure = autoExposure,
+                    setCameraSettingVisibility = ShowCameraSettingController.HIDE_ALL
                 )
             )
         }
@@ -484,6 +510,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 currentCameraSettingState.copy(
                     cameraSettingState = CameraSettingState.LOAD_LIST,
                     settingMode = settingMode,
+                    setCameraSettingVisibility = ShowCameraSettingController.SHOW_EXPOSURE_SETTING_RECYCLER_LIST
                 )
             )
         }

@@ -10,14 +10,10 @@ import android.graphics.Point
 import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.os.Build
-import android.os.Build.VERSION
-import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
-import android.view.ViewTreeObserver.OnPreDrawListener
 import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -82,9 +78,9 @@ class CameraPreviewScreen(
 
     private val zoomSlider: Slider = root.findViewById(R.id.zoomSlider)
     private val whiteBalanceSlider: Slider = root.findViewById(R.id.whiteBalanceSlider)
-    private val zoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
 
     private val lnrCameraSetting: LinearLayoutCompat = root.findViewById(R.id.cameraSetting)
+    private val lnrZoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
     private val lnrSwitchLens = root.findViewById<LinearLayoutCompat>(R.id.lnrSwitchLens)
     private val lnrIso = root.findViewById<LinearLayoutCompat>(R.id.lnrImageIso)
     private val lnrShutter = root.findViewById<LinearLayoutCompat>(R.id.lnrImageShutter)
@@ -122,6 +118,9 @@ class CameraPreviewScreen(
     private val buttonZoomFiveTimes: MaterialButton = root.findViewById(R.id.buttonTimesFive)
     private val buttonZoomTenTimes: MaterialButton = root.findViewById(R.id.buttonTimesTen)
 
+    var recyclerViewClicked = false
+    var zoomClicked = false
+
     private var autoExposure: Boolean = true
 
     //animation when button is clicked
@@ -143,8 +142,6 @@ class CameraPreviewScreen(
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
     val action: Flow<CameraUiAction> = _action
-
-    private var showZoomSlider = false
 
     var resizableState = ResizableViewModuleState.Normal
     var resizeButtonClicked = true
@@ -173,18 +170,23 @@ class CameraPreviewScreen(
         }
 
         switchLensButton.setOnClickListener {
-            switchLens(root, it)
+            animateButton(it)
+            recyclerViewClicked = false
+            zoomClicked = false
+            onSettingClicked(CameraSettingMode.SWITCH_LENS)
         }
 
         imageViewIso.setOnClickListener {
-            clickedButton = it
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
+            it.startAnimation(buttonClick)
+            recyclerViewClicked = !recyclerViewClicked
+            zoomClicked = false
             onSettingClicked(CameraSettingMode.ISO)
         }
 
         imageViewShutter.setOnClickListener {
-            clickedButton = it
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
+            it.startAnimation(buttonClick)
+            recyclerViewClicked = !recyclerViewClicked
+            zoomClicked = false
             onSettingClicked(CameraSettingMode.SHUTTER_SPEED)
         }
 
@@ -197,55 +199,37 @@ class CameraPreviewScreen(
         */
 
         imageViewExposure.setOnClickListener {
-            clickedButton = it
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
+            it.startAnimation(buttonClick)
+            recyclerViewClicked = !recyclerViewClicked
+            zoomClicked = false
             onSettingClicked(CameraSettingMode.EXPOSURE)
         }
 
-        imageViewAutoExposure.setOnClickListener { onSettingClicked(CameraSettingMode.AUTO_EXPOSURE) }
+        imageViewAutoExposure.setOnClickListener {
+            it.startAnimation(buttonClick)
+            recyclerViewClicked = false
+            zoomClicked = false
+            onSettingClicked(CameraSettingMode.AUTO_EXPOSURE)
+        }
 
         imageZoom.setOnClickListener {
-            clickedButton = it
-            setCameraSettingsVisibility(CameraSettingsView.ZoomSliderView)
+            it.startAnimation(buttonClick)
+            recyclerViewClicked = false
+            zoomClicked = !zoomClicked
+            onSettingClicked(CameraSettingMode.ZOOM)
         }
 
         imageWhiteBalance.setOnClickListener {
-            clickedButton = it
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
+            it.startAnimation(buttonClick)
+            recyclerViewClicked = !recyclerViewClicked
+            zoomClicked = false
             onSettingClicked(CameraSettingMode.WHITE_BALANCE)
-        }
-
-    }
-    private fun setCameraSettingsVisibility(cameraSettingsView: CameraSettingsView){
-        clickedButton?.startAnimation(buttonClick)
-        when (cameraSettingsView) {
-            CameraSettingsView.ExposureSettingListView -> {
-                if(zoomControl.isVisible) zoomControl.visibility = View.GONE
-
-                if(whiteBalanceSlider.isVisible) whiteBalanceSlider.visibility = View.GONE
-            }
-            CameraSettingsView.ZoomSliderView -> {
-                if(recyclerViewExposureSetting.isVisible) recyclerViewExposureSetting.visibility = View.GONE
-
-                if(whiteBalanceSlider.isVisible) whiteBalanceSlider.visibility = View.GONE
-
-                zoomControl.visibility = View.VISIBLE
-                if (showZoomSlider) zoomControl.visibility = View.GONE
-
-                showZoomSlider = !showZoomSlider
-
-            }
         }
 
     }
 
     enum class ResizableViewModuleState {
         Normal, Exclusive, Hidden
-    }
-
-
-    private enum class CameraSettingsView {
-        ExposureSettingListView, ZoomSliderView
     }
 
     fun getCameraSettingsVisibility(): Boolean {
@@ -545,10 +529,8 @@ class CameraPreviewScreen(
         }
     }
 
-    private fun switchLens(root: View, switchLensButton: View) {
-        root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-            _action.emit(CameraUiAction.SwitchCameraClick)
-        }
+    private fun animateButton(switchLensButton: View) {
+
         switchLensButton.animate().apply {
             rotation(180f)
             duration = 300L
@@ -571,6 +553,8 @@ class CameraPreviewScreen(
                 CameraSettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
                 CameraSettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
                 CameraSettingMode.WHITE_BALANCE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
+                CameraSettingMode.ZOOM -> _action.emit(CameraUiAction.ZoomClicked)
+                CameraSettingMode.SWITCH_LENS -> _action.emit(CameraUiAction.SwitchCameraClick)
             }
         }
     }
@@ -578,11 +562,21 @@ class CameraPreviewScreen(
     /* Setup all the view state of the UI shown in the camera preview. */
     fun updateCameraScreenViewState(state: CameraScreenViewState) {
         updateCameraSettingsLinearLayoutViewState(state.cameraPreviewScreenViewState)
+        updateCameraSettingControllersViewState(state.cameraPreviewScreenViewState)
         updateSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
         updateCameraExposureViewState(state.cameraPreviewScreenViewState)
         setZoomButtonVisibility(state.cameraPreviewScreenViewState)
         setCameraSettingRecyclerViewState(state.cameraPreviewScreenViewState)
         setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
+    }
+
+    private fun updateCameraSettingControllersViewState(state: CameraPreviewScreenViewState){
+        Log.d(TAG, "updateCameraSettingControllersViewState: isRecyclerViewExposureControlVisible " +state.cameraSettingControllersViewState.isRecyclerViewExposureControlVisible)
+        Log.d(TAG, "updateCameraSettingControllersViewState: isZoomControlVisible " +state.cameraSettingControllersViewState.isZoomControlVisible)
+        Log.d(TAG, "updateCameraSettingControllersViewState: isWhiteBalanceControlVisible " +state.cameraSettingControllersViewState.isWhiteBalanceControlVisible)
+        recyclerViewExposureSetting.isVisible = state.cameraSettingControllersViewState.isRecyclerViewExposureControlVisible
+        lnrZoomControl.isVisible = state.cameraSettingControllersViewState.isZoomControlVisible
+        whiteBalanceSlider.isVisible = state.cameraSettingControllersViewState.isWhiteBalanceControlVisible
     }
 
     private fun updateCameraSettingsLinearLayoutViewState(state: CameraPreviewScreenViewState){
@@ -611,7 +605,7 @@ class CameraPreviewScreen(
     }
 
     private fun setCameraSettingRecyclerViewState(state: CameraPreviewScreenViewState) {
-        recyclerViewExposureSetting.isVisible = state.cameraSettingRecyclerViewState.isOpened
+        //recyclerViewExposureSetting.isVisible = state.cameraSettingRecyclerViewState.isOpened
     }
 
     fun setCameraSettingButtonValue(state: CameraSettingValueState) {
@@ -708,6 +702,7 @@ class CameraPreviewScreen(
         settingMode: CameraSettingMode,
         currentValue: String
     ) {
+        Log.d(TAG, "SettingMode: "+settingMode.toString())
         if (dataList.isNullOrEmpty() || dataList.size == 1) {
             return
         }

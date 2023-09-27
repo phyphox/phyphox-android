@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.camera.viewstate
 
 data class CameraPreviewScreenViewState(
     val cameraSettingLinearLayoutViewState: CameraSettingLinearLayoutViewState = CameraSettingLinearLayoutViewState(),
+    val cameraSettingControllersViewState: CameraSettingControllersViewState = CameraSettingControllersViewState(),
     val shutterButtonViewState: ShutterButtonViewState = ShutterButtonViewState(),
     val isoButtonViewState: IsoButtonViewState = IsoButtonViewState(),
     val apertureButtonViewState: ApertureButtonViewState = ApertureButtonViewState(),
@@ -19,6 +20,15 @@ data class CameraPreviewScreenViewState(
 
     fun setCameraSettingsVisibility(isVisible: Boolean): CameraPreviewScreenViewState =
         copy(cameraSettingLinearLayoutViewState = cameraSettingLinearLayoutViewState.copy(isVisible = isVisible))
+
+    fun setCameraZoomControllerVisibility(isVisible: Boolean): CameraPreviewScreenViewState =
+        copy(cameraSettingControllersViewState = cameraSettingControllersViewState.copy(isZoomControlVisible = isVisible))
+
+    fun setCameraRecyclerViewExposureControllerVisibility(isVisible: Boolean): CameraPreviewScreenViewState =
+        copy(cameraSettingControllersViewState = cameraSettingControllersViewState.copy(isRecyclerViewExposureControlVisible = isVisible))
+
+    fun setCameraWhiteBalanceControllerVisibility(isVisible: Boolean): CameraPreviewScreenViewState =
+        copy(cameraSettingControllersViewState = cameraSettingControllersViewState.copy(isWhiteBalanceControlVisible = isVisible))
 
     fun showSwitchLensControl(): CameraPreviewScreenViewState =
         copy(switchLensButtonViewState = switchLensButtonViewState.copy(isVisible = true))
@@ -119,6 +129,12 @@ data class CameraPreviewScreenViewState(
 data class CameraSettingLinearLayoutViewState(
     val isVisible: Boolean = true,
     val isEnabled: Boolean = true
+)
+
+data class CameraSettingControllersViewState(
+    val isZoomControlVisible: Boolean = false,
+    val isRecyclerViewExposureControlVisible: Boolean = false,
+    val isWhiteBalanceControlVisible: Boolean = false
 )
 
 data class SwitchLensButtonViewState(

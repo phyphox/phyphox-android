@@ -29,6 +29,8 @@ data class CameraSettingValueState  constructor(
     val cameraSettingLevel: CameraSettingLevel = CameraSettingLevel.BASIC,
     val cameraSettingRecyclerState: CameraSettingRecyclerState = CameraSettingRecyclerState.TO_HIDE,
 
+    val setCameraSettingVisibility: ShowCameraSettingController = ShowCameraSettingController.HIDE_ALL,
+
     val cameraMaxZoomRatio: Float = 0.0f,
     val cameraMinZoomRatio: Float = 0.0f,
     val cameraZoomRatio: Float = 0.0f,
@@ -50,7 +52,9 @@ enum class CameraSettingMode {
     APERTURE,
     EXPOSURE,
     AUTO_EXPOSURE,
-    WHITE_BALANCE
+    WHITE_BALANCE,
+    ZOOM,
+    SWITCH_LENS
 }
 
 enum class CameraSettingLevel {
@@ -71,4 +75,11 @@ enum class CameraSettingState{
     LOAD_LIST,
     VALUE_UPDATED,
     LOAD_FINISHED
+}
+
+enum class ShowCameraSettingController{
+    HIDE_ALL,
+    SHOW_EXPOSURE_SETTING_RECYCLER_LIST,
+    SHOW_ZOOM_SLIDER,
+    SHOW_WHITE_BALANCE_SLIDER
 }
