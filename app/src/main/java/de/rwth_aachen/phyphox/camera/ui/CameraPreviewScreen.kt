@@ -13,6 +13,7 @@ import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
@@ -70,7 +71,6 @@ class CameraPreviewScreen(
     val TAG = "CameraPreviewScreen"
 
     val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
-    private val mainFrameLayout: ConstraintLayout = root.findViewById(R.id.mainFrameLayout)
     private val frameLayoutPreviewView: FrameLayout = root.findViewById(R.id.fl_preview_view)
 
     private val buttonMaximize: ImageView = root.findViewById(R.id.imageMaximize)
@@ -81,6 +81,7 @@ class CameraPreviewScreen(
 
     private val lnrCameraSetting: LinearLayoutCompat = root.findViewById(R.id.cameraSetting)
     private val lnrZoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
+    private val lnrZoom: LinearLayoutCompat = root.findViewById(R.id.lnrZoom)
     private val lnrSwitchLens = root.findViewById<LinearLayoutCompat>(R.id.lnrSwitchLens)
     private val lnrIso = root.findViewById<LinearLayoutCompat>(R.id.lnrImageIso)
     private val lnrShutter = root.findViewById<LinearLayoutCompat>(R.id.lnrImageShutter)
@@ -125,11 +126,10 @@ class CameraPreviewScreen(
 
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
-    private var clickedButton: View? = null
 
     private var selectedPosition = RecyclerView.NO_POSITION
 
-    var transformation = Matrix()
+    private var transformation = Matrix()
 
     var width: Int = 0
     var height: Int = 0
@@ -169,21 +169,21 @@ class CameraPreviewScreen(
 
         }
 
-        switchLensButton.setOnClickListener {
-            animateButton(it)
+        lnrSwitchLens.setOnClickListener {
+            animateButton(switchLensButton)
             recyclerViewClicked = false
             zoomClicked = false
             onSettingClicked(CameraSettingMode.SWITCH_LENS)
         }
 
-        imageViewIso.setOnClickListener {
+        lnrIso.setOnClickListener {
             it.startAnimation(buttonClick)
             recyclerViewClicked = !recyclerViewClicked
             zoomClicked = false
             onSettingClicked(CameraSettingMode.ISO)
         }
 
-        imageViewShutter.setOnClickListener {
+        lnrShutter.setOnClickListener {
             it.startAnimation(buttonClick)
             recyclerViewClicked = !recyclerViewClicked
             zoomClicked = false
@@ -198,28 +198,28 @@ class CameraPreviewScreen(
         }
         */
 
-        imageViewExposure.setOnClickListener {
+        lnrExposure.setOnClickListener {
             it.startAnimation(buttonClick)
             recyclerViewClicked = !recyclerViewClicked
             zoomClicked = false
             onSettingClicked(CameraSettingMode.EXPOSURE)
         }
 
-        imageViewAutoExposure.setOnClickListener {
+        lnrAutoExposure.setOnClickListener {
             it.startAnimation(buttonClick)
             recyclerViewClicked = false
             zoomClicked = false
             onSettingClicked(CameraSettingMode.AUTO_EXPOSURE)
         }
 
-        imageZoom.setOnClickListener {
+        lnrZoom.setOnClickListener {
             it.startAnimation(buttonClick)
             recyclerViewClicked = false
             zoomClicked = !zoomClicked
             onSettingClicked(CameraSettingMode.ZOOM)
         }
 
-        imageWhiteBalance.setOnClickListener {
+        lnrWhiteBalance.setOnClickListener {
             it.startAnimation(buttonClick)
             recyclerViewClicked = !recyclerViewClicked
             zoomClicked = false
@@ -566,14 +566,10 @@ class CameraPreviewScreen(
         updateSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
         updateCameraExposureViewState(state.cameraPreviewScreenViewState)
         setZoomButtonVisibility(state.cameraPreviewScreenViewState)
-        setCameraSettingRecyclerViewState(state.cameraPreviewScreenViewState)
         setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
     }
 
     private fun updateCameraSettingControllersViewState(state: CameraPreviewScreenViewState){
-        Log.d(TAG, "updateCameraSettingControllersViewState: isRecyclerViewExposureControlVisible " +state.cameraSettingControllersViewState.isRecyclerViewExposureControlVisible)
-        Log.d(TAG, "updateCameraSettingControllersViewState: isZoomControlVisible " +state.cameraSettingControllersViewState.isZoomControlVisible)
-        Log.d(TAG, "updateCameraSettingControllersViewState: isWhiteBalanceControlVisible " +state.cameraSettingControllersViewState.isWhiteBalanceControlVisible)
         recyclerViewExposureSetting.isVisible = state.cameraSettingControllersViewState.isRecyclerViewExposureControlVisible
         lnrZoomControl.isVisible = state.cameraSettingControllersViewState.isZoomControlVisible
         whiteBalanceSlider.isVisible = state.cameraSettingControllersViewState.isWhiteBalanceControlVisible
@@ -590,22 +586,22 @@ class CameraPreviewScreen(
 
     private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState) {
         lnrIso.isVisible = state.isoButtonViewState.isVisible
+        lnrIso.isEnabled = state.isoButtonViewState.isEnabled
         imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
 
         lnrShutter.isVisible = state.shutterButtonViewState.isVisible
+        lnrShutter.isEnabled = state.shutterButtonViewState.isEnabled
         imageViewShutter.isEnabled = state.shutterButtonViewState.isEnabled
 
         lnrAperture.isVisible = state.apertureButtonViewState.isVisible
+        lnrAperture.isEnabled = state.apertureButtonViewState.isEnabled
         imageViewAperture.isEnabled = state.apertureButtonViewState.isEnabled
 
         lnrExposure.isVisible = state.exposureViewState.isVisible
+        lnrExposure.isEnabled = state.exposureViewState.isEnabled
         imageViewExposure.isEnabled = state.exposureViewState.isEnabled
 
         lnrAutoExposure.isVisible = state.autoExposureViewState.isVisible
-    }
-
-    private fun setCameraSettingRecyclerViewState(state: CameraPreviewScreenViewState) {
-        //recyclerViewExposureSetting.isVisible = state.cameraSettingRecyclerViewState.isOpened
     }
 
     fun setCameraSettingButtonValue(state: CameraSettingValueState) {

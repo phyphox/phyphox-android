@@ -136,6 +136,8 @@ class CameraPreviewFragment : Fragment() {
 
                     is CameraUiAction.OverlayUpdateDone ->
                         cameraViewModel.overlayUpdated()
+
+                    else -> {}
                 }
             }
         }
@@ -144,6 +146,7 @@ class CameraPreviewFragment : Fragment() {
             cameraViewModel.imageAnalyser.action.collectLatest { action: ImageAnalysisUIAction ->
                 when (action) {
                     is ImageAnalysisUIAction.UpdateLuminaceValue -> Unit
+                    else -> {}
                 }
             }
         }
