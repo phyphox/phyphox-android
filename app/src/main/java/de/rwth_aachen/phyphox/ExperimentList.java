@@ -870,7 +870,11 @@ public class ExperimentList extends AppCompatActivity {
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
                                     customColor = true;
-                                    color = RGB.fromPhyphoxString(xpp.nextText().trim(), getResources(), new RGB(getResources().getColor(R.color.phyphox_primary)));
+                                    try {
+                                        color = RGB.fromPhyphoxString(xpp.nextText().trim(), getResources(), new RGB(getResources().getColor(R.color.phyphox_primary)));
+                                    } catch (Exception e) {
+                                        customColor = false;
+                                    }
                                 }
                                 break;
                             case "input": //We just have to check if there are any sensors, which are not supported on this device

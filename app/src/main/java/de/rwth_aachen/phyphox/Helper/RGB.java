@@ -56,7 +56,10 @@ public class RGB {
         }
 
         //Not a constant, so it hast to be hex...
-        return RGB.fromHexString("#" + colorStr);
+        if (colorStr.startsWith("#"))
+            return RGB.fromHexString(colorStr);
+        else
+            return RGB.fromHexString("#" + colorStr);
     }
 
     public static RGB fromPhyphoxString(String colorStr, Resources res) {
