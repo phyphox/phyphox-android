@@ -318,7 +318,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         shutdown = false; //Deactivate shutdown variable
 
-        if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (experiment != null && experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
                 experiment.depthInput.startCameras();
             } catch (Exception e) {
