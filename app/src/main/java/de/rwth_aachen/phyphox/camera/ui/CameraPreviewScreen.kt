@@ -498,7 +498,12 @@ class CameraPreviewScreen(
 
     fun updateOverlay(cameraUiState: CameraUiState) {
 
-        val inner = cameraUiState.cameraPassepartout.toRectF()
+        val inner = RectF(
+                (1.0f - cameraUiState.cameraPassepartout.bottom) * width,
+                cameraUiState.cameraPassepartout.left * height,
+                (1.0f - cameraUiState.cameraPassepartout.top) * width,
+                cameraUiState.cameraPassepartout.right * height
+        )
         val outer =
             RectF(0f, 0f, cameraUiState.cameraWidth.toFloat(), cameraUiState.cameraHeight.toFloat())
         transformation.mapRect(inner)

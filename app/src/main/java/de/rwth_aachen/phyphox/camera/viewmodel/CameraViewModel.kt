@@ -204,9 +204,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
     }
 
-    fun getCameraRect(): Rect{
+    fun getCameraRect(): RectF{
        return _cameraUiState.value.cameraPassepartout
-
     }
 
     fun switchCamera() {
@@ -295,33 +294,21 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
-    fun imageAnalysisFinished(){
+    fun imageAnalysisFinished(currentTime: Double){
         viewModelScope.launch {
             _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_FINISHED
+                    currentTimeStamp = currentTime,
+                    imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_FINISHED
             ))
         }
     }
 
-    fun updateImageAnalysisLuminance(luminance: Double, currentTime: Double){
+    fun updateImageAnalysisLuma(luma: Double){
         viewModelScope.launch {
             _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                luminance = luminance,
-                currentTimeStamp = currentTime
+                luma = luma
             ))
         }
-    }
-
-    fun updateImageAnalysisColor(colorCode: String){
-        viewModelScope.launch {
-            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                colorCode = colorCode
-            ))
-        }
-    }
-
-    fun getColorCode(): String {
-        return _imageAnalysisValueState.value.colorCode
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -602,17 +589,10 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         val ymin: Float = Math.min(cameraInput.y1, cameraInput.y2)
         val ymax: Float = Math.max(cameraInput.y1, cameraInput.y2)
 
-        val inner = RectF(
-            (1.0f - ymax) * width,
-            xmin * height,
-            (1.0f - ymin) * width,
-            xmax * height
-        )
-
         viewModelScope.launch {
             _cameraUiState.emit(
                 _cameraUiState.value.copy(
-                    cameraPassepartout = inner.toRect(),
+                    cameraPassepartout = RectF(xmin, ymin, xmax, ymax),
                     overlayUpdateState = OverlayUpdateState.UPDATE
             ))
         }

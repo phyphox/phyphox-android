@@ -1882,11 +1882,6 @@ public abstract class PhyphoxFile {
                             featureStr = "photometric";
                         else featureStr = featureStr.toLowerCase();
 
-                        String analysisStr = getStringAttribute("analysis");
-                        if(analysisStr == null){
-                            analysisStr = "luminance";
-                        } else analysisStr = analysisStr.toLowerCase();
-
                         CameraInput.PhyphoxShowCameraControls showCameraControls;
                         switch (showControls){
                             case "always":{
@@ -1900,7 +1895,7 @@ public abstract class PhyphoxFile {
                                 break;
                             }
                             default: {
-                                throw new phyphoxFileException("Unknown show controls name: " + featureStr, xpp.getLineNumber());
+                                throw new phyphoxFileException("Unknown show controls name: " + showControls, xpp.getLineNumber());
                             }
                         }
 
@@ -1919,21 +1914,6 @@ public abstract class PhyphoxFile {
                             }
                         }
 
-                        CameraInput.PhyphoxCameraAnalysis cameraAnalysis;
-                        switch (analysisStr){
-                            case "luminance":{
-                                cameraAnalysis = CameraInput.PhyphoxCameraAnalysis.Luminance;
-                                break;
-                            }
-                            case "brightness":{
-                                cameraAnalysis = CameraInput.PhyphoxCameraAnalysis.Brightness;
-                                break;
-                            }
-                            default: {
-                                throw new phyphoxFileException("Unknown analysis name: " + analysisStr, xpp.getLineNumber());
-                            }
-                        }
-
                         double x1user = getDoubleAttribute("x1", 0.4);
                         double x2user = getDoubleAttribute("x2", 0.6);
                         double y1user = getDoubleAttribute("y1", 0.4);
@@ -1947,8 +1927,7 @@ public abstract class PhyphoxFile {
 
                         //Allowed input/output configuration
                         ioBlockParser.ioMapping[] outputMapping = {
-                                new ioBlockParser.ioMapping() {{name = "lumen_z"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
-                                new ioBlockParser.ioMapping() {{name = "bright_z"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "luma"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
@@ -1974,7 +1953,6 @@ public abstract class PhyphoxFile {
                                 experiment.experimentTimeReference,
                                 showCameraControls,
                                 feature,
-                                cameraAnalysis,
                                 autoExposure,
                                 exposureAdjustmentLevel,
                                 lockedSetting.isEmpty() ? null : lockedSetting);

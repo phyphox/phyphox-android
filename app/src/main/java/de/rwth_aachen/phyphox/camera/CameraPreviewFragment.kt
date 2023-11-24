@@ -159,8 +159,7 @@ class CameraPreviewFragment : Fragment() {
                     ImageAnalysisState.IMAGE_ANALYSIS_READY -> Unit
 
                     ImageAnalysisState.IMAGE_ANALYSIS_STARTED -> {
-                        // set hex code text when color is detected
-                        cameraPreviewScreen.setColorCodeText(cameraViewModel.getColorCode())
+
                     }
 
                     ImageAnalysisState.IMAGE_ANALYSIS_FINISHED -> Unit

@@ -84,7 +84,6 @@ public class ExperimentTimeReference {
     }
 
     public double getExperimentTimeFromEvent(long eventTime) {
-        logToDebug();
         if (timeMappings.isEmpty())
             return 0.0;
         TimeMapping last = timeMappings.get(timeMappings.size()-1);

@@ -1,6 +1,6 @@
 package de.rwth_aachen.phyphox.camera.model
 
-import android.graphics.Rect
+import android.graphics.RectF
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
@@ -18,7 +18,7 @@ data class CameraUiState  constructor(
     val cameraHeight: Int = 0,
     val cameraWidth: Int = 0,
     // This holds the cropped image which is cropped by the user through the overlayView.
-    val cameraPassepartout: Rect = Rect(),
+    val cameraPassepartout: RectF = RectF(),
     val overlayUpdateState: OverlayUpdateState = OverlayUpdateState.NO_UPDATE,
 
     val physicalSensorPixelHeight: Float = 0.0f,
