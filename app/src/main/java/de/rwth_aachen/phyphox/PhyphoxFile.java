@@ -1927,7 +1927,8 @@ public abstract class PhyphoxFile {
 
                         //Allowed input/output configuration
                         ioBlockParser.ioMapping[] outputMapping = {
-                                new ioBlockParser.ioMapping() {{name = "luma"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "luma"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "luminance"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},

@@ -3,6 +3,7 @@ package de.rwth_aachen.phyphox.camera.model
 data class ImageAnalysisValueState(
     val currentTimeStamp: Double = 0.0,
     val luma : Double = 0.0,
+    val luminance : Double = 0.0,
     val imageAnalysisState: ImageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
 )
 

@@ -21,14 +21,19 @@ class CameraInput() {
     var y2: Float = 0f
 
     // Holds and release the image analysis value (z) and time value (t) from data buffer
-    lateinit var dataLuma: DataBuffer
-    lateinit var dataT: DataBuffer
-    lateinit var shutterSpeedDataBuffer: DataBuffer
-    lateinit var isoDataBuffer: DataBuffer
-    lateinit var apertureDataBuffer: DataBuffer
-    lateinit var exposureDataBuffer: DataBuffer
-    lateinit var sensorPixelHeight: DataBuffer
-    lateinit var sensorPixelWidth: DataBuffer
+    var dataLuma: DataBuffer? = null
+    var dataLuminance: DataBuffer? = null
+    var dataT: DataBuffer? = null
+    var shutterSpeedDataBuffer: DataBuffer? = null
+    var isoDataBuffer: DataBuffer? = null
+    var apertureDataBuffer: DataBuffer? = null
+    var exposureDataBuffer: DataBuffer? = null
+    var sensorPixelHeight: DataBuffer? = null
+    var sensorPixelWidth: DataBuffer? = null
+
+    var analysisRequiresColor = false
+    var analysisRequiresRGB = false
+    var analysisRequiresLinearRGB = false
 
     // List of buffers (variables) that is provided in the xml
     lateinit var buffers: Vector<DataOutput>
@@ -76,17 +81,23 @@ class CameraInput() {
         this.autoExposure = autoExposure
         this.exposureAdjustmentLevel = exposureAdjustmentLevel
 
-
         if (buffers.size > 0 && buffers[0] != null) dataLuma = buffers[0].buffer
-        if (buffers.size > 1 && buffers[1] != null) dataT = buffers[1].buffer
+        if (buffers.size > 1 && buffers[1] != null) dataLuminance = buffers[1].buffer
+        if (buffers.size > 2 && buffers[2] != null) dataT = buffers[2].buffer
 
-        if (buffers.size > 2 && buffers[2] != null) shutterSpeedDataBuffer = buffers[2].buffer
-        if (buffers.size > 3 && buffers[3] != null) isoDataBuffer = buffers[3].buffer
-        if (buffers.size > 4 && buffers[4] != null) apertureDataBuffer = buffers[4].buffer
-        if (buffers.size > 5 && buffers[5] != null) exposureDataBuffer = buffers[5].buffer
+        if (buffers.size > 3 && buffers[3] != null) shutterSpeedDataBuffer = buffers[3].buffer
+        if (buffers.size > 4 && buffers[4] != null) isoDataBuffer = buffers[4].buffer
+        if (buffers.size > 5 && buffers[5] != null) apertureDataBuffer = buffers[5].buffer
+        if (buffers.size > 6 && buffers[6] != null) exposureDataBuffer = buffers[6].buffer
 
-        if (buffers.size > 5 && buffers[5] != null) sensorPixelHeight = buffers[6].buffer
-        if (buffers.size > 5 && buffers[5] != null) sensorPixelWidth = buffers[7].buffer
+        if (buffers.size > 7 && buffers[7] != null) sensorPixelHeight = buffers[7].buffer
+        if (buffers.size > 8 && buffers[8] != null) sensorPixelWidth = buffers[8].buffer
+
+        if (dataLuminance != null) {
+            analysisRequiresColor = true
+            analysisRequiresRGB = true
+            analysisRequiresLinearRGB = true
+        }
 
         setDefaultCameraSettingValueIfAvailable(lockedSettings)
 

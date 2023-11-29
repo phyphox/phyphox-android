@@ -311,6 +311,14 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         }
     }
 
+    fun updateImageAnalysisLuminance(luminance: Double){
+        viewModelScope.launch {
+            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
+                    luminance = luminance
+            ))
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.M)
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     fun loadAndSetupExposureSettingRanges() {
@@ -370,10 +378,10 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         var awbLockAvailable = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE)
 
         val sensorPhysicalSize = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)
-        cameraInput.sensorPixelHeight.clear(true)
-        cameraInput.sensorPixelHeight.append(sensorPhysicalSize?.height?.toDouble() ?: 0.0)
-        cameraInput.sensorPixelWidth.clear(true)
-        cameraInput.sensorPixelWidth.append(sensorPhysicalSize?.width?.toDouble() ?: 0.0)
+        cameraInput.sensorPixelHeight?.clear(true)
+        cameraInput.sensorPixelHeight?.append(sensorPhysicalSize?.height?.toDouble() ?: 0.0)
+        cameraInput.sensorPixelWidth?.clear(true)
+        cameraInput.sensorPixelWidth?.append(sensorPhysicalSize?.width?.toDouble() ?: 0.0)
 
 
         val currentCameraUiState = _cameraSettingValueState.value
@@ -435,8 +443,8 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                     exposure
                 )
 
-                cameraInput.exposureDataBuffer.clear(true)
-                cameraInput.exposureDataBuffer.append(exposure.toDouble())
+                cameraInput.exposureDataBuffer?.clear(true)
+                cameraInput.exposureDataBuffer?.append(exposure.toDouble())
 
                 return previewBuilder
             }
@@ -451,14 +459,14 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 if (shutterSpeed != 0L) extender.setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutterSpeed)
                 if (aperture != 0.0f) extender.setCaptureRequestOption(CaptureRequest.LENS_APERTURE, aperture)
 
-                cameraInput.shutterSpeedDataBuffer.clear(true)
-                cameraInput.exposureDataBuffer.append(shutterSpeed.toDouble())
+                cameraInput.shutterSpeedDataBuffer?.clear(true)
+                cameraInput.exposureDataBuffer?.append(shutterSpeed.toDouble())
 
-                cameraInput.isoDataBuffer.clear(true)
-                cameraInput.isoDataBuffer.append(iso.toDouble())
+                cameraInput.isoDataBuffer?.clear(true)
+                cameraInput.isoDataBuffer?.append(iso.toDouble())
 
-                cameraInput.apertureDataBuffer.clear(true)
-                cameraInput.apertureDataBuffer.append(aperture.toDouble())
+                cameraInput.apertureDataBuffer?.clear(true)
+                cameraInput.apertureDataBuffer?.append(aperture.toDouble())
 
                 setupWhiteBalance(cameraSettingValueState, extender)
 
