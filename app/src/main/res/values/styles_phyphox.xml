@@ -52,5 +52,15 @@
         <item name="android:tint">@color/phyphox_black_100</item>
     </style>
 
+    <style name="MaterialSeekbarTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/phyphox_white_100</item>
+    </style>
+
+    <style name="MaterialButtonTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/phyphox_black_100</item>
+        <item name="android:textColor">@color/phyphox_white_100</item>
+
+    </style>
+
 
 </resources>

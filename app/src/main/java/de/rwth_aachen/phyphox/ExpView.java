@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
@@ -19,6 +20,7 @@ import android.text.style.MetricAffectingSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -33,7 +35,12 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
+import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.core.view.ViewCompat;
+import androidx.fragment.app.FragmentContainerView;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,12 +48,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.Camera.DepthInput;
-import de.rwth_aachen.phyphox.Camera.DepthPreview;
+import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
+import de.rwth_aachen.phyphox.camera.Scrollable;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
+import de.rwth_aachen.phyphox.camera.depth.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
+import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
 // specific way to show the results of an element.
@@ -70,6 +81,11 @@ public class ExpView implements Serializable{
     public static enum State {
         hidden, normal, maximized;
     }
+
+    //Remember? We are in the expView class.
+    //An experiment view has a name and holds a bunch of expViewElement instances
+    public String name;
+    public Vector<expViewElement> elements = new Vector<>();
 
     //Abstract expViewElement class defining the interface for any element of an experiment view
     public abstract class expViewElement implements Serializable, BufferNotification {
@@ -652,10 +668,22 @@ public class ExpView implements Serializable{
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         private boolean triggered = true;
+        private boolean editable = true;
+
+        public String label;
+
+        private PhyphoxExperiment phyphoxExperiment;
+
+        private LinearLayout root_ll;
+        private Context c;
+        public AppCompatSeekBar seekBar;
+        public SettingChangeListener settingChangeListener;
+
 
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
+            this.label = label;
             this.unit = "";
             this.factor = 1.;
         }
@@ -694,6 +722,10 @@ public class ExpView implements Serializable{
             this.max = max;
         }
 
+        protected void setEditable(boolean editable){
+            this.editable = editable;
+        }
+
         @Override
         //This is an input, so the updateMode should be "input"
         protected String getUpdateMode() {
@@ -704,7 +736,10 @@ public class ExpView implements Serializable{
         //Create the view in Android and append it to the linear layout
         protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
-            //Create a row holding the label and the textEdit
+            phyphoxExperiment = experiment;
+            root_ll = ll;
+            this.c = c;
+
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -750,7 +785,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.7f)); //Most of the right half
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            //   et.setPadding((int) labelSize / 2, 0, 0, 0);
+
             et.setTypeface(null, Typeface.BOLD);
 
             //Construct the inputType flags from our own state
@@ -770,6 +805,11 @@ public class ExpView implements Serializable{
                 et.setKeyListener(DigitsKeyListener.getInstance(allowedDigits.toString()));
                 et.addTextChangedListener(new DecimalTextWatcher());
             }
+            if(!editable){
+                et.setInputType(InputType.TYPE_NULL);
+                et.setBackgroundColor(res.getColor(R.color.cardview_dark_background));
+            }
+
 
             //Start with NaN
             et.setText("NaN");
@@ -798,25 +838,20 @@ public class ExpView implements Serializable{
             rootView.setFocusableInTouchMode(true);
 
             //Add the row to the main linear layout passed to this function
-            ll.addView(rootView);
+            root_ll.addView(rootView);
 
             //Add a listener to the edit box to keep track of the focus
-            et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                public void onFocusChange(View v, boolean hasFocus) {
-                    focused = hasFocus;
-                    if (!hasFocus) {
-                        setValue(getValue()); //Write back the value actually used...
-                        triggered = true;
-                    }
+            et.setOnFocusChangeListener((v, hasFocus) -> {
+                focused = hasFocus;
+                if (!hasFocus) {
+                    setValue(getValue()); //Write back the value actually used...
+                    triggered = true;
                 }
             });
 
-            et.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    et.clearFocus();
-                    return true;
-                }
+            et.setOnEditorActionListener((textView, i, keyEvent) -> {
+                et.clearFocus();
+                return true;
             });
 
         }
@@ -2263,8 +2298,80 @@ public class ExpView implements Serializable{
         }
     }
 
-    //Remember? We are in the expView class.
-    //An experiment view has a name and holds a bunch of expViewElement instances
-    public String name;
-    public Vector<expViewElement> elements = new Vector<>();
+    public class cameraElement extends expViewElement implements  Serializable {
+
+        private ExpViewFragment parent = null;
+        private CameraPreviewFragment cameraPreviewFragment = null;
+
+        Scrollable scrollable = new Scrollable() {
+            @Override
+            public void enableScrollable() {
+                parent.enableScrolling();
+            }
+
+            @Override
+            public void disableScrollable() {
+                parent.disableScrolling();
+            }
+        };
+
+
+        protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+
+        @Override
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+           if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+               return;
+
+           super.createView(ll, c, res, parent, experiment);
+           this.parent = parent;
+
+            LayoutInflater inflater = LayoutInflater.from(c);
+            View inflateView = inflater.inflate(R.layout.camera_layout, ll, true);
+            FragmentContainerView containerView = inflateView.findViewById(R.id.fragmetContainerView);
+            cameraPreviewFragment = new CameraPreviewFragment();
+            FragmentManager fragmentManager = parent.getChildFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+            Bundle args = new Bundle();
+            args.putSerializable(CameraHelper.EXPERIMENT_ARG, experiment);
+            args.putSerializable(CameraHelper.EXPERIMENT_SCROLL_ARG, scrollable);
+            cameraPreviewFragment.setArguments(args);
+
+            fragmentTransaction.add(containerView.getId(), cameraPreviewFragment);
+            fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+
+        }
+
+        @Override
+        protected String createViewHTML() {
+            return null;
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return null;
+        }
+
+        @Override
+        protected void maximize() {
+            super.maximize();
+        }
+
+        @Override
+        protected void restore() {
+            super.restore();
+        }
+
+        @Override
+        protected void onFragmentStop(PhyphoxExperiment experiment) {
+            super.onFragmentStop(experiment);
+
+        }
+    }
+
 }

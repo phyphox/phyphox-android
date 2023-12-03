@@ -42,6 +42,7 @@ public class ExperimentTimeReference {
         for (TimeMapping mapping : timeMappings) {
             Log.d("TimeReference", mapping.event.name() + ": experiment time = " + mapping.experimentTime + ", event time = " + mapping.eventTime + ", system time = " + mapping.systemTime);
         }
+        Log.d("TimeReference", "...");
     }
 
     public void registerEvent(TimeMappingEvent event) {

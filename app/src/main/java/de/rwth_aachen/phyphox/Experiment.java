@@ -13,10 +13,7 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
@@ -26,7 +23,6 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -76,7 +72,6 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
@@ -98,7 +93,7 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
-import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
@@ -433,6 +428,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
             pager = ((ViewPager)findViewById(R.id.view_pager));
             FragmentManager manager = getSupportFragmentManager();
+            // Setting page limit will retain the viewpager from reloading the view from view-model.
+            // Can continue showing camera value in other fragment tabs and also fixes the occasional crash while switching tabs.
+            pager.setOffscreenPageLimit(experiment.experimentViews.size());
+
             adapter = new ExpViewPagerAdapter(manager, this.experiment);
             pager.setAdapter(adapter);
             tabLayout.setupWithViewPager(pager);
