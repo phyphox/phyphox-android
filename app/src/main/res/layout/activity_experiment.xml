@@ -37,23 +37,6 @@
         app:tabMode="scrollable"
     />
 
-    <ProgressBar
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
-        android:progressTint="@color/phyphox_white_100"
-        android:indeterminateOnly="true"
-        android:indeterminate="true"
-        android:indeterminateBehavior="repeat"
-        android:background="@android:color/transparent"
-        android:layout_alignParentLeft="false"
-        android:layout_alignParentEnd="false"
-        android:layout_alignParentRight="false"
-        android:layout_alignParentStart="false"
-        android:progressBackgroundTint="@android:color/transparent"
-        android:layout_below="@+id/tab_layout" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

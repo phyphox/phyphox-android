@@ -889,6 +889,7 @@ public class ExpView implements Serializable{
             if (!triggered)
                 return false;
             triggered = false;
+            experiment.getBuffer(inputs.get(0)).clear(false);
             experiment.getBuffer(inputs.get(0)).append(getValue());
             return true;
         }

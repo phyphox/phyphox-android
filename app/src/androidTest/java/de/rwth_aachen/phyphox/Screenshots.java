@@ -77,7 +77,7 @@ public class Screenshots {
         Screengrab.setDefaultScreenshotStrategy(new UiAutomatorScreenshotStrategy());
 
         Intent i = new Intent();
-        i.setData(Uri.parse("phyphox://rwth-aachen.sciebo.de/s/mezViL5TH4gyEe5/download"));
+        i.setData(Uri.parse("phyphox://rwth-aachen.sciebo.de/s/5MzNo8IIe8bJuoD/download"));
         i.setAction(Intent.ACTION_VIEW);
         experimentActivityTestRule.launchActivity(i);
 

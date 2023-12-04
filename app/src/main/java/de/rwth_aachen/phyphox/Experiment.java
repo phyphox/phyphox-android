@@ -47,7 +47,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TableLayout;
@@ -177,11 +176,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean proximityLock = false;
     PowerManager.WakeLock wakeLock = null;
 
-    //The analysis progress bar
-    ProgressBar analysisProgress;       //Reference to the progress bar view
-    boolean analysisInProgress = false; //Set to true by second thread while analysis is running
-    float analysisProgressAlpha = 0.f;  //Will be increased while analysis is running and decreased while idle. This smoothes the display and results in an everage transparency representing the average load.
-
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
@@ -248,9 +242,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
-
-        this.analysisProgress = (ProgressBar)findViewById(R.id.progressBar);
-        analysisProgress.setVisibility(View.INVISIBLE);
 
         //Set our custom action bar
         Toolbar toolbar = (Toolbar) findViewById(R.id.customActionBar);
@@ -1461,9 +1452,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     try {
                         //time for some analysis?
                         if (measuring) {
-                            analysisInProgress = true;
                             experiment.processAnalysis(true); //Do the math.
-                            analysisInProgress = false;
                         }
                     } catch (Exception e) {
                         Log.e("updateData", "Unhandled exception.", e);
@@ -1483,26 +1472,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         @Override
         public void run() {
             updateViewsHandler.removeCallbacksAndMessages(null);
-
-            //Show progressbar if analysis is running (set by second thread)
-            if (analysisInProgress) {
-                analysisProgressAlpha += 0.05;
-                if (analysisProgressAlpha > 1.f)
-                    analysisProgressAlpha = 1.f;
-            } else {
-                analysisProgressAlpha -= 0.05;
-                if (analysisProgressAlpha < 0.f)
-                    analysisProgressAlpha = 0.f;
-            }
-            if (analysisProgressAlpha > 0.1) {
-                if (analysisProgressAlpha >= 0.9)
-                    analysisProgress.setAlpha(1.f);
-                else
-                    analysisProgress.setAlpha(analysisProgressAlpha);
-                analysisProgress.setVisibility(View.VISIBLE);
-            } else {
-                analysisProgress.setVisibility(View.INVISIBLE);
-            }
 
             //If a defocus has been requested (on another thread), do so.
             if (shouldDefocus) {
@@ -1739,7 +1708,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Stop the measurement
     public void stopMeasurement() {
         measuring = false; //Set the state
-        analysisProgressAlpha = 0.f; //Disable the progress bar
 
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
         if (!serverEnabled) {
