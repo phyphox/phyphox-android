@@ -1,2 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">ফিফক্স</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
+    <string name="action_settings">সেটিংস</string>
+    <string name="title_activity_experiment">ফিফক্স</string>
+    <string name="graph_tools_pan_and_zoom">আঙুল দিয়ে জুম</string>
+    <string name="graph_tools_pick">ডাটা নেওয়া</string>
+    <string name="graph_tools_more">আরো টুলস</string>
+    <string name="graph_tools_system_time">সিস্টেমের সময়ে পাল্টান</string>
+    <string name="graph_tools_reset">জুম রিসেট করুন</string>
+    <string name="graph_tools_follow">নতুন ডাটা ফলো করুন</string>
+    <string name="graph_tools_linear_fit">রৈখিক ফিট</string>
+    <string name="graph_tools_export">এই ডেটাসেট রপ্তানি করুন</string>
+    <string name="graph_tools_log_x">লগারিদমিক x অক্ষ</string>
+    <string name="graph_tools_log_y">লগারিদমিক y অক্ষ</string>
+    <string name="graph_point_label">বিন্দু</string>
+    <string name="graph_slope_label">নতি</string>
+    <string name="graph_difference_label">তফাত</string>
+    <string name="graph_fit_label">রৈখিক ফিট: y = a x + b</string>
+    <string name="applyZoomTitle">জুম করুন</string>
+    <string name="applyZoomExplanation">আপনি ইন্টার‍্যাক্টিভ মোড ছেড়ে বেরোচ্ছেন। আপনি চাইলে বর্তমান জুম স্তর বজায় রাখতে পারেন।</string>
+    <string name="applyZoomAdvanced">উন্নত (Advanced) বিকল্প</string>
+    <string name="applyZoomApply">প্রয়োগ করুন…</string>
+    <string name="applyZoomReset">ডিফল্টে রিসেট</string>
+    <string name="applyZoomKeep">পছন্দ হিসেবে রাখুন</string>
+    <string name="applyZoomFollow">নতুন ডাটা রাখুন আর তাকে অনুসরণ করুন</string>
+    <string name="applyZoomThis">কেবল এই গ্রাফ</string>
+    <string name="applyZoomSameVariable">অন্য গ্রাফেওঃ একই চলরাশি (variable)</string>
+    <string name="applyZoomSameUnit">অন্য গ্রাফেঃ একই একক</string>
+    <string name="applyZoomSameAxis">অন্য গ্রাফেঃ একই অক্ষ</string>
+    <string name="newExperiment">পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentSimple">সহজ পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentPhyphoxInfo">আরো উন্নতমানের পরীক্ষা বা ডাটা বিশ্লেষণ যোগ করতে হলে phyphox.org সাইটে যান। আপনার সহকর্মী, বন্ধু আর ছাত্রদের সাথে ভাগ করে নিন।</string>
+    <string name="newExperimentInputTitle">শীর্ষক</string>
+    <string name="newExperimentInputBufferSize">বাফারের আকার (যতগুলি রাশি সংগ্রহ করা হবে তার সংখ্যা)</string>
+    <string name="newExperimentInputRate">সেন্সরের হার (rate) (হার্ৎসে, 0 = যতো বেশি সম্ভব</string>
+    <string name="newExperimentInputSensors">সক্রিয় সেন্সর</string>
+    <string name="newExperimentBluetooth">ব্লু-টুথ যন্ত্রের জন্য পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentBluetoothErrorTitle">ব্লু-টুথ স্ক্যানে ত্রুটি</string>
+    <string name="newExperimentBluetoothLoadFromDevice">যন্ত্র থেকে লোড করুন</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">এই যন্ত্রের নিজস্ব phyphox পরীক্ষা আছে। এটি চালু করার জন্য \"যন্ত্র থেকে লোড করুন\" বিকল্পটি বেছে নিন।</string>
+    <string name="newExperimentQR">QR কোড থেকে পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentQRscan">ফিফক্স পরীক্ষা সম্বলিত QR কোড স্ক্যান করুন।</string>
+    <string name="newExperimentQRErrorTitle">QR কোড ত্রুটি।</string>
+    <string name="newExperimentQRNoExperiment">ফিফক্স পরীক্ষা সম্বলিত QR কোড পাওয়া যায় নি।</string>
+    <string name="newExperimentQRcrcMismatch">আপনি এখন যে QR কোড স্ক্যান করেছেন সেটি আগের কোডের সাথে মিলছে না। দয়া করে একই পরীক্ষা সংক্রান্ত QR কোড স্ক্যান করুন।</string>
+    <string name="newExperimentQRCodesMissing1">যে QR কোডটি আপনি এখন স্ক্যান করেছেন সেটি একটি কোডের</string>
+    <string name="newExperimentQRCodesMissing2">সংগ্রহের অংশ। বাকি কোডের জন্য \"এগিয়ে যান\" দাবান। অবশিষ্ট কোড:</string>
+</resources>
