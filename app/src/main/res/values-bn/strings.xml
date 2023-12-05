@@ -56,7 +56,7 @@
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="faqPhyphoxOrg">প্রায়শই জিজ্ঞাসা করা প্রশ্ন</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
-    <string name="remotePhyphoxOrg">রিমোট কন্ট্রোল সংক্রান্ত সহায়তা</string>
+    <string name="remotePhyphoxOrg">রিমোট কন্ট্রোল সহায়তা</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
     <string name="deviceInfo">ডিভাইসের বিবরণ</string>
@@ -77,4 +77,15 @@
 \nডমিনিক ডরসেল
 \nজোনাস গেসনার
 \nক্যামিলা লুমারঝেইম</string>
+    <string name="sensorLinearAcceleration">রৈখিক ত্বরণ</string>
+    <string name="sensorGravity">গুরুত্ব</string>
+    <string name="sensorLight">লাইট</string>
+    <string name="sensorGyroscope">জাইরোস্কোপ</string>
+    <string name="sensorAccelerometer">ত্বরণমাপি</string>
+    <string name="sensorMagneticField">চুম্বক ক্ষেত্র</string>
+    <string name="sensorPressure">চাপ</string>
+    <string name="sensorTemperature">তাপমাত্রা</string>
+    <string name="sensorHumidity">আদ্রতা</string>
+    <string name="sensorProximity">নৈকট্য</string>
+    <string name="sensorAttitude">দেহভঙ্গিমা</string>
 </resources>
