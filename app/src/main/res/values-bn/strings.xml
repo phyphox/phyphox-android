@@ -47,4 +47,34 @@
     <string name="newExperimentQRcrcMismatch">আপনি এখন যে QR কোড স্ক্যান করেছেন সেটি আগের কোডের সাথে মিলছে না। দয়া করে একই পরীক্ষা সংক্রান্ত QR কোড স্ক্যান করুন।</string>
     <string name="newExperimentQRCodesMissing1">যে QR কোডটি আপনি এখন স্ক্যান করেছেন সেটি একটি কোডের</string>
     <string name="newExperimentQRCodesMissing2">সংগ্রহের অংশ। বাকি কোডের জন্য \"এগিয়ে যান\" দাবান। অবশিষ্ট কোড:</string>
+    <string name="newExperimentQRBadCRC">অবৈধ চেকসাম। এর অর্থ হয় QR কোডটি খারাপ নাহয় স্ক্যান করার সময় কিছু সমস্যা হয়েছে।</string>
+    <string name="newExperimentBTReadErrorTitle">ব্লুটুথ পরীক্ষায় ত্রুটি।</string>
+    <string name="newExperimentBTReadErrorCorrupted">প্রেরিত পরীক্ষার ডাটা বিকৃত হয়েছে।</string>
+    <string name="generalErrorDialog">কোনো সমস্যা হয়েছে।</string>
+    <string name="help">তথ্য এবং সহায়তা</string>
+    <string name="experimentsPhyphoxOrg">পরীক্ষার ধারণা ও প্রণালী</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">প্রায়শই জিজ্ঞাসা করা প্রশ্ন</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">রিমোট কন্ট্রোল সংক্রান্ত সহায়তা</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="deviceInfo">ডিভাইসের বিবরণ</string>
+    <string name="copyToClipboard">ক্লিপবোর্ডে কপি করুন</string>
+    <string name="deviceInfoCopied">ডিভাইস সম্বন্ধে তথ্য আপনার ক্লিপবোর্ডে কপি করা হয়েছে।</string>
+    <string name="warning">সাবধান</string>
+    <string name="donotshowagain">পুনরায় দেখাবেন না</string>
+    <string name="damageWarning">পরীক্ষা করার সময় যাতে আপনার ফোনের কোনো রকম ক্ষতি না হয় সেদিকে দৃষ্টি দেবেন। বিশেষ করে খেয়াল রাখবেন যেন ফোন কোনো শক্ত জায়গায় না পড়ে বা অতিরিক্ত প্রাবল্যের চৌম্বক ক্ষেত্রের সংস্পর্শে না আসে। আপনার ফোনের কোনো ক্ষতির জন্য ফিফক্স প্রণেতারা দায়ী থাকবেন না।</string>
+    <string name="info">তথ্য</string>
+    <string name="credits">স্বীকৃতি</string>
+    <string name="creditsRWTH">phyphox® তৈরি করেছেন RWTH, আচেন বিশ্ববিদ্যালয়ের দ্বিতীয় পদার্থবিদ্যা সংস্থান।</string>
+    <string name="creditsNames">মূল ধারণা এবং প্রস্তুতি :
+\nডাঃ. সেবাস্টিয়ান স্ট্যাকস
+\nমূল ধারণা:
+\nপ্রফেসর ক্রিস্টোফ স্ট্যাম্পফার
+\nপ্রোগ্রামিং:
+\nগৌরব ত্রিপাঠী
+\nডমিনিক ডরসেল
+\nজোনাস গেসনার
+\nক্যামিলা লুমারঝেইম</string>
 </resources>
