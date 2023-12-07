@@ -88,4 +88,6 @@
     <string name="sensorHumidity">আদ্রতা</string>
     <string name="sensorProximity">নৈকট্য</string>
     <string name="sensorAttitude">দেহভঙ্গিমা</string>
+    <string name="gpl">ফিফক্স (Phyphox®) GNU জেনারেল পাব্লিক লাইসেন্সের অধীণ। আরো জানতে হলে বা এর সোর্সকোড পেতে হলে দয়া করে http://phyphox.org সাইটে যান। অবশ্য, \"ফিফক্স\" এবং \"আর ডব্লিউ টি এইচ আচেন\" এই নাম দুটি ট্রেডমার্ক হিসাবে নথিভুক্ত আছে।</string>
+    <string name="creditsLibs">"রিমোট অ্যাক্সেস এর জন্য নির্মিত ওয়েব-ইন্টারফেসটি MIT লাইসেন্সের অধীনে প্রাপ্ত জাভাস্ক্রিপ্ট লাইব্রেরি \"Chart.js\"(http://chartjs.org) ব্যবহার  করে।"</string>
 </resources>
