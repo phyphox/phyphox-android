@@ -117,4 +117,8 @@
     <string name="start">শুরু করুন</string>
     <string name="clear_data">ডাটা মুছে দিন</string>
     <string name="clear_data_question">রেকর্ড করা ডাটা মুছবো\?</string>
+    <string name="clear">মুছা</string>
+    <string name="leave_experiment">পরীক্ষা করা ছাড়া</string>
+    <string name="leave_experiment_question">এই পরীক্ষাটি না করি এবং রেকর্ড করা ডাটা বাতিল করি\?</string>
+    <string name="leave">বাদ দাউ</string>
 </resources>
