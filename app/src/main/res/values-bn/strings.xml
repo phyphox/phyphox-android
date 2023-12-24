@@ -113,7 +113,7 @@
     <string name="delete">মুছে দিন</string>
     <string name="confirmDelete">আপনি কি এই পরীক্ষাটি আপনার সংগ্রহ থেকে সরাতে চাইছেন\?</string>
     <string name="confirmDeleteTitle">মুছে ফেলা নিশ্চিত করছেন\?</string>
-    <string name="stop">দাঁড়ান।</string>
+    <string name="stop">দাঁড়ান</string>
     <string name="start">শুরু করুন</string>
     <string name="clear_data">ডাটা মুছে দিন</string>
     <string name="clear_data_question">রেকর্ড করা ডাটা মুছবো\?</string>
