@@ -1,20 +1,20 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
         applicationId "de.rwth_aachen.phyphox"
         minSdkVersion 14
-        targetSdkVersion 33
+        targetSdkVersion rootProject.ext.compileSdkVersion
+        compileSdk rootProject.ext.compileSdkVersion
 
-        versionName "1.1.12"
+        versionName "1.1.13"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1011208 //1.01.12-08
+        versionCode 1011300 //1.01.13-00
 
         def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
-        resConfigs 'en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW'
+        resourceConfigurations += ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
 
         vectorDrawables {
             useSupportLibrary = true
@@ -42,7 +42,7 @@ android {
         }
     }
 
-    flavorDimensions "permissions"
+    flavorDimensions = ["permissions"]
     productFlavors {
         screenshot {
             dimension "permissions"
@@ -69,13 +69,13 @@ dependencies {
 
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    implementation 'com.google.android.material:material:1.8.0'
-    implementation 'androidx.annotation:annotation:1.5.0'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.annotation:annotation:1.7.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.appcompat:appcompat-resources:1.6.1'
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'androidx.core:core:1.9.0'
-    implementation 'androidx.fragment:fragment:1.5.7'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'androidx.core:core:1.12.0'
+    implementation 'androidx.fragment:fragment:1.6.2'
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
     //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md
