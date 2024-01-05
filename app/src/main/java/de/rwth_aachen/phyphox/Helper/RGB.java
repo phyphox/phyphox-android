@@ -197,11 +197,7 @@ public class RGB {
             l = 1;
 
         double t = s * (l < 0.5 ? l : 1.0 - l);
-        RGB candidate = RGB.fromHSV(hue(), l > 0 ? 2 * t / (l+t) : 0.0, l+t);
-
-        Log.d("TEST", "NEW lightness = " + l + ", gammaL = " + gammaL + ", luminance = " + candidate.luminance());
-
-        return candidate;
+        return RGB.fromHSV(hue(), l > 0 ? 2 * t / (l+t) : 0.0, l+t);
     }
 
     public RGB autoLightColor(Resources res) {
