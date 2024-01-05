@@ -10,7 +10,7 @@
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:clickable="false"
         android:elevation="1dp"
-        android:paddingRight="@dimen/activity_horizontal_padding"
+        android:paddingRight="0dp"
         android:paddingEnd="@dimen/activity_horizontal_padding">
 
         <ImageView
@@ -48,7 +48,7 @@
             android:layout_toStartOf="@+id/menuButton" />
 
         <ImageButton
-            android:layout_width="wrap_content"
+            android:layout_width="@dimen/expElementIconSize"
             android:layout_height="@dimen/expElementIconSize"
             android:id="@+id/menuButton"
             android:background="@android:color/transparent"
