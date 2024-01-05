@@ -429,8 +429,7 @@ public class ExperimentList extends AppCompatActivity {
             else {
                 //No asset. Menu button visible and it needs an onClickListener
                 holder.menuBtn.setVisibility(ImageView.VISIBLE);
-                if (colors.get(position).luminance() > 0.1)
-                    holder.menuBtn.setColorFilter(colors.get(position).intColor(), android.graphics.PorterDuff.Mode.SRC_IN);
+                holder.menuBtn.setColorFilter(RGB.fromRGB(255, 255, 255).autoLightColor(res).intColor(), android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.menuBtn.setOnClickListener(v -> {
                     android.widget.PopupMenu popup = new android.widget.PopupMenu(new ContextThemeWrapper(ExperimentList.this, R.style.Theme_Phyphox_DayNight), v);
                     popup.getMenuInflater().inflate(R.menu.experiment_item_context, popup.getMenu());
