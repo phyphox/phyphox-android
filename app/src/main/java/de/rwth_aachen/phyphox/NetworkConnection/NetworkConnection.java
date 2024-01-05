@@ -286,13 +286,13 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
 
     public void stop() {
         running = false;
-        intervalHandler.removeCallbacksAndMessages(intervalExecute);
+        intervalHandler.removeCallbacksAndMessages(null);
     }
 
     private Runnable intervalExecute = new Runnable() {
         @Override
         public void run() {
-            intervalHandler.removeCallbacksAndMessages(intervalExecute);
+            intervalHandler.removeCallbacksAndMessages(null);
             execute(null);
             if (running)
                 intervalHandler.postDelayed(intervalExecute, (long)(interval*1000));
