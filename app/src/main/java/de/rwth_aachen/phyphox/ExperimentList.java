@@ -84,6 +84,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -96,7 +99,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1103,8 +1108,8 @@ public class ExperimentList extends AppCompatActivity {
         loadExperimentList();
     }
 
-    //This asyncTask extracts a zip file to a temporary directory
-    //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
+    //This asyncTask stores the content of a data in a temporary file
+    //When it's done, it opens it as a single phyphox file
     protected static class handleCopyIntent extends AsyncTask<String, Void, String> {
         private Intent intent; //The intent to read from
         private WeakReference<ExperimentList> parent;
@@ -1219,26 +1224,24 @@ public class ExperimentList extends AppCompatActivity {
             try {
                 //Prepare temporary directory
                 File tempPath = new File(parent.get().getFilesDir(), "temp_zip");
-                if (!tempPath.exists()) {
-                    if (!tempPath.mkdirs())
-                        return "Could not create temporary directory to extract zip file.";
-                }
-                String[] files = tempPath.list();
-                for (String file : files) {
-                    if (!(new File(tempPath, file).delete()))
-                        return "Could not clear temporary directory to extract zip file.";
-                }
+                if (tempPath.exists())
+                    FileUtils.deleteDirectory(tempPath);
+                if (!tempPath.mkdirs())
+                    return "Could not create temporary directory to extract zip file.";
 
                 ZipInputStream zis = new ZipInputStream(phyphoxStream.inputStream);
 
                 ZipEntry entry;
                 byte[] buffer = new byte[2048];
                 while((entry = zis.getNextEntry()) != null) {
+                    if (!entry.getName().endsWith(".phyphox"))
+                        continue;
                     File f = new File(tempPath, entry.getName());
                     String canonicalPath = f.getCanonicalPath();
                     if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
                         return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
                     }
+                    f.getParentFile().mkdirs();
                     FileOutputStream out = new FileOutputStream(f);
                     int size = 0;
                     while ((size = zis.read(buffer)) > 0)
@@ -1249,6 +1252,7 @@ public class ExperimentList extends AppCompatActivity {
                 }
                 zis.close();
             } catch (Exception e) {
+                Log.e("zip", "Error loading zip file.", e);
                 return "Error loading zip file: " + e.getMessage();
             }
 
@@ -1267,18 +1271,14 @@ public class ExperimentList extends AppCompatActivity {
             progress.dismiss();
         if (result.isEmpty()) {
             File tempPath = new File(getFilesDir(), "temp_zip");
-            final File[] files = tempPath.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String filename) {
-                    return filename.endsWith(".phyphox");
-                }
-            });
-            if (files.length == 0) {
+            String[] extensions = {"phyphox"};
+            final Collection<File> files = FileUtils.listFiles(tempPath, extensions, true);
+            if (files.size() == 0) {
                 Toast.makeText(this, "Error: There is no valid phyphox experiment in this zip file.", Toast.LENGTH_LONG).show();
-            } else if (files.length == 1) {
+            } else if (files.size() == 1) {
                 //Create an intent for this file
                 Intent intent = new Intent(this, Experiment.class);
-                intent.setData(Uri.fromFile(files[0]));
+                intent.setData(Uri.fromFile(files.iterator().next()));
                 if (preselectedDevice != null)
                     intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, preselectedDevice.getAddress());
                 intent.setAction(Intent.ACTION_VIEW);
@@ -1317,7 +1317,7 @@ public class ExperimentList extends AppCompatActivity {
                     //Load details for each experiment
                     try {
                         InputStream input = new FileInputStream(file);
-                        loadExperimentInfo(input, file.getName(), "temp_zip", false, zipExperiments, null, null);
+                        loadExperimentInfo(input, tempPath.toURI().relativize(file.toURI()).getPath(), "temp_zip", false, zipExperiments, null, null);
                         input.close();
                     } catch (IOException e) {
                         Log.e("zip", e.getMessage());
