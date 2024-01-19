@@ -1737,7 +1737,9 @@ public abstract class PhyphoxFile {
                         experiment.micRateOutput = "";
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    if (Build.MANUFACTURER.toLowerCase().contains("xiaomi"))
+                        experiment.forceAudioRecordingCompatibilityFormat = true; //Several Xiaomi devices have issues supporting ENCODING_PCM_FLOAT, Falling back to 16bit ints is not that much of a disadvantage, so let's be safe and force them all to the legacy format
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !experiment.forceAudioRecordingCompatibilityFormat)
                         experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT)/2;
                     else
                         experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
