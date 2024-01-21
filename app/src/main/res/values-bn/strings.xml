@@ -121,4 +121,8 @@
     <string name="leave_experiment">পরীক্ষা করা বন্ধ করুন</string>
     <string name="leave_experiment_question">এই পরীক্ষাটি বন্ধ করে রেকর্ড করা ডাটা বাতিল করি\?</string>
     <string name="leave">বেরিয়ে যান</string>
+    <string name="timed_stop">সময় চলা বন্ধ করুন</string>
+    <string name="timed_start">সময় চলা শুরু করুন</string>
+    <string name="loadingTitle">লোড করুন</string>
+    <string name="loadingText">পরীক্ষাটি লোড করুন</string>
 </resources>
