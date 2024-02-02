@@ -11,7 +11,7 @@ public class DataInput implements Serializable {
     boolean isEmpty = false;
     double value = Double.NaN;
     public DataBuffer buffer = null;
-    boolean clearAfterRead = true;
+    boolean keep = false;
 
     //Get value
     public double getValue() {
@@ -22,8 +22,8 @@ public class DataInput implements Serializable {
     }
 
     //Constructor if this should contain a buffer
-    protected DataInput(DataBuffer buffer, boolean clear) {
-        this.clearAfterRead = clear;
+    protected DataInput(DataBuffer buffer, boolean keep) {
+        this.keep = keep;
         isBuffer = true;
         this.isEmpty = false;
         this.buffer = buffer;
@@ -96,7 +96,7 @@ public class DataInput implements Serializable {
 
     protected DataInput copy() {
         if (this.isBuffer) {
-            return new DataInput(this.buffer.copy(), this.clearAfterRead);
+            return new DataInput(this.buffer.copy(), this.keep);
         } else if (isEmpty) {
             return new DataInput();
         } else {

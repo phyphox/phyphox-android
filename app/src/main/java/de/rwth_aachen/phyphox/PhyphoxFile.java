@@ -811,7 +811,8 @@ public abstract class PhyphoxFile {
                     } else if (type.equals("buffer")) {
 
                         //Check the type
-                        boolean clearAfterRead = getBooleanAttribute("clear", true);
+                        boolean clearAfterRead = getBooleanAttribute("clear", true); //Deprecated
+                        boolean keep = getBooleanAttribute("keep", !clearAfterRead); //New attribute keep = !clear,
 
                         //This is a buffer. Let's see if it exists
                         String bufferName = getText();
@@ -821,7 +822,7 @@ public abstract class PhyphoxFile {
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                         else {
-                            inputList.set(targetIndex, new DataInput(buffer, clearAfterRead));
+                            inputList.set(targetIndex, new DataInput(buffer, keep));
                         }
                     } else if (type.equals("empty")) {
                         //No input, Is this allowed?
@@ -840,7 +841,8 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
 
                     //Check the type
-                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true); //Deprecated
+                    boolean append = getBooleanAttribute("append", !clearBeforeWrite); //New attribute append = !clear,
 
                     if (mapping != null) {
                         for (int i = 0; i < outputMapping.length; i++) {
@@ -917,7 +919,7 @@ public abstract class PhyphoxFile {
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                     else {
-                        outputList.set(targetIndex, new DataOutput(buffer, clearBeforeWrite));
+                        outputList.set(targetIndex, new DataOutput(buffer, append));
                     }
                     break;
                 default: //Unknown tag...
@@ -2061,12 +2063,13 @@ public abstract class PhyphoxFile {
 
                     String type = getStringAttribute("type");
                     if (type == null || type.equals("buffer")) {
-                        boolean clear = getBooleanAttribute("clear", false);
+                        boolean clear = getBooleanAttribute("clear", false); //Deprecated
+                        boolean keep = getBooleanAttribute("keep", !clear); //New attribute keep = !clear,
                         String bufferName = getText();
                         DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                        sendable = new NetworkConnection.NetworkSendableData(buffer, clear);
+                        sendable = new NetworkConnection.NetworkSendableData(buffer, keep);
                         if (datatype != null) {
                             sendable.additionalAttributes = new HashMap<>();
                             sendable.additionalAttributes.put("datatype", datatype);
@@ -2093,13 +2096,14 @@ public abstract class PhyphoxFile {
                     if (id == null)
                         throw new phyphoxFileException("Missing id in receive element.", xpp.getLineNumber());
 
-                    boolean clear = getBooleanAttribute("clear", false);
+                    boolean clear = getBooleanAttribute("clear", false); //Deprecated
+                    boolean append = getBooleanAttribute("append", !clear); //New attribute append = !clear,
 
                     String bufferName = getText();
                     DataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                    receivable = new NetworkConnection.NetworkReceivableData(buffer, clear);
+                    receivable = new NetworkConnection.NetworkReceivableData(buffer, append);
 
                     receive.put(id, receivable);
                     break;
