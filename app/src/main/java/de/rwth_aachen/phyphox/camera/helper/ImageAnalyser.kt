@@ -12,6 +12,7 @@ import de.rwth_aachen.phyphox.camera.model.ImageAnalysisUIAction
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.last
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import kotlin.math.pow
@@ -130,6 +131,10 @@ class ImageAnalyser(private val cameraViewModel: CameraViewModel) : ImageAnalysi
                     cameraViewModel.cameraInput.experimentTimeReference.getExperimentTimeFromEvent(
                             mediaImage.timestamp)
             cameraViewModel.cameraInput.dataT?.append(t)
+
+            cameraViewModel.cameraInput.shutterSpeedDataBuffer?.append(cameraViewModel.reportedShutter)
+            cameraViewModel.cameraInput.isoDataBuffer?.append(cameraViewModel.reportedIso)
+            cameraViewModel.cameraInput.apertureDataBuffer?.append(cameraViewModel.reportedAperture)
 
             cameraViewModel.imageAnalysisFinished(t)
         }

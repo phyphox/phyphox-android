@@ -4,11 +4,15 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.graphics.Rect
 import android.graphics.RectF
+import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.CaptureResult
+import android.hardware.camera2.TotalCaptureResult
 import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
@@ -77,6 +81,10 @@ class CameraViewModel(private val application: Application) : ViewModel() {
     val imageAnalyser: ImageAnalyser = ImageAnalyser(this)
 
     lateinit var scrollable : Scrollable
+
+    var reportedAperture = Double.NaN
+    var reportedShutter = Double.NaN
+    var reportedIso = Double.NaN
 
     fun initializeCamera() {
 
@@ -378,9 +386,7 @@ class CameraViewModel(private val application: Application) : ViewModel() {
         var awbLockAvailable = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE)
 
         val sensorPhysicalSize = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)
-        cameraInput.sensorPixelHeight?.clear(true)
         cameraInput.sensorPixelHeight?.append(sensorPhysicalSize?.height?.toDouble() ?: 0.0)
-        cameraInput.sensorPixelWidth?.clear(true)
         cameraInput.sensorPixelWidth?.append(sensorPhysicalSize?.width?.toDouble() ?: 0.0)
 
 
@@ -418,6 +424,16 @@ class CameraViewModel(private val application: Application) : ViewModel() {
 
         val previewBuilder = Preview.Builder()
         val extender = Camera2Interop.Extender(previewBuilder)
+
+        val captureCallback = object : CameraCaptureSession.CaptureCallback() {
+            override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
+                reportedAperture = result.get(CaptureResult.LENS_APERTURE)?.toDouble() ?: Double.NaN
+                reportedIso = result.get(CaptureResult.SENSOR_SENSITIVITY)?.toDouble() ?: Double.NaN
+                reportedShutter = result.get(CaptureResult.SENSOR_EXPOSURE_TIME)?.toDouble() ?: Double.NaN
+                Log.d("TEST", "X: " + reportedAperture + ", " + reportedIso + ", " + reportedShutter)
+            }
+        }
+        extender.setSessionCaptureCallback(captureCallback)
 
         val cameraSettingValueState = _cameraSettingValueState.value
 
@@ -458,15 +474,6 @@ class CameraViewModel(private val application: Application) : ViewModel() {
                 if (iso != 0) extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
                 if (shutterSpeed != 0L) extender.setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutterSpeed)
                 if (aperture != 0.0f) extender.setCaptureRequestOption(CaptureRequest.LENS_APERTURE, aperture)
-
-                cameraInput.shutterSpeedDataBuffer?.clear(true)
-                cameraInput.exposureDataBuffer?.append(shutterSpeed.toDouble())
-
-                cameraInput.isoDataBuffer?.clear(true)
-                cameraInput.isoDataBuffer?.append(iso.toDouble())
-
-                cameraInput.apertureDataBuffer?.clear(true)
-                cameraInput.apertureDataBuffer?.append(aperture.toDouble())
 
                 setupWhiteBalance(cameraSettingValueState, extender)
 

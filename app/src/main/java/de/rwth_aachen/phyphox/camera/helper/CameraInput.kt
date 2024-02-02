@@ -88,10 +88,9 @@ class CameraInput() {
         if (buffers.size > 3 && buffers[3] != null) shutterSpeedDataBuffer = buffers[3].buffer
         if (buffers.size > 4 && buffers[4] != null) isoDataBuffer = buffers[4].buffer
         if (buffers.size > 5 && buffers[5] != null) apertureDataBuffer = buffers[5].buffer
-        if (buffers.size > 6 && buffers[6] != null) exposureDataBuffer = buffers[6].buffer
 
-        if (buffers.size > 7 && buffers[7] != null) sensorPixelHeight = buffers[7].buffer
-        if (buffers.size > 8 && buffers[8] != null) sensorPixelWidth = buffers[8].buffer
+        if (buffers.size > 6 && buffers[6] != null) sensorPixelHeight = buffers[6].buffer
+        if (buffers.size > 7 && buffers[7] != null) sensorPixelWidth = buffers[7].buffer
 
         if (dataLuminance != null) {
             analysisRequiresColor = true

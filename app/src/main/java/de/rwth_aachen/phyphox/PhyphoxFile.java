@@ -1746,6 +1746,7 @@ public abstract class PhyphoxFile {
                     }
                     experiment.micRate = getIntAttribute("rate", 48000); //Recording rate
                     experiment.appendAudioInput = getBooleanAttribute("append", false);
+                    experiment.appendAudioInput = getBooleanAttribute("append", false);
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
@@ -1927,13 +1928,12 @@ public abstract class PhyphoxFile {
 
                         //Allowed input/output configuration
                         ioBlockParser.ioMapping[] outputMapping = {
-                                new ioBlockParser.ioMapping() {{name = "luma"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                                new ioBlockParser.ioMapping() {{name = "luminance"; asRequired = false; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "luma"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "luminance"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                                new ioBlockParser.ioMapping() {{name = "exposure"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "sensor_pixel_height"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "sensor_pixel_width"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                         };
