@@ -235,7 +235,7 @@
     <string name="beeperStop">Stop-Ton</string>
     <string name="activate_all">Alle aktivieren</string>
     <string name="deactivate_all">Alle deaktivieren</string>
-    <string name="common_unit_short_arbitrary_unit">a.u.</string>
+    <string name="common_unit_short_arbitrary_unit">arb. unit</string>
     <string name="common_unit_short_second">s</string>
     <string name="common_unit_short_milli_second">ms</string>
     <string name="common_unit_short_hertz">Hz</string>
