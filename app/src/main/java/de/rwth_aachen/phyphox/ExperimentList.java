@@ -1281,6 +1281,7 @@ public class ExperimentList extends AppCompatActivity {
                 intent.setData(Uri.fromFile(files.iterator().next()));
                 if (preselectedDevice != null)
                     intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, preselectedDevice.getAddress());
+                intent.putExtra(EXPERIMENT_ISTEMP, "temp_zip");
                 intent.setAction(Intent.ACTION_VIEW);
 
                 //Open the file

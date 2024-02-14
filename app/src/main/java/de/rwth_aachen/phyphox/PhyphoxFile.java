@@ -141,7 +141,8 @@ public abstract class PhyphoxFile {
             String scheme = intent.getScheme();
 
             if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) { //If the file location is found in the extra EXPERIMENT_XML, it is a local file
-                phyphoxStream.isLocal = !intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false);
+                String isTemp = intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP);
+                phyphoxStream.isLocal = (isTemp == null || isTemp.isEmpty());
                 if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISASSET, true)) { //The local file is an asser
                     AssetManager assetManager = parent.getAssets();
                     try {
