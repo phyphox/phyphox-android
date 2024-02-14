@@ -1029,6 +1029,7 @@ public class ExperimentList extends AppCompatActivity {
 
     //Load all experiments from assets and from local files
     private void loadExperimentList() {
+        long loadTime = System.nanoTime();
 
         //We want to show current availability of experiments requiring cameras
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -1098,6 +1099,7 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         sv.scrollTo(0, scrollY);
+        Log.d("loadExperimentList", "Loaded experiment list in " + (System.nanoTime() - loadTime)/1e6 + "ms");
     }
 
     @Override
@@ -1906,7 +1908,7 @@ public class ExperimentList extends AppCompatActivity {
 
         String themePreference = PreferenceManager
                 .getDefaultSharedPreferences(this)
-                .getString(getString(R.string.setting_dark_mode_key),SettingsFragment.DARK_MODE_ON);
+                .getString(getString(R.string.setting_dark_mode_key), SettingsFragment.DARK_MODE_ON);
         SettingsFragment.setApplicationTheme(themePreference);
 
         //Basics. Call super-constructor and inflate the layout.

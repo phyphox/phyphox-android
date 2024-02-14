@@ -196,10 +196,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             TaskStackBuilder.create(this)
                     .addNextIntent(upIntent)
                     .startActivities();
-            finish();
-        } else {
-            NavUtils.navigateUpTo(this, upIntent);
         }
+        finish();
     }
 
     private void leaveExperiment() {
