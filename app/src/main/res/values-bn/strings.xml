@@ -125,4 +125,6 @@
     <string name="timed_start">সময় চলা শুরু করুন</string>
     <string name="loadingTitle">লোড হচ্ছে</string>
     <string name="loadingText">পরীক্ষাটি লোড হচ্ছে…</string>
+    <string name="loadingBluetoothConnectionText">বুলুটুথ ডিভাইস এর সাথে যোগাযোগ স্থাপন করুন</string>
+    <string name="settings">সেটিং</string>
 </resources>
