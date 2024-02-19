@@ -127,4 +127,23 @@
     <string name="loadingText">পরীক্ষাটি লোড হচ্ছে…</string>
     <string name="loadingBluetoothConnectionText">ব্লউ টুথ ডিভাইস এর সাথে যুক্ত হচ্ছে …</string>
     <string name="settings">সেটিং</string>
+    <string name="enableTimedRun">সময়সীমাতে রান করুন</string>
+    <string name="export">ডাটা আনুন</string>
+    <string name="networkPrivacySensorInfo">নিম্নলিখিত সেন্সর এর প্রযুক্তিগত বিবরণ:</string>
+    <string name="timedRunBeeps">ধ্বনিক সংকেত</string>
+    <string name="beeperCountdown">ধ্বনি গোনা শুরু করুন</string>
+    <string name="beeperStart">ধ্বনি চালু করুণ</string>
+    <string name="beeperRunning">ধ্বনি চলুক</string>
+    <string name="beeperStop">ধ্বনি বন্ধ করুণ</string>
+    <string name="activate_all">সবাই কে সক্রিয় করুন</string>
+    <string name="deactivate_all">সবাই কে নিষ্ক্রিয় করুন</string>
+    <string name="depthAggregationMode">একত্রীকরণ মোড</string>
+    <string name="depthAggregationModePrompt">চয়নিত ক্ষেত্রে বেশি তথ্য একত্রিত করার পদ্ধতি চয়ন করুন।</string>
+    <string name="depthAggregationModeClosest">নিকটতম</string>
+    <string name="depthAggregationModeAverage">গড়</string>
+    <string name="depthAggregationModeWeighted">ওজন কৃত</string>
+    <string name="cameraFrontFacing">সামনের দিকে মুখ করা ক্যামেরা</string>
+    <string name="cameraBackFacing">পিছনের দিকে মুখ করা ক্যামেরা</string>
+    <string name="cameraExternal">বাহ্যিক ক্যামেরা</string>
+    <string name="settingsDefault">পূর্বনির্দিষ্ট</string>
 </resources>
