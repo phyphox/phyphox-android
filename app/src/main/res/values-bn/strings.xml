@@ -123,6 +123,6 @@
     <string name="leave">বেরিয়ে যান</string>
     <string name="timed_stop">সময় চলা বন্ধ করুন</string>
     <string name="timed_start">সময় চলা শুরু করুন</string>
-    <string name="loadingTitle">লোড করুন</string>
-    <string name="loadingText">পরীক্ষাটি লোড করুন</string>
+    <string name="loadingTitle">লোড হচ্ছে</string>
+    <string name="loadingText">পরীক্ষাটি লোড হচ্ছে…</string>
 </resources>
