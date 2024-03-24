@@ -16,10 +16,6 @@ import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.opencv.android.Utils
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.nio.ByteBuffer
@@ -209,65 +205,6 @@ object CameraHelper {
             }
         }
         return json.toString()
-    }
-
-    fun byteArrayToMat(byteArray: ByteArray, cameraRect: Rect) : Mat{
-
-        val width = cameraRect.width()
-        val height = cameraRect.height()
-
-        val mat = Mat(height , width, CvType.CV_8UC1)
-        mat.put(0, 0, byteArray)
-        //Imgproc.cvtColor(mat, mat, Imgproc.COLOR_YUV2RGBA_YV12)
-
-        return mat
-    }
-
-    fun imageToMat(image: Image): Mat {
-        // Get the image dimensions and format
-        val width = image.width
-        val height = image.height
-        val format = image.format
-
-        // Convert the Image to a byte array
-        val buffer: ByteBuffer = image.planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-
-        // Create a Mat object from the byte array
-        val mat: Mat
-        when (format) {
-            ImageFormat.YUV_420_888 -> {
-                mat = Mat(height + height / 2, width, CvType.CV_8UC1)
-                mat.put(0, 0, bytes)
-                Imgproc.cvtColor(mat, mat, Imgproc.COLOR_YUV2RGBA_NV21)
-            }
-            ImageFormat.YUV_422_888 -> {
-                mat = Mat(height, width, CvType.CV_8UC2)
-                mat.put(0, 0, bytes)
-                Imgproc.cvtColor(mat, mat, Imgproc.COLOR_YUV2RGBA_YUY2)
-            }
-            ImageFormat.YUV_444_888 -> {
-                mat = Mat(height, width, CvType.CV_8UC3)
-                mat.put(0, 0, bytes)
-                Imgproc.cvtColor(mat, mat, Imgproc.COLOR_YUV2RGB_YUY2)
-            }
-            else -> throw IllegalArgumentException("Unsupported image format: $format")
-        }
-
-        return mat
-    }
-
-    fun convertMatToImageProxy(mat: Mat?, image: ImageProxy): ImageProxy {
-        val rgba = Mat()
-        Imgproc.cvtColor(mat, rgba, Imgproc.COLOR_GRAY2RGBA)
-        val bitmap = Bitmap.createBitmap(rgba.cols(), rgba.rows(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(rgba, bitmap)
-        val planes = image.image!!.planes
-        val buffer = planes[0].buffer
-        buffer.rewind()
-        bitmap.copyPixelsToBuffer(buffer)
-        return image
     }
 
     /**

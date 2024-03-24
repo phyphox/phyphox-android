@@ -244,7 +244,7 @@ public class Analysis {
                                 inputArraySizes.set(i, inputsOriginal.get(i).getFilledSize());
                             } else
                                 inputs.set(i, inputsOriginal.get(i).copy());
-                            if (inputsOriginal.get(i).isBuffer && inputsOriginal.get(i).clearAfterRead && !inputsOriginal.get(i).buffer.isStatic)
+                            if (inputsOriginal.get(i).isBuffer && !inputsOriginal.get(i).keep && !inputsOriginal.get(i).buffer.isStatic)
                                 inputsOriginal.get(i).clear(false);
                         }
                     }
@@ -254,7 +254,7 @@ public class Analysis {
 
                 if (!clearInModule) {
                     for (DataOutput output : outputs)
-                        if (output != null && output.clearBeforeWrite)
+                        if (output != null && !output.append)
                             output.buffer.clear(false);
                 }
 
@@ -372,13 +372,13 @@ public class Analysis {
             double b = inputArrays.get(1)[inputArraySizes.get(1) - 1];
             if ((a < b && less) || (a == b && equal) || (a > b && greater)) {
                 if (inputArrays.size() >= 3 && inputArrays.get(2) != null) {
-                    if (outputs.get(0).clearBeforeWrite)
+                    if (!outputs.get(0).append)
                         outputs.get(0).clear(false);
                     outputs.get(0).append(inputArrays.get(2), inputArraySizes.get(2));
                 }
             } else {
                 if (inputArrays.size() >= 4  && inputArrays.get(3) != null) {
-                    if (outputs.get(0).clearBeforeWrite)
+                    if (!outputs.get(0).append)
                         outputs.get(0).clear(false);
                     outputs.get(0).append(inputArrays.get(3), inputArraySizes.get(3));
                 }

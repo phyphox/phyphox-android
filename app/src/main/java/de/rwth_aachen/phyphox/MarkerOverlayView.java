@@ -7,6 +7,8 @@ import android.graphics.Point;
 import android.graphics.RectF;
 import android.view.View;
 
+import de.rwth_aachen.phyphox.Helper.RGB;
+
 public class MarkerOverlayView extends View {
 
     Paint paint;
@@ -23,7 +25,7 @@ public class MarkerOverlayView extends View {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(3.f);
         paint.setAntiAlias(true);
-        paint.setColor(0xffffffff);
+        paint.setColor((new RGB(0xffffff)).autoLightColor(ctx.getResources()).intColor());
 
         paintPP = new Paint();
         paintPP.setStyle(Paint.Style.FILL);

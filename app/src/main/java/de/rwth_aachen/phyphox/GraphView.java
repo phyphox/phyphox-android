@@ -1172,7 +1172,7 @@ public class GraphView extends View {
             return graphSetup.systemTimeReferenceGap.get(i);
         } else if (linearTime && !absoluteTime) {
             int i = 0;
-            while (i + 1 < graphSetup.trStarts.size() && graphSetup.trStarts.get(i + 1) + graphSetup.systemTimeReferenceGap.get(i+1) < v)
+            while (i + 1 < graphSetup.trStarts.size() && i + 1 < graphSetup.systemTimeReferenceGap.size() && graphSetup.trStarts.get(i + 1) + graphSetup.systemTimeReferenceGap.get(i+1) < v)
                 i++;
             return -graphSetup.systemTimeReferenceGap.get(i);
         }

@@ -304,12 +304,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="depthAggregationModeClosest">Closest</string>
     <string name="depthAggregationModeAverage">Average</string>
     <string name="depthAggregationModeWeighted">Weighted</string>
-
     <string name="cameraFrontFacing">Front facing camera</string>
     <string name="cameraFront">Front</string>
     <string name="cameraBackFacing">Back facing camera</string>
     <string name="cameraBack">Back</string>
     <string name="cameraExternal">External camera</string>
+
     <string name="off">Off</string>
     <string name="on">On</string>
     <string name="camera_preview">Camera Preview</string>
@@ -317,7 +317,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="camera_not_ready">Camera Not Ready</string>
 
     <string name="settingsDefault">Default</string>
-
     <string name="settings">Settings</string>
     <string name="settingsHeadLanguage">Language</string>
     <string name="settingsLanguage">App language</string>
@@ -327,7 +326,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settingsProximityLock">Proximity lock</string>
     <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
     <string name="settingsPort">Remote access port</string>
-
     <string name="settings_theme_night">Default</string>
     <string name="settings_theme_no_night">Light mode </string>
     <string name="settings_theme_sync_setting">Sync with system</string>
@@ -338,8 +336,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settings_mode_dark">On (Default)</string>
     <string name="settings_mode_no_dark">Off </string>
     <string name="settings_mode_dark_system">As system</string>
-
-    <string name="common_unit_short_arbitrary_unit">a.u.</string>
+    <string name="common_unit_short_arbitrary_unit">arb. unit</string>
     <string name="common_unit_short_second">s</string>
     <string name="common_unit_short_milli_second">ms</string>
     <string name="common_unit_short_hertz">Hz</string>
@@ -387,11 +384,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_direction_short_south_east">SE</string>
     <string name="common_direction_short_north_west">NW</string>
     <string name="common_direction_short_south_west">SW</string>
-
     <string name="common_musical_note_a2">A2</string>
     <string name="common_musical_note_bb2">A#2 / Bb2</string>
     <string name="common_musical_note_b2">B2</string>
-
     <string name="common_musical_note_a3">A3</string>
     <string name="common_musical_note_bb3">A#3 / Bb3</string>
     <string name="common_musical_note_b3">B3</string>
@@ -404,7 +399,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_musical_note_gb3">F#3 / Gb3</string>
     <string name="common_musical_note_g3">G3</string>
     <string name="common_musical_note_ab3">G#3 / Ab3</string>
-
     <string name="common_musical_note_a4">A4</string>
     <string name="common_musical_note_bb4">A#4 / Bb4</string>
     <string name="common_musical_note_b4">B4</string>
@@ -417,7 +411,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_musical_note_gb4">F#4 / Gb4</string>
     <string name="common_musical_note_g4">G4</string>
     <string name="common_musical_note_ab4">G#4 / Ab4</string>
-
     <string name="common_musical_note_a5">A5</string>
     <string name="common_musical_note_bb5">A#5 / Bb5</string>
     <string name="common_musical_note_b5">B5</string>
@@ -430,7 +423,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_musical_note_gb5">F#5 / Gb5</string>
     <string name="common_musical_note_g5">G5</string>
     <string name="common_musical_note_ab5">G#5 / Ab5</string>
-
     <string name="common_musical_note_a6">A6</string>
     <string name="common_musical_note_bb6">A#6 / Bb6</string>
     <string name="common_musical_note_b6">B6</string>
@@ -443,7 +435,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_musical_note_gb6">F#6 / Gb6</string>
     <string name="common_musical_note_g6">G6</string>
     <string name="common_musical_note_ab6">G#6 / Ab6</string>
-
     <string name="common_musical_note_a7">A7</string>
     <string name="common_musical_note_bb7">A#7 / Bb7</string>
     <string name="common_musical_note_b7">B7</string>

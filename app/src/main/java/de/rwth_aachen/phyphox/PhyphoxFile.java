@@ -58,6 +58,7 @@ import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.helper.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttJson;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttTlsCsv;
@@ -71,7 +72,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.16";
+    public final static String phyphoxFileVersion = "1.17";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -142,7 +143,8 @@ public abstract class PhyphoxFile {
             String scheme = intent.getScheme();
 
             if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) { //If the file location is found in the extra EXPERIMENT_XML, it is a local file
-                phyphoxStream.isLocal = !intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false);
+                String isTemp = intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP);
+                phyphoxStream.isLocal = (isTemp == null || isTemp.isEmpty());
                 if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISASSET, true)) { //The local file is an asser
                     AssetManager assetManager = parent.getAssets();
                     try {
@@ -309,10 +311,9 @@ public abstract class PhyphoxFile {
         }
 
         //Helper to receive a color attribute, if invalid or not present, return default
-        protected int getColorAttribute(String identifier, int defaultValue) {
+        protected RGB getColorAttribute(String identifier, RGB defaultValue) {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
-
-            return Helper.parseColor(att, defaultValue, parent.getResources());
+            return RGB.fromPhyphoxString(att, parent.getResources(), defaultValue);
         }
 
         //These functions should be overriden with block-specific code
@@ -813,7 +814,8 @@ public abstract class PhyphoxFile {
                     } else if (type.equals("buffer")) {
 
                         //Check the type
-                        boolean clearAfterRead = getBooleanAttribute("clear", true);
+                        boolean clearAfterRead = getBooleanAttribute("clear", true); //Deprecated
+                        boolean keep = getBooleanAttribute("keep", !clearAfterRead); //New attribute keep = !clear,
 
                         //This is a buffer. Let's see if it exists
                         String bufferName = getText();
@@ -823,7 +825,7 @@ public abstract class PhyphoxFile {
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                         else {
-                            inputList.set(targetIndex, new DataInput(buffer, clearAfterRead));
+                            inputList.set(targetIndex, new DataInput(buffer, keep));
                         }
                     } else if (type.equals("empty")) {
                         //No input, Is this allowed?
@@ -842,7 +844,8 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
 
                     //Check the type
-                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true); //Deprecated
+                    boolean append = getBooleanAttribute("append", !clearBeforeWrite); //New attribute append = !clear,
 
                     if (mapping != null) {
                         for (int i = 0; i < outputMapping.length; i++) {
@@ -919,7 +922,7 @@ public abstract class PhyphoxFile {
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                     else {
-                        outputList.set(targetIndex, new DataOutput(buffer, clearBeforeWrite));
+                        outputList.set(targetIndex, new DataOutput(buffer, append));
                     }
                     break;
                 default: //Unknown tag...
@@ -1267,12 +1270,7 @@ public abstract class PhyphoxFile {
                     int precision = getIntAttribute("precision", 2);
                     boolean scientific = getBooleanAttribute("scientific", false);
                     double size = getDoubleAttribute("size", 1.0);
-                    int color;
-                    if(Helper.isDarkTheme(parent.getResources())){
-                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
-                    } else{
-                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_80));
-                    }
+                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1316,12 +1314,7 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "info": { //An info element just shows some text
-                    int color;
-                    if(Helper.isDarkTheme(parent.getResources())){
-                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_white_100));
-                    } else{
-                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_80));
-                    }
+                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
 
                     boolean bold = getBooleanAttribute("bold", false);
                     boolean italic = getBooleanAttribute("italic", false);
@@ -1342,7 +1335,7 @@ public abstract class PhyphoxFile {
                 case "separator": {
                     //An info element just shows some text
                     ExpView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
-                    int c = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_60));
+                    RGB c = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_black_60)));
                     float height = (float)getDoubleAttribute("height", 0.1);
                     separatore.setColor(c);
                     separatore.setHeight(height);
@@ -1366,8 +1359,8 @@ public abstract class PhyphoxFile {
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
                     while (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE,"mapColor"+colorStepIndex) != null) {
-                        int color = getColorAttribute("mapColor"+colorStepIndex, parent.getResources().getColor(R.color.phyphox_primary));
-                        colorScale.add(color);
+                        RGB color = getColorAttribute("mapColor"+colorStepIndex, new RGB(parent.getResources().getColor(R.color.phyphox_primary)));
+                        colorScale.add(color.intColor());
                         colorStepIndex++;
                     }
 
@@ -1406,10 +1399,10 @@ public abstract class PhyphoxFile {
                     int xPrecision = getIntAttribute("xPrecision", -1);
                     int yPrecision = getIntAttribute("yPrecision", -1);
                     int zPrecision = getIntAttribute("zPrecision", -1);
-                    int color = parent.getResources().getColor(R.color.phyphox_primary);
+                    RGB color = new RGB(parent.getResources().getColor(R.color.phyphox_primary));
                     boolean globalColor = false;
                     if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {
-                        color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_primary));
+                        color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_primary)));
                         globalColor = true;
                     }
 
@@ -1469,7 +1462,7 @@ public abstract class PhyphoxFile {
                     ge.setMapWidth(mapWidth);
                     ge.setColorScale(colorScale);
                     ge.setLineWidth(lineWidth);
-                    ge.setColor(color);
+                    ge.setColor(color, parent.getResources());
                     ge.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
                     ge.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
                     ge.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
@@ -1483,17 +1476,17 @@ public abstract class PhyphoxFile {
                     if (!globalColor) {
                         for (int i = 0; i < Math.ceil(ats.size() / 3); i++) {
                             switch (i % 6) {
-                                case 0: ge.setColor(parent.getResources().getColor(R.color.phyphox_primary), i);
+                                case 0: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_primary)), i, parent.getResources());
                                     break;
-                                case 1: ge.setColor(parent.getResources().getColor(R.color.phyphox_green), i);
+                                case 1: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_green)), i, parent.getResources());
                                     break;
-                                case 2: ge.setColor(parent.getResources().getColor(R.color.phyphox_blue_60), i);
+                                case 2: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_blue_60)), i, parent.getResources());
                                     break;
-                                case 3: ge.setColor(parent.getResources().getColor(R.color.phyphox_yellow), i);
+                                case 3: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_yellow)), i, parent.getResources());
                                     break;
-                                case 4: ge.setColor(parent.getResources().getColor(R.color.phyphox_magenta), i);
+                                case 4: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_magenta)), i, parent.getResources());
                                     break;
-                                case 5: ge.setColor(parent.getResources().getColor(R.color.phyphox_red), i);
+                                case 5: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_red)), i, parent.getResources());
                                     break;
                             }
                         }
@@ -1516,8 +1509,8 @@ public abstract class PhyphoxFile {
                             }
                         }
                         if (at.attributes.containsKey("color")) {
-                            int localColor = Helper.parseColor(at.attributes.get("color"), parent.getResources().getColor(R.color.phyphox_primary), parent.getResources());
-                            ge.setColor(localColor | 0xff000000, i/3);
+                            RGB localColor = RGB.fromPhyphoxString(at.attributes.get("color"), parent.getResources(), new RGB(parent.getResources().getColor(R.color.phyphox_primary)));
+                            ge.setColor(localColor, i/3, parent.getResources());
                         }
                         if (at.attributes.containsKey("linewidth")) {
                             try {
@@ -1636,8 +1629,8 @@ public abstract class PhyphoxFile {
                     } else
                         svge.setSvgParts(svgCode);
 
-                    int color = getColorAttribute("color", parent.getResources().getColor(R.color.phyphox_black_60));
-                    svge.setBackgroundColor(color);
+                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_black_60)));
+                    svge.setBackgroundColor(color.intColor());
 
                     newView.elements.add(svge);
                     break;
@@ -1764,7 +1757,9 @@ public abstract class PhyphoxFile {
                         experiment.micRateOutput = "";
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    if (Build.MANUFACTURER.toLowerCase().contains("xiaomi"))
+                        experiment.forceAudioRecordingCompatibilityFormat = true; //Several Xiaomi devices have issues supporting ENCODING_PCM_FLOAT, Falling back to 16bit ints is not that much of a disadvantage, so let's be safe and force them all to the legacy format
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !experiment.forceAudioRecordingCompatibilityFormat)
                         experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT)/2;
                     else
                         experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
@@ -2192,12 +2187,13 @@ public abstract class PhyphoxFile {
 
                     String type = getStringAttribute("type");
                     if (type == null || type.equals("buffer")) {
-                        boolean clear = getBooleanAttribute("clear", false);
+                        boolean clear = getBooleanAttribute("clear", false); //Deprecated
+                        boolean keep = getBooleanAttribute("keep", !clear); //New attribute keep = !clear,
                         String bufferName = getText();
                         DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                        sendable = new NetworkConnection.NetworkSendableData(buffer, clear);
+                        sendable = new NetworkConnection.NetworkSendableData(buffer, keep);
                         if (datatype != null) {
                             sendable.additionalAttributes = new HashMap<>();
                             sendable.additionalAttributes.put("datatype", datatype);
@@ -2224,13 +2220,14 @@ public abstract class PhyphoxFile {
                     if (id == null)
                         throw new phyphoxFileException("Missing id in receive element.", xpp.getLineNumber());
 
-                    boolean clear = getBooleanAttribute("clear", false);
+                    boolean clear = getBooleanAttribute("clear", false); //Deprecated
+                    boolean append = getBooleanAttribute("append", !clear); //New attribute append = !clear,
 
                     String bufferName = getText();
                     DataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                    receivable = new NetworkConnection.NetworkReceivableData(buffer, clear);
+                    receivable = new NetworkConnection.NetworkReceivableData(buffer, append);
 
                     receive.put(id, receivable);
                     break;

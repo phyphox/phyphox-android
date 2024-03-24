@@ -43,7 +43,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TableLayout;
@@ -120,6 +119,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private static final String STATE_MENU_HINT_DISMISSED = "menu_hint_dismissed";
     private static final String STATE_START_HINT_DISMISSED = "start_hint_dismissed";
     private static final String STATE_SAVE_LOCALLY_DISMISSED = "save_locally_dismissed";
+    private static final String STATE_BLUETOOTH_SCAN_DISMISSED = "bluetooth_scan_dismissed";
+    private static final String STATE_NETWORK_SCAN_DISMISSED = "network_scan_dismissed";
+    private static final String STATE_DATA_POLICY_DISMISSED = "data_policy_dismissed";
+    private static final String STATE_SENSOR_WARNING_DISMISSED = "sensor_warning_dismissed";
 
     //This handler creates the "main loop" as it is repeatedly called using postDelayed
     //Not a real loop to keep some resources available
@@ -133,6 +136,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean menuHintDismissed = false; //Remember that the user has clicked away the hint to the menu
     boolean startHintDismissed = false; //Remember that the user has clicked away the hint to the start button
     boolean saveLocallyDismissed = false; //Remember that the user did not want to save this experiment locally
+    boolean bluetoothScanDismissed = false;
+    boolean networkScanDismissed = false;
+    boolean dataPolicyDismissed = false;
+    boolean sensorWarningDismissed = false;
 
     //Remote server
     private RemoteServer remote = null; //The remote server (see remoteServer class)
@@ -172,11 +179,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean proximityLock = false;
     PowerManager.WakeLock wakeLock = null;
 
-    //The analysis progress bar
-    ProgressBar analysisProgress;       //Reference to the progress bar view
-    boolean analysisInProgress = false; //Set to true by second thread while analysis is running
-    float analysisProgressAlpha = 0.f;  //Will be increased while analysis is running and decreased while idle. This smoothes the display and results in an everage transparency representing the average load.
-
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
@@ -189,10 +191,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             TaskStackBuilder.create(this)
                     .addNextIntent(upIntent)
                     .startActivities();
-            finish();
-        } else {
-            NavUtils.navigateUpTo(this, upIntent);
         }
+        finish();
     }
 
     private void leaveExperiment() {
@@ -243,9 +243,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
-
-        this.analysisProgress = (ProgressBar)findViewById(R.id.progressBar);
-        analysisProgress.setVisibility(View.INVISIBLE);
 
         //Set our custom action bar
         Toolbar toolbar = (Toolbar) findViewById(R.id.customActionBar);
@@ -322,7 +319,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         shutdown = false; //Deactivate shutdown variable
 
-        if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (experiment != null && experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
                 experiment.depthInput.startCameras();
             } catch (Exception e) {
@@ -368,6 +365,110 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             Toast.makeText(this, R.string.save_locally_done, Toast.LENGTH_LONG).show(); //Present message
         } else // There has been an error
             Toast.makeText(this, result, Toast.LENGTH_LONG).show(); //Show error to user
+    }
+
+    void showInitialDialogs() {
+        if (experiment == null || !experiment.loaded)
+            return;
+
+        //Privacy policy
+        if (!dataPolicyDismissed && experiment.networkConnections.size() > 0) {
+            Set<String> sensors = new HashSet<>();
+            for (int i = 0; i < experiment.inputSensors.size(); i++) {
+                sensors.add(res.getString(experiment.inputSensors.get(i).getDescriptionRes()));
+            }
+            if (experiment.depthInput != null) {
+                sensors.add(res.getString(R.string.sensorDepth));
+            }
+            experiment.networkConnections.get(0).getDataAndPolicyDialog(experiment.audioRecord != null, experiment.gpsIn != null, experiment.inputSensors.size() > 0, sensors, this, this).show();
+            return;
+        }
+
+        //Warning about vendor sensors
+        if (!sensorWarningDismissed) {
+            for (SensorInput sensor : experiment.inputSensors) {
+                if (sensor.vendorSensor) {
+                    showSensorWarning(sensor);
+                    sensorWarningDismissed = true;
+                    return;
+                }
+            }
+        }
+
+        //Save locally
+        if (!saveLocallyDismissed && !experiment.isLocal) { //If this experiment has been loaded from a external source, we offer to save it locally
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(res.getString(R.string.save_locally_message))
+                    .setTitle(R.string.save_locally)
+                    .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+                            new PhyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
+                            saveLocallyDismissed = true;
+                            experiment.isLocal = true;
+                            showInitialDialogs();
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            saveLocallyDismissed = true;
+                            showInitialDialogs();
+                        }
+                    }).setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            saveLocallyDismissed = true;
+                            showInitialDialogs();
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            return;
+        }
+
+        //Network scan dialog
+        if (!networkScanDismissed) {
+            networkScanDismissed = true;
+            connectNetworkConnections();
+            return;
+        }
+
+        //Bluetooth scan dialog
+        if (!bluetoothScanDismissed) {
+            bluetoothScanDismissed = true;
+            connectBluetoothDevices(false, false);
+            return;
+        }
+    }
+
+    void setupTabLayout() {
+        tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
+        if(Helper.isDarkTheme(getResources())){
+            tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
+        } else {
+            tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
+        }
+        pager = ((ViewPager)findViewById(R.id.view_pager));
+        FragmentManager manager = getSupportFragmentManager();
+        adapter = new ExpViewPagerAdapter(manager, this.experiment);
+        pager.setAdapter(adapter);
+        tabLayout.setupWithViewPager(pager);
+        pager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+
+        for (int i = 0; i < adapter.getCount(); i++) {
+            ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
+            if (f != null)
+                f.recreateView();
+        }
+
+        if (adapter.getCount() < 2)
+            tabLayout.setVisibility(View.GONE);
+
+        try {
+            experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     //This is called from the experiment loading thread in onPostExecute, so the experiment should
@@ -424,43 +525,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 menuHintDismissed = savedInstanceState.getBoolean(STATE_MENU_HINT_DISMISSED);
                 startHintDismissed = savedInstanceState.getBoolean(STATE_START_HINT_DISMISSED);
                 saveLocallyDismissed = savedInstanceState.getBoolean(STATE_SAVE_LOCALLY_DISMISSED);
+                bluetoothScanDismissed = savedInstanceState.getBoolean(STATE_BLUETOOTH_SCAN_DISMISSED);
+                networkScanDismissed = savedInstanceState.getBoolean(STATE_NETWORK_SCAN_DISMISSED);
+                sensorWarningDismissed = savedInstanceState.getBoolean(STATE_SENSOR_WARNING_DISMISSED);
+                dataPolicyDismissed = savedInstanceState.getBoolean(STATE_DATA_POLICY_DISMISSED);
+
 
                 //Which view was active when we were stopped?
                 startView = savedInstanceState.getInt(STATE_CURRENT_VIEW);
             }
 
-            tabLayout = ((TabLayout)findViewById(R.id.tab_layout));
-            if(Helper.isDarkTheme(getResources())){
-                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_black_40));
-            } else {
-                tabLayout.setBackgroundColor(getResources().getColor(R.color.phyphox_white_90));
-            }
-            pager = ((ViewPager)findViewById(R.id.view_pager));
-            FragmentManager manager = getSupportFragmentManager();
-            // Setting page limit will retain the viewpager from reloading the view from view-model.
-            // Can continue showing camera value in other fragment tabs and also fixes the occasional crash while switching tabs.
-            pager.setOffscreenPageLimit(experiment.experimentViews.size());
-
-            adapter = new ExpViewPagerAdapter(manager, this.experiment);
-            pager.setAdapter(adapter);
-            tabLayout.setupWithViewPager(pager);
-            pager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-
-            for (int i = 0; i < adapter.getCount(); i++) {
-                ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
-                if (f != null)
-                    f.recreateView();
-            }
-
-            if (adapter.getCount() < 2)
-                tabLayout.setVisibility(View.GONE);
-
-            try {
-                experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
-            } catch (Exception e) {
-                Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-
+            setupTabLayout();
             tabLayout.getTabAt(startView).select();
 
             //Everything is ready. Let's start the "main loop"
@@ -491,58 +566,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             this.experiment = null;
         }
 
-        for (SensorInput sensor : experiment.inputSensors) {
-            if (sensor.vendorSensor) {
-                showSensorWarning(sensor);
-            }
-        }
-
         //Check if experiment is already in list and if so, flag it as local.
         if (experiment.source != null && Helper.experimentInCollection(experiment.crc32, this)) {
             experiment.isLocal = true;
-        }
-
-        if (experiment.loaded && experiment.networkConnections.size() > 0) {
-            Set<String> sensors = new HashSet<>();
-            for (int i = 0; i < experiment.inputSensors.size(); i++) {
-                sensors.add(res.getString(experiment.inputSensors.get(i).getDescriptionRes()));
-            }
-            if (experiment.depthInput != null) {
-                sensors.add(res.getString(R.string.sensorDepth));
-            }
-            experiment.networkConnections.get(0).getDataAndPolicyDialog(experiment.audioRecord != null, experiment.gpsIn != null, experiment.inputSensors.size() > 0, sensors, this, this).show();
-        } else if (!experiment.isLocal && experiment.loaded) { //If this experiment has been loaded from a external source, we offer to save it locally
-            menuHintDismissed = true; //Do not show menu startMenuItem for external experiments
-
-            if (!saveLocallyDismissed) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setMessage(res.getString(R.string.save_locally_message))
-                        .setTitle(R.string.save_locally)
-                        .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-                                new PhyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
-                            }
-                        })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                saveLocallyDismissed = true;
-                                connectBluetoothDevices(false, false);
-                            }
-                        }).setOnCancelListener(new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialog) {
-                                saveLocallyDismissed = true;
-                                connectBluetoothDevices(false, false);
-                            }
-                        });
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            } else {
-                connectBluetoothDevices(false, false);
-            }
-        } else if (experiment.loaded) {
-            connectBluetoothDevices(false, false);
         }
 
         //An explanation is not necessary for raw sensors and of course we don't want it if there is an error
@@ -557,6 +583,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
         if (menuHintDismissCount >= 3)
             menuHintDismissed = true;
+        if (!experiment.isLocal && experiment.loaded)
+            menuHintDismissed = true; //Do not show menu startMenuItem for external experiments
 
         //If the start button has been used a few times, we do not show its hint again
         int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
@@ -575,15 +603,24 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK))
                 wakeLock = powerManager.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "phyphox:measuring");
         }
+
+        //All done. Almost. Now let's resolve anything the user needs to know or needs to decide
+        showInitialDialogs();
     }
 
     private void showSensorWarning(SensorInput sensor) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(res.getString(R.string.vendorSensorWarning1) + " " + res.getString(sensor.getDescriptionRes()) + " " + res.getString(R.string.vendorSensorWarning2))
                 .setTitle(R.string.vendorSensorTitle)
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        showInitialDialogs();
+                    }
+                })
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-
+                        showInitialDialogs();
                     }
                 });
 
@@ -598,15 +635,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 return;
             }
         }
-        connectBluetoothDevices(false, false);
+        networkScanDismissed = true;
+        showInitialDialogs();
     }
 
     public void networkScanDialogDismissed() {
-        connectNetworkConnections();
+        networkScanDismissed = true;
+        showInitialDialogs();
     }
 
     public void dataPolicyInfoDismissed() {
-        connectNetworkConnections();
+        dataPolicyDismissed = true;
+        showInitialDialogs();
     }
 
     public static boolean isBluetoothConnectionSuccessful = false;
@@ -1460,9 +1500,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     try {
                         //time for some analysis?
                         if (measuring) {
-                            analysisInProgress = true;
                             experiment.processAnalysis(true); //Do the math.
-                            analysisInProgress = false;
                         }
                     } catch (Exception e) {
                         Log.e("updateData", "Unhandled exception.", e);
@@ -1482,26 +1520,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         @Override
         public void run() {
             updateViewsHandler.removeCallbacksAndMessages(null);
-
-            //Show progressbar if analysis is running (set by second thread)
-            if (analysisInProgress) {
-                analysisProgressAlpha += 0.05;
-                if (analysisProgressAlpha > 1.f)
-                    analysisProgressAlpha = 1.f;
-            } else {
-                analysisProgressAlpha -= 0.05;
-                if (analysisProgressAlpha < 0.f)
-                    analysisProgressAlpha = 0.f;
-            }
-            if (analysisProgressAlpha > 0.1) {
-                if (analysisProgressAlpha >= 0.9)
-                    analysisProgress.setAlpha(1.f);
-                else
-                    analysisProgress.setAlpha(analysisProgressAlpha);
-                analysisProgress.setVisibility(View.VISIBLE);
-            } else {
-                analysisProgress.setVisibility(View.INVISIBLE);
-            }
 
             //If a defocus has been requested (on another thread), do so.
             if (shouldDefocus) {
@@ -1738,7 +1756,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Stop the measurement
     public void stopMeasurement() {
         measuring = false; //Set the state
-        analysisProgressAlpha = 0.f; //Disable the progress bar
 
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
         if (!serverEnabled) {
@@ -1964,6 +1981,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putBoolean(STATE_MENU_HINT_DISMISSED, menuHintDismissed);
             outState.putBoolean(STATE_START_HINT_DISMISSED, startHintDismissed);
             outState.putBoolean(STATE_SAVE_LOCALLY_DISMISSED, saveLocallyDismissed);
+            outState.putBoolean(STATE_BLUETOOTH_SCAN_DISMISSED, bluetoothScanDismissed);
+            outState.putBoolean(STATE_NETWORK_SCAN_DISMISSED, networkScanDismissed);
+            outState.putBoolean(STATE_SENSOR_WARNING_DISMISSED, sensorWarningDismissed);
+            outState.putBoolean(STATE_DATA_POLICY_DISMISSED, dataPolicyDismissed);
         } catch (Exception e) {
             //Something went wrong?
             //Discard all the data to get a clean new activity and start fresh.

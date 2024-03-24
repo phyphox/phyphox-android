@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ফিফক্স</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
+    <string name="action_settings">সেটিংস</string>
+    <string name="title_activity_experiment">ফিফক্স</string>
+    <string name="graph_tools_pan_and_zoom">আঙুল দিয়ে জুম</string>
+    <string name="graph_tools_pick">ডাটা নেওয়া</string>
+    <string name="graph_tools_more">আরো টুলস</string>
+    <string name="graph_tools_system_time">সিস্টেমের সময়ে পাল্টান</string>
+    <string name="graph_tools_reset">জুম রিসেট করুন</string>
+    <string name="graph_tools_follow">নতুন ডাটা ফলো করুন</string>
+    <string name="graph_tools_linear_fit">রৈখিক ফিট</string>
+    <string name="graph_tools_export">এই ডেটাসেট রপ্তানি করুন</string>
+    <string name="graph_tools_log_x">লগারিদমিক x অক্ষ</string>
+    <string name="graph_tools_log_y">লগারিদমিক y অক্ষ</string>
+    <string name="graph_point_label">বিন্দু</string>
+    <string name="graph_slope_label">নতি</string>
+    <string name="graph_difference_label">তফাত</string>
+    <string name="graph_fit_label">রৈখিক ফিট: y = a x + b</string>
+    <string name="applyZoomTitle">জুম করুন</string>
+    <string name="applyZoomExplanation">আপনি ইন্টার‍্যাক্টিভ মোড ছেড়ে বেরোচ্ছেন। আপনি চাইলে বর্তমান জুম স্তর বজায় রাখতে পারেন।</string>
+    <string name="applyZoomAdvanced">উন্নত (Advanced) বিকল্প</string>
+    <string name="applyZoomApply">প্রয়োগ করুন…</string>
+    <string name="applyZoomReset">ডিফল্টে রিসেট</string>
+    <string name="applyZoomKeep">পছন্দ হিসেবে রাখুন</string>
+    <string name="applyZoomFollow">নতুন ডাটা রাখুন আর তাকে অনুসরণ করুন</string>
+    <string name="applyZoomThis">কেবল এই গ্রাফ</string>
+    <string name="applyZoomSameVariable">অন্য গ্রাফেওঃ একই চলরাশি (variable)</string>
+    <string name="applyZoomSameUnit">অন্য গ্রাফেঃ একই একক</string>
+    <string name="applyZoomSameAxis">অন্য গ্রাফেঃ একই অক্ষ</string>
+    <string name="newExperiment">পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentSimple">সহজ পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentPhyphoxInfo">আরো উন্নতমানের পরীক্ষা বা ডাটা বিশ্লেষণ যোগ করতে হলে phyphox.org সাইটে যান। আপনার সহকর্মী, বন্ধু আর ছাত্রদের সাথে ভাগ করে নিন।</string>
+    <string name="newExperimentInputTitle">শীর্ষক</string>
+    <string name="newExperimentInputBufferSize">বাফারের আকার (যতগুলি রাশি সংগ্রহ করা হবে তার সংখ্যা)</string>
+    <string name="newExperimentInputRate">সেন্সরের হার (rate) (হার্ৎসে, 0 = যতো বেশি সম্ভব</string>
+    <string name="newExperimentInputSensors">সক্রিয় সেন্সর</string>
+    <string name="newExperimentBluetooth">ব্লু-টুথ যন্ত্রের জন্য পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentBluetoothErrorTitle">ব্লু-টুথ স্ক্যানে ত্রুটি</string>
+    <string name="newExperimentBluetoothLoadFromDevice">যন্ত্র থেকে লোড করুন</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">এই যন্ত্রের নিজস্ব phyphox পরীক্ষা আছে। এটি চালু করার জন্য \"যন্ত্র থেকে লোড করুন\" বিকল্পটি বেছে নিন।</string>
+    <string name="newExperimentQR">QR কোড থেকে পরীক্ষা যোগ করুন</string>
+    <string name="newExperimentQRscan">ফিফক্স পরীক্ষা সম্বলিত QR কোড স্ক্যান করুন।</string>
+    <string name="newExperimentQRErrorTitle">QR কোড ত্রুটি।</string>
+    <string name="newExperimentQRNoExperiment">ফিফক্স পরীক্ষা সম্বলিত QR কোড পাওয়া যায় নি।</string>
+    <string name="newExperimentQRcrcMismatch">আপনি এখন যে QR কোড স্ক্যান করেছেন সেটি আগের কোডের সাথে মিলছে না। দয়া করে একই পরীক্ষা সংক্রান্ত QR কোড স্ক্যান করুন।</string>
+    <string name="newExperimentQRCodesMissing1">যে QR কোডটি আপনি এখন স্ক্যান করেছেন সেটি একটি কোডের</string>
+    <string name="newExperimentQRCodesMissing2">সংগ্রহের অংশ। বাকি কোডের জন্য \"এগিয়ে যান\" দাবান। অবশিষ্ট কোড:</string>
+    <string name="newExperimentQRBadCRC">অবৈধ চেকসাম। এর অর্থ হয় QR কোডটি খারাপ নাহয় স্ক্যান করার সময় কিছু সমস্যা হয়েছে।</string>
+    <string name="newExperimentBTReadErrorTitle">ব্লুটুথ পরীক্ষায় ত্রুটি।</string>
+    <string name="newExperimentBTReadErrorCorrupted">প্রেরিত পরীক্ষার ডাটা বিকৃত হয়েছে।</string>
+    <string name="generalErrorDialog">কোনো সমস্যা হয়েছে।</string>
+    <string name="help">তথ্য এবং সহায়তা</string>
+    <string name="experimentsPhyphoxOrg">পরীক্ষার ধারণা ও প্রণালী</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">প্রায়শই জিজ্ঞাসা করা প্রশ্ন</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">রিমোট কন্ট্রোল সহায়তা</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="deviceInfo">ডিভাইসের বিবরণ</string>
+    <string name="copyToClipboard">ক্লিপবোর্ডে কপি করুন</string>
+    <string name="deviceInfoCopied">ডিভাইস সম্বন্ধে তথ্য আপনার ক্লিপবোর্ডে কপি করা হয়েছে।</string>
+    <string name="warning">সাবধান</string>
+    <string name="donotshowagain">পুনরায় দেখাবেন না</string>
+    <string name="damageWarning">পরীক্ষা করার সময় যাতে আপনার ফোনের কোনো রকম ক্ষতি না হয় সেদিকে দৃষ্টি দেবেন। বিশেষ করে খেয়াল রাখবেন যেন ফোন কোনো শক্ত জায়গায় না পড়ে বা অতিরিক্ত প্রাবল্যের চৌম্বক ক্ষেত্রের সংস্পর্শে না আসে। আপনার ফোনের কোনো ক্ষতির জন্য ফিফক্স প্রণেতারা দায়ী থাকবেন না।</string>
+    <string name="info">তথ্য</string>
+    <string name="credits">স্বীকৃতি</string>
+    <string name="creditsRWTH">phyphox® তৈরি করেছেন RWTH, আচেন বিশ্ববিদ্যালয়ের দ্বিতীয় পদার্থবিদ্যা সংস্থান।</string>
+    <string name="creditsNames">মূল ধারণা এবং প্রস্তুতি :
+\nডাঃ. সেবাস্টিয়ান স্ট্যাকস
+\nমূল ধারণা:
+\nপ্রফেসর ক্রিস্টোফ স্ট্যাম্পফার
+\nপ্রোগ্রামিং:
+\nগৌরব ত্রিপাঠী
+\nডমিনিক ডরসেল
+\nজোনাস গেসনার
+\nক্যামিলা লুমারঝেইম</string>
+    <string name="sensorLinearAcceleration">রৈখিক ত্বরণ</string>
+    <string name="sensorGravity">গুরুত্ব</string>
+    <string name="sensorLight">লাইট</string>
+    <string name="sensorGyroscope">জাইরোস্কোপ</string>
+    <string name="sensorAccelerometer">ত্বরণমাপি</string>
+    <string name="sensorMagneticField">চুম্বক ক্ষেত্র</string>
+    <string name="sensorPressure">চাপ</string>
+    <string name="sensorTemperature">তাপমাত্রা</string>
+    <string name="sensorHumidity">আদ্রতা</string>
+    <string name="sensorProximity">নৈকট্য</string>
+    <string name="sensorAttitude">দেহভঙ্গিমা</string>
+    <string name="gpl">ফিফক্স (Phyphox®) GNU জেনারেল পাব্লিক লাইসেন্সের অধীণ। আরো জানতে হলে বা এর সোর্সকোড পেতে হলে দয়া করে http://phyphox.org সাইটে যান। অবশ্য, \"ফিফক্স\" এবং \"আর ডব্লিউ টি এইচ আচেন\" এই নাম দুটি ট্রেডমার্ক হিসাবে নথিভুক্ত আছে।</string>
+    <string name="creditsLibs">রিমোট অ্যাক্সেস এর জন্য নির্মিত ওয়েব-ইন্টারফেসটি MIT লাইসেন্সের অধীনে প্রাপ্ত জাভাস্ক্রিপ্ট লাইব্রেরি \"Chart.js\"(http://chartjs.org) ব্যবহার করে। ফ্যুরিয়র ট্রান্সফর্মের জন্য আমরা ব্যবহার করেছি FFTW লাইব্রেরি (http://fftw.org), কপিরাইট © 2003, 2007-11 ম্যাত্তিও ফ্রিগো, কপিরাইট © 2003, 2007-11 ম্যাসাচুসেটস ইনস্টিটিউট অফ টেকনোলজি , যেটি, GNU জেনারেল পাবলিক লাইসেন্সের (২ নম্বর বা তার পরবর্তী ভার্সন) অধীন। GPS উচ্চতার ডাটা</string>
+    <string name="sensorVendor">বিক্রেতা সংক্রান্ত</string>
+    <string name="sensorDepth">গভীরতা (LiDAR/ToF)</string>
+    <string name="sensorCamera">ক্যামেরা</string>
+    <string name="vendorSensorTitle">বিক্রেতা নির্দিষ্ট সেন্সর</string>
+    <string name="vendorSensorWarning1">সেন্সর</string>
+    <string name="vendorSensorWarning2">সঠিক সেন্সর প্রকারের সূচনা দেওয়া যাচ্ছে না।মনে হয় এটি বিক্রেতা-নির্দিষ্ট সেন্সর এবং আমাদের পক্ষে শুধু এর প্রকার বা নাম অনুমান করা সম্ভব। ফলে, এটি আশানুরূপভাবে কাজ না করতেও পারে।</string>
+    <string name="location">অবস্থান</string>
+    <string name="sensorNotAvailableWarningTitle">সেন্সর পাওয়া যাচ্ছে না।</string>
+    <string name="sensorNotAvailableWarningText1">সেন্সর</string>
+    <string name="sensorNotAvailableWarningText2">পাওয়া যাচ্ছে না। সাধারণত এর অর্থ হলো যে আপনার মোবাইলে এই ধরনের সেন্সর নেই।</string>
+    <string name="sensorNotAvailableWarningMoreInfo">অধিক তথ্য</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+    <string name="ok">ঠিক আছে।</string>
+    <string name="tryagain">পুনরায় প্রয়াস করুন</string>
+    <string name="doContinue">করতে থাকুন</string>
+    <string name="close">বন্ধ করুন</string>
+    <string name="next">পরবর্তী</string>
+    <string name="cancel">বাতিল করুন</string>
+    <string name="unknown">অজ্ঞাত</string>
+    <string name="rename">নাম পরিবর্তন করুন</string>
+    <string name="delete">মুছে দিন</string>
+    <string name="confirmDelete">আপনি কি এই পরীক্ষাটি আপনার সংগ্রহ থেকে সরাতে চাইছেন\?</string>
+    <string name="confirmDeleteTitle">মুছে ফেলা নিশ্চিত করছেন\?</string>
+    <string name="stop">দাঁড়ান</string>
+    <string name="start">শুরু করুন</string>
+    <string name="clear_data">ডাটা মুছে দিন</string>
+    <string name="clear_data_question">রেকর্ড করা ডাটা মুছবো\?</string>
+    <string name="clear">মুছুন</string>
+    <string name="leave_experiment">পরীক্ষা করা বন্ধ করুন</string>
+    <string name="leave_experiment_question">এই পরীক্ষাটি বন্ধ করে রেকর্ড করা ডাটা বাতিল করি\?</string>
+    <string name="leave">বেরিয়ে যান</string>
+    <string name="timed_stop">সময় চলা বন্ধ করুন</string>
+    <string name="timed_start">সময় চলা শুরু করুন</string>
+    <string name="loadingTitle">লোড করুন</string>
+    <string name="loadingText">পরীক্ষাটি লোড করুন</string>
+</resources>

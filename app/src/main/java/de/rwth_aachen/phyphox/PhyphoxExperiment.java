@@ -109,6 +109,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
     boolean appendAudioInput = false; //Append audio input on start of analysis cycle instead of replacing old data
+    boolean forceAudioRecordingCompatibilityFormat = false; //Some Xiaomi device do not properly work with ENCODING_PCM_FLOAT if the Google Assistent voice trigger is enabled. This forces the use of the good old 16bit int format
 
     //Network connections
     List<NetworkConnection> networkConnections = new ArrayList<>();
@@ -210,7 +211,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                 float[] buffer = new float[readBufferSize]; //The temporary buffer to read to
                 short[] oldBuffer = new short[readBufferSize]; //Used for <23 compatibility
                 int bytesRead = 0;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat)
                     bytesRead = audioRecord.read(buffer, 0, readBufferSize, AudioRecord.READ_NON_BLOCKING);
                 else
                     bytesRead = audioRecord.read(oldBuffer, 0, readBufferSize);
@@ -225,7 +226,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                             sampleRateWritten = true;
                             recordingUsed = false;
                         }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat)
                             recording.append(buffer, bytesRead);
                         else
                             recording.append(oldBuffer, bytesRead);
@@ -485,7 +486,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         //Create audioTrack instance
         if (micBufferSize > 0) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat)
                 audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT, micBufferSize * 2);
             else
                 audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize * 2);

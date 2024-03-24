@@ -40,14 +40,14 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
 
         public DataType type;
         public DataBuffer buffer = null;
-        public boolean clear = false;
+        public boolean keep = true;
         public Metadata metadata = null;
         public ExperimentTimeReference timeReference = null;
         public Map<String, String> additionalAttributes = null;
-        public NetworkSendableData(DataBuffer buffer, boolean clear) {
+        public NetworkSendableData(DataBuffer buffer, boolean keep) {
             this.type = DataType.BUFFER;
             this.buffer = buffer;
-            this.clear = clear;
+            this.keep = keep;
         }
         public NetworkSendableData(Metadata metadata) {
             this.type = DataType.METADATA;
@@ -61,10 +61,10 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
 
     public static class NetworkReceivableData {
         DataBuffer buffer;
-        boolean clear;
-        public NetworkReceivableData(DataBuffer buffer, boolean clear) {
+        boolean append;
+        public NetworkReceivableData(DataBuffer buffer, boolean append) {
             this.buffer = buffer;
-            this.clear = clear;
+            this.append = append;
         }
     }
 
@@ -286,13 +286,13 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
 
     public void stop() {
         running = false;
-        intervalHandler.removeCallbacksAndMessages(intervalExecute);
+        intervalHandler.removeCallbacksAndMessages(null);
     }
 
     private Runnable intervalExecute = new Runnable() {
         @Override
         public void run() {
-            intervalHandler.removeCallbacksAndMessages(intervalExecute);
+            intervalHandler.removeCallbacksAndMessages(null);
             execute(null);
             if (running)
                 intervalHandler.postDelayed(intervalExecute, (long)(interval*1000));
@@ -315,7 +315,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
             for (Map.Entry<String, NetworkSendableData> item : send.entrySet()) {
                 if (item.getValue().buffer == null)
                     continue;
-                if (item.getValue().clear)
+                if (!item.getValue().keep)
                     item.getValue().buffer.clear(false);
             }
 
@@ -360,7 +360,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                 if (item.getValue().buffer == null)
                     continue;
                 Double[] data = conversion.get(item.getKey());
-                if (item.getValue().clear)
+                if (!item.getValue().append)
                     item.getValue().buffer.clear(false);
                 item.getValue().buffer.append(data, data.length);
                 item.getValue().buffer.markSet();

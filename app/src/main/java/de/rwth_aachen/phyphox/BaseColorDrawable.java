@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat;
 import com.caverock.androidsvg.SVG;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.RGB;
 
 //This is the base class of our experiment icons. It is basically just stuff drawn on a colored background.
 //All icons are supposed to be used as squares!
@@ -27,8 +28,8 @@ abstract class BaseColorDrawable extends Drawable {
         paintBG.setStyle(Paint.Style.FILL);
     }
 
-    public void setBaseColor(int color) {
-        paintBG.setColor(color);
+    public void setBaseColor(RGB color) {
+        paintBG.setColor(color.intColor());
     }
 
     @Override
@@ -73,14 +74,9 @@ class TextIcon extends BaseColorDrawable {
     }
 
     @Override
-    public void setBaseColor(int color) {
+    public void setBaseColor(RGB color) {
         super.setBaseColor(color);
-
-
-        if (Helper.luminance(color) > 0.7)
-            paint.setColor(0xff000000);
-        else
-            paint.setColor(0xffffffff);
+        paint.setColor(color.overlayTextColor().intColor());
     }
 
     @Override
