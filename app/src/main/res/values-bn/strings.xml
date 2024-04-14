@@ -305,4 +305,17 @@
     <string name="bt_exception_notification">UUID সংশ্লিষ্ট বৈশিষ্ট্যের জন্য বিজ্ঞপ্তিগুলি হলো</string>
     <string name="bt_exception_notification_enable">এনেবল করা যাচ্ছে না।</string>
     <string name="bt_exception_notification_disable">পুনরায় ডিসেবল করা যাচ্ছে না।</string>
+    <string name="timedRunDialogTitle">সময় শুরু করুন</string>
+    <string name="timedRunStartDelay">দেরিতে শুরু</string>
+    <string name="timedRunStopDelay">পরীক্ষার নির্দিষ্ট সময়</string>
+    <string name="export_subject">ফিফক্স থেকে প্রাপ্ত ডাটা</string>
+    <string name="share">স্ক্রীনশর্ট শেয়ার করুন</string>
+    <string name="share_subject">ফিফক্স থেকে স্ক্রীনশর্ট নিন</string>
+    <string name="share_pick_share">শেয়ার করার পদ্ধতি নিন</string>
+    <string name="remoteServer">রিমোট অ্যাক্সেস কে অনুমতি দিন</string>
+    <string name="remoteServerWarningTitle">সুরক্ষা সচেতন!</string>
+    <string name="remoteServerNoNetwork">প্রথমে আপনাকে রিমোট ডিভাইস এ ওয়াইফাই সংযোগ স্থাপন করতে হবে।অনুগ্রহ করে ওয়াইফাই এনাবল করুন অথবা মোবাইল হটপট তৈরি করুন।</string>
+    <string name="remoteServerActive">রিমোট অ্যাক্সেস এনা বল করুন।নিম্নলিখিত URL থেকে এই এক্সপেরিমেন্ট টির অ্যাক্সেস দিন:
+\n%1$s</string>
+    <string name="hotspotSettings">হটপট সেটিং গুলি</string>
 </resources>
