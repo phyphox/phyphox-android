@@ -11,6 +11,7 @@ import android.media.Image
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageProxy
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import org.json.JSONArray
@@ -315,6 +316,9 @@ object CameraHelper {
     }
 
     fun findIsoNearestNumber(input: Int, numbers: List<Int>): Int{
+        if (numbers.size == 0)
+            return input
+
         var nearestNumber = numbers[0]
         var difference = Math.abs(input - nearestNumber)
 
@@ -478,6 +482,14 @@ object CameraHelper {
         }
 
         return mutableListOf()
+    }
+
+    fun cameraLensToSelector(@CameraSelector.LensFacing lensFacing: Int): CameraSelector {
+        when (lensFacing) {
+            CameraSelector.LENS_FACING_FRONT -> return CameraSelector.DEFAULT_FRONT_CAMERA
+            CameraSelector.LENS_FACING_BACK -> return CameraSelector.DEFAULT_BACK_CAMERA
+            else -> throw IllegalArgumentException("Invalid lens facing type: $lensFacing")
+        }
     }
 
 }

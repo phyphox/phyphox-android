@@ -13,6 +13,7 @@ import android.view.View;
 
 import androidx.preference.PreferenceManager;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -139,7 +140,7 @@ public class GraphView extends View {
     boolean followX = false;
 
     private TouchMode touchMode = TouchMode.off;
-    public class ZoomState {
+    public class ZoomState implements Serializable {
         double minX = Double.NaN;
         double maxX = Double.NaN;
         double minY = Double.NaN;

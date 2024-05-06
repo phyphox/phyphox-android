@@ -9,7 +9,6 @@ sealed class CameraUiAction {
     data class UpdateAutoExposure(val autoExposure: Boolean): CameraUiAction()
     object CameraSettingValueSelected : CameraUiAction()
     object UpdateOverlay : CameraUiAction()
-    data class UpdateCameraDimension(val height: Int, val width: Int): CameraUiAction()
     object OverlayUpdateDone : CameraUiAction()
 
 }

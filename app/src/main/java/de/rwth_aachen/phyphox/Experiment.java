@@ -326,6 +326,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Toast.makeText(this, "DepthPreview: setCamera could not restart depthInput: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
             }
         }
+
+        if (experiment != null && experiment.cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            experiment.cameraInput.startCameraFromProvider(this, this.getApplication());
+
         updateViewsHandler.postDelayed(updateViews, 40); //Start the "main loop" again
         startRemoteServer();  //Restart the remote server (if it is activated)
         //We do not start the measurement again automatically. If the user switched away, this might
@@ -553,6 +557,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     Toast.makeText(this, "DepthPreview: setCamera could not restart depthInput: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
                 }
             }
+
+            if (experiment.cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                experiment.cameraInput.startCameraFromProvider(this, this.getApplication());
+
             //Start the remote server if activated
             startRemoteServer();
         } else {

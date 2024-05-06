@@ -17,6 +17,7 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -56,8 +57,9 @@ import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
-import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
-import de.rwth_aachen.phyphox.camera.helper.SettingChangeListener;
+import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel;
+import de.rwth_aachen.phyphox.camera.model.CameraUiState;
+import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
 // specific way to show the results of an element.
@@ -142,6 +144,9 @@ public class ExpView implements Serializable{
                 experiment.getBuffer(valueOutput).register(this);
             }
             needsUpdate = true;
+        }
+
+        protected void destroyView() {
         }
 
         protected void onFragmentStop(PhyphoxExperiment experiment) {
@@ -676,8 +681,6 @@ public class ExpView implements Serializable{
 
         private LinearLayout root_ll;
         private Context c;
-        public AppCompatSeekBar seekBar;
-        public SettingChangeListener settingChangeListener;
 
 
         //No special constructor. Just some defaults.
@@ -2300,18 +2303,27 @@ public class ExpView implements Serializable{
 
     public class cameraElement extends expViewElement implements  Serializable {
 
-        private ExpViewFragment parent = null;
-        private CameraPreviewFragment cameraPreviewFragment = null;
+        private cameraElement self;
+        private boolean isExclusive = false;
+        transient private ExpViewFragment parent = null;
+        transient private CameraPreviewFragment cameraPreviewFragment = null;
+        float height = 300; //dp, might be settable in the future
+
+        ShowCameraControls showCameraControls = ShowCameraControls.FullViewOnly;
+        CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCE;
+        String lockedSettings;
 
         Scrollable scrollable = new Scrollable() {
             @Override
             public void enableScrollable() {
                 parent.enableScrolling();
+                rootView.getParent().requestDisallowInterceptTouchEvent(false);
             }
 
             @Override
             public void disableScrollable() {
                 parent.disableScrolling();
+                rootView.getParent().requestDisallowInterceptTouchEvent(true);
             }
         };
 
@@ -2320,30 +2332,60 @@ public class ExpView implements Serializable{
             super(label, valueOutput, inputs, res);
         }
 
+        public void applyControlSettings(ShowCameraControls showCameraControls, int exposureAdjustmentLevel) {
+            this.showCameraControls = showCameraControls;
+            this.lockedSettings = lockedSettings;
+            switch (exposureAdjustmentLevel) {
+                case 1: cameraSettingLevel = CameraSettingLevel.BASIC;
+                        break;
+                case 2: cameraSettingLevel = CameraSettingLevel.INTERMEDIATE;
+                        break;
+                default: cameraSettingLevel = CameraSettingLevel.ADVANCE;
+                        break;
+            }
+        }
+
+        protected boolean toggleExclusive() {
+            if (self.parent != null) {
+                if (isExclusive) {
+                    self.parent.leaveExclusive();
+                } else {
+                    self.parent.requestExclusive(self);
+                }
+                return true;
+            }
+            return false;
+        }
 
         @Override
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
-           if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
                return;
 
-           super.createView(ll, c, res, parent, experiment);
-           this.parent = parent;
+            super.createView(ll, c, res, parent, experiment);
+            this.parent = parent;
+            this.self = this;
 
             LayoutInflater inflater = LayoutInflater.from(c);
-            View inflateView = inflater.inflate(R.layout.camera_layout, ll, true);
-            FragmentContainerView containerView = inflateView.findViewById(R.id.fragmetContainerView);
-            cameraPreviewFragment = new CameraPreviewFragment();
-            FragmentManager fragmentManager = parent.getChildFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            rootView = inflater.inflate(R.layout.camera_layout, ll, false);
+            rootView.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, parent.getResources().getDisplayMetrics());
+            ll.addView(rootView);
 
-            Bundle args = new Bundle();
-            args.putSerializable(CameraHelper.EXPERIMENT_ARG, experiment);
-            args.putSerializable(CameraHelper.EXPERIMENT_SCROLL_ARG, scrollable);
-            cameraPreviewFragment.setArguments(args);
+            rootView.setOnClickListener(view -> toggleExclusive());
+            rootView.setFocusableInTouchMode(false);
 
-            fragmentTransaction.add(containerView.getId(), cameraPreviewFragment);
-            fragmentTransaction.addToBackStack(null);
-            fragmentTransaction.commit();
+            FragmentContainerView containerView = rootView.findViewById(R.id.fragmentContainerView);
+            if (cameraPreviewFragment == null)
+                cameraPreviewFragment = new CameraPreviewFragment(experiment, scrollable, this::toggleExclusive, showCameraControls, cameraSettingLevel);
+
+            parent.getChildFragmentManager().beginTransaction().add(containerView.getId(), cameraPreviewFragment).commit();
+        }
+
+        @Override
+        protected void destroyView() {
+            if (parent != null && cameraPreviewFragment != null)
+                parent.getChildFragmentManager().beginTransaction().remove(cameraPreviewFragment).commit();
+            cameraPreviewFragment = null;
 
         }
 
@@ -2358,19 +2400,41 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        protected void maximize() {
-            super.maximize();
+        protected void onFragmentStop(PhyphoxExperiment experiment) {
+            super.onFragmentStop(experiment);
+
         }
 
         @Override
         protected void restore() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                return;
+
             super.restore();
+            if (rootView != null && cameraPreviewFragment != null && parent != null) {
+                isExclusive = false;
+
+                rootView.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, parent.getResources().getDisplayMetrics());
+                rootView.requestLayout();
+
+                cameraPreviewFragment.setInteractive(false);
+            }
         }
 
         @Override
-        protected void onFragmentStop(PhyphoxExperiment experiment) {
-            super.onFragmentStop(experiment);
+        protected void maximize() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                return;
 
+            super.maximize();
+            if (rootView != null && cameraPreviewFragment != null && parent != null) {
+                isExclusive = true;
+
+                rootView.getLayoutParams().height = LinearLayout.LayoutParams.MATCH_PARENT;
+                rootView.requestLayout();
+
+                cameraPreviewFragment.setInteractive(true);
+            }
         }
     }
 

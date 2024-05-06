@@ -8,10 +8,9 @@ import androidx.lifecycle.ViewModelProvider
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraViewModelFactory(
-    private val application: Application,
 ) : ViewModelProvider.Factory{
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return CameraViewModel(application) as T
+        return CameraViewModel() as T
     }
 }

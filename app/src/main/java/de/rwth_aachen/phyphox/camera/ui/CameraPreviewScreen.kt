@@ -12,9 +12,11 @@ import android.graphics.RectF
 import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
+import android.view.Surface
+import android.view.TextureView
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -24,10 +26,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
-import androidx.camera.view.PreviewView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.toRectF
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -39,19 +38,20 @@ import com.google.android.material.slider.Slider
 import com.google.common.util.concurrent.ListenableFuture
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
+import de.rwth_aachen.phyphox.camera.CameraInput
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
-import de.rwth_aachen.phyphox.camera.helper.CameraInput
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
-import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
-import de.rwth_aachen.phyphox.camera.model.CameraUiAction
-import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
+import de.rwth_aachen.phyphox.camera.model.CameraSettingState
+import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageButtonViewState
+import de.rwth_aachen.phyphox.camera.model.ShowCameraControls
 import de.rwth_aachen.phyphox.camera.model.TextViewCameraSettingViewState
 import de.rwth_aachen.phyphox.camera.model.ZoomButtonInfo
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
-import de.rwth_aachen.phyphox.camera.viewstate.CameraPreviewScreenViewState
+import de.rwth_aachen.phyphox.camera.viewstate.CameraControlElementViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
+import de.rwth_aachen.phyphox.camera.viewstate.CameraZoomControlViewState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -61,17 +61,19 @@ import java.text.DecimalFormat
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraPreviewScreen(
-    private val root: View,
-    private val cameraInput: CameraInput,
-    private val cameraViewModel: CameraViewModel
+        private val root: View,
+        private val cameraInput: CameraInput,
+        private val cameraViewModel: CameraViewModel,
+        private val toggleExclusive: () -> Boolean
 ) {
 
     private val context: Context = root.context
 
     val TAG = "CameraPreviewScreen"
 
-    val previewView: PreviewView = (root.findViewById(R.id.preview_view)) as PreviewView
+    val previewTextureView: TextureView = root.findViewById(R.id.preview_view)
     private val frameLayoutPreviewView: FrameLayout = root.findViewById(R.id.fl_preview_view)
+    private val overlayView: MarkerOverlayView = root.findViewById(R.id.cam_overlay_view)
 
     private val buttonMaximize: ImageView = root.findViewById(R.id.imageMaximize)
     private val buttonMinimize: ImageView = root.findViewById(R.id.imageMinimize)
@@ -88,7 +90,6 @@ class CameraPreviewScreen(
     private val lnrAperture = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAperture)
     private val lnrAutoExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageAutoExposure)
     private val lnrExposure = root.findViewById<LinearLayoutCompat>(R.id.lnrImageExposure)
-    private val lnrColorCode = root.findViewById<LinearLayoutCompat>(R.id.llColorCode)
     private val lnrWhiteBalance = root.findViewById<LinearLayoutCompat>(R.id.lnrWhiteBalance)
 
     //image buttons
@@ -108,10 +109,10 @@ class CameraPreviewScreen(
     private val textViewAutoExposureStatus = root.findViewById<TextView>(R.id.textAutoExposureStatus)
     private val textViewExposureStatus = root.findViewById<TextView>(R.id.textExposureStatus)
     private val textViewLens = root.findViewById<TextView>(R.id.textSwitchLens)
-    private val tvColorCode = root.findViewById<TextView>(R.id.tvColorCode)
+    private val textZoom = root.findViewById<TextView>(R.id.textCurrentZoom)
     private val textWhiteBalance = root.findViewById<TextView>(R.id.textWhiteBalance)
 
-    private val recyclerViewExposureSetting = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
+    private val recyclerViewCameraSetting = root.findViewById<RecyclerView>(R.id.recyclerViewCameraSetting)
 
     private val buttonWiderAngle: MaterialButton = root.findViewById(R.id.buttonWideAngle)
     private val buttonDefaultZoom: MaterialButton = root.findViewById(R.id.buttonDefaultZoom)
@@ -122,8 +123,6 @@ class CameraPreviewScreen(
     var recyclerViewClicked = false
     var zoomClicked = false
 
-    private var autoExposure: Boolean = true
-
     //animation when button is clicked
     private val buttonClick = AlphaAnimation(1f, 0.4f)
 
@@ -131,42 +130,28 @@ class CameraPreviewScreen(
 
     private var transformation = Matrix()
 
-    var width: Int = 0
-    var height: Int = 0
-
     var panningIndexX = 0
     var panningIndexY = 0
-
-    var overlayView: MarkerOverlayView = MarkerOverlayView(context)
 
     // observable to observe the action performed
     private val _action: MutableSharedFlow<CameraUiAction> = MutableSharedFlow()
     val action: Flow<CameraUiAction> = _action
 
+    private var currentState: CameraScreenViewState? = null
+
     var resizableState = ResizableViewModuleState.Normal
-    var resizeButtonClicked = true
 
     init {
 
         initializeAndSetupCameraDimension()
-
         setFrameTouchOnListener()
 
         buttonMaximize.setOnClickListener {
-            resizeButtonClicked = true
-            buttonMinimize.visibility = View.VISIBLE
-            buttonMaximize.visibility = View.GONE
-            resizableState = ResizableViewModuleState.Exclusive
-            initializeAndSetupCameraDimension()
+            toggleExclusive()
         }
 
         buttonMinimize.setOnClickListener {
-            resizeButtonClicked = true
-            buttonMinimize.visibility = View.GONE
-            buttonMaximize.visibility = View.VISIBLE
-            resizableState = ResizableViewModuleState.Normal
-            initializeAndSetupCameraDimension()
-
+            toggleExclusive()
         }
 
         lnrSwitchLens.setOnClickListener {
@@ -225,7 +210,21 @@ class CameraPreviewScreen(
             zoomClicked = false
             onSettingClicked(CameraSettingMode.WHITE_BALANCE)
         }
+    }
 
+    fun setInteractive(interactive: Boolean) {
+        if (interactive) {
+            buttonMinimize.visibility = View.VISIBLE
+            buttonMaximize.visibility = View.GONE
+            resizableState = ResizableViewModuleState.Exclusive
+            initializeAndSetupCameraDimension()
+        } else {
+            buttonMinimize.visibility = View.GONE
+            buttonMaximize.visibility = View.VISIBLE
+            resizableState = ResizableViewModuleState.Normal
+            initializeAndSetupCameraDimension()
+        }
+        cameraViewModel.requestUpdate()
     }
 
     enum class ResizableViewModuleState {
@@ -233,20 +232,20 @@ class CameraPreviewScreen(
     }
 
     fun getCameraSettingsVisibility(): Boolean {
-        return when (cameraInput.showControls) {
-            CameraInput.PhyphoxShowCameraControls.FullViewOnly -> {
+        return when (cameraViewModel.cameraUiState.value.showCameraControls) {
+            ShowCameraControls.FullViewOnly -> {
                 when (resizableState) {
                     ResizableViewModuleState.Normal -> return false
                     ResizableViewModuleState.Exclusive -> return true
                     else -> false
                 }
             }
-            CameraInput.PhyphoxShowCameraControls.Always -> true
-            CameraInput.PhyphoxShowCameraControls.Never -> false
+            ShowCameraControls.Always -> true
+            ShowCameraControls.Never -> false
         }
     }
 
-    fun setUpWhiteBalanceControl(cameraSettingState: CameraSettingValueState){
+    fun setUpWhiteBalanceControl(cameraSettingState: CameraSettingState){
         val wbRange = cameraSettingState.cameraWhiteBalanceManualRange
         if(wbRange.isEmpty())
             return
@@ -257,7 +256,7 @@ class CameraPreviewScreen(
 
     }
 
-    fun setupZoomControl(cameraSettingState: CameraSettingValueState) {
+    fun setupZoomControl(cameraSettingState: CameraSettingState) {
         val zoomRatio = cameraSettingState.cameraZoomRatioConverted
 
         if(zoomRatio.isEmpty()){
@@ -282,7 +281,7 @@ class CameraPreviewScreen(
         zoomSlider.addOnChangeListener { _, value, _ ->
 
             val mappedValue = zoomRatio.getOrElse(value.toInt()) { 1.0f }
-            val listenableZoomRatio: ListenableFuture<Void>? = cameraViewModel.camera?.cameraControl?.setZoomRatio(mappedValue)
+            val listenableZoomRatio: ListenableFuture<Void>? = cameraInput.camera?.cameraControl?.setZoomRatio(mappedValue)
             val selectedButton = zoomButtons.firstOrNull { it.zoomValue == mappedValue }?.button ?: SelectedZoomButton.None
             changeZoomButtonColor(selectedButton)
             listenableZoomRatio?.cancel(true) // fix for zoom lagging
@@ -321,7 +320,7 @@ class CameraPreviewScreen(
 
         buttons[selectedButton]?.setOnClickListener {
             changeZoomButtonColor(SelectedZoomButton.None)
-            cameraViewModel.camera?.cameraControl?.setZoomRatio(zoomRatioValue)
+            cameraInput.camera?.cameraControl?.setZoomRatio(zoomRatioValue)
             zoomSlider.value = zoomRatio.indexOf(zoomRatioValue).toFloat()
             changeZoomButtonColor(selectedButton)
         }
@@ -354,57 +353,26 @@ class CameraPreviewScreen(
 
 
     private fun initializeAndSetupCameraDimension() {
-        previewView.viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+        previewTextureView.viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
             override fun onGlobalLayout() {
-                if (previewView.width > 0 && previewView.height > 0) {
-                    width = previewView.width
-                    height = previewView.height
-
-                    if(resizeButtonClicked){
-                        when (resizableState) {
-                            ResizableViewModuleState.Normal -> {
-                                width /= 2
-                                 height /= 2
-                            }
-                            ResizableViewModuleState.Exclusive -> {
-                                width *= 2
-                                height *= 2
-                            }
-                            else -> {
-                                width = 0
-                                height = 0
-                            }
-                        }
-                    }
-
-                    val layoutParams = previewView.layoutParams
-                    layoutParams.width = width
-                    layoutParams.height = height
-                    previewView.layoutParams = layoutParams
-
-                    frameLayoutPreviewView.removeView(overlayView)
-                    overlayView.layoutParams = layoutParams
-                    frameLayoutPreviewView.addView(overlayView)
-
-                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-                        _action.emit(CameraUiAction.UpdateCameraDimension(height, width))
-                    }
-
-                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-                        _action.emit(CameraUiAction.UpdateOverlay)
-                    }
-
-                    previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                    resizeButtonClicked = false
+                root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                    _action.emit(CameraUiAction.UpdateOverlay)
                 }
+                previewTextureView.viewTreeObserver.removeOnGlobalLayoutListener(this)
             }
         })
     }
 
-    fun setCurrentValueInCameraSettingTextView(cameraSettingState: CameraSettingValueState) {
-        autoExposure = cameraSettingState.disabledAutoExposure
-
+    fun setCurrentValueInCameraSettingTextView(cameraSettingState: CameraSettingState) {
         with(cameraSettingState) {
+
+            if (cameraSettingState.currentLens == LENS_FACING_FRONT) {
+                textViewLens.text = context.getText(R.string.cameraFront)
+            } else if (cameraSettingState.currentLens == LENS_FACING_BACK) {
+                textViewLens.text = context.getText(R.string.cameraBack)
+            }
+
+            textViewAutoExposureStatus.text =  if (cameraSettingState.autoExposure) "On" else "Off"
 
             textViewCurrentIsoValue.text = isoRange?.map { it.toInt() }?.let {
                 CameraHelper.findIsoNearestNumber(cameraSettingState.currentIsoValue, it)
@@ -416,7 +384,7 @@ class CameraPreviewScreen(
                         "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
                     }
 
-            textViewCurrentApertureValue.text = "f/".plus(apertureRange?.get(0))
+            textViewCurrentApertureValue.text = "f/".plus(currentApertureValue)
 
             textViewExposureStatus.text = currentExposureValue.toString()
 
@@ -436,8 +404,10 @@ class CameraPreviewScreen(
             val invert = Matrix()
             transformation.invert(invert)
             invert.mapPoints(touch)
-            val x: Float = touch[1] / height
-            val y: Float = 1.0f - touch[0] / width
+            val x: Float = touch[1] / frameLayoutPreviewView.getHeight()
+            val y: Float = 1.0f - touch[0] / frameLayoutPreviewView.getWidth()
+
+            var passepartout = RectF(cameraInput.cameraSettingState.value.cameraPassepartout)
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -445,13 +415,13 @@ class CameraPreviewScreen(
                     cameraViewModel.scrollable.disableScrollable()
 
                     val d11: Float =
-                        (x - cameraInput.x1) * (x - cameraInput.x1) + (y - cameraInput.y1) * (y - cameraInput.y1)
+                        (x - passepartout.left) * (x - passepartout.left) + (y - passepartout.top) * (y - passepartout.top)
                     val d12: Float =
-                        (x - cameraInput.x1) * (x - cameraInput.x1) + (y - cameraInput.y2) * (y - cameraInput.y2)
+                        (x - passepartout.left) * (x - passepartout.left) + (y - passepartout.bottom) * (y - passepartout.bottom)
                     val d21: Float =
-                        (x - cameraInput.x2) * (x - cameraInput.x2) + (y - cameraInput.y1) * (y - cameraInput.y1)
+                        (x - passepartout.right) * (x - passepartout.right) + (y - passepartout.top) * (y - passepartout.top)
                     val d22: Float =
-                        (x - cameraInput.x2) * (x - cameraInput.x2) + (y - cameraInput.y2) * (y - cameraInput.y2)
+                        (x - passepartout.right) * (x - passepartout.right) + (y - passepartout.bottom) * (y - passepartout.bottom)
 
                     val dist = 0.1f
 
@@ -475,54 +445,82 @@ class CameraPreviewScreen(
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    if (panningIndexX == 1) cameraInput.x1 = x
-                    else if (panningIndexX == 2) cameraInput.x2 = x
 
-                    if (panningIndexY == 1) cameraInput.y1 = y
-                    else if (panningIndexY == 2) cameraInput.y2 = y
+                    if (panningIndexX == 1) passepartout.left = x
+                    else if (panningIndexX == 2) passepartout.right = x
 
-                    root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-                        _action.emit(CameraUiAction.UpdateOverlay)
-                    }
+                    if (panningIndexY == 1) passepartout.top = y
+                    else if (panningIndexY == 2) passepartout.bottom = y
 
+                    cameraViewModel.setPassepartout(passepartout)
                 }
 
                 MotionEvent.ACTION_UP -> {
                     cameraViewModel.scrollable.enableScrollable()
-                    v.performClick()
                 }
             }
             true
         }
     }
 
-    fun updateOverlay(cameraUiState: CameraUiState) {
+    public fun updateTransformation(outWidth: Int, outHeight: Int) {
+        cameraInput.analyzingOpenGLRenderer?.let {
+            val w: Int = it.previewWidth
+            val h: Int = it.previewHeight
+            if (w == 0 || h == 0) return
+            val rotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+            transformation = Matrix()
+            val landscape = Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation
+            val targetAspect = if (landscape) w.toFloat() / h.toFloat() else h.toFloat() / w.toFloat() //Careful: We calculate relative to a portrait orientation, so h and w of the camera start flipped
+            val sx: Float
+            val sy: Float
+            if (outWidth.toFloat() / outHeight.toFloat() > targetAspect) {
+                sx = outHeight * targetAspect / outWidth.toFloat()
+                sy = 1f
+            } else {
+                sx = 1f
+                sy = outWidth / targetAspect / outHeight.toFloat()
+            }
+            if (Surface.ROTATION_90 == rotation) {
+                transformation.postScale(sx / targetAspect, sy * targetAspect)
+                transformation.postRotate(-90f)
+                transformation.postTranslate(0.5f * (1f - sx) * outWidth, 0.5f * (1f + sy) * outHeight)
+            } else if (Surface.ROTATION_180 == rotation) {
+                transformation.postRotate(180f)
+                transformation.postScale(sx, sy)
+                transformation.postTranslate(0.5f * (1f + sx) * outWidth, 0.5f * (1f + sy) * outHeight)
+            } else if (Surface.ROTATION_270 == rotation) {
+                transformation.postScale(sx / targetAspect, sy * targetAspect)
+                transformation.postRotate(90f)
+                transformation.postTranslate(0.5f * (1f + sx) * outWidth, 0.5f * (1f - sy) * outHeight)
+            } else {
+                transformation.postScale(sx, sy)
+                transformation.postTranslate(0.5f * (1f - sx) * outWidth, 0.5f * (1f - sy) * outHeight)
+            }
+            previewTextureView.setTransform(transformation)
+            updateOverlay()
+        }
+    }
 
-        val inner = RectF(
-                (1.0f - cameraUiState.cameraPassepartout.bottom) * width,
-                cameraUiState.cameraPassepartout.left * height,
-                (1.0f - cameraUiState.cameraPassepartout.top) * width,
-                cameraUiState.cameraPassepartout.right * height
-        )
-        val outer =
-            RectF(0f, 0f, cameraUiState.cameraWidth.toFloat(), cameraUiState.cameraHeight.toFloat())
+    public fun updateOverlay() {
+        val passepartout = cameraInput.cameraSettingState.value.cameraPassepartout
+
+        val xmin: Float = Math.min(passepartout.left, passepartout.right)
+        val xmax: Float = Math.max(passepartout.left, passepartout.right)
+        val ymin: Float = Math.min(passepartout.top, passepartout.bottom)
+        val ymax: Float = Math.max(passepartout.top, passepartout.bottom)
+        val inner = RectF((1.0f - ymax) * frameLayoutPreviewView.getWidth(), xmin * frameLayoutPreviewView.getHeight(), (1.0f - ymin) * frameLayoutPreviewView.getWidth(), xmax * frameLayoutPreviewView.getHeight())
         transformation.mapRect(inner)
-        transformation.mapRect(outer)
-        var points: Array<Point?>?
-
-        overlayView.setClipRect(outer)
-        overlayView.setPassepartout(inner)
-
-        points = arrayOfNulls(4)
-        points[0] = Point(Math.round(inner.left), Math.round(inner.top))
-        points[1] = Point(Math.round(inner.right), Math.round(inner.top))
-        points[2] = Point(Math.round(inner.left), Math.round(inner.bottom))
-        points[3] = Point(Math.round(inner.right), Math.round(inner.bottom))
-
-        if (resizableState == ResizableViewModuleState.Normal) points = null
-
+        val points: Array<Point?>?
+        if (resizableState == ResizableViewModuleState.Exclusive) {
+            points = arrayOfNulls(4)
+            points[0] = Point(Math.round(inner.left), Math.round(inner.top))
+            points[1] = Point(Math.round(inner.right), Math.round(inner.top))
+            points[2] = Point(Math.round(inner.left), Math.round(inner.bottom))
+            points[3] = Point(Math.round(inner.right), Math.round(inner.bottom))
+        } else points = null
+        overlayView.setClipRect(null)
         overlayView.update(null, points)
-
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.OverlayUpdateDone)
         }
@@ -556,7 +554,7 @@ class CameraPreviewScreen(
                 CameraSettingMode.SHUTTER_SPEED -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
                 CameraSettingMode.APERTURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
                 CameraSettingMode.EXPOSURE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
-                CameraSettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!autoExposure))
+                CameraSettingMode.AUTO_EXPOSURE -> _action.emit(CameraUiAction.UpdateAutoExposure(!cameraInput.cameraSettingState.value.autoExposure))
                 CameraSettingMode.WHITE_BALANCE -> _action.emit(CameraUiAction.CameraSettingClick(settingMode))
                 CameraSettingMode.ZOOM -> _action.emit(CameraUiAction.ZoomClicked)
                 CameraSettingMode.SWITCH_LENS -> _action.emit(CameraUiAction.SwitchCameraClick)
@@ -565,65 +563,178 @@ class CameraPreviewScreen(
     }
 
     /* Setup all the view state of the UI shown in the camera preview. */
-    fun updateCameraScreenViewState(state: CameraScreenViewState) {
-        updateCameraSettingsLinearLayoutViewState(state.cameraPreviewScreenViewState)
-        updateCameraSettingControllersViewState(state.cameraPreviewScreenViewState)
-        updateSwitchLensButtonViewState(state.cameraPreviewScreenViewState)
-        updateCameraExposureViewState(state.cameraPreviewScreenViewState)
-        setZoomButtonVisibility(state.cameraPreviewScreenViewState)
-        setCameraExposureControlViewState(state.cameraPreviewScreenViewState)
-    }
-
-    private fun updateCameraSettingControllersViewState(state: CameraPreviewScreenViewState){
-        recyclerViewExposureSetting.isVisible = state.cameraSettingControllersViewState.isRecyclerViewExposureControlVisible
-        lnrZoomControl.isVisible = state.cameraSettingControllersViewState.isZoomControlVisible
-        whiteBalanceSlider.isVisible = state.cameraSettingControllersViewState.isWhiteBalanceControlVisible
-    }
-
-    private fun updateCameraSettingsLinearLayoutViewState(state: CameraPreviewScreenViewState){
-        lnrCameraSetting.isVisible = state.cameraSettingLinearLayoutViewState.isVisible
-    }
-
-    private fun updateSwitchLensButtonViewState(state: CameraPreviewScreenViewState) {
-        lnrSwitchLens.isEnabled = state.switchLensButtonViewState.isEnabled
-        lnrSwitchLens.isVisible = state.switchLensButtonViewState.isVisible
-    }
-
-    private fun setCameraExposureControlViewState(state: CameraPreviewScreenViewState) {
-        lnrIso.isVisible = state.isoButtonViewState.isVisible
-        lnrIso.isEnabled = state.isoButtonViewState.isEnabled
-        imageViewIso.isEnabled = state.isoButtonViewState.isEnabled
-
-        lnrShutter.isVisible = state.shutterButtonViewState.isVisible
-        lnrShutter.isEnabled = state.shutterButtonViewState.isEnabled
-        imageViewShutter.isEnabled = state.shutterButtonViewState.isEnabled
-
-        lnrAperture.isVisible = state.apertureButtonViewState.isVisible
-        lnrAperture.isEnabled = state.apertureButtonViewState.isEnabled
-        imageViewAperture.isEnabled = state.apertureButtonViewState.isEnabled
-
-        lnrExposure.isVisible = state.exposureViewState.isVisible
-        lnrExposure.isEnabled = state.exposureViewState.isEnabled
-        imageViewExposure.isEnabled = state.exposureViewState.isEnabled
-
-        lnrAutoExposure.isVisible = state.autoExposureViewState.isVisible
-    }
-
-    fun setCameraSettingButtonValue(state: CameraSettingValueState) {
-        if (state.currentIsoValue != 0) textViewCurrentIsoValue.text =
-            state.currentIsoValue.toString()
-        if (state.currentShutterValue != 0L) {
-            val fraction = CameraHelper.convertNanoSecondToSecond(state.currentShutterValue)
-            textViewCurrentShutterValue.text =
-                "".plus(fraction.numerator).plus("/").plus(fraction.denominator)
+    fun updateCameraScreenViewState(newState: CameraScreenViewState) {
+        var forceAll = (currentState == null)
+        if (forceAll) {
+            currentState = CameraScreenViewState()
         }
-        if (state.apertureRange?.size!! > 0) textViewCurrentApertureValue.text =
-            state.apertureRange!![0]
-        if (state.currentExposureValue != 0.0f) textViewExposureStatus.text =
-            state.currentExposureValue.toString()
+        val oldState = currentState!!
+
+        if (forceAll || (newState.isVisible != oldState.isVisible)) {
+            lnrCameraSetting.isVisible = newState.isVisible
+            if (newState.isVisible) {
+                forceAll = true
+            } else {
+                recyclerViewCameraSetting.isVisible = false
+                lnrZoomControl.isVisible = false
+                whiteBalanceSlider.isVisible = false
+            }
+            currentState = currentState!!.copy(isVisible = newState.isVisible)
+        }
+
+        if (!forceAll && !newState.isVisible) {
+            return //No need to update anything as long as it isn't visible anyways
+        }
+
+        if (forceAll || newState.mainControls.switchLensButton != oldState.mainControls.switchLensButton) {
+            updateMainButton(lnrSwitchLens, newState.mainControls.switchLensButton, switchLensButton, textViewLens, R.drawable.ic_flip_camera_android)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(switchLensButton = newState.mainControls.switchLensButton.copy()))
+        }
+
+        if (forceAll || newState.mainControls.autoExposureButton != oldState.mainControls.autoExposureButton) {
+            updateMainButton(lnrAutoExposure, newState.mainControls.autoExposureButton, imageViewAutoExposure, textViewAutoExposureStatus, R.drawable.ic_auto_exposure)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(autoExposureButton = newState.mainControls.autoExposureButton.copy()))
+        }
+
+        if (forceAll || newState.mainControls.exposureButton != oldState.mainControls.exposureButton) {
+            updateMainButton(lnrExposure, newState.mainControls.exposureButton, imageViewExposure, textViewExposureStatus, R.drawable.ic_exposure)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(exposureButton = newState.mainControls.exposureButton.copy()))
+        }
+
+        if (forceAll || newState.mainControls.isoButton != oldState.mainControls.isoButton) {
+            updateMainButton(lnrIso, newState.mainControls.isoButton, imageViewIso, textViewCurrentIsoValue, R.drawable.ic_camera_iso)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(isoButton = newState.mainControls.isoButton.copy()))
+        }
+
+        if (forceAll || newState.mainControls.shutterButton != oldState.mainControls.shutterButton) {
+            updateMainButton(lnrShutter, newState.mainControls.shutterButton, imageViewShutter, textViewCurrentShutterValue, R.drawable.baseline_shutter_speed_24)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(shutterButton = newState.mainControls.shutterButton.copy()))
+        }
+
+        if (forceAll || newState.mainControls.apertureButton != oldState.mainControls.apertureButton) {
+            updateMainButton(lnrAperture, newState.mainControls.apertureButton, imageViewAperture, textViewCurrentApertureValue, R.drawable.ic_camera_aperture)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(apertureButton = newState.mainControls.apertureButton.copy()))
+        }
+
+        if (forceAll || newState.mainControls.zoomButton != oldState.mainControls.zoomButton) {
+            updateMainButton(lnrZoom, newState.mainControls.zoomButton, imageZoom, textZoom, R.drawable.ic_zoom)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(zoomButton = newState.mainControls.zoomButton.copy()))
+        }
+
+        if (forceAll || newState.mainControls.whiteBalanceButton != oldState.mainControls.whiteBalanceButton) {
+            updateMainButton(lnrWhiteBalance, newState.mainControls.whiteBalanceButton, imageWhiteBalance, textWhiteBalance, R.drawable.ic_white_balance)
+            currentState = currentState!!.copy(mainControls = currentState!!.mainControls.copy(whiteBalanceButton = newState.mainControls.whiteBalanceButton.copy()))
+        }
+
+        if (forceAll || (newState.subControls.recyclerViewVisible != oldState.subControls.recyclerViewVisible)) {
+            recyclerViewCameraSetting.isVisible = newState.subControls.recyclerViewVisible
+            currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(recyclerViewVisible = newState.subControls.recyclerViewVisible))
+        }
+
+        if (forceAll || newState.subControls.zoomControls != oldState.subControls.zoomControls) {
+            lnrZoomControl.isVisible = newState.subControls.zoomControls.isVisible
+            setZoomButtonVisibility(newState.subControls.zoomControls)
+            currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(zoomControls = newState.subControls.zoomControls.copy()))
+        }
+
+        if (forceAll || newState.subControls.apertureSlider != oldState.subControls.apertureSlider) {
+            if (newState.subControls.apertureSlider.isVisible) {
+                loadRecyclerViewContent(CameraSettingMode.APERTURE)
+            }
+            currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(apertureSlider = newState.subControls.apertureSlider.copy()))
+        }
+
+        if (forceAll || newState.subControls.exposureSlider != oldState.subControls.exposureSlider) {
+            if (newState.subControls.exposureSlider.isVisible) {
+                loadRecyclerViewContent(CameraSettingMode.EXPOSURE)
+            }
+            currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(exposureSlider = newState.subControls.exposureSlider.copy()))
+        }
+
+        if (forceAll || newState.subControls.isoSlider != oldState.subControls.isoSlider) {
+            if (newState.subControls.isoSlider.isVisible) {
+                loadRecyclerViewContent(CameraSettingMode.ISO)
+            }
+            currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(isoSlider = newState.subControls.isoSlider.copy()))
+        }
+
+        if (forceAll || newState.subControls.shutterSpeedSlider != oldState.subControls.shutterSpeedSlider) {
+            if (newState.subControls.shutterSpeedSlider.isVisible) {
+                loadRecyclerViewContent(CameraSettingMode.SHUTTER_SPEED)
+            }
+            currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(shutterSpeedSlider = newState.subControls.shutterSpeedSlider.copy()))
+        }
+
+        if (forceAll || newState.subControls.whiteBalanceControl != oldState.subControls.whiteBalanceControl) {
+            if (newState.subControls.whiteBalanceControl.isVisible) {
+                loadRecyclerViewContent(CameraSettingMode.WHITE_BALANCE)
+            }
+            whiteBalanceSlider.isVisible = newState.subControls.whiteBalanceControl.isVisible
+            currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(whiteBalanceControl = newState.subControls.whiteBalanceControl.copy()))
+        }
+
+    }
+    fun updateMainButton(lnr: LinearLayoutCompat, state: CameraControlElementViewState, imageView: ImageView, textView: TextView, drawable: Int) {
+        lnr.isVisible = state.isVisible
+        lnr.isEnabled = state.isEnabled
+        imageView.isEnabled = state.isEnabled
+        setImageViewDrawable(ImageButtonViewState(imageView, drawable, state.isEnabled))
+        setTextViewColor(TextViewCameraSettingViewState(textView, state.isEnabled))
     }
 
-    private fun setZoomButtonVisibility(state: CameraPreviewScreenViewState) {
+    fun loadRecyclerViewContent(mode: CameraSettingMode) {
+        val currentValue = when (mode) {
+            CameraSettingMode.ISO -> cameraInput.cameraSettingState.value.isoRange?.map { it.toInt() }
+                    ?.let { isoRange ->
+                        CameraHelper.findIsoNearestNumber(
+                                cameraInput.cameraSettingState.value.currentIsoValue,
+                                isoRange
+                        )
+                    }
+
+            CameraSettingMode.SHUTTER_SPEED -> {
+                val fraction =
+                        CameraHelper.convertNanoSecondToSecond(cameraInput.cameraSettingState.value.currentShutterValue)
+                "${fraction.numerator}/${fraction.denominator}"
+            }
+
+            CameraSettingMode.APERTURE -> cameraInput.cameraSettingState.value.currentApertureValue
+
+            CameraSettingMode.EXPOSURE ->
+                CameraHelper.getActualValueFromExposureCompensation(
+                        cameraInput.cameraSettingState.value.currentExposureValue,
+                        cameraInput.cameraSettingState.value.exposureStep
+                )
+
+            CameraSettingMode.WHITE_BALANCE ->
+                CameraHelper.getWhiteBalanceModes().getValue(cameraInput.cameraSettingState.value.cameraCurrentWhiteBalanceMode)
+
+            else -> ""
+        }.toString()
+
+
+        val exposureSettingRange = when (mode) {
+            CameraSettingMode.ISO -> cameraInput.cameraSettingState.value.isoRange
+            CameraSettingMode.SHUTTER_SPEED -> cameraInput.cameraSettingState.value.shutterSpeedRange
+            CameraSettingMode.APERTURE -> cameraInput.cameraSettingState.value.apertureRange
+            CameraSettingMode.EXPOSURE -> cameraInput.cameraSettingState.value.exposureRange
+            CameraSettingMode.WHITE_BALANCE ->
+                CameraHelper.getWhiteBalanceModes().filter {
+                    cameraInput.cameraSettingState.value.cameraWhiteBalanceModes.contains(it.key)
+                }.values.toList().filter {
+                    it != "Manual"
+                }
+            else -> emptyList()
+        }
+
+        populateAndShowCameraSettingValueIntoRecyclerView(
+                exposureSettingRange,
+                mode,
+                currentValue
+        )
+    }
+
+    private fun setZoomButtonVisibility(state: CameraZoomControlViewState) {
         buttonWiderAngle.isVisible = state.widerAngleButtonViewState.isVisible
         buttonDefaultZoom.isVisible = state.defaultButtonViewState.isVisible
         buttonZoomTwoTimes.isVisible = state.twoTimesButtonViewState.isVisible
@@ -631,49 +742,7 @@ class CameraPreviewScreen(
         buttonZoomTenTimes.isVisible = state.tenTimesButtonViewState.isVisible
     }
 
-    fun setWhiteBalanceSliderVisibility(state: CameraSettingValueState){
-        if(state.cameraCurrentWhiteBalanceMode == 0){
-            whiteBalanceSlider.visibility = View.VISIBLE
-        } else {
-            whiteBalanceSlider.visibility = View.GONE
-        }
-
-    }
-
-    fun setCameraSwitchInfo(state: CameraUiState) {
-        if (state.cameraLens == LENS_FACING_FRONT) {
-            textViewLens.text = context.getText(R.string.cameraFront)
-        } else if (state.cameraLens == LENS_FACING_BACK) {
-            textViewLens.text = context.getText(R.string.cameraBack)
-        }
-    }
-
     /* From the ViewState, update the state of the ImageView and TextView of Camera Setting UI */
-    private fun updateCameraExposureViewState(state: CameraPreviewScreenViewState) {
-
-        listOf(
-            ImageButtonViewState(imageViewExposure, R.drawable.ic_exposure, state.exposureViewState.isEnabled),
-            ImageButtonViewState(imageViewIso, R.drawable.ic_camera_iso, state.isoButtonViewState.isEnabled),
-            ImageButtonViewState(imageViewShutter, R.drawable.baseline_shutter_speed_24, state.shutterButtonViewState.isEnabled),
-            ImageButtonViewState(imageViewAperture, R.drawable.ic_camera_aperture, false)
-        ).forEach {
-                viewState -> setImageViewDrawable(viewState)
-        }
-
-        textViewAutoExposureStatus.text =
-            context.getText(if (state.autoExposureViewState.isEnabled) R.string.off else R.string.on)
-
-        listOf(
-            TextViewCameraSettingViewState(textViewCurrentIsoValue, state.isoButtonViewState.isEnabled),
-            TextViewCameraSettingViewState(textViewCurrentShutterValue, state.shutterButtonViewState.isEnabled),
-            TextViewCameraSettingViewState(textViewCurrentApertureValue, state.apertureButtonViewState.isEnabled),
-            TextViewCameraSettingViewState(textViewExposureStatus, state.exposureViewState.isEnabled),
-        ).forEach { viewState ->
-            setTextViewColor(viewState, state.autoExposureViewState.isEnabled)
-        }
-
-    }
-
 
     private fun setImageViewDrawable(viewState: ImageButtonViewState) {
         val drawable = AppCompatResources.getDrawable(context, viewState.drawableResId)
@@ -683,14 +752,9 @@ class CameraPreviewScreen(
         viewState.imageView.setImageDrawable(drawable)
     }
 
-    private fun setTextViewColor(viewState: TextViewCameraSettingViewState, autoExposureEnabled: Boolean){
+    private fun setTextViewColor(viewState: TextViewCameraSettingViewState){
         val inactiveTextColor = ContextCompat.getColor(context, R.color.phyphox_white_50_black_50)
         val activeTextColor = ContextCompat.getColor(context, R.color.phyphox_white_100)
-
-        if(!autoExposureEnabled){
-            viewState.textView.setTextColor(inactiveTextColor)
-            return
-        }
 
         viewState.textView.setTextColor(if (viewState.isEnabled) activeTextColor else inactiveTextColor)
     }
@@ -703,7 +767,6 @@ class CameraPreviewScreen(
         settingMode: CameraSettingMode,
         currentValue: String
     ) {
-        Log.d(TAG, "SettingMode: "+settingMode.toString())
         if (dataList.isNullOrEmpty() || dataList.size == 1) {
             return
         }
@@ -718,18 +781,18 @@ class CameraPreviewScreen(
             }
         }
 
-        with(recyclerViewExposureSetting) {
+        with(recyclerViewCameraSetting) {
 
             val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             layoutManager = mLayoutManager
             itemAnimator = DefaultItemAnimator()
 
-            recyclerViewExposureSetting.adapter =
+            recyclerViewCameraSetting.adapter =
                 ChooseCameraSettingValueAdapter(dataList, settingChangeListener, currentValue)
 
             selectedPosition = dataList.indexOf(currentValue)
-            recyclerViewExposureSetting.postDelayed({
-                recyclerViewExposureSetting.scrollToPosition(selectedPosition) }, 100)
+            recyclerViewCameraSetting.postDelayed({
+                recyclerViewCameraSetting.scrollToPosition(selectedPosition) }, 100)
         }
 
         recyclerLoadingFinished()
@@ -740,21 +803,6 @@ class CameraPreviewScreen(
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.CameraSettingValueSelected)
         }
-    }
-
-    fun setColorCodeText(colorCode: String) {
-        if (colorCode == "") {
-            lnrColorCode.visibility = View.GONE
-        } else {
-            lnrColorCode.visibility = View.VISIBLE
-            try {
-                tvColorCode.setText(colorCode)
-                lnrColorCode.setBackgroundColor(Color.parseColor("#$colorCode"))
-            } catch (e: IllegalArgumentException) {
-                tvColorCode.setText(colorCode + ": " + e)
-            }
-        }
-
     }
 
 }

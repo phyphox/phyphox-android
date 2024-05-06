@@ -3,12 +3,13 @@ package de.rwth_aachen.phyphox.Helper;
 import android.content.res.Resources;
 import android.util.Log;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import de.rwth_aachen.phyphox.R;
 
-public class RGB {
+public class RGB implements Serializable {
     private static final double HUE_MAX = 360.0;
     int color;
 

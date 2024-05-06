@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.graphics.Camera;
 import android.hardware.camera2.CameraManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
@@ -55,7 +54,7 @@ import de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
-import de.rwth_aachen.phyphox.camera.helper.CameraInput;
+import de.rwth_aachen.phyphox.camera.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.Helper.RGB;
@@ -67,6 +66,8 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConversion;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkDiscovery;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.camera.model.CameraUiState;
+import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
@@ -1594,8 +1595,34 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "camera-gui": {
+                    String showControls = getStringAttribute("show_controls");
+                    if (showControls == null) {
+                        showControls = "";
+                    } else {
+                        showControls = showControls.toLowerCase();
+                    }
+
+                    int exposureAdjustmentLevel = getIntAttribute("exposure_adjustment_level", 1);
+
+                    ShowCameraControls showCameraControls;
+                    switch (showControls){
+                        case "always":{
+                            showCameraControls = ShowCameraControls.Always;
+                            break;
+                        } case "never": {
+                            showCameraControls = ShowCameraControls.Never;
+                            break;
+                        } case "full_view_only": {
+                            showCameraControls = ShowCameraControls.FullViewOnly;
+                            break;
+                        }
+                        default: {
+                            throw new phyphoxFileException("Unknown show controls name: " + showControls, xpp.getLineNumber());
+                        }
+                    }
 
                     ExpView.cameraElement cameraElement = newView.new cameraElement(label, null, null, parent.getResources());
+                    cameraElement.applyControlSettings(showCameraControls, exposureAdjustmentLevel);
                     newView.elements.add(cameraElement);
                     break;
                 }
@@ -1862,38 +1889,12 @@ public abstract class PhyphoxFile {
                             throw new phyphoxFileException("Need permission to access the camera."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
                         }
 
-                        String showControls = getStringAttribute("show_controls");
-                        if(showControls == null) {showControls = ""; }
-                        else { showControls.toLowerCase(); }
-
                         boolean autoExposure = getBooleanAttribute("auto_exposure", true);
-
-                        int exposureAdjustmentLevel = getIntAttribute("exposure_adjustment_level", 1);
-
-                        String lockedSetting = getStringAttribute("locked");
-                        if(lockedSetting == null) lockedSetting = "";
 
                         String featureStr = getStringAttribute("feature");
                         if(featureStr == null)
                             featureStr = "photometric";
                         else featureStr = featureStr.toLowerCase();
-
-                        CameraInput.PhyphoxShowCameraControls showCameraControls;
-                        switch (showControls){
-                            case "always":{
-                                showCameraControls = CameraInput.PhyphoxShowCameraControls.Always;
-                                break;
-                            } case "never": {
-                                showCameraControls = CameraInput.PhyphoxShowCameraControls.Never;
-                                break;
-                            } case "full_view_only": {
-                                showCameraControls = CameraInput.PhyphoxShowCameraControls.FullViewOnly;
-                                break;
-                            }
-                            default: {
-                                throw new phyphoxFileException("Unknown show controls name: " + showControls, xpp.getLineNumber());
-                            }
-                        }
 
                         CameraInput.PhyphoxCameraFeature feature;
                         switch (featureStr){
@@ -1901,14 +1902,14 @@ public abstract class PhyphoxFile {
                                 feature = CameraInput.PhyphoxCameraFeature.Photometric;
                                 break;
                             }
-                            case "color_detector": {
-                                feature = CameraInput.PhyphoxCameraFeature.ColorDetector;
-                                break;
-                            }
                             default: {
                                 throw new phyphoxFileException("Unknown feature name: " + featureStr, xpp.getLineNumber());
                             }
                         }
+
+                        String lockedSetting = getStringAttribute("locked");
+                        if (lockedSetting == null)
+                            lockedSetting = "";
 
                         double x1user = getDoubleAttribute("x1", 0.4);
                         double x2user = getDoubleAttribute("x2", 0.6);
@@ -1929,8 +1930,6 @@ public abstract class PhyphoxFile {
                                 new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                                new ioBlockParser.ioMapping() {{name = "sensor_pixel_height"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                                new ioBlockParser.ioMapping() {{name = "sensor_pixel_width"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}}
                         };
 
                         //String availableCameraSettings = getStringAttribute("setting");
@@ -1947,10 +1946,8 @@ public abstract class PhyphoxFile {
                                 outputs,
                                 experiment.dataLock,
                                 experiment.experimentTimeReference,
-                                showCameraControls,
                                 feature,
                                 autoExposure,
-                                exposureAdjustmentLevel,
                                 lockedSetting.isEmpty() ? null : lockedSetting);
 
                         break;

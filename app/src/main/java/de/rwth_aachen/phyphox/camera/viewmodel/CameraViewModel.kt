@@ -1,651 +1,307 @@
 package de.rwth_aachen.phyphox.camera.viewmodel
 
-import android.annotation.SuppressLint
-import android.app.Application
-import android.graphics.Rect
 import android.graphics.RectF
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraMetadata
-import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.CaptureResult
-import android.hardware.camera2.TotalCaptureResult
-import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.camera.camera2.interop.Camera2CameraInfo
-import androidx.camera.camera2.interop.Camera2Interop
-import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.toRect
-import androidx.lifecycle.LifecycleOwner
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.common.util.concurrent.ListenableFuture
-import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.camera.Scrollable
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
-import de.rwth_aachen.phyphox.camera.helper.CameraInput
-import de.rwth_aachen.phyphox.camera.helper.ImageAnalyser
-import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
-import de.rwth_aachen.phyphox.camera.model.CameraSettingRecyclerState
-import de.rwth_aachen.phyphox.camera.model.CameraSettingState
-import de.rwth_aachen.phyphox.camera.model.CameraSettingValueState
+import de.rwth_aachen.phyphox.camera.CameraInput
 import de.rwth_aachen.phyphox.camera.model.CameraState
+import de.rwth_aachen.phyphox.camera.model.CameraPreviewState
+import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraUiState
-import de.rwth_aachen.phyphox.camera.model.ImageAnalysisState
-import de.rwth_aachen.phyphox.camera.model.ImageAnalysisValueState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
-import de.rwth_aachen.phyphox.camera.model.ShowCameraSettingController
-import kotlinx.coroutines.flow.Flow
+import de.rwth_aachen.phyphox.camera.model.ShowCameraControls
+import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
+import de.rwth_aachen.phyphox.camera.viewstate.CameraControlElementViewState
+import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
+import de.rwth_aachen.phyphox.camera.viewstate.CameraZoomControlViewState
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class CameraViewModel(private val application: Application) : ViewModel() {
+class CameraViewModel() : ViewModel() {
 
     val TAG = "CameraViewModel"
-    private lateinit var cameraProviderListenableFuture: ListenableFuture<ProcessCameraProvider>
-    private lateinit var cameraProvider: ProcessCameraProvider
-    val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
-
-    var camera: Camera? = null
 
     lateinit var preview: Preview
-    private lateinit var imageAnalysis: ImageAnalysis
 
     private val _cameraUiState: MutableStateFlow<CameraUiState> = MutableStateFlow(CameraUiState())
-    private val _cameraSettingValueState: MutableStateFlow<CameraSettingValueState> =
-        MutableStateFlow(CameraSettingValueState())
-    private val _imageAnalysisValueState: MutableStateFlow<ImageAnalysisValueState> = MutableStateFlow(
-        ImageAnalysisValueState()
-    )
-
-    val cameraUiState: Flow<CameraUiState> = _cameraUiState
-    val cameraSettingValueState: Flow<CameraSettingValueState> = _cameraSettingValueState
-    val imageAnalysisUiState: Flow<ImageAnalysisValueState> = _imageAnalysisValueState
+    val cameraUiState: StateFlow<CameraUiState> = _cameraUiState
+    var cameraScreenViewState: MutableStateFlow<CameraScreenViewState>? = null
 
     lateinit var cameraInput: CameraInput
-    lateinit var phyphoxExperiment: PhyphoxExperiment
-
-    val imageAnalyser: ImageAnalyser = ImageAnalyser(this)
 
     lateinit var scrollable : Scrollable
 
-    var reportedAperture = Double.NaN
-    var reportedShutter = Double.NaN
-    var reportedIso = Double.NaN
+    fun setControlSettings(showCameraControls: ShowCameraControls, cameraSettingLevel: CameraSettingLevel) {
+        _cameraUiState.value = cameraUiState.value.copy(
+                showCameraControls = showCameraControls,
+                cameraSettingLevel = cameraSettingLevel
+        )
+    }
+    fun start(cameraScreenViewState: MutableStateFlow<CameraScreenViewState>, cameraPreviewScreen: CameraPreviewScreen) {
+        this.cameraScreenViewState = cameraScreenViewState
+        viewModelScope.launch {
+            cameraUiState.collectLatest { cameraUiState ->
+                when (cameraUiState.cameraPreviewState) {
+                    CameraPreviewState.INITIALIZING -> {
+                        initializeCameraUI()
 
-    fun initializeCamera() {
+                        cameraScreenViewState.emit(
+                                cameraScreenViewState.value
+                                        .copy(isVisible = cameraPreviewScreen.getCameraSettingsVisibility())
+                                        .updateCameraMainControls {
+                                            when (cameraUiState.cameraSettingLevel) {
+                                                CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
+                                                CameraSettingLevel.INTERMEDIATE -> {
+                                                    val exposureLocked =
+                                                            cameraUiState.editableCameraSettings?.contains("exposure") ?: false
+                                                    it.enableIntermediateExposureControl(exposureLocked)
+                                                }
+                                                CameraSettingLevel.ADVANCE -> {
+                                                    val isoLocked =
+                                                            cameraUiState.editableCameraSettings?.contains("iso") ?: false
+                                                    val shutterLocked =
+                                                            cameraUiState.editableCameraSettings?.contains("shutter_speed") ?: false
+                                                    it.enableAdvanceExposureControl(isoLocked, shutterLocked)
+                                                }
+                                            }
+                                        }
+                        )
+                    }
 
+                    CameraPreviewState.WAITING_FOR_CAMERA -> {
+                        if (cameraInput.cameraSettingState.value.cameraState == CameraState.RUNNING) {
+                            _cameraUiState.emit(
+                                cameraUiState.copy(cameraPreviewState = CameraPreviewState.ATTACHING_TO_CAMERA)
+                            )
+                        }
+                    }
+
+                    CameraPreviewState.ATTACHING_TO_CAMERA -> {
+                        cameraPreviewScreen.previewTextureView.doOnLayout {
+                            startCameraPreviewView(cameraPreviewScreen)
+                        }
+
+                        cameraPreviewScreen.setupZoomControl(cameraInput.cameraSettingState.value)
+                        cameraPreviewScreen.setUpWhiteBalanceControl(cameraInput.cameraSettingState.value)
+
+                        _cameraUiState.emit(
+                                cameraUiState.copy(cameraPreviewState = CameraPreviewState.UPDATING)
+                        )
+                    }
+
+
+                    CameraPreviewState.UPDATING -> {
+                        _cameraUiState.emit(
+                                cameraUiState.copy(cameraPreviewState = CameraPreviewState.RUNNING)
+                        )
+                        cameraScreenViewState?.value?.let {
+                            cameraScreenViewState?.emit(
+                                    it.copy(
+                                            isVisible = cameraPreviewScreen.getCameraSettingsVisibility(),
+                                            subControls = it.subControls
+                                                    .hideAll()
+                                                    .copy(
+                                                        recyclerViewVisible = true,
+                                                        exposureSlider = it.subControls.exposureSlider.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.EXPOSURE, isEnabled = cameraUiState.settingMode == CameraSettingMode.EXPOSURE),
+                                                        isoSlider = it.subControls.isoSlider.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.ISO, isEnabled = cameraUiState.settingMode == CameraSettingMode.ISO),
+                                                        apertureSlider = it.subControls.apertureSlider.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.APERTURE, isEnabled = cameraUiState.settingMode == CameraSettingMode.APERTURE),
+                                                        shutterSpeedSlider = it.subControls.shutterSpeedSlider.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.SHUTTER_SPEED, isEnabled = cameraUiState.settingMode == CameraSettingMode.SHUTTER_SPEED),
+                                                        whiteBalanceControl = it.subControls.whiteBalanceControl.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.WHITE_BALANCE, isEnabled = cameraUiState.settingMode == CameraSettingMode.WHITE_BALANCE),
+                                            )
+                                    )
+                            )
+                        }
+                    }
+
+                    CameraPreviewState.RUNNING -> Unit
+                }
+
+                when (cameraUiState.overlayUpdateState) {
+                    OverlayUpdateState.NO_UPDATE -> Unit
+                    OverlayUpdateState.UPDATE -> {
+                        cameraPreviewScreen.updateOverlay()
+                    }
+                    OverlayUpdateState.UPDATE_DONE -> Unit
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            cameraInput.cameraSettingState.collectLatest { cameraSettingState ->
+                if (cameraSettingState.cameraState == CameraState.RUNNING) {
+                    if (cameraUiState.value.cameraPreviewState == CameraPreviewState.WAITING_FOR_CAMERA) {
+                        _cameraUiState.emit(
+                                cameraUiState.value.copy(cameraPreviewState = CameraPreviewState.ATTACHING_TO_CAMERA)
+                        )
+                    }
+                    cameraPreviewScreen.setCurrentValueInCameraSettingTextView(cameraSettingState)
+                    val oldState = cameraScreenViewState.value
+                    val newState = cameraScreenViewState.value.copy(
+                            mainControls = oldState.mainControls.copy(
+                                    exposureButton = oldState.mainControls.exposureButton.copy(isEnabled = !cameraSettingState.autoExposure),
+                                    isoButton = oldState.mainControls.isoButton.copy(isEnabled = !cameraSettingState.autoExposure),
+                                    shutterButton = oldState.mainControls.shutterButton.copy(isEnabled = !cameraSettingState.autoExposure),
+                            )
+                    )
+
+                    cameraScreenViewState.emit(newState)
+                } else if (cameraSettingState.cameraState == CameraState.RESTART) {
+                    _cameraUiState.emit(
+                        cameraUiState.value.copy(cameraPreviewState = CameraPreviewState.WAITING_FOR_CAMERA)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun initializeCameraUI() {
         viewModelScope.launch {
             val currentCameraUiState = _cameraUiState.value
 
-            cameraProviderListenableFuture = ProcessCameraProvider.getInstance(application)
             val availableCameraLens =
-                listOf(
-                    CameraSelector.LENS_FACING_BACK,
-                    CameraSelector.LENS_FACING_FRONT
-                )
+                    listOf(
+                            CameraSelector.LENS_FACING_BACK,
+                            CameraSelector.LENS_FACING_FRONT
+                    )
 
             val newCameraUiState = currentCameraUiState.copy(
-                cameraState = CameraState.READY,
-                availableCameraLens = availableCameraLens,
-                editableCameraSettings = cameraInput.lockedSettings
+                    cameraPreviewState = CameraPreviewState.WAITING_FOR_CAMERA,
+                    availableCameraLens = availableCameraLens,
+                    editableCameraSettings = cameraInput.lockedSettings
             )
 
             _cameraUiState.emit(newCameraUiState)
         }
     }
 
-    private fun cameraInitialized() {
+    fun requestUpdate() {
         viewModelScope.launch {
-            val currentCameraUiState = _cameraUiState.value
-            _cameraUiState.emit(
-                currentCameraUiState.copy(
-                    cameraState = CameraState.LOADING
+            if (cameraUiState.value.cameraPreviewState == CameraPreviewState.RUNNING) {
+                _cameraUiState.emit(
+                        cameraUiState.value.copy(
+                                cameraPreviewState = CameraPreviewState.UPDATING
+                        )
                 )
-            )
-        }
-    }
-
-    fun initializeCameraSettingValue() {
-        viewModelScope.launch {
-            val currentCurrentUiState = _cameraSettingValueState.value
-            val newCameraUiState = currentCurrentUiState.copy(
-                currentApertureValue = cameraInput.apertureCurrentValue,
-                currentIsoValue = cameraInput.isoCurrentValue,
-                currentShutterValue = cameraInput.shutterSpeedCurrentValue,
-                currentExposureValue = cameraInput.currentExposureValue,
-                disabledAutoExposure = cameraInput.autoExposure,
-                cameraSettingLevel = when (cameraInput.exposureAdjustmentLevel) {
-                    1 -> CameraSettingLevel.BASIC
-                    2 -> CameraSettingLevel.INTERMEDIATE
-                    else -> CameraSettingLevel.ADVANCE
-                }
-            )
-            _cameraSettingValueState.emit(newCameraUiState)
-        }
-    }
-
-    fun setUpCameraDimension(height: Int, width: Int){
-        viewModelScope.launch {
-            _cameraUiState.emit(
-                _cameraUiState.value.copy(
-                    cameraHeight = height,
-                    cameraWidth = width
-                )
-            )
-        }
-    }
-
-    @SuppressLint("UnsafeOptInUsageError")
-    fun startCameraPreviewView(
-        previewView: PreviewView,
-        lifecycleOwner: LifecycleOwner,
-        withExposure: Boolean
-    ) {
-
-        cameraProviderListenableFuture.addListener({
-            try {
-                cameraProvider = cameraProviderListenableFuture.get()
-                (cameraProvider as ProcessCameraProvider?)?.let {
-                    startCamera(previewView, it, lifecycleOwner, withExposure)
-                }
-            } catch (e: ExecutionException) {
-                e.printStackTrace()
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
             }
-        }, ContextCompat.getMainExecutor(application))
+        }
     }
 
-    private fun cameraLensToSelector(@CameraSelector.LensFacing lensFacing: Int): CameraSelector =
-        when (lensFacing) {
-            CameraSelector.LENS_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
-            CameraSelector.LENS_FACING_BACK -> CameraSelector.DEFAULT_BACK_CAMERA
-            else -> throw IllegalArgumentException("Invalid lens facing type: $lensFacing")
-        }
-
-    private fun startCamera(
-        previewView: PreviewView,
-        cameraProvider: ProcessCameraProvider,
-        lifecycleOwner: LifecycleOwner,
-        withExposure: Boolean
+    fun startCameraPreviewView(
+            cameraPreviewScreen: CameraPreviewScreen
     ) {
-        cameraProvider.unbindAll()
-        val currentCameraUiState = _cameraUiState.value
-
-        val cameraSelector = cameraLensToSelector(currentCameraUiState.cameraLens)
-
-        preview = setUpPreviewWithExposure(withExposure).build().also {
-            it.setSurfaceProvider(previewView.surfaceProvider)
-        }
-
-        imageAnalysis = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-            .build()
-
-        imageAnalysis.setAnalyzer(cameraExecutor, imageAnalyser)
-
-        camera = cameraProvider.bindToLifecycle(
-            lifecycleOwner,
-            cameraSelector,
-            preview,
-            imageAnalysis
-        )
-
-        setupZoomControl()
-        loadAndSetupExposureSettingRanges()
-        cameraInitialized()
-
+        cameraInput.analyzingOpenGLRenderer?.attachTexturePreviewView(cameraPreviewScreen)
     }
 
-    fun getCameraRect(): RectF{
-       return _cameraUiState.value.cameraPassepartout
+    public fun stopCameraPreviewView(
+            cameraPreviewScreen: CameraPreviewScreen
+    ) {
+        cameraInput.analyzingOpenGLRenderer?.detachTexturePreviewView(cameraPreviewScreen)
     }
 
     fun switchCamera() {
-        val currentCameraUiState = _cameraUiState.value
-        if (currentCameraUiState.cameraState == CameraState.LOADING) {
+        if (cameraUiState.value.cameraPreviewState == CameraPreviewState.RUNNING) {
             // To switch the camera lens, there has to be at least 2 camera lenses
-            if (currentCameraUiState.availableCameraLens.size == 1) return
+            if (cameraUiState.value.availableCameraLens.size == 1) return
 
-            val camLensFacing = currentCameraUiState.cameraLens
-            // Toggle the lens facing
-            val newCameraUiState = if (camLensFacing == CameraSelector.LENS_FACING_BACK) {
-                currentCameraUiState.copy(cameraLens = CameraSelector.LENS_FACING_FRONT)
-            } else {
-                currentCameraUiState.copy(cameraLens = CameraSelector.LENS_FACING_BACK)
-            }
-
-            viewModelScope.launch {
-                _cameraUiState.emit(
-                    newCameraUiState.copy(
-                        cameraState = CameraState.NOT_READY,
-                    )
-                )
-                _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                    imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_NOT_READY
-                ))
-                _cameraSettingValueState.emit(
-                    _cameraSettingValueState.value.copy(
-                        setCameraSettingVisibility = ShowCameraSettingController.HIDE_ALL
-                    )
-                )
-            }
+            cameraInput.switchCamera()
         }
     }
 
-    fun showZoomController(){
+    fun showZoomController() {
         viewModelScope.launch {
-            _cameraSettingValueState.emit(
-                _cameraSettingValueState.value.copy(
-                    setCameraSettingVisibility = ShowCameraSettingController.SHOW_ZOOM_SLIDER
+            cameraScreenViewState?.value?.let {
+                val opticalZooms =
+                        CameraHelper.getAvailableOpticalZoomList(cameraInput.cameraSettingState.value.cameraMaxOpticalZoom)
+
+                cameraScreenViewState?.emit(
+                        it.copy(
+                                subControls = it.subControls.hideAll().copy(
+                                    zoomControls = CameraZoomControlViewState(true, true).setupOpticalZoomButtonVisibility(
+                                            cameraInput.cameraSettingState.value.cameraMinZoomRatio < 1.0f,
+                                            opticalZooms.isNotEmpty(),
+                                            opticalZooms.contains(2),
+                                            opticalZooms.contains(5),
+                                            opticalZooms.contains(10)
+                                    )
+                                )
+                        )
                 )
-            )
+            }
         }
     }
 
     fun hideAllController(){
         viewModelScope.launch {
-            _cameraSettingValueState.emit(
-                _cameraSettingValueState.value.copy(
-                    setCameraSettingVisibility = ShowCameraSettingController.HIDE_ALL
+            cameraScreenViewState?.value?.let {
+                cameraScreenViewState?.emit(
+                        it.copy(subControls = it.subControls.hideAll())
                 )
-            )
-        }
-    }
-
-    fun changeExposure(autoExposure: Boolean) {
-        viewModelScope.launch {
-            _cameraUiState.emit(
-                _cameraUiState.value.copy(
-                    cameraState = CameraState.NOT_READY,
-                )
-            )
-            _cameraSettingValueState.emit(
-                _cameraSettingValueState.value.copy(
-                    disabledAutoExposure = autoExposure,
-                    setCameraSettingVisibility = ShowCameraSettingController.HIDE_ALL
-                )
-            )
-        }
-
-    }
-
-    fun cameraReady() {
-        viewModelScope.launch {
-            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_READY
-            ))
-        }
-
-    }
-
-    fun imageAnalysisStarted(){
-        viewModelScope.launch {
-            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_STARTED
-            ))
-        }
-    }
-
-    fun imageAnalysisFinished(currentTime: Double){
-        viewModelScope.launch {
-            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                    currentTimeStamp = currentTime,
-                    imageAnalysisState = ImageAnalysisState.IMAGE_ANALYSIS_FINISHED
-            ))
-        }
-    }
-
-    fun updateImageAnalysisLuma(luma: Double){
-        viewModelScope.launch {
-            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                luma = luma
-            ))
-        }
-    }
-
-    fun updateImageAnalysisLuminance(luminance: Double){
-        viewModelScope.launch {
-            _imageAnalysisValueState.emit(_imageAnalysisValueState.value.copy(
-                    luminance = luminance
-            ))
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
-    fun loadAndSetupExposureSettingRanges() {
-        val cameraInfo = camera?.cameraInfo?.let { Camera2CameraInfo.from(it) }
-
-        // from the cameraCharacteristic, isoRange is acquired which is in the form of of Range<Int>,
-        // which is then mapped into List<String>
-        val isoRange =
-            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE)
-                .let { isoRange_ ->
-                    isoRange_?.lower?.let { lower ->
-                        isoRange_.upper?.let { upper ->
-                            CameraHelper.isoRange(lower, upper).map { it.toString() }
-                        }
-                    }
-                }
-
-        // from the cameraCharacteristic, shutter speed range is acquired which is in the form of of Range<Long>,
-        // which is then mapped into List<String>
-        val shutterSpeedRange =
-            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
-                .let { shutterSpeedRange_ ->
-                    shutterSpeedRange_?.lower?.let { lower ->
-                        shutterSpeedRange_.upper?.let { upper ->
-                            CameraHelper.shutterSpeedRange(lower, upper)
-                                .map { "" + it.numerator + "/" + it.denominator }
-                        }
-                    }
-
-                }
-
-        // from the cameraCharacteristic, aperture range is acquired which is in the form of of FloatArray,
-        // which is then mapped into List<String>
-        val apertureRange =
-            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)
-                .let { apertureRange_ ->
-                    apertureRange_?.map { it.toString() }
-                }
-
-        var exposureStep = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP)?.toFloat()
-        if(exposureStep == null)
-            exposureStep = 1F
-
-        val exposureLower =
-            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.lower
-        val exposureUpper =
-            cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)?.upper
-
-        val exposureRange = if (exposureLower != null && exposureUpper != null)
-            CameraHelper.getExposureValuesFromRange(exposureLower, exposureUpper, exposureStep).map { it.toString() }
-         else {
-            emptyList()
-        }
-
-        val awbAvailableModes = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES) ?: intArrayOf()
-        val maxRegionsAWB = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB) ?: 0
-        var awbLockAvailable = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE)
-
-        val sensorPhysicalSize = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)
-        cameraInput.sensorPixelHeight?.append(sensorPhysicalSize?.height?.toDouble() ?: 0.0)
-        cameraInput.sensorPixelWidth?.append(sensorPhysicalSize?.width?.toDouble() ?: 0.0)
-
-
-        val currentCameraUiState = _cameraSettingValueState.value
-        val newCameraUiState = currentCameraUiState.copy(
-            apertureRange = apertureRange,
-            shutterSpeedRange = shutterSpeedRange,
-            isoRange = isoRange,
-            exposureRange = exposureRange,
-            exposureStep = exposureStep,
-            cameraSettingState = CameraSettingState.LOADED,
-            cameraMaxRegionAWB =  maxRegionsAWB,
-            cameraWhiteBalanceModes = CameraHelper.getWhiteBalanceModes().filter { awbAvailableModes.contains(it.key) }.keys.toList()
-
-        )
-
-
-        viewModelScope.launch {
-            _cameraSettingValueState.emit(newCameraUiState)
-        }
-
-        viewModelScope.launch {
-            _cameraUiState.emit(
-                _cameraUiState.value.copy(
-                    physicalSensorPixelHeight = sensorPhysicalSize?.height ?: 0.0f,
-                    physicalSensorPixelWidth =  sensorPhysicalSize?.width ?: 0.0f
-                )
-            )
-        }
-    }
-
-    @SuppressLint("UnsafeOptInUsageError")
-    fun setUpPreviewWithExposure(withExposure: Boolean): Preview.Builder {
-        if (!withExposure) return Preview.Builder()
-
-        val previewBuilder = Preview.Builder()
-        val extender = Camera2Interop.Extender(previewBuilder)
-
-        val captureCallback = object : CameraCaptureSession.CaptureCallback() {
-            override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
-                reportedAperture = result.get(CaptureResult.LENS_APERTURE)?.toDouble() ?: Double.NaN
-                reportedIso = result.get(CaptureResult.SENSOR_SENSITIVITY)?.toDouble() ?: Double.NaN
-                reportedShutter = result.get(CaptureResult.SENSOR_EXPOSURE_TIME)?.toDouble() ?: Double.NaN
-                Log.d("TEST", "X: " + reportedAperture + ", " + reportedIso + ", " + reportedShutter)
             }
         }
-        extender.setSessionCaptureCallback(captureCallback)
-
-        val cameraSettingValueState = _cameraSettingValueState.value
-
-        when (cameraSettingValueState.cameraSettingLevel) {
-            CameraSettingLevel.BASIC -> return Preview.Builder()
-            CameraSettingLevel.INTERMEDIATE -> {
-                extender.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CameraMetadata.CONTROL_AE_MODE_ON
-                )
-
-                val exposure: Int = CameraHelper.getActualValueFromExposureCompensation(
-                    cameraSettingValueState.currentExposureValue,
-                    cameraSettingValueState.exposureStep
-                )
-
-                extender.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AE_LOCK,
-                    true
-                )
-                extender.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
-                    exposure
-                )
-
-                cameraInput.exposureDataBuffer?.clear(true)
-                cameraInput.exposureDataBuffer?.append(exposure.toDouble())
-
-                return previewBuilder
-            }
-            CameraSettingLevel.ADVANCE -> {
-                extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
-
-                val iso: Int = cameraSettingValueState.currentIsoValue
-                val shutterSpeed: Long = cameraSettingValueState.currentShutterValue
-                val aperture: Float = cameraSettingValueState.currentApertureValue
-
-                if (iso != 0) extender.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
-                if (shutterSpeed != 0L) extender.setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutterSpeed)
-                if (aperture != 0.0f) extender.setCaptureRequestOption(CaptureRequest.LENS_APERTURE, aperture)
-
-                setupWhiteBalance(cameraSettingValueState, extender)
-
-                return previewBuilder
-            }
-        }
-
     }
 
-    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
-    private fun setupWhiteBalance(cameraSettingValueState: CameraSettingValueState, extender:  Camera2Interop.Extender<Preview> ){
-        val currentMode = cameraSettingValueState.cameraCurrentWhiteBalanceMode
-        val currentValue = cameraSettingValueState.cameraCurrentWhiteBalanceManualValue
-
-        when(currentMode) {
-            0 -> {
-                //extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
-                extender.setCaptureRequestOption(
-                    CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
-                )
-                if(currentValue.size == 4){
-                    extender.setCaptureRequestOption(
-                        CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(currentValue[0], currentValue[1],  currentValue[2], currentValue[3])
-                    )
-                }
-            }
-            else -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, currentMode)
-
-        }
+    fun changeAutoExposure(autoExposure: Boolean) {
+        cameraInput.setAutoExposure(autoExposure)
     }
+
+
 
     fun openCameraSettingValue(settingMode: CameraSettingMode) {
-        val currentCameraSettingState = _cameraSettingValueState.value
+        val currentCameraUiState = _cameraUiState.value
         viewModelScope.launch {
-            _cameraSettingValueState.emit(
-                currentCameraSettingState.copy(
-                    cameraSettingState = CameraSettingState.LOAD_LIST,
+            _cameraUiState.emit(
+                currentCameraUiState.copy(
                     settingMode = settingMode,
-                    setCameraSettingVisibility = ShowCameraSettingController.SHOW_EXPOSURE_SETTING_RECYCLER_LIST
-                )
-            )
-        }
-    }
-
-    fun updateViewStateOfRecyclerView(showRecyclerview: Boolean) {
-        val currentCameraSettingState = _cameraSettingValueState.value
-        viewModelScope.launch {
-            _cameraSettingValueState.emit(
-                currentCameraSettingState.copy(
-                    cameraSettingState = CameraSettingState.LOAD_FINISHED,
-                    cameraSettingRecyclerState = if (showRecyclerview) CameraSettingRecyclerState.TO_SHOW else CameraSettingRecyclerState.TO_HIDE,
+                    cameraPreviewState = CameraPreviewState.UPDATING
                 )
             )
         }
     }
 
     fun cameraSettingOpened() {
-        val currentCameraSettingState = _cameraSettingValueState.value
-        viewModelScope.launch {
-            _cameraSettingValueState.emit(
-                currentCameraSettingState.copy(
-                    cameraSettingState = CameraSettingState.LOAD_FINISHED,
-                )
-            )
-        }
     }
 
-    fun updateCurrentWhiteBalanceValue(value: FloatArray){
-        val currentCameraSettingState = _cameraSettingValueState.value
-        viewModelScope.launch {
-            _cameraSettingValueState.emit(
-                currentCameraSettingState.copy(
-                    cameraCurrentWhiteBalanceManualValue = value,
-                    cameraSettingState = CameraSettingState.VALUE_UPDATED
-                )
-            )
-        }
+    fun changeWhiteBalance(value: FloatArray) {
+        //TODO
     }
 
     fun updateCameraSettingValue(value: String, settingMode: CameraSettingMode) {
-
-        val currentCameraSettingState = _cameraSettingValueState.value
-        val currentCameraUiState = _cameraUiState.value
-
-        val newCameraSettingState: CameraSettingValueState = when (settingMode) {
-            CameraSettingMode.ISO -> {
-                currentCameraSettingState.copy(
-                    currentIsoValue = value.toInt(),
-                    cameraSettingState = CameraSettingState.VALUE_UPDATED
-                )
-            }
-            CameraSettingMode.SHUTTER_SPEED -> {
-                currentCameraSettingState.copy(
-                    currentShutterValue = CameraHelper.stringToNanoseconds(value),
-                    cameraSettingState = CameraSettingState.VALUE_UPDATED
-                )
-            }
-            CameraSettingMode.WHITE_BALANCE -> {
-                currentCameraSettingState.copy(
-                    cameraCurrentWhiteBalanceMode = CameraHelper.getWhiteBalanceModes().filter { value == it.value }.keys.first(),
-                    cameraSettingState = CameraSettingState.VALUE_UPDATED
-                )
-            }
-            else -> {
-                currentCameraSettingState.copy(
-                    currentExposureValue = value.toFloat(),
-                    cameraSettingState = CameraSettingState.VALUE_UPDATED
-                )
-            }
-        }
-        viewModelScope.launch {
-            _cameraSettingValueState.emit(newCameraSettingState)
-            _cameraUiState.emit(
-                currentCameraUiState.copy(
-                    cameraState = CameraState.NOT_READY,
-                )
-            )
-        }
-
+        cameraInput.updateCameraSettingValue(value, settingMode)
     }
 
-    fun updateCameraOverlayValue() {
-        val height = _cameraUiState.value.cameraHeight
-        val width = _cameraUiState.value.cameraWidth
-
-        val xmin: Float = Math.min(cameraInput.x1, cameraInput.x2)
-        val xmax: Float = Math.max(cameraInput.x1, cameraInput.x2)
-        val ymin: Float = Math.min(cameraInput.y1, cameraInput.y2)
-        val ymax: Float = Math.max(cameraInput.y1, cameraInput.y2)
-
+    fun updateCameraOverlay() {
         viewModelScope.launch {
             _cameraUiState.emit(
                 _cameraUiState.value.copy(
-                    cameraPassepartout = RectF(xmin, ymin, xmax, ymax),
                     overlayUpdateState = OverlayUpdateState.UPDATE
             ))
         }
-
     }
 
     fun overlayUpdated(){
         viewModelScope.launch {
-            _cameraUiState.emit(_cameraUiState.value.copy(
-                overlayUpdateState = OverlayUpdateState.UPDATE_DONE
+            _cameraUiState.emit(
+                _cameraUiState.value.copy(
+                    overlayUpdateState = OverlayUpdateState.UPDATE_DONE
             ))
         }
     }
-    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
-    private fun  setupZoomControl(){
-        val cameraInfo = camera?.cameraInfo?.let { Camera2CameraInfo.from(it) }
-        val zoomStateValue = camera?.cameraInfo?.zoomState?.value
 
-        val maxZoomRatio =  zoomStateValue?.maxZoomRatio ?: 1f
-        val minZoomRatio =  zoomStateValue?.minZoomRatio ?: 0f
-        val zoomRatio =  zoomStateValue?.zoomRatio ?: 1f
-        val linearZoom =  zoomStateValue?.linearZoom ?: 1f
-
-        val maxOpticalZoom: FloatArray? = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
-
-        val ratios: MutableList<Float> = CameraHelper.computeZoomRatios(minZoomRatio, maxZoomRatio)
-
-        viewModelScope.launch {
-            _cameraSettingValueState.emit(_cameraSettingValueState.value.copy(
-                cameraMinZoomRatio = minZoomRatio,
-                cameraMaxZoomRatio = maxZoomRatio,
-                cameraZoomRatio = zoomRatio,
-                cameraLinearRatio = linearZoom,
-                cameraZoomRatioConverted = ratios,
-                cameraMaxOpticalZoom = maxOpticalZoom?.last()
-            ))
-        }
-
+    fun setPassepartout(passepartout: RectF) {
+        cameraInput.setPassepartout(passepartout)
+        updateCameraOverlay()
     }
 
 }
