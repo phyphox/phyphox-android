@@ -2553,7 +2553,6 @@ public class Analysis {
                 skip = inputArrays.get(4)[inputArraySizes.get(4)-1].intValue();
             if (inputArrays.size() > 5 && inputArrays.get(5) != null && inputArraySizes.get(5) > 0)
                 last = inputArrays.get(5)[inputArraySizes.get(5)-1];
-            Log.d("TEST", "In: " + data.length + ", threshold " + threshold + ", distance " + distance + ", skip " + skip + ", index " + index + ", last " + last);
 
             int i = 0;
             int n = inputArraySizes.get(0);
@@ -2613,8 +2612,76 @@ public class Analysis {
             if (outputs.size() > 3 && outputs.get(3) != null) {
                 outputs.get(3).append(last);
             }
+        }
+    }
 
-            Log.d("TEST", "Out: index " + (index + i) + ", skip = " + skip + " last " + last);
+    //Moving average
+    //Take data as input along with width of the moving average (number of values to average)
+    //Output is just the resulting moving average
+    //Parameter dropIncomplete determines whether values are emitted if less than width values have been taken into account
+    //With dropIncomplete true, it will output n-width+1 values for an input of n data values
+    //With dropIncomplete false, it will output n values
+    public static class movingaverageAM extends AnalysisModule implements Serializable {
+        boolean dropIncomplete = false;
+
+        protected movingaverageAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, boolean dropIncomplete) {
+            super(experiment, inputs, outputs);
+            this.dropIncomplete = dropIncomplete;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            int width = 10;
+
+            Double[] data = inputArrays.get(0);
+            if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
+                width = inputArrays.get(1)[inputArraySizes.get(1)-1].intValue();
+
+            int start = dropIncomplete ? width : 0;
+
+            for (int i = start; i < inputArraySizes.get(0); i++) {
+                int substart = Math.min(i-width, 0);
+                double sum = 0.0;
+                for (int j = substart; j <= i; j++) {
+                    sum += data[j];
+                }
+                sum /= (double)(i - substart + 1);
+                outputs.get(0).append(sum);
+            }
+        }
+    }
+
+    //Split
+    //Takes data as input and splits it into two buffers at the index (given as second input)
+    //Index defaults to the length of the input data if not given (i.e. the entire input is returned as the first output without splitting)
+    //A third parameter "overlap" allows to set a number of elements from before the split index that will also end up in the second buffer
+    //Setting only "overlap" will result in all data being copied into the first output and the last "overlap" elements also being copied to the second output
+    public static class splitAM extends AnalysisModule implements Serializable {
+        protected splitAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double[] data = inputArrays.get(0);
+
+            int n = inputArraySizes.get(0);
+            int index = n;
+            if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
+                index = inputArrays.get(1)[inputArraySizes.get(1)-1].intValue();
+            int overlap = 0;
+            if (inputArrays.size() > 2 && inputArrays.get(2) != null && inputArraySizes.get(2) > 0)
+                overlap = inputArrays.get(2)[inputArraySizes.get(2)-1].intValue();
+
+            int limit = Math.min(index, n);
+            if (outputs.size() > 0 && outputs.get(0) != null)
+                outputs.get(0).append(Arrays.copyOfRange(data, 0, limit), limit);
+            limit = Math.max(limit - overlap, 0);
+            if (outputs.size() > 1 && outputs.get(1) != null)
+                outputs.get(1).append(Arrays.copyOfRange(data, limit, n), n-limit);
+
         }
     }
 
