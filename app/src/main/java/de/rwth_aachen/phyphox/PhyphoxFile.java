@@ -70,7 +70,7 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.17";
+    public final static String phyphoxFileVersion = "1.18";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -2896,6 +2896,37 @@ public abstract class PhyphoxFile {
 
                     Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(experiment, inputs, outputs);
                     experiment.analysis.add(constAM);
+                } break;
+                case "eventstream": { //Find events in a datastream (i.e. acoustic stopwatch)
+                    String triggerModeStr = getStringAttribute("mode");
+                    if (triggerModeStr == null)
+                        triggerModeStr = "above";
+
+                    Analysis.eventstreamAM.TriggerMode triggerMode;
+
+                    try {
+                        triggerMode = Analysis.eventstreamAM.TriggerMode.valueOf(triggerModeStr);
+                    } catch (Exception e) {
+                        throw new phyphoxFileException("Unknown trigger mode " + triggerModeStr, xpp.getLineNumber());
+                    }
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "distance"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "skip"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "last"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "events"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "skip"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "last"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.eventstreamAM(experiment, inputs, outputs, triggerMode));
                 } break;
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
