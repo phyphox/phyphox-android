@@ -1304,12 +1304,12 @@ public class Analysis {
                 //Only trigger if the last and the current value are valid,
                 if (!(Double.isNaN(last) || Double.isNaN(v))) {
                     if (falling) {
-                        if (last > vthreshold && v < vthreshold) {
+                        if (last >= vthreshold && v < vthreshold) {
                             //Falling trigger and value went below threshold -> break
                             break;
                         }
                     } else {
-                        if (last < vthreshold && v > vthreshold) {
+                        if (last <= vthreshold && v > vthreshold) {
                             //Rising trigger and value went above threshold -> break
                             break;
                         }
