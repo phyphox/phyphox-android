@@ -763,7 +763,7 @@ public class ExpView implements Serializable{
             }
             if (decimal) {
                 inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
-                allowedDigits.append(".,");
+                allowedDigits.append("-.,Ee"); //Note: This is not perfect, but we get into trouble if numbers are so small that they need to be represented in scientific notation (1e-6). But then again, this is not really about securing anything...
             }
             et.setInputType(inputType);
             if (decimal) {
@@ -855,6 +855,9 @@ public class ExpView implements Serializable{
                 return currentValue;
             try {
                 currentValue = Double.valueOf(et.getText().toString().replace(",", "."))/factor;
+                if (!signed && currentValue < 0.0) {
+                    currentValue = Math.abs(currentValue); //Another safety net as we cannot entirely rule out the minus sign in decimal notation because of possible scientific representation
+                }
                 if (currentValue < min) {
                     currentValue = min;
                 }
