@@ -17,6 +17,7 @@ import android.os.Build;
 import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -104,11 +105,12 @@ public abstract class PhyphoxFile {
         InputStream inputStream = null; //the input stream or null on error
         byte source[] = null;           //A copy of the input for non-local sources
         String errorMessage = "";       //Error message that can be displayed to the user
+        String resourceFolder = null;   //Local folder that holds the resources required by the experiment (for example images)
         long crc32;
     }
 
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
-    public static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
+    public static void remoteInputToMemory(PhyphoxStream stream, String resourceFolder, boolean resourceViaCRC32) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         CRC32 crc32 = new CRC32();
@@ -124,6 +126,11 @@ public abstract class PhyphoxFile {
         stream.source = os.toByteArray();
         stream.inputStream = new ByteArrayInputStream(stream.source);
         stream.crc32 = crc32.getValue();
+
+        if (resourceFolder != null)
+            stream.resourceFolder = resourceFolder + "/" + (resourceViaCRC32 ? Long.toHexString(crc32.getValue()).toLowerCase() : "res");
+        else
+            stream.resourceFolder = null;
     }
 
     //Helper function to open an inputStream from various intents
@@ -147,7 +154,7 @@ public abstract class PhyphoxFile {
                     AssetManager assetManager = parent.getAssets();
                     try {
                         phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        remoteInputToMemory(phyphoxStream);
+                        remoteInputToMemory(phyphoxStream, "ASSET", true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
                     }
@@ -155,15 +162,17 @@ public abstract class PhyphoxFile {
                     //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
                     try {
                         File tempDir = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP));
-                        phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
-                        remoteInputToMemory(phyphoxStream);
+                        File file = new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        phyphoxStream.inputStream = new FileInputStream(file);
+                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), false);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
                 } else { //The local file is in the private directory
                     try {
                         phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        remoteInputToMemory(phyphoxStream);
+                        File file = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
@@ -188,7 +197,8 @@ public abstract class PhyphoxFile {
                 }
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
-                    remoteInputToMemory(phyphoxStream);
+                    File containingFolder = new File(uri.getPath());
+                    remoteInputToMemory(phyphoxStream, containingFolder.getParent(), false);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from file: " + e.getMessage();
                 }
@@ -200,7 +210,7 @@ public abstract class PhyphoxFile {
                 ContentResolver resolver = parent.getContentResolver();
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
-                    remoteInputToMemory(phyphoxStream);
+                    remoteInputToMemory(phyphoxStream, null, false);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from content: " + e.getMessage();
                 }
@@ -211,13 +221,13 @@ public abstract class PhyphoxFile {
                 try {
                     URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                     phyphoxStream.inputStream = url.openStream();
-                    remoteInputToMemory(phyphoxStream);
+                    remoteInputToMemory(phyphoxStream, null, false);
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
                         URL url = new URL("http", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                         phyphoxStream.inputStream = url.openStream();
-                        remoteInputToMemory(phyphoxStream);
+                        remoteInputToMemory(phyphoxStream, null, false);
                     } catch (Exception e2) {
                         phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
                     }
@@ -1585,40 +1595,42 @@ public abstract class PhyphoxFile {
                     dge.setAspectRatio(aspectRatio);
                     newView.elements.add(dge);
                     break;
-                case "svg": //A (parametric) svg image
-                    //Allowed input/output configuration
-                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
-                    };
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
+                case "image": { // Shows an image
+                    String src = getStringAttribute("src");
+                    if (src == null || src.isEmpty())
+                        throw new phyphoxFileException("Image element requires src attribute.", xpp.getLineNumber());
 
-                    Vector<String> inStrings = new Vector<>();
-                    for (DataInput input : inputs)
-                        inStrings.add(input.buffer.name);
+                    ExpView.imageElement img = newView.new imageElement(null, null, parent.getResources(), src); //No inputs (for now?)
 
-                    ExpView.svgElement svge = newView.new svgElement(null, null, inStrings, parent.getResources()); //No inputs, just the label and resources
+                    float scale = (float)getDoubleAttribute("scale", 1.0);
+                    img.setScale(scale);
 
-                    String svgCode = null;
-                    for (ioBlockParser.AdditionalTag at : ats) {
-                        if (at.name.equals("input"))
-                            continue;
-                        if (!at.name.equals("source")) {
-                            throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
+                    ExpView.ImageFilter darkFilter = ExpView.ImageFilter.none;
+                    ExpView.ImageFilter lightFilter = ExpView.ImageFilter.none;
+                    String darkFilterStr = getStringAttribute("darkFilter");
+                    String lightFilterStr = getStringAttribute("lightFilter");
+                    if (darkFilterStr != null && !darkFilterStr.isEmpty()) {
+                        try {
+                            darkFilter = ExpView.ImageFilter.valueOf(darkFilterStr);
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Unknown image filter: " + darkFilterStr, xpp.getLineNumber());
                         }
-                        svgCode = at.content;
+                    }
+                    if (lightFilterStr != null && !lightFilterStr.isEmpty()) {
+                        try {
+                            lightFilter = ExpView.ImageFilter.valueOf(lightFilterStr);
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Unknown image filter: " + lightFilterStr, xpp.getLineNumber());
+                        }
                     }
 
-                    if (svgCode == null) {
-                        throw new phyphoxFileException("SVG source code missing.", xpp.getLineNumber());
-                    } else
-                        svge.setSvgParts(svgCode);
 
-                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_black_60)));
-                    svge.setBackgroundColor(color.intColor());
+                    img.setFilters(darkFilter, lightFilter);
 
-                    newView.elements.add(svge);
+                    newView.elements.add(img);
+                    experiment.resources.add(src);
                     break;
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
@@ -3100,6 +3112,7 @@ public abstract class PhyphoxFile {
             experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
             experiment.source = input.source;
             experiment.crc32 = input.crc32;
+            experiment.resourceFolder = input.resourceFolder;
 
             try {
                 //Setup the pull parser
@@ -3231,7 +3244,21 @@ public abstract class PhyphoxFile {
             } catch (Exception e) {
                 return "Error loading the original XML file again: " + e.getMessage();
             }
-            return "";
+            PhyphoxExperiment exp = parent.get().experiment;
+            String warnings = "";
+            if (exp.resourceFolder != null && !exp.resources.isEmpty()) {
+                File newResFolder = new File(parent.get().getFilesDir(), Long.toHexString(exp.crc32).toLowerCase());
+                newResFolder.mkdirs();
+                for (String src : exp.resources) {
+                    try {
+                        Helper.copyFile(new File(exp.resourceFolder, src), new File(newResFolder, src));
+                    } catch (Exception e) {
+                        Log.e("CopyXML", "Could not save resource: " + e.getMessage());
+                        warnings += "Could not save resource: " + src + "\n";
+                    }
+                }
+            }
+            return warnings;
         }
 
         @Override

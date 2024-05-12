@@ -460,6 +460,7 @@ public class RemoteServer extends Thread {
         registry.register("/config", new configCommandHandler()); //The config command requests information on the currently active experiment configuration
         registry.register("/meta", new metaCommandHandler()); //The meta command requests information on the device
         registry.register("/time", new timeCommandHandler()); //The meta command requests information on the current time reference
+        registry.register("/res", new resCommandHandler()); //Fetch resource files (like images embedded in the experiment configuration)
         httpService.setHandlerResolver(registry);
     }
 
@@ -1095,6 +1096,44 @@ public class RemoteServer extends Thread {
             response.setEntity(entity);
 
         }
+    }
+
+    //The res handler serves resource files (like images embedded in the experiment configuration)
+    class resCommandHandler implements HttpRequestHandler {
+
+        @Override
+        public void handle(HttpRequest request, HttpResponse response,
+                           HttpContext httpContext) throws HttpException, IOException {
+
+            //Get the parameters
+            Uri uri = Uri.parse(request.getRequestLine().getUri());
+            String src = uri.getQueryParameter("src");
+
+            BasicHttpEntity entity = new BasicHttpEntity();
+            final String result;
+
+            if (src != null && !src.isEmpty() && experiment.resources.contains(src)) {
+                try {
+                    File file = new File(experiment.resourceFolder, src);
+                    InputStream inputStream = new FileInputStream(file);
+                    entity.setContent(inputStream);
+                    entity.setContentLength(file.length());
+                    response.setEntity(entity);
+                    return;
+                } catch (Exception e) {
+                    result = "{\"error\" = \"Unknown file.\"}";
+                }
+            } else {
+                result = "{\"error\" = \"Unknown file.\"}";
+            }
+            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
+            entity.setContent(inputStream);
+            entity.setContentLength(inputStream.available());
+
+            response.setHeader("Content-Type", "application/json");
+            response.setEntity(entity);
+        }
+
     }
 
 }

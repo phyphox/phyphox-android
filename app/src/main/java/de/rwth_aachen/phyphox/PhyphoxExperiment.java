@@ -9,6 +9,8 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.collection.ArraySet;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -27,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -54,6 +57,8 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
+    Set<String> resources = new ArraySet<>();
+    String resourceFolder = null;
     long crc32 = 0;
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment

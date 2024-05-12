@@ -33,7 +33,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.zip.CRC32;
@@ -193,6 +195,10 @@ public abstract class Helper {
     }
 
     public static boolean experimentInCollection(File file, Activity act) {
+        return experimentInCollection(getCRC32(file), act);
+    }
+
+    public static long getCRC32(File file) {
         CRC32 crc32 = new CRC32();
         try {
             InputStream input = new FileInputStream(file);
@@ -203,12 +209,30 @@ public abstract class Helper {
             }
             input.close();
         }catch (Exception e) {
-            return false;
+            return 0;
         }
 
-        long refCRC32 = crc32.getValue();
+        return crc32.getValue();
+    }
 
-        return experimentInCollection(refCRC32, act);
+    //Thanks to https://stackoverflow.com/a/9293885/8068814
+    public static void copyFile(File src, File dst) throws IOException {
+        InputStream in = new FileInputStream(src);
+        try {
+            OutputStream out = new FileOutputStream(dst);
+            try {
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            } finally {
+                out.close();
+            }
+        } finally {
+            in.close();
+        }
     }
 
     //Recursively get all TextureViews, used for screenshots
