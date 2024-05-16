@@ -318,4 +318,31 @@
     <string name="remoteServerActive">রিমোট অ্যাক্সেস এনা বল করুন।নিম্নলিখিত URL থেকে এই এক্সপেরিমেন্ট টির অ্যাক্সেস দিন:
 \n%1$s</string>
     <string name="hotspotSettings">হটপট সেটিং গুলি</string>
+    <string name="calibrated_magnetometer">ক্যালিব্রেটেড ম্যাগনাটোমিটার ব্যবহার করুন</string>
+    <string name="force_gnss">কেবল মাত্র উপগ্রহ দ্বারা নিরধারিত স্থান</string>
+    <string name="switchToPhoneLayout">দেখঃ সংকীর্ণ</string>
+    <string name="switchColumns1">দেখঃ ১ কলম</string>
+    <string name="switchColumns2">দেখঃ ২কলম</string>
+    <string name="switchColumns3">দেখঃ৩ কলম</string>
+    <string name="toggleBrightMode">আলোকিও মোড</string>
+    <string name="fontSize">সম্মুখ আকার</string>
+    <string name="show_description">পরীক্ষার তথ্য</string>
+    <string name="save_locally">সংগ্রহ করতে পরীক্ষা যুক্ত করুন</string>
+    <string name="save_locally_done">সংগ্রহের জন্য পরীক্ষাটি সফল্ভাবে যুক্ত হয়েছে।</string>
+    <string name="save_locally_message">এই পরীক্ষাটি রিমোট উৎস থেকে খোলে দেওয়া হয়েছে। আপনি কি এটিকে আপনার পরীক্ষার সংগ্রহশালাই যোগ করতে চান\?</string>
+    <string name="save_locally_button">সংগ্রহ তে সেভ করুন</string>
+    <string name="save_state">পরীক্ষার স্থিতি সেভ করুন</string>
+    <string name="save_state_category">পরীক্ষার স্থিতিগুলি সেভ করা হোল</string>
+    <string name="save_state_message">পরীক্ষাটির স্থিতি কে আপনি ডাটা সমেত আপনার সংগ্রহ তে সেভ করতে পারেন অথবা তৃতীয় পার্টির অ্যাপ এর সাথে শেয়ার করতে পারেন ।</string>
+    <string name="save_state_title">শীর্ষক</string>
+    <string name="save_state_save">সংগ্রহ করতে</string>
+    <string name="save_state_share">ভাগাভাগি</string>
+    <string name="save_state_subject">ফিফক্স এর জন্য পরীক্ষার স্থিতি</string>
+    <string name="save_state_default_title">মাপা</string>
+    <string name="save_state_success">আপনার সংগ্রহ তে স্থিতি সেভ করা হয়েছে।</string>
+    <string name="open_zip_title">পরীক্ষাটির একটি সেট কে খুলুন</string>
+    <string name="open_save_all">সবকিছু সেভ করুন</string>
+    <string name="open_bluetooth_assets_title">ব্লুটুথ ডিভাইস এর জন্য পরীক্ষা</string>
+    <string name="timedRun">সময় চালু</string>
+    <string name="pick_exportFormat">ডাটা সজ্জা নির্বাচন করুন।</string>
 </resources>
