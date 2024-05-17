@@ -18,7 +18,7 @@
         android:id="@+id/hint_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_dialog"
+        app:srcCompat="@drawable/rounded_dialog"
         android:gravity="center"
         android:text=""
         android:padding="10dp"

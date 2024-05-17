@@ -89,7 +89,7 @@
             android:paddingLeft="4dp"
             android:paddingBottom="4dp"
             android:layout_gravity="bottom|end"
-            android:src="@drawable/ic_info"
+            app:srcCompat="@drawable/ic_info"
             android:paddingRight="4dp" />
 
     </FrameLayout>
