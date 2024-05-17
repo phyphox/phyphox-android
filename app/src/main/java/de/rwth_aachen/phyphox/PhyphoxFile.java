@@ -3108,12 +3108,10 @@ public abstract class PhyphoxFile {
                 experiment.message = input.errorMessage;
                 return experiment;
             }
-
             experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
             experiment.source = input.source;
             experiment.crc32 = input.crc32;
             experiment.resourceFolder = input.resourceFolder;
-
             try {
                 //Setup the pull parser
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
