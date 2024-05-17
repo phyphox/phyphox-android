@@ -399,13 +399,14 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             //Bluetooth
             Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
             for (BluetoothInput bti : bluetoothInputs) {
+                bti.stop();
                 uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
             }
             for (BluetoothOutput bto : bluetoothOutputs) {
+                bto.stop();
                 uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
             }
             for (Bluetooth b : uniqueBluetoothDevices.values()) {
-                b.stop();
                 b.writeEventCharacteristic(event);
             }
         }
@@ -430,7 +431,6 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                 uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
             }
             for (Bluetooth b : uniqueBluetoothDevices.values()) {
-                b.stop();
                 b.writeEventCharacteristic(event);
             }
         }
