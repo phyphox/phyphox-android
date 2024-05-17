@@ -1378,9 +1378,11 @@ public class ExperimentList extends AppCompatActivity {
                         .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
                             for (ExperimentsInCategory experimentCats : zipExperiments) {
                                 for (ExperimentShortInfo experimentShortInfo : experimentCats.experiments.experimentShortInfos) {
-                                    File file = new File(experimentShortInfo.xmlFile);
+                                    File file = new File(tempPath, experimentShortInfo.xmlFile);
                                     long crc32 = Helper.getCRC32(file);
+                                    Log.d("TEST", "CRC32 > " + Long.toHexString(crc32).toLowerCase());
                                     if (!Helper.experimentInCollection(crc32, parent)) {
+                                        Log.d("TEST", "Looks okish...");
                                         file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
                                         if (!experimentShortInfo.resources.isEmpty()) {
                                             File resFolder = new File(tempPath, "res");

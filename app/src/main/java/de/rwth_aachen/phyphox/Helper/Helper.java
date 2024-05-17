@@ -209,6 +209,7 @@ public abstract class Helper {
             }
             input.close();
         }catch (Exception e) {
+            Log.e("getCRC32", "Exception: " + e.getMessage());
             return 0;
         }
 
