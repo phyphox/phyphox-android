@@ -1464,11 +1464,14 @@ public class ExperimentList extends AppCompatActivity {
             bluetoothExperimentLoader = new BluetoothExperimentLoader(getBaseContext(), new BluetoothExperimentLoader.BluetoothExperimentLoaderCallback() {
                 @Override
                 public void updateProgress(int transferred, int total) {
-                    if (total > 0) {
-                        if (progress.isIndeterminate()) {
-                            parent.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
+
+                    parent.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            if (total > 0) {
+                                if (progress.isIndeterminate()) {
+                                    progress.dismiss();
                                     progress = new ProgressDialog(parent);
                                     progress.setTitle(res.getString(R.string.loadingTitle));
                                     progress.setMessage(res.getString(R.string.loadingText));
@@ -1485,26 +1488,33 @@ public class ExperimentList extends AppCompatActivity {
                                     progress.setProgress(transferred);
                                     progress.setMax(total);
                                     progress.show();
+                                } else {
+                                    progress.setProgress(transferred);
                                 }
-                            });
-                        } else {
-                            progress.setProgress(transferred);
+                            }
                         }
-                    }
+                    });
                 }
 
                 @Override
                 public void dismiss() {
-                    progress.dismiss();
+                    parent.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress.dismiss();
+                        }
+                    });
                 }
 
                 @Override
                 public void error(String msg) {
+                    dismiss();
                     showBluetoothExperimentReadError(msg, device);
                 }
 
                 @Override
                 public void success(Uri experimentUri, boolean isZip) {
+                    dismiss();
                     Intent intent = new Intent(parent, Experiment.class);
                     intent.setData(experimentUri);
                     intent.setAction(Intent.ACTION_VIEW);

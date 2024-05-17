@@ -37,6 +37,8 @@ public class BluetoothExperimentLoader {
     int currentBluetoothDataIndex;
     long currentBluetoothDataCRC32;
 
+    boolean active = false;
+
     public interface BluetoothExperimentLoaderCallback {
         void updateProgress(int transferred, int total);
         void dismiss();
@@ -61,6 +63,7 @@ public class BluetoothExperimentLoader {
         currentBluetoothDataSize = 0;
         currentBluetoothDataIndex = 0;
         descriptor = null;
+        active = false;
 
         gatt = device.connectGatt(ctx, false, new BluetoothGattCallback() {
             @Override
@@ -98,6 +101,8 @@ public class BluetoothExperimentLoader {
                     callback.error(ctx.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + ctx.getString(R.string.bt_exception_notification_enable) + " (no experiment characteristic)");
                     return;
                 }
+
+                active = true;
 
                 //Enable notifications
                 if (!gatt.setCharacteristicNotification(experimentCharacteristic, true)) {
@@ -165,10 +170,12 @@ public class BluetoothExperimentLoader {
     private void disconnect() {
             //If phyphoxExperimentControlCharacteristicUUID is available, we can tell the device that we are no longer expecting the transfer by writing 0
             setControlCharacteristicIfAvailable(0);
+            active = false;
             gatt.disconnect();
     }
 
     public void cancel() {
+        active = false;
         if (gatt != null) {
             if (descriptor != null) {
                 descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
@@ -181,6 +188,8 @@ public class BluetoothExperimentLoader {
     }
 
     private void dataIn(byte[] data) {
+        if (!active)
+            return;
         if (currentBluetoothData == null) {
             String header = new String(data);
             if (!header.startsWith("phyphox")) {
