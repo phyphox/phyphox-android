@@ -10,7 +10,7 @@ android {
 
         versionName "1.1.16"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1011601 //1.01.16-01
+        versionCode 1011602 //1.01.16-02
 
         def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
@@ -62,6 +62,12 @@ android {
     useLibrary 'org.apache.http.legacy'
     namespace 'de.rwth_aachen.phyphox'
     testNamespace 'de.rwth_aachen.phyphoxTest'
+
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }
 
 dependencies {
