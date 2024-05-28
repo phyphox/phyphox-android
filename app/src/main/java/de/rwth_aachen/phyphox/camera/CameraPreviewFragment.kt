@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import de.rwth_aachen.phyphox.Helper.RGB
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
@@ -31,7 +32,10 @@ class CameraPreviewFragment (
         private val scrollable: Scrollable,
         private val toggleExclusive: () -> Boolean,
         private val showCameraControls: ShowCameraControls,
-        private val cameraSettingsLevel: CameraSettingLevel
+        private val cameraSettingsLevel: CameraSettingLevel,
+        private val grayscale: Boolean,
+        private val markOverexposure: RGB?,
+        private val markUnderexposure: RGB?
 ) : Fragment() {
     val TAG = "CameraPreviewFragment"
 
@@ -72,7 +76,7 @@ class CameraPreviewFragment (
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        cameraPreviewScreen = CameraPreviewScreen(view, experiment?.cameraInput!!, cameraViewModel, toggleExclusive)
+        cameraPreviewScreen = CameraPreviewScreen(view, experiment?.cameraInput!!, cameraViewModel, toggleExclusive, grayscale, markOverexposure, markUnderexposure)
         cameraViewModel.start(cameraScreenViewState, cameraPreviewScreen)
 
         lifecycleScope.launch {

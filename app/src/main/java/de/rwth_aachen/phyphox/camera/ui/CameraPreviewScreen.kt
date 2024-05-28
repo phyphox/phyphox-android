@@ -36,6 +36,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import com.google.common.util.concurrent.ListenableFuture
+import de.rwth_aachen.phyphox.Helper.RGB
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.CameraInput
@@ -64,7 +65,10 @@ class CameraPreviewScreen(
         private val root: View,
         private val cameraInput: CameraInput,
         private val cameraViewModel: CameraViewModel,
-        private val toggleExclusive: () -> Boolean
+        private val toggleExclusive: () -> Boolean,
+        val grayscale: Boolean,
+        val markOverexposure: RGB?,
+        val markUnderexposure: RGB?
 ) {
 
     private val context: Context = root.context

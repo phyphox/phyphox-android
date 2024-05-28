@@ -2309,6 +2309,10 @@ public class ExpView implements Serializable{
         transient private CameraPreviewFragment cameraPreviewFragment = null;
         float height = 300; //dp, might be settable in the future
 
+        boolean grayscale;
+        RGB markOverexposure;
+        RGB markUnderexposure;
+
         ShowCameraControls showCameraControls = ShowCameraControls.FullViewOnly;
         CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCE;
         String lockedSettings;
@@ -2345,6 +2349,12 @@ public class ExpView implements Serializable{
             }
         }
 
+        public void setPreviewParameters(boolean grayscale, RGB markOverexposure, RGB markUnderexposure) {
+            this.grayscale = grayscale;
+            this.markOverexposure = markOverexposure;
+            this.markUnderexposure = markUnderexposure;
+        }
+
         protected boolean toggleExclusive() {
             if (self.parent != null) {
                 if (isExclusive) {
@@ -2376,7 +2386,7 @@ public class ExpView implements Serializable{
 
             FragmentContainerView containerView = rootView.findViewById(R.id.fragmentContainerView);
             if (cameraPreviewFragment == null)
-                cameraPreviewFragment = new CameraPreviewFragment(experiment, scrollable, this::toggleExclusive, showCameraControls, cameraSettingLevel);
+                cameraPreviewFragment = new CameraPreviewFragment(experiment, scrollable, this::toggleExclusive, showCameraControls, cameraSettingLevel, grayscale, markOverexposure, markUnderexposure);
 
             parent.getChildFragmentManager().beginTransaction().add(containerView.getId(), cameraPreviewFragment).commit();
         }

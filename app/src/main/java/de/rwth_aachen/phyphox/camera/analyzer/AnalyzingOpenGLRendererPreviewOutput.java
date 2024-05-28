@@ -32,6 +32,7 @@ import android.opengl.EGLContext;
 
 import javax.microedition.khronos.egl.EGL10;
 
+import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -40,17 +41,37 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
 
     final static String fragmentShader =
             "#extension GL_OES_EGL_image_external : require\n" +
-            "precision mediump float;" +
-            "uniform samplerExternalOES texture;" +
-            "varying vec2 positionInPassepartout;" +
-            "varying vec2 texPosition;" +
-            "void main () {" +
-            "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0))))" +
-            "       gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0) * texture2D(texture, texPosition);" +
-            "  else " +
-            "       gl_FragColor = texture2D(texture, texPosition);" +
-            "}";
+            "precision mediump float;\n" +
+            "uniform samplerExternalOES texture;\n" +
+            "varying vec2 positionInPassepartout;\n" +
+            "varying vec2 texPosition;\n" +
+
+            "uniform int grayscale;\n" +
+            "uniform int markOverexposure;\n" +
+            "uniform int markUnderexposure;\n" +
+            "uniform vec3 overexposureColor;\n" +
+            "uniform vec3 underexposureColor;\n" +
+
+            "void main () {\n" +
+            "  vec4 color;\n" +
+            "  if (grayscale > 0) {\n " +
+            "    float luma = dot(texture2D(texture, texPosition).rgb, vec3(0.2126, 0.7152, 0.0722));\n" +
+            "    color = vec4(luma, luma, luma, 1.0);\n" +
+            "  } else {\n" +
+            "    color = texture2D(texture, texPosition);\n" +
+            "  }\n" +
+            "  if (markOverexposure > 0 && any(greaterThan(color, vec4(0.99, 0.99, 0.99, 1.0)))) {\n" +
+            "    color = vec4(overexposureColor, 1.0);\n" +
+            "  } else if (markUnderexposure > 0 && any(lessThan(color, vec4(0.01, 0.01, 0.01, 0.0)))) {\n" +
+            "    color = vec4(underexposureColor, 1.0);\n" +
+            "  }\n" +
+            "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0))))\n" +
+            "       gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0) * color;\n" +
+            "  else\n" +
+            "       gl_FragColor = color;\n" +
+            "}\n";
     static int program, verticesHandle, texCoordinatesHandle, camMatrixHandle, textureHandle, passepartoutMinHandle, passepartoutMaxHandle;
+    static int grayscaleHandle, markOverexposureHandle, markUnderexposureHandle, overexposureColorHandle, underexposureColorHandle;
     static EGLContext eglContext = null;
     static EGLDisplay eglDisplay;
     static EGLConfig eglConfig;
@@ -62,12 +83,18 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
     private SurfaceTexture newSurface = null;
     int w, h;
 
+    boolean grayscale;
+    RGB markOverexposure, markUnderexposure;
+
     int[] surfaceAttribs = {
             EGL10.EGL_NONE
     };
 
     AnalyzingOpenGLRendererPreviewOutput(CameraPreviewScreen cameraPreviewScreen) {
         this.cameraPreviewScreen = new WeakReference<>(cameraPreviewScreen);
+        this.grayscale = cameraPreviewScreen.getGrayscale();
+        this.markOverexposure = cameraPreviewScreen.getMarkOverexposure();
+        this.markUnderexposure = cameraPreviewScreen.getMarkUnderexposure();
     }
 
     public boolean isGone() {
@@ -120,6 +147,12 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
         passepartoutMinHandle = GLES20.glGetUniformLocation(program, "passepartoutMin");
         passepartoutMaxHandle = GLES20.glGetUniformLocation(program, "passepartoutMax");
 
+        grayscaleHandle = GLES20.glGetUniformLocation(program, "grayscale");
+        markOverexposureHandle = GLES20.glGetUniformLocation(program, "markOverexposure");
+        overexposureColorHandle = GLES20.glGetUniformLocation(program, "overexposureColor");
+        markUnderexposureHandle = GLES20.glGetUniformLocation(program, "markUnderexposure");
+        underexposureColorHandle = GLES20.glGetUniformLocation(program, "underexposureColor");
+
         checkGLError("preview: prepareOpenGL");
     }
 
@@ -147,6 +180,14 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
         GLES20.glUniform1i(textureHandle, 0);
         GLES20.glUniform2f(passepartoutMinHandle, passepartout.left, passepartout.top);
         GLES20.glUniform2f(passepartoutMaxHandle, passepartout.right, passepartout.bottom);
+
+        GLES20.glUniform1i(grayscaleHandle, grayscale ? 1 : 0);
+        GLES20.glUniform1i(markOverexposureHandle, markOverexposure != null ? 1 : 0);
+        GLES20.glUniform1i(markUnderexposureHandle, markUnderexposure != null ? 1 : 0);
+        if (markOverexposure != null)
+            GLES20.glUniform3f(overexposureColorHandle, markOverexposure.r() / 255.f, markOverexposure.g() / 255.f, markOverexposure.b() / 255.f);
+        if (markUnderexposure != null)
+            GLES20.glUniform3f(underexposureColorHandle, markUnderexposure.r() / 255.f, markUnderexposure.g() / 255.f, markUnderexposure.b() / 255.f);
 
         GLES20.glUniformMatrix4fv(camMatrixHandle, 1, false, camMatrix, 0);
 

@@ -19,14 +19,17 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.SurfaceRequest;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
+import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.camera.CameraInput;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen;
@@ -48,7 +51,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
     Lock dataLock;
     List<AnalyzingModule> analyzingModules = new ArrayList<>();
-    List<AnalyzingOpenGLRendererPreviewOutput> previewOutputs = new LinkedList<>();
+    Deque<AnalyzingOpenGLRendererPreviewOutput> previewOutputs = new ConcurrentLinkedDeque<>();
 
     public boolean measuring = false;
     ExperimentTimeReference experimentTimeReference;

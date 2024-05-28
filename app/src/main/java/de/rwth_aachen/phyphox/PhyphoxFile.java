@@ -1621,8 +1621,13 @@ public abstract class PhyphoxFile {
                         }
                     }
 
+                    boolean grayscale = getBooleanAttribute("grayscale", false);
+                    RGB markOverexposure = getColorAttribute("markOverexposure", null);
+                    RGB markUnderexposure = getColorAttribute("markUnderexposure", null);
+
                     ExpView.cameraElement cameraElement = newView.new cameraElement(label, null, null, parent.getResources());
                     cameraElement.applyControlSettings(showCameraControls, exposureAdjustmentLevel);
+                    cameraElement.setPreviewParameters(grayscale, markOverexposure, markUnderexposure);
                     newView.elements.add(cameraElement);
                     break;
                 }
