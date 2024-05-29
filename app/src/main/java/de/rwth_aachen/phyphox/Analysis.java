@@ -1304,12 +1304,12 @@ public class Analysis {
                 //Only trigger if the last and the current value are valid,
                 if (!(Double.isNaN(last) || Double.isNaN(v))) {
                     if (falling) {
-                        if (last > vthreshold && v < vthreshold) {
+                        if (last >= vthreshold && v < vthreshold) {
                             //Falling trigger and value went below threshold -> break
                             break;
                         }
                     } else {
-                        if (last < vthreshold && v > vthreshold) {
+                        if (last <= vthreshold && v > vthreshold) {
                             //Rising trigger and value went above threshold -> break
                             break;
                         }
@@ -2510,6 +2510,177 @@ public class Analysis {
                     outputs.get(out).append(index < inputArray.length ? inputArray[index] : Double.NaN);
                 }
             }
+
+        }
+    }
+
+    //Eventstream
+    //This is a convenient and faster substitute for stopwatch implementations like the acoustic stopwatch
+    //It takes an attribute "mode" determining wether raw values, derivatives or absolutes are used for triggering
+    //Inputs are data, threshold and distance (the minimum number of values before the event may be detected)
+    //Furthermore it takes index, skip and last as inputs. These represent the index (nth sample) of the data within a stream, the number of values to be skipped (typically the remainder of the last "distance") and last (the last value from the pervious data block)
+    //The output is mainly "events" which will hold the indices of detected events
+    //Additionally, there are also index, skip und last as outputs, corresponding to the inputs. Often it is sufficient to just write these to a buffer and use the same one as input for the next iteration.
+    public static class eventstreamAM extends AnalysisModule implements Serializable {
+        public enum TriggerMode {
+            above, below, aboveAbsolute, belowAbsolute, aboveDerivative, belowDerivative, aboveDerivativeAbsolute, belowDerivativeAbsolute;
+        }
+
+        TriggerMode triggerMode = TriggerMode.above;
+
+        protected eventstreamAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, TriggerMode triggerMode) {
+            super(experiment, inputs, outputs);
+            this.triggerMode = triggerMode;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            double threshold = 0.;
+            int distance = 0;
+            int index = 0;
+            int skip = 0;
+            double last = Double.NaN;
+
+            Double[] data = inputArrays.get(0);
+            if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
+                threshold = inputArrays.get(1)[inputArraySizes.get(1)-1];
+            if (inputArrays.size() > 2 && inputArrays.get(2) != null && inputArraySizes.get(2) > 0)
+                distance = inputArrays.get(2)[inputArraySizes.get(2)-1].intValue();
+            if (inputArrays.size() > 3 && inputArrays.get(3) != null && inputArraySizes.get(3) > 0)
+                index = inputArrays.get(3)[inputArraySizes.get(3)-1].intValue();
+            if (inputArrays.size() > 4 && inputArrays.get(4) != null && inputArraySizes.get(4) > 0)
+                skip = inputArrays.get(4)[inputArraySizes.get(4)-1].intValue();
+            if (inputArrays.size() > 5 && inputArrays.get(5) != null && inputArraySizes.get(5) > 0)
+                last = inputArrays.get(5)[inputArraySizes.get(5)-1];
+
+            int i = 0;
+            int n = inputArraySizes.get(0);
+            while (i < n) { //For each value of input1
+                if (skip > 0) {
+                    int steps = Math.min(skip, n-i);
+                    skip -= steps;
+                    i += steps;
+                    last = data[i-1];
+                    continue;
+                }
+                double v = data[i];
+                boolean triggered = false;
+
+                switch (triggerMode) {
+                    case above:
+                        triggered = v > threshold;
+                        break;
+                    case below:
+                        triggered = v < threshold;
+                        break;
+                    case aboveAbsolute:
+                        triggered = Math.abs(v) > threshold;
+                        break;
+                    case belowAbsolute:
+                        triggered = Math.abs(v) < threshold;
+                        break;
+                    case aboveDerivative:
+                        triggered = v - last > threshold;
+                        break;
+                    case belowDerivative:
+                        triggered = v - last < threshold;
+                        break;
+                    case aboveDerivativeAbsolute:
+                        triggered = Math.abs(v - last) > threshold;
+                        break;
+                    case belowDerivativeAbsolute:
+                        triggered = Math.abs(v - last) < threshold;
+                        break;
+                }
+
+                if (triggered) {
+                    if (outputs.size() > 0 &&  outputs.get(0) != null)
+                        outputs.get(0).append(i+index);
+                    skip = distance;
+                }
+                last = v;
+                i++;
+            }
+
+            if (outputs.size() > 1 && outputs.get(1) != null) {
+                outputs.get(1).append(index+i);
+            }
+            if (outputs.size() > 2 && outputs.get(2) != null) {
+                outputs.get(2).append(skip);
+            }
+            if (outputs.size() > 3 && outputs.get(3) != null) {
+                outputs.get(3).append(last);
+            }
+        }
+    }
+
+    //Moving average
+    //Take data as input along with width of the moving average (number of values to average)
+    //Output is just the resulting moving average
+    //Parameter dropIncomplete determines whether values are emitted if less than width values have been taken into account
+    //With dropIncomplete true, it will output n-width+1 values for an input of n data values
+    //With dropIncomplete false, it will output n values
+    public static class movingaverageAM extends AnalysisModule implements Serializable {
+        boolean dropIncomplete = false;
+
+        protected movingaverageAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, boolean dropIncomplete) {
+            super(experiment, inputs, outputs);
+            this.dropIncomplete = dropIncomplete;
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            int width = 10;
+
+            Double[] data = inputArrays.get(0);
+            if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
+                width = inputArrays.get(1)[inputArraySizes.get(1)-1].intValue();
+
+            int start = dropIncomplete ? width : 0;
+
+            for (int i = start; i < inputArraySizes.get(0); i++) {
+                int substart = Math.min(i-width, 0);
+                double sum = 0.0;
+                for (int j = substart; j <= i; j++) {
+                    sum += data[j];
+                }
+                sum /= (double)(i - substart + 1);
+                outputs.get(0).append(sum);
+            }
+        }
+    }
+
+    //Split
+    //Takes data as input and splits it into two buffers at the index (given as second input)
+    //Index defaults to the length of the input data if not given (i.e. the entire input is returned as the first output without splitting)
+    //A third parameter "overlap" allows to set a number of elements from before the split index that will also end up in the second buffer
+    //Setting only "overlap" will result in all data being copied into the first output and the last "overlap" elements also being copied to the second output
+    public static class splitAM extends AnalysisModule implements Serializable {
+        protected splitAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            Double[] data = inputArrays.get(0);
+
+            int n = inputArraySizes.get(0);
+            int index = n;
+            if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
+                index = inputArrays.get(1)[inputArraySizes.get(1)-1].intValue();
+            int overlap = 0;
+            if (inputArrays.size() > 2 && inputArrays.get(2) != null && inputArraySizes.get(2) > 0)
+                overlap = inputArrays.get(2)[inputArraySizes.get(2)-1].intValue();
+
+            int limit = Math.min(index, n);
+            if (outputs.size() > 0 && outputs.get(0) != null)
+                outputs.get(0).append(Arrays.copyOfRange(data, 0, limit), limit);
+            limit = Math.max(limit - overlap, 0);
+            if (outputs.size() > 1 && outputs.get(1) != null)
+                outputs.get(1).append(Arrays.copyOfRange(data, limit, n), n-limit);
 
         }
     }

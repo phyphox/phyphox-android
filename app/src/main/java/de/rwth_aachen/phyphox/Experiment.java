@@ -18,6 +18,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -267,7 +268,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             //Start loading the experiment in a second thread (mostly for network loading, but it won't hurt in any case...)
             //So display a ProgressDialog and instantiate and execute loadXMLAsyncTask (see phyphoxFile class)
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-            (new PhyphoxFile.loadXMLAsyncTask(intent, this)).execute();
+            (new PhyphoxFile.loadXMLAsyncTask(intent, this)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
     }
@@ -1035,17 +1036,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
             final CheckBox cbTimedRunEnabled = (CheckBox) vLayout.findViewById(R.id.timedRunEnabled);
-            final TableLayout tTimedRunTimeOptions = (TableLayout) vLayout.findViewById(R.id.timedRunTimeOptions);
-            final RelativeLayout tTimedRunBeeperAllRow = (RelativeLayout) vLayout.findViewById(R.id.timedRunBeepAllRow);
-            final TableLayout tTimedRunBeeperOptions = (TableLayout) vLayout.findViewById(R.id.timedRunBeepOptions);
+            final RelativeLayout tTimedRunTimeOptions = (RelativeLayout) vLayout.findViewById(R.id.timedRunTimeOptions);
+
             cbTimedRunEnabled.setChecked(timedRun);
 
             final CompoundButton.OnCheckedChangeListener enabledChanged = new CompoundButton.OnCheckedChangeListener() {
                   @Override
                   public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                       tTimedRunTimeOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-                      tTimedRunBeeperAllRow.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-                      tTimedRunBeeperOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                   }
 
             };

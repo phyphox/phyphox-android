@@ -17,6 +17,7 @@ import android.os.Build;
 import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -73,7 +74,7 @@ import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.17";
+    public final static String phyphoxFileVersion = "1.18";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -107,11 +108,12 @@ public abstract class PhyphoxFile {
         InputStream inputStream = null; //the input stream or null on error
         byte source[] = null;           //A copy of the input for non-local sources
         String errorMessage = "";       //Error message that can be displayed to the user
+        String resourceFolder = null;   //Local folder that holds the resources required by the experiment (for example images)
         long crc32;
     }
 
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
-    public static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
+    public static void remoteInputToMemory(PhyphoxStream stream, String resourceFolder, boolean resourceViaCRC32) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         CRC32 crc32 = new CRC32();
@@ -127,6 +129,11 @@ public abstract class PhyphoxFile {
         stream.source = os.toByteArray();
         stream.inputStream = new ByteArrayInputStream(stream.source);
         stream.crc32 = crc32.getValue();
+
+        if (resourceFolder != null)
+            stream.resourceFolder = resourceFolder + "/" + (resourceViaCRC32 ? Long.toHexString(crc32.getValue()).toLowerCase() : "res");
+        else
+            stream.resourceFolder = null;
     }
 
     //Helper function to open an inputStream from various intents
@@ -150,7 +157,7 @@ public abstract class PhyphoxFile {
                     AssetManager assetManager = parent.getAssets();
                     try {
                         phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        remoteInputToMemory(phyphoxStream);
+                        remoteInputToMemory(phyphoxStream, "ASSET", true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
                     }
@@ -158,15 +165,17 @@ public abstract class PhyphoxFile {
                     //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
                     try {
                         File tempDir = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP));
-                        phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
-                        remoteInputToMemory(phyphoxStream);
+                        File file = new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        phyphoxStream.inputStream = new FileInputStream(file);
+                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), false);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
                 } else { //The local file is in the private directory
                     try {
                         phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        remoteInputToMemory(phyphoxStream);
+                        File file = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
@@ -191,7 +200,8 @@ public abstract class PhyphoxFile {
                 }
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
-                    remoteInputToMemory(phyphoxStream);
+                    File containingFolder = new File(uri.getPath());
+                    remoteInputToMemory(phyphoxStream, containingFolder.getParent(), false);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from file: " + e.getMessage();
                 }
@@ -203,7 +213,7 @@ public abstract class PhyphoxFile {
                 ContentResolver resolver = parent.getContentResolver();
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
-                    remoteInputToMemory(phyphoxStream);
+                    remoteInputToMemory(phyphoxStream, null, false);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from content: " + e.getMessage();
                 }
@@ -214,13 +224,13 @@ public abstract class PhyphoxFile {
                 try {
                     URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                     phyphoxStream.inputStream = url.openStream();
-                    remoteInputToMemory(phyphoxStream);
+                    remoteInputToMemory(phyphoxStream, null, false);
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
                         URL url = new URL("http", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                         phyphoxStream.inputStream = url.openStream();
-                        remoteInputToMemory(phyphoxStream);
+                        remoteInputToMemory(phyphoxStream, null, false);
                     } catch (Exception e2) {
                         phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
                     }
@@ -1594,10 +1604,46 @@ public abstract class PhyphoxFile {
                     newView.elements.add(dge);
                     break;
                 }
+                case "image": { // Shows an image
+                    String src = getStringAttribute("src");
+                    if (src == null || src.isEmpty())
+                        throw new phyphoxFileException("Image element requires src attribute.", xpp.getLineNumber());
+
+                    ExpView.imageElement img = newView.new imageElement(null, null, parent.getResources(), src); //No inputs (for now?)
+
+                    float scale = (float)getDoubleAttribute("scale", 1.0);
+                    img.setScale(scale);
+
+                    ExpView.ImageFilter darkFilter = ExpView.ImageFilter.none;
+                    ExpView.ImageFilter lightFilter = ExpView.ImageFilter.none;
+                    String darkFilterStr = getStringAttribute("darkFilter");
+                    String lightFilterStr = getStringAttribute("lightFilter");
+                    if (darkFilterStr != null && !darkFilterStr.isEmpty()) {
+                        try {
+                            darkFilter = ExpView.ImageFilter.valueOf(darkFilterStr);
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Unknown image filter: " + darkFilterStr, xpp.getLineNumber());
+                        }
+                    }
+                    if (lightFilterStr != null && !lightFilterStr.isEmpty()) {
+                        try {
+                            lightFilter = ExpView.ImageFilter.valueOf(lightFilterStr);
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Unknown image filter: " + lightFilterStr, xpp.getLineNumber());
+                        }
+                    }
+
+
+                    img.setFilters(darkFilter, lightFilter);
+
+                    newView.elements.add(img);
+                    experiment.resources.add(src);
+                    break;
+                }
                 case "camera-gui": {
                     String showControls = getStringAttribute("show_controls");
                     if (showControls == null) {
-                        showControls = "";
+                        showControls = "full_view_only";
                     } else {
                         showControls = showControls.toLowerCase();
                     }
@@ -1629,42 +1675,6 @@ public abstract class PhyphoxFile {
                     cameraElement.applyControlSettings(showCameraControls, exposureAdjustmentLevel);
                     cameraElement.setPreviewParameters(grayscale, markOverexposure, markUnderexposure);
                     newView.elements.add(cameraElement);
-                    break;
-                }
-                case "svg": {
-                    //A (parametric) svg image
-                    //Allowed input/output configuration
-                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
-                    };
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
-
-                    Vector<String> inStrings = new Vector<>();
-                    for (DataInput input : inputs)
-                        inStrings.add(input.buffer.name);
-
-                    ExpView.svgElement svge = newView.new svgElement(null, null, inStrings, parent.getResources()); //No inputs, just the label and resources
-
-                    String svgCode = null;
-                    for (ioBlockParser.AdditionalTag at : ats) {
-                        if (at.name.equals("input"))
-                            continue;
-                        if (!at.name.equals("source")) {
-                            throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
-                        }
-                        svgCode = at.content;
-                    }
-
-                    if (svgCode == null) {
-                        throw new phyphoxFileException("SVG source code missing.", xpp.getLineNumber());
-                    } else
-                        svge.setSvgParts(svgCode);
-
-                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_black_60)));
-                    svge.setBackgroundColor(color.intColor());
-
-                    newView.elements.add(svge);
                     break;
                 }
                 default: //Unknown tag...
@@ -1770,7 +1780,6 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("Need permission to record audio."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
                     }
                     experiment.micRate = getIntAttribute("rate", 48000); //Recording rate
-                    experiment.appendAudioInput = getBooleanAttribute("append", false);
                     experiment.appendAudioInput = getBooleanAttribute("append", false);
 
                     //Allowed input/output configuration
@@ -3022,6 +3031,65 @@ public abstract class PhyphoxFile {
                     Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(experiment, inputs, outputs);
                     experiment.analysis.add(constAM);
                 } break;
+                case "eventstream": { //Find events in a datastream (i.e. acoustic stopwatch)
+                    String triggerModeStr = getStringAttribute("mode");
+                    if (triggerModeStr == null)
+                        triggerModeStr = "above";
+
+                    Analysis.eventstreamAM.TriggerMode triggerMode;
+
+                    try {
+                        triggerMode = Analysis.eventstreamAM.TriggerMode.valueOf(triggerModeStr);
+                    } catch (Exception e) {
+                        throw new phyphoxFileException("Unknown trigger mode " + triggerModeStr, xpp.getLineNumber());
+                    }
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "distance"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "skip"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "last"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "events"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "skip"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "last"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.eventstreamAM(experiment, inputs, outputs, triggerMode));
+                } break;
+                case "movingaverage": { //Find events in a datastream (i.e. acoustic stopwatch)
+                    boolean dropIncomplete = getBooleanAttribute("dropIncomplete", false);
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "width"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.movingaverageAM(experiment, inputs, outputs, dropIncomplete));
+                } break;
+                case "split": { //Find events in a datastream (i.e. acoustic stopwatch)
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "overlap"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out1"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "out2"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.splitAM(experiment, inputs, outputs));
+                } break;
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
@@ -3166,7 +3234,7 @@ public abstract class PhyphoxFile {
             experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
             experiment.source = input.source;
             experiment.crc32 = input.crc32;
-
+            experiment.resourceFolder = input.resourceFolder;
             try {
                 //Setup the pull parser
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
@@ -3297,7 +3365,21 @@ public abstract class PhyphoxFile {
             } catch (Exception e) {
                 return "Error loading the original XML file again: " + e.getMessage();
             }
-            return "";
+            PhyphoxExperiment exp = parent.get().experiment;
+            String warnings = "";
+            if (exp.resourceFolder != null && !exp.resources.isEmpty()) {
+                File newResFolder = new File(parent.get().getFilesDir(), Long.toHexString(exp.crc32).toLowerCase());
+                newResFolder.mkdirs();
+                for (String src : exp.resources) {
+                    try {
+                        Helper.copyFile(new File(exp.resourceFolder, src), new File(newResFolder, src));
+                    } catch (Exception e) {
+                        Log.e("CopyXML", "Could not save resource: " + e.getMessage());
+                        warnings += "Could not save resource: " + src + "\n";
+                    }
+                }
+            }
+            return warnings;
         }
 
         @Override

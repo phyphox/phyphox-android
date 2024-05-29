@@ -63,6 +63,12 @@ android {
     useLibrary 'org.apache.http.legacy'
     namespace 'de.rwth_aachen.phyphox'
     testNamespace 'de.rwth_aachen.phyphoxTest'
+
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }
 
 dependencies {

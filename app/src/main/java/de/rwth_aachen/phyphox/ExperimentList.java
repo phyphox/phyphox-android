@@ -66,6 +66,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.collection.ArraySet;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
@@ -127,8 +128,22 @@ import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
 
 public class ExperimentList extends AppCompatActivity {
 
+    class ExperimentShortInfo {
+        RGB color;
+        Drawable icon;
+        String title;
+        String description;
+        Set<String> resources;
+        String xmlFile;
+        String isTemp;
+        boolean isAsset;
+        int unavailableSensor;
+        String isLink;
+    }
+
     //Strings which define extra information for intents starting an experiment from local files
     public final static String EXPERIMENT_XML = "com.dicon.phyphox.EXPERIMENT_XML";
+    public final static String EXPERIMENT_RESOURCELIST = "com.dicon.phyphox.EXPERIMENT_RESOURCELIST";
     public final static String EXPERIMENT_ISTEMP = "com.dicon.phyphox.EXPERIMENT_ISTEMP";
     public final static String EXPERIMENT_ISASSET = "com.dicon.phyphox.EXPERIMENT_ISASSET";
     public final static String EXPERIMENT_UNAVAILABLESENSOR = "com.dicon.phyphox.EXPERIMENT_UNAVAILABLESENSOR";
@@ -249,15 +264,8 @@ public class ExperimentList extends AppCompatActivity {
         private String preselectedBluetoothAddress = null;
 
         //Experiment data
-        Vector<RGB> colors = new Vector<>(); //List of colors for each experiment
-        Vector<Drawable> icons = new Vector<>(); //List of icons for each experiment
-        Vector<String> titles = new Vector<>(); //List of titles for each experiment
-        Vector<String> infos = new Vector<>(); //List of short descriptions for each experiment
-        Vector<String> xmlFiles = new Vector<>(); //List of xmlFile name for each experiment (has to be provided in the intent if the user wants to load this)
-        Vector<String> isTemp = new Vector<>(); //List of booleans for each experiment, which track whether the file is a temporary file
-        Vector<Boolean> isAsset = new Vector<>(); //List of booleans for each experiment, which track whether the file is an asset or stored loacally (has to be provided in the intent if the user wants to load this)
-        Vector<Integer> unavailableSensorList = new Vector<>(); //List of strings for each experiment, which give the name of the unavailable sensor if sensorReady is false
-        Vector<String> isLinkList = new Vector<>(); //List of strings for each experiment, which are an URL is it is only a link entry
+
+        Vector<ExperimentShortInfo> experimentShortInfos = new Vector<>();
 
         //The constructor takes the activity reference. That's all.
         public ExperimentItemAdapter(Activity parentActivity, String category) {
@@ -272,7 +280,7 @@ public class ExperimentList extends AppCompatActivity {
 
         //The number of elements is just the number of icons. (Any of the lists should do)
         public int getCount() {
-            return icons.size();
+            return experimentShortInfos.size();
         }
 
         //We don't need to pick an object with this interface, but it has to be implemented
@@ -290,10 +298,10 @@ public class ExperimentList extends AppCompatActivity {
         public void start(int position, View v) {
             //Create the intent and place the experiment location in it
             Intent intent = new Intent(v.getContext(), Experiment.class);
-            intent.putExtra(EXPERIMENT_XML, xmlFiles.get(position));
-            intent.putExtra(EXPERIMENT_ISTEMP, isTemp.get(position));
-            intent.putExtra(EXPERIMENT_ISASSET, isAsset.get(position));
-            intent.putExtra(EXPERIMENT_UNAVAILABLESENSOR, unavailableSensorList.get(position));
+            intent.putExtra(EXPERIMENT_XML, experimentShortInfos.get(position).xmlFile);
+            intent.putExtra(EXPERIMENT_ISTEMP, experimentShortInfos.get(position).isTemp);
+            intent.putExtra(EXPERIMENT_ISASSET, experimentShortInfos.get(position).isAsset);
+            intent.putExtra(EXPERIMENT_UNAVAILABLESENSOR, experimentShortInfos.get(position).unavailableSensor);
             if (this.preselectedBluetoothAddress != null)
                 intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, this.preselectedBluetoothAddress);
             intent.setAction(Intent.ACTION_VIEW);
@@ -311,25 +319,16 @@ public class ExperimentList extends AppCompatActivity {
         //Called to fill the adapter with experiment.
         //For each experiment we need an icon, a title, a short description, the location of the
         // file and whether it can be found as an asset or a local file.
-        public void addExperiment(RGB color, Drawable icon, String title, String info, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
+        public void addExperiment(ExperimentShortInfo shortInfo) {
             //Insert it alphabetically into out list. So find the element before which the new
             //title belongs.
             int i;
-            for (i = 0; i < titles.size(); i++) {
-                if (titles.get(i).compareTo(title) >= 0)
+            for (i = 0; i < experimentShortInfos.size(); i++) {
+                if (experimentShortInfos.get(i).title.compareTo(shortInfo.title) >= 0)
                     break;
             }
 
-            //Now insert the experiment here
-            colors.insertElementAt(color, i);
-            icons.insertElementAt(icon, i);
-            titles.insertElementAt(title, i);
-            infos.insertElementAt(info, i);
-            xmlFiles.insertElementAt(xmlFile, i);
-            this.isTemp.insertElementAt(isTemp, i);
-            this.isAsset.insertElementAt(isAsset, i);
-            unavailableSensorList.insertElementAt(unavailableSensor, i);
-            isLinkList.insertElementAt(isLink, i);
+            experimentShortInfos.insertElementAt(shortInfo, i);
 
             //Notify the adapter that we changed its contents
             this.notifyDataSetChanged();
@@ -353,9 +352,9 @@ public class ExperimentList extends AppCompatActivity {
                 convertView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (isLinkList.get(position) != null) {
+                        if (experimentShortInfos.get(position).isLink != null) {
                             try {
-                                Uri uri = Uri.parse(isLinkList.get(position));
+                                Uri uri = Uri.parse(experimentShortInfos.get(position).isLink);
                                 if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
                                     Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                                     if (intent.resolveActivity(getPackageManager()) != null) {
@@ -374,11 +373,11 @@ public class ExperimentList extends AppCompatActivity {
                                     });
                             AlertDialog dialog = builder.create();
                             dialog.show();
-                        } else if (unavailableSensorList.get(position) < 0)
+                        } else if (experimentShortInfos.get(position).unavailableSensor < 0)
                             start(position, v);
                         else {
                             AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                            builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(unavailableSensorList.get(position)) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
+                            builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(experimentShortInfos.get(position).unavailableSensor) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
                                     .setTitle(R.string.sensorNotAvailableWarningTitle)
                                     .setPositiveButton(R.string.ok, (dialog, id) -> {
 
@@ -411,17 +410,17 @@ public class ExperimentList extends AppCompatActivity {
             }
 
             //Update icons and texts
-            holder.icon.setImageDrawable(icons.get(position));
-            holder.title.setText(titles.get(position));
-            holder.info.setText(infos.get(position));
+            holder.icon.setImageDrawable(experimentShortInfos.get(position).icon);
+            holder.title.setText(experimentShortInfos.get(position).title);
+            holder.info.setText(experimentShortInfos.get(position).description);
 
-            if (unavailableSensorList.get(position) >= 0) {
+            if (experimentShortInfos.get(position).unavailableSensor >= 0) {
                 holder.title.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
                 holder.info.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
             }
 
             //Handle the menubutton. Set it visible only for non-assets
-            if (isTemp.get(position) != null || isAsset.get(position))
+            if (experimentShortInfos.get(position).isTemp != null || experimentShortInfos.get(position).isAsset)
                 holder.menuBtn.setVisibility(ImageView.GONE); //Asset - no menu button
             else {
                 //No asset. Menu button visible and it needs an onClickListener
@@ -436,7 +435,7 @@ public class ExperimentList extends AppCompatActivity {
                     popup.setOnMenuItemClickListener(menuItem -> {
                         switch (menuItem.getItemId()) {
                             case R.id.experiment_item_share: {
-                                File file = new File(getFilesDir(), "/"+xmlFiles.get(position));
+                                File file = new File(getFilesDir(), "/"+experimentShortInfos.get(position).xmlFile);
 
                                 final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
                                 final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
@@ -474,7 +473,23 @@ public class ExperimentList extends AppCompatActivity {
                                         .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                                             public void onClick(DialogInterface dialog, int id) {
                                                 //Confirmed. Delete the item and reload the list
-                                                deleteFile(xmlFiles.get(position));
+                                                long crc32 = Helper.getCRC32(new File(getFilesDir(), experimentShortInfos.get(position).xmlFile));
+                                                File resFolder = new File(getFilesDir(), Long.toHexString(crc32).toLowerCase());
+                                                Log.d("ExperimentList", "Deleting " + experimentShortInfos.get(position).xmlFile);
+                                                deleteFile(experimentShortInfos.get(position).xmlFile);
+                                                if (resFolder.isDirectory()) {
+                                                    Log.d("ExperimentList", "Also deleting resource folder " + Long.toHexString(crc32).toLowerCase());
+                                                    String[] files = resFolder.list();
+                                                    for (String file : files) {
+                                                        if (new File(resFolder, file).delete()) {
+                                                            Log.d("ExperimentList", "Done.");
+                                                        } else {
+                                                            Log.d("ExperimentList", "Failed.");
+                                                        }
+                                                    }
+                                                } else {
+                                                    Log.d("ExperimentList", "No resource folder found at " + resFolder.getAbsolutePath());
+                                                }
                                                 loadExperimentList();
                                             }
                                         })
@@ -490,7 +505,7 @@ public class ExperimentList extends AppCompatActivity {
                             case R.id.experiment_item_rename: {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
                                 final EditText edit = new EditText(parentActivity);
-                                edit.setText(titles.get(position));
+                                edit.setText(experimentShortInfos.get(position).title);
                                 builder.setView(edit)
                                         .setTitle(R.string.rename)
                                         .setPositiveButton(R.string.rename, (dialog, id) -> {
@@ -498,8 +513,29 @@ public class ExperimentList extends AppCompatActivity {
                                             if (newName.replaceAll("\\s+", "").isEmpty())
                                                 return;
                                             //Confirmed. Rename the item and reload the list
+
+                                            long oldCrc32 = Helper.getCRC32(new File(getFilesDir(), experimentShortInfos.get(position).xmlFile));
+                                            File oldResFolder = new File(getFilesDir(), Long.toHexString(oldCrc32).toLowerCase());
+
                                             if (isSavedState)
-                                                Helper.replaceTagInFile(xmlFiles.get(position), getApplicationContext(), "/phyphox/state-title", newName);
+                                                Helper.replaceTagInFile(experimentShortInfos.get(position).xmlFile, getApplicationContext(), "/phyphox/state-title", newName);
+
+                                            long newCrc32 = Helper.getCRC32(new File(getFilesDir(), experimentShortInfos.get(position).xmlFile));
+                                            File newResFolder = new File(getFilesDir(), Long.toHexString(newCrc32).toLowerCase());
+
+                                            if (oldResFolder.isDirectory()) {
+                                                newResFolder.mkdirs();
+                                                String[] files = oldResFolder.list();
+                                                for (String file : files) {
+                                                    Log.d("ExperimentList", "Moving resource file " + file);
+                                                    if (new File(oldResFolder, file).renameTo(new File(newResFolder, file))) {
+                                                        Log.d("ExperimentList", "Done.");
+                                                    } else {
+                                                        Log.d("ExperimentList", "Failed.");
+                                                    }
+                                                }
+                                            }
+
                                             loadExperimentList();
                                         })
                                         .setNegativeButton(R.string.cancel, (dialog, id) -> {
@@ -665,13 +701,13 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         //Wrapper to add an experiment to this category. This just hands it over to the adapter and updates the category color.
-        public void addExperiment(String exp, RGB color, Drawable image, String description, final String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor, String isLink) {
-            experiments.addExperiment(color, image, exp, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
-            Integer n = colorCount.get(color);
+        public void addExperiment(ExperimentShortInfo shortInfo) {
+            experiments.addExperiment(shortInfo);
+            Integer n = colorCount.get(shortInfo.color);
             if (n == null)
-                colorCount.put(color, 1);
+                colorCount.put(shortInfo.color, 1);
             else
-                colorCount.put(color, n+1);
+                colorCount.put(shortInfo.color, n+1);
             int max = 0;
             RGB catColor = new RGB(0);
             if (hasName(phyphoxCat)) {
@@ -717,26 +753,36 @@ public class ExperimentList extends AppCompatActivity {
     //turn will be called here.
     //This addExperiment(...) is called for each experiment found. It checks if the experiment's
     // category already exists and adds it to this category or creates a category for the experiment
-    private void addExperiment(String exp, String cat, RGB color, Drawable image, String description, String xmlFile, String isTemp, boolean isAsset, Integer unavailableSensor,  String isLink, Vector<ExperimentsInCategory> categories) {
+    private void addExperiment(ExperimentShortInfo shortInfo, String cat, Vector<ExperimentsInCategory> categories) {
         //Check all categories for the category of the new experiment
         for (ExperimentsInCategory icat : categories) {
             if (icat.hasName(cat)) {
                 //Found it. Add the experiment and return
-                icat.addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
+                icat.addExperiment(shortInfo);
                 return;
             }
         }
         //Category does not yet exist. Create it and add the experiment
         categories.add(new ExperimentsInCategory(cat, this));
-        categories.lastElement().addExperiment(exp, color, image, description, xmlFile, isTemp, isAsset, unavailableSensor, isLink);
+        categories.lastElement().addExperiment(shortInfo);
     }
 
 
     private void addInvalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
         Log.e("list:loadExperiment", message);
+        ExperimentShortInfo shortInfo = new ExperimentShortInfo();
+        shortInfo.title = xmlFile;
+        shortInfo.color = new RGB(0xffff0000);
+        shortInfo.icon = new TextIcon("!", this);
+        shortInfo.description = message;
+        shortInfo.xmlFile = xmlFile;
+        shortInfo.isTemp = isTemp;
+        shortInfo.isAsset = isAsset;
+        shortInfo.unavailableSensor = -1;
+        shortInfo.isLink = null;
         if (categories != null)
-            addExperiment(xmlFile, getString(R.string.unknown), new RGB(0xffff0000), new TextIcon("!", this), message, xmlFile, isTemp, isAsset, -1, null, categories);
+            addExperiment(shortInfo, getString(R.string.unknown), categories);
     }
 
     //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
@@ -751,14 +797,16 @@ public class ExperimentList extends AppCompatActivity {
             return;
         }
 
-        //Strings to hold results of the few items we care about
-        String title = ""; //Experiment title
-        String stateTitle = ""; //A title given by the user for a saved experiment state
-        String category = ""; //Experiment category
-        RGB color = new RGB(getResources().getColor(R.color.phyphox_primary)); //Icon base color
+        //Class to hold results of the few items we care about
+        ExperimentShortInfo shortInfo = new ExperimentShortInfo();
+        shortInfo.color = new RGB(getResources().getColor(R.color.phyphox_primary)); //Icon base color
+        shortInfo.description = "";
+        shortInfo.unavailableSensor = -1;
+        shortInfo.resources = new ArraySet<>();
+        String stateTitle = null; //A title given by the user for a saved experiment state
+        String category = null;
         boolean customColor = false;
         String icon = ""; //Experiment icon (just the raw data as defined in the experiment file. Will be interpreted below)
-        String description = ""; //First line of the experiment's descriptions as a short info
         BaseColorDrawable image = null; //This will hold the icon
 
         try { //A lot of stuff can go wrong here. Let's catch any xml problem.
@@ -771,7 +819,8 @@ public class ExperimentList extends AppCompatActivity {
             SensorManager sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
             boolean inInput = false;
             boolean inOutput = false;
-            Integer unavailableSensor = -1;
+            boolean inViews = false;
+            boolean inView = false;
             boolean isLink = false;
             String link = null;
 
@@ -811,7 +860,7 @@ public class ExperimentList extends AppCompatActivity {
                                 break;
                             case "title": //This should give us the experiment title
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
-                                    title = xpp.nextText().trim();
+                                    shortInfo.title = xpp.nextText().trim();
                                 break;
                             case "state-title":
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
@@ -853,7 +902,7 @@ public class ExperimentList extends AppCompatActivity {
                                 break;
                             case "description": //This should give us the experiment description, but we only need the first line
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
-                                    description = xpp.nextText().trim().split("\n", 2)[0]; //Remove any whitespaces and take the first line until the first line break
+                                    shortInfo.description = xpp.nextText().trim().split("\n", 2)[0]; //Remove any whitespaces and take the first line until the first line break
                                 break;
                             case "category": //This should give us the experiment category
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
@@ -867,7 +916,7 @@ public class ExperimentList extends AppCompatActivity {
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
                                     customColor = true;
                                     try {
-                                        color = RGB.fromPhyphoxString(xpp.nextText().trim(), getResources(), new RGB(getResources().getColor(R.color.phyphox_primary)));
+                                        shortInfo.color = RGB.fromPhyphoxString(xpp.nextText().trim(), getResources(), new RGB(getResources().getColor(R.color.phyphox_primary)));
                                     } catch (Exception e) {
                                         customColor = false;
                                     }
@@ -881,8 +930,22 @@ public class ExperimentList extends AppCompatActivity {
                                 if (xpp.getDepth() == phyphoxDepth+1)
                                     inOutput = true;
                                 break;
+                            case "views":
+                                if (xpp.getDepth() == phyphoxDepth+1)
+                                    inViews = true;
+                                break;
+                            case "view":
+                                if (xpp.getDepth() == phyphoxDepth+2 && inViews)
+                                    inView = true;
+                                break;
+                            case "image":
+                                if (!inView)
+                                    break;
+                                String src = xpp.getAttributeValue(null, "src");
+                                shortInfo.resources.add(src);
+                                break;
                             case "sensor":
-                                if (!inInput || unavailableSensor >= 0)
+                                if (!inInput || shortInfo.unavailableSensor >= 0)
                                     break;
                                 String type = xpp.getAttributeValue(null, "type");
                                 String ignoreUnavailableStr = xpp.getAttributeValue(null, "ignoreUnavailable");
@@ -892,36 +955,36 @@ public class ExperimentList extends AppCompatActivity {
                                     testSensor = new SensorInput(type, ignoreUnavailable,0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (SensorInput.SensorException e) {
-                                    unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
+                                    shortInfo.unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
                                     break;
                                 }
                                 if (!(testSensor.isAvailable() || testSensor.ignoreUnavailable)) {
-                                    unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
+                                    shortInfo.unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));
                                 }
                                 break;
                             case "location":
-                                if (!inInput || unavailableSensor >= 0)
+                                if (!inInput || shortInfo.unavailableSensor >= 0)
                                     break;
                                 if (!GpsInput.isAvailable(this)) {
-                                    unavailableSensor = R.string.location;
+                                    shortInfo.unavailableSensor = R.string.location;
                                 }
                                 break;
                             case "depth":
-                                if (!inInput || unavailableSensor >= 0)
+                                if (!inInput || shortInfo.unavailableSensor >= 0)
                                     break;
                                 if (!DepthInput.isAvailable()) {
-                                    unavailableSensor = R.string.sensorDepth;
+                                    shortInfo.unavailableSensor = R.string.sensorDepth;
                                 }
                                 break;
                             case "camera":
                                 PackageManager pm = this.getPackageManager();
-                                if(!inInput || unavailableSensor >= 0)
+                                if(!inInput || shortInfo.unavailableSensor >= 0)
                                     break;
                                 if(!pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY))
-                                    unavailableSensor = R.string.sensorCamera;
+                                    shortInfo.unavailableSensor = R.string.sensorCamera;
                                 break;
                             case "bluetooth":
-                                if ((!inInput && !inOutput) || unavailableSensor >= 0) {
+                                if ((!inInput && !inOutput) || shortInfo.unavailableSensor >= 0) {
                                     break;
                                 }
                                 String name = xpp.getAttributeValue(null, "name");
@@ -947,12 +1010,12 @@ public class ExperimentList extends AppCompatActivity {
                                     }
                                 }
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                                    unavailableSensor = R.string.bluetooth;
+                                    shortInfo.unavailableSensor = R.string.bluetooth;
                                 } else if (!Bluetooth.isSupported(this)) {
-                                    unavailableSensor = R.string.bluetooth;
+                                    shortInfo.unavailableSensor = R.string.bluetooth;
                                 }
                                 if (!customColor)
-                                    color = new RGB(getResources().getColor(R.color.phyphox_blue_100));
+                                    shortInfo.color = new RGB(getResources().getColor(R.color.phyphox_blue_100));
                                 break;
                         }
                         break;
@@ -981,6 +1044,14 @@ public class ExperimentList extends AppCompatActivity {
                                 if (xpp.getDepth() == phyphoxDepth+1)
                                     inOutput = false;
                                 break;
+                            case "views":
+                                if (xpp.getDepth() == phyphoxDepth+1)
+                                    inViews = false;
+                                break;
+                            case "view":
+                                if (xpp.getDepth() == phyphoxDepth+2)
+                                    inView = false;
+                                break;
                         }
                         break;
 
@@ -989,33 +1060,38 @@ public class ExperimentList extends AppCompatActivity {
             }
 
             //Sanity check: We need a title!
-            if (title.equals("")) {
+            if (shortInfo.title == null) {
                 addInvalidExperiment(experimentXML,  "Invalid: \" + experimentXML + \" misses a title.", isTemp, isAsset, categories);
                 return;
             }
 
             //Sanity check: We need a category!
-            if (category.equals("")) {
+            if (category == null) {
                 addInvalidExperiment(experimentXML,  "Invalid: \" + experimentXML + \" misses a category.", isTemp, isAsset, categories);
                 return;
             }
 
-            if (!stateTitle.equals("")) {
-                description = title;
-                title = stateTitle;
+            if (stateTitle != null) {
+                shortInfo.description = shortInfo.title;
+                shortInfo.title = stateTitle;
                 category = getString(R.string.save_state_category);
             }
 
             //Let's check the icon
             if (image == null) //No icon given. Create a TextIcon from the first three characters of the title
-                image = new TextIcon(title.substring(0, Math.min(title.length(), 3)), this);
-
-
+                image = new TextIcon(shortInfo.title.substring(0, Math.min(shortInfo.title.length(), 3)), this);
 
             //We have all the information. Add the experiment.
-            image.setBaseColor(color);
+            image.setBaseColor(shortInfo.color);
             if (categories != null) {
-                addExperiment(title, category, color, image, isLink ? "Link: " + link : description, experimentXML, isTemp, isAsset, unavailableSensor, (isLink ? link : null), categories);
+                shortInfo.icon = image;
+                shortInfo.description = isLink ? "Link: " + link : shortInfo.description;
+                shortInfo.xmlFile = experimentXML;
+                shortInfo.isTemp = isTemp;
+                shortInfo.isAsset = isAsset;
+                shortInfo.isLink = isLink ? link : null;
+
+                addExperiment(shortInfo, category, categories);
             }
 
 
@@ -1235,13 +1311,13 @@ public class ExperimentList extends AppCompatActivity {
                 ZipEntry entry;
                 byte[] buffer = new byte[2048];
                 while((entry = zis.getNextEntry()) != null) {
-                    if (!entry.getName().endsWith(".phyphox"))
-                        continue;
                     File f = new File(tempPath, entry.getName());
                     String canonicalPath = f.getCanonicalPath();
                     if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
                         return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
                     }
+                    if (!(entry.getName().endsWith(".phyphox") || f.getParentFile().getName().equals("res")))
+                        continue;
                     f.getParentFile().mkdirs();
                     FileOutputStream out = new FileOutputStream(f);
                     int size = 0;
@@ -1289,29 +1365,6 @@ public class ExperimentList extends AppCompatActivity {
                 startActivity(intent);
             } else {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-                View view = inflater.inflate(R.layout.open_multipe_dialog, null);
-                final Activity parent = this;
-                builder.setView(view)
-                        .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
-                            for (File file : files) {
-                                if (!Helper.experimentInCollection(file, parent))
-                                    file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
-                            }
-                            loadExperimentList();
-                            dialog.dismiss();
-                        })
-                        .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
-                AlertDialog dialog = builder.create();
-
-                ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_zip_dialog_instructions);
-
-                LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_multiple_dialog_list);
-
-                dialog.setTitle(getResources().getString(R.string.open_zip_title));
-
                 Vector<ExperimentsInCategory> zipExperiments = new Vector<>();
 
                 //Load experiments from local files
@@ -1328,6 +1381,48 @@ public class ExperimentList extends AppCompatActivity {
                 }
 
                 Collections.sort(zipExperiments, new categoryComparator());
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+                View view = inflater.inflate(R.layout.open_multipe_dialog, null);
+                final Activity parent = this;
+                builder.setView(view)
+                        .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
+                            for (ExperimentsInCategory experimentCats : zipExperiments) {
+                                for (ExperimentShortInfo experimentShortInfo : experimentCats.experiments.experimentShortInfos) {
+                                    File file = new File(tempPath, experimentShortInfo.xmlFile);
+                                    long crc32 = Helper.getCRC32(file);
+                                    if (!Helper.experimentInCollection(crc32, parent)) {
+                                        file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
+                                        if (!experimentShortInfo.resources.isEmpty()) {
+                                            File resFolder = new File(tempPath, "res");
+                                            File targetFolder = new File(getFilesDir(), Long.toHexString(crc32).toLowerCase());
+                                            targetFolder.mkdirs();
+                                            for (String src : experimentShortInfo.resources) {
+                                                File srcFile = new File(resFolder, src);
+                                                File dstFile = new File(targetFolder, src);
+                                                try {
+                                                    Helper.copyFile(srcFile, dstFile);
+                                                } catch (Exception e) {
+                                                    Toast.makeText(ExperimentList.this, "Error while copying " + srcFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            loadExperimentList();
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
+                AlertDialog dialog = builder.create();
+
+                ((TextView)view.findViewById(R.id.open_multiple_dialog_instructions)).setText(R.string.open_zip_dialog_instructions);
+
+                LinearLayout catList = (LinearLayout)view.findViewById(R.id.open_multiple_dialog_list);
+
+                dialog.setTitle(getResources().getString(R.string.open_zip_title));
 
                 for (ExperimentsInCategory cat : zipExperiments) {
                     if (preselectedDevice != null)
@@ -1382,11 +1477,14 @@ public class ExperimentList extends AppCompatActivity {
             bluetoothExperimentLoader = new BluetoothExperimentLoader(getBaseContext(), new BluetoothExperimentLoader.BluetoothExperimentLoaderCallback() {
                 @Override
                 public void updateProgress(int transferred, int total) {
-                    if (total > 0) {
-                        if (progress.isIndeterminate()) {
-                            parent.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
+
+                    parent.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            if (total > 0) {
+                                if (progress.isIndeterminate()) {
+                                    progress.dismiss();
                                     progress = new ProgressDialog(parent);
                                     progress.setTitle(res.getString(R.string.loadingTitle));
                                     progress.setMessage(res.getString(R.string.loadingText));
@@ -1403,26 +1501,33 @@ public class ExperimentList extends AppCompatActivity {
                                     progress.setProgress(transferred);
                                     progress.setMax(total);
                                     progress.show();
+                                } else {
+                                    progress.setProgress(transferred);
                                 }
-                            });
-                        } else {
-                            progress.setProgress(transferred);
+                            }
                         }
-                    }
+                    });
                 }
 
                 @Override
                 public void dismiss() {
-                    progress.dismiss();
+                    parent.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress.dismiss();
+                        }
+                    });
                 }
 
                 @Override
                 public void error(String msg) {
+                    dismiss();
                     showBluetoothExperimentReadError(msg, device);
                 }
 
                 @Override
                 public void success(Uri experimentUri, boolean isZip) {
+                    dismiss();
                     Intent intent = new Intent(parent, Experiment.class);
                     intent.setData(experimentUri);
                     intent.setAction(Intent.ACTION_VIEW);
@@ -2351,7 +2456,6 @@ public class ExperimentList extends AppCompatActivity {
         final CheckBox nePressure = (CheckBox) neLayout.findViewById(R.id.nePressure);
         final CheckBox neProximity = (CheckBox) neLayout.findViewById(R.id.neProximity);
         final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
-        final CheckBox neCamera = (CheckBox) neLayout.findViewById(R.id.neCamera);
 
         //Setup the dialog builder...
         neRate.addTextChangedListener(new DecimalTextWatcher());
@@ -2386,8 +2490,7 @@ public class ExperimentList extends AppCompatActivity {
                 boolean pressure = nePressure.isChecked();
                 boolean prox = neProximity.isChecked();
                 boolean temp = neTemperature.isChecked();
-                boolean camera = neCamera.isChecked();
-                if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp || camera)) {
+                if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp)) {
                     acc = true;
                     Toast.makeText(ExperimentList.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
                 }
@@ -2464,15 +2567,6 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<container size=\"0\">temp_time</container>").getBytes());
                         output.write(("<container size=\"0\">temp</container>").getBytes());
                     }
-                    if (camera){
-                        output.write(("<container size=\"0\">xmm</container>").getBytes());
-                        output.write(("<container size=\"0\">x</container>").getBytes());
-                        output.write(("<container size=\"0\">t</container>").getBytes());
-                        output.write(("<container size=\"0\">tout</container>").getBytes());
-                        output.write(("<container size=\"0\">tout1</container>").getBytes());
-                        output.write(("<container size=\"0\">xout</container>").getBytes());
-                        output.write(("<container size=\"0\">xout1</container>").getBytes());
-                    }
                     output.write("</data-containers>".getBytes());
 
                     //Inputs for each sensor
@@ -2497,22 +2591,9 @@ public class ExperimentList extends AppCompatActivity {
                         output.write(("<sensor type=\"proximity\" rate=\"" + rate + "\" ><output component=\"x\">prox</output><output component=\"t\">prox_time</output></sensor>").getBytes());
                     if (temp)
                         output.write(("<sensor type=\"temperature\" rate=\"" + rate + "\" ><output component=\"x\">temp</output><output component=\"t\">temp_time</output></sensor>").getBytes());
-                    if(camera){
-                        // Write Input
-                        output.write(("<camera x1=\"" + 0.4 +
-                                "\" x2=\"" + 0.6  +
-                                "\" y1=\"" + 0.4  +
-                                "\" y2=\"" + 0.6  +
-                                "\" mode=\"average\" " +
-                                " feature=\"photometric\" " +
-                                " setting=\"[iso, shutter speed, aperture]\" >" +
-                                "<output component=\"z\">x</output>" +
-                                "<output component=\"t\">t" +
-                                "</output>" +
-                                "</camera>").getBytes());
-                    }
                     output.write("</input>".getBytes());
 
+                    //Views for each sensor
                     output.write("<views>".getBytes());
                     if (acc) {
                         output.write("<view label=\"Accelerometer\">".getBytes());
@@ -2579,43 +2660,6 @@ public class ExperimentList extends AppCompatActivity {
                         output.write("<view label=\"Temperature\">".getBytes());
                         output.write(("<graph label=\"Temperature\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
                         output.write("</view>".getBytes());
-                    }
-                    if(camera){
-                        String xmlCode  = "<view label=\"Settings\">\n"
-                                + "    <info label=\"Tap onto the preview and drag to change the area of the image that is taken into account to evaluate the image. You can also choose different setting to setup the image within the area.\"/>\n"
-                                + "    <separator height=\"1\"/>\n"
-                                + "    <camera-gui label=\"Preview\" auto_exposure = \"true\" exposure_adjustment_level=\"3\" />\n"
-                                + "    <separator height=\"1\"/>\n"
-                                + "    <separator color=\"white\"/>\n"
-                                + "    <edit label=\"Shutter Speed\" unit=\"[[unit_short_second]]\" default=\"2000000\" editable = \"true\">\n"
-                                + "        <output>tout</output>\n"
-                                + "    </edit>\n"
-                                + "    <edit label=\"ISO\" unit=\"[[unit_short_second]]\" default=\"1000.0\" editable = \"true\">\n"
-                                + "        <output>tout1</output>\n"
-                                + "    </edit>\n"
-                                + "    <edit label=\"Aperture\" unit=\"[[unit_short_second]]\" default=\"1.4\" editable = \"true\">\n"
-                                + "        <output>xout</output>\n"
-                                + "    </edit>\n"
-                                + "    <edit label=\"Exposure\" unit=\"[[unit_short_second]]\" default=\"0\" editable = \"true\">\n"
-                                + "        <output>xout1</output>\n"
-                                + "    </edit>\n"
-                                + "</view>";
-
-                        output.write(xmlCode.getBytes());
-
-                        String xmlCode1 = "<view label= \"Simple\">\n"
-                                + "    <value label=\"Average Luminosity\" size=\"2\" unit=\"[[unit_short_luminance]]\">\n"
-                                + "        <input>x</input>\n"
-                                + "    </value>\n"
-                                + "\n"
-                                + "    <graph label=\"Luminosity\" partialUpdate=\"true\" labelX=\"[[quantity_short_time]]\" labelY=\"[[quantity_short_luminance]]\" unitX=\"[[unit_short_second]]\" unitY=\"[[unit_short_luminance]]\">\n"
-                                + "        <input axis=\"x\" lineWidth=\"2\">t</input>\n"
-                                + "        <input axis=\"y\">x</input>\n"
-                                + "    </graph>\n"
-                                + "\n"
-                                + "</view>";
-
-                        output.write(xmlCode1.getBytes());
                     }
                     output.write("</views>".getBytes());
 
@@ -2694,18 +2738,6 @@ public class ExperimentList extends AppCompatActivity {
                         output.write("<data name=\"Time (s)\">temp_time</data>".getBytes());
                         output.write("<data name=\"Temperature (°C)\">temp</data>".getBytes());
                         output.write("</set>".getBytes());
-                    }
-                    if(camera){
-                        String export = "<set name=\"Data\">\n"
-                                + "    <data name=\"t\">t</data>\n"
-                                + "    <data name=\"z\">x</data>\n"
-                                + "</set>\n"
-                                + "<set name=\"LOESS\">\n"
-                                + "    <data name=\"t\">tout</data>\n"
-                                + "    <data name=\"z\">xout</data>\n"
-                                + "</set>";
-
-                        output.write(export.getBytes());
                     }
                     output.write("</export>".getBytes());
 

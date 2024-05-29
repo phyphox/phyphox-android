@@ -7,9 +7,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraCharacteristics;
+import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
@@ -42,13 +48,15 @@ import androidx.fragment.app.FragmentContainerView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-
+import java.io.File;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
 import de.rwth_aachen.phyphox.camera.Scrollable;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
@@ -801,7 +809,7 @@ public class ExpView implements Serializable{
             }
             if (decimal) {
                 inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
-                allowedDigits.append(".,");
+                allowedDigits.append("-.,Ee"); //Note: This is not perfect, but we get into trouble if numbers are so small that they need to be represented in scientific notation (1e-6). But then again, this is not really about securing anything...
             }
             et.setInputType(inputType);
             if (decimal) {
@@ -893,6 +901,9 @@ public class ExpView implements Serializable{
                 return currentValue;
             try {
                 currentValue = Double.valueOf(et.getText().toString().replace(",", "."))/factor;
+                if (!signed && currentValue < 0.0) {
+                    currentValue = Math.abs(currentValue); //Another safety net as we cannot entirely rule out the minus sign in decimal notation because of possible scientific representation
+                }
                 if (currentValue < min) {
                     currentValue = min;
                 }
@@ -2227,33 +2238,38 @@ public class ExpView implements Serializable{
         }
     }
 
-    //svgElement shows an svg image, optionally, parts of its source code can be replaced by measured values.
-    public class svgElement extends expViewElement implements Serializable {
-        transient ParametricSVGView svgView = null;
-        int backgroundColor = 0xffffff;
-        String source = null;
+    enum ImageFilter {
+        none, invert
+    }
 
-        //Constructor takes the same arguments as the expViewElement constructor
-        svgElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
-            super(label, valueOutput, inputs, res);
+    //imageElement displays an image
+    public class imageElement extends expViewElement implements Serializable {
+
+        private String src;
+        Drawable drawable;
+        private float scale = 1.0f;
+        private ImageFilter darkFilter = ImageFilter.none;
+        private ImageFilter lightFilter = ImageFilter.none;
+
+        //Label is not used
+        imageElement(String valueOutput, Vector<String> inputs, Resources res, String src) {
+            super("", valueOutput, inputs, res);
+            this.src = src;
         }
 
-        public void setBackgroundColor(int c) {
-            this.backgroundColor = c;
-            if (svgView != null)
-                svgView.setBackgroundColor(c);
+        public void setScale(float scale) {
+            this.scale = scale;
         }
 
-        public void setSvgParts(String source) {
-            this.source = source;
-            if (svgView != null)
-                svgView.setSvgParts(source);
+        public void setFilters(ImageFilter darkFilter, ImageFilter lightFilter) {
+            this.darkFilter = darkFilter;
+            this.lightFilter = lightFilter;
         }
 
         @Override
-        //This is a single value. So the updateMode is "single"
+        //This does not display anything. Do not update.
         protected String getUpdateMode() {
-            return "single";
+            return "none";
         }
 
         @Override
@@ -2261,44 +2277,91 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
-            svgView = new ParametricSVGView(c);
-            svgView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            if (experiment.resourceFolder.startsWith("ASSET")) {
+                String assetPath = experiment.resourceFolder.replace("ASSET/", "experiments/") + src;
+                try {
+                    InputStream is = res.getAssets().open(assetPath);
+                    drawable = new BitmapDrawable(BitmapFactory.decodeStream(is));
+                } catch (Exception e) {
+                    Log.e("imageView", "Failed to open image from asset: " + assetPath);
+                }
+            } else {
+                File srcFile = new File(experiment.resourceFolder, src);
+                Bitmap bmp = BitmapFactory.decodeFile(srcFile.getAbsolutePath());
+                if (bmp != null)
+                    drawable = new BitmapDrawable(bmp);
+            }
+            if (drawable != null) {
+                applyFilter(Helper.isDarkTheme(res) ? darkFilter : lightFilter);
 
-            //svgView.setBackgroundColor(backgroundColor);
-            if (source != null)
-                svgView.setSvgParts(source);
+                ImageView iv = new ImageView(c);
+                LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                iv.setLayoutParams(lllp);
 
-            //Set the ParametricSVGView as root
-            rootView = svgView;
-            rootView.setFocusableInTouchMode(false);
+                iv.setImageDrawable(drawable);
+                iv.setAdjustViewBounds(true);
+                iv.setScaleType(ImageView.ScaleType.FIT_XY);
+                iv.setScaleX(scale);
+                iv.setScaleY(scale);
+
+                rootView = iv;
+            } else {
+                TextView tv = new TextView(c);
+                LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                tv.setLayoutParams(lllp);
+
+                tv.setText("Image not available");
+                tv.setGravity(Gravity.CENTER);
+                tv.setTypeface(null, Typeface.BOLD);
+                rootView = tv;
+            }
+
+            //Add it to the linear layout
             ll.addView(rootView);
+        }
+
+        final ColorMatrixColorFilter colorFilterNone = new ColorMatrixColorFilter(
+            new float[]{
+                    -1, 0, 0, 0, 0,
+                    0, -1, 0, 0, 0,
+                    0, 0, -1, 0, 0,
+                    0, 0, 0, 1, 0
+            }
+        );
+
+        final ColorMatrixColorFilter colorFilterInvert = new ColorMatrixColorFilter(
+            new float[]{
+                -1, 0, 0, 0, 255,
+                0, -1, 0, 0, 255,
+                0, 0, -1, 0, 255,
+                0, 0, 0, 1, 0
+            }
+        );
+
+        protected void applyFilter(ImageFilter filter) {
+            switch (filter) {
+                case none:
+                    drawable.setColorFilter(colorFilterNone);
+                    break;
+                case invert:
+                    drawable.setColorFilter(colorFilterInvert);
+                    break;
+            }
         }
 
         @Override
         //Create the HTML version of this view:
+        //<div>
+        //  <img ... />
+        //</div>
         protected String createViewHTML(){
-            return "";
+            return "<div class=\"imageElement\" id=\"element" + htmlID + "\"><img style=\"width: " + (100.0*scale) + "% \" class=\"lightFilter_" + lightFilter.toString() + " darkFilter_" + darkFilter.toString() + "\" src=\"res?src=" + src + "\"></p></div>";
         }
 
-        @Override
-        //We just have to send calculated value and the unit to the textView
-        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
-            if (!needsUpdate)
-                return;
-            needsUpdate = false;
-            double[] data = new double[inputs.size()];
-            for (int i = 0; i < inputs.size(); i++)
-                data[i] = experiment.getBuffer(inputs.get(i)).value;
-            svgView.update(data);
-        }
-
-        @Override
-        //In Javascript we just have to set the content of the value <span> to the value using jquery
-        protected String setDataHTML() {
-            return "";
-        }
     }
 
     public class cameraElement extends expViewElement implements  Serializable {

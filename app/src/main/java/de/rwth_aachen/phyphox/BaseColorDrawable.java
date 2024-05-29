@@ -41,7 +41,7 @@ abstract class BaseColorDrawable extends Drawable {
     @Override
     //Needs to be implemented.
     public void setColorFilter(ColorFilter cf) {
-        paintBG.setColorFilter(cf);
+        //Do not apply the filter. It is not needed for our icons and breaks with older Androids
     }
 
     @Override
