@@ -56,11 +56,18 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     public boolean measuring = false;
     ExperimentTimeReference experimentTimeReference;
     DataBuffer timeOutput;
+    DataBuffer shutterSpeedOutput, apertureOutput, isoOutput;
 
     public AnalyzingOpenGLRenderer(CameraInput cameraInput, Lock lock, StateFlow<CameraSettingState> cameraSettingValueState) {
         this.cameraSettingValueState = cameraSettingValueState;
         this.experimentTimeReference = cameraInput.experimentTimeReference;
+
         this.timeOutput = cameraInput.getDataT();
+
+        this.shutterSpeedOutput = cameraInput.getShutterSpeedDataBuffer();
+        this.apertureOutput = cameraInput.getApertureDataBuffer();
+        this.isoOutput = cameraInput.getIsoDataBuffer();
+
         this.dataLock = lock;
         if (cameraInput.getDataLuminance() != null) {
             analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataLuminance(), true));
@@ -190,6 +197,13 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
             analyzingModule.writeToBuffers();
         if (timeOutput != null)
             timeOutput.append(t);
+        CameraSettingState state = cameraSettingValueState.getValue();
+        if (shutterSpeedOutput != null)
+            shutterSpeedOutput.append(state.getCurrentShutterValue()/1.0e9);
+        if (apertureOutput != null)
+            apertureOutput.append(state.getCurrentApertureValue());
+        if (isoOutput != null)
+            isoOutput.append(state.getCurrentIsoValue());
     }
 
     void draw() {
@@ -210,25 +224,26 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
                     RectF passepartout = cameraSettingValueState.getValue().getCameraPassepartout();
 
+                    boolean dataNeedsToBeWrittenToBuffers = true;
                     if (measuring) {
                         for (AnalyzingModule analyzingModule : analyzingModules) {
                             analyzingModule.analyze(camMatrix, passepartout);
                         }
-                    }
 
-                    boolean buffersWritten = false;
-                    if (dataLock.tryLock()) { //First try to write to buffers. If they available at the moment, draw preview first
-                        writeToBuffers(t);
-                        buffersWritten = true;
-                        dataLock.unlock();
-                    }
+                        if (dataLock.tryLock()) { //First try to write to buffers. If they available at the moment, draw preview first
+                            writeToBuffers(t);
+                            dataNeedsToBeWrittenToBuffers = false;
+                            dataLock.unlock();
+                        }
+                    } else
+                        dataNeedsToBeWrittenToBuffers = false;
 
 
                     for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
                         previewOutput.draw(camMatrix, passepartout);
                     }
 
-                    if (!buffersWritten) {
+                    if (dataNeedsToBeWrittenToBuffers) {
                         dataLock.lock();
                         writeToBuffers(t);
                         dataLock.unlock();

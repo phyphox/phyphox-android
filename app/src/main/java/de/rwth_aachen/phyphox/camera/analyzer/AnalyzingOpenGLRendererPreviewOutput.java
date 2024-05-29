@@ -53,17 +53,14 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
             "uniform vec3 underexposureColor;\n" +
 
             "void main () {\n" +
-            "  vec4 color;\n" +
-            "  if (grayscale > 0) {\n " +
-            "    float luma = dot(texture2D(texture, texPosition).rgb, vec3(0.2126, 0.7152, 0.0722));\n" +
-            "    color = vec4(luma, luma, luma, 1.0);\n" +
-            "  } else {\n" +
-            "    color = texture2D(texture, texPosition);\n" +
-            "  }\n" +
+            "  vec4 color = texture2D(texture, texPosition);\n" +
             "  if (markOverexposure > 0 && any(greaterThan(color, vec4(0.99, 0.99, 0.99, 1.0)))) {\n" +
             "    color = vec4(overexposureColor, 1.0);\n" +
             "  } else if (markUnderexposure > 0 && any(lessThan(color, vec4(0.01, 0.01, 0.01, 0.0)))) {\n" +
             "    color = vec4(underexposureColor, 1.0);\n" +
+            "  } else if (grayscale > 0) {\n" +
+            "    float luma = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));\n" +
+            "    color = vec4(luma, luma, luma, 1.0);\n" +
             "  }\n" +
             "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0))))\n" +
             "       gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0) * color;\n" +
