@@ -57,10 +57,17 @@ class CameraInput : Serializable {
     // Holds and release the image analysis value (z) and time value (t) from data buffer
     var dataLuma: DataBuffer? = null
     var dataLuminance: DataBuffer? = null
+    var dataHue: DataBuffer? = null
+    var dataSaturation: DataBuffer? = null
+    var dataValue: DataBuffer? = null
+    var dataThreshold: DataBuffer? = null
+
     var dataT: DataBuffer? = null
     var shutterSpeedDataBuffer: DataBuffer? = null
     var isoDataBuffer: DataBuffer? = null
     var apertureDataBuffer: DataBuffer? = null
+
+    var thresholdAnalyzerThreshold: Double = 0.5
 
     val dataLock: Lock
 
@@ -397,7 +404,8 @@ class CameraInput : Serializable {
             experimentTimeReference: ExperimentTimeReference,
             cameraFeature: PhyphoxCameraFeature,
             autoExposure: Boolean,
-            lockedSettings: String?
+            lockedSettings: String?,
+            thresholdAnalyzerThreshold: Double
     ) {
 
         this._cameraSettingState = MutableStateFlow<CameraSettingState>(
@@ -412,15 +420,20 @@ class CameraInput : Serializable {
         this.buffers = buffers
         this.experimentTimeReference = experimentTimeReference
 
-        if (buffers.size > 0 && buffers[0] != null) dataLuma = buffers[0].buffer
-        if (buffers.size > 1 && buffers[1] != null) dataLuminance = buffers[1].buffer
-        if (buffers.size > 2 && buffers[2] != null) dataT = buffers[2].buffer
+        if (buffers.size > 0 && buffers[0] != null) dataT = buffers[0].buffer
+        if (buffers.size > 1 && buffers[1] != null) dataLuma = buffers[1].buffer
+        if (buffers.size > 2 && buffers[2] != null) dataLuminance = buffers[2].buffer
+        if (buffers.size > 3 && buffers[3] != null) dataHue = buffers[3].buffer
+        if (buffers.size > 4 && buffers[4] != null) dataSaturation = buffers[4].buffer
+        if (buffers.size > 5 && buffers[5] != null) dataValue = buffers[5].buffer
+        if (buffers.size > 6 && buffers[6] != null) dataThreshold = buffers[6].buffer
 
-        if (buffers.size > 3 && buffers[3] != null) shutterSpeedDataBuffer = buffers[3].buffer
-        if (buffers.size > 4 && buffers[4] != null) isoDataBuffer = buffers[4].buffer
-        if (buffers.size > 5 && buffers[5] != null) apertureDataBuffer = buffers[5].buffer
+        if (buffers.size > 7 && buffers[7] != null) shutterSpeedDataBuffer = buffers[7].buffer
+        if (buffers.size > 8 && buffers[8] != null) isoDataBuffer = buffers[8].buffer
+        if (buffers.size > 9 && buffers[9] != null) apertureDataBuffer = buffers[9].buffer
 
         this.dataLock = lock
+        this.thresholdAnalyzerThreshold = thresholdAnalyzerThreshold
     }
 
     enum class PhyphoxCameraFeature {

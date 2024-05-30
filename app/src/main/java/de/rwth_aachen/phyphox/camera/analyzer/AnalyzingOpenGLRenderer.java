@@ -75,6 +75,18 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         if (cameraInput.getDataLuma() != null) {
             analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataLuma(), false));
         }
+        if (cameraInput.getDataHue() != null) {
+            analyzingModules.add(new HSVAnalyzer(cameraInput.getDataHue(), HSVAnalyzer.Mode.hue));
+        }
+        if (cameraInput.getDataSaturation() != null) {
+            analyzingModules.add(new HSVAnalyzer(cameraInput.getDataSaturation(), HSVAnalyzer.Mode.saturation));
+        }
+        if (cameraInput.getDataValue() != null) {
+            analyzingModules.add(new HSVAnalyzer(cameraInput.getDataValue(), HSVAnalyzer.Mode.value));
+        }
+        if (cameraInput.getDataThreshold() != null) {
+            analyzingModules.add(new ThresholdAnalyzer(cameraInput.getDataThreshold(), cameraInput.getThresholdAnalyzerThreshold()));
+        }
         AnalyzingOpenGLRendererPreviewOutput.executor = executor;
     }
 

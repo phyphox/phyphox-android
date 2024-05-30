@@ -78,7 +78,9 @@ public abstract class AnalyzingModule {
     public abstract void prepare();
     public abstract void analyze(float[] camMatrix, RectF passepartout);
     public abstract void writeToBuffers();
-    public abstract void destroy();
+    public void destroy() {
+
+    }
 
 
 }

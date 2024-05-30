@@ -1936,11 +1936,17 @@ public abstract class PhyphoxFile {
                         double y1 = 1.0 - x1user;
                         double y2 = 1.0 - x2user;
 
+                        double thresholdAnalyzerThreshold = getDoubleAttribute("threshold", 0.5);
+
                         //Allowed input/output configuration
                         ioBlockParser.ioMapping[] outputMapping = {
+                                new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "luma"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "luminance"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                                new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "hue"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "saturation"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "value"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                                 new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
@@ -1962,7 +1968,8 @@ public abstract class PhyphoxFile {
                                 experiment.experimentTimeReference,
                                 feature,
                                 autoExposure,
-                                lockedSetting.isEmpty() ? null : lockedSetting);
+                                lockedSetting.isEmpty() ? null : lockedSetting,
+                                thresholdAnalyzerThreshold);
 
                         break;
 

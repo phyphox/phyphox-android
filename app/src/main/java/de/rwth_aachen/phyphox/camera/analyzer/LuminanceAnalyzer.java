@@ -111,13 +111,6 @@ public class LuminanceAnalyzer extends AnalyzingModule {
     }
 
     @Override
-    public void destroy() {
-        EGL14.eglDestroySurface(eglDisplay, analyzingSurface);
-        for (int i = 0; i < nDownsampleSteps; i++)
-            EGL14.eglDestroySurface(eglDisplay, downsampleSurfaces[i]);
-    }
-
-    @Override
     public void analyze(float[] camMatrix, RectF passepartout) {
         drawLuminance(camMatrix, passepartout);
         for (int i = 0; i < nDownsampleSteps; i++) {

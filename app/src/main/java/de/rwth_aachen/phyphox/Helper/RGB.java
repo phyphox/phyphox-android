@@ -10,7 +10,7 @@ import java.util.Map;
 import de.rwth_aachen.phyphox.R;
 
 public class RGB implements Serializable {
-    private static final double HUE_MAX = 360.0;
+    public static final double HUE_MAX = 360.0;
     int color;
 
     public RGB(int color) {
