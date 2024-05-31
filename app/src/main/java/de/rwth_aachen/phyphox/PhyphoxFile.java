@@ -1905,6 +1905,30 @@ public abstract class PhyphoxFile {
 
                         boolean autoExposure = getBooleanAttribute("auto_exposure", true);
 
+                        String aeStrategyStr = getStringAttribute("aeStrategy");
+                        if (aeStrategyStr == null) {
+                            aeStrategyStr = "mean";
+                        }
+
+                        CameraInput.AEStrategy aeStrategy;
+                        switch (aeStrategyStr) {
+                            case "mean": {
+                                aeStrategy = CameraInput.AEStrategy.mean;
+                                break;
+                            }
+                            case "avoidOverexposure": {
+                                aeStrategy = CameraInput.AEStrategy.avoidOverexposure;
+                                break;
+                            }
+                            case "avoidUnderexposure": {
+                                aeStrategy = CameraInput.AEStrategy.avoidUnderxposure;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown aeStrategy: " + aeStrategyStr, xpp.getLineNumber());
+                            }
+                        }
+
                         String featureStr = getStringAttribute("feature");
                         if(featureStr == null)
                             featureStr = "photometric";
@@ -1969,6 +1993,7 @@ public abstract class PhyphoxFile {
                                 feature,
                                 autoExposure,
                                 lockedSetting.isEmpty() ? null : lockedSetting,
+                                aeStrategy,
                                 thresholdAnalyzerThreshold);
 
                         break;

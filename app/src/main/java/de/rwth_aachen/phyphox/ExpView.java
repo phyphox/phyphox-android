@@ -2375,7 +2375,6 @@ public class ExpView implements Serializable{
         boolean grayscale;
         RGB markOverexposure;
         RGB markUnderexposure;
-
         ShowCameraControls showCameraControls = ShowCameraControls.FullViewOnly;
         CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCE;
         String lockedSettings;

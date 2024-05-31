@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import de.rwth_aachen.phyphox.DataBuffer;
+import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class ThresholdAnalyzer extends AnalyzingModule {
@@ -127,7 +128,7 @@ public class ThresholdAnalyzer extends AnalyzingModule {
     }
 
     @Override
-    public void writeToBuffers() {
+    public void writeToBuffers(CameraSettingState state) {
         out.append(latestResult);
     }
 

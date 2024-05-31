@@ -21,6 +21,7 @@ import java.nio.ByteOrder;
 
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class HSVAnalyzer extends AnalyzingModule {
@@ -240,7 +241,7 @@ public class HSVAnalyzer extends AnalyzingModule {
     }
 
     @Override
-    public void writeToBuffers() {
+    public void writeToBuffers(CameraSettingState state) {
         out.append(latestResult);
     }
 

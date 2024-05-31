@@ -11,6 +11,8 @@ import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
+import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
+
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public abstract class AnalyzingModule {
     static int w, h;
@@ -77,7 +79,7 @@ public abstract class AnalyzingModule {
 
     public abstract void prepare();
     public abstract void analyze(float[] camMatrix, RectF passepartout);
-    public abstract void writeToBuffers();
+    public abstract void writeToBuffers(CameraSettingState state);
     public void destroy() {
 
     }

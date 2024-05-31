@@ -13,62 +13,36 @@ import android.opengl.EGL14;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.os.Build;
-import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class LuminanceAnalyzer extends AnalyzingModule {
+public class ExposureAnalyzer extends AnalyzingModule {
 
-    final static String luminanceFragmentShader =
+    final static String exposureFragmentShader =
             "#extension GL_OES_EGL_image_external : require\n" +
             "precision highp float;" +
             "uniform samplerExternalOES texture;" +
             "varying vec2 positionInPassepartout;" +
             "varying vec2 texPosition;" +
-
-            "float linearize(float x) {" +
-            "  if (x < 0.04045) " +
-            "    return x/12.92;" +
-            "  else" +
-            "    return pow((x+0.055)/1.055, 2.4);" +
-            "}" +
-
             "void main () {" +
             "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
-            "    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);" +
+            "    gl_FragColor = vec4(1.0, 0.0, 0.0, 0.0);" +
             "  } else {" +
-            "    vec3 gammaRGB = texture2D(texture, texPosition).rgb;" +
-
-//            "    vec3 linRGB = pow(gammaRGB, vec3(2.2, 2.2, 2.2));" +   //Adobe RGB or approximation of sRGB
-
-            "    vec3 linRGB = vec3(linearize(gammaRGB.r), linearize(gammaRGB.g), linearize(gammaRGB.b));" +
-            "    gl_FragColor = vec4(0.0, dot(linRGB, vec3(0.2126, 0.7152, 0.0722)), 1.0, 1.0);" +
+            "    vec3 rgb = texture2D(texture, texPosition).rgb;" +
+            "    float luma = dot(rgb, vec3(0.2126, 0.7152, 0.0722));" +
+            "    float rgbMax = max(rgb.r, max(rgb.b, rgb.g));" +
+            "    float rgbMin = min(rgb.r, min(rgb.b, rgb.g));" +
+            "    gl_FragColor = vec4(rgbMin, luma, rgbMax, 1.0);" +
             "  }" +
             "}";
 
-    final static String lumaFragmentShader =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision highp float;" +
-                    "uniform samplerExternalOES texture;" +
-                    "varying vec2 positionInPassepartout;" +
-                    "varying vec2 texPosition;" +
-                    "void main () {" +
-                    "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
-                    "    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);" +
-                    "  } else {" +
-                    "    vec3 gammaRGB = texture2D(texture, texPosition).rgb;" +
-                    "    gl_FragColor = vec4(0.0, dot(gammaRGB, vec3(0.2126, 0.7152, 0.0722)), 1.0, 1.0);" +
-                    " }" +
-                    "}";
-
-    final static String luminanceDownsamplingFragmentShader =
+    final static String exposureDownsamplingFragmentShader =
             "precision highp float;" +
             "uniform sampler2D texture;" +
             "varying vec2 texPosition1;" +
@@ -76,35 +50,50 @@ public class LuminanceAnalyzer extends AnalyzingModule {
             "varying vec2 texPosition3;" +
             "varying vec2 texPosition4;" +
             "void main () {" +
-            "   vec4 result = texture2D(texture, texPosition1);" +
-            "   if (texPosition2.x <= 1.0)" +
-            "       result += texture2D(texture, texPosition2);" +
-            "   if (texPosition3.y <= 1.0)" +
-            "       result += texture2D(texture, texPosition3);" +
-            "   if (texPosition4.x <= 1.0 && texPosition4.y <= 1.0)" +
-            "       result += texture2D(texture, texPosition4);" +
-            "   float overflow = floor(result.g);" +
-            "   result.g = result.g - overflow;" +
-            "   result.r = result.r + overflow / 255.0;" +
-            "   result.b = result.b / 4.0;" +
+            "   vec4 sample = texture2D(texture, texPosition1);" +
+            "   vec4 result = sample;" +
+            "   result.g *= result.a;" +
+            "   if (texPosition2.x <= 1.0) {" +
+            "       sample = texture2D(texture, texPosition2);" +
+            "       result.r = min(result.r, sample.r);" +
+            "       result.g += sample.g * sample.a;" +
+            "       result.b = max(result.b, sample.b);" +
+            "       result.a += sample.a;" +
+            "   }" +
+            "   if (texPosition3.y <= 1.0) {" +
+            "       sample = texture2D(texture, texPosition3);" +
+            "       result.r = min(result.r, sample.r);" +
+            "       result.g += sample.g * sample.a;" +
+            "       result.b = max(result.b, sample.b);" +
+            "       result.a += sample.a;" +
+            "   }" +
+            "   if (texPosition4.x <= 1.0 && texPosition4.y <= 1.0) {" +
+            "       sample = texture2D(texture, texPosition4);" +
+            "       result.r = min(result.r, sample.r);" +
+            "       result.g += sample.g * sample.a;" +
+            "       result.b = max(result.b, sample.b);" +
+            "       result.a += sample.a;" +
+            "   }" +
+            "   result.g /= result.a;" +
+            "   result.a = result.a / 4.0;" +
             "   gl_FragColor = result;" +
             "}";
 
-    boolean linear = false;
-    DataBuffer out;
     int luminanceProgram, luminanceDownsamplingProgram;
     int luminanceProgramVerticesHandle, luminanceProgramTexCoordinatesHandle, luminanceProgramCamMatrixHandle, luminanceProgramTextureHandle, luminanceProgramPassepartoutMinHandle, luminanceProgramPassepartoutMaxHandle;
     int luminanceDownsamplingProgramVerticesHandle, luminanceDownsamplingProgramTexCoordinatesHandle, luminanceDownsamplingProgramTextureHandle;
     int luminanceDownsamplingResSourceHandle, luminanceDownsamplingResTargetHandle;
 
-    double latestResult = Double.NaN;
-    public LuminanceAnalyzer(DataBuffer out, boolean linear) {
-        this.linear = linear;
-        this.out = out;
+    public double minRGB = Double.NaN;
+    public double maxRGB = Double.NaN;
+    public double meanLuma = Double.NaN;
+
+    public ExposureAnalyzer() {
+
     }
     @Override
     public void prepare() {
-        luminanceProgram = buildProgram(fullScreenVertexShader, linear ? luminanceFragmentShader : lumaFragmentShader);
+        luminanceProgram = buildProgram(fullScreenVertexShader, exposureFragmentShader);
         luminanceProgramVerticesHandle = GLES20.glGetAttribLocation(luminanceProgram, "vertices");
         luminanceProgramTexCoordinatesHandle = GLES20.glGetAttribLocation(luminanceProgram, "texCoordinates");
         luminanceProgramCamMatrixHandle = GLES20.glGetUniformLocation(luminanceProgram, "camMatrix");
@@ -112,27 +101,29 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         luminanceProgramPassepartoutMinHandle = GLES20.glGetUniformLocation(luminanceProgram, "passepartoutMin");
         luminanceProgramPassepartoutMaxHandle = GLES20.glGetUniformLocation(luminanceProgram, "passepartoutMax");
 
-        luminanceDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, luminanceDownsamplingFragmentShader);
+        luminanceDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, exposureDownsamplingFragmentShader);
         luminanceDownsamplingProgramVerticesHandle = GLES20.glGetAttribLocation(luminanceDownsamplingProgram, "vertices");
         luminanceDownsamplingProgramTexCoordinatesHandle = GLES20.glGetAttribLocation(luminanceDownsamplingProgram, "texCoordinates");
         luminanceDownsamplingProgramTextureHandle = GLES20.glGetUniformLocation(luminanceDownsamplingProgram, "texture");
         luminanceDownsamplingResSourceHandle = GLES20.glGetUniformLocation(luminanceDownsamplingProgram, "resSource");
         luminanceDownsamplingResTargetHandle = GLES20.glGetUniformLocation(luminanceDownsamplingProgram, "resTarget");
 
-        checkGLError("LuminanceAnalyzer: prepare");
+        checkGLError("ExposureAnalyzer: prepare");
     }
 
     @Override
     public void analyze(float[] camMatrix, RectF passepartout) {
-        drawLuminance(camMatrix, passepartout);
+        drawExposure(camMatrix, passepartout);
         for (int i = 0; i < nDownsampleSteps; i++) {
-            drawLuminanceDownsampling(i, camMatrix);
+            drawExposureDownsampling(i, camMatrix);
         }
 
         int outW = wDownsampleStep[nDownsampleSteps -1];
         int outH = hDownsampleStep[nDownsampleSteps -1];
 
-        long luminance = 0;
+        long vMin = 255;
+        long vMean = 0;
+        long vMax = 0;
         long totalContribution = 0;
 
         ByteBuffer resultBuffer = ByteBuffer.allocateDirect(outW * outH * 4).order(ByteOrder.nativeOrder());
@@ -146,19 +137,27 @@ public class LuminanceAnalyzer extends AnalyzingModule {
             long g = resultBuffer.get() & 0xff;
             long b = resultBuffer.get() & 0xff;
             long a = resultBuffer.get() & 0xff;
-            luminance += ((r << 8) + g);
-            totalContribution += b;
+            vMin = Math.min(vMin, r);
+            vMean += g * a;
+            vMax = Math.max(vMax, b);
+            totalContribution += a;
         }
 
         checkGLError("luminance analyze");
 
-        latestResult = (double)luminance / (double)(totalContribution*Math.pow(4, nDownsampleSteps));
+        minRGB = vMin / 255.0f;
+        maxRGB = vMax / 255.0f;
+        meanLuma = (double)vMean / (double)(totalContribution) / 255.0f;
+    }
+
+    public void reset() {
+        minRGB = Double.NaN;
+        maxRGB = Double.NaN;
+        meanLuma = Double.NaN;
     }
 
     @Override
     public void writeToBuffers(CameraSettingState state) {
-        double exposureFactor = linear ? state.getCurrentApertureValue() * 100.0/state.getCurrentIsoValue() * (1.0e9/60.0) / state.getCurrentShutterValue() : 1.0;
-        out.append(latestResult*exposureFactor);
     }
 
     public void makeCurrent(EGLSurface eglSurface, int w, int h) {
@@ -168,7 +167,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         GLES20.glViewport(0,0, w, h);
     }
 
-    void drawLuminance(float[] camMatrix, RectF passepartout) {
+    void drawExposure(float[] camMatrix, RectF passepartout) {
         makeCurrent(analyzingSurface, w, h);
 
         GLES20.glUseProgram(luminanceProgram);
@@ -198,10 +197,10 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         GLES20.glDisableVertexAttribArray(luminanceProgramVerticesHandle);
         GLES20.glDisableVertexAttribArray(luminanceProgramTexCoordinatesHandle);
 
-        checkGLError("draw luminance");
+        checkGLError("draw exposure");
     }
 
-    void drawLuminanceDownsampling(int step, float[] camMatrix) {
+    void drawExposureDownsampling(int step, float[] camMatrix) {
         long start = System.nanoTime();
         makeCurrent(downsampleSurfaces[step], wDownsampleStep[step], hDownsampleStep[step]);
 
@@ -234,6 +233,6 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         GLES20.glDisableVertexAttribArray(luminanceDownsamplingProgramVerticesHandle);
         GLES20.glDisableVertexAttribArray(luminanceDownsamplingProgramTexCoordinatesHandle);
 
-        checkGLError("downsample luminance");
+        checkGLError("downsample exposure");
     }
 }

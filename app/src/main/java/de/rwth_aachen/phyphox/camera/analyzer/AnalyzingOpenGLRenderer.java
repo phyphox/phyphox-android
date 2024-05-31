@@ -38,6 +38,10 @@ import kotlinx.coroutines.flow.StateFlow;
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, SurfaceTexture.OnFrameAvailableListener {
 
+    public interface ExposureStatisticsListener {
+        void newExposureStatistics(double minRGB, double maxRGB, double meanLuma);
+    }
+
     StateFlow<CameraSettingState> cameraSettingValueState;
     Executor executor = Executors.newSingleThreadExecutor();
     public int previewWidth = 0;
@@ -49,8 +53,11 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     SurfaceTexture cameraSurfaceTexture = null;
     Surface cameraSurface = null;
 
+    ExposureStatisticsListener exposureStatisticsListener;
+
     Lock dataLock;
     List<AnalyzingModule> analyzingModules = new ArrayList<>();
+    ExposureAnalyzer exposureAnalyzer;
     Deque<AnalyzingOpenGLRendererPreviewOutput> previewOutputs = new ConcurrentLinkedDeque<>();
 
     public boolean measuring = false;
@@ -58,7 +65,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     DataBuffer timeOutput;
     DataBuffer shutterSpeedOutput, apertureOutput, isoOutput;
 
-    public AnalyzingOpenGLRenderer(CameraInput cameraInput, Lock lock, StateFlow<CameraSettingState> cameraSettingValueState) {
+    public AnalyzingOpenGLRenderer(CameraInput cameraInput, Lock lock, StateFlow<CameraSettingState> cameraSettingValueState, ExposureStatisticsListener exposureStatisticsListener) {
         this.cameraSettingValueState = cameraSettingValueState;
         this.experimentTimeReference = cameraInput.experimentTimeReference;
 
@@ -87,6 +94,10 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         if (cameraInput.getDataThreshold() != null) {
             analyzingModules.add(new ThresholdAnalyzer(cameraInput.getDataThreshold(), cameraInput.getThresholdAnalyzerThreshold()));
         }
+
+        this.exposureAnalyzer = new ExposureAnalyzer();
+        this.exposureStatisticsListener = exposureStatisticsListener;
+
         AnalyzingOpenGLRendererPreviewOutput.executor = executor;
     }
 
@@ -166,6 +177,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
             analyzingModule.prepare();
         }
 
+        exposureAnalyzer.prepare();
+
         checkGLError("prepareOpenGL (modules)");
 
         AnalyzingOpenGLRendererPreviewOutput.prepareOpenGL(eglContext, eglDisplay, eglConfig, eglCameraTexture);
@@ -204,12 +217,11 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     long renderingTotal = 0;
     long nFrames = 0;
 
-    void writeToBuffers(double t) {
+    void writeToBuffers(double t, CameraSettingState state) {
         for (AnalyzingModule analyzingModule : analyzingModules)
-            analyzingModule.writeToBuffers();
+            analyzingModule.writeToBuffers(state);
         if (timeOutput != null)
             timeOutput.append(t);
-        CameraSettingState state = cameraSettingValueState.getValue();
         if (shutterSpeedOutput != null)
             shutterSpeedOutput.append(state.getCurrentShutterValue()/1.0e9);
         if (apertureOutput != null)
@@ -220,6 +232,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
     void draw() {
         double t = experimentTimeReference.getExperimentTime();
+        CameraSettingState state = cameraSettingValueState.getValue();
         executor.execute(
                 () -> {
                     if (eglContext == null || cameraSurfaceTexture == null)
@@ -234,7 +247,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     float[] camMatrix = new float[16];
                     cameraSurfaceTexture.getTransformMatrix(camMatrix);
 
-                    RectF passepartout = cameraSettingValueState.getValue().getCameraPassepartout();
+                    RectF passepartout = state.getCameraPassepartout();
 
                     boolean dataNeedsToBeWrittenToBuffers = true;
                     if (measuring) {
@@ -243,13 +256,19 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                         }
 
                         if (dataLock.tryLock()) { //First try to write to buffers. If they available at the moment, draw preview first
-                            writeToBuffers(t);
+                            writeToBuffers(t, state);
                             dataNeedsToBeWrittenToBuffers = false;
                             dataLock.unlock();
                         }
                     } else
                         dataNeedsToBeWrittenToBuffers = false;
 
+                    if (state.getAutoExposure()) {
+                        exposureAnalyzer.analyze(camMatrix, passepartout);
+                        if (exposureStatisticsListener != null)
+                            exposureStatisticsListener.newExposureStatistics(exposureAnalyzer.minRGB, exposureAnalyzer.maxRGB, exposureAnalyzer.meanLuma);
+                    } else
+                        exposureAnalyzer.reset();
 
                     for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
                         previewOutput.draw(camMatrix, passepartout);
@@ -257,7 +276,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
                     if (dataNeedsToBeWrittenToBuffers) {
                         dataLock.lock();
-                        writeToBuffers(t);
+                        writeToBuffers(t, state);
                         dataLock.unlock();
                     }
 
