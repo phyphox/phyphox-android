@@ -73,7 +73,9 @@ class CameraViewModel() : ViewModel() {
                                                             cameraUiState.editableCameraSettings?.contains("iso") ?: false
                                                     val shutterLocked =
                                                             cameraUiState.editableCameraSettings?.contains("shutter_speed") ?: false
-                                                    it.enableAdvanceExposureControl(isoLocked, shutterLocked)
+                                                    val apertureLocked =
+                                                            cameraUiState.editableCameraSettings?.contains("aperture") ?: false
+                                                    it.enableAdvanceExposureControl(isoLocked, shutterLocked, apertureLocked)
                                                 }
                                             }
                                         }
@@ -153,6 +155,7 @@ class CameraViewModel() : ViewModel() {
                                     exposureButton = oldState.mainControls.exposureButton.copy(isEnabled = !cameraSettingState.autoExposure),
                                     isoButton = oldState.mainControls.isoButton.copy(isEnabled = !cameraSettingState.autoExposure),
                                     shutterButton = oldState.mainControls.shutterButton.copy(isEnabled = !cameraSettingState.autoExposure),
+                                    apertureButton = oldState.mainControls.apertureButton.copy(isEnabled = !cameraSettingState.autoExposure && (cameraSettingState.apertureRange?.count() ?: 0) > 1)
                             )
                     )
 

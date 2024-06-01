@@ -41,12 +41,13 @@ data class CameraMainControlsViewState(
     fun enableAdvanceExposureControl(
             isIsoLocked: Boolean,
             isShutterSpeedLocked: Boolean,
+            isApertureLocked: Boolean,
     ): CameraMainControlsViewState =
             copy(
                     switchLensButton = switchLensButton.copy(isVisible = true, isEnabled = true),
                     shutterButton = shutterButton.copy(isVisible = true, isEnabled = !isShutterSpeedLocked),
                     isoButton = isoButton.copy(isVisible = true, isEnabled = !isIsoLocked),
-                    apertureButton = apertureButton.copy(isVisible = true, isEnabled = false),
+                    apertureButton = apertureButton.copy(isVisible = true, isEnabled = !isApertureLocked),
                     autoExposureButton = autoExposureButton.copy(isVisible = true, isEnabled = true),
                     exposureButton = exposureButton.copy(isVisible = false),
                     zoomButton = zoomButton.copy(isVisible = true, isEnabled = true),

@@ -179,13 +179,12 @@ class CameraPreviewScreen(
             onSettingClicked(CameraSettingMode.SHUTTER_SPEED)
         }
 
-        /**
-        imageViewAperture.setOnClickListener {
-            setCameraSettingsVisibility(CameraSettingsView.ExposureSettingListView)
-            clickedButton = it
-            onSettingClicked(ExposureSettingMode.APERTURE)
+        lnrAperture.setOnClickListener {
+            it.startAnimation(buttonClick)
+            recyclerViewClicked = !recyclerViewClicked
+            zoomClicked = false
+            onSettingClicked(CameraSettingMode.APERTURE)
         }
-        */
 
         lnrExposure.setOnClickListener {
             it.startAnimation(buttonClick)
@@ -715,7 +714,6 @@ class CameraPreviewScreen(
 
             else -> ""
         }.toString()
-
 
         val exposureSettingRange = when (mode) {
             CameraSettingMode.ISO -> cameraInput.cameraSettingState.value.isoRange

@@ -294,14 +294,14 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         val currentCameraSettingValueState = _cameraSettingState.value
         val newCameraSettingValueState = currentCameraSettingValueState.copy(
                 apertureRange = apertureRange,
+                currentApertureValue = apertureRange?.first()?.toFloat() ?: 1.0f,
                 shutterSpeedRange = shutterSpeedRange,
                 isoRange = isoRange,
                 exposureRange = exposureRange,
                 exposureStep = exposureStep,
                 cameraState = CameraState.RUNNING,
                 cameraMaxRegionAWB =  maxRegionsAWB,
-                cameraWhiteBalanceModes = CameraHelper.getWhiteBalanceModes().filter { awbAvailableModes.contains(it.key) }.keys.toList()
-
+                cameraWhiteBalanceModes = CameraHelper.getWhiteBalanceModes().filter { awbAvailableModes.contains(it.key) }.keys.toList(),
         )
 
          _cameraSettingState.value = newCameraSettingValueState
