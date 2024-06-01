@@ -54,7 +54,7 @@ public class HSVAnalyzer extends AnalyzingModule {
             "  }" +
             "}";
 
-    final static String saturationFragmentShader = //TODO
+    final static String saturationFragmentShader =
             "#extension GL_OES_EGL_image_external : require\n" +
                     "precision highp float;" +
                     "uniform samplerExternalOES texture;" +
@@ -195,7 +195,7 @@ public class HSVAnalyzer extends AnalyzingModule {
     }
 
     @Override
-    public void analyze(float[] camMatrix, RectF passepartout) { //TODO
+    public void analyze(float[] camMatrix, RectF passepartout) {
         drawHSV(camMatrix, passepartout);
         for (int i = 0; i < nDownsampleSteps; i++) {
             drawHsvDownsampling(i, camMatrix);

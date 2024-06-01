@@ -140,6 +140,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     CameraState.INITIALIZING -> {
                         setupZoomControl()
                         loadAndSetupExposureSettingRanges()
+                        updateCaptureRequestOptions(cameraSettingState)
                         _cameraSettingState.emit(
                                 _cameraSettingState.value.copy(
                                         cameraState = CameraState.RUNNING
@@ -328,50 +329,57 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     }
 
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    fun updateCaptureRequestOptions(newState: CameraSettingState) {
+        val crBuilder = CaptureRequestOptions.Builder()
+        crBuilder.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, newState.currentIsoValue)
+                .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, newState.currentShutterValue)
+                .setCaptureRequestOption(CaptureRequest.LENS_APERTURE, newState.currentApertureValue)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, newState.cameraCurrentWhiteBalanceMode)
+
+        camera?.let {
+            val control = Camera2CameraControl.from(it.getCameraControl())
+            control.setCaptureRequestOptions(crBuilder.build())
+        }
+    }
+
     fun updateCameraSettingValue(value: String, settingMode: CameraSettingMode) {
 
         val currentCameraSettingState = cameraSettingState.value
         var newCameraSettingState = currentCameraSettingState.copy()
 
-        val crBuilder = CaptureRequestOptions.Builder()
 
         when (settingMode) {
             CameraSettingMode.ISO -> {
                 val iso: Int = value.toInt()
-                crBuilder.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
-                         .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, currentCameraSettingState.currentShutterValue)
-                         .setCaptureRequestOption(CaptureRequest.LENS_APERTURE, currentCameraSettingState.currentApertureValue)
                 newCameraSettingState = currentCameraSettingState.copy(
                         currentIsoValue = iso,
                 )
             }
             CameraSettingMode.SHUTTER_SPEED -> {
                 val shutterSpeed: Long = CameraHelper.stringToNanoseconds(value)
-                crBuilder.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, currentCameraSettingState.currentIsoValue)
-                         .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutterSpeed)
-                         .setCaptureRequestOption(CaptureRequest.LENS_APERTURE, currentCameraSettingState.currentApertureValue)
                 newCameraSettingState = currentCameraSettingState.copy(
                         currentShutterValue = shutterSpeed,
                 )
             }
             CameraSettingMode.APERTURE -> {
                 val aperture: Float = value.toFloat()
-                crBuilder.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, currentCameraSettingState.currentIsoValue)
-                         .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, currentCameraSettingState.currentShutterValue)
-                         .setCaptureRequestOption(CaptureRequest.LENS_APERTURE, aperture)
                 newCameraSettingState = currentCameraSettingState.copy(
                         currentApertureValue = aperture,
                 )
             }
+            CameraSettingMode.WHITE_BALANCE -> {
+                val wb: Int = CameraHelper.getWhiteBalanceModes().filter { value == it.value }.keys.first()
+                newCameraSettingState = currentCameraSettingState.copy(
+                        cameraCurrentWhiteBalanceMode = wb,
+                )
+            }
             else -> {
                 Log.e("CameraInput", "updateCameraSettingValue called with unexpected settingMode " + settingMode)
+                return
             }
         }
 
-        camera?.let {
-            val control = Camera2CameraControl.from(it.getCameraControl())
-            control.setCaptureRequestOptions(crBuilder.build())
-        }
+        updateCaptureRequestOptions(newCameraSettingState)
 
         lifecycleOwner?.lifecycleScope?.launch {
             _cameraSettingState.emit(
@@ -566,19 +574,12 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 if (shutter > shutterMax)
                     shutter = shutterMax
 
-                val crBuilder = CaptureRequestOptions.Builder()
-                crBuilder.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso)
-                        .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, shutter)
-                        .setCaptureRequestOption(CaptureRequest.LENS_APERTURE, state.currentApertureValue)
                 var newCameraSettingState = state.copy(
                         currentIsoValue = iso,
                         currentShutterValue = shutter
                 )
 
-                camera?.let {
-                    val control = Camera2CameraControl.from(it.getCameraControl())
-                    control.setCaptureRequestOptions(crBuilder.build())
-                }
+                updateCaptureRequestOptions(newCameraSettingState)
 
                 lifecycleOwner?.lifecycleScope?.launch {
                     _cameraSettingState.emit(

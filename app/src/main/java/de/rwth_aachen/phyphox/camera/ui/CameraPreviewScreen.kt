@@ -673,7 +673,7 @@ class CameraPreviewScreen(
             if (newState.subControls.whiteBalanceControl.isVisible) {
                 loadRecyclerViewContent(CameraSettingMode.WHITE_BALANCE)
             }
-            whiteBalanceSlider.isVisible = newState.subControls.whiteBalanceControl.isVisible
+            whiteBalanceSlider.isVisible = newState.subControls.whiteBalanceControl.sliderIsVisible
             currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(whiteBalanceControl = newState.subControls.whiteBalanceControl.copy()))
         }
 

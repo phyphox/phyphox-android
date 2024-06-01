@@ -17,7 +17,7 @@ data class CameraSubControlViewState(
         val shutterSpeedSlider: CameraControlElementViewState = CameraControlElementViewState(),
         val apertureSlider: CameraControlElementViewState = CameraControlElementViewState(),
         val zoomControls: CameraZoomControlViewState = CameraZoomControlViewState(),
-        val whiteBalanceControl: CameraControlElementViewState = CameraControlElementViewState(),
+        val whiteBalanceControl: WhiteBalanceControlElementViewState = WhiteBalanceControlElementViewState(),
 ) {
 
     fun hideAll(): CameraSubControlViewState =
@@ -37,3 +37,8 @@ data class CameraControlElementViewState(
     val isVisible: Boolean = false
 )
 
+data class WhiteBalanceControlElementViewState(
+    val isEnabled: Boolean = false,
+    val isVisible: Boolean = false,
+    val sliderIsVisible: Boolean = false
+)

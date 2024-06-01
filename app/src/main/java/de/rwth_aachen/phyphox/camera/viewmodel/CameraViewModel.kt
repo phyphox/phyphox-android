@@ -274,7 +274,7 @@ class CameraViewModel() : ViewModel() {
     }
 
     fun changeWhiteBalance(value: FloatArray) {
-        //TODO
+        cameraInput.setWhiteBalance(value)
     }
 
     fun updateCameraSettingValue(value: String, settingMode: CameraSettingMode) {
