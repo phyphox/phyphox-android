@@ -150,9 +150,9 @@ class CameraViewModel() : ViewModel() {
                     val oldState = cameraScreenViewState.value
                     val newState = cameraScreenViewState.value.copy(
                             mainControls = oldState.mainControls.copy(
-                                    isoButton = oldState.mainControls.isoButton.copy(isEnabled = !cameraSettingState.autoExposure),
-                                    shutterButton = oldState.mainControls.shutterButton.copy(isEnabled = !cameraSettingState.autoExposure),
-                                    apertureButton = oldState.mainControls.apertureButton.copy(isEnabled = !cameraSettingState.autoExposure && (cameraSettingState.apertureRange?.count() ?: 0) > 1)
+                                    isoButton = oldState.mainControls.isoButton.copy(isEnabled = !cameraSettingState.autoExposure && !(cameraInput.lockedSettings?.contains("iso") ?: false)),
+                                    shutterButton = oldState.mainControls.shutterButton.copy(isEnabled = !cameraSettingState.autoExposure && !(cameraInput.lockedSettings?.contains("shutter_speed") ?: false)),
+                                    apertureButton = oldState.mainControls.apertureButton.copy(isEnabled = !cameraSettingState.autoExposure && (cameraSettingState.apertureRange?.count() ?: 0) > 1 && !(cameraInput.lockedSettings?.contains("aperture") ?: false))
                             )
                     )
 
