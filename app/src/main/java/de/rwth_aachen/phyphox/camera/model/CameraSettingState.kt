@@ -27,7 +27,6 @@ data class CameraSettingState  constructor(
         var exposureRange: List<String>? = emptyList(),
 
         val autoExposure: Boolean = true,
-        var exposureStep: Float = 0F,
         val cameraState: CameraState = CameraState.NONE,
 
         val cameraMaxZoomRatio: Float = 0.0f,

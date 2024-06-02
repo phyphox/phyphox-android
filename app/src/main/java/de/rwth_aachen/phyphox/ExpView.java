@@ -15,9 +15,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraCharacteristics;
-import android.media.Image;
 import android.os.Build;
-import android.os.Bundle;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.text.TextPaint;
@@ -42,11 +40,8 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
-import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.FragmentContainerView;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import java.io.File;
 import java.io.InputStream;
@@ -66,7 +61,6 @@ import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel;
-import de.rwth_aachen.phyphox.camera.model.CameraUiState;
 import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
@@ -2376,7 +2370,7 @@ public class ExpView implements Serializable{
         RGB markOverexposure;
         RGB markUnderexposure;
         ShowCameraControls showCameraControls = ShowCameraControls.FullViewOnly;
-        CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCE;
+        CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCED;
         String lockedSettings;
 
         Scrollable scrollable = new Scrollable() {
@@ -2406,7 +2400,7 @@ public class ExpView implements Serializable{
                         break;
                 case 2: cameraSettingLevel = CameraSettingLevel.INTERMEDIATE;
                         break;
-                default: cameraSettingLevel = CameraSettingLevel.ADVANCE;
+                default: cameraSettingLevel = CameraSettingLevel.ADVANCED;
                         break;
             }
         }

@@ -14,6 +14,7 @@ import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageProxy
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
+import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -341,26 +342,17 @@ object CameraHelper {
         return fractionToNanoseconds(fraction)
     }
 
-    // TODO think about how to manage the steps
-    // returns the list of exposure values which are divisible by 5 only, so 4.0, 3.5, 3.0 and so on
-    fun getExposureValuesFromRange(min: Int, max: Int, step: Float): List<Float>{
-
-        val exposureValues = mutableListOf<Float>()
-        for (value in min..max){
-            val exposureCompensation = value*step
-            val decimalPLaces = 1
-            val powerOf10 = 10.0f.pow(decimalPLaces)
-            val roundedNumber = round(exposureCompensation * powerOf10) / powerOf10
-            exposureValues.add(roundedNumber)
-        }
-
-        return exposureValues.filter { (it * 10).toInt() % 5 == 0 }
+    //Since we implement our own AE algorithm we do not care about device AE compensation option
+    //The downside is that we are limited to the dynamic range of the preview, so +/-1EV is all we
+    //can offer reasonably
+    fun getExposureValuesDefaultList(): List<String> {
+        return listOf("-1.0EV", "-0.7EV", "-0.3EV", "0.0EV", "0.3EV", "0.7EV", "1.0EV")
     }
 
-    fun getActualValueFromExposureCompensation(exposureCompensation: Float, step: Float): Int {
-        return (exposureCompensation/ step).toInt()
-
+    fun exposureValueStringToFloat(str: String): Float {
+        return str.dropLast(2).toFloat()
     }
+
 
     /**
      * From the range given, compute the list that will be used for zoom ratio
@@ -490,6 +482,35 @@ object CameraHelper {
             CameraSelector.LENS_FACING_BACK -> return CameraSelector.DEFAULT_BACK_CAMERA
             else -> throw IllegalArgumentException("Invalid lens facing type: $lensFacing")
         }
+    }
+
+    fun adjustExposure(adjust: Double, state: CameraSettingState): Pair<Long, Int> {
+        var iso = state.currentIsoValue
+        var shutter = state.currentShutterValue
+        val shutterMax = stringToNanoseconds(state.shutterSpeedRange!!.first())
+        val shutterMin = stringToNanoseconds(state.shutterSpeedRange!!.last())
+        val isoMax = state.isoRange?.last()?.toInt() ?: 100
+        val isoMin = state.isoRange?.first()?.toInt() ?: 100
+
+        var shutterOption = 0L
+        var isoOption = 0
+        for (isoCandidate in state.isoRange!!) {
+            isoOption = isoCandidate.toInt()
+            shutterOption = (shutter * adjust * iso / isoOption).toLong()
+            if (shutterOption < shutterMin)
+                break;
+            if (shutterOption < 1e9/60 && shutterOption <= shutterMax)
+                break
+        }
+        shutter = shutterOption
+        iso = isoOption
+
+        if (shutter > shutterMax)
+            shutter = shutterMax
+        if (shutter < shutterMin)
+            shutter = shutterMin
+
+        return Pair(shutter, iso)
     }
 
 }

@@ -389,7 +389,7 @@ class CameraPreviewScreen(
 
             textViewCurrentApertureValue.text = "f/".plus(currentApertureValue)
 
-            textViewExposureStatus.text = currentExposureValue.toString()
+            textViewExposureStatus.text = currentExposureValue.toString().plus("EV")
 
             textWhiteBalance.text =
                 CameraHelper.getWhiteBalanceModes()[cameraCurrentWhiteBalanceMode]
@@ -703,11 +703,7 @@ class CameraPreviewScreen(
 
             CameraSettingMode.APERTURE -> cameraInput.cameraSettingState.value.currentApertureValue
 
-            CameraSettingMode.EXPOSURE ->
-                CameraHelper.getActualValueFromExposureCompensation(
-                        cameraInput.cameraSettingState.value.currentExposureValue,
-                        cameraInput.cameraSettingState.value.exposureStep
-                )
+            CameraSettingMode.EXPOSURE -> cameraInput.cameraSettingState.value.currentExposureValue
 
             CameraSettingMode.WHITE_BALANCE ->
                 CameraHelper.getWhiteBalanceModes().getValue(cameraInput.cameraSettingState.value.cameraCurrentWhiteBalanceMode)

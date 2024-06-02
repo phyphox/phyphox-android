@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox.camera.viewmodel
 
 import android.graphics.RectF
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -20,7 +19,6 @@ import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.ShowCameraControls
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
-import de.rwth_aachen.phyphox.camera.viewstate.CameraControlElementViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraZoomControlViewState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +66,7 @@ class CameraViewModel() : ViewModel() {
                                                             cameraUiState.editableCameraSettings?.contains("exposure") ?: false
                                                     it.enableIntermediateExposureControl(exposureLocked)
                                                 }
-                                                CameraSettingLevel.ADVANCE -> {
+                                                CameraSettingLevel.ADVANCED -> {
                                                     val isoLocked =
                                                             cameraUiState.editableCameraSettings?.contains("iso") ?: false
                                                     val shutterLocked =
@@ -152,7 +150,6 @@ class CameraViewModel() : ViewModel() {
                     val oldState = cameraScreenViewState.value
                     val newState = cameraScreenViewState.value.copy(
                             mainControls = oldState.mainControls.copy(
-                                    exposureButton = oldState.mainControls.exposureButton.copy(isEnabled = !cameraSettingState.autoExposure),
                                     isoButton = oldState.mainControls.isoButton.copy(isEnabled = !cameraSettingState.autoExposure),
                                     shutterButton = oldState.mainControls.shutterButton.copy(isEnabled = !cameraSettingState.autoExposure),
                                     apertureButton = oldState.mainControls.apertureButton.copy(isEnabled = !cameraSettingState.autoExposure && (cameraSettingState.apertureRange?.count() ?: 0) > 1)

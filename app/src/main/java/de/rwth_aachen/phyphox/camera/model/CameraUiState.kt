@@ -55,7 +55,7 @@ enum class CameraSettingMode {
 enum class CameraSettingLevel {
     BASIC, // auto exposure ON (Level 1)
     INTERMEDIATE, // auto exposure OFF, only adjust exposure (Level 2)
-    ADVANCE // auto exposure OFF, can adjust ISO, Shutter Speed and Aperture (Level 3)
+    ADVANCED // auto exposure OFF, can adjust ISO, Shutter Speed and Aperture (Level 3)
 }
 
 enum class ShowCameraControls {
