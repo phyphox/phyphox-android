@@ -124,6 +124,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             try {
                 cameraProvider = cameraProviderListenableFuture.get()
                 (cameraProvider as ProcessCameraProvider?)?.let {
+                    it.unbindAll()
                     startCamera()
                 }
             } catch (e: ExecutionException) {
@@ -149,6 +150,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     }
                     CameraState.RUNNING -> Unit
                     CameraState.RESTART -> {
+                        Log.d("TEST", "RESTART")
                         cameraProvider?.unbindAll()
                         analyzingOpenGLRenderer?.releaseCameraSurface({
                             lifecycleOwner.lifecycleScope.launch {
@@ -163,7 +165,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     }
 
     fun startCamera() {
-
+        Log.d("TEST", "startCamera")
         if (analyzingOpenGLRenderer == null)
             analyzingOpenGLRenderer = AnalyzingOpenGLRenderer(this, dataLock, cameraSettingState, this)
 
