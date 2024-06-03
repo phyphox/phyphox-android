@@ -142,6 +142,12 @@ public class ThresholdAnalyzer extends AnalyzingModule {
     void drawThreshold(float[] camMatrix, RectF passepartout) {
         makeCurrent(analyzingSurface, w, h);
 
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
+        GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+        GLES20.glScissor((int)Math.floor(w*(1.0-Math.max(passepartout.top, passepartout.bottom))), (int)Math.floor(h*(1.0-Math.max(passepartout.left, passepartout.right))), (int)Math.ceil(w*Math.abs(passepartout.height())), (int)Math.ceil(h*Math.abs(passepartout.width())));
+
         GLES20.glUseProgram(thresholdProgram);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, fullScreenVboVertices);
@@ -170,6 +176,8 @@ public class ThresholdAnalyzer extends AnalyzingModule {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         GLES20.glDisableVertexAttribArray(thresholdProgramVerticesHandle);
         GLES20.glDisableVertexAttribArray(thresholdProgramTexCoordinatesHandle);
+
+        GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 
         checkGLError("draw threshold");
     }
