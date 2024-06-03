@@ -154,6 +154,9 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
     }
 
     void draw(float[] camMatrix, RectF passepartout) {
+        if (!cameraPreviewScreen.get().getVisibleToUser())
+            return;
+
         if (!makeCurrent())
             return;
 

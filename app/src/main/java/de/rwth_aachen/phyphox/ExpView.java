@@ -257,6 +257,10 @@ public class ExpView implements Serializable{
             }
         }
 
+        protected void onViewSelected(boolean parentViewIsVisible) {
+
+        }
+
     }
 
     //valueElement implements a simple text display for a single value with an unit and a given
@@ -1453,7 +1457,8 @@ public class ExpView implements Serializable{
         public void onFragmentStop(PhyphoxExperiment experiment) {
             super.onFragmentStop(experiment);
 
-            interactiveGV.stop();
+            if (interactiveGV != null)
+                interactiveGV.stop();
             gv = null;
             interactiveGV = null;
         }
@@ -2501,6 +2506,14 @@ public class ExpView implements Serializable{
 
                 cameraPreviewFragment.setInteractive(true);
             }
+        }
+
+        @Override
+        protected void onViewSelected(boolean parentViewIsVisible) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                return;
+            if (cameraPreviewFragment != null)
+                cameraPreviewFragment.onPageVisibleToUser(parentViewIsVisible);
         }
     }
 

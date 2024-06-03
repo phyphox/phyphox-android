@@ -73,6 +73,8 @@ class CameraPreviewScreen(
 
     private val context: Context = root.context
 
+    var visibleToUser: Boolean = true
+
     val TAG = "CameraPreviewScreen"
 
     val previewTextureView: TextureView = root.findViewById(R.id.preview_view)

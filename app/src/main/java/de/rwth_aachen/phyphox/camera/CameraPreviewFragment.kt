@@ -127,6 +127,10 @@ class CameraPreviewFragment (
         cameraViewModel.stopCameraPreviewView(cameraPreviewScreen)
     }
 
+    fun onPageVisibleToUser(visible: Boolean) {
+        cameraPreviewScreen.visibleToUser = visible
+    }
+
 }
 
 interface Scrollable: Serializable {

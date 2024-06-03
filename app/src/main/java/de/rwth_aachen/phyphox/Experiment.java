@@ -459,6 +459,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         pager.setAdapter(adapter);
         tabLayout.setupWithViewPager(pager);
         pager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+
+            @Override
+            public void onPageSelected(int position) {
+                for (int i = 0; i < experiment.experimentViews.size(); i++) {
+                    for (ExpView.expViewElement eve : experiment.experimentViews.elementAt(i).elements) {
+                        eve.onViewSelected(i == position);
+                    }
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+        });
 
         for (int i = 0; i < adapter.getCount(); i++) {
             ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(i));
