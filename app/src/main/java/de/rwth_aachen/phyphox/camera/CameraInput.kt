@@ -537,7 +537,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                         adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
                     }
                     AEStrategy.avoidUnderxposure -> {
-                        if (minRGB > 0.25) {
+                        if (minRGB > 0.2) {
                             adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
                         } else if (minRGB > 0.1) {
                             adjust = 1.0 - 0.1 * (minRGB - 0.25)
@@ -546,7 +546,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                         }
                     }
                     AEStrategy.avoidOverexposure -> {
-                        if (maxRGB < 0.75) {
+                        if (maxRGB < 0.8) {
                             adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
                         } else if (maxRGB < 0.9) {
                             adjust = 1.0 - 0.1 * (maxRGB - 0.75)
