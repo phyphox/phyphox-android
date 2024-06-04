@@ -256,7 +256,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                         }
 
                         if (dataLock.tryLock()) { //First try to write to buffers. If they available at the moment, draw preview first
-                            writeToBuffers(t, state);
+                            if (measuring) //This might have changed while analyzing
+                                writeToBuffers(t, state);
                             dataNeedsToBeWrittenToBuffers = false;
                             dataLock.unlock();
                         }
@@ -274,9 +275,10 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                         previewOutput.draw(camMatrix, passepartout);
                     }
 
-                    if (dataNeedsToBeWrittenToBuffers) {
+                    if (dataNeedsToBeWrittenToBuffers && measuring) {
                         dataLock.lock();
-                        writeToBuffers(t, state);
+                        if (measuring) //This might still have changed while waiting for the lock. In fact, if the user clears all data without explicitly stopping the measurement we would otherwise add old data to the freshly cleared buffers
+                            writeToBuffers(t, state);
                         dataLock.unlock();
                     }
 
