@@ -34,7 +34,7 @@ public class HSVAnalyzer extends AnalyzingModule {
             "varying vec2 texPosition;" +
             "void main () {" +
             "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
-            "    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);" +
+            "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);" +
             "  } else {" +
             "    vec3 rgb = texture2D(texture, texPosition).rgb;" +
             "    float rgbMax = max(max(rgb.r, rgb.g), rgb.b);" +
@@ -255,10 +255,7 @@ public class HSVAnalyzer extends AnalyzingModule {
     void drawHSV(float[] camMatrix, RectF passepartout) {
         makeCurrent(analyzingSurface, w, h);
 
-        if (mode == Mode.hue)
-            GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        else
-            GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
