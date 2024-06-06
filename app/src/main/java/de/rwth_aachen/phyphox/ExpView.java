@@ -2277,7 +2277,7 @@ public class ExpView implements Serializable{
             super.createView(ll, c, res, parent, experiment);
 
             if (experiment.resourceFolder.startsWith("ASSET")) {
-                String assetPath = experiment.resourceFolder.replace("ASSET/", "experiments/") + src;
+                String assetPath = "experiments/res/" + src;
                 try {
                     InputStream is = res.getAssets().open(assetPath);
                     drawable = new BitmapDrawable(BitmapFactory.decodeStream(is));
@@ -2325,9 +2325,9 @@ public class ExpView implements Serializable{
 
         final ColorMatrixColorFilter colorFilterNone = new ColorMatrixColorFilter(
             new float[]{
-                    -1, 0, 0, 0, 0,
-                    0, -1, 0, 0, 0,
-                    0, 0, -1, 0, 0,
+                    1, 0, 0, 0, 0,
+                    0, 1, 0, 0, 0,
+                    0, 0, 1, 0, 0,
                     0, 0, 0, 1, 0
             }
         );
