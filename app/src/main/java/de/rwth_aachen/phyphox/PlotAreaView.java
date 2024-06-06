@@ -10,6 +10,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.TextureView;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -44,7 +45,7 @@ public class PlotAreaView extends TextureView {
 
 }
 
-class CurveData {
+class CurveData implements Serializable {
     int vboX, vboY;
     int ibo;
     int ibCount, ibUsedCount;
@@ -58,9 +59,7 @@ class CurveData {
     transient List<ExperimentTimeReferenceSet> timeReferencesX, timeReferencesY;
 }
 
-class GraphSetup {
-    private final Object lock = new Object();
-
+class GraphSetup implements Serializable {
     public boolean incrementalX = false;
 
     int plotBoundL, plotBoundT, plotBoundW, plotBoundH;
@@ -241,7 +240,7 @@ class GraphSetup {
 }
 
 class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener {
-    private final Object lock = new Object();
+    transient private final Object lock = new Object();
     private SurfaceTexture surfaceTexture;
     private boolean done = false;
     private boolean readyToRender = false;

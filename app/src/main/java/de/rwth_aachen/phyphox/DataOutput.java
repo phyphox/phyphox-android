@@ -8,7 +8,7 @@ import java.util.Iterator;
 
 public class DataOutput implements Serializable {
     public DataBuffer buffer = null;
-    boolean clearBeforeWrite = true;
+    boolean append;
 
     //Get value
     public double getValue() {
@@ -16,8 +16,8 @@ public class DataOutput implements Serializable {
     }
 
     //Constructor with specified clear attribute
-    protected DataOutput(DataBuffer buffer, boolean clear) {
-        this.clearBeforeWrite = clear;
+    protected DataOutput(DataBuffer buffer, boolean append) {
+        this.append = append;
         this.buffer = buffer;
     }
 

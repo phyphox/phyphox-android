@@ -13,6 +13,7 @@ import android.view.View;
 
 import androidx.preference.PreferenceManager;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -139,7 +140,7 @@ public class GraphView extends View {
     boolean followX = false;
 
     private TouchMode touchMode = TouchMode.off;
-    public class ZoomState {
+    public class ZoomState implements Serializable {
         double minX = Double.NaN;
         double maxX = Double.NaN;
         double minY = Double.NaN;
@@ -1172,7 +1173,7 @@ public class GraphView extends View {
             return graphSetup.systemTimeReferenceGap.get(i);
         } else if (linearTime && !absoluteTime) {
             int i = 0;
-            while (i + 1 < graphSetup.trStarts.size() && graphSetup.trStarts.get(i + 1) + graphSetup.systemTimeReferenceGap.get(i+1) < v)
+            while (i + 1 < graphSetup.trStarts.size() && i + 1 < graphSetup.systemTimeReferenceGap.size() && graphSetup.trStarts.get(i + 1) + graphSetup.systemTimeReferenceGap.get(i+1) < v)
                 i++;
             return -graphSetup.systemTimeReferenceGap.get(i);
         }

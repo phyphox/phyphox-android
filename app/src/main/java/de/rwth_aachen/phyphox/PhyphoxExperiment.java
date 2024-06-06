@@ -7,8 +7,9 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.SystemClock;
 import android.util.Log;
+
+import androidx.collection.ArraySet;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -28,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -43,7 +45,8 @@ import javax.xml.transform.stream.StreamResult;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
-import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.CameraInput;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 //This class holds all the information that makes up an experiment
@@ -55,6 +58,8 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
     byte[] source = null; //This holds the original source file
+    Set<String> resources = new ArraySet<>();
+    String resourceFolder = null;
     long crc32 = 0;
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment
@@ -70,6 +75,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     public ExperimentTimeReference experimentTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<SensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
     public DepthInput depthInput = null;
+    public CameraInput cameraInput = null;
     public GpsInput gpsIn = null;
     public Vector<BluetoothInput> bluetoothInputs = new Vector<>(); //Instances of bluetoothInputs (see sensorInput.java) which are used in this experiment
     public Vector<BluetoothOutput> bluetoothOutputs = new Vector<>(); //Instances of bluetoothOutputs (see sensorInput.java) which are used in this experiment
@@ -108,6 +114,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     int micBufferSize = 0; //The size of the recording buffer
     int minBufferSize = 0; //The minimum buffer size requested by the device
     boolean appendAudioInput = false; //Append audio input on start of analysis cycle instead of replacing old data
+    boolean forceAudioRecordingCompatibilityFormat = false; //Some Xiaomi device do not properly work with ENCODING_PCM_FLOAT if the Google Assistent voice trigger is enabled. This forces the use of the good old 16bit int format
 
     //Network connections
     List<NetworkConnection> networkConnections = new ArrayList<>();
@@ -209,7 +216,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                 float[] buffer = new float[readBufferSize]; //The temporary buffer to read to
                 short[] oldBuffer = new short[readBufferSize]; //Used for <23 compatibility
                 int bytesRead = 0;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat)
                     bytesRead = audioRecord.read(buffer, 0, readBufferSize, AudioRecord.READ_NON_BLOCKING);
                 else
                     bytesRead = audioRecord.read(oldBuffer, 0, readBufferSize);
@@ -224,7 +231,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                             sampleRateWritten = true;
                             recordingUsed = false;
                         }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat)
                             recording.append(buffer, bytesRead);
                         else
                             recording.append(oldBuffer, bytesRead);
@@ -387,6 +394,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             depthInput.stop();
 
+        if (cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            cameraInput.stop();
+
         for (NetworkConnection networkConnection : networkConnections)
             networkConnection.stop();
 
@@ -394,13 +404,14 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             //Bluetooth
             Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
             for (BluetoothInput bti : bluetoothInputs) {
+                bti.stop();
                 uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
             }
             for (BluetoothOutput bto : bluetoothOutputs) {
+                bto.stop();
                 uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
             }
             for (Bluetooth b : uniqueBluetoothDevices.values()) {
-                b.stop();
                 b.writeEventCharacteristic(event);
             }
         }
@@ -425,7 +436,6 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                 uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
             }
             for (Bluetooth b : uniqueBluetoothDevices.values()) {
-                b.stop();
                 b.writeEventCharacteristic(event);
             }
         }
@@ -440,6 +450,10 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             depthInput.start();
+
+        if (cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            cameraInput.start();
+
 
         //Playback
         if (audioOutput != null) {
@@ -477,7 +491,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         //Create audioTrack instance
         if (micBufferSize > 0) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat)
                 audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT, micBufferSize * 2);
             else
                 audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize * 2);

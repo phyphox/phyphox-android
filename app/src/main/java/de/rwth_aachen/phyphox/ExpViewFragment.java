@@ -5,12 +5,12 @@ import android.animation.LayoutTransition;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 
 import androidx.fragment.app.Fragment;
 
@@ -18,7 +18,7 @@ public class ExpViewFragment extends Fragment {
     private static final String ARG_INDEX = "index";
 
     private int index;
-    public ScrollView root;
+    public CustomScrollableView root;
     boolean hasExclusive;
 
     public ExpViewFragment() {
@@ -33,6 +33,14 @@ public class ExpViewFragment extends Fragment {
                 ge.applyZoom(min, max, follow, unit, buffer, yAxis, absoluteTime);
             }
         }
+    }
+
+    public void disableScrolling(){
+        root.setScrollEnabled(false);
+    }
+
+    public void enableScrolling(){
+        root.setScrollEnabled(true);
     }
 
     public boolean hasExclusive() {
@@ -105,6 +113,11 @@ public class ExpViewFragment extends Fragment {
         if (root == null)
             return;
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
+        if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+                element.destroyView();
+            }
+        }
         ll.removeAllViews();
 
         root.setFillViewport(false);
@@ -135,7 +148,7 @@ public class ExpViewFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        root = (ScrollView)inflater.inflate(R.layout.fragment_exp_view, container, false);
+        root = (CustomScrollableView)inflater.inflate(R.layout.fragment_exp_view, container, false);
 
         final LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -151,9 +164,18 @@ public class ExpViewFragment extends Fragment {
     }
 
     @Override
-    public void onStart() {
+    public void onResume() {
+        super.onResume();
         recreateView();
-        super.onStart();
+    }
+
+    public void onPause() {
+        super.onPause();
+        if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+                element.destroyView();
+            }
+        }
     }
 
     @Override

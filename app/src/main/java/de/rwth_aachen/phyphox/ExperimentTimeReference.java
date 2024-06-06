@@ -4,10 +4,11 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ExperimentTimeReference {
+public class ExperimentTimeReference implements Serializable {
     interface Listener {
         void onExperimentTimeReferenceUpdated(ExperimentTimeReference experimentTimeReference);
     }
@@ -42,6 +43,7 @@ public class ExperimentTimeReference {
         for (TimeMapping mapping : timeMappings) {
             Log.d("TimeReference", mapping.event.name() + ": experiment time = " + mapping.experimentTime + ", event time = " + mapping.eventTime + ", system time = " + mapping.systemTime);
         }
+        Log.d("TimeReference", "...");
     }
 
     public void registerEvent(TimeMappingEvent event) {

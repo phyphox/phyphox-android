@@ -413,9 +413,9 @@ public class Bluetooth implements Serializable {
      * Called when the experiment is stopped.
      */
     public void stop() {
+        isRunning = false;
         toast.cancel();
         clear(); // reset commandQueue
-        isRunning = false;
     }
 
     /**

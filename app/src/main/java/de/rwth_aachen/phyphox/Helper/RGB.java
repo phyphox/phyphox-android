@@ -3,13 +3,14 @@ package de.rwth_aachen.phyphox.Helper;
 import android.content.res.Resources;
 import android.util.Log;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import de.rwth_aachen.phyphox.R;
 
-public class RGB {
-    private static final double HUE_MAX = 360.0;
+public class RGB implements Serializable {
+    public static final double HUE_MAX = 360.0;
     int color;
 
     public RGB(int color) {
@@ -175,7 +176,27 @@ public class RGB {
 
         double l = (2.0 - saturation()) * value() / 2.0;
         double s = l > 0 && l < 1 ? saturation() * value() / (l < 0.5 ? l * 2.0 : 2.0 - l * 2.0) : 0.0;
-        l = 1.0 - l;
+
+        // While flipping HSL lightness (l = 1.0 - l) is a good first approximation, it fails for
+        // colors where luminance differs massively from lightness. Extreme example:
+        // ff0000 (yellow) has a lightness of 0.5 and would remain unchanged although it is
+        // perceived as very bright and has a good contrast to black but almost no contrast to
+        // white.
+        // Directly calculating HSL or RGB for a target luminance seems to be tricky according to
+        // comments in https://stackoverflow.com/a/61761862/8068814, but we do not have to be exact.
+        // Instead lets flip the luminance and use that for lightness
+        // (in linear space, though, so need to adjust gamma)
+        double lum = luminance();
+        double pivot = 0.21404114; //Math.pow((0.5+0.055)/1.055, 2.4);
+        double gammaL = pivot * (1 - lum) / (1 - pivot);
+        if (gammaL < 0)
+            gammaL = 0.0;
+        l = 1.055 * Math.pow(gammaL, 1.0/2.4) - 0.055;
+        if (l < 0)
+            l = 0;
+        else if (l > 1)
+            l = 1;
+
         double t = s * (l < 0.5 ? l : 1.0 - l);
         return RGB.fromHSV(hue(), l > 0 ? 2 * t / (l+t) : 0.0, l+t);
     }

@@ -153,6 +153,12 @@
                     android:text="@string/sensorTemperature"
                     android:id="@+id/neTemperature" />
 
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sensorCamera"
+                    android:id="@+id/neCamera" />
+
             </LinearLayout>
 
         </LinearLayout>

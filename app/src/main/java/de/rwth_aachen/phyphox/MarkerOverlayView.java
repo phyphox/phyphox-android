@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.RectF;
+import android.util.AttributeSet;
 import android.view.View;
 
 import de.rwth_aachen.phyphox.Helper.RGB;
@@ -19,8 +20,7 @@ public class MarkerOverlayView extends View {
     RectF clip = null;
     GraphSetup graphSetup = null;
 
-    public MarkerOverlayView(Context ctx) {
-        super(ctx);
+    private void init(Context ctx) {
         paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(3.f);
@@ -30,6 +30,15 @@ public class MarkerOverlayView extends View {
         paintPP = new Paint();
         paintPP.setStyle(Paint.Style.FILL);
         paintPP.setColor(0x80000000);
+    }
+    public MarkerOverlayView(Context ctx) {
+        super(ctx);
+        init(ctx);
+    }
+
+    public MarkerOverlayView(Context ctx, AttributeSet attrs) {
+        super(ctx, attrs);
+        init(ctx);
     }
 
     public void update(Point[] line, Point[] points) {

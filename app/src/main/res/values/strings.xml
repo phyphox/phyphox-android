@@ -305,8 +305,17 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="depthAggregationModeAverage">Average</string>
     <string name="depthAggregationModeWeighted">Weighted</string>
     <string name="cameraFrontFacing">Front facing camera</string>
+    <string name="cameraFront">Front</string>
     <string name="cameraBackFacing">Back facing camera</string>
+    <string name="cameraBack">Back</string>
     <string name="cameraExternal">External camera</string>
+
+    <string name="off">Off</string>
+    <string name="on">On</string>
+    <string name="camera_preview">Camera Preview</string>
+
+    <string name="camera_not_ready">Camera Not Ready</string>
+
     <string name="settingsDefault">Default</string>
     <string name="settings">Settings</string>
     <string name="settingsHeadLanguage">Language</string>
@@ -346,6 +355,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_unit_short_hecto_pascal">hPa</string>
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
+    <string name="common_unit_short_luminance">cd/m²</string>
+    <string name="common_unit_percentage">%</string>
+
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
     <string name="common_quantity_short_magnetic_field">B</string>
@@ -361,6 +373,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_quantity_short_latitude">φ</string>
     <string name="common_quantity_short_longitude">λ</string>
     <string name="common_quantity_short_altitude">z</string>
+    <string name="common_quantity_short_luminance">Lv</string>
+    <string name="common_quantity_percentage">Percent</string>
+
     <string name="common_direction_short_north">N</string>
     <string name="common_direction_short_south">S</string>
     <string name="common_direction_short_east">E</string>

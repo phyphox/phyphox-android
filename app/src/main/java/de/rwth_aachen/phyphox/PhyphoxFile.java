@@ -17,6 +17,7 @@ import android.os.Build;
 import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -53,8 +54,9 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput;
-import de.rwth_aachen.phyphox.Camera.CameraHelper;
-import de.rwth_aachen.phyphox.Camera.DepthInput;
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
+import de.rwth_aachen.phyphox.camera.CameraInput;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.NetworkConnection.Mqtt.MqttCsv;
@@ -65,12 +67,14 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConversion;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkDiscovery;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.camera.model.CameraUiState;
+import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.16";
+    public final static String phyphoxFileVersion = "1.19";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -104,11 +108,12 @@ public abstract class PhyphoxFile {
         InputStream inputStream = null; //the input stream or null on error
         byte source[] = null;           //A copy of the input for non-local sources
         String errorMessage = "";       //Error message that can be displayed to the user
+        String resourceFolder = null;   //Local folder that holds the resources required by the experiment (for example images)
         long crc32;
     }
 
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
-    public static void remoteInputToMemory(PhyphoxStream stream) throws IOException {
+    public static void remoteInputToMemory(PhyphoxStream stream, String resourceFolder, boolean resourceViaCRC32) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         CRC32 crc32 = new CRC32();
@@ -124,6 +129,11 @@ public abstract class PhyphoxFile {
         stream.source = os.toByteArray();
         stream.inputStream = new ByteArrayInputStream(stream.source);
         stream.crc32 = crc32.getValue();
+
+        if (resourceFolder != null)
+            stream.resourceFolder = resourceFolder + "/" + (resourceViaCRC32 ? Long.toHexString(crc32.getValue()).toLowerCase() : "res");
+        else
+            stream.resourceFolder = null;
     }
 
     //Helper function to open an inputStream from various intents
@@ -141,12 +151,13 @@ public abstract class PhyphoxFile {
             String scheme = intent.getScheme();
 
             if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) { //If the file location is found in the extra EXPERIMENT_XML, it is a local file
-                phyphoxStream.isLocal = !intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISTEMP, false);
+                String isTemp = intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP);
+                phyphoxStream.isLocal = (isTemp == null || isTemp.isEmpty());
                 if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISASSET, true)) { //The local file is an asser
                     AssetManager assetManager = parent.getAssets();
                     try {
                         phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        remoteInputToMemory(phyphoxStream);
+                        remoteInputToMemory(phyphoxStream, "ASSET", true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
                     }
@@ -154,15 +165,17 @@ public abstract class PhyphoxFile {
                     //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
                     try {
                         File tempDir = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP));
-                        phyphoxStream.inputStream = new FileInputStream(new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML)));
-                        remoteInputToMemory(phyphoxStream);
+                        File file = new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        phyphoxStream.inputStream = new FileInputStream(file);
+                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), false);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
                 } else { //The local file is in the private directory
                     try {
                         phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        remoteInputToMemory(phyphoxStream);
+                        File file = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
@@ -187,7 +200,8 @@ public abstract class PhyphoxFile {
                 }
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
-                    remoteInputToMemory(phyphoxStream);
+                    File containingFolder = new File(uri.getPath());
+                    remoteInputToMemory(phyphoxStream, containingFolder.getParent(), false);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from file: " + e.getMessage();
                 }
@@ -199,7 +213,7 @@ public abstract class PhyphoxFile {
                 ContentResolver resolver = parent.getContentResolver();
                 try {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
-                    remoteInputToMemory(phyphoxStream);
+                    remoteInputToMemory(phyphoxStream, null, false);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from content: " + e.getMessage();
                 }
@@ -210,13 +224,13 @@ public abstract class PhyphoxFile {
                 try {
                     URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                     phyphoxStream.inputStream = url.openStream();
-                    remoteInputToMemory(phyphoxStream);
+                    remoteInputToMemory(phyphoxStream, null, false);
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
                         URL url = new URL("http", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
                         phyphoxStream.inputStream = url.openStream();
-                        remoteInputToMemory(phyphoxStream);
+                        remoteInputToMemory(phyphoxStream, null, false);
                     } catch (Exception e2) {
                         phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
                     }
@@ -811,7 +825,8 @@ public abstract class PhyphoxFile {
                     } else if (type.equals("buffer")) {
 
                         //Check the type
-                        boolean clearAfterRead = getBooleanAttribute("clear", true);
+                        boolean clearAfterRead = getBooleanAttribute("clear", true); //Deprecated
+                        boolean keep = getBooleanAttribute("keep", !clearAfterRead); //New attribute keep = !clear,
 
                         //This is a buffer. Let's see if it exists
                         String bufferName = getText();
@@ -821,7 +836,7 @@ public abstract class PhyphoxFile {
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                         else {
-                            inputList.set(targetIndex, new DataInput(buffer, clearAfterRead));
+                            inputList.set(targetIndex, new DataInput(buffer, keep));
                         }
                     } else if (type.equals("empty")) {
                         //No input, Is this allowed?
@@ -840,7 +855,8 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
 
                     //Check the type
-                    boolean clearBeforeWrite = getBooleanAttribute("clear", true);
+                    boolean clearBeforeWrite = getBooleanAttribute("clear", true); //Deprecated
+                    boolean append = getBooleanAttribute("append", !clearBeforeWrite); //New attribute append = !clear,
 
                     if (mapping != null) {
                         for (int i = 0; i < outputMapping.length; i++) {
@@ -917,7 +933,7 @@ public abstract class PhyphoxFile {
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                     else {
-                        outputList.set(targetIndex, new DataOutput(buffer, clearBeforeWrite));
+                        outputList.set(targetIndex, new DataOutput(buffer, append));
                     }
                     break;
                 default: //Unknown tag...
@@ -1327,7 +1343,8 @@ public abstract class PhyphoxFile {
                     newView.elements.add(infoe);
                     break;
                 }
-                case "separator": //An info element just shows some text
+                case "separator": {
+                    //An info element just shows some text
                     ExpView.separatorElement separatore = newView.new separatorElement(null, null, parent.getResources()); //No inputs, just the label and resources
                     RGB c = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_black_60)));
                     float height = (float)getDoubleAttribute("height", 0.1);
@@ -1335,6 +1352,7 @@ public abstract class PhyphoxFile {
                     separatore.setHeight(height);
                     newView.elements.add(separatore);
                     break;
+                }
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
@@ -1528,6 +1546,7 @@ public abstract class PhyphoxFile {
                     boolean signed = getBooleanAttribute("signed", true);
                     boolean decimal = getBooleanAttribute("decimal", true);
                     double defaultValue = getDoubleAttribute("default", 0.);
+                    boolean isEditable = getBooleanAttribute("editable", true);
 
                     double min = getDoubleAttribute("min", Double.NEGATIVE_INFINITY);
                     double max = getDoubleAttribute("max", Double.POSITIVE_INFINITY);
@@ -1545,6 +1564,7 @@ public abstract class PhyphoxFile {
                     ie.setDecimal(decimal); //May the user enter a decimal point (non-integer values)?
                     ie.setDefaultValue(defaultValue); //Default value before the user entered anything
                     ie.setLimits(min, max);
+                    ie.setEditable(isEditable);
                     newView.elements.add(ie);
                     break;
                 }
@@ -1576,46 +1596,87 @@ public abstract class PhyphoxFile {
                     newView.elements.add(be);
                     break;
                 }
-                case "depth-gui": //GUI for the depth input (LiDAR/ToF)
+                case "depth-gui": {
+                    //GUI for the depth input (LiDAR/ToF)
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     ExpView.depthGuiElement dge = newView.new depthGuiElement(label, null, null, parent.getResources()); //Two array inputs
                     dge.setAspectRatio(aspectRatio);
                     newView.elements.add(dge);
                     break;
-                case "svg": //A (parametric) svg image
-                    //Allowed input/output configuration
-                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
-                    };
-                    (new ioBlockParser(xpp, experiment, parent, inputs, null, inputMapping, null, null, ats)).process(); //Load inputs and outputs
+                }
+                case "image": { // Shows an image
+                    String src = getStringAttribute("src");
+                    if (src == null || src.isEmpty())
+                        throw new phyphoxFileException("Image element requires src attribute.", xpp.getLineNumber());
 
-                    Vector<String> inStrings = new Vector<>();
-                    for (DataInput input : inputs)
-                        inStrings.add(input.buffer.name);
+                    ExpView.imageElement img = newView.new imageElement(null, null, parent.getResources(), src); //No inputs (for now?)
 
-                    ExpView.svgElement svge = newView.new svgElement(null, null, inStrings, parent.getResources()); //No inputs, just the label and resources
+                    float scale = (float)getDoubleAttribute("scale", 1.0);
+                    img.setScale(scale);
 
-                    String svgCode = null;
-                    for (ioBlockParser.AdditionalTag at : ats) {
-                        if (at.name.equals("input"))
-                            continue;
-                        if (!at.name.equals("source")) {
-                            throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
+                    ExpView.ImageFilter darkFilter = ExpView.ImageFilter.none;
+                    ExpView.ImageFilter lightFilter = ExpView.ImageFilter.none;
+                    String darkFilterStr = getStringAttribute("darkFilter");
+                    String lightFilterStr = getStringAttribute("lightFilter");
+                    if (darkFilterStr != null && !darkFilterStr.isEmpty()) {
+                        try {
+                            darkFilter = ExpView.ImageFilter.valueOf(darkFilterStr);
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Unknown image filter: " + darkFilterStr, xpp.getLineNumber());
                         }
-                        svgCode = at.content;
+                    }
+                    if (lightFilterStr != null && !lightFilterStr.isEmpty()) {
+                        try {
+                            lightFilter = ExpView.ImageFilter.valueOf(lightFilterStr);
+                        } catch (Exception e) {
+                            throw new phyphoxFileException("Unknown image filter: " + lightFilterStr, xpp.getLineNumber());
+                        }
                     }
 
-                    if (svgCode == null) {
-                        throw new phyphoxFileException("SVG source code missing.", xpp.getLineNumber());
-                    } else
-                        svge.setSvgParts(svgCode);
 
-                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_black_60)));
-                    svge.setBackgroundColor(color.intColor());
+                    img.setFilters(darkFilter, lightFilter);
 
-                    newView.elements.add(svge);
+                    newView.elements.add(img);
+                    experiment.resources.add(src);
                     break;
+                }
+                case "camera-gui": {
+                    String showControls = getStringAttribute("show_controls");
+                    if (showControls == null) {
+                        showControls = "full_view_only";
+                    } else {
+                        showControls = showControls.toLowerCase();
+                    }
+
+                    int exposureAdjustmentLevel = getIntAttribute("exposure_adjustment_level", 1);
+
+                    ShowCameraControls showCameraControls;
+                    switch (showControls){
+                        case "always":{
+                            showCameraControls = ShowCameraControls.Always;
+                            break;
+                        } case "never": {
+                            showCameraControls = ShowCameraControls.Never;
+                            break;
+                        } case "full_view_only": {
+                            showCameraControls = ShowCameraControls.FullViewOnly;
+                            break;
+                        }
+                        default: {
+                            throw new phyphoxFileException("Unknown show controls name: " + showControls, xpp.getLineNumber());
+                        }
+                    }
+
+                    boolean grayscale = getBooleanAttribute("grayscale", false);
+                    RGB markOverexposure = getColorAttribute("markOverexposure", null);
+                    RGB markUnderexposure = getColorAttribute("markUnderexposure", null);
+
+                    ExpView.cameraElement cameraElement = newView.new cameraElement(label, null, null, parent.getResources());
+                    cameraElement.applyControlSettings(showCameraControls, exposureAdjustmentLevel);
+                    cameraElement.setPreviewParameters(grayscale, markOverexposure, markUnderexposure);
+                    newView.elements.add(cameraElement);
+                    break;
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
@@ -1737,7 +1798,9 @@ public abstract class PhyphoxFile {
                         experiment.micRateOutput = "";
 
                     //Devices have a minimum buffer size. We might need to increase our buffer...
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    if (Build.MANUFACTURER.toLowerCase().contains("xiaomi"))
+                        experiment.forceAudioRecordingCompatibilityFormat = true; //Several Xiaomi devices have issues supporting ENCODING_PCM_FLOAT, Falling back to 16bit ints is not that much of a disadvantage, so let's be safe and force them all to the legacy format
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !experiment.forceAudioRecordingCompatibilityFormat)
                         experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT)/2;
                     else
                         experiment.minBufferSize = AudioRecord.getMinBufferSize(experiment.micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)/2;
@@ -1828,6 +1891,114 @@ public abstract class PhyphoxFile {
                     }
 
                     break;
+                }
+                case "camera": {
+                    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                        throw new phyphoxFileException("Camera is only supported from API level 21 upwards (Android 5)");
+                    else {
+                        //Check for camera permission
+                        if (ContextCompat.checkSelfPermission(parent, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            //No permission? Request it (Android 6+, only)
+                            ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.CAMERA}, 0);
+                            throw new phyphoxFileException("Need permission to access the camera."); //We will throw an error here, but when the user grants the permission, the activity will be restarted from the permission callback
+                        }
+
+                        boolean autoExposure = getBooleanAttribute("auto_exposure", true);
+
+                        String aeStrategyStr = getStringAttribute("aeStrategy");
+                        if (aeStrategyStr == null) {
+                            aeStrategyStr = "mean";
+                        }
+
+                        CameraInput.AEStrategy aeStrategy;
+                        switch (aeStrategyStr) {
+                            case "mean": {
+                                aeStrategy = CameraInput.AEStrategy.mean;
+                                break;
+                            }
+                            case "avoidOverexposure": {
+                                aeStrategy = CameraInput.AEStrategy.avoidOverexposure;
+                                break;
+                            }
+                            case "avoidUnderexposure": {
+                                aeStrategy = CameraInput.AEStrategy.avoidUnderxposure;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown aeStrategy: " + aeStrategyStr, xpp.getLineNumber());
+                            }
+                        }
+
+                        String featureStr = getStringAttribute("feature");
+                        if(featureStr == null)
+                            featureStr = "photometric";
+                        else featureStr = featureStr.toLowerCase();
+
+                        CameraInput.PhyphoxCameraFeature feature;
+                        switch (featureStr){
+                            case "photometric": {
+                                feature = CameraInput.PhyphoxCameraFeature.Photometric;
+                                break;
+                            }
+                            default: {
+                                throw new phyphoxFileException("Unknown feature name: " + featureStr, xpp.getLineNumber());
+                            }
+                        }
+
+                        String lockedSetting = getStringAttribute("locked");
+                        if (lockedSetting == null)
+                            lockedSetting = "";
+
+                        double x1user = getDoubleAttribute("x1", 0.4);
+                        double x2user = getDoubleAttribute("x2", 0.6);
+                        double y1user = getDoubleAttribute("y1", 0.4);
+                        double y2user = getDoubleAttribute("y2", 0.6);
+
+                        //Careful: We will translate the user coordinate system to the camera coordinate system: x -> -y, y -> -x
+                        double x1 = 1.0 - y1user;
+                        double x2 = 1.0 - y2user;
+                        double y1 = 1.0 - x1user;
+                        double y2 = 1.0 - x2user;
+
+                        double thresholdAnalyzerThreshold = getDoubleAttribute("threshold", 0.5);
+
+                        //Allowed input/output configuration
+                        ioBlockParser.ioMapping[] outputMapping = {
+                                new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "luma"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "luminance"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "hue"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "saturation"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "value"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                                new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
+                        };
+
+                        //String availableCameraSettings = getStringAttribute("setting");
+                        //ArrayList<ExposureSettingMode> availableSettings = CameraHelper.convertInputSettingToSettingMode(availableCameraSettings);
+
+                        Vector<DataOutput> outputs = new Vector<>();
+                        (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
+
+                        experiment.cameraInput= new CameraInput(
+                                (float) x1,
+                                (float) x2,
+                                (float) y1,
+                                (float) y2,
+                                outputs,
+                                experiment.dataLock,
+                                experiment.experimentTimeReference,
+                                feature,
+                                autoExposure,
+                                lockedSetting.isEmpty() ? null : lockedSetting,
+                                aeStrategy,
+                                thresholdAnalyzerThreshold);
+
+                        break;
+
+                    }
                 }
                 case "bluetooth": { //A bluetooth input
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
@@ -2059,12 +2230,13 @@ public abstract class PhyphoxFile {
 
                     String type = getStringAttribute("type");
                     if (type == null || type.equals("buffer")) {
-                        boolean clear = getBooleanAttribute("clear", false);
+                        boolean clear = getBooleanAttribute("clear", false); //Deprecated
+                        boolean keep = getBooleanAttribute("keep", !clear); //New attribute keep = !clear,
                         String bufferName = getText();
                         DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null)
                             throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                        sendable = new NetworkConnection.NetworkSendableData(buffer, clear);
+                        sendable = new NetworkConnection.NetworkSendableData(buffer, keep);
                         if (datatype != null) {
                             sendable.additionalAttributes = new HashMap<>();
                             sendable.additionalAttributes.put("datatype", datatype);
@@ -2091,13 +2263,14 @@ public abstract class PhyphoxFile {
                     if (id == null)
                         throw new phyphoxFileException("Missing id in receive element.", xpp.getLineNumber());
 
-                    boolean clear = getBooleanAttribute("clear", false);
+                    boolean clear = getBooleanAttribute("clear", false); //Deprecated
+                    boolean append = getBooleanAttribute("append", !clear); //New attribute append = !clear,
 
                     String bufferName = getText();
                     DataBuffer buffer = experiment.getBuffer(bufferName);
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                    receivable = new NetworkConnection.NetworkReceivableData(buffer, clear);
+                    receivable = new NetworkConnection.NetworkReceivableData(buffer, append);
 
                     receive.put(id, receivable);
                     break;
@@ -2890,6 +3063,65 @@ public abstract class PhyphoxFile {
                     Analysis.constGeneratorAM constAM = new Analysis.constGeneratorAM(experiment, inputs, outputs);
                     experiment.analysis.add(constAM);
                 } break;
+                case "eventstream": { //Find events in a datastream (i.e. acoustic stopwatch)
+                    String triggerModeStr = getStringAttribute("mode");
+                    if (triggerModeStr == null)
+                        triggerModeStr = "above";
+
+                    Analysis.eventstreamAM.TriggerMode triggerMode;
+
+                    try {
+                        triggerMode = Analysis.eventstreamAM.TriggerMode.valueOf(triggerModeStr);
+                    } catch (Exception e) {
+                        throw new phyphoxFileException("Unknown trigger mode " + triggerModeStr, xpp.getLineNumber());
+                    }
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "distance"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "skip"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "last"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "events"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "skip"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "last"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.eventstreamAM(experiment, inputs, outputs, triggerMode));
+                } break;
+                case "movingaverage": { //Find events in a datastream (i.e. acoustic stopwatch)
+                    boolean dropIncomplete = getBooleanAttribute("dropIncomplete", false);
+
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "width"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.movingaverageAM(experiment, inputs, outputs, dropIncomplete));
+                } break;
+                case "split": { //Find events in a datastream (i.e. acoustic stopwatch)
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "index"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "overlap"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out1"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "out2"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.splitAM(experiment, inputs, outputs));
+                } break;
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
@@ -3034,7 +3266,7 @@ public abstract class PhyphoxFile {
             experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
             experiment.source = input.source;
             experiment.crc32 = input.crc32;
-
+            experiment.resourceFolder = input.resourceFolder;
             try {
                 //Setup the pull parser
                 BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
@@ -3165,7 +3397,21 @@ public abstract class PhyphoxFile {
             } catch (Exception e) {
                 return "Error loading the original XML file again: " + e.getMessage();
             }
-            return "";
+            PhyphoxExperiment exp = parent.get().experiment;
+            String warnings = "";
+            if (exp.resourceFolder != null && !exp.resources.isEmpty()) {
+                File newResFolder = new File(parent.get().getFilesDir(), Long.toHexString(exp.crc32).toLowerCase());
+                newResFolder.mkdirs();
+                for (String src : exp.resources) {
+                    try {
+                        Helper.copyFile(new File(exp.resourceFolder, src), new File(newResFolder, src));
+                    } catch (Exception e) {
+                        Log.e("CopyXML", "Could not save resource: " + e.getMessage());
+                        warnings += "Could not save resource: " + src + "\n";
+                    }
+                }
+            }
+            return warnings;
         }
 
         @Override

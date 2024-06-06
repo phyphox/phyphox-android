@@ -7,8 +7,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
 import android.text.InputType;
@@ -16,9 +21,11 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -34,19 +41,27 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.view.ViewCompat;
+import androidx.fragment.app.FragmentContainerView;
 
+import java.io.File;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.Camera.DepthInput;
-import de.rwth_aachen.phyphox.Camera.DepthPreview;
+import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
+import de.rwth_aachen.phyphox.camera.Scrollable;
+import de.rwth_aachen.phyphox.camera.depth.DepthInput;
+import de.rwth_aachen.phyphox.camera.depth.DepthPreview;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.RGB;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel;
+import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 
 // expView implements experiment views, which are collections of displays and graphs that form a
 // specific way to show the results of an element.
@@ -70,6 +85,11 @@ public class ExpView implements Serializable{
     public static enum State {
         hidden, normal, maximized;
     }
+
+    //Remember? We are in the expView class.
+    //An experiment view has a name and holds a bunch of expViewElement instances
+    public String name;
+    public Vector<expViewElement> elements = new Vector<>();
 
     //Abstract expViewElement class defining the interface for any element of an experiment view
     public abstract class expViewElement implements Serializable, BufferNotification {
@@ -126,6 +146,9 @@ public class ExpView implements Serializable{
                 experiment.getBuffer(valueOutput).register(this);
             }
             needsUpdate = true;
+        }
+
+        protected void destroyView() {
         }
 
         protected void onFragmentStop(PhyphoxExperiment experiment) {
@@ -232,6 +255,10 @@ public class ExpView implements Serializable{
             if (rootView != null) {
                 rootView.setVisibility(VISIBLE);
             }
+        }
+
+        protected void onViewSelected(boolean parentViewIsVisible) {
+
         }
 
     }
@@ -652,10 +679,20 @@ public class ExpView implements Serializable{
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
         private boolean triggered = true;
+        private boolean editable = true;
+
+        public String label;
+
+        private PhyphoxExperiment phyphoxExperiment;
+
+        private LinearLayout root_ll;
+        private Context c;
+
 
         //No special constructor. Just some defaults.
         editElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
+            this.label = label;
             this.unit = "";
             this.factor = 1.;
         }
@@ -694,6 +731,10 @@ public class ExpView implements Serializable{
             this.max = max;
         }
 
+        protected void setEditable(boolean editable){
+            this.editable = editable;
+        }
+
         @Override
         //This is an input, so the updateMode should be "input"
         protected String getUpdateMode() {
@@ -704,7 +745,10 @@ public class ExpView implements Serializable{
         //Create the view in Android and append it to the linear layout
         protected void createView(LinearLayout ll, final Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
-            //Create a row holding the label and the textEdit
+            phyphoxExperiment = experiment;
+            root_ll = ll;
+            this.c = c;
+
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -750,7 +794,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.7f)); //Most of the right half
             et.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
-            //   et.setPadding((int) labelSize / 2, 0, 0, 0);
+
             et.setTypeface(null, Typeface.BOLD);
 
             //Construct the inputType flags from our own state
@@ -763,13 +807,18 @@ public class ExpView implements Serializable{
             }
             if (decimal) {
                 inputType |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
-                allowedDigits.append(".,");
+                allowedDigits.append("-.,Ee"); //Note: This is not perfect, but we get into trouble if numbers are so small that they need to be represented in scientific notation (1e-6). But then again, this is not really about securing anything...
             }
             et.setInputType(inputType);
             if (decimal) {
                 et.setKeyListener(DigitsKeyListener.getInstance(allowedDigits.toString()));
                 et.addTextChangedListener(new DecimalTextWatcher());
             }
+            if(!editable){
+                et.setInputType(InputType.TYPE_NULL);
+                et.setBackgroundColor(res.getColor(R.color.cardview_dark_background));
+            }
+
 
             //Start with NaN
             et.setText("NaN");
@@ -798,25 +847,20 @@ public class ExpView implements Serializable{
             rootView.setFocusableInTouchMode(true);
 
             //Add the row to the main linear layout passed to this function
-            ll.addView(rootView);
+            root_ll.addView(rootView);
 
             //Add a listener to the edit box to keep track of the focus
-            et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                public void onFocusChange(View v, boolean hasFocus) {
-                    focused = hasFocus;
-                    if (!hasFocus) {
-                        setValue(getValue()); //Write back the value actually used...
-                        triggered = true;
-                    }
+            et.setOnFocusChangeListener((v, hasFocus) -> {
+                focused = hasFocus;
+                if (!hasFocus) {
+                    setValue(getValue()); //Write back the value actually used...
+                    triggered = true;
                 }
             });
 
-            et.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    et.clearFocus();
-                    return true;
-                }
+            et.setOnEditorActionListener((textView, i, keyEvent) -> {
+                et.clearFocus();
+                return true;
             });
 
         }
@@ -855,6 +899,9 @@ public class ExpView implements Serializable{
                 return currentValue;
             try {
                 currentValue = Double.valueOf(et.getText().toString().replace(",", "."))/factor;
+                if (!signed && currentValue < 0.0) {
+                    currentValue = Math.abs(currentValue); //Another safety net as we cannot entirely rule out the minus sign in decimal notation because of possible scientific representation
+                }
                 if (currentValue < min) {
                     currentValue = min;
                 }
@@ -1410,7 +1457,8 @@ public class ExpView implements Serializable{
         public void onFragmentStop(PhyphoxExperiment experiment) {
             super.onFragmentStop(experiment);
 
-            interactiveGV.stop();
+            if (interactiveGV != null)
+                interactiveGV.stop();
             gv = null;
             interactiveGV = null;
         }
@@ -2189,33 +2237,38 @@ public class ExpView implements Serializable{
         }
     }
 
-    //svgElement shows an svg image, optionally, parts of its source code can be replaced by measured values.
-    public class svgElement extends expViewElement implements Serializable {
-        transient ParametricSVGView svgView = null;
-        int backgroundColor = 0xffffff;
-        String source = null;
+    enum ImageFilter {
+        none, invert
+    }
 
-        //Constructor takes the same arguments as the expViewElement constructor
-        svgElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
-            super(label, valueOutput, inputs, res);
+    //imageElement displays an image
+    public class imageElement extends expViewElement implements Serializable {
+
+        private String src;
+        Drawable drawable;
+        private float scale = 1.0f;
+        private ImageFilter darkFilter = ImageFilter.none;
+        private ImageFilter lightFilter = ImageFilter.none;
+
+        //Label is not used
+        imageElement(String valueOutput, Vector<String> inputs, Resources res, String src) {
+            super("", valueOutput, inputs, res);
+            this.src = src;
         }
 
-        public void setBackgroundColor(int c) {
-            this.backgroundColor = c;
-            if (svgView != null)
-                svgView.setBackgroundColor(c);
+        public void setScale(float scale) {
+            this.scale = scale;
         }
 
-        public void setSvgParts(String source) {
-            this.source = source;
-            if (svgView != null)
-                svgView.setSvgParts(source);
+        public void setFilters(ImageFilter darkFilter, ImageFilter lightFilter) {
+            this.darkFilter = darkFilter;
+            this.lightFilter = lightFilter;
         }
 
         @Override
-        //This is a single value. So the updateMode is "single"
+        //This does not display anything. Do not update.
         protected String getUpdateMode() {
-            return "single";
+            return "none";
         }
 
         @Override
@@ -2223,48 +2276,245 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
-            svgView = new ParametricSVGView(c);
-            svgView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            if (experiment.resourceFolder.startsWith("ASSET")) {
+                String assetPath = "experiments/res/" + src;
+                try {
+                    InputStream is = res.getAssets().open(assetPath);
+                    drawable = new BitmapDrawable(BitmapFactory.decodeStream(is));
+                } catch (Exception e) {
+                    Log.e("imageView", "Failed to open image from asset: " + assetPath);
+                }
+            } else {
+                File srcFile = new File(experiment.resourceFolder, src);
+                Bitmap bmp = BitmapFactory.decodeFile(srcFile.getAbsolutePath());
+                if (bmp != null)
+                    drawable = new BitmapDrawable(bmp);
+            }
+            if (drawable != null) {
+                applyFilter(Helper.isDarkTheme(res) ? darkFilter : lightFilter);
 
-            //svgView.setBackgroundColor(backgroundColor);
-            if (source != null)
-                svgView.setSvgParts(source);
+                ImageView iv = new ImageView(c);
+                LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                iv.setLayoutParams(lllp);
 
-            //Set the ParametricSVGView as root
-            rootView = svgView;
-            rootView.setFocusableInTouchMode(false);
+                iv.setImageDrawable(drawable);
+                iv.setAdjustViewBounds(true);
+                iv.setScaleType(ImageView.ScaleType.FIT_XY);
+                iv.setScaleX(scale);
+                iv.setScaleY(scale);
+
+                rootView = iv;
+            } else {
+                TextView tv = new TextView(c);
+                LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                tv.setLayoutParams(lllp);
+
+                tv.setText("Image not available");
+                tv.setGravity(Gravity.CENTER);
+                tv.setTypeface(null, Typeface.BOLD);
+                rootView = tv;
+            }
+
+            //Add it to the linear layout
             ll.addView(rootView);
+        }
+
+        final ColorMatrixColorFilter colorFilterNone = new ColorMatrixColorFilter(
+            new float[]{
+                    1, 0, 0, 0, 0,
+                    0, 1, 0, 0, 0,
+                    0, 0, 1, 0, 0,
+                    0, 0, 0, 1, 0
+            }
+        );
+
+        final ColorMatrixColorFilter colorFilterInvert = new ColorMatrixColorFilter(
+            new float[]{
+                -1, 0, 0, 0, 255,
+                0, -1, 0, 0, 255,
+                0, 0, -1, 0, 255,
+                0, 0, 0, 1, 0
+            }
+        );
+
+        protected void applyFilter(ImageFilter filter) {
+            switch (filter) {
+                case none:
+                    drawable.setColorFilter(colorFilterNone);
+                    break;
+                case invert:
+                    drawable.setColorFilter(colorFilterInvert);
+                    break;
+            }
         }
 
         @Override
         //Create the HTML version of this view:
+        //<div>
+        //  <img ... />
+        //</div>
         protected String createViewHTML(){
-            return "";
+            return "<div class=\"imageElement\" id=\"element" + htmlID + "\"><img style=\"width: " + (100.0*scale) + "% \" class=\"lightFilter_" + lightFilter.toString() + " darkFilter_" + darkFilter.toString() + "\" src=\"res?src=" + src + "\"></p></div>";
+        }
+
+    }
+
+    public class cameraElement extends expViewElement implements  Serializable {
+
+        private cameraElement self;
+        private boolean isExclusive = false;
+        transient private ExpViewFragment parent = null;
+        transient private CameraPreviewFragment cameraPreviewFragment = null;
+        float height = 300; //dp, might be settable in the future
+
+        boolean grayscale;
+        RGB markOverexposure;
+        RGB markUnderexposure;
+        ShowCameraControls showCameraControls = ShowCameraControls.FullViewOnly;
+        CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCED;
+        String lockedSettings;
+
+        Scrollable scrollable = new Scrollable() {
+            @Override
+            public void enableScrollable() {
+                parent.enableScrolling();
+                rootView.getParent().requestDisallowInterceptTouchEvent(false);
+            }
+
+            @Override
+            public void disableScrollable() {
+                parent.disableScrolling();
+                rootView.getParent().requestDisallowInterceptTouchEvent(true);
+            }
+        };
+
+
+        protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+        public void applyControlSettings(ShowCameraControls showCameraControls, int exposureAdjustmentLevel) {
+            this.showCameraControls = showCameraControls;
+            this.lockedSettings = lockedSettings;
+            switch (exposureAdjustmentLevel) {
+                case 1: cameraSettingLevel = CameraSettingLevel.BASIC;
+                        break;
+                case 2: cameraSettingLevel = CameraSettingLevel.INTERMEDIATE;
+                        break;
+                default: cameraSettingLevel = CameraSettingLevel.ADVANCED;
+                        break;
+            }
+        }
+
+        public void setPreviewParameters(boolean grayscale, RGB markOverexposure, RGB markUnderexposure) {
+            this.grayscale = grayscale;
+            this.markOverexposure = markOverexposure;
+            this.markUnderexposure = markUnderexposure;
+        }
+
+        protected boolean toggleExclusive() {
+            if (self.parent != null) {
+                if (isExclusive) {
+                    self.parent.leaveExclusive();
+                } else {
+                    self.parent.requestExclusive(self);
+                }
+                return true;
+            }
+            return false;
         }
 
         @Override
-        //We just have to send calculated value and the unit to the textView
-        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
-            if (!needsUpdate)
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+               return;
+
+            super.createView(ll, c, res, parent, experiment);
+            this.parent = parent;
+            this.self = this;
+
+            LayoutInflater inflater = LayoutInflater.from(c);
+            rootView = inflater.inflate(R.layout.camera_layout, ll, false);
+            rootView.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, parent.getResources().getDisplayMetrics());
+            ll.addView(rootView);
+
+            rootView.setOnClickListener(view -> toggleExclusive());
+            rootView.setFocusableInTouchMode(false);
+
+            FragmentContainerView containerView = rootView.findViewById(R.id.fragmentContainerView);
+            if (cameraPreviewFragment == null)
+                cameraPreviewFragment = new CameraPreviewFragment(experiment, scrollable, this::toggleExclusive, showCameraControls, cameraSettingLevel, grayscale, markOverexposure, markUnderexposure);
+
+            parent.getChildFragmentManager().beginTransaction().add(containerView.getId(), cameraPreviewFragment).commit();
+        }
+
+        @Override
+        protected void destroyView() {
+            if (parent != null && cameraPreviewFragment != null)
+                parent.getChildFragmentManager().beginTransaction().remove(cameraPreviewFragment).commit();
+            cameraPreviewFragment = null;
+
+        }
+
+        @Override
+        protected String createViewHTML() {
+            return null;
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return null;
+        }
+
+        @Override
+        protected void onFragmentStop(PhyphoxExperiment experiment) {
+            super.onFragmentStop(experiment);
+
+        }
+
+        @Override
+        protected void restore() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
                 return;
-            needsUpdate = false;
-            double[] data = new double[inputs.size()];
-            for (int i = 0; i < inputs.size(); i++)
-                data[i] = experiment.getBuffer(inputs.get(i)).value;
-            svgView.update(data);
+
+            super.restore();
+            if (rootView != null && cameraPreviewFragment != null && parent != null) {
+                isExclusive = false;
+
+                rootView.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, parent.getResources().getDisplayMetrics());
+                rootView.requestLayout();
+
+                cameraPreviewFragment.setInteractive(false);
+            }
         }
 
         @Override
-        //In Javascript we just have to set the content of the value <span> to the value using jquery
-        protected String setDataHTML() {
-            return "";
+        protected void maximize() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                return;
+
+            super.maximize();
+            if (rootView != null && cameraPreviewFragment != null && parent != null) {
+                isExclusive = true;
+
+                rootView.getLayoutParams().height = LinearLayout.LayoutParams.MATCH_PARENT;
+                rootView.requestLayout();
+
+                cameraPreviewFragment.setInteractive(true);
+            }
+        }
+
+        @Override
+        protected void onViewSelected(boolean parentViewIsVisible) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+                return;
+            if (cameraPreviewFragment != null)
+                cameraPreviewFragment.onPageVisibleToUser(parentViewIsVisible);
         }
     }
 
-    //Remember? We are in the expView class.
-    //An experiment view has a name and holds a bunch of expViewElement instances
-    public String name;
-    public Vector<expViewElement> elements = new Vector<>();
 }

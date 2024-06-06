@@ -243,7 +243,6 @@ public class BluetoothInput extends Bluetooth {
      */
     @Override
     public void stop() {
-
         if (subscribeOnStart && (mode.equals("notification") || mode.equals("indication"))) {
             unsubscribeFromNotifications();
         }
