@@ -235,7 +235,7 @@
     <string name="beeperStop">Ήχος λήξης</string>
     <string name="activate_all">Ενεργοποίηση όλων</string>
     <string name="deactivate_all">Απενεργοποίηση όλων</string>
-    <string name="common_unit_short_arbitrary_unit">α.μ</string>
+    <string name="common_unit_short_arbitrary_unit">αυθ.μονάδα</string>
     <string name="common_quantity_short_acceleration">α</string>
     <string name="common_direction_short_north">Β</string>
     <string name="common_direction_short_south">Ν</string>
@@ -349,7 +349,7 @@
     <string name="depthAggregationModeAverage">Μέσες τιμές</string>
     <string name="depthAggregationModeWeighted">Σταθμισμένα</string>
     <string name="cameraFrontFacing">Μπροστινή κάμερα</string>
-    <string name="cameraBackFacing">Οπίσθια κάμερα</string>
+    <string name="cameraBackFacing">Πίσω κάμερα</string>
     <string name="cameraExternal">Εξωτερική κάμερα</string>
     <string name="sensorGravity">Βαρύτητα</string>
     <string name="settingsDefault">Προεπιλογή</string>
@@ -373,4 +373,14 @@
     <string name="settings_mode_no_dark">Off</string>
     <string name="settings_mode_dark_system">Όμοιο με το σύστημα</string>
     <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
+    <string name="cameraFront">Μπροστά</string>
+    <string name="cameraBack">Πίσω</string>
+    <string name="off">Off</string>
+    <string name="on">On</string>
+    <string name="camera_preview">Προεπισκόπηση</string>
+    <string name="camera_not_ready">Ανέτοιμη κάμερα</string>
+    <string name="common_unit_short_luminance">cd/m²</string>
+    <string name="common_unit_percentage">%</string>
+    <string name="common_quantity_short_luminance">Lv</string>
+    <string name="common_quantity_percentage">Ποσοστό</string>
 </resources>
