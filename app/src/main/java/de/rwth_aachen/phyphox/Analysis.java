@@ -2641,7 +2641,7 @@ public class Analysis {
             int start = dropIncomplete ? width : 0;
 
             for (int i = start; i < inputArraySizes.get(0); i++) {
-                int substart = Math.min(i-width, 0);
+                int substart = Math.max(i-width, 0);
                 double sum = 0.0;
                 for (int j = substart; j <= i; j++) {
                     sum += data[j];
