@@ -493,6 +493,14 @@ public class RemoteServer extends Thread {
         respond(response, contentType, in, content.length());
     }
 
+    protected void respond(HttpResponse response, String json) {
+        respond(response, "application/json", json);
+    }
+
+    protected void respond(HttpResponse response, boolean result) {
+        respond(response, result ? "{\"result\": true}" : "{\"result\": false}");
+    }
+
     //The home handler simply sends the already compiled index.html
     class HomeCommandHandler implements HttpRequestHandler {
 
@@ -726,7 +734,7 @@ public class RemoteServer extends Thread {
             }
 
             //Done. Build a string and return it as usual
-            respond(response, "application/json", sb.toString());
+            respond(response, sb.toString());
         }
 
     }
@@ -743,21 +751,19 @@ public class RemoteServer extends Thread {
             Uri uri = Uri.parse(request.getRequestLine().getUri());
             String cmd = uri.getQueryParameter("cmd");
 
-            final String result;
-
             if (cmd != null) {
                 switch (cmd) {
                     case "start": //Start the measurement
                         callActivity.remoteStartMeasurement();
-                        result = "{\"result\": true}";
+                        respond(response, true);
                         break;
                     case "stop": //Stop the measurement
                         callActivity.remoteStopMeasurement();
-                        result = "{\"result\": true}";
+                        respond(response, true);
                         break;
                     case "clear": //Clear measurement data
                         callActivity.clearData();
-                        result = "{\"result\": true}";
+                        respond(response, true);
                         break;
                     case "set": //Set the value of a buffer
                         String buffer = uri.getQueryParameter("buffer"); //Which buffer?
@@ -768,12 +774,12 @@ public class RemoteServer extends Thread {
                                 v = Double.valueOf(value);
                             } catch (Exception e) {
                                 //Invalid input
-                                result = "{\"result\": false}";
+                                respond(response, false);
                                 break;
                             }
                             if (Double.isNaN(v)) {
                                 //We do not allow to explicitly set NaN. The buffer initially contains NaN and this is probably a mistake
-                                result = "{\"result\": false}";
+                                respond(response, false);
                             } else {
                                 callActivity.remoteInput = true;
                                 experiment.newData = true;
@@ -788,10 +794,10 @@ public class RemoteServer extends Thread {
                                 } finally {
                                     experiment.dataLock.unlock();
                                 }
-                                result = "{\"result\": true}";
+                                respond(response, true);
                             }
                         } else
-                            result = "{\"result\": false}";
+                            respond(response, false);
                         break;
                     case "trigger":
                         String elementStr = uri.getQueryParameter("element"); //Which element?
@@ -801,23 +807,21 @@ public class RemoteServer extends Thread {
                                 htmlID = Integer.valueOf(elementStr);
                             } catch (Exception e) {
                                 //Invalid input
-                                result = "{\"result\": false}";
+                                respond(response, false);
                                 break;
                             }
                             experiment.experimentViews.get(htmlID2View.get(htmlID)).elements.get(htmlID2Element.get(htmlID)).trigger();
-                            result = "{\"result\": true}";
+                            respond(response, true);
                         } else {
-                            result = "{\"result\": false}";
+                            respond(response, false);
                         }
                         break;
                     default:
-                        result = "{\"result\": false}";
+                        respond(response, false);
                         break;
                 }
             } else
-                result = "{\"result\": false}";
-
-            respond(response, "application/json", result);
+                respond(response, false);
         }
 
     }
@@ -838,8 +842,7 @@ public class RemoteServer extends Thread {
             int formatInt = Integer.parseInt(format);
             if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
                 //Not good. Build an error entity
-                final String result = "{\"error\" = \"Format out of range.\"}";
-                respond(response, "application/json", result);
+                respond(response, "{\"error\" = \"Format out of range.\"}");
             } else {
                 //Alright, let's go on with the export
 
@@ -865,8 +868,6 @@ public class RemoteServer extends Thread {
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
-
-            String result;
             try {
                 JSONObject json = new JSONObject();
 
@@ -964,13 +965,11 @@ public class RemoteServer extends Thread {
                 }
                 json.put("export", export);
 
-                result = json.toString();
+                respond(response, json.toString());
             } catch (JSONException e) {
-                result = "{\"result\": false}";
                 Log.e("configHandler", "Error: " + e.getMessage());
+                respond(response, false);
             }
-
-            respond(response, "application/json", result);
         }
 
     }
@@ -981,8 +980,6 @@ public class RemoteServer extends Thread {
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
-
-            String result;
 
             try {
 
@@ -1005,14 +1002,11 @@ public class RemoteServer extends Thread {
                 }
                 deviceJson.put("sensors", sensorsJson);
 
-
-                result = deviceJson.toString();
+                respond(response, deviceJson.toString());
             } catch (JSONException e) {
-                result = "{\"result\": false}";
                 Log.e("configHandler", "Error: " + e.getMessage());
+                respond(response, false);
             }
-
-            respond(response, "application/json", result);
         }
     }
 
@@ -1022,9 +1016,6 @@ public class RemoteServer extends Thread {
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
-
-            String result;
-
             try {
 
                 JSONArray json = new JSONArray();
@@ -1036,12 +1027,11 @@ public class RemoteServer extends Thread {
                     json.put(eventJson);
                 }
 
-                result = json.toString();
+                respond(response, json.toString());
             } catch (JSONException e) {
-                result = "{\"result\": false}";
                 Log.e("configHandler", "Error: " + e.getMessage());
+                respond(response, false);
             }
-            respond(response, "application/json", result);
         }
     }
 
@@ -1056,20 +1046,16 @@ public class RemoteServer extends Thread {
             Uri uri = Uri.parse(request.getRequestLine().getUri());
             String src = uri.getQueryParameter("src");
 
-            final String result;
-
             if (src != null && !src.isEmpty() && experiment.resources.contains(src)) {
                 try {
                     File file = new File(experiment.resourceFolder, src);
                     respond(response, null, file);
-                    return;
                 } catch (Exception e) {
-                    result = "{\"error\" = \"Unknown file.\"}";
+                    respond(response, "{\"error\" = \"Unknown file.\"}");
                 }
             } else {
-                result = "{\"error\" = \"Unknown file.\"}";
+                respond(response, "{\"error\" = \"Unknown file.\"}");
             }
-            respond(response, "application/json", result);
         }
 
     }
