@@ -45,6 +45,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -470,58 +471,58 @@ public class RemoteServer extends Thread {
         RUNNING = false;
     }
 
-    //The home handler simply takes the already compiled index.html and pushes it through an OutputStreamWriter
+    protected void respond(HttpResponse response, String contentType, InputStream in, long length) {
+        BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(in);
+        if (length > -1)
+            entity.setContentLength(length);
+        //Set the header and THEN send the file
+        if (contentType != null)
+            response.setHeader("Content-Type", contentType);
+        response.setEntity(entity);
+    }
+
+    protected void respond(HttpResponse response, String contentType, String content) {
+        byte[] bytes = content.getBytes();
+        InputStream in = new ByteArrayInputStream(bytes);
+        respond(response, contentType, in, bytes.length);
+    }
+
+    protected void respond(HttpResponse response, String contentType, File content) throws FileNotFoundException {
+        InputStream in = new FileInputStream(content);
+        respond(response, contentType, in, content.length());
+    }
+
+    //The home handler simply sends the already compiled index.html
     class HomeCommandHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
-
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(indexHTML.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            //Set the header and THEN send the file
-            response.setHeader("Content-Type", "text/html");
-            response.setEntity(entity);
+            respond(response, "text/html", indexHTML);
         }
 
     }
 
-    //The style handler simply takes the already compiled style.css and pushes it through an OutputStreamWriter
+    //The style handler simply sends the already compiled style.css
     class StyleCommandHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
-
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(styleCSS.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            //Set the header and THEN send the file
-            response.setHeader("Content-Type", "text/css");
-            response.setEntity(entity);
+            respond(response, "text/css", styleCSS);
         }
 
     }
 
-    //The logo handler simply reads the logo from resources and pushes it through an OutputStreamWriter
+    //The logo handler simply reads the logo from resources and sends it
     class logoHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
-
-            BasicHttpEntity entity = new BasicHttpEntity();
             InputStream inputStream = context.getAssets().open("remote/phyphox_orange.png");
-            entity.setContent(inputStream);
-
-            //Set the header and THEN send the file
-            response.setHeader("Content-Type", "image/png");
-            response.setEntity(entity);
+            respond(response, "image/png", inputStream, -1);
         }
 
     }
@@ -725,15 +726,7 @@ public class RemoteServer extends Thread {
             }
 
             //Done. Build a string and return it as usual
-            final String result = sb.toString();
-
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
+            respond(response, "application/json", sb.toString());
         }
 
     }
@@ -824,13 +817,7 @@ public class RemoteServer extends Thread {
             } else
                 result = "{\"result\": false}";
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
+            respond(response, "application/json", result);
         }
 
     }
@@ -848,20 +835,11 @@ public class RemoteServer extends Thread {
             Uri uri = Uri.parse(request.getRequestLine().getUri());
             String format = uri.getQueryParameter("format");
 
-            //We will build this entity depending on the format. If it is invalid we will repons
-            //with an error
-            BasicHttpEntity entity;
             int formatInt = Integer.parseInt(format);
             if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
                 //Not good. Build an error entity
                 final String result = "{\"error\" = \"Format out of range.\"}";
-
-                entity = new BasicHttpEntity();
-                InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-                entity.setContent(inputStream);
-                entity.setContentLength(inputStream.available());
-
-                response.setHeader("Content-Type", "application/json");
+                respond(response, "application/json", result);
             } else {
                 //Alright, let's go on with the export
 
@@ -872,19 +850,10 @@ public class RemoteServer extends Thread {
                 final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
                 final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName, context);
 
-                entity = new BasicHttpEntity();
-                InputStream inputStream = new FileInputStream(exportFile);
-                entity.setContent(inputStream);
-                entity.setContentLength(inputStream.available());
-
-                //Set the content type and set "Content-Disposition" to force the browser to handle this as a download with a default file name
-                response.setHeader("Content-Type", type);
+                //Set "Content-Disposition" to force the browser to handle this as a download with a default file name
                 response.setHeader("Content-Disposition", "attachment; filename=\""+experiment.exporter.exportFormats[formatInt].getFilename(false) + "\"");
+                respond(response, type, exportFile);
             }
-
-            //Send error or file
-            response.setEntity(entity);
-
         }
 
     }
@@ -1001,14 +970,7 @@ public class RemoteServer extends Thread {
                 Log.e("configHandler", "Error: " + e.getMessage());
             }
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
-
+            respond(response, "application/json", result);
         }
 
     }
@@ -1050,14 +1012,7 @@ public class RemoteServer extends Thread {
                 Log.e("configHandler", "Error: " + e.getMessage());
             }
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
-
+            respond(response, "application/json", result);
         }
     }
 
@@ -1086,15 +1041,7 @@ public class RemoteServer extends Thread {
                 result = "{\"result\": false}";
                 Log.e("configHandler", "Error: " + e.getMessage());
             }
-
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
-
+            respond(response, "application/json", result);
         }
     }
 
@@ -1109,16 +1056,12 @@ public class RemoteServer extends Thread {
             Uri uri = Uri.parse(request.getRequestLine().getUri());
             String src = uri.getQueryParameter("src");
 
-            BasicHttpEntity entity = new BasicHttpEntity();
             final String result;
 
             if (src != null && !src.isEmpty() && experiment.resources.contains(src)) {
                 try {
                     File file = new File(experiment.resourceFolder, src);
-                    InputStream inputStream = new FileInputStream(file);
-                    entity.setContent(inputStream);
-                    entity.setContentLength(file.length());
-                    response.setEntity(entity);
+                    respond(response, null, file);
                     return;
                 } catch (Exception e) {
                     result = "{\"error\" = \"Unknown file.\"}";
@@ -1126,12 +1069,7 @@ public class RemoteServer extends Thread {
             } else {
                 result = "{\"error\" = \"Unknown file.\"}";
             }
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
+            respond(response, "application/json", result);
         }
 
     }
