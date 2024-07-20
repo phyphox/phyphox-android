@@ -66,8 +66,8 @@ import java.util.Set;
 import java.util.Vector;
 
 //remoteServer implements a web-interface to remote control the experiment and receive the data
-//Unfortunately, Google decided to depricate org.apache.http in Android 6, so until we move to
-//something else, we need to suppress deprication warnings if we do not want to get flooded.
+//Unfortunately, Google decided to deprecate org.apache.http in Android 6, so until we move to
+//something else, we need to suppress deprecation warnings if we do not want to get flooded.
 
 @SuppressWarnings( "deprecation" )
 public class RemoteServer extends Thread {
@@ -83,7 +83,7 @@ public class RemoteServer extends Thread {
 
     public String sessionID = "";
 
-    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
+    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it necessary to force a full buffer update to the remote interface
 
     static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
 
@@ -220,9 +220,9 @@ public class RemoteServer extends Thread {
                     htmlID2Element.clear();
 
                     for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                        //For each ecperiment view
+                        //For each experiment view
 
-                        if (i > 0)  //Add a colon if this is not the first item to seperate the previous one.
+                        if (i > 0)  //Add a colon if this is not the first item to separate the previous one.
                             sb.append(",\n"); //Not necessary, but debugging is so much more fun with a line-break.
 
                         //The name of this view
@@ -238,7 +238,7 @@ public class RemoteServer extends Thread {
                             htmlID2View.add(i);
                             htmlID2Element.add(j);
 
-                            if (j > 0)  //Add a colon if this is not the first item to seperate the previous one.
+                            if (j > 0)  //Add a colon if this is not the first item to separate the previous one.
                                 sb.append(",");
 
                             //The element's label
@@ -340,7 +340,7 @@ public class RemoteServer extends Thread {
         this(experiment, callActivity, String.format("%06x", (System.nanoTime() & 0xffffff)));
     }
 
-    //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
+    //This helper function lists all external IP addresses, so the user can be told, how to reach the webinterface
     public static String getAddresses(Context context) {
         String ret = "";
         Inet4Address filterMobile = null;
@@ -368,7 +368,7 @@ public class RemoteServer extends Thread {
             while (enumNetworkInterfaces.hasMoreElements()) { //For each network interface
                 NetworkInterface networkInterface = enumNetworkInterfaces.nextElement();
                 Enumeration<InetAddress> enumInetAddress = networkInterface.getInetAddresses();
-                while (enumInetAddress.hasMoreElements()) { //For each adress of this interface
+                while (enumInetAddress.hasMoreElements()) { //For each address of this interface
                     InetAddress inetAddress = enumInetAddress.nextElement();
 
                     //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
@@ -381,7 +381,7 @@ public class RemoteServer extends Thread {
             }
 
         } catch (SocketException e) {
-            Log.e("getAdresses", "Error getting the IP.", e);
+            Log.e("getAddresses", "Error getting the IP.", e);
         }
         return ret;
     }
@@ -466,7 +466,7 @@ public class RemoteServer extends Thread {
     }
 
 
-    //Stop the server by siply setting RUNNING to false
+    //Stop the server by simply setting RUNNING to false
     public synchronized void stopServer() {
         RUNNING = false;
     }
@@ -617,7 +617,7 @@ public class RemoteServer extends Thread {
                     if (firstBuffer)
                         firstBuffer = false;
                     else
-                        sb.append(",\n"); //Seperate the object with a comma, if this is not the first item
+                        sb.append(",\n"); //Separate the object with a comma, if this is not the first item
 
                     //Get the threshold reference data buffer
                     DataBuffer db_reference;
@@ -651,7 +651,7 @@ public class RemoteServer extends Thread {
                             sb.append(format.format(db.value));
                     else {
                         //Get all the values...
-                        boolean firstValue = true; //Find first iteration, so the other ones can add a seperator
+                        boolean firstValue = true; //Find first iteration, so the other ones can add a separator
                         Double data[] = db.getArray();
                         int n = db.getFilledSize();
                         Double dataRef[];
@@ -671,7 +671,7 @@ public class RemoteServer extends Thread {
                             if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
                                 continue;
 
-                            //Add a seperator if this is not the first value
+                            //Add a separator if this is not the first value
                             if (firstValue)
                                 firstValue = false;
                             else
@@ -767,10 +767,10 @@ public class RemoteServer extends Thread {
                                 callActivity.remoteInput = true;
                                 experiment.newData = true;
 
-                                //Defocus the input element in the API interface or it might not be updated and will reenter the old value
+                                //Defocus the input element in the API interface otherwise it might not be updated and will reenter the old value
                                 callActivity.requestDefocus();
 
-                                //Send the value to the buffer, but aquire a lock first, so it does not interfere with data analysis
+                                //Send the value to the buffer, but acquire a lock first, so it does not interfere with data analysis
                                 experiment.dataLock.lock();
                                 try {
                                     experiment.getBuffer(buffer).append(v);
