@@ -454,14 +454,14 @@ public class RemoteServer extends Thread {
         HttpRequestHandlerRegistry registry = new HttpRequestHandlerRegistry();
         registry.register("/", new HomeCommandHandler()); //The basic interface (index.html) when the user just calls the address
         registry.register("/style.css", new StyleCommandHandler()); //The style sheet (style.css) linked from index.html
-        registry.register("/logo", new logoHandler()); //The phyphox logo, also included in style.css
-        registry.register("/get", new getCommandHandler()); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
-        registry.register("/control", new controlCommandHandler()); //The control command starts and stops measurements
-        registry.register("/export", new exportCommandHandler()); //The export command requests a data file containing sets as requested by the paramters
-        registry.register("/config", new configCommandHandler()); //The config command requests information on the currently active experiment configuration
-        registry.register("/meta", new metaCommandHandler()); //The meta command requests information on the device
-        registry.register("/time", new timeCommandHandler()); //The meta command requests information on the current time reference
-        registry.register("/res", new resCommandHandler()); //Fetch resource files (like images embedded in the experiment configuration)
+        registry.register("/logo", new LogoHandler()); //The phyphox logo, also included in style.css
+        registry.register("/get", new GetCommandHandler()); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
+        registry.register("/control", new ControlCommandHandler()); //The control command starts and stops measurements
+        registry.register("/export", new ExportCommandHandler()); //The export command requests a data file containing sets as requested by the parameters
+        registry.register("/config", new ConfigCommandHandler()); //The config command requests information on the currently active experiment configuration
+        registry.register("/meta", new MetaCommandHandler()); //The meta command requests information on the device
+        registry.register("/time", new TimeCommandHandler()); //The meta command requests information on the current time reference
+        registry.register("/res", new ResCommandHandler()); //Fetch resource files (like images embedded in the experiment configuration)
         httpService.setHandlerResolver(registry);
     }
 
@@ -524,7 +524,7 @@ public class RemoteServer extends Thread {
     }
 
     //The logo handler simply reads the logo from resources and sends it
-    class logoHandler implements HttpRequestHandler {
+    class LogoHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
@@ -541,10 +541,10 @@ public class RemoteServer extends Thread {
     // values from buffer3 at indices at which values of buffer2 are greater than 67890
     //Example: If you have a graph of sensor data y against time t and already have data to
     // 20 seconds, you would request t=20 and y=20|t to receive any data beyond 20 seconds
-    class getCommandHandler implements HttpRequestHandler {
+    class GetCommandHandler implements HttpRequestHandler {
 
         //This structure (ok, class) holds one element of the request corresponding to a buffer
-        protected class bufferRequest {
+        protected class BufferRequest {
             public String name;         //Name of the requested buffer
             public Double threshold;    //Threshold from which to read data
             public String reference;    //The buffer to which the threshold should be applied
@@ -555,11 +555,11 @@ public class RemoteServer extends Thread {
                            HttpContext httpContext) throws HttpException, IOException {
 
             Uri uri = Uri.parse(request.getRequestLine().getUri());
-            Set<bufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
+            Set<BufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
             Set<String> names = uri.getQueryParameterNames();
             if (!names.isEmpty()) {
                 for (String name : names) {
-                    bufferRequest br = new bufferRequest();
+                    BufferRequest br = new BufferRequest();
                     br.name = name;
                     br.reference = "";
                     String value = uri.getQueryParameter(name);
@@ -593,7 +593,7 @@ public class RemoteServer extends Thread {
             try {
                 //First let's take a guess at how much memory we will need
                 int sizeEstimate = 0;
-                for (bufferRequest buffer : buffers) {
+                for (BufferRequest buffer : buffers) {
                     DataBuffer db = experiment.getBuffer(buffer.name);
                     if (db != null)
                         sizeEstimate += 14 * db.size + 100;
@@ -610,7 +610,7 @@ public class RemoteServer extends Thread {
 
                 //Start building...
                 sb.append("{\"buffer\":{\n");
-                for (bufferRequest buffer : buffers) {
+                for (BufferRequest buffer : buffers) {
                     DataBuffer db = experiment.getBuffer(buffer.name);
                     if (db == null)
                         continue;
@@ -725,7 +725,7 @@ public class RemoteServer extends Thread {
     //This query has the simple form control?cmd=start or control?cmd=set&buffer=name&value=42
     //The first form starts or stops the measurement. The second one sends a user-given value (from
     //an editElement) to a buffer
-    class controlCommandHandler implements HttpRequestHandler {
+    class ControlCommandHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
@@ -812,7 +812,7 @@ public class RemoteServer extends Thread {
     //The export query has the form export?format=1&set1=On&set3=On
     //format gives the index of the export format selected by the user
     //Any set (set0, set1, set2...) given should be included in this export
-    class exportCommandHandler implements HttpRequestHandler {
+    class ExportCommandHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
@@ -846,7 +846,7 @@ public class RemoteServer extends Thread {
 
     //The config query does not take any parameters
     //It returns information on the currently active experiment configuration like title, category, checksum, inputs, buffers, ...
-    class configCommandHandler implements HttpRequestHandler {
+    class ConfigCommandHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
@@ -959,7 +959,7 @@ public class RemoteServer extends Thread {
 
     //The meta query does not take any parameters
     //It returns information on the currently used device
-    class metaCommandHandler implements HttpRequestHandler {
+    class MetaCommandHandler implements HttpRequestHandler {
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
@@ -995,7 +995,7 @@ public class RemoteServer extends Thread {
 
     //The time query does not take any parameters
     //It returns a list of time reference points, i.e. start and stop times of the current experiment
-    class timeCommandHandler implements HttpRequestHandler {
+    class TimeCommandHandler implements HttpRequestHandler {
         @Override
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
@@ -1019,7 +1019,7 @@ public class RemoteServer extends Thread {
     }
 
     //The res handler serves resource files (like images embedded in the experiment configuration)
-    class resCommandHandler implements HttpRequestHandler {
+    class ResCommandHandler implements HttpRequestHandler {
 
         @Override
         public void handle(HttpRequest request, HttpResponse response,
