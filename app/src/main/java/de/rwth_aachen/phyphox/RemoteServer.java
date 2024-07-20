@@ -554,51 +554,34 @@ public class RemoteServer extends Thread {
         public void handle(HttpRequest request, HttpResponse response,
                            HttpContext httpContext) throws HttpException, IOException {
 
-            Uri uri=Uri.parse(request.getRequestLine().getUri());
-
-            //Based on code from getQueryParameterNames, see http://stackoverflow.com/questions/11642494/android-net-uri-getqueryparameternames-alternative
-            String query = uri.getQuery();
-            Set<bufferRequest> bufferList = new LinkedHashSet<>(); //This list will hold all requests
-            int start = 0;
-            if (query != null) {
-                do { //We will iterate through each element of the query
-                    int next = query.indexOf('&', start);
-                    int end = (next == -1) ? query.length() : next;
-                    int separator = query.indexOf('=', start);
-                    if (separator > end || separator == -1) {
-                        separator = end;
-                    }
-
-                    //Now the current element is query.substring(start, end) and the "=" will be at seperator
-
-                    //Intrepret the request
+            Uri uri = Uri.parse(request.getRequestLine().getUri());
+            Set<bufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
+            Set<String> names = uri.getQueryParameterNames();
+            if (!names.isEmpty()) {
+                for (String name : names) {
                     bufferRequest br = new bufferRequest();
-                    br.name = Uri.decode(query.substring(start, separator)); //The name (the part before "=")
+                    br.name = name;
                     br.reference = "";
-                    if (separator == end)
+                    String value = uri.getQueryParameter(name);
+                    if (value == null || value.isEmpty()) {
                         br.threshold = Double.NaN; //No special request - the last value should be ok
-                    else {
-                        String th = query.substring(separator+1, end); //The part after "="
-                        if (th.equals("full") || forceFullUpdate) {
-                            br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
-                        } else {
-                            //So we get a threshold. We just have to figure out the reference buffer
-                            int subsplit = th.indexOf('|');
-                            if (subsplit == -1)
-                                br.threshold = Double.valueOf(th); //No reference specified
-                            else { //A reference is given
-                                br.threshold = Double.valueOf(th.substring(0, subsplit));
-                                br.reference = th.substring(subsplit+1);
-                            }
-                            //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
-                            //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-                            br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold/1e7)));
+                    } else if (value.equals("full") || forceFullUpdate) {
+                        br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
+                    } else {
+                        //So we get a threshold. We just have to figure out the reference buffer
+                        int subsplit = value.indexOf('|');
+                        if (subsplit == -1)
+                            br.threshold = Double.valueOf(value); //No reference specified
+                        else { //A reference is given
+                            br.threshold = Double.valueOf(value.substring(0, subsplit));
+                            br.reference = value.substring(subsplit+1);
                         }
+                        //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
+                        //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
+                        br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold/1e7)));
                     }
-
-                    bufferList.add(br);
-                    start = end + 1;
-                } while (start < query.length());
+                    buffers.add(br);
+                }
                 forceFullUpdate = false;
             }
 
@@ -610,7 +593,7 @@ public class RemoteServer extends Thread {
             try {
                 //First let's take a guess at how much memory we will need
                 int sizeEstimate = 0;
-                for (bufferRequest buffer : bufferList) {
+                for (bufferRequest buffer : buffers) {
                     if (experiment.dataMap.containsKey(buffer.name)) {
                         sizeEstimate += 14 * experiment.dataBuffers.get(experiment.dataMap.get(buffer.name)).size + 100;
                     }
@@ -627,7 +610,7 @@ public class RemoteServer extends Thread {
 
                 //Start building...
                 sb.append("{\"buffer\":{\n");
-                for (bufferRequest buffer : bufferList) {
+                for (bufferRequest buffer : buffers) {
                     if (experiment.dataMap.containsKey(buffer.name)) { //For each buffer that is requested
                         if (firstBuffer)
                             firstBuffer = false;
