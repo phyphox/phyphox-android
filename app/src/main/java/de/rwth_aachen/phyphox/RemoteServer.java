@@ -165,6 +165,96 @@ public class RemoteServer extends Thread {
 
     }
 
+    protected void buildViewsJson(StringBuilder sb) {
+        //The viewLayout is a JSON object with our view setup. All the experiment views
+        //and their view elements and their JavaScript functions and so on...
+
+        //Beginning of the JSON block
+        sb.append("var views = [");
+
+        int id = 0; //We will give each view a unique id to address them in JavaScript
+        //via a HTML id
+        htmlID2View.clear();
+        htmlID2Element.clear();
+
+        for (int i = 0; i < experiment.experimentViews.size(); i++) {
+            //For each experiment view
+            ExpView view = experiment.experimentViews.get(i);
+
+            if (i > 0)  //Add a colon if this is not the first item to separate the previous one.
+                sb.append(",\n"); //Not necessary, but debugging is so much more fun with a line-break.
+
+            //The name of this view
+            sb.append("{\"name\": \"");
+            sb.append(view.name.replace("\"","\\\""));
+
+            //Now for its elements
+            sb.append("\", \"elements\":[\n");
+            for (int j = 0; j < view.elements.size(); j++) {
+                //For each element within this view
+                ExpView.expViewElement element = view.elements.get(j);
+
+                //Store the mapping of htmlID to the experiment view hierarchy
+                htmlID2View.add(i);
+                htmlID2Element.add(j);
+
+                if (j > 0)  //Add a colon if this is not the first item to separate the previous one.
+                    sb.append(",");
+
+                //The element's label
+                sb.append("{\"label\":\"");
+                sb.append(element.label.replace("\"","\\\""));
+
+                //The id, we just created
+                sb.append("\",\"index\":\"");
+                sb.append(id);
+
+                //The update method
+                sb.append("\",\"updateMode\":\"");
+                sb.append(element.getUpdateMode());
+
+                //The label size
+                sb.append("\",\"labelSize\":\"");
+                sb.append(element.labelSize);
+
+                //The HTML markup for this element - on this occasion we notify the element about its id
+                sb.append("\",\"html\":\"");
+                sb.append(element.getViewHTML(id).replace("\"","\\\""));
+
+                //The Javascript function that handles data completion
+                sb.append("\",\"dataCompleteFunction\":");
+                sb.append(element.dataCompleteHTML());
+
+                //If this element takes an x array, set the buffer and the JS function
+                if (element.inputs != null) {
+                    sb.append(",\"dataInput\":[");
+                    boolean first = true;
+                    for (String input : element.inputs) {
+                        if (first)
+                            first = false;
+                        else
+                            sb.append(",");
+                        if (input == null)
+                            sb.append("null");
+                        else {
+                            sb.append("\"");
+                            sb.append(input.replace("\"", "\\\""));
+                            sb.append("\"");
+                        }
+                    }
+                    sb.append("],\"dataInputFunction\":\n");
+                    sb.append(element.setDataHTML());
+                    sb.append("\n");
+                }
+
+                sb.append("}"); //The element is complete
+                id++;
+            }
+            sb.append("\n]}"); //The view is complete
+        }
+        sb.append("\n];"); //The views are complete -> JSON object complete
+    }
+
     //Constructs the HTML file and replaces some placeholder.
     //This is where the experiment views place their HTML code.
     protected void buildIndexHTML () {
@@ -197,94 +287,7 @@ public class RemoteServer extends Thread {
                 } else if (line.contains("<!-- [[fontSizeTranslation]] -->")) {
                     sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", context.getString(R.string.fontSize)));
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
-                    //The viewLayout is a JSON object with our view setup. All the experiment views
-                    //and their view elements and their JavaScript functions and so on...
-
-                    //Beginning of the JSON block
-                    sb.append("var views = [");
-
-                    int id = 0; //We will give each view a unique id to address them in JavaScript
-                                //via a HTML id
-                    htmlID2View.clear();
-                    htmlID2Element.clear();
-
-                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                        //For each experiment view
-                        ExpView view = experiment.experimentViews.get(i);
-
-                        if (i > 0)  //Add a colon if this is not the first item to separate the previous one.
-                            sb.append(",\n"); //Not necessary, but debugging is so much more fun with a line-break.
-
-                        //The name of this view
-                        sb.append("{\"name\": \"");
-                        sb.append(view.name.replace("\"","\\\""));
-
-                        //Now for its elements
-                        sb.append("\", \"elements\":[\n");
-                        for (int j = 0; j < view.elements.size(); j++) {
-                            //For each element within this view
-                            ExpView.expViewElement element = view.elements.get(j);
-
-                            //Store the mapping of htmlID to the experiment view hierarchy
-                            htmlID2View.add(i);
-                            htmlID2Element.add(j);
-
-                            if (j > 0)  //Add a colon if this is not the first item to separate the previous one.
-                                sb.append(",");
-
-                            //The element's label
-                            sb.append("{\"label\":\"");
-                            sb.append(element.label.replace("\"","\\\""));
-
-                            //The id, we just created
-                            sb.append("\",\"index\":\"");
-                            sb.append(id);
-
-                            //The update method
-                            sb.append("\",\"updateMode\":\"");
-                            sb.append(element.getUpdateMode());
-
-                            //The label size
-                            sb.append("\",\"labelSize\":\"");
-                            sb.append(element.labelSize);
-
-                            //The HTML markup for this element - on this occasion we notify the element about its id
-                            sb.append("\",\"html\":\"");
-                            sb.append(element.getViewHTML(id).replace("\"","\\\""));
-
-                            //The Javascript function that handles data completion
-                            sb.append("\",\"dataCompleteFunction\":");
-                            sb.append(element.dataCompleteHTML());
-
-                            //If this element takes an x array, set the buffer and the JS function
-                            if (element.inputs != null) {
-                                sb.append(",\"dataInput\":[");
-                                boolean first = true;
-                                for (String input : element.inputs) {
-                                    if (first)
-                                        first = false;
-                                    else
-                                        sb.append(",");
-                                    if (input == null)
-                                        sb.append("null");
-                                    else {
-                                        sb.append("\"");
-                                        sb.append(input.replace("\"", "\\\""));
-                                        sb.append("\"");
-                                    }
-                                }
-                                sb.append("],\"dataInputFunction\":\n");
-                                sb.append(element.setDataHTML());
-                                sb.append("\n");
-                            }
-
-                            sb.append("}"); //The element is complete
-                            id++;
-                        }
-                        sb.append("\n]}"); //The view is complete
-                    }
-                    sb.append("\n];"); //The views are complete -> JSON object complete
-                    //That's it!
+                    buildViewsJson(sb);
                 } else if (line.contains("<!-- [[viewOptions]] -->")) {
                     //The option list for the view selector. Simple.
                     for (ExpView view : experiment.experimentViews) {
@@ -538,40 +541,115 @@ public class RemoteServer extends Thread {
             public String reference;    //The buffer to which the threshold should be applied
         }
 
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
+        protected BufferRequest parseBufferRequest(String name, String value, boolean forceFullUpdate) {
+            BufferRequest br = new BufferRequest();
+            br.name = name;
+            br.reference = "";
+            if (value == null || value.isEmpty()) {
+                br.threshold = Double.NaN; //No special request - the last value should be ok
+            } else if (value.equals("full") || forceFullUpdate) {
+                br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
+            } else {
+                //So we get a threshold. We just have to figure out the reference buffer
+                int subsplit = value.indexOf('|');
+                if (subsplit == -1)
+                    br.threshold = Double.valueOf(value); //No reference specified
+                else { //A reference is given
+                    br.threshold = Double.valueOf(value.substring(0, subsplit));
+                    br.reference = value.substring(subsplit + 1);
+                }
+                //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
+                //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
+                br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold / 1e7)));
+            }
+            return br;
+        }
 
-            Uri uri = Uri.parse(request.getRequestLine().getUri());
+        protected Set<BufferRequest> getBufferRequests(HttpRequest request) {
             Set<BufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
+            Uri uri = Uri.parse(request.getRequestLine().getUri());
             Set<String> names = uri.getQueryParameterNames();
             if (!names.isEmpty()) {
                 for (String name : names) {
-                    BufferRequest br = new BufferRequest();
-                    br.name = name;
-                    br.reference = "";
                     String value = uri.getQueryParameter(name);
-                    if (value == null || value.isEmpty()) {
-                        br.threshold = Double.NaN; //No special request - the last value should be ok
-                    } else if (value.equals("full") || forceFullUpdate) {
-                        br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
-                    } else {
-                        //So we get a threshold. We just have to figure out the reference buffer
-                        int subsplit = value.indexOf('|');
-                        if (subsplit == -1)
-                            br.threshold = Double.valueOf(value); //No reference specified
-                        else { //A reference is given
-                            br.threshold = Double.valueOf(value.substring(0, subsplit));
-                            br.reference = value.substring(subsplit+1);
-                        }
-                        //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
-                        //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-                        br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold/1e7)));
-                    }
+                    BufferRequest br = parseBufferRequest(name, value, forceFullUpdate);
                     buffers.add(br);
                 }
                 forceFullUpdate = false;
             }
+            return buffers;
+        }
+
+        protected void buildBuffer(BufferRequest buffer, DataBuffer db, DecimalFormat format, StringBuilder sb) {
+            //Get the threshold reference data buffer
+            DataBuffer db_reference = buffer.reference.isEmpty() ? db : experiment.getBuffer(buffer.reference);
+
+            //Buffer name
+            sb.append("\"");
+            sb.append(db.name);
+
+            //Buffer size
+            sb.append("\":{\"size\":");
+            sb.append(db.size);
+
+            //Does the response contain a single value, the whole buffer or a part of it?
+            sb.append(",\"updateMode\":\"");
+            if (Double.isNaN(buffer.threshold))
+                sb.append("single");
+            else if (Double.isInfinite(buffer.threshold))
+                sb.append("full");
+            else
+                sb.append("partial");
+            sb.append("\", \"buffer\":[");
+
+            if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
+                if (Double.isNaN(db.value) || Double.isInfinite(db.value))
+                    sb.append("null");
+                else
+                    sb.append(format.format(db.value));
+            else {
+                //Get all the values...
+                boolean firstValue = true; //Find first iteration, so the other ones can add a separator
+                Double[] data = db.getArray();
+                int n = db.getFilledSize();
+                Double[] dataRef;
+                if (db_reference == db)
+                    dataRef = data;
+                else {
+                    dataRef = db_reference.getArray();
+                    n = Math.min(n, db_reference.getFilledSize());
+                }
+
+
+                Double v;
+                for (int i = 0; i < n; i++) {
+                    //Simultaneously get the values from both iterators
+                    v = data[i];
+                    Double v_dep = dataRef[i];
+                    if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
+                        continue;
+
+                    //Add a separator if this is not the first value
+                    if (firstValue)
+                        firstValue = false;
+                    else
+                        sb.append(",");
+
+                    if (Double.isNaN(v) || Double.isInfinite(v))
+                        sb.append("null");
+                    else
+                        sb.append(format.format(v));
+                }
+            }
+
+            sb.append("]}");
+        }
+
+        @Override
+        public void handle(HttpRequest request, HttpResponse response,
+                           HttpContext httpContext) throws HttpException, IOException {
+
+            Set<BufferRequest> buffers = getBufferRequests(request);
 
             //We now know what the query request. Let's build our answer
             StringBuilder sb;
@@ -607,68 +685,7 @@ public class RemoteServer extends Thread {
                     else
                         sb.append(",\n"); //Separate the object with a comma, if this is not the first item
 
-                    //Get the threshold reference data buffer
-                    DataBuffer db_reference = buffer.reference.isEmpty() ? db : experiment.getBuffer(buffer.reference);
-
-                    //Buffer name
-                    sb.append("\"");
-                    sb.append(db.name);
-
-                    //Buffer size
-                    sb.append("\":{\"size\":");
-                    sb.append(db.size);
-
-                    //Does the response contain a single value, the whole buffer or a part of it?
-                    sb.append(",\"updateMode\":\"");
-                    if (Double.isNaN(buffer.threshold))
-                        sb.append("single");
-                    else if (Double.isInfinite(buffer.threshold))
-                        sb.append("full");
-                    else
-                        sb.append("partial");
-                    sb.append("\", \"buffer\":[");
-
-                    if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
-                        if (Double.isNaN(db.value) || Double.isInfinite(db.value))
-                            sb.append("null");
-                        else
-                            sb.append(format.format(db.value));
-                    else {
-                        //Get all the values...
-                        boolean firstValue = true; //Find first iteration, so the other ones can add a separator
-                        Double[] data = db.getArray();
-                        int n = db.getFilledSize();
-                        Double[] dataRef;
-                        if (db_reference == db)
-                            dataRef = data;
-                        else {
-                            dataRef = db_reference.getArray();
-                            n = Math.min(n, db_reference.getFilledSize());
-                        }
-
-
-                        Double v;
-                        for (int i = 0; i < n; i++) {
-                            //Simultaneously get the values from both iterators
-                            v = data[i];
-                            Double v_dep = dataRef[i];
-                            if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
-                                continue;
-
-                            //Add a separator if this is not the first value
-                            if (firstValue)
-                                firstValue = false;
-                            else
-                                sb.append(",");
-
-                            if (Double.isNaN(v) || Double.isInfinite(v))
-                                sb.append("null");
-                            else
-                                sb.append(format.format(v));
-                        }
-                    }
-
-                    sb.append("]}");
+                    buildBuffer(buffer, db, format, sb);
                 }
 
                 //We also send the experiment status
