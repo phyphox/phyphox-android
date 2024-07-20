@@ -825,7 +825,7 @@ public class RemoteServer extends Thread {
             int formatInt = Integer.parseInt(format);
             if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
                 //Not good. Build an error entity
-                respond(response, "{\"error\" = \"Format out of range.\"}");
+                respond(response, "{\"error\": \"Format out of range.\"}");
             } else {
                 //Alright, let's go on with the export
 
@@ -1034,10 +1034,10 @@ public class RemoteServer extends Thread {
                     File file = new File(experiment.resourceFolder, src);
                     respond(response, null, file);
                 } catch (Exception e) {
-                    respond(response, "{\"error\" = \"Unknown file.\"}");
+                    respond(response, "{\"error\": \"Unknown file.\"}");
                 }
             } else {
-                respond(response, "{\"error\" = \"Unknown file.\"}");
+                respond(response, "{\"error\": \"Unknown file.\"}");
             }
         }
 
