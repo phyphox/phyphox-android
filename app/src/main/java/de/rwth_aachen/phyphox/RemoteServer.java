@@ -59,7 +59,6 @@ import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -179,34 +178,24 @@ public class RemoteServer extends Thread {
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) { //The title. This one is easy...
                     sb.append(line.replace("<!-- [[title]] -->", experiment.title));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[clearDataTranslation]] -->")) { //The localized string for "clear data"
-                        sb.append(line.replace("<!-- [[clearDataTranslation]] -->", context.getString(R.string.clear_data)));
-                        sb.append("\n");
+                    sb.append(line.replace("<!-- [[clearDataTranslation]] -->", context.getString(R.string.clear_data)));
                 } else if (line.contains("<!-- [[clearConfirmTranslation]] -->")) { //The localized string for "Clear data?"
                     sb.append(line.replace("<!-- [[clearConfirmTranslation]] -->", context.getString(R.string.clear_data_question)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[exportTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[exportTranslation]] -->", context.getString(R.string.export)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchToPhoneLayoutTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchToPhoneLayoutTranslation]] -->", context.getString(R.string.switchToPhoneLayout)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns1Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns1Translation]] -->", context.getString(R.string.switchColumns1)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns2Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns2Translation]] -->", context.getString(R.string.switchColumns2)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns3Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns3Translation]] -->", context.getString(R.string.switchColumns3)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[toggleBrightModeTranslation]] -->")) {
                     sb.append(line.replace("<!-- [[toggleBrightModeTranslation]] -->", context.getString(R.string.toggleBrightMode)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[fontSizeTranslation]] -->")) {
                     sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", context.getString(R.string.fontSize)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     //The viewLayout is a JSON object with our view setup. All the experiment views
                     //and their view elements and their JavaScript functions and so on...
@@ -221,18 +210,20 @@ public class RemoteServer extends Thread {
 
                     for (int i = 0; i < experiment.experimentViews.size(); i++) {
                         //For each experiment view
+                        ExpView view = experiment.experimentViews.get(i);
 
                         if (i > 0)  //Add a colon if this is not the first item to separate the previous one.
                             sb.append(",\n"); //Not necessary, but debugging is so much more fun with a line-break.
 
                         //The name of this view
                         sb.append("{\"name\": \"");
-                        sb.append(experiment.experimentViews.get(i).name.replace("\"","\\\""));
+                        sb.append(view.name.replace("\"","\\\""));
 
                         //Now for its elements
                         sb.append("\", \"elements\":[\n");
-                        for (int j = 0; j < experiment.experimentViews.get(i).elements.size(); j++) {
+                        for (int j = 0; j < view.elements.size(); j++) {
                             //For each element within this view
+                            ExpView.expViewElement element = view.elements.get(j);
 
                             //Store the mapping of htmlID to the experiment view hierarchy
                             htmlID2View.add(i);
@@ -243,7 +234,7 @@ public class RemoteServer extends Thread {
 
                             //The element's label
                             sb.append("{\"label\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).label.replace("\"","\\\""));
+                            sb.append(element.label.replace("\"","\\\""));
 
                             //The id, we just created
                             sb.append("\",\"index\":\"");
@@ -251,25 +242,25 @@ public class RemoteServer extends Thread {
 
                             //The update method
                             sb.append("\",\"updateMode\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).getUpdateMode());
+                            sb.append(element.getUpdateMode());
 
                             //The label size
                             sb.append("\",\"labelSize\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).labelSize);
+                            sb.append(element.labelSize);
 
                             //The HTML markup for this element - on this occasion we notify the element about its id
                             sb.append("\",\"html\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).getViewHTML(id).replace("\"","\\\""));
+                            sb.append(element.getViewHTML(id).replace("\"","\\\""));
 
                             //The Javascript function that handles data completion
                             sb.append("\",\"dataCompleteFunction\":");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).dataCompleteHTML());
+                            sb.append(element.dataCompleteHTML());
 
                             //If this element takes an x array, set the buffer and the JS function
-                            if (experiment.experimentViews.get(i).elements.get(j).inputs != null) {
+                            if (element.inputs != null) {
                                 sb.append(",\"dataInput\":[");
                                 boolean first = true;
-                                for (String input : experiment.experimentViews.get(i).elements.get(j).inputs) {
+                                for (String input : element.inputs) {
                                     if (first)
                                         first = false;
                                     else
@@ -283,7 +274,7 @@ public class RemoteServer extends Thread {
                                     }
                                 }
                                 sb.append("],\"dataInputFunction\":\n");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).setDataHTML());
+                                sb.append(element.setDataHTML());
                                 sb.append("\n");
                             }
 
@@ -292,25 +283,24 @@ public class RemoteServer extends Thread {
                         }
                         sb.append("\n]}"); //The view is complete
                     }
-                    sb.append("\n];\n"); //The views are complete -> JSON object complete
+                    sb.append("\n];"); //The views are complete -> JSON object complete
                     //That's it!
                 } else if (line.contains("<!-- [[viewOptions]] -->")) {
                     //The option list for the view selector. Simple.
-                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                        //For each view
-                        sb.append("<li>");
-                        sb.append(experiment.experimentViews.get(i).name);
-                        sb.append("</li>\n");
+                    for (ExpView view : experiment.experimentViews) {
+                        sb.append("<li>").append(view.name).append("</li>\n");
                     }
                 } else if (line.contains("<!-- [[exportFormatOptions]] -->")) {
                     //The export format
-                    for (int i = 0; i < experiment.exporter.exportFormats.length; i++)
-                        sb.append("<option value=\"").append(i).append("\">").append(experiment.exporter.exportFormats[i].getName()).append("</option>\n");
+                    for (int i = 0; i < experiment.exporter.exportFormats.length; i++) {
+                        DataExport.ExportFormat format = experiment.exporter.exportFormats[i];
+                        sb.append("<option value=\"").append(i).append("\">").append(format.getName()).append("</option>\n");
+                    }
                 } else {
                     //No placeholder. Just append this.
                     sb.append(line);
-                    sb.append("\n");
                 }
+                sb.append("\n");
             }
         } catch (Exception e) {
             Log.e("remoteServer","Error loading index.html", e);
@@ -346,16 +336,14 @@ public class RemoteServer extends Thread {
         Inet4Address filterMobile = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            Network networks[] = connectivityManager.getAllNetworks();
+            Network[] networks = connectivityManager.getAllNetworks();
             for (Network network : networks) {
                 NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
                 if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
                     continue;
                 }
                 LinkProperties properties = connectivityManager.getLinkProperties(network);
-                Iterator<LinkAddress> iterator = properties.getLinkAddresses().iterator();
-                while (iterator.hasNext()) {
-                    LinkAddress address = iterator.next();
+                for (LinkAddress address : properties.getLinkAddresses()) {
                     if (address.getAddress() instanceof Inet4Address) {
                         filterMobile = (Inet4Address) address.getAddress();
                         break;
@@ -620,11 +608,7 @@ public class RemoteServer extends Thread {
                         sb.append(",\n"); //Separate the object with a comma, if this is not the first item
 
                     //Get the threshold reference data buffer
-                    DataBuffer db_reference;
-                    if (buffer.reference.equals(""))
-                        db_reference = db;
-                    else
-                        db_reference = experiment.getBuffer(buffer.reference);
+                    DataBuffer db_reference = buffer.reference.isEmpty() ? db : experiment.getBuffer(buffer.reference);
 
                     //Buffer name
                     sb.append("\"");
@@ -652,9 +636,9 @@ public class RemoteServer extends Thread {
                     else {
                         //Get all the values...
                         boolean firstValue = true; //Find first iteration, so the other ones can add a separator
-                        Double data[] = db.getArray();
+                        Double[] data = db.getArray();
                         int n = db.getFilledSize();
-                        Double dataRef[];
+                        Double[] dataRef;
                         if (db_reference == db)
                             dataRef = data;
                         else {
@@ -696,21 +680,15 @@ public class RemoteServer extends Thread {
 
                 //Measuring?
                 sb.append("\", \"measuring\":");
-                if (callActivity.measuring)
-                    sb.append("true");
-                else
-                    sb.append("false");
+                sb.append(callActivity.measuring);
 
                 //Timed run?
                 sb.append(", \"timedRun\":");
-                if (callActivity.timedRun)
-                    sb.append("true");
-                else
-                    sb.append("false");
+                sb.append(callActivity.timedRun);
 
                 //Countdown state
                 sb.append(", \"countDown\":");
-                sb.append(String.valueOf(callActivity.millisUntilFinished));
+                sb.append(callActivity.millisUntilFinished);
                 sb.append("\n}\n}\n");
             } finally {
                 experiment.dataLock.unlock();
@@ -830,14 +808,15 @@ public class RemoteServer extends Thread {
                 //Alright, let's go on with the export
 
                 //Get the content-type
-                String type = experiment.exporter.exportFormats[formatInt].getType(false);
+                DataExport.ExportFormat exportFormat = experiment.exporter.exportFormats[formatInt];
+                String type = exportFormat.getType(false);
 
                 //Use the experiment's exporter to create the file
                 final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName, context);
+                final File exportFile = experiment.exporter.exportDirect(exportFormat, callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName, context);
 
                 //Set "Content-Disposition" to force the browser to handle this as a download with a default file name
-                response.setHeader("Content-Disposition", "attachment; filename=\""+experiment.exporter.exportFormats[formatInt].getFilename(false) + "\"");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + exportFormat.getFilename(false) + "\"");
                 respond(response, type, exportFile);
             }
         }
