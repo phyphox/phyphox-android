@@ -594,9 +594,9 @@ public class RemoteServer extends Thread {
                 //First let's take a guess at how much memory we will need
                 int sizeEstimate = 0;
                 for (bufferRequest buffer : buffers) {
-                    if (experiment.dataMap.containsKey(buffer.name)) {
-                        sizeEstimate += 14 * experiment.dataBuffers.get(experiment.dataMap.get(buffer.name)).size + 100;
-                    }
+                    DataBuffer db = experiment.getBuffer(buffer.name);
+                    if (db != null)
+                        sizeEstimate += 14 * db.size + 100;
                 }
 
                 //Create the string builder
@@ -611,80 +611,80 @@ public class RemoteServer extends Thread {
                 //Start building...
                 sb.append("{\"buffer\":{\n");
                 for (bufferRequest buffer : buffers) {
-                    if (experiment.dataMap.containsKey(buffer.name)) { //For each buffer that is requested
-                        if (firstBuffer)
-                            firstBuffer = false;
+                    DataBuffer db = experiment.getBuffer(buffer.name);
+                    if (db == null)
+                        continue;
+                    if (firstBuffer)
+                        firstBuffer = false;
+                    else
+                        sb.append(",\n"); //Seperate the object with a comma, if this is not the first item
+
+                    //Get the threshold reference data buffer
+                    DataBuffer db_reference;
+                    if (buffer.reference.equals(""))
+                        db_reference = db;
+                    else
+                        db_reference = experiment.getBuffer(buffer.reference);
+
+                    //Buffer name
+                    sb.append("\"");
+                    sb.append(db.name);
+
+                    //Buffer size
+                    sb.append("\":{\"size\":");
+                    sb.append(db.size);
+
+                    //Does the response contain a single value, the whole buffer or a part of it?
+                    sb.append(",\"updateMode\":\"");
+                    if (Double.isNaN(buffer.threshold))
+                        sb.append("single");
+                    else if (Double.isInfinite(buffer.threshold))
+                        sb.append("full");
+                    else
+                        sb.append("partial");
+                    sb.append("\", \"buffer\":[");
+
+                    if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
+                        if (Double.isNaN(db.value) || Double.isInfinite(db.value))
+                            sb.append("null");
                         else
-                            sb.append(",\n"); //Seperate the object with a comma, if this is not the first item
-
-                        //Get the databuffers. The one requested and the threshold reference
-                        DataBuffer db = experiment.getBuffer(buffer.name);
-                        DataBuffer db_reference;
-                        if (buffer.reference.equals(""))
-                            db_reference = db;
-                        else
-                            db_reference = experiment.getBuffer(buffer.reference);
-
-                        //Buffer name
-                        sb.append("\"");
-                        sb.append(db.name);
-
-                        //Buffer size
-                        sb.append("\":{\"size\":");
-                        sb.append(db.size);
-
-                        //Does the response contain a single value, the whole buffer or a part of it?
-                        sb.append(",\"updateMode\":\"");
-                        if (Double.isNaN(buffer.threshold))
-                            sb.append("single");
-                        else if (Double.isInfinite(buffer.threshold))
-                            sb.append("full");
-                        else
-                            sb.append("partial");
-                        sb.append("\", \"buffer\":[");
-
-                        if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
-                            if (Double.isNaN(db.value) || Double.isInfinite(db.value))
-                                sb.append("null");
-                            else
-                                sb.append(format.format(db.value));
+                            sb.append(format.format(db.value));
+                    else {
+                        //Get all the values...
+                        boolean firstValue = true; //Find first iteration, so the other ones can add a seperator
+                        Double data[] = db.getArray();
+                        int n = db.getFilledSize();
+                        Double dataRef[];
+                        if (db_reference == db)
+                            dataRef = data;
                         else {
-                            //Get all the values...
-                            boolean firstValue = true; //Find first iteration, so the other ones can add a seperator
-                            Double data[] = db.getArray();
-                            int n = db.getFilledSize();
-                            Double dataRef[];
-                            if (db_reference == db)
-                                dataRef = data;
-                            else {
-                                dataRef = db_reference.getArray();
-                                n = Math.min(n, db_reference.getFilledSize());
-                            }
-
-
-                            Double v;
-                            for (int i = 0; i < n; i++) {
-                                //Simultaneously get the values from both iterators
-                                v = data[i];
-                                Double v_dep = dataRef[i];
-                                if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
-                                    continue;
-
-                                //Add a seperator if this is not the first value
-                                if (firstValue)
-                                    firstValue = false;
-                                else
-                                    sb.append(",");
-
-                                if (Double.isNaN(v) || Double.isInfinite(v))
-                                    sb.append("null");
-                                else
-                                    sb.append(format.format(v));
-                            }
+                            dataRef = db_reference.getArray();
+                            n = Math.min(n, db_reference.getFilledSize());
                         }
 
-                        sb.append("]}");
+
+                        Double v;
+                        for (int i = 0; i < n; i++) {
+                            //Simultaneously get the values from both iterators
+                            v = data[i];
+                            Double v_dep = dataRef[i];
+                            if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
+                                continue;
+
+                            //Add a seperator if this is not the first value
+                            if (firstValue)
+                                firstValue = false;
+                            else
+                                sb.append(",");
+
+                            if (Double.isNaN(v) || Double.isInfinite(v))
+                                sb.append("null");
+                            else
+                                sb.append(format.format(v));
+                        }
                     }
+
+                    sb.append("]}");
                 }
 
                 //We also send the experiment status
@@ -773,7 +773,7 @@ public class RemoteServer extends Thread {
                                 //Send the value to the buffer, but aquire a lock first, so it does not interfere with data analysis
                                 experiment.dataLock.lock();
                                 try {
-                                    experiment.dataBuffers.get(experiment.dataMap.get(buffer)).append(v);
+                                    experiment.getBuffer(buffer).append(v);
                                 } finally {
                                     experiment.dataLock.unlock();
                                 }
