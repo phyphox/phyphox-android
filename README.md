@@ -63,35 +63,7 @@ This part of phyphox uses the fftw to calculate Fourier transformations (http://
 
 ### Apache POI
 
-This part of phyphox uses the Apache POI library (https://poi.apache.org) to create the webserver for the remote access feature. It is released under the Apache Licence v2 with the following notices:
-
-Apache POI
-Copyright 2003-2017 The Apache Software Foundation
-
-This product includes software developed by
-The Apache Software Foundation (https://www.apache.org/).
-
-This product contains parts that were originally based on software from BEA.
-Copyright (c) 2000-2003, BEA Systems, <http://www.bea.com/> (dead link),
-which was acquired by Oracle Corporation in 2008.
-<http://www.oracle.com/us/corporate/Acquisitions/bea/index.html>
-<https://en.wikipedia.org/wiki/BEA_Systems>
-
-This product contains W3C XML Schema documents. Copyright 2001-2003 (c)
-World Wide Web Consortium (Massachusetts Institute of Technology, European
-Research Consortium for Informatics and Mathematics, Keio University)
-
-This product contains the Piccolo XML Parser for Java
-(http://piccolo.sourceforge.net/). Copyright 2002 Yuval Oren.
-
-This product contains the chunks_parse_cmds.tbl file from the vsdump program.
-Copyright (C) 2006-2007 Valek Filippov (frob@df.ru)
-
-This product contains parts of the eID Applet project 
-<http://eid-applet.googlecode.com> and <https://github.com/e-Contract/eid-applet>.
-Copyright (c) 2009-2014
-FedICT (federal ICT department of Belgium), e-Contract.be BVBA (https://www.e-contract.be),
-Bart Hanssens from FedICT
+This part of phyphox uses the jlhttp library ([freeutils.net/source/jlhttp](https://www.freeutils.net/source/jlhttp/)) to create the webserver for the remote access feature. It is released under the GNU General Public Licence. Big thanks to [Amichai R.](https://github.com/amichair) for this library and for migrating phyphox to it.
 
 ### ZXing
 
