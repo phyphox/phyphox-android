@@ -1,28 +1,21 @@
 package de.rwth_aachen.phyphox.camera.helper
 
-import android.graphics.Bitmap
-import android.graphics.ImageFormat
-import android.graphics.Rect
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.media.Image
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageProxy
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.nio.ByteBuffer
 import java.util.Arrays
-import kotlin.math.pow
+import kotlin.math.abs
+import kotlin.math.log
 import kotlin.math.round
 import kotlin.math.roundToInt
 
@@ -242,33 +235,11 @@ object CameraHelper {
     data class Fraction(val numerator: Long, val denominator: Long)
 
 
-    fun BigDecimal.toFraction(): Fraction {
-        var num = this
-        var den = BigDecimal.ONE
-        var maxDenominator = BigDecimal(10).pow(12) // Set the maximum denominator
-
-        while (num.remainder(BigDecimal.ONE).abs() > BigDecimal.ZERO) {
-            num *= BigDecimal(10)
-            den *= BigDecimal(10)
-            if (den > maxDenominator)
-                break
-        }
-
-        val gcd = num.toBigInteger().gcd(den.toBigInteger())
-        num /= BigDecimal(gcd)
-        den /= BigDecimal(gcd)
-
-        return Fraction(num.toLong(), den.toLong())
-    }
-
     fun convertNanoSecondToSecond(value: Long) : Fraction {
-        val seconds = BigDecimal(value).divide(BigDecimal.valueOf(1_000_000_000), 10, RoundingMode.HALF_UP)
-        val fraction = seconds.toFraction()
-        var denominator = fraction.denominator / fraction.numerator
-        if (denominator >= 1_000L) {
-            denominator = (denominator.toDouble() / 1000).toLong() * 1000
-        }
-        return Fraction(1, denominator)
+        if (value > 1e9)
+            return Fraction(round(value.toDouble()/1.0e9).toLong(), 1)
+        else
+            return Fraction(1, round(1.0e9/value.toDouble()).toLong())
     }
 
     private fun fractionToNanoseconds(fraction: Fraction): Long{
@@ -485,6 +456,8 @@ object CameraHelper {
     }
 
     fun adjustExposure(adjust: Double, state: CameraSettingState): Pair<Long, Int> {
+        val shutterTarget = (1e9/30).toLong()
+
         var iso = state.currentIsoValue
         var shutter = state.currentShutterValue
         val shutterMax = stringToNanoseconds(state.shutterSpeedRange!!.first())
@@ -492,21 +465,35 @@ object CameraHelper {
         val isoMax = state.isoRange?.last()?.toInt() ?: 100
         val isoMin = state.isoRange?.first()?.toInt() ?: 100
 
-        var shutterOption = 0L
-        var isoOption = 0
+        fun isoShutterRating(iso: Int, shutter: Long): Double {
+            return abs(log(iso.toDouble()/50.0, 2.0)) + // Prefer ISO 100
+                    10*abs(log(shutter.toDouble()/(shutterTarget.toDouble()), 2.0)) + // Strongly Prefer 1/30s shutter
+                    if (shutter > shutterTarget) 1000.0 else 0.0 // Big penalty for exposure times that reduce the frame rate
+        }
+
+        var shutterOption = shutter
+        var isoOption = iso
+        var optionRating = isoShutterRating(iso, shutter) + 10000 //The unchecked original is just a fallback that should never be necessary
         for (isoCandidate in state.isoRange!!) {
-            isoOption = isoCandidate.toInt()
-            shutterOption = (shutter * adjust * iso / isoOption).toLong()
-            if (shutterOption < shutterMin)
-                break;
-            if (shutterOption < 1e9/60 && shutterOption <= shutterMax)
-                break
+            val thisIso = isoCandidate.toInt()
+            val thisShutter = (shutter * adjust * iso / thisIso).toLong()
+            if (thisShutter < shutterMin || thisShutter > shutterMax)
+                continue
+            val rating = isoShutterRating(thisIso, thisShutter)
+
+            if (rating < optionRating) {
+                shutterOption = thisShutter
+                isoOption = thisIso
+                optionRating = rating
+            }
         }
         shutter = shutterOption
         iso = isoOption
 
         if (shutter > shutterMax)
             shutter = shutterMax
+        if (shutter > shutterTarget)
+            shutter = shutterTarget
         if (shutter < shutterMin)
             shutter = shutterMin
 
