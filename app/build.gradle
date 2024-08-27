@@ -60,7 +60,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    useLibrary 'org.apache.http.legacy'
     namespace 'de.rwth_aachen.phyphox'
     testNamespace 'de.rwth_aachen.phyphoxTest'
 
@@ -94,6 +93,8 @@ dependencies {
 
     //https://poi.apache.org/changes.html
     implementation 'org.apache.poi:poi:3.13'
+
+    implementation 'net.freeutils:jlhttp:3.1'
 
     //https://bigbadaboom.github.io/androidsvg/release_notes.html
     implementation 'com.caverock:androidsvg:1.4'

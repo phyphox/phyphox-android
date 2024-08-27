@@ -1935,16 +1935,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return;
 
         //Stop it!
-        remote.stopServer();
-
-        //Wait for the second thread and remove the instance
-        try {
-            remote.join();
-        } catch (Exception e) {
-            Log.e("stopRemoteServer", "Exception on join.", e);
-        }
+        remote.stop();
         remote = null;
-
     }
 
     //Called by remote server to stop the measurement from other thread
