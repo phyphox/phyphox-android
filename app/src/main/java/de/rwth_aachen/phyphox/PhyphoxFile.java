@@ -1410,6 +1410,7 @@ public abstract class PhyphoxFile {
                     int xPrecision = getIntAttribute("xPrecision", -1);
                     int yPrecision = getIntAttribute("yPrecision", -1);
                     int zPrecision = getIntAttribute("zPrecision", -1);
+                    boolean suppressScientificNotation = getBooleanAttribute("suppressScientificNotation", false);
                     RGB color = new RGB(parent.getResources().getColor(R.color.phyphox_primary));
                     boolean globalColor = false;
                     if (xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "color") != null) {
@@ -1484,6 +1485,7 @@ public abstract class PhyphoxFile {
                     ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime, hideTimeMarkers);
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
+                    ge.setSuppressScientificNotation(suppressScientificNotation);
                     if (!globalColor) {
                         for (int i = 0; i < Math.ceil(ats.size() / 3); i++) {
                             switch (i % 6) {

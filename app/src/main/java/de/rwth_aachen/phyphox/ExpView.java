@@ -1138,6 +1138,7 @@ public class ExpView implements Serializable{
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
         private boolean logZ = false; //logarithmic scale for the z-axis?
+        private boolean suppressScientificNotation = false;
         private int xPrecision = -1;
         private int yPrecision = -1;
         private int zPrecision = -1;
@@ -1321,6 +1322,10 @@ public class ExpView implements Serializable{
             this.hideTimeMarkers = hideTimeMarkers;
         }
 
+        protected void setSuppressScientificNotation(boolean suppressScientificNotation) {
+            this.suppressScientificNotation = suppressScientificNotation;
+        }
+
         //Interface to set log scales
         protected void setLogScale(boolean logX, boolean logY, boolean logZ) {
             this.logX = logX;
@@ -1424,6 +1429,7 @@ public class ExpView implements Serializable{
             gv.setFollowX(followX);
             gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
             gv.setTimeAxes(timeOnX, timeOnY);
+            gv.setSuppressScientificNotation(suppressScientificNotation);
             gv.setAbsoluteTime(absoluteTime);
             gv.setLinearTime(linearTime);
             gv.setHideTimeMarkers(hideTimeMarkers);
