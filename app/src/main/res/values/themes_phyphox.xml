@@ -19,6 +19,7 @@
         <item name="colorPrimaryDark">@color/phyphox_black_80</item>
         <item name="android:textSize">@dimen/font</item>
         <item name="itemBackground">@color/phyphox_white_90</item>
+        <item name="android:actionMenuTextColor">@color/phyphox_white_100</item>
 
         <!-- Provides the icon color in whole application, like in toolbar icon, settings icon.
         But some widgets are overwritten with its specific tint, for example, in BottomNavigationView-->
