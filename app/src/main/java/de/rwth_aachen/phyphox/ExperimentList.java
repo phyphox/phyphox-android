@@ -20,7 +20,6 @@ import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
@@ -80,8 +79,6 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -90,12 +87,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -948,11 +943,19 @@ public class ExperimentList extends AppCompatActivity {
                                 if (!inInput || shortInfo.unavailableSensor >= 0)
                                     break;
                                 String type = xpp.getAttributeValue(null, "type");
+                                String typeFilterStr = xpp.getAttributeValue(null, "typeFilter");
+                                int typeFilter = -1;
+                                try {
+                                    typeFilter = Integer.parseInt(typeFilterStr);
+                                } catch (Exception ignored) {
+
+                                }
+                                String nameFilter = xpp.getAttributeValue(null, "nameFilter");
                                 String ignoreUnavailableStr = xpp.getAttributeValue(null, "ignoreUnavailable");
                                 boolean ignoreUnavailable = (ignoreUnavailableStr != null && Boolean.valueOf(ignoreUnavailableStr));
                                 SensorInput testSensor;
                                 try {
-                                    testSensor = new SensorInput(type, ignoreUnavailable,0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
+                                    testSensor = new SensorInput(type, nameFilter, typeFilter, ignoreUnavailable,0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
                                     testSensor.attachSensorManager(sensorManager);
                                 } catch (SensorInput.SensorException e) {
                                     shortInfo.unavailableSensor = SensorInput.getDescriptionRes(SensorInput.resolveSensorString(type));

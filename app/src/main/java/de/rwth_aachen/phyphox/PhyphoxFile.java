@@ -1709,6 +1709,8 @@ public abstract class PhyphoxFile {
                     }
 
                     String type = getStringAttribute("type");
+                    int typeFilter = getIntAttribute("typeFilter", -1);
+                    String nameFilter = getStringAttribute("nameFilter");
                     boolean ignoreUnavailable = getBooleanAttribute("ignoreUnavailable", false);
 
                     //Allowed input/output configuration
@@ -1725,7 +1727,7 @@ public abstract class PhyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new SensorInput(type, ignoreUnavailable, rate, rateStrategy, stride, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
+                        experiment.inputSensors.add(new SensorInput(type, nameFilter, typeFilter, ignoreUnavailable, rate, rateStrategy, stride, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (SensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());
