@@ -1805,6 +1805,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public void clearData() {
         //Clear the buffers
 
+        experiment.experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.CLEAR);
         stopMeasurement();
 
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
@@ -1814,22 +1815,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     buffer.clear(true);
         } finally {
             experiment.dataLock.unlock();
-        }
-
-        experiment.experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.CLEAR);
-        ExperimentTimeReference.TimeMapping event = experiment.experimentTimeReference.timeMappings.size() > 0 ? experiment.experimentTimeReference.timeMappings.get(experiment.experimentTimeReference.timeMappings.size() - 1) : null;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
-            for (BluetoothInput bti : experiment.bluetoothInputs) {
-                uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
-            }
-            for (BluetoothOutput bto : experiment.bluetoothOutputs) {
-                uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
-            }
-            for (Bluetooth b : uniqueBluetoothDevices.values()) {
-                b.writeEventCharacteristic(event);
-            }
         }
 
         experiment.experimentTimeReference.reset();

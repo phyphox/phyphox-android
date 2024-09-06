@@ -373,8 +373,10 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (!loaded)
             return;
 
-        experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
         ExperimentTimeReference.TimeMapping event = experimentTimeReference.timeMappings.size() > 0 ? experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1) : null;
+        if (event == null || event.event != ExperimentTimeReference.TimeMappingEvent.CLEAR)
+            experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
+        event = experimentTimeReference.timeMappings.size() > 0 ? experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1) : null;
         lastAnalysis = 0.0;
 
         //Recording
