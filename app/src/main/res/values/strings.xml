@@ -209,6 +209,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="hotspotSettings">Hotspot Settings</string>
     <string name="remoteColorMapWarning">The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.</string>
     <string name="remoteDepthGUIWarning">Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.</string>
+    <string name="remoteCameraPreviewWarning">Previewing and controlling the camera on the remote interface is not supported.</string>
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
     <string name="force_gnss">Satellite location only</string>
     <string name="switchToPhoneLayout">View: Narrow</string>

@@ -2378,6 +2378,8 @@ public class ExpView implements Serializable{
         CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCED;
         String lockedSettings;
 
+        final String warningText;
+
         Scrollable scrollable = new Scrollable() {
             @Override
             public void enableScrollable() {
@@ -2395,6 +2397,7 @@ public class ExpView implements Serializable{
 
         protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
+            warningText = res.getString(R.string.remoteCameraPreviewWarning).replace("'", "\\'");
         }
 
         public void applyControlSettings(ShowCameraControls showCameraControls, int exposureAdjustmentLevel) {
@@ -2461,13 +2464,14 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        protected String createViewHTML() {
-            return null;
+        //Create the HTML markup. We do not stream the video to the web interface, so this is just a placeholder and notification
+        protected String createViewHTML(){
+            return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"" + htmlID + "\"><span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span><div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
         }
 
         @Override
         protected String getUpdateMode() {
-            return null;
+            return "none";
         }
 
         @Override
