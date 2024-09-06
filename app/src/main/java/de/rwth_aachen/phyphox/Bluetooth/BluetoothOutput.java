@@ -64,6 +64,8 @@ public class BluetoothOutput extends Bluetooth {
                             out = newOut;
                         }
                         System.arraycopy(value, 0, out, c.outputOffset, value.length);
+                        if (!data.get(c.index).keep)
+                            data.get(c.index).clear(false);
                     }
                 }
                 if (out != null) {

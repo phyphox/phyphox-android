@@ -539,6 +539,8 @@ public abstract class PhyphoxFile {
 
                     short offset = (short)getIntAttribute("offset", 0);
 
+                    boolean keep = getBooleanAttribute("keep", true);
+
                     // check if buffer exists
                     String bufferName = getText();
                     DataBuffer buffer = experiment.getBuffer(bufferName);
@@ -546,7 +548,7 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                     }
 
-                    inputList.add(new DataInput(buffer, false));
+                    inputList.add(new DataInput(buffer, keep));
 
                     // add data to characteristics
                     characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction, offset));
@@ -3162,6 +3164,7 @@ public abstract class PhyphoxFile {
                         String nameFilter = getStringAttribute("name");
                         String addressFilter = getStringAttribute("address");
                         String uuidFilterStr = getStringAttribute("uuid");
+
                         UUID uuidFilter = null;
                         if (uuidFilterStr != null && !uuidFilterStr.isEmpty()) {
                             try {

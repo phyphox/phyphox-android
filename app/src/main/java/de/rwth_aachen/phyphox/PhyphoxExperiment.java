@@ -312,7 +312,12 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (measuring && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             //Send the results to the bluetooth outputs (if used)
             for (BluetoothOutput btOut : bluetoothOutputs) {
-                btOut.sendData();
+                dataLock.lock();
+                try {
+                    btOut.sendData();
+                } finally {
+                    dataLock.unlock();
+                }
             }
         }
 
