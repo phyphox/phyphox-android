@@ -15,10 +15,10 @@ public class ExperimentTimeReference implements Serializable {
     private Listener listener;
 
     public enum TimeMappingEvent {
-        START, PAUSE
+        START, PAUSE, CLEAR //Note about clear: Since the timemapping list is also cleared in that case, clear is immediately removed after being added to the list. It is however transmitted to clients via the event BLE characteristic
     }
 
-    public class TimeMapping {
+    public static class TimeMapping {
         public TimeMappingEvent event;
         public Double experimentTime;
         public long eventTime;
@@ -63,12 +63,12 @@ public class ExperimentTimeReference implements Serializable {
             TimeMapping last = timeMappings.get(timeMappings.size()-1);
             switch (last.event) {
                 case START:
-                    if (event != TimeMappingEvent.PAUSE)
+                    if (event == TimeMappingEvent.START)
                         return;
                     timeMappings.add(new TimeMapping(event, getExperimentTimeFromEvent(eventTime), eventTime, systemTime));
                     break;
                 case PAUSE:
-                    if (event != TimeMappingEvent.START)
+                    if (event == TimeMappingEvent.PAUSE)
                         return;
                     timeMappings.add(new TimeMapping(event, last.experimentTime, eventTime, systemTime));
                     break;

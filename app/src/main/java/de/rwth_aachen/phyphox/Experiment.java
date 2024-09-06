@@ -80,6 +80,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -1814,6 +1815,23 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         } finally {
             experiment.dataLock.unlock();
         }
+
+        experiment.experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.CLEAR);
+        ExperimentTimeReference.TimeMapping event = experiment.experimentTimeReference.timeMappings.size() > 0 ? experiment.experimentTimeReference.timeMappings.get(experiment.experimentTimeReference.timeMappings.size() - 1) : null;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
+            for (BluetoothInput bti : experiment.bluetoothInputs) {
+                uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
+            }
+            for (BluetoothOutput bto : experiment.bluetoothOutputs) {
+                uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
+            }
+            for (Bluetooth b : uniqueBluetoothDevices.values()) {
+                b.writeEventCharacteristic(event);
+            }
+        }
+
         experiment.experimentTimeReference.reset();
         experiment.newData = true;
         experiment.newUserInput = true;
