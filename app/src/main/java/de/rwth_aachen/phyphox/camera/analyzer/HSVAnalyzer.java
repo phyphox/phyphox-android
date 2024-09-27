@@ -239,7 +239,7 @@ public class HSVAnalyzer extends AnalyzingModule {
                 x += ((r << 8) + g) - 0x7f7f;
                 y += ((b << 8) + a) - 0x7f7f;
             }
-            double h = Math.atan2(y, x) * RGB.HUE_MAX / (2.0 * Masth.PI);
+            double h = Math.atan2(y, x) * RGB.HUE_MAX / (2.0 * Math.PI);
             latestResult = h < 0 ? h + RGB.HUE_MAX : h;
         } else {
             long sum = 0;
