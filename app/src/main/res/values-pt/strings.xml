@@ -210,4 +210,8 @@
     <string name="bt_more_info_link_button">Mais informações</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
     <string name="common_unit_short_arbitrary_unit">u.a.</string>
+    <string name="settingsHeadAdvanced">Avançado</string>
+    <string name="settingsProximityLock">Bloqueio de proximidade</string>
+    <string name="settingsProximityLockDetail">Desativa o ecrã quando o sensor de proximidade é acionado, evitando a introdução acidental de dados (por exemplo quando o telemóvel se encontra num bolso).</string>
+    <string name="settingsPort">Porta de acesso remoto</string>
 </resources>
