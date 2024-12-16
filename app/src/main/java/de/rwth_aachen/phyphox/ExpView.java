@@ -2535,6 +2535,8 @@ public class ExpView implements Serializable{
     public class toggleElement extends  expViewElement implements  Serializable {
 
         String defaultValue;
+
+        private RGB color;
         protected toggleElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
         }
@@ -2592,6 +2594,119 @@ public class ExpView implements Serializable{
 
         public void setDefaultValue(String defaultValue){
             this.defaultValue = defaultValue;
+
+        }
+
+        protected void setColor(RGB c) {
+            this.color = c;
+        }
+
+        @Override
+        protected String createViewHTML() {
+            return null;
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return null;
+        }
+    }
+
+    public class dropDownElement extends expViewElement implements Serializable {
+
+        String defaultValue;
+
+        private RGB color;
+
+        protected class Mapping {
+            String value;
+            String str;
+
+            protected Mapping(String str) {
+                this.str = str;
+            }
+
+        }
+
+        protected Vector<dropDownElement.Mapping> mappings = new Vector<>();
+
+        protected void addMapping(dropDownElement.Mapping mapping) {
+            this.mappings.add(mapping);
+        }
+
+        public void setDefaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        protected void setColor(RGB c) {
+            this.color = c;
+        }
+
+        protected dropDownElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+        @Override
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+            super.createView(ll, c, res, parent, experiment);
+
+            //Create a row consisting of label and value
+            LinearLayout row = new LinearLayout(c);
+            row.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+
+            //Create the label as textView
+            TextView labelView = new TextView(c);
+            labelView.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //left half should be label
+            labelView.setText(this.label);
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            labelView.setPadding(0, 0, (int) labelSize / 2, 0);
+
+            //Create the value (and unit) as textView
+            Spinner spinner = new Spinner(c);
+            spinner.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //right half should be value+unit
+            spinner.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+
+            spinner.setPadding((int) labelSize / 2, 0, 0, 0);
+            ArrayList<String> options = new ArrayList<>();
+            options.add("1");
+            options.add("3");
+            options.add("4");
+            options.add("6");
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(c.getApplicationContext(), android.R.layout.simple_spinner_item, options);
+            spinner.setAdapter(adapter);
+
+            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    ((TextView) spinner.getChildAt(0)).setTextColor(color.autoLightColor(res).intColor());
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> adapterView) {
+
+                }
+            });
+
+            //Add label and value to the row
+            row.addView(labelView);
+            row.addView(spinner);
+
+            //Add the row to the linear layout
+            rootView = row;
+            rootView.setFocusableInTouchMode(true);
+            ll.addView(rootView);
 
         }
 
