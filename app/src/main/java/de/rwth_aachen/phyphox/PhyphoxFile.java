@@ -1698,6 +1698,43 @@ public abstract class PhyphoxFile {
                     break;
 
                 }
+                case "dropdown": {
+                    String defaultValue = getStringAttribute("defaultValue");
+                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
+
+                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
+                    //Allowed output configuration
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; }}
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null, ats)).process(); //Load inputs and outputs
+
+                    ExpView.dropDownElement dropDownElement = newView.new dropDownElement(label, outputs.get(0).buffer.name, null, parent.getResources());
+                    dropDownElement.setDefaultValue(defaultValue);
+                    dropDownElement.setColor(color);
+                    for(ioBlockParser.AdditionalTag at: ats){
+                        if(at.name.equals("output")){
+                            continue;
+                        }
+                        if (!at.name.equals("map")) {
+                            throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
+                        }
+                        ExpView.dropDownElement.Mapping map = dropDownElement.new Mapping(translate(at.content, parent));
+                        if(at.attributes.containsKey("value")){
+                            try {
+                                map.value = at.attributes.get("value");
+                            } catch (Exception e){
+                                throw new phyphoxFileException("Could not parse value tag.", xpp.getLineNumber());
+                            }
+                        }
+                        dropDownElement.addMapping(map);
+                    }
+
+
+                    newView.elements.add(dropDownElement);
+                    break;
+
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
