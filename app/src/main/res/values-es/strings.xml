@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="action_settings">Ajustes</string>
+    <string name="action_settings">Configuraciones</string>
     <string name="newExperiment">Añadir experimentos</string>
     <string name="newExperimentPhyphoxInfo">Visita phyhphox.org para crear experimentos más avanzados, incluyendo análisis de datos y compártelos con colegas, estudiantes y amigos.</string>
     <string name="newExperimentInputTitle">Título</string>
@@ -152,7 +152,7 @@
     <string name="newExperimentBluetooth">Añadir experimento para dispositivo Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Error de escaneo de Bluetooth</string>
     <string name="newExperimentBluetoothLoadFromDevice">Cargar desde dispositivo</string>
-    <string name="newExperimentBluetoothLoadFromDeviceInfo">Este dispositivo proporciona su propio experimento phyphox. Selecciona cargar desde dispositivo para abrirlo.</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Este dispositivo dispone de su propio experimento phyphox. Selecciona cargar desde el dispositivo para abrirlo.</string>
     <string name="newExperimentQR">Añadir experimento desde un código QR</string>
     <string name="newExperimentQRscan">Escanea un código QR que contenga un experimento de phyphox.</string>
     <string name="newExperimentQRErrorTitle">Error de código QR.</string>
@@ -230,4 +230,15 @@
     <string name="settingsProximityLock">bloqueo de proximidad</string>
     <string name="settingsProximityLockDetail">Desactive la pantalla cuando se active el sensor de proximidad para evitar entradas no deseadas, por ejemplo, en un bolsillo.</string>
     <string name="settingsPort">Puerto de acceso remoto</string>
+    <string name="graph_tools_system_time">Convertir a reloj del sistema</string>
+    <string name="categoryPhyphoxOrg">Contribuir a phyphox</string>
+    <string name="categoryPhyphoxOrgHint">Existen nuevas opciones para contribuir a phyphox al final de la lista.</string>
+    <string name="timedRunBeeps">Señales acústicas</string>
+    <string name="beeperCountdown">Cuenta regresiva</string>
+    <string name="beeperStart">Timbre de inicio</string>
+    <string name="sensorDepth">Profundidad (LiDAR/ToF)</string>
+    <string name="sensorCamera">Camara</string>
+    <string name="remoteDepthGUIWarning">Vista previa y control del sensor LiDAR/ToF no esta habilitado para la interfaz remota.</string>
+    <string name="sensorGravity">Gravedad</string>
+    <string name="privacyPolicyURL">https://phyphox.org/politicadeprivacidad</string>
 </resources>
