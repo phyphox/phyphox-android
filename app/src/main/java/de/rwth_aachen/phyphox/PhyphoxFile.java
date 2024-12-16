@@ -1681,6 +1681,23 @@ public abstract class PhyphoxFile {
                     newView.elements.add(cameraElement);
                     break;
                 }
+                case "toggle": {
+
+                    String defaultValue = getStringAttribute("defaultValue");
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; }}
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
+
+
+                    ExpView.toggleElement toggleElement = newView.new toggleElement(label, outputs.get(0).buffer.name, null, parent.getResources());
+                    toggleElement.setDefaultValue(defaultValue);
+                    newView.elements.add(toggleElement);
+                    break;
+
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
