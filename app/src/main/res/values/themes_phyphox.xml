@@ -66,4 +66,8 @@
         <item name="android:tint">@null</item>
     </style>
 
+    <style name="SliderMaterialTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/phyphox_primary</item>
+    </style>
+
 </resources>
