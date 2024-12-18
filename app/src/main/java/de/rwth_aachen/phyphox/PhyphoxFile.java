@@ -1735,6 +1735,30 @@ public abstract class PhyphoxFile {
                     break;
 
                 }
+                case "slider" : {
+                    String defaultValue = getStringAttribute("defaultValue");
+                    String minValue = getStringAttribute("minValue");
+                    String maxValue = getStringAttribute("maxValue");
+                    String stepSize = getStringAttribute("stepSize");
+                    String precision = getStringAttribute("precision");
+                    RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
+
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; }}
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
+
+                    ExpView.sliderElement sliderElement = newView.new sliderElement(label, outputs.get(0).buffer.name, null, parent.getResources());
+                    sliderElement.setDefaultValue(defaultValue);
+                    sliderElement.setColor(color);
+                    sliderElement.setMinValue(minValue);
+                    sliderElement.setMaxValue(maxValue);
+                    sliderElement.setStepSize(stepSize);
+                    sliderElement.setPrecision(precision);
+
+                    newView.elements.add(sliderElement);
+                    break;
+                }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }

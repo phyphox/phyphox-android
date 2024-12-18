@@ -21,6 +21,7 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -45,6 +46,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.FragmentContainerView;
 
+import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
@@ -2705,6 +2707,132 @@ public class ExpView implements Serializable{
 
             //Add the row to the linear layout
             rootView = row;
+            rootView.setFocusableInTouchMode(true);
+            ll.addView(rootView);
+
+        }
+
+        @Override
+        protected String createViewHTML() {
+            return null;
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return null;
+        }
+    }
+
+    public class sliderElement extends expViewElement implements Serializable {
+
+        private String defaultValue;
+        private String maxValue;
+        private String minValue;
+        private String stepSize;
+        private String precision;
+        private RGB color;
+
+        protected sliderElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+        public void setDefaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        public void setMaxValue(String maxValue) {
+            this.maxValue = maxValue;
+        }
+
+        public void setMinValue(String minValue) {
+            this.minValue = minValue;
+        }
+
+        public void setStepSize(String stepSize) {
+            this.stepSize = stepSize;
+        }
+
+        public void setPrecision(String precision) {
+            this.precision = precision;
+        }
+
+        public void setColor(RGB color) {
+            this.color = color;
+        }
+
+        @Override
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+            super.createView(ll, c, res, parent, experiment);
+
+            //Create a row consisting of label and value
+            LinearLayout column = new LinearLayout(c);
+            column.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            column.setOrientation(LinearLayout.VERTICAL);
+            column.setGravity(Gravity.CENTER_HORIZONTAL);
+
+            //Create a row consisting of label and value
+            LinearLayout row = new LinearLayout(c);
+            row.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+
+            LinearLayout secondRow = new LinearLayout(c);
+            secondRow.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            secondRow.setOrientation(LinearLayout.HORIZONTAL);
+            secondRow.setGravity(Gravity.CENTER | Gravity.CENTER_HORIZONTAL);
+            secondRow.setGravity(Gravity.CENTER_VERTICAL);
+
+            //Create the label as textView
+            TextView labelView = new TextView(c);
+            labelView.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //left half should be label
+            labelView.setText(this.label);
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            labelView.setPadding(0, 0, (int) labelSize / 2, 0);
+            labelView.setTextColor(color.autoLightColor(res).intColor());
+
+            //Create the value (and unit) as textView
+            TextView tv = new TextView(c);
+            tv.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //right half should be value+unit
+            tv.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize); //Align left to the center of the row
+            tv.setPadding((int) labelSize / 2, 0, 0, 0);
+            tv.setTypeface(null, Typeface.BOLD);
+            tv.setTextColor(color.autoLightColor(res).intColor());
+            tv.setText(defaultValue);
+
+            LayoutInflater inflater = (LayoutInflater) c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+            View view = inflater.inflate(R.layout.slider, null);
+            Slider slider = view.findViewById(R.id.sliderView);
+            slider.setValueFrom(Float.parseFloat(minValue));
+            slider.setValueTo(Float.parseFloat(maxValue));
+            slider.setStepSize(Float.parseFloat(stepSize));
+            slider.setValue(Float.parseFloat(defaultValue));
+
+            //Add label and value to the row
+            row.addView(labelView);
+            row.addView(tv);
+
+            secondRow.addView(slider);
+
+            column.addView(row);
+            column.addView(secondRow);
+
+            //Add the row to the linear layout
+            rootView = column;
             rootView.setFocusableInTouchMode(true);
             ll.addView(rootView);
 
