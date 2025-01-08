@@ -24,6 +24,7 @@ import android.text.style.MetricAffectingSpan;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.DragEvent;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -32,6 +33,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,6 +43,7 @@ import android.widget.Switch;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.ViewCompat;
@@ -55,7 +58,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -2538,6 +2540,10 @@ public class ExpView implements Serializable{
 
         String defaultValue;
 
+        private boolean triggered = true;
+
+        SwitchMaterial switchView;
+
         private RGB color;
         protected toggleElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
@@ -2567,7 +2573,7 @@ public class ExpView implements Serializable{
 
             //Create a horizontal linear layout, which seperates the right half into the edit field
             //and a textView to show the unit next to the user input
-            SwitchMaterial switchView = new SwitchMaterial(c);
+            switchView = new SwitchMaterial(c);
             LinearLayout.LayoutParams tableRow = new LinearLayout.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2583,8 +2589,16 @@ public class ExpView implements Serializable{
             row.addView(labelView);
             row.addView(switchViewRow);
 
-            boolean isSwitchedOn = !Objects.equals(this.defaultValue, "0");
+            boolean isSwitchedOn = Integer.parseInt(this.defaultValue) == 1;
             switchView.setChecked(isSwitchedOn);
+
+            switchView.setOnCheckedChangeListener(new SwitchMaterial.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    compoundButton.setChecked(b);
+                    triggered = true;
+                }
+            });
 
             rootView = row;
             rootView.setFocusableInTouchMode(true);
@@ -2604,13 +2618,71 @@ public class ExpView implements Serializable{
         }
 
         @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            int v = (int) experiment.getBuffer(inputs.get(0)).value;
+            switchView.setChecked(v == 1);
+
+        }
+
+        @Override
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if(!triggered){
+                return false;
+            }
+            triggered = false;
+            experiment.getBuffer(inputs.get(0)).clear(false);
+            double switchValue = switchView.isChecked() ? 1.0 : 0.0;
+            experiment.getBuffer(inputs.get(0)).append(switchValue);
+            return  true;
+        }
+
+        @Override
+        protected void clear() {
+            triggered = true;
+        }
+
+        @Override
         protected String createViewHTML() {
-            return null;
+
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"switchElement\" id=\"element"+htmlID+"\">" +
+                    "<span class=\"label\">"+this.label+"</span>" +
+                    "</span><input type=\"checkbox\" class=\"value\" id=\"radio"+htmlID+"\" "+defaultValue+" ></input>" +
+                    "</div>";
+        }
+
+        @Override
+        protected String setDataHTML() {
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+            return "function (data) {\n" +
+                    "                if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                    return;\n" +
+                    "\n" +
+                    "                var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                var radioButton = document.getElementById(\"radio"+htmlID+"\");\n" +
+                    "            \n" +
+                    "                if (isNaN(x) || x == null || x == 0 || x == 0.0) {\n" +
+                    "                    radioButton.checked = false;\n" +
+                    "                } else {\n" +
+                    "                    radioButton.checked = true;\n" +
+                    "                }\n" +
+                    "            \n" +
+                    "                // Update value when checkbox state changes\n" +
+                    "                radioButton.onchange = function() {\n" +
+                    "                    var value = radioButton.checked ? 1.0 : 0.0;\n" +
+                    "                    ajax('control?cmd=set&buffer="+bufferName+"&value='+value);\n" +
+                    "                };\n" +
+                    "            }";
+        }
+
+        @Override
+        protected double getValue() {
+            switchView.isChecked();
+            return  Double.parseDouble(defaultValue);
         }
 
         @Override
         protected String getUpdateMode() {
-            return null;
+            return "single";
         }
     }
 
@@ -2620,8 +2692,12 @@ public class ExpView implements Serializable{
 
         private RGB color;
 
+        Spinner spinner;
+
+        private boolean triggered = false;
+
         protected class Mapping {
-            String value;
+            Double value;
             String str;
 
             protected Mapping(String str) {
@@ -2672,7 +2748,7 @@ public class ExpView implements Serializable{
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
 
             //Create the value (and unit) as textView
-            Spinner spinner = new Spinner(c);
+            spinner = new Spinner(c);
             spinner.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2681,18 +2757,23 @@ public class ExpView implements Serializable{
 
             spinner.setPadding((int) labelSize / 2, 0, 0, 0);
             ArrayList<String> options = new ArrayList<>();
-            options.add("1");
-            options.add("3");
-            options.add("4");
-            options.add("6");
 
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(c.getApplicationContext(), android.R.layout.simple_spinner_item, options);
+            for(Mapping title: mappings){
+                if(title.str.isEmpty()){
+                    options.add(title.value + "");
+                } else {
+                    options.add(title.str);
+                }
+            }
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(c.getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, options);
             spinner.setAdapter(adapter);
 
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                     ((TextView) spinner.getChildAt(0)).setTextColor(color.autoLightColor(res).intColor());
+                    triggered = true;
                 }
 
                 @Override
@@ -2713,14 +2794,120 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        protected String createViewHTML() {
-            return null;
+        protected String getUpdateMode() {
+            return "single";
         }
 
         @Override
-        protected String getUpdateMode() {
-            return null;
+        protected double getValue() {
+            return  mappings.get(spinner.getSelectedItemPosition()).value;
         }
+
+        @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            if (!needsUpdate)
+                return;
+            needsUpdate = false;
+
+            double x = experiment.getBuffer(inputs.get(0)).value;
+
+            int index= -1;
+
+            for(int i = 0; i < mappings.size(); i++){
+                if(mappings.get(i).value == x){
+                    index = i;
+                    break;
+                }
+            }
+            spinner.setSelection((index == -1)? 0 : index);
+
+        }
+
+        @Override
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if (!triggered)
+                return false;
+            triggered = false;
+            experiment.getBuffer(inputs.get(0)).clear(false);
+            experiment.getBuffer(inputs.get(0)).append(getValue());
+            return true;
+        }
+
+        @Override
+        protected String createViewHTML() {
+
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"dropdownElement\" id=\"element"+htmlID+"\">" +
+                    "<span class=\"label\">"+this.label+"</span>" +
+                    "<select onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value)\" class=\"value\" id=\"select"+htmlID+"\" />" +
+                    "</div>";
+
+        }
+
+
+
+        @Override
+        protected String setDataHTML() {
+
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+
+            ArrayList<String> options = new ArrayList<>();
+            ArrayList<Double> values = new ArrayList<>();
+
+            for(Mapping maps: mappings){
+                options.add(maps.str);
+                values.add(maps.value);
+            }
+
+            // Create a string in JSON-like format
+            StringBuilder jsonArray = new StringBuilder("[");
+            for (int i = 0; i < options.size(); i++) {
+                jsonArray.append("\"").append(options.get(i)).append("\"");
+                if (i < options.size() - 1) {
+                    jsonArray.append(", ");
+                }
+            }
+            jsonArray.append("]");
+
+
+            return "function (data) {\n" +
+                    "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                        return;\n" +
+                    "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                    \n" +
+                    "                    var dropdownElement = document.getElementById(\"select"+htmlID+"\")\n" +
+                    "            \n" +
+                    "                    var selectedValue = x\n" +
+                    "                    dropdownElement.innerHTML = \"\"\n" +
+                    "            \n" +
+                    "                    var values = "+values+" \n" +
+                    "                    var options =  "+ jsonArray +"\n" +
+                    "                     console.log(options.length) \n" +
+                    "                    for (var i = 0; i < options.length ; i++){\n" +
+                    "                          console.log(options[i])\n" +
+                    "                          console.log(values[i])\n" +
+                    "                        var option = document.createElement(\"option\")\n" +
+                    "                        option.value = values[i]\n" +
+                    "                        if(options[i] == \"\"){\n" +
+                    "                            option.text = values[i]\n" +
+                    "                        } else {\n" +
+                    "                            option.text = options[i]\n" +
+                    "                        }\n" +
+                    "                        \n" +
+                    "                        dropdownElement.appendChild(option)\n" +
+                    "                    }\n" +
+                    "            \n" +
+                    "            \n" +
+
+                    "                    if (values.includes(selectedValue)) {\n" +
+                    "                        dropdownElement.selectedIndex = values.indexOf(selectedValue)\n" +
+                    "                    } else {\n" +
+                    "                      dropdownElement.selectedIndex = 0\n" +
+                    "                    }\n" +
+                    "            \n" +
+                    "             \n" +
+                    "            }";
+        }
+
     }
 
     public class sliderElement extends expViewElement implements Serializable {
@@ -2731,6 +2918,9 @@ public class ExpView implements Serializable{
         private String stepSize;
         private String precision;
         private RGB color;
+        boolean triggered = false;
+        TextView tv;
+        Slider slider;
 
         protected sliderElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
@@ -2764,7 +2954,6 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
 
-            //Create a row consisting of label and value
             LinearLayout column = new LinearLayout(c);
             column.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -2772,7 +2961,6 @@ public class ExpView implements Serializable{
             column.setOrientation(LinearLayout.VERTICAL);
             column.setGravity(Gravity.CENTER_HORIZONTAL);
 
-            //Create a row consisting of label and value
             LinearLayout row = new LinearLayout(c);
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -2786,9 +2974,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT));
             secondRow.setOrientation(LinearLayout.HORIZONTAL);
             secondRow.setGravity(Gravity.CENTER | Gravity.CENTER_HORIZONTAL);
-            secondRow.setGravity(Gravity.CENTER_VERTICAL);
 
-            //Create the label as textView
             TextView labelView = new TextView(c);
             labelView.setLayoutParams(new TableRow.LayoutParams(
                     0,
@@ -2800,8 +2986,8 @@ public class ExpView implements Serializable{
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
             labelView.setTextColor(color.autoLightColor(res).intColor());
 
-            //Create the value (and unit) as textView
-            TextView tv = new TextView(c);
+
+            tv = new TextView(c);
             tv.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2813,20 +2999,54 @@ public class ExpView implements Serializable{
             tv.setTextColor(color.autoLightColor(res).intColor());
             tv.setText(defaultValue);
 
+            TextView minValueLabel = new TextView(c);
+            minValueLabel.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.1f));
+            minValueLabel.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            minValueLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize / 1.5f);
+            minValueLabel.setTextColor(color.autoLightColor(res).intColor());
+            minValueLabel.setText(minValue);
+
+            TextView maxValueLabel = new TextView(c);
+            maxValueLabel.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.1f));
+            maxValueLabel.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            maxValueLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize / 1.5f);
+            maxValueLabel.setTextColor(color.autoLightColor(res).intColor());
+            maxValueLabel.setText(maxValue);
+
             LayoutInflater inflater = (LayoutInflater) c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
             View view = inflater.inflate(R.layout.slider, null);
-            Slider slider = view.findViewById(R.id.sliderView);
+            slider = view.findViewById(R.id.sliderView);
             slider.setValueFrom(Float.parseFloat(minValue));
             slider.setValueTo(Float.parseFloat(maxValue));
             slider.setStepSize(Float.parseFloat(stepSize));
             slider.setValue(Float.parseFloat(defaultValue));
+            slider.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.9f));
 
+            slider.addOnChangeListener(new Slider.OnChangeListener() {
+                @Override
+                public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
+                    triggered = true;
+                    tv.setText(String.valueOf(value));
+                    slider.setValue(value);
+                }
+            });
             //Add label and value to the row
             row.addView(labelView);
             row.addView(tv);
 
+            secondRow.addView(minValueLabel);
             secondRow.addView(slider);
+            secondRow.addView(maxValueLabel);
 
             column.addView(row);
             column.addView(secondRow);
@@ -2839,13 +3059,96 @@ public class ExpView implements Serializable{
         }
 
         @Override
+        protected double getValue() {
+            return slider.getValue();
+        }
+
+        @Override
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if(!triggered)
+                return false;
+            triggered = false;
+            experiment.getBuffer(inputs.get(0)).clear(false);
+            experiment.getBuffer(inputs.get(0)).append(getValue());
+            return true;
+        }
+
+        @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            if (!needsUpdate)
+                return;
+            needsUpdate = false;
+
+            double x = experiment.getBuffer(inputs.get(0)).value;
+
+            if(Double.isNaN(x) || x == 0.0 ){
+                x = Double.parseDouble(defaultValue);
+            }
+
+            slider.setValue((float) x);
+            tv.setText(String.valueOf(x));
+        }
+
+        @Override
         protected String createViewHTML() {
-            return null;
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
+                        "<span class=\"label\">"+this.label+"</span>" +
+                        "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" +
+                        "<div class=\"sliderContainer\">" +
+                            "<span class=\"minValue\" >"+minValue+"</span>" +
+                                "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
+                                " min=\"1\" max=\"100\" value=\"100\" " +
+                                "onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value)\" >" +
+                                "</input>" +
+                            "<span class=\"maxValue\">"+maxValue+"</span>" +
+                         "</div>" +
+                    "</div>";
+
+        }
+
+        @Override
+        protected String setDataHTML() {
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+
+            return "function (data) {\n" +
+                    "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                        return;\n" +
+                    "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                    var selectedValue = parseFloat(x)\n" +
+                    "                    var sliderElement = document.getElementById(\"input"+htmlID+"\")\n" +
+                    "            \n" +
+                    "                    var valueDisplay = document.getElementById(\"value"+htmlID+"\");\n" +
+                    "            \n" +
+                    "                    if (sliderElement) {\n" +
+                    "                        sliderElement.min = "+minValue+";\n" +
+                    "                        sliderElement.max = "+maxValue+";\n" +
+                    "                        sliderElement.value = x || "+defaultValue+" \n" +
+                    "                    }\n" +
+                    "                    if (valueDisplay) {\n" +
+                    "                        if(x.toFixed(1) == 0.0 || isNaN(x)){\n" +
+                    "                            valueDisplay.textContent = "+defaultValue+";\n" +
+                    "                        } else {\n" +
+                    "                            valueDisplay.textContent = x.toFixed(1)\n" +
+                    "                        }\n" +
+                    "                        \n" +
+                    "                    }\n" +
+                    "            \n" +
+                    "                    if (sliderElement){\n" +
+                    "                        sliderElement.addEventListener('input', function () {\n" +
+                    "                            if (valueDisplay) {\n" +
+                    "                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(1);\n" +
+                    "                            }\n" +
+                    "                            x = parseFloat(sliderElement.value)\n" +
+                    "                            data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1] = x\n" +
+                    "                        });\n" +
+                    "                        \n" +
+                    "            }\n" +
+                    "            }";
         }
 
         @Override
         protected String getUpdateMode() {
-            return null;
+            return "single";
         }
     }
 }
