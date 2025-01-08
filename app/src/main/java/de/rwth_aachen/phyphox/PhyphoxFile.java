@@ -1722,7 +1722,7 @@ public abstract class PhyphoxFile {
                         ExpView.dropDownElement.Mapping map = dropDownElement.new Mapping(translate(at.content, parent));
                         if(at.attributes.containsKey("value")){
                             try {
-                                map.value = at.attributes.get("value");
+                                map.value = Double.valueOf(at.attributes.get("value"));
                             } catch (Exception e){
                                 throw new phyphoxFileException("Could not parse value tag.", xpp.getLineNumber());
                             }
