@@ -42,6 +42,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -1573,6 +1574,7 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "button": { //The edit element can take input from the user
+                    String dynamicBuffer = getStringAttribute("dynamicLabel");
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1591,11 +1593,41 @@ public abstract class PhyphoxFile {
                             continue;
                         if (at.name.equals("output"))
                             continue;
+                        if (at.name.equals("map")) {
+                            ExpView.buttonElement.ButtonMapping map = be.new ButtonMapping(translate(at.content, parent));
+                            if (at.attributes.containsKey("min")) {
+                                try {
+                                    map.min = Double.valueOf(at.attributes.get("min"));
+                                } catch (Exception e) {
+                                    throw new phyphoxFileException("Could not parse min of map tag.", xpp.getLineNumber());
+                                }
+                            }
+                            if (at.attributes.containsKey("max")) {
+                                try {
+                                    map.max = Double.valueOf(at.attributes.get("max"));
+                                } catch (Exception e) {
+                                    throw new phyphoxFileException("Could not parse max of map tag.", xpp.getLineNumber());
+                                }
+                            }
+                            be.addMapping(map);
+                            continue;
+                        }
                         if (!at.name.equals("trigger")) {
                             throw new phyphoxFileException("Unknown tag " + at.name + " found by ioBlockParser.", xpp.getLineNumber());
                         }
+
                         triggers.add(at.content);
                     }
+
+
+                    if(dynamicBuffer != null){
+                        DataBuffer buffer = experiment.getBuffer(dynamicBuffer);
+                        if(buffer == null){
+                            throw new phyphoxFileException("Could not parse buffer with name " + dynamicBuffer, xpp.getLineNumber());
+                        }
+                        be.setBuffer(buffer);
+                    }
+
                     be.setTriggers(triggers);
                     newView.elements.add(be);
                     break;
