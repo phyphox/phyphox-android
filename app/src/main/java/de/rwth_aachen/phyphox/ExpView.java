@@ -987,6 +987,24 @@ public class ExpView implements Serializable{
         private List<NetworkConnection> networkConnections = null;
         private boolean triggered = false;
         private ExpViewFragment parent;
+        private DataBuffer buffer;
+        Button b;
+
+        protected class ButtonMapping {
+            Double min = Double.NEGATIVE_INFINITY;
+            Double max = Double.POSITIVE_INFINITY;
+            String str;
+
+            protected ButtonMapping(String str) {
+                this.str = str;
+            }
+        }
+
+        protected Vector<ButtonMapping> mappings = new Vector<>();
+
+        protected void addMapping(ButtonMapping mapping) {
+            this.mappings.add(mapping);
+        }
 
         //No special constructor.
         buttonElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -1002,10 +1020,14 @@ public class ExpView implements Serializable{
             this.triggers = triggers;
         }
 
+        public void setBuffer(DataBuffer buffer) {
+            this.buffer = buffer;
+        }
+
         @Override
         //This is not automatically updated, but triggered by the user, so it's "none"
         protected String getUpdateMode() {
-            return "none";
+            return "single";
         }
 
         @Override
@@ -1017,17 +1039,19 @@ public class ExpView implements Serializable{
 
             networkConnections = experiment.networkConnections;
 
-            //The button
-            Button b = new Button(c);
+            b = new Button(c);
 
             LinearLayout.LayoutParams vglp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-//            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, context.getDimension(R.dimen.info_element_margin), context.getDisplayMetrics());
-//            vglp.setMargins(0, margin, 0, 0);
             vglp.gravity = Gravity.CENTER;
 
             b.setLayoutParams(vglp);
             b.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             b.setText(this.label);
+
+            if(buffer != null){
+                // Register the buffer of the dynamic label which is defined as string in xml
+                experiment.getBuffer(buffer.name).register(this);
+            }
 
             //Add the button to the main linear layout passed to this function
             rootView = b;
@@ -1095,6 +1119,29 @@ public class ExpView implements Serializable{
         }
 
         @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            if (!needsUpdate)
+                return;
+            needsUpdate = false;
+
+            double x = buffer.value;
+
+            String buttonLabel = this.label;
+
+            if (Double.isNaN(x)) {
+                buttonLabel = this.label;
+            } else {
+                for (ButtonMapping map : mappings)  {
+                    if (x >= map.min && x <= map.max) {
+                        buttonLabel = map.str;
+                        break;
+                    }
+                }
+            }
+            b.setText(buttonLabel);
+        }
+
+        @Override
         //Create the HTML markup for this element
         //<div>
         //  <span>Label</span> <input /> <span>unit</span>
@@ -1103,8 +1150,41 @@ public class ExpView implements Serializable{
         //onchange-listener in the markup
         protected String createViewHTML(){
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
-                    "<button onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
+                    "<button class=\"valueNumber\" onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\" " +
+                    "onchange=\"ajax('control?cmd=set&buffer="+buffer.name+"\")&value='+this.value/)\">" + this.label +"</button>" +
                     "</div>";
+        }
+
+        @Override
+        protected String setDataHTML() {
+            StringBuilder sb = new StringBuilder();
+
+            String bufferName = buffer.name;
+
+            sb.append("function (data) {");
+            sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
+            sb.append("         return;");
+            sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
+            sb.append(      "var v = null;");
+
+            sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
+            for (ButtonMapping map : mappings) {
+                String str = map.str.replace("<","&lt;").replace(">","&gt;").replace("\"","\\\"");
+                if (!map.max.isInfinite() && !map.min.isInfinite()) {
+                    sb.append("else if (x >= " + map.min + " && x <= " + map.max + ") {v = \"" + str + "\";}");
+                } else if (!map.max.isInfinite()) {
+                    sb.append("else if (x <= " + map.max + ") {v = \"" + str + "\";}");
+                } else if (!map.min.isInfinite()) {
+                    sb.append("else if (x >= " + map.min + ") {v = \"" + str + "\";}");
+                } else {
+                    sb.append("else if (true) {v = \"" + str + "\";}");
+                }
+            }
+
+            sb.append("     var valueNumber = document.getElementById(\"element"+htmlID+")\").getElementsByClassName(\"valueNumber\")[0];");
+            sb.append("     valueNumber.textContent = v;");
+            sb.append("}");
+            return sb.toString();
         }
     }
 
