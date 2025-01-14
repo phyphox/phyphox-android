@@ -1027,6 +1027,9 @@ public class ExpView implements Serializable{
         @Override
         //This is not automatically updated, but triggered by the user, so it's "none"
         protected String getUpdateMode() {
+            if(buffer == null){
+                return "none";
+            }
             return "single";
         }
 
@@ -1149,25 +1152,36 @@ public class ExpView implements Serializable{
         //Note that the input is send from here as well as the AJAX-request is placed in the
         //onchange-listener in the markup
         protected String createViewHTML(){
+
+            if(buffer == null){
+                return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
+                        "<button onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
+                        "</div>";
+            }
+
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
-                    "<button class=\"valueNumber\" onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\" " +
-                    "onchange=\"ajax('control?cmd=set&buffer="+buffer.name+"\")&value='+this.value/)\">" + this.label +"</button>" +
+                    "<button class=\"valueNumber\" id=\"button"+htmlID+"\" onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\" " +
+                    "onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value)\">" + this.label +"</button>" +
                     "</div>";
         }
 
         @Override
         protected String setDataHTML() {
+            if(buffer == null){
+                return "function() {}";
+            }
+
             StringBuilder sb = new StringBuilder();
 
-            String bufferName = buffer.name;
+            String bufferName = super.inputs.get(0).replace("\"", "\\\"");
 
             sb.append("function (data) {");
             sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
             sb.append("         return;");
             sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
-            sb.append(      "var v = null;");
+            sb.append(      "var v = \""+this.label+"\";");
 
-            sb.append(      "if (isNaN(x) || x == null) { v = \"-\" }");
+            sb.append(      "if (isNaN(x) || x == null) { v = \" "+this.label+"\" }");
             for (ButtonMapping map : mappings) {
                 String str = map.str.replace("<","&lt;").replace(">","&gt;").replace("\"","\\\"");
                 if (!map.max.isInfinite() && !map.min.isInfinite()) {
@@ -1181,7 +1195,7 @@ public class ExpView implements Serializable{
                 }
             }
 
-            sb.append("     var valueNumber = document.getElementById(\"element"+htmlID+")\").getElementsByClassName(\"valueNumber\")[0];");
+            sb.append("     var valueNumber = document.getElementById(\"button"+htmlID+"\");");
             sb.append("     valueNumber.textContent = v;");
             sb.append("}");
             return sb.toString();
