@@ -1756,7 +1756,7 @@ public abstract class PhyphoxFile {
                         ExpView.dropDownElement.Mapping map = dropDownElement.new Mapping(translate(at.content, parent));
                         if(at.attributes.containsKey("value")){
                             try {
-                                map.value = Double.valueOf(at.attributes.get("value"));
+                                map.value = at.attributes.get("value");
                             } catch (Exception e){
                                 throw new phyphoxFileException("Could not parse value tag.", xpp.getLineNumber());
                             }
@@ -1775,20 +1775,39 @@ public abstract class PhyphoxFile {
                     String maxValue = getStringAttribute("maxValue");
                     String stepSize = getStringAttribute("stepSize");
                     String precision = getStringAttribute("precision");
+                    String type = getStringAttribute("type");
+                    Boolean showValue = getBooleanAttribute("showValue", true);
                     RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
 
-                    ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; }}
-                    };
-                    (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
+                    ExpView.SliderType sliderType = (Objects.equals(type, "range")) ? ExpView.SliderType.Range : ExpView.SliderType.Normal;
 
-                    ExpView.sliderElement sliderElement = newView.new sliderElement(label, outputs.get(0).buffer.name, null, parent.getResources());
+                    Vector<String> outStrings = new Vector<>();
+                    if(sliderType == ExpView.SliderType.Normal){
+                        ioBlockParser.ioMapping[] outputMapping = {
+                                new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; }}
+                        };
+                        (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
+                        outStrings.add(outputs.get(0).buffer.name);
+                    } else {
+                        ioBlockParser.ioMapping[] outputMapping = {
+                                new ioBlockParser.ioMapping() {{name = "lowerValue"; asRequired = false; minCount = 1; maxCount = 1; }},
+                                new ioBlockParser.ioMapping() {{name = "upperValue"; asRequired = false; minCount = 1; maxCount = 1; }}
+                        };
+                        (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "value")).process(); //Load inputs and outputs
+
+                        outStrings.add(outputs.get(0).buffer.name);
+                        outStrings.add(outputs.get(1).buffer.name);
+                    }
+
+                    ExpView.sliderElement sliderElement = newView.new sliderElement(label, outStrings, null, parent.getResources());
                     sliderElement.setDefaultValue(defaultValue);
                     sliderElement.setColor(color);
                     sliderElement.setMinValue(minValue);
                     sliderElement.setMaxValue(maxValue);
                     sliderElement.setStepSize(stepSize);
                     sliderElement.setPrecision(precision);
+                    sliderElement.setType(sliderType);
+                    sliderElement.setShowValue(showValue);
 
                     newView.elements.add(sliderElement);
                     break;

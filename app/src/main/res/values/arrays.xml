@@ -7,5 +7,9 @@
         <item>@string/applyZoomSameAxis</item>
     </string-array>
 
+    <array name="initial_slider_values">
+        <item>60.0</item>
+        <item>70.0</item>
+    </array>
 
 </resources>
