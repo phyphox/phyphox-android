@@ -2892,7 +2892,7 @@ public class ExpView implements Serializable{
 
             for(Mapping title: mappings){
                 if(title.str.isEmpty()){
-                    options.add(title.value + "");
+                    options.add(title.value);
                 } else {
                     options.add(title.str);
                 }
@@ -3013,10 +3013,7 @@ public class ExpView implements Serializable{
                     "            \n" +
                     "                    var values = "+values+" \n" +
                     "                    var options =  "+ jsonArray +"\n" +
-                    "                     console.log(options.length) \n" +
                     "                    for (var i = 0; i < options.length ; i++){\n" +
-                    "                          console.log(options[i])\n" +
-                    "                          console.log(values[i])\n" +
                     "                        var option = document.createElement(\"option\")\n" +
                     "                        option.value = values[i]\n" +
                     "                        if(options[i] == \"\"){\n" +
@@ -3315,14 +3312,16 @@ public class ExpView implements Serializable{
 
         @Override
         protected String createViewHTML() {
-            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
+            return (type == SliderType.Range) ? getTwoSlidersVerticallyHTML() :
+
+                 "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
                         "<span class=\"label\">"+this.label+"</span>" +
                         "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" +
                         "<div class=\"sliderContainer\">" +
                             "<span class=\"minValue\" >"+minValue+"</span>" +
                                 "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
-                                " min=\"1\" max=\"100\" value=\"100\" " +
-                                "onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value)\" >" +
+                                    "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                    ">" +
                                 "</input>" +
                             "<span class=\"maxValue\">"+maxValue+"</span>" +
                          "</div>" +
@@ -3330,34 +3329,138 @@ public class ExpView implements Serializable{
 
         }
 
+
+        private String getTwoSlidersVerticallyHTML(){
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
+                                            "<span class=\"label\">"+this.label+"</span>" +
+                                            "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" +
+                                            "<div class=\"sliderContainer\">" +
+                                            "<span class=\"minValue\" >"+minValue+"</span>" +
+                                                "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
+                                                    "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                                    ">" +
+                                                "</input>" +
+                                            "<span class=\"maxValue\"></span>" +
+                                            "</div>" +
+                                            "<div class=\"sliderContainer\">" +
+                                            "<span class=\"minValue\"></span>" +
+                                            "<input type=\"range\" class=\"slider\" id=\"input1"+htmlID+"\"" +
+                                                "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                                    ">" +
+                                                    "</input>" +
+                                                "<span class=\"maxValue\">"+maxValue+"</span>" +
+                                            "</div>" +
+                                    "</div>";
+        }
+
         @Override
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
 
-            return "function (data) {\n" +
+            return type == SliderType.Range ? setHTMLForRangeSlider() :
+
+                "function (data) {\n" +
                     "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
-                    "                    var selectedValue = parseFloat(x)\n" +
+                    "                    var selectedValue = parseFloat(x).toFixed("+precision+")\n" +
                     "                    var sliderElement = document.getElementById(\"input"+htmlID+"\")\n" +
-                    "            \n" +
                     "                    var valueDisplay = document.getElementById(\"value"+htmlID+"\");\n" +
-                    "            \n" +
                     "                    if (sliderElement) {\n" +
                     "                        sliderElement.min = "+minValue+";\n" +
                     "                        sliderElement.max = "+maxValue+";\n" +
-                    "                        sliderElement.value = x || "+defaultValue+" \n" +
+                        "                    sliderElement.step = "+stepSize+";\n" +
+                    "                        sliderElement.value = selectedValue || "+defaultValue+" \n" +
                     "                    }\n" +
-                    "                    if (valueDisplay) {\n" +
-                    "                        if(x.toFixed(1) == 0.0 || isNaN(x)){\n" +
-                    "                            valueDisplay.textContent = "+defaultValue+";\n" +
-                    "                        } else {\n" +
-                    "                            valueDisplay.textContent = x.toFixed(1)\n" +
+                    "                    if(valueDisplay){ \n"+
+                    "                        valueDisplay.textContent = parseFloat(sliderElement.value).toFixed("+precision+");\n"+
+                    "                    }\n" +
+                    "                   sliderElement.onchange = function() {\n"+
+                    "                            if (valueDisplay) {\n" +
+                    "                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed("+precision+");\n" +
+                        "                        }\n" +
+                    "                       ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElement.value)\n"+
+                    "                   }\n" +
+                    "            }";
+        }
+
+        private String setHTMLForRangeSlider() {
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+            String upperValueBufferName = inputs.get(1).replace("\"", "\\\"");
+
+            return "function (data) {\n" +
+                    "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                        return;\n" +
+                    "                    if (!data.hasOwnProperty(\""+upperValueBufferName+"\"))\n" +
+                    "                        return;\n" +
+
+                    "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                    var y = data[\""+upperValueBufferName+"\"][\"data\"][data[\""+upperValueBufferName+"\"][\"data\"].length - 1];\n" +
+
+                    "                    var selectedValueX = parseFloat(x).toFixed("+precision+")\n" +
+                    "                    var selectedValueY = parseFloat(y).toFixed("+precision+")\n" +
+
+                    "                    var sliderElementOne = document.getElementById(\"input"+htmlID+"\")\n" +
+                    "                    var sliderElementTwo = document.getElementById(\"input1"+htmlID+"\")\n" +
+                    "                    var valueDisplay = document.getElementById(\"value"+htmlID+"\");\n" +
+
+                    "                    if (sliderElementOne && sliderElementTwo) {\n" +
+                    "                        sliderElementOne.min = "+minValue+";\n" +
+                    "                        sliderElementTwo.min = "+minValue+";\n" +
+                    "                        sliderElementOne.max = "+maxValue+";\n" +
+                    "                        sliderElementTwo.max = "+maxValue+";\n" +
+                    "                        sliderElementOne.step = "+stepSize+";\n" +
+                    "                        sliderElementTwo.step = "+stepSize+";\n" +
+                    "                        sliderElementOne.value = selectedValueX || "+defaultValue+" \n" +
+                    "                        sliderElementTwo.value = selectedValueY || "+defaultValue+" \n" +
+                    "                    }\n" +
+
+                    "                    if(valueDisplay){ \n"+
+                    "                        valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n"+
+                    "                    }\n" +
+
+                    "                    if (sliderElementOne || sliderElementTwo){\n" +
+                    "                       sliderElementOne.onchange = function() {\n"+
+                    "                            if(sliderElementOne.value <= sliderElementTwo.value) {\n"+
+                    "                                if (valueDisplay) {\n" +
+                    "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
+                    "                               }\n" +
+                    "                               ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElementOne.value)\n"+
+                    "                            }\n" +
                     "                        }\n" +
-                    "                        \n" +
-                    "                    }\n" +
-                    "            \n" +
-                    "                    if (sliderElement){\n" +
+
+                    "                        sliderElementTwo.onchange = function() {\n"+
+                    "                            if(sliderElementOne.value <= sliderElementTwo.value) {\n"+
+                    "                                if (valueDisplay) {\n" +
+                    "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
+                    "                               }\n" +
+                    "                            ajax('control?cmd=set&buffer="+getValueOutputs().get(1)+"&value='+sliderElementTwo.value)\n"+
+                    "                            }\n" +
+                    "                       }\n" +
+                    "            }\n" +
+                    "       }";
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return "single";
+        }
+
+        private String getRangeSliderHTML(){
+            return "<section class =\"range-slider\">" +
+                    "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\" " +
+                    "min=\"1\" max=\"100\" value=\"20\" step="+stepSize+" " +
+                    "onchange=\"ajax('control?cmd=set&buffer="+outputs.get(0)+"&value='+this.value)\">" +
+                    "<input value=\"50\" min=\"0\" max=\"100\" step="+stepSize+" type=\"range\"" +
+                    "onchange=\"ajax('control?cmd=set&buffer="+outputs.get(1) +"&value='+this.value)\">" +
+                    "</section>";
+        }
+    }
+}
+
+/*
+
+  if (sliderElement){\n" +
                     "                        sliderElement.addEventListener('input', function () {\n" +
                     "                            if (valueDisplay) {\n" +
                     "                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(1);\n" +
@@ -3366,13 +3469,6 @@ public class ExpView implements Serializable{
                     "                            data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1] = x\n" +
                     "                        });\n" +
                     "                        \n" +
-                    "            }\n" +
-                    "            }";
-        }
+                    "                   }\n" +
 
-        @Override
-        protected String getUpdateMode() {
-            return "single";
-        }
-    }
-}
+ */
