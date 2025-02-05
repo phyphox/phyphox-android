@@ -22,8 +22,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import org.w3c.dom.Document;
@@ -530,5 +535,18 @@ public abstract class Helper {
             zipData = dataReceived;
         }
         return zipData;
+    }
+
+    // From Android 15 (SDK 35), because of edge-to-edge UI, there should be inset at status bar
+    public static void setWindowInsetListenerForSystemBar(View v){
+        ViewCompat.setOnApplyWindowInsetsListener(v, new OnApplyWindowInsetsListener() {
+            @NonNull
+            @Override
+            public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                return insets;
+            }
+        });
     }
 }

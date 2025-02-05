@@ -70,6 +70,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import com.caverock.androidsvg.SVG;
@@ -2029,6 +2033,8 @@ public class ExperimentList extends AppCompatActivity {
         }
 
         Activity parentActivity = this;
+
+        Helper.setWindowInsetListenerForSystemBar(findViewById(R.id.expListHeader));
 
         //Set the on-click-listener for the credits
         View.OnClickListener ocl = new View.OnClickListener() {
