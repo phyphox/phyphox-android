@@ -29,6 +29,15 @@ import de.rwth_aachen.phyphox.Helper.Helper;
 
 //The graphView class implements an Android view which displays a data graph
 
+/*
+How code might be working in case of fourier transform color map plot
+
+1) there are two plots drawn each with difference coloring
+    this might indicate that there are two drawplot function and there should be indicator which plot it is
+2) both plot has different x and y labeling and common thing is that both has x axis tick label
+3) second plot uses the color provided in the first plot.
+ */
+
 public class GraphView extends View {
     public enum Style {
         lines, dots, hbars, vbars, mapXY, mapZ, unknown;
@@ -79,8 +88,7 @@ public class GraphView extends View {
 
     Style[] style; //Styles for each graph
     int[] mapWidth; //MapWidth for each graph (if applicable)
-    Vector<Integer> colorScale = new Vector<>();
-
+    boolean showColorScaleForColorMapChart;
     private final static int maxXRegularTics = 5; //Constant to set a target number of tics on the x axis
     private final static int maxYRegularTics = 5; //Constant to set a target number of tics on the y axis
     private final static int maxZRegularTics = 5; //Constant to set a target number of tics on the y axis
@@ -293,6 +301,10 @@ public class GraphView extends View {
             pickedPointIndex[i] = -1;
             pointInfoListener.hidePointInfo(i);
         }
+    }
+
+    public void setShowColorScaleForColorMapChart(boolean show){
+        this.showColorScaleForColorMapChart = show;
     }
 
     public void setTouchMode(TouchMode touchMode) {
@@ -1301,6 +1313,9 @@ public class GraphView extends View {
         Tic[] zTics = null;
         if (zScale)
             zTics = getTics(workingMinZ, workingMaxZ, maxZTics, logZ, false, 0);
+
+        if(!showColorScaleForColorMapChart)
+            zScale = false;
 
         //Calculate area...
         int w = this.getWidth();

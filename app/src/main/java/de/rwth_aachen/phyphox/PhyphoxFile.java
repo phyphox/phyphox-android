@@ -17,7 +17,6 @@ import android.os.Build;
 import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -68,7 +67,6 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConversion;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkDiscovery;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
-import de.rwth_aachen.phyphox.camera.model.CameraUiState;
 import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 
 //phyphoxFile implements the loading of an experiment from a *.phyphox file as well as the copying
@@ -1360,6 +1358,7 @@ public abstract class PhyphoxFile {
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
                     int mapWidth= getIntAttribute("mapWidth", 0);
+                    boolean showColorScale = getBooleanAttribute("showColorScale", true);
                     boolean partialUpdate = getBooleanAttribute("partialUpdate", false);
                     int history = getIntAttribute("history", 1);
                     String labelX = getTranslatedAttribute("labelX");
@@ -1413,6 +1412,7 @@ public abstract class PhyphoxFile {
                     int xPrecision = getIntAttribute("xPrecision", -1);
                     int yPrecision = getIntAttribute("yPrecision", -1);
                     int zPrecision = getIntAttribute("zPrecision", -1);
+
                     boolean suppressScientificNotation = getBooleanAttribute("suppressScientificNotation", false);
                     RGB color = new RGB(parent.getResources().getColor(R.color.phyphox_primary));
                     boolean globalColor = false;
@@ -1474,6 +1474,7 @@ public abstract class PhyphoxFile {
                     if (lineStyle != null) {
                         ge.setStyle(GraphView.styleFromStr(lineStyle));
                     }
+                    ge.setShowColorScale(showColorScale);
                     ge.setMapWidth(mapWidth);
                     ge.setColorScale(colorScale);
                     ge.setLineWidth(lineWidth);
@@ -1489,6 +1490,7 @@ public abstract class PhyphoxFile {
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     ge.setSuppressScientificNotation(suppressScientificNotation);
+
                     if (!globalColor) {
                         for (int i = 0; i < Math.ceil(ats.size() / 3); i++) {
                             switch (i % 6) {

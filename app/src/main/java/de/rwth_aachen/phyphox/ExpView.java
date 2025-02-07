@@ -1261,6 +1261,7 @@ public class ExpView implements Serializable{
         private Vector<GraphView.Style> style = new Vector<>(); //Show lines instead of points?
         private Vector<Integer> mapWidth = new Vector<>();
         private Vector<Integer> colorScale = new Vector<>();
+        private boolean showColorScale;
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
         private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
@@ -1393,6 +1394,10 @@ public class ExpView implements Serializable{
         protected void setMapWidth(int width) {
             for (int i = 0; i < nCurves || i < historyLength; i++)
                 setMapWidth(width, i);
+        }
+
+        protected  void setShowColorScale(boolean showColorScale){
+            this.showColorScale = showColorScale;
         }
 
         public void setScaleModeX(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
@@ -1528,6 +1533,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             interactiveGV.setLayoutParams(lp);
             interactiveGV.setLabel(this.label);
+            interactiveGV.setShowColorScale(showColorScale);
 
             if (act instanceof Experiment) {
                 DataExport dataExport = new DataExport(experiment);
