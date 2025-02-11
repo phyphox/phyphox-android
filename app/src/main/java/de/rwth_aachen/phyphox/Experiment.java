@@ -1422,58 +1422,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Desciption-button. Show the experiment description
         if (id == R.id.action_description) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(experiment.title);
-
-            LinearLayout ll = new LinearLayout(builder.getContext());
-            ll.setOrientation(LinearLayout.VERTICAL);
-            int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
-            int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
-            ll.setPadding(marginX, marginY, marginX, marginY);
-
-            if (!experiment.stateTitle.isEmpty()) {
-                TextView stateLabel = new TextView(builder.getContext());
-                stateLabel.setText(experiment.stateTitle);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
-                stateLabel.setLayoutParams(lp);
-                ll.addView(stateLabel);
-            }
-
-            TextView description = new TextView(builder.getContext());
-            description.setText(experiment.description);
-
-            ll.addView(description);
-
-            for (String label : experiment.links.keySet()) {
-                Button btn = new Button(builder.getContext());
-                btn.setText(label);
-                final String url = experiment.links.get(label);
-                btn.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View view) {
-                        Uri uri = Uri.parse(url);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        if (intent.resolveActivity(getPackageManager()) != null) {
-                            startActivity(intent);
-                        }
-                    }
-                });
-                ll.addView(btn);
-            }
-
-            ScrollView sv = new ScrollView(builder.getContext());
-            sv.setHorizontalScrollBarEnabled(false);
-            sv.setVerticalScrollBarEnabled(true);
-            sv.addView(ll);
-
-            builder.setView(sv);
-
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            showExperimentInfo();
             return true;
         }
 
@@ -1598,6 +1547,60 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     };
 
+    public void showExperimentInfo(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(experiment.title);
+
+        LinearLayout ll = new LinearLayout(builder.getContext());
+        ll.setOrientation(LinearLayout.VERTICAL);
+        int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
+        int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
+        ll.setPadding(marginX, marginY, marginX, marginY);
+
+        if (!experiment.stateTitle.isEmpty()) {
+            TextView stateLabel = new TextView(builder.getContext());
+            stateLabel.setText(experiment.stateTitle);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
+            stateLabel.setLayoutParams(lp);
+            ll.addView(stateLabel);
+        }
+
+        TextView description = new TextView(builder.getContext());
+        description.setText(experiment.description);
+
+        ll.addView(description);
+
+        for (String label : experiment.links.keySet()) {
+            Button btn = new Button(builder.getContext());
+            btn.setText(label);
+            final String url = experiment.links.get(label);
+            btn.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    Uri uri = Uri.parse(url);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    if (intent.resolveActivity(getPackageManager()) != null) {
+                        startActivity(intent);
+                    }
+                }
+            });
+            ll.addView(btn);
+        }
+
+        ScrollView sv = new ScrollView(builder.getContext());
+        sv.setHorizontalScrollBarEnabled(false);
+        sv.setVerticalScrollBarEnabled(true);
+        sv.addView(ll);
+
+        builder.setView(sv);
+
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 
     //Start a measurement
     public void startMeasurement() {
