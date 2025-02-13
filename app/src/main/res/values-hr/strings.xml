@@ -1,2 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">phyphox</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privatnost</string>
+    <string name="action_settings">Postavke</string>
+    <string name="title_activity_experiment">phyphox</string>
+    <string name="graph_tools_pan_and_zoom">Pomicanje i zumiranje</string>
+    <string name="graph_tools_pick">Izaberite podatke</string>
+    <string name="graph_tools_more">Više alata</string>
+    <string name="graph_tools_system_time">Pretvorite u sustavno vrijeme</string>
+    <string name="graph_tools_reset">Resetirajte zumiranje</string>
+    <string name="graph_tools_follow">Pratite nove podatke</string>
+    <string name="graph_tools_export">Izvezite ovaj skup podataka</string>
+    <string name="graph_tools_log_x">Logaritamska x os</string>
+    <string name="graph_tools_log_y">Logaritamska y os</string>
+    <string name="graph_point_label">Točka</string>
+    <string name="graph_slope_label">Nagib</string>
+</resources>
