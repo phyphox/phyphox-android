@@ -15,4 +15,131 @@
     <string name="graph_tools_log_y">Logaritamska y os</string>
     <string name="graph_point_label">Točka</string>
     <string name="graph_slope_label">Nagib</string>
+    <string name="graph_tools_linear_fit">Linearna regresija</string>
+    <string name="graph_difference_label">Razlika</string>
+    <string name="graph_fit_label">Linearna regresija: y = a x + b</string>
+    <string name="applyZoomTitle">Primjenite zumiranje</string>
+    <string name="applyZoomExplanation">Tijekom zatvaranja interaktivnog načina rada ovog grafa, možete izabrati želite li zadržati zumiranje.</string>
+    <string name="applyZoomAdvanced">Napredne opcije</string>
+    <string name="applyZoomApply">Primjenite na…</string>
+    <string name="applyZoomReset">Resetirajte na zadano se</string>
+    <string name="applyZoomKeep">Zadržite odabrano</string>
+    <string name="applyZoomFollow">Zadržite i pratite nove podatke</string>
+    <string name="applyZoomThis">Samo ovaj graf</string>
+    <string name="applyZoomSameVariable">Drugi grafovi: Ista varijabla</string>
+    <string name="applyZoomSameUnit">Drugi grafovi: Ista mjerna jedinica</string>
+    <string name="applyZoomSameAxis">Drugi grafovi: Ista os</string>
+    <string name="newExperiment">Dodajte pokuse</string>
+    <string name="newExperimentSimple">Dodajte jednostavni pokus</string>
+    <string name="newExperimentPhyphoxInfo">Posjetite phyphox.org kako bi ste izradili napredne pokuse uključujući analizu podataka i podjelite ih s kolegama, studentima i prijateljima.</string>
+    <string name="newExperimentInputTitle">Naslov</string>
+    <string name="newExperimentInputBufferSize">Veličina bufera (broj vrijednosti koji će se spremiti)</string>
+    <string name="newExperimentInputRate">Brzina Senzora ( u Hz, 0 = najbrža moguća)</string>
+    <string name="newExperimentInputSensors">Aktivni senzori</string>
+    <string name="newExperimentBluetooth">Dodajte pokus za Bluetooth uređaj</string>
+    <string name="newExperimentBluetoothErrorTitle">pogreška Bluetooth skeniranja</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Učitajte s uređaja</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Ovaj uređaj pruža vlastiti pyhphox pokus. Odaberite u učitavanje s uređaja kako bi ste otvorili.</string>
+    <string name="newExperimentQR">Dodajte pokus iz QR koda</string>
+    <string name="newExperimentQRscan">Skenirajte QR kod koji sadrži phyphox pokus.</string>
+    <string name="newExperimentQRErrorTitle">pogreška QR koda.</string>
+    <string name="newExperimentQRNoExperiment">Nije pronađen QR kod koji sadrži phyphox pokus.</string>
+    <string name="newExperimentQRcrcMismatch">Izgleda da QR kod koji ste upravo skenirali ne odgovara prihašnjim kodovima. Molim Vas da skenirate samo kodove koji pripadaju istom pokusu.</string>
+    <string name="newExperimentQRCodesMissing1">QR koji ste upravo skenirali je dio seta od</string>
+    <string name="newExperimentQRCodesMissing2">kodova. Molim Vas da pritisnete nastavi kako bi ste skenirali preostale kodove. Kodovi koji još nedostaju:</string>
+    <string name="newExperimentQRBadCRC">Neispravna kontolna suma. Ovo znači ili da je loš QR kod ili je nešto pošlo po zlu tijeko skeniranja.</string>
+    <string name="newExperimentBTReadErrorTitle">Pogreška Bluetooth pokusa.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Preneseni podaci pokusa su oštećeni.</string>
+    <string name="generalErrorDialog">Dogodila se pogreška.</string>
+    <string name="help">Pomoć i informacije</string>
+    <string name="experimentsPhyphoxOrg">Ideje i upute pokusa</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Često postavljana pitanja</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Pomoć za daljinsko upravljanje</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#hr</string>
+    <string name="deviceInfo">Informacije o uređaju</string>
+    <string name="copyToClipboard">Kopirajte u međuspremnik</string>
+    <string name="deviceInfoCopied">Informacije o uređaju su kopirane u međuspremnik.</string>
+    <string name="warning">Upozorenje</string>
+    <string name="donotshowagain">Ne prikazuj ponovno</string>
+    <string name="damageWarning">Molim Vas budite oprezni kako ne bi ste oštetili vaš telefon tijekom pokusa. Molim Vas posebno pazite da ga ne ispustite na tvrde površine i da ga ne izlažete prejakim magnetskim poljima. Autori phyphox-a nisu odgovorni za eventualna oštećenja Vašeg telefona.</string>
+    <string name="info">Informacije</string>
+    <string name="credits">Bodovi</string>
+    <string name="creditsRWTH">phyphox® je kreiran na drugom Institutu Fizike na RWTH Aachen Sveučilištu.</string>
+    <string name="creditsNames">Razvoj i koncept:
+\nDr. Sebastian Staacks
+\nKoncept:
+\nProf. Christoph Stampfer
+\nProgramiranje:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
+    <string name="gpl">Phyphox® je program otvorenog koda objavljen pod GNU General Public Licence. Molim Vas posjetite http://phyphox.org za daljnje informacije i za pristup njegovom izvornom kodu. Ali, ime \"phyphox\" i \"RWTH Aachen\" su registritani zaštitni znakovi.</string>
+    <string name="creditsLibs">Internet sučelje za daljinsko upravljanje koristi Javascript biblioteku \"Chart.js\"(http://chartjs.org), dostupnu pod MIT licencom. Za Furijerove transformacije, koristimo FFTW biblioteku (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, koja je dostupna pod GNU General Public Licence (verzija 2 ili novija). PodaciGPS elevacije su pretvoreni iz WGS84 elipsoida u EGM84 geoid koristeći EGM84 podatke (30\' rezolucija) i prenesenom funkcijom iz GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licenca).</string>
+    <string name="sensorLinearAcceleration">Linearno ubrzanje</string>
+    <string name="sensorGravity">Sila teža</string>
+    <string name="sensorLight">Svijetlost</string>
+    <string name="sensorGyroscope">Žiroskop</string>
+    <string name="sensorAccelerometer">Mjerač ubrzanja</string>
+    <string name="sensorMagneticField">Magnetsko polje</string>
+    <string name="sensorPressure">Tlak</string>
+    <string name="sensorTemperature">Temperatura</string>
+    <string name="sensorHumidity">Vlaga</string>
+    <string name="sensorProximity">Blizina</string>
+    <string name="sensorAttitude">Nadmorska visina</string>
+    <string name="sensorVendor">Specifično za dobavljača</string>
+    <string name="sensorDepth">Dubina (LiDAR/ToF)</string>
+    <string name="sensorCamera">Kamera</string>
+    <string name="vendorSensorTitle">Senzor specifičan za dobavljača</string>
+    <string name="vendorSensorWarning1">Senzor</string>
+    <string name="vendorSensorWarning2">ne prijavljuje ispravan tip senzora. Senzor je ozgleda specifičan za proizvođača i mi možemo samo pogađati tip iz njegovog imena. Stoga, možda neće raditi kao što ste očekivali.</string>
+    <string name="location">Lokacija</string>
+    <string name="sensorNotAvailableWarningTitle">Senzor nije dostupan.</string>
+    <string name="sensorNotAvailableWarningText1">Senzor</string>
+    <string name="sensorNotAvailableWarningText2">nije dostupan. Ovo obično znači da Vaš uređaj, jednostavno, nema ovaj tip senzora.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Više informacija</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+    <string name="ok">U redu</string>
+    <string name="tryagain">Pokušajte ponovno</string>
+    <string name="doContinue">Nastavi</string>
+    <string name="close">Zatvori</string>
+    <string name="next">Sljedeći</string>
+    <string name="cancel">Odustani</string>
+    <string name="unknown">nepoznato</string>
+    <string name="rename">Preimenuj</string>
+    <string name="delete">Obriši</string>
+    <string name="confirmDelete">Želite li obrisati ovaj pokud iz Vaše kolekcije\?</string>
+    <string name="confirmDeleteTitle">Potvrdi brisanje\?</string>
+    <string name="stop">Zaustavi</string>
+    <string name="start">Pokreni</string>
+    <string name="clear_data">Obriši podatke</string>
+    <string name="clear_data_question">Obrisati zapisane podatke\?</string>
+    <string name="clear">Očisti</string>
+    <string name="leave_experiment">Napusti pokus</string>
+    <string name="leave_experiment_question">Želite li napustiti ovaj pokus i odbaciti snimljene podatke\?</string>
+    <string name="leave">Napusti</string>
+    <string name="timed_stop">Zaustavi vremenski mjereno izvršavanje</string>
+    <string name="timed_start">Započni vremenski mjereno izvršavanje</string>
+    <string name="loadingTitle">Učitavanje</string>
+    <string name="loadingText">Učitavam pokus…</string>
+    <string name="loadingBluetoothConnectionText">Spajanje na Bluetooth uređaj…</string>
+    <string name="timedRunDialogTitle">Vremenski mjereno izvršavanje</string>
+    <string name="timedRunStartDelay">Pokreni odgodu (s)</string>
+    <string name="timedRunStopDelay">Trajanje pokusa (s)</string>
+    <string name="enableTimedRun">Omogući vremenski mjereno izvršavanje</string>
+    <string name="export">Izvezi podatke</string>
+    <string name="export_empty">Postavke ovog pokusa ne određuju podatke za izvoz. Ako je ovo pogreška, molim Vas kontaktirajte izvor QR koda ili konfugiracijske datoteke.</string>
+    <string name="export_subject">Podaci iz phyphonix-a</string>
+    <string name="export_pick_share">Izaverite metodu izvoza</string>
+    <string name="share">Podijelite snimku zaslona</string>
+    <string name="share_subject">Snimka zaslona od phyphonix-a</string>
+    <string name="share_pick_share">Izaberite metodu dijeljenja</string>
+    <string name="remoteServer">Dopustite daljinski pristup</string>
+    <string name="remoteServerWarning">Omogućiti ćete upravljanje na daljinu prikupljenim podacima. Ovo bi trebali raditi samo na poverljivoj mreži! Također pripazite, izravan pristup između iređaja možda nije moguć na mnogim poslovnim i učilišnim mrežama.
+\nZa najbolju sigurnost i performanse savijetujem Vam da se na ovaj uređaj povežete pomoću tethering-a (mobičnog hotspot-a).
+\nNakon što pritisnete u redu, moći će te pristupiti Vašim mjerenjima iz bilo kojeg web preglednika na istoj mreži.</string>
+    <string name="remoteServerWarningTitle">Sigurnosno upozorenje!</string>
 </resources>
