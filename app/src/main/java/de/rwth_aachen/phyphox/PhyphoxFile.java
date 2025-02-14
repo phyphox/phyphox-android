@@ -1,5 +1,9 @@
 package de.rwth_aachen.phyphox;
 
+import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_ISASSET;
+import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_ISTEMP;
+import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_XML;
+
 import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -149,22 +153,22 @@ public abstract class PhyphoxFile {
             //We need to perform slightly different actions for all the different schemes
             String scheme = intent.getScheme();
 
-            if (intent.getStringExtra(ExperimentList.EXPERIMENT_XML) != null) { //If the file location is found in the extra EXPERIMENT_XML, it is a local file
-                String isTemp = intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP);
+            if (intent.getStringExtra(EXPERIMENT_XML) != null) { //If the file location is found in the extra EXPERIMENT_XML, it is a local file
+                String isTemp = intent.getStringExtra(EXPERIMENT_ISTEMP);
                 phyphoxStream.isLocal = (isTemp == null || isTemp.isEmpty());
-                if (intent.getBooleanExtra(ExperimentList.EXPERIMENT_ISASSET, true)) { //The local file is an asser
+                if (intent.getBooleanExtra(EXPERIMENT_ISASSET, true)) { //The local file is an asser
                     AssetManager assetManager = parent.getAssets();
                     try {
-                        phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        phyphoxStream.inputStream = assetManager.open("experiments/" + intent.getStringExtra(EXPERIMENT_XML));
                         remoteInputToMemory(phyphoxStream, "ASSET", true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from assets: " + e.getMessage();
                     }
-                } else if (intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP) != null) {
+                } else if (intent.getStringExtra(EXPERIMENT_ISTEMP) != null) {
                     //This is a temporary file. Typically from a zip file. It's in the private directory, but in a subfolder called "temp"
                     try {
-                        File tempDir = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_ISTEMP));
-                        File file = new File(tempDir, intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        File tempDir = new File(parent.getFilesDir(), intent.getStringExtra(EXPERIMENT_ISTEMP));
+                        File file = new File(tempDir, intent.getStringExtra(EXPERIMENT_XML));
                         phyphoxStream.inputStream = new FileInputStream(file);
                         remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), false);
                     } catch (Exception e) {
@@ -172,8 +176,8 @@ public abstract class PhyphoxFile {
                     }
                 } else { //The local file is in the private directory
                     try {
-                        phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
-                        File file = new File(parent.getFilesDir(), intent.getStringExtra(ExperimentList.EXPERIMENT_XML));
+                        phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(EXPERIMENT_XML));
+                        File file = new File(parent.getFilesDir(), intent.getStringExtra(EXPERIMENT_XML));
                         remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), true);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();

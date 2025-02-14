@@ -1,5 +1,7 @@
 package de.rwth_aachen.phyphox;
 
+import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -46,7 +48,6 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,10 +62,6 @@ import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
-import androidx.core.graphics.Insets;
-import androidx.core.view.OnApplyWindowInsetsListener;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
@@ -84,7 +81,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -520,7 +516,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             timedRunStopDelay = experiment.timedRunStopDelay;
 
             //If the experiment has been launched from a Bluetooth scan, we need to set the bluetooth device in the experiment so it does not ask the user again
-            String btAddress = intent.getStringExtra(ExperimentList.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
+            String btAddress = intent.getStringExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
             if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 for (Bluetooth bt : this.experiment.bluetoothInputs)
                     bt.deviceAddress = btAddress;
@@ -611,7 +607,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             startHintDismissed = true;
 
         //If the hint has been shown a few times, we do not show it again
-        SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+        SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
         int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
         if (menuHintDismissCount >= 3)
             menuHintDismissed = true;
@@ -825,7 +821,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             public void onDismiss() {
                 popupWindow = null;
                 menuHintDismissed = true;
-                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
                 int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
                 settings.edit().putInt("menuHintDismissCount", menuHintDismissCount+1).apply();
             }
@@ -1001,7 +997,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (timedRun) {
                 startTimedMeasurement();
             } else {
-                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
                 int startHintDismissCount = settings.getInt("startHintDismissCount", 0);
                 settings.edit().putInt("startHintDismissCount", startHintDismissCount + 1).apply();
                 startMeasurement();
@@ -1022,7 +1018,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Play button. Start a measurement
         if (id == R.id.action_play) {
-            SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+            SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
             int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
             settings.edit().putInt("startHintDismissCount", startHintDismissCount+1).apply();
 

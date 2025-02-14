@@ -58,7 +58,7 @@ public class Metadata {
         switch (metadata) {
             case uniqueID:
                 final String settingName = "NetworkMetadataUUID";
-                SharedPreferences settings = ctx.getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                SharedPreferences settings = ctx.getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
                 String userId = settings.getString(settingName, null);
                 if (userId == null) {
                     userId = UUID.randomUUID().toString();
