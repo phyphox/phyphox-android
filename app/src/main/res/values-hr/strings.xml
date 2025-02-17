@@ -138,8 +138,61 @@
     <string name="share_subject">Snimka zaslona od phyphonix-a</string>
     <string name="share_pick_share">Izaberite metodu dijeljenja</string>
     <string name="remoteServer">Dopustite daljinski pristup</string>
-    <string name="remoteServerWarning">Omogućiti ćete upravljanje na daljinu prikupljenim podacima. Ovo bi trebali raditi samo na poverljivoj mreži! Također pripazite, izravan pristup između iređaja možda nije moguć na mnogim poslovnim i učilišnim mrežama.
-\nZa najbolju sigurnost i performanse savijetujem Vam da se na ovaj uređaj povežete pomoću tethering-a (mobičnog hotspot-a).
+    <string name="remoteServerWarning">Omogućiti ćete upravljanje na daljinu prikupljenim podacima. Ovo bi trebali raditi samo na povjerljivoj mreži! Također pripazite, izravan pristup između uređaja možda nije moguć na mnogim poslovnim i učilišnim mrežama.
+\n
+\nZa najbolju sigurnost i performanse savjetujem Vam da se na ovaj uređaj povežete pomoću tethering-a (mobilnog hotspot-a).
+\n
 \nNakon što pritisnete u redu, moći će te pristupiti Vašim mjerenjima iz bilo kojeg web preglednika na istoj mreži.</string>
     <string name="remoteServerWarningTitle">Sigurnosno upozorenje!</string>
+    <string name="remoteServerNoNetwork">Prvo trebate uspostaviti WiFi vezu s udaljenim uređajem. Molim uključite WiFi ili mobilni hotspot.</string>
+    <string name="remoteServerActive">Daljinski pristup je omogućen. Pristupite ovom pokusu sa sljedećeg URL-a:
+\n%1$s</string>
+    <string name="hotspotSettings">Hotspot postavke</string>
+    <string name="remoteColorMapWarning">Boja grafa u cijelom udaljenom sučelju je samo približna. Nasuprot grafu u aplikaciji, trenutno ne podržava nejednako udaljene podatke ili logaritamske skale na x i y osima. Pa, podaci u raznim intervalima mogu se pojaviti na krivim lokacijama.</string>
+    <string name="remoteDepthGUIWarning">Pregled i upravljanje LiDAR/ToF senzora pomoću udaljenog sučelja nije podržan.</string>
+    <string name="calibrated_magnetometer">Koristite kalibrirani magnetometar</string>
+    <string name="force_gnss">Samo satelitska lokacija</string>
+    <string name="switchToPhoneLayout">Pogled: Uzak</string>
+    <string name="switchColumns1">Pogled: 1 stupac</string>
+    <string name="switchColumns2">Pogled: 2 stupca</string>
+    <string name="switchColumns3">Pogled: 3 stupca</string>
+    <string name="toggleBrightMode">Svijetli način</string>
+    <string name="fontSize">Veličina fonta</string>
+    <string name="show_description">Informacije pokusa</string>
+    <string name="save_locally">Dodajte pokus u kolekciju</string>
+    <string name="save_locally_done">Pokus uspješno dodan u kolekciju.</string>
+    <string name="save_locally_message">Ovaj pokus je otvoren iz udaljenog sučelja. Želite li ga dodati u Vašu kolekciju pokusa\?</string>
+    <string name="save_locally_button">Spremite u kolekciju</string>
+    <string name="save_state">Spremite stanje pokusa</string>
+    <string name="save_state_category">Spremljena stanja pokusa</string>
+    <string name="save_state_message">Možete spremiti stanja ovog pokusa, uključujući Vaše podatke, u Vašu kolekciju, ili ga podijeliti sa aplikacijama treće strane.</string>
+    <string name="save_state_title">Naslov</string>
+    <string name="save_state_save">U kolekciju</string>
+    <string name="save_state_share">Podijeli</string>
+    <string name="save_state_subject">Stanje pokusa za phyphox</string>
+    <string name="save_state_default_title">Mjerenje</string>
+    <string name="save_state_success">Stanje je spremljeno u Vašu kolekciju.</string>
+    <string name="open_zip_title">Otvaranje grupe pokusa</string>
+    <string name="open_zip_dialog_instructions">Ovaj izvor sadrži više pokusa. Možete odabrati jedan radi otvaranja, ili spremanja u Vašu kolekciju, ili spremiti ih sve, odjednom, u Vašu kolekciju koristeći dugme ispod.</string>
+    <string name="open_save_all">Spremite sve</string>
+    <string name="open_bluetooth_assets_title">Pokusi za Bluetooth uređaj</string>
+    <string name="open_bluetooth_assets">Phyphox omogućuje sljedeće pokuse za Vaš uređaj. Možete ih jednostavno otvoriti i koristiti ili ih dodati u Vašu kolekciju radi jednostavnog pristupa iz glavnog izbornika.</string>
+    <string name="timedRun">Mjereno izvođenje</string>
+    <string name="pick_exportSets">Izaberite grupe podataka za izvoz.</string>
+    <string name="pick_exportFormat">Izaberite format podataka.</string>
+    <string name="noDrawableData">Nema podatka za crtanje.</string>
+    <string name="categoryNewExperiment">Jednostavni prilagođeni pokusi</string>
+    <string name="categoryRawSensor">Sirovi Senzori</string>
+    <string name="categoryPhyphoxOrg">Pridonesite phyphox-u</string>
+    <string name="categoryPhyphoxOrgHint">Postoje nove mogućnosti podrške phyphox-u na dnu liste.</string>
+    <string name="experimentinfo_hint">Provjerite informacije pokusa kako bi ste naučili kako ga koristiti.</string>
+    <string name="start_hint">Dodirnite trokut kako bi ste pokrenuli pokus.</string>
+    <string name="bluetooth">Bluetooth Niske Energije</string>
+    <string name="bt_android_version">Bluetooth Niske Energije nije podržan na inačicama Androida ispod 4.3.</string>
+    <string name="bt_pick_device">Molim Vas odaberite uređaj.</string>
+    <string name="bt_scanning_generic">Traženje Bluetooth uređaja…</string>
+    <string name="bt_scanning_specific1">Traženje Bluetooth uređaja s(a)</string>
+    <string name="bt_scanning_specific2">u njihovo ime…</string>
+    <string name="bt_device_not_supported">Nema dostupnih pokusa.</string>
+    <string name="bt_location_explanation">Android zahtijeva dozvolu lociranja za Bluetooth skeniranja, kako bi se rezultat mogao koristiti za izvlačenja informacija o lokaciji. Sada ćemo zatražiti ove dozvole. Trebate ih odobriti za potrebe Bluetooth skeniranja.</string>
 </resources>
