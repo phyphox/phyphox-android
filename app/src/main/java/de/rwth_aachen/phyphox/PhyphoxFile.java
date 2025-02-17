@@ -1,8 +1,8 @@
 package de.rwth_aachen.phyphox;
 
-import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_ISASSET;
-import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_ISTEMP;
-import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_XML;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISASSET;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISTEMP;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_XML;
 
 import android.Manifest;
 import android.app.Activity;
@@ -108,9 +108,9 @@ public abstract class PhyphoxFile {
     //PhyphoxStream bundles the result of an opened stream
     public static class PhyphoxStream {
         boolean isLocal;                //is the stream a local resource? (asset or private file)
-        InputStream inputStream = null; //the input stream or null on error
+        public InputStream inputStream = null; //the input stream or null on error
         byte source[] = null;           //A copy of the input for non-local sources
-        String errorMessage = "";       //Error message that can be displayed to the user
+        public String errorMessage = "";       //Error message that can be displayed to the user
         String resourceFolder = null;   //Local folder that holds the resources required by the experiment (for example images)
         long crc32;
     }

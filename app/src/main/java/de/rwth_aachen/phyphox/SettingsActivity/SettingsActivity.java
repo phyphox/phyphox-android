@@ -1,21 +1,16 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.SettingsActivity;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.OnApplyWindowInsetsListener;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import android.os.Bundle;
-import android.view.View;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.R;
 
 
-public class Settings extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

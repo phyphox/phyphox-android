@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
@@ -57,7 +56,7 @@ import javax.xml.xpath.XPathFactory;
 import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
-import de.rwth_aachen.phyphox.SettingsFragment;
+import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 
 public abstract class Helper {
 
