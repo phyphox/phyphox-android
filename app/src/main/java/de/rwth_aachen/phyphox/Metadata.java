@@ -14,10 +14,12 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.UUID;
 
+import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 
 import static android.content.Context.SENSOR_SERVICE;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
 
 public class Metadata {
 
@@ -58,7 +60,7 @@ public class Metadata {
         switch (metadata) {
             case uniqueID:
                 final String settingName = "NetworkMetadataUUID";
-                SharedPreferences settings = ctx.getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
+                SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME, 0);
                 String userId = settings.getString(settingName, null);
                 if (userId == null) {
                     userId = UUID.randomUUID().toString();

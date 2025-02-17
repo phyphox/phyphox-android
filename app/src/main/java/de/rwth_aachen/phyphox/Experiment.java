@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
-import static de.rwth_aachen.phyphox.ExperimentItemAdapter.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -95,6 +96,7 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
+import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -607,7 +609,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             startHintDismissed = true;
 
         //If the hint has been shown a few times, we do not show it again
-        SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
         if (menuHintDismissCount >= 3)
             menuHintDismissed = true;
@@ -821,7 +823,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             public void onDismiss() {
                 popupWindow = null;
                 menuHintDismissed = true;
-                SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
+                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
                 int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
                 settings.edit().putInt("menuHintDismissCount", menuHintDismissCount+1).apply();
             }
@@ -997,7 +999,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (timedRun) {
                 startTimedMeasurement();
             } else {
-                SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
+                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
                 int startHintDismissCount = settings.getInt("startHintDismissCount", 0);
                 settings.edit().putInt("startHintDismissCount", startHintDismissCount + 1).apply();
                 startMeasurement();
@@ -1018,7 +1020,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Play button. Start a measurement
         if (id == R.id.action_play) {
-            SharedPreferences settings = getSharedPreferences(ExperimentListActivity.PREFS_NAME, 0);
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
             int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
             settings.edit().putInt("startHintDismissCount", startHintDismissCount+1).apply();
 

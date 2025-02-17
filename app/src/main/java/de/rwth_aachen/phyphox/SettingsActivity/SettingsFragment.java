@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.SettingsActivity;
 
 
 import android.os.Build;
@@ -19,6 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import de.rwth_aachen.phyphox.BuildConfig;
+import de.rwth_aachen.phyphox.R;
+
 public class SettingsFragment extends PreferenceFragmentCompat {
 
     public static final String GRAPH_SIZE_KEY = "graph_size_dialog";
@@ -30,7 +33,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        PreferenceManager.setDefaultValues(getContext(),R.xml.settings, false);
+        PreferenceManager.setDefaultValues(getContext(), R.xml.settings, false);
         setPreferencesFromResource(R.xml.settings, rootKey);
 
         setupPortEditText();

@@ -69,7 +69,7 @@ import javax.xml.xpath.XPathFactory;
 import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
-import de.rwth_aachen.phyphox.SettingsFragment;
+import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 
 public abstract class Helper {
 
