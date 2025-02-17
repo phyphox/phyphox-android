@@ -28,7 +28,7 @@ public class ExperimentRepository{
 
         //Clear the old list first
         assetExperimentLoader.categories.clear();
-        assetExperimentLoader.showCurrentCameraAvaibility();
+        assetExperimentLoader.showCurrentCameraAvailability();
 
         assetExperimentLoader.loadAndAddExperimentFromLocalFile();
         assetExperimentLoader.loadAndAddExperimentFromAsset();

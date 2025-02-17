@@ -18,18 +18,18 @@ import de.rwth_aachen.phyphox.PhyphoxFile;
 
 //This asyncTask extracts a zip file to a temporary directory
 //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
-public class HandleZipIntent extends AsyncTask<String, Void, String> {
+public class ZipIntentHandler extends AsyncTask<String, Void, String> {
     private Intent intent; //The intent to read from
     private WeakReference<ExperimentListActivity> parent;
     BluetoothDevice preselectedDevice = null;
 
     //The constructor takes the intent to copy from and the parent activity to call back when finished.
-    public HandleZipIntent(Intent intent, ExperimentListActivity parent) {
+    public ZipIntentHandler(Intent intent, ExperimentListActivity parent) {
         this.intent = intent;
         this.parent = new WeakReference<ExperimentListActivity>(parent);
     }
 
-    public HandleZipIntent(Intent intent, ExperimentListActivity parent, BluetoothDevice preselectedDevice) {
+    public ZipIntentHandler(Intent intent, ExperimentListActivity parent, BluetoothDevice preselectedDevice) {
         this.intent = intent;
         this.parent = new WeakReference<ExperimentListActivity>(parent);
         this.preselectedDevice = preselectedDevice;

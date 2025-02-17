@@ -97,8 +97,8 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentList.handler.BluetoothScanner;
 import de.rwth_aachen.phyphox.ExperimentList.handler.CategoryComparator;
-import de.rwth_aachen.phyphox.ExperimentList.handler.HandleCopyIntent;
-import de.rwth_aachen.phyphox.ExperimentList.handler.HandleZipIntent;
+import de.rwth_aachen.phyphox.ExperimentList.handler.CopyIntentHandler;
+import de.rwth_aachen.phyphox.ExperimentList.handler.ZipIntentHandler;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentLoadInfoData;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
@@ -400,7 +400,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                     intent.setData(experimentUri);
                     intent.setAction(Intent.ACTION_VIEW);
                     if (isZip) {
-                        new HandleZipIntent(intent, parent, device).execute();
+                        new ZipIntentHandler(intent, parent, device).execute();
                     } else {
                         intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, device.getAddress());
                         startActivity(intent);
@@ -463,11 +463,11 @@ public class ExperimentListActivity extends AppCompatActivity {
             } else {
                 //We got a zip-file. Let's see what's inside...
                 progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-                new HandleZipIntent(intent, this).execute();
+                new ZipIntentHandler(intent, this).execute();
             }
         } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-            new HandleCopyIntent(intent, this).execute();
+            new CopyIntentHandler(intent, this).execute();
         }
     }
 
@@ -710,7 +710,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                     Intent zipIntent = new Intent(this, Experiment.class);
                     zipIntent.setData(Uri.fromFile(zipFile));
                     zipIntent.setAction(Intent.ACTION_VIEW);
-                    new HandleZipIntent(zipIntent, this).execute();
+                    new ZipIntentHandler(zipIntent, this).execute();
                 } else {
                     showQRScanError(res.getString(R.string.newExperimentQRCodesMissing1) + " " + currentQRsize + " " + res.getString(R.string.newExperimentQRCodesMissing2) + " " + missing, false);
                 }
