@@ -17,13 +17,13 @@ import de.rwth_aachen.phyphox.PhyphoxFile;
 
 //This asyncTask stores the content of a data in a temporary file
 //When it's done, it opens it as a single phyphox file
-public class HandleCopyIntent extends AsyncTask<String, Void, String> {
+public class CopyIntentHandler extends AsyncTask<String, Void, String> {
     private Intent intent; //The intent to read from
     private WeakReference<ExperimentListActivity> parent;
     private File file = null;
 
     //The constructor takes the intent to copy from and the parent activity to call back when finished.
-    public HandleCopyIntent(Intent intent, ExperimentListActivity parent) {
+    public CopyIntentHandler(Intent intent, ExperimentListActivity parent) {
         this.intent = intent;
         this.parent = new WeakReference<ExperimentListActivity>(parent);
     }

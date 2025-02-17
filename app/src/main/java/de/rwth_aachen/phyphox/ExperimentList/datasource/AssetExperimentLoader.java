@@ -53,8 +53,15 @@ public class AssetExperimentLoader {
 
     Vector<ExperimentsInCategory> categories;
 
-    private final HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
-    private final HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>();  //This will collect uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
+    /**
+     * Collects names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
+     */
+    private final HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>();
+
+    /**
+     *  Collects uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
+     */
+    private final HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>();
 
 
     public AssetExperimentLoader(ExperimentListEnvironment environment, ExperimentRepository repository) {
@@ -67,7 +74,6 @@ public class AssetExperimentLoader {
         if (!new HashSet<>(this.categories).containsAll(categories)) {
             this.categories.addAll(categories);
         }
-
     }
 
     public HashMap<String, Vector<String>> getBluetoothDeviceNameList() {
@@ -78,13 +84,14 @@ public class AssetExperimentLoader {
         return bluetoothDeviceUUIDList;
     }
 
-    //The third addExperiment function:
-    //ExperimentItemAdapter.addExperiment(...) is called by category.addExperiment(...), which in
-    //turn will be called here.
-    //This addExperiment(...) is called for each experiment found. It checks if the experiment's
-    // category already exists and adds it to this category or creates a category for the experiment
+    /**
+     * The third addExperiment function:
+     *  ExperimentItemAdapter.addExperiment(...) is called by category.addExperiment(...), which in
+     *  turn will be called here.
+     *  This addExperiment(...) is called for each experiment found. It checks if the experiment's
+     *   category already exists and adds it to this category or creates a category for the experiment
+     */
     public void addExperiment(ExperimentShortInfo shortInfo, String cat) {
-        //this.categories.clear();
         //Check all categories for the category of the new experiment
         for (ExperimentsInCategory icat : this.categories) {
             if (icat.hasName(cat)) {
@@ -115,7 +122,7 @@ public class AssetExperimentLoader {
             addExperiment(shortInfo, environment.resources.getString(R.string.unknown));
     }
 
-    public void showCurrentCameraAvaibility() {
+    public void showCurrentCameraAvailability() {
         //We want to show current availability of experiments requiring cameras
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             CameraManager cm = (CameraManager) environment.context.getSystemService(Context.CAMERA_SERVICE);
@@ -123,7 +130,9 @@ public class AssetExperimentLoader {
         }
     }
 
-    //Minimalistic loading function. This only retrieves the data necessary to list the experiment.
+    /**
+     * Minimalistic loading function. This only retrieves the data necessary to list the experiment.
+     */
     public ExperimentShortInfo loadExperimentShortInfo(ExperimentLoadInfoData data) {
         //Class to hold results of the few items we care about
         ExperimentShortInfo shortInfo = new ExperimentShortInfo();
@@ -472,8 +481,10 @@ public class AssetExperimentLoader {
         return shortInfo;
     }
 
+    /**
+     * Load experiments from local files
+     */
     protected void loadAndAddExperimentFromLocalFile() {
-        //Load experiments from local files
         try {
             //Get all files that end on ".phyphox"
             File[] files = environment.getFilesDir().listFiles((dir, filename) -> filename.endsWith(".phyphox"));
@@ -497,8 +508,10 @@ public class AssetExperimentLoader {
 
     }
 
+    /**
+     * Load experiments from assets
+     */
     protected void loadAndAddExperimentFromAsset() {
-        //Load experiments from assets
         try {
 
             final String[] experimentXMLs = environment.assetManager.list("experiments"); //All experiments are placed in the experiments folder
@@ -520,7 +533,9 @@ public class AssetExperimentLoader {
 
     }
 
-    //Load hidden bluetooth experiments - these are not shown but will be offered if a matching Bluetooth device is found during a scan
+    /**
+     * Load hidden bluetooth experiments - these are not shown but will be offered if a matching Bluetooth device is found during a scan
+     */
     protected void loadAndAddExperimentFromHiddenBluetooth() {
         try {
             final String[] experimentXMLs = environment.assetManager.list("experiments/bluetooth");
