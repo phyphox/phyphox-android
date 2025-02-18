@@ -21,7 +21,7 @@ Sensors supported:
 
 Export formats
 - CSV (Comma separated values)
-- CSV (Tab-separated values)
+- TSV (Tab-separated values)
 - Excel
 (if you need other formats, please let us know)
 
