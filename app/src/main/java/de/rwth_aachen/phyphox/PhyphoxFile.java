@@ -434,9 +434,23 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "tone": {
+                    String parameter = getStringAttribute("waveform");
+                    if(parameter == null)
+                        parameter = "sine";
+                    AudioOutput.Waveform waveform = AudioOutput.Waveform.SINE;
+                    switch (parameter){
+                        case "square":
+                            waveform = AudioOutput.Waveform.SQUARE;
+                            break;
+                        case "sawtooth":
+                            waveform = AudioOutput.Waveform.SAWTOOTH;
+                            break;
+                        default:
+                            break;
+                    }
                     if (level == 1) {
                         //Tone plugin
-                        currentPlugin = audioOutput.new AudioOutputPluginTone();
+                        currentPlugin = audioOutput.new AudioOutputPluginTone(waveform);
                     } else {
                         throw new phyphoxFileException("Unexpected tone tag.", xpp.getLineNumber());
                     }
