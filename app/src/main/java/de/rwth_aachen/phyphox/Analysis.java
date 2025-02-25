@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.Serializable;
@@ -7,6 +8,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Vector;
+
+import de.rwth_aachen.phyphox.Helper.Helper;
 
 // The analysis class is used to to do math operations on dataBuffers
 
@@ -316,6 +319,28 @@ public class Analysis {
                 outputs.get(0).append(linearTime ? experiment.analysisLinearTime : experiment.analysisTime);
             if (outputs.size() > 1 && outputs.get(1) != null)
                 outputs.get(1).append(linearTime ? experiment.experimentTimeReference.getSystemTimeReferenceByIndex(0) * 0.001 : experiment.experimentTimeReference.getSystemTimeReferenceByIndex(experiment.experimentTimeReference.getReferenceIndexFromExperimentTime(experiment.analysisTime)) * 0.001);
+        }
+    }
+
+    // Get various system status information
+    public static class infosAM extends AnalysisModule implements Serializable{
+        Context context;
+
+        protected infosAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, Context context) {
+            super(experiment, inputs, outputs);
+            this.context = context;
+        }
+
+        @Override
+        protected void update() {
+            if(outputs.get(0) != null)
+                outputs.get(0).append(Helper.getBatteryPercentage(context));
+
+            if(outputs.get(1) != null)
+                outputs.get(1).append(Helper.getWifiReceptionStrength(context));
+
+            if(outputs.get(2) != null)
+                outputs.get(2).append(Helper.getSystemVolume(context));
         }
     }
 

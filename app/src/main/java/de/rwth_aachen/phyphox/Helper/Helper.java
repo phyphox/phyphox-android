@@ -1,18 +1,29 @@
 package de.rwth_aachen.phyphox.Helper;
 
+import static android.content.Context.AUDIO_SERVICE;
+import static android.content.Context.BATTERY_SERVICE;
+
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Base64;
@@ -23,6 +34,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import androidx.core.graphics.Insets;
@@ -548,5 +560,63 @@ public abstract class Helper {
                 return insets;
             }
         });
+    }
+
+    public static int getBatteryPercentage(Context context) {
+
+        final int NO_BATTERY_SIGNAL_LEVEL = 0;
+
+        if(context == null) return NO_BATTERY_SIGNAL_LEVEL;
+
+        if (Build.VERSION.SDK_INT >= 21) { // 21 is version LOLLIPOP
+            BatteryManager bm = (BatteryManager) context.getSystemService(BATTERY_SERVICE);
+            if(bm == null) return NO_BATTERY_SIGNAL_LEVEL;
+
+            return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+        } else {
+            IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+            Intent batteryStatus = context.registerReceiver(null, iFilter);
+            if(batteryStatus == null) return NO_BATTERY_SIGNAL_LEVEL;
+
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            if (level == -1 || scale == -1 || scale == 0) return NO_BATTERY_SIGNAL_LEVEL;
+
+            double batteryPct = (double) level / scale;
+            return (int) (batteryPct * 100);
+        }
+    }
+
+    public static int getWifiReceptionStrength(Context context){
+        final int MAX_SIGNAL_LEVEL = 5;
+        final int NO_CONNECTION_SIGNAL_LEVEL = 0;
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            return NO_CONNECTION_SIGNAL_LEVEL;
+
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+        if (!wifiManager.isWifiEnabled()) return NO_CONNECTION_SIGNAL_LEVEL;
+
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+        if (wifiInfo == null || wifiInfo.getNetworkId() == -1) return NO_CONNECTION_SIGNAL_LEVEL;
+
+        int rssi = wifiInfo.getRssi();
+
+        return WifiManager.calculateSignalLevel(rssi, MAX_SIGNAL_LEVEL);
+    }
+
+    public static int getSystemVolume(Context context){
+        final int NO_AUDIO_LEVEL = 0;
+        if(context == null) return NO_AUDIO_LEVEL;
+
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if(audioManager == null) return NO_AUDIO_LEVEL;
+
+        int volumeLevel = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        int maxVolumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        return (int) (((float) volumeLevel / maxVolumeLevel) * 100);
+
     }
 }

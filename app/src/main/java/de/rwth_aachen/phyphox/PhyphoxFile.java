@@ -2499,6 +2499,21 @@ public abstract class PhyphoxFile {
 
                     experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs, linearTime));
                 } break;
+                case "infos": {
+
+                    //Allowed input/output configuration
+                    ioBlockParser.ioMapping[] inputMapping = {
+                            new ioBlockParser.ioMapping() {},
+                    };
+                    ioBlockParser.ioMapping[] outputMapping = {
+                            new ioBlockParser.ioMapping() {{name = "batteryLevel"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "wifiSignalStrength"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "systemVolume"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                    };
+                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
+
+                    experiment.analysis.add(new Analysis.infosAM(experiment, inputs, outputs, parent.getBaseContext()));
+                } break;
                 case "formula": {
                     String formula = getStringAttribute("formula");
 
