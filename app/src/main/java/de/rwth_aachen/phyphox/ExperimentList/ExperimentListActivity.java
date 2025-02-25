@@ -1,9 +1,7 @@
 package de.rwth_aachen.phyphox.ExperimentList;
 
-import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISASSET;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISTEMP;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
-import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_XML;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.phyphoxCatHintRelease;
 
@@ -45,7 +43,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -104,7 +101,7 @@ import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentLoadInfoData;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.ExperimentList.ui.ExperimentsInCategory;
-import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.ExperimentList.handler.SimpleExperimentCreator;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
 import de.rwth_aachen.phyphox.PhyphoxFile;
@@ -129,13 +126,464 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     boolean newExperimentDialogOpen = false;
 
-    //private Vector<ExperimentsInCategory> categories = new Vector<>(); //The list of categories. The ExperimentsInCategory class (see below) holds a ExperimentsInCategory and all its experiment items
-    //private HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>(); //This will collect names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
-    //private HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>(); //This will collect uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
-
     PopupWindow popupWindow = null;
 
     private ExperimentRepository experimentRepository;
+
+    ImageView creditsV;
+    FloatingActionButton newExperimentButton, newExperimentBluetooth, newExperimentQR, newExperimentSimple;
+    TextView newExperimentBluetoothLabel, newExperimentSimpleLabel, newExperimentQRLabel;
+    ReportingScrollView sv;
+    View backgroundDimmer;
+
+    @Override
+    //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
+    //  warning message.
+    protected void onCreate(Bundle savedInstanceState) {
+
+        //Switch from the theme used as splash screen to the theme for the activity
+        //This method is for pre Android 12 devices: We set a theme that shows the splash screen and
+        //on create is executed when all resources are loaded, which then replaces the theme with
+        //the normal one.
+        //On Android 12 this does not hurt, but Android 12 shows its own splash method (defined with
+        //specific attributes in the theme), so the classic splash screen is not shown anyways
+        //before setTheme is called and we see the normal theme right away.
+        setTheme(R.style.Theme_Phyphox_DayNight);
+
+        String themePreference = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(getString(R.string.setting_dark_mode_key), SettingsFragment.DARK_MODE_ON);
+        SettingsFragment.setApplicationTheme(themePreference);
+
+        //Basics. Call super-constructor and inflate the layout.
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_experiment_list);
+
+        res = getResources(); //Get Resource reference for easy access.
+
+        creditsV = findViewById(R.id.credits);
+        newExperimentButton = findViewById(R.id.newExperiment);
+
+        newExperimentSimple = findViewById(R.id.newExperimentSimple);
+        newExperimentSimpleLabel = findViewById(R.id.newExperimentSimpleLabel);
+        newExperimentBluetooth = findViewById(R.id.newExperimentBluetooth);
+        newExperimentQR = findViewById(R.id.newExperimentQR);
+        newExperimentBluetoothLabel = findViewById(R.id.newExperimentBluetoothLabel);
+        newExperimentQRLabel = findViewById(R.id.newExperimentQRLabel);
+        backgroundDimmer = findViewById(R.id.experimentListDimmer);
+
+        if (!displayDoNotDamageYourPhone()) { //Show the do-not-damage-your-phone-warning
+            showSupportHintIfRequired();
+        }
+
+        Helper.setWindowInsetListenerForSystemBar(findViewById(R.id.expListHeader));
+
+        setUpOnClickListener();
+
+        ExperimentListEnvironment environment = new ExperimentListEnvironment(getAssets(), getResources(), getApplicationContext(), this);
+        experimentRepository = new ExperimentRepository(environment);
+
+        handleIntent(getIntent());
+
+    }
+
+    @Override
+    //If we return to this activity we want to reload the experiment list as other activities may
+    //have changed it
+    protected void onResume() {
+        super.onResume();
+        experimentRepository.loadExperimentList();
+    }
+
+    @Override
+    public void onUserInteraction() {
+        if (popupWindow != null)
+            popupWindow.dismiss();
+    }
+
+    @Override
+    //Callback for premission requests done during the activity. (since Android 6 / Marshmallow)
+    //If a new permission has been granted, we will just restart the activity to reload the experiment
+    //   with the formerly missing permission
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            this.recreate();
+        }
+    }
+
+    private void setUpOnClickListener(){
+
+        View.OnClickListener ocl = this::showPopupMenu;
+
+        creditsV.setOnClickListener(ocl);
+
+        Button.OnClickListener neocl = v -> {
+            if (newExperimentDialogOpen)
+                hideNewExperimentDialog();
+            else
+                showNewExperimentDialog();
+
+        };
+
+        View experimentListDimmer = findViewById(R.id.experimentListDimmer);
+        newExperimentButton.setOnClickListener(neocl);
+        experimentListDimmer.setOnClickListener(neocl);
+
+        Button.OnClickListener neoclSimple = v -> {
+            hideNewExperimentDialog();
+            openSimpleExperimentConfigurationDialog(this);
+        };
+
+        newExperimentSimple.setOnClickListener(neoclSimple);
+        newExperimentSimpleLabel.setOnClickListener(neoclSimple);
+
+        Button.OnClickListener neoclBluetooth = v -> {
+            hideNewExperimentDialog();
+
+            Set<String> bluetoothNameKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceNameList().keySet();
+            Set<UUID> bluetoothUUIDKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceUUIDList().keySet();
+
+            new BluetoothScanner(this, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {
+                @Override
+                public void onBluetoothDeviceFound(BluetoothScanDialog.BluetoothDeviceInfo result) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                        openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
+                    }
+                }
+
+                @Override
+                public void onBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
+                    showBluetoothScanError(res.getString(R.string.bt_android_version), true, true);
+
+                }
+            }).execute();
+        };
+
+        newExperimentBluetooth.setOnClickListener(neoclBluetooth);
+        newExperimentBluetoothLabel.setOnClickListener(neoclBluetooth);
+
+        Button.OnClickListener neoclQR = v -> {
+            hideNewExperimentDialog();
+            scanQRCode();
+        };
+
+        newExperimentQR.setOnClickListener(neoclQR);
+        newExperimentQRLabel.setOnClickListener(neoclQR);
+
+        sv = findViewById(R.id.experimentScroller);
+        sv.setOnScrollChangedListener((scrollView, x, y, oldx, oldy) -> {
+            int bottom = scrollView.getChildAt(scrollView.getChildCount() - 1).getBottom();
+            if (y + 10 > bottom - scrollView.getHeight()) {
+                scrollView.setOnScrollChangedListener(null);
+                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString("lastSupportHint", phyphoxCatHintRelease);
+                editor.apply();
+            }
+        });
+
+    }
+
+    private void showPopupMenu(View v) {
+        Context wrapper = new ContextThemeWrapper(ExperimentListActivity.this, R.style.Theme_Phyphox_DayNight);
+        PopupMenu popup = new PopupMenu(wrapper, v);
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_privacy) {
+                openLink(res.getString(R.string.privacyPolicyURL));
+                return true;
+            }
+            else if (item.getItemId() == R.id.action_credits) {
+                openCreditDialog();
+                return true;
+            }
+            else if (item.getItemId() == R.id.action_helpExperiments) {
+                openLink(res.getString(R.string.experimentsPhyphoxOrgURL));
+                return true;
+            }
+            else if (item.getItemId() == R.id.action_helpFAQ) {
+                openLink(res.getString(R.string.faqPhyphoxOrgURL));
+                return true;
+            }
+            else if (item.getItemId() == R.id.action_helpRemote) {
+                openLink(res.getString(R.string.remotePhyphoxOrgURL));
+                return true;
+            }
+            else if (item.getItemId() == R.id.action_settings) {
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            }
+            else if (item.getItemId() == R.id.action_deviceInfo) {
+                openDeviceInfoDialog();
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+        popup.inflate(R.menu.menu_help);
+        popup.show();
+    }
+
+    private void openLink(String URLString) {
+        Uri uri = Uri.parse(URLString);
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+    }
+
+    private void openDeviceInfoDialog() {
+        StringBuilder sb = new StringBuilder();
+
+        PackageInfo pInfo;
+        try {
+            pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
+        } catch (Exception e) {
+            pInfo = null;
+        }
+
+        if (Helper.isDarkTheme(res)) {
+            sb.append(" <font color='white'");
+        } else {
+            sb.append(" <font color='black'");
+        }
+
+        sb.append("<b>phyphox</b><br />");
+        if (pInfo != null) {
+            sb.append("Version: ");
+            sb.append(pInfo.versionName);
+            sb.append("<br />");
+            sb.append("Build: ");
+            sb.append(pInfo.versionCode);
+            sb.append("<br />");
+        } else {
+            sb.append("Version: Unknown<br />");
+            sb.append("Build: Unknown<br />");
+        }
+        sb.append("File format: ");
+        sb.append(PhyphoxFile.phyphoxFileVersion);
+        sb.append("<br /><br />");
+
+        sb.append("<b>Permissions</b><br />");
+        if (pInfo != null && pInfo.requestedPermissions != null) {
+            for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
+                sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
+                sb.append(": ");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+                    sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
+                else
+                    sb.append("API < 16");
+                sb.append("<br />");
+            }
+        } else {
+            if (pInfo == null)
+                sb.append("Unknown<br />");
+            else
+                sb.append("None<br />");
+        }
+        sb.append("<br />");
+
+        sb.append("<b>Device</b><br />");
+        sb.append("Model: ");
+        sb.append(Build.MODEL);
+        sb.append("<br />");
+        sb.append("Brand: ");
+        sb.append(Build.BRAND);
+        sb.append("<br />");
+        sb.append("Board: ");
+        sb.append(Build.DEVICE);
+        sb.append("<br />");
+        sb.append("Manufacturer: ");
+        sb.append(Build.MANUFACTURER);
+        sb.append("<br />");
+        sb.append("ABIS: ");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(Build.SUPPORTED_ABIS[i]);
+            }
+        } else {
+            sb.append("API < 21");
+        }
+        sb.append("<br />");
+        sb.append("Base OS: ");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            sb.append(Build.VERSION.BASE_OS);
+        } else {
+            sb.append("API < 23");
+        }
+        sb.append("<br />");
+        sb.append("Codename: ");
+        sb.append(Build.VERSION.CODENAME);
+        sb.append("<br />");
+        sb.append("Release: ");
+        sb.append(Build.VERSION.RELEASE);
+        sb.append("<br />");
+        sb.append("Patch: ");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            sb.append(Build.VERSION.SECURITY_PATCH);
+        } else {
+            sb.append("API < 23");
+        }
+        sb.append("<br /><br />");
+
+        sb.append("<b>Sensors</b><br /><br />");
+        SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        if (sensorManager == null) {
+            sb.append("Unkown<br />");
+        } else {
+            for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+                sb.append("<b>");
+                sb.append(res.getString(SensorInput.getDescriptionRes(sensor.getType())));
+                sb.append("</b> (type ");
+                sb.append(sensor.getType());
+                sb.append(")");
+                sb.append("<br />");
+                sb.append("- Name: ");
+                sb.append(sensor.getName());
+                sb.append("<br />");
+                sb.append("- Range: ");
+                sb.append(sensor.getMaximumRange());
+                sb.append(" ");
+                sb.append(SensorInput.getUnit(sensor.getType()));
+                sb.append("<br />");
+                sb.append("- Resolution: ");
+                sb.append(sensor.getResolution());
+                sb.append(" ");
+                sb.append(SensorInput.getUnit(sensor.getType()));
+                sb.append("<br />");
+                sb.append("- Min delay: ");
+                sb.append(sensor.getMinDelay());
+                sb.append(" µs");
+                sb.append("<br />");
+                sb.append("- Max delay: ");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    sb.append(sensor.getMaxDelay());
+                } else {
+                    sb.append("API < 21");
+                }
+                sb.append(" µs");
+                sb.append("<br />");
+                sb.append("- Power: ");
+                sb.append(sensor.getPower());
+                sb.append(" mA");
+                sb.append("<br />");
+                sb.append("- Vendor: ");
+                sb.append(sensor.getVendor());
+                sb.append("<br />");
+                sb.append("- Version: ");
+                sb.append(sensor.getVersion());
+                sb.append("<br /><br />");
+            }
+        }
+        sb.append("<br /><br />");
+
+        sb.append("<b>Cameras</b><br /><br />");
+        sb.append("<b>Depth sensors</b><br />");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            sb.append("- Depth sensors front: ");
+            int depthFront = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
+            sb.append(depthFront);
+            sb.append("<br />");
+            sb.append("- Max resolution front: ");
+            sb.append(depthFront > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_FRONT) : "-");
+            sb.append("<br />");
+            sb.append("- Max frame rate front: ");
+            sb.append(depthFront > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_FRONT) : "-");
+            sb.append("<br />");
+            sb.append("- Depth sensors back: ");
+            int depthBack = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
+            sb.append(depthBack);
+            sb.append("<br />");
+            sb.append("- Max resolution back: ");
+            sb.append(depthBack > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_BACK) : "-");
+            sb.append("<br />");
+            sb.append("- Max frame rate back: ");
+            sb.append(depthBack > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_BACK) : "-");
+            sb.append("<br />");
+        } else {
+            sb.append("API < 23");
+        }
+        sb.append("<br /><br />");
+
+        sb.append("<b>Camera 2 API</b><br />");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            sb.append(CameraHelper.getCamera2FormattedCaps(false));
+        } else {
+            sb.append("API < 21");
+        }
+        sb.append("</font>");
+
+        final Spanned text = Html.fromHtml(sb.toString());
+        ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentListActivity.this, R.style.Theme_Phyphox_DayNight);
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctw);
+        builder.setMessage(text)
+                .setTitle(R.string.deviceInfo)
+                .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //Copy the device info to the clipboard and notify the user
+
+                        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        ClipData data = ClipData.newPlainText(res.getString(R.string.deviceInfo), text);
+                        cm.setPrimaryClip(data);
+
+                        Toast.makeText(ExperimentListActivity.this, res.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //Closed by user. Nothing to do.
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void openCreditDialog() {
+        //Create the credits as an AlertDialog
+        ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentListActivity.this, R.style.rwth);
+        AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
+        LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
+        View creditLayout = creditsInflater.inflate(R.layout.credits, null);
+
+        //Set the credit texts, which require HTML markup
+        TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
+
+        SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
+        boolean first = true;
+        for (String line : res.getString(R.string.creditsNames).split("\\n")) {
+            if (first)
+                first = false;
+            else
+                creditsNamesSpannable.append("\n");
+            creditsNamesSpannable.append(line.trim());
+        }
+        Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
+        while (matcher.find()) {
+            creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        }
+        tv.setText(creditsNamesSpannable);
+        TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
+        tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
+        TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
+        tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
+        TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
+        tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
+
+        //Finish alertDialog builder
+        credits.setView(creditLayout);
+        credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                //Nothing to do. Just close the thing.
+            }
+        });
+
+        //Present the dialog
+        credits.show();
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     private void showSupportHint() {
@@ -179,12 +627,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public void onUserInteraction() {
-        if (popupWindow != null)
-            popupWindow.dismiss();
-    }
-
     private void showSupportHintIfRequired() {
         try {
             if (!getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS).versionName.split("-")[0].equals(phyphoxCatHintRelease))
@@ -200,34 +642,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
 
         showSupportHint();
-        final boolean disabled = false;
-
-        ReportingScrollView sv = ((ReportingScrollView) findViewById(R.id.experimentScroller));
-        sv.setOnScrollChangedListener(new ReportingScrollView.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged(ReportingScrollView scrollView, int x, int y, int oldx, int oldy) {
-                int bottom = scrollView.getChildAt(scrollView.getChildCount() - 1).getBottom();
-                if (y + 10 > bottom - scrollView.getHeight()) {
-                    scrollView.setOnScrollChangedListener(null);
-                    SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-                    SharedPreferences.Editor editor = settings.edit();
-                    editor.putString("lastSupportHint", phyphoxCatHintRelease);
-                    editor.apply();
-                }
-            }
-        });
-    }
-
-
-    //Load all experiments from assets and from local files
-
-
-    @Override
-    //If we return to this activity we want to reload the experiment list as other activities may
-    //have changed it
-    protected void onResume() {
-        super.onResume();
-        experimentRepository.loadExperimentList();
     }
 
 
@@ -473,14 +887,6 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     protected void showNewExperimentDialog() {
         newExperimentDialogOpen = true;
-        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
-        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
-        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
-        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
-        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
-        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
-        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
-        final View backgroundDimmer = (View) findViewById(R.id.experimentListDimmer);
 
         Animation rotate45In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate45);
         Animation fabIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_in);
@@ -507,14 +913,6 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     protected void hideNewExperimentDialog() {
         newExperimentDialogOpen = false;
-        final FloatingActionButton newExperimentButton = (FloatingActionButton) findViewById(R.id.newExperiment);
-        final FloatingActionButton newExperimentSimple = (FloatingActionButton) findViewById(R.id.newExperimentSimple);
-        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
-        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
-        final TextView newExperimentSimpleLabel = (TextView) findViewById(R.id.newExperimentSimpleLabel);
-        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
-        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
-        final View backgroundDimmer = (View) findViewById(R.id.experimentListDimmer);
 
         Animation rotate0In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate0);
         Animation fabOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_out);
@@ -549,17 +947,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         qrScan.setOrientationLocked(true);
 
         qrScan.initiateScan();
-    }
-
-    @Override
-    //Callback for premission requests done during the activity. (since Android 6 / Marshmallow)
-    //If a new permission has been granted, we will just restart the activity to reload the experiment
-    //   with the formerly missing permission
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            this.recreate();
-        }
     }
 
     protected void showQRScanError(String msg, Boolean isError) {
@@ -720,415 +1107,6 @@ public class ExperimentListActivity extends AppCompatActivity {
             }
         }
     }
-
-    @Override
-    //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
-    //  warning message.
-    protected void onCreate(Bundle savedInstanceState) {
-
-        //Switch from the theme used as splash screen to the theme for the activity
-        //This method is for pre Android 12 devices: We set a theme that shows the splash screen and
-        //on create is executed when all resources are loaded, which then replaces the theme with
-        //the normal one.
-        //On Android 12 this does not hurt, but Android 12 shows its own splash method (defined with
-        //specific attributes in the theme), so the classic splash screen is not shown anyways
-        //before setTheme is called and we see the normal theme right away.
-        setTheme(R.style.Theme_Phyphox_DayNight);
-
-        String themePreference = PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getString(getString(R.string.setting_dark_mode_key), SettingsFragment.DARK_MODE_ON);
-        SettingsFragment.setApplicationTheme(themePreference);
-
-        //Basics. Call super-constructor and inflate the layout.
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_experiment_list);
-
-        res = getResources(); //Get Resource reference for easy access.
-
-        if (!displayDoNotDamageYourPhone()) { //Show the do-not-damage-your-phone-warning
-            showSupportHintIfRequired();
-        }
-
-        Activity parentActivity = this;
-
-
-        Helper.setWindowInsetListenerForSystemBar(findViewById(R.id.expListHeader));
-
-        //Set the on-click-listener for the credits
-        View.OnClickListener ocl = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Context wrapper = new ContextThemeWrapper(ExperimentListActivity.this, R.style.Theme_Phyphox_DayNight);
-                PopupMenu popup = new PopupMenu(wrapper, v);
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        if (item.getItemId() == R.id.action_privacy) {
-                            Uri uri = Uri.parse(res.getString(R.string.privacyPolicyURL));
-                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(intent);
-                            }
-                            return true;
-                        } else if (item.getItemId() == R.id.action_credits) {
-                            //Create the credits as an AlertDialog
-                            ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentListActivity.this, R.style.rwth);
-                            AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
-                            LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
-                            View creditLayout = creditsInflater.inflate(R.layout.credits, null);
-
-                            //Set the credit texts, which require HTML markup
-                            TextView tv = (TextView) creditLayout.findViewById(R.id.creditNames);
-
-                            SpannableStringBuilder creditsNamesSpannable = new SpannableStringBuilder();
-                            boolean first = true;
-                            for (String line : res.getString(R.string.creditsNames).split("\\n")) {
-                                if (first)
-                                    first = false;
-                                else
-                                    creditsNamesSpannable.append("\n");
-                                creditsNamesSpannable.append(line.trim());
-                            }
-                            Matcher matcher = Pattern.compile("^.*:$", Pattern.MULTILINE).matcher(creditsNamesSpannable);
-                            while (matcher.find()) {
-                                creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-                            }
-                            tv.setText(creditsNamesSpannable);
-                            TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
-                            tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
-                            TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
-                            tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
-                            TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
-                            tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
-
-                            //Finish alertDialog builder
-                            credits.setView(creditLayout);
-                            credits.setPositiveButton(res.getText(R.string.close), new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    //Nothing to do. Just close the thing.
-                                }
-                            });
-
-                            //Present the dialog
-                            credits.show();
-                            return true;
-                        } else if (item.getItemId() == R.id.action_helpExperiments) {
-                            Uri uri = Uri.parse(res.getString(R.string.experimentsPhyphoxOrgURL));
-                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(intent);
-                            }
-                            return true;
-                        } else if (item.getItemId() == R.id.action_helpFAQ) {
-                            Uri uri = Uri.parse(res.getString(R.string.faqPhyphoxOrgURL));
-                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(intent);
-                            }
-                            return true;
-                        } else if (item.getItemId() == R.id.action_helpRemote) {
-                            Uri uri = Uri.parse(res.getString(R.string.remotePhyphoxOrgURL));
-                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(intent);
-                            }
-                            return true;
-                        } else if (item.getItemId() == R.id.action_settings) {
-                            Intent intent = new Intent(parentActivity, SettingsActivity.class);
-                            startActivity(intent);
-                            return true;
-                        } else if (item.getItemId() == R.id.action_deviceInfo) {
-                            StringBuilder sb = new StringBuilder();
-
-                            PackageInfo pInfo;
-                            try {
-                                pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
-                            } catch (Exception e) {
-                                pInfo = null;
-                            }
-
-                            if (Helper.isDarkTheme(res)) {
-                                sb.append(" <font color='white'");
-                            } else {
-                                sb.append(" <font color='black'");
-                            }
-
-                            sb.append("<b>phyphox</b><br />");
-                            if (pInfo != null) {
-                                sb.append("Version: ");
-                                sb.append(pInfo.versionName);
-                                sb.append("<br />");
-                                sb.append("Build: ");
-                                sb.append(pInfo.versionCode);
-                                sb.append("<br />");
-                            } else {
-                                sb.append("Version: Unknown<br />");
-                                sb.append("Build: Unknown<br />");
-                            }
-                            sb.append("File format: ");
-                            sb.append(PhyphoxFile.phyphoxFileVersion);
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Permissions</b><br />");
-                            if (pInfo != null && pInfo.requestedPermissions != null) {
-                                for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
-                                    sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
-                                    sb.append(": ");
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                                        sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
-                                    else
-                                        sb.append("API < 16");
-                                    sb.append("<br />");
-                                }
-                            } else {
-                                if (pInfo == null)
-                                    sb.append("Unknown<br />");
-                                else
-                                    sb.append("None<br />");
-                            }
-                            sb.append("<br />");
-
-                            sb.append("<b>Device</b><br />");
-                            sb.append("Model: ");
-                            sb.append(Build.MODEL);
-                            sb.append("<br />");
-                            sb.append("Brand: ");
-                            sb.append(Build.BRAND);
-                            sb.append("<br />");
-                            sb.append("Board: ");
-                            sb.append(Build.DEVICE);
-                            sb.append("<br />");
-                            sb.append("Manufacturer: ");
-                            sb.append(Build.MANUFACTURER);
-                            sb.append("<br />");
-                            sb.append("ABIS: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
-                                    if (i > 0)
-                                        sb.append(", ");
-                                    sb.append(Build.SUPPORTED_ABIS[i]);
-                                }
-                            } else {
-                                sb.append("API < 21");
-                            }
-                            sb.append("<br />");
-                            sb.append("Base OS: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                sb.append(Build.VERSION.BASE_OS);
-                            } else {
-                                sb.append("API < 23");
-                            }
-                            sb.append("<br />");
-                            sb.append("Codename: ");
-                            sb.append(Build.VERSION.CODENAME);
-                            sb.append("<br />");
-                            sb.append("Release: ");
-                            sb.append(Build.VERSION.RELEASE);
-                            sb.append("<br />");
-                            sb.append("Patch: ");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                sb.append(Build.VERSION.SECURITY_PATCH);
-                            } else {
-                                sb.append("API < 23");
-                            }
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Sensors</b><br /><br />");
-                            SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-                            if (sensorManager == null) {
-                                sb.append("Unkown<br />");
-                            } else {
-                                for (Sensor sensor : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
-                                    sb.append("<b>");
-                                    sb.append(res.getString(SensorInput.getDescriptionRes(sensor.getType())));
-                                    sb.append("</b> (type ");
-                                    sb.append(sensor.getType());
-                                    sb.append(")");
-                                    sb.append("<br />");
-                                    sb.append("- Name: ");
-                                    sb.append(sensor.getName());
-                                    sb.append("<br />");
-                                    sb.append("- Range: ");
-                                    sb.append(sensor.getMaximumRange());
-                                    sb.append(" ");
-                                    sb.append(SensorInput.getUnit(sensor.getType()));
-                                    sb.append("<br />");
-                                    sb.append("- Resolution: ");
-                                    sb.append(sensor.getResolution());
-                                    sb.append(" ");
-                                    sb.append(SensorInput.getUnit(sensor.getType()));
-                                    sb.append("<br />");
-                                    sb.append("- Min delay: ");
-                                    sb.append(sensor.getMinDelay());
-                                    sb.append(" µs");
-                                    sb.append("<br />");
-                                    sb.append("- Max delay: ");
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                        sb.append(sensor.getMaxDelay());
-                                    } else {
-                                        sb.append("API < 21");
-                                    }
-                                    sb.append(" µs");
-                                    sb.append("<br />");
-                                    sb.append("- Power: ");
-                                    sb.append(sensor.getPower());
-                                    sb.append(" mA");
-                                    sb.append("<br />");
-                                    sb.append("- Vendor: ");
-                                    sb.append(sensor.getVendor());
-                                    sb.append("<br />");
-                                    sb.append("- Version: ");
-                                    sb.append(sensor.getVersion());
-                                    sb.append("<br /><br />");
-                                }
-                            }
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Cameras</b><br /><br />");
-                            sb.append("<b>Depth sensors</b><br />");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                sb.append("- Depth sensors front: ");
-                                int depthFront = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
-                                sb.append(depthFront);
-                                sb.append("<br />");
-                                sb.append("- Max resolution front: ");
-                                sb.append(depthFront > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_FRONT) : "-");
-                                sb.append("<br />");
-                                sb.append("- Max frame rate front: ");
-                                sb.append(depthFront > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_FRONT) : "-");
-                                sb.append("<br />");
-                                sb.append("- Depth sensors back: ");
-                                int depthBack = DepthInput.countCameras(CameraCharacteristics.LENS_FACING_FRONT);
-                                sb.append(depthBack);
-                                sb.append("<br />");
-                                sb.append("- Max resolution back: ");
-                                sb.append(depthBack > 0 ? DepthInput.getMaxResolution(CameraCharacteristics.LENS_FACING_BACK) : "-");
-                                sb.append("<br />");
-                                sb.append("- Max frame rate back: ");
-                                sb.append(depthBack > 0 ? DepthInput.getMaxRate(CameraCharacteristics.LENS_FACING_BACK) : "-");
-                                sb.append("<br />");
-                            } else {
-                                sb.append("API < 23");
-                            }
-                            sb.append("<br /><br />");
-
-                            sb.append("<b>Camera 2 API</b><br />");
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                sb.append(CameraHelper.getCamera2FormattedCaps(false));
-                            } else {
-                                sb.append("API < 21");
-                            }
-                            sb.append("</font>");
-
-                            final Spanned text = Html.fromHtml(sb.toString());
-                            ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentListActivity.this, R.style.Theme_Phyphox_DayNight);
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ctw);
-                            builder.setMessage(text)
-                                    .setTitle(R.string.deviceInfo)
-                                    .setPositiveButton(R.string.copyToClipboard, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            //Copy the device info to the clipboard and notify the user
-
-                                            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                                            ClipData data = ClipData.newPlainText(res.getString(R.string.deviceInfo), text);
-                                            cm.setPrimaryClip(data);
-
-                                            Toast.makeText(ExperimentListActivity.this, res.getString(R.string.deviceInfoCopied), Toast.LENGTH_SHORT).show();
-                                        }
-                                    })
-                                    .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            //Closed by user. Nothing to do.
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    }
-                });
-                popup.inflate(R.menu.menu_help);
-                popup.show();
-
-            }
-        };
-        ImageView creditsV = (ImageView) findViewById(R.id.credits);
-        creditsV.setOnClickListener(ocl);
-
-        //Setup the on-click-listener for the create-new-experiment button
-        final ExperimentListActivity thisRef = this; //Context needs to be accessed in the onClickListener
-
-        Button.OnClickListener neocl = v -> {
-            if (newExperimentDialogOpen)
-                hideNewExperimentDialog();
-            else
-                showNewExperimentDialog();
-        };
-
-        final FloatingActionButton newExperimentButton = findViewById(R.id.newExperiment);
-        final View experimentListDimmer = findViewById(R.id.experimentListDimmer);
-        newExperimentButton.setOnClickListener(neocl);
-        experimentListDimmer.setOnClickListener(neocl);
-
-        Button.OnClickListener neoclSimple = v -> {
-            hideNewExperimentDialog();
-            newExperimentDialog(thisRef);
-        };
-
-        final FloatingActionButton newExperimentSimple = findViewById(R.id.newExperimentSimple);
-        final TextView newExperimentSimpleLabel = findViewById(R.id.newExperimentSimpleLabel);
-        newExperimentSimple.setOnClickListener(neoclSimple);
-        newExperimentSimpleLabel.setOnClickListener(neoclSimple);
-
-        Button.OnClickListener neoclBluetooth = v -> {
-            hideNewExperimentDialog();
-
-            Set<String> bluetoothNameKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceNameList().keySet();
-            Set<UUID> bluetoothUUIDKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceUUIDList().keySet();
-
-            new BluetoothScanner(parentActivity, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {
-                @Override
-                public void onBluetoothDeviceFound(BluetoothScanDialog.BluetoothDeviceInfo result) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                        openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
-                    }
-                }
-
-                @Override
-                public void onBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
-                    showBluetoothScanError(res.getString(R.string.bt_android_version), true, true);
-
-                }
-            }).execute();
-        };
-
-        final FloatingActionButton newExperimentBluetooth = (FloatingActionButton) findViewById(R.id.newExperimentBluetooth);
-        final TextView newExperimentBluetoothLabel = (TextView) findViewById(R.id.newExperimentBluetoothLabel);
-        newExperimentBluetooth.setOnClickListener(neoclBluetooth);
-        newExperimentBluetoothLabel.setOnClickListener(neoclBluetooth);
-
-        Button.OnClickListener neoclQR = v -> {
-            hideNewExperimentDialog();
-            scanQRCode();
-        };
-
-        final FloatingActionButton newExperimentQR = (FloatingActionButton) findViewById(R.id.newExperimentQR);
-        final TextView newExperimentQRLabel = (TextView) findViewById(R.id.newExperimentQRLabel);
-        newExperimentQR.setOnClickListener(neoclQR);
-        newExperimentQRLabel.setOnClickListener(neoclQR);
-
-        ExperimentListEnvironment environment = new ExperimentListEnvironment(getAssets(), getResources(), parentActivity.getApplicationContext(), parentActivity);
-
-        experimentRepository = new ExperimentRepository(environment);
-
-        handleIntent(getIntent());
-
-    }
-
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @SuppressLint("MissingPermission")
@@ -1292,7 +1270,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         });
     }
 
-
     //Displays a warning message that some experiments might damage the phone
     private boolean displayDoNotDamageYourPhone() {
         //Use the app theme and create an AlertDialog-builder
@@ -1335,338 +1312,23 @@ public class ExperimentListActivity extends AppCompatActivity {
     }
 
     //This displays a rather complex dialog to allow users to set up a simple experiment
-    private void newExperimentDialog(final Context c) {
-        //Build the dialog with an AlertDialog builder...
+    private void openSimpleExperimentConfigurationDialog(final Context c) {
         ContextThemeWrapper ctw = new ContextThemeWrapper(this, R.style.Theme_Phyphox_DayNight);
         AlertDialog.Builder neDialog = new AlertDialog.Builder(ctw);
         LayoutInflater neInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View neLayout = neInflater.inflate(R.layout.new_experiment, null);
 
-        //Get a bunch of references to the dialog elements
-        final EditText neTitle = (EditText) neLayout.findViewById(R.id.neTitle); //The edit box for the title of the new experiment
-        final EditText neRate = (EditText) neLayout.findViewById(R.id.neRate); //Edit box for the aquisition rate
-
-        //More references: Checkboxes for sensors
-        final CheckBox neAccelerometer = (CheckBox) neLayout.findViewById(R.id.neAccelerometer);
-        final CheckBox neGyroscope = (CheckBox) neLayout.findViewById(R.id.neGyroscope);
-        final CheckBox neHumidity = (CheckBox) neLayout.findViewById(R.id.neHumidity);
-        final CheckBox neLight = (CheckBox) neLayout.findViewById(R.id.neLight);
-        final CheckBox neLinearAcceleration = (CheckBox) neLayout.findViewById(R.id.neLinearAcceleration);
-        final CheckBox neLocation = (CheckBox) neLayout.findViewById(R.id.neLocation);
-        final CheckBox neMagneticField = (CheckBox) neLayout.findViewById(R.id.neMagneticField);
-        final CheckBox nePressure = (CheckBox) neLayout.findViewById(R.id.nePressure);
-        final CheckBox neProximity = (CheckBox) neLayout.findViewById(R.id.neProximity);
-        final CheckBox neTemperature = (CheckBox) neLayout.findViewById(R.id.neTemperature);
-
-        //Setup the dialog builder...
-        neRate.addTextChangedListener(new DecimalTextWatcher());
         neDialog.setView(neLayout);
         neDialog.setTitle(R.string.newExperiment);
-        neDialog.setPositiveButton(res.getText(R.string.ok), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                //Here we have to create the experiment definition file
-                //This is a lot of tedious work....
-
-                //Prepare the variables from user input
-
-                String title = neTitle.getText().toString(); //Title of the new experiment
-
-                //Prepare the rate
-                double rate;
-                try {
-                    rate = Double.valueOf(neRate.getText().toString().replace(',', '.'));
-                } catch (Exception e) {
-                    rate = 0;
-                    Toast.makeText(ExperimentListActivity.this, "Invaid sensor rate. Fall back to fastest rate.", Toast.LENGTH_LONG).show();
-                }
-
-                //Collect the enabled sensors
-                boolean acc = neAccelerometer.isChecked();
-                boolean gyr = neGyroscope.isChecked();
-                boolean hum = neHumidity.isChecked();
-                boolean light = neLight.isChecked();
-                boolean lin = neLinearAcceleration.isChecked();
-                boolean loc = neLocation.isChecked();
-                boolean mag = neMagneticField.isChecked();
-                boolean pressure = nePressure.isChecked();
-                boolean prox = neProximity.isChecked();
-                boolean temp = neTemperature.isChecked();
-                if (!(acc || gyr || light || lin || loc || mag || pressure || prox || hum || temp)) {
-                    acc = true;
-                    Toast.makeText(ExperimentListActivity.this, "No sensor selected. Adding accelerometer as default.", Toast.LENGTH_LONG).show();
-                }
-
-                //Generate random file name
-                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox";
-
-                //Now write the whole file...
-                try {
-                    FileOutputStream output = c.openFileOutput(file, MODE_PRIVATE);
-                    output.write("<phyphox version=\"1.14\">".getBytes());
-
-                    //Title, standard category and standard description
-                    output.write(("<title>" + title.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;").replace("&", "&amp;") + "</title>").getBytes());
-                    output.write(("<category>" + res.getString(R.string.categoryNewExperiment) + "</category>").getBytes());
-                    output.write(("<color>red</color>").getBytes());
-                    output.write("<description>Get raw data from selected sensors.</description>".getBytes());
-
-                    //Buffers for all sensors
-                    output.write("<data-containers>".getBytes());
-                    if (acc) {
-                        output.write(("<container size=\"0\">acc_time</container>").getBytes());
-                        output.write(("<container size=\"0\">accX</container>").getBytes());
-                        output.write(("<container size=\"0\">accY</container>").getBytes());
-                        output.write(("<container size=\"0\">accZ</container>").getBytes());
-                    }
-                    if (gyr) {
-                        output.write(("<container size=\"0\">gyr_time</container>").getBytes());
-                        output.write(("<container size=\"0\">gyrX</container>").getBytes());
-                        output.write(("<container size=\"0\">gyrY</container>").getBytes());
-                        output.write(("<container size=\"0\">gyrZ</container>").getBytes());
-                    }
-                    if (hum) {
-                        output.write(("<container size=\"0\">hum_time</container>").getBytes());
-                        output.write(("<container size=\"0\">hum</container>").getBytes());
-                    }
-                    if (light) {
-                        output.write(("<container size=\"0\">light_time</container>").getBytes());
-                        output.write(("<container size=\"0\">light</container>").getBytes());
-                    }
-                    if (lin) {
-                        output.write(("<container size=\"0\">lin_time</container>").getBytes());
-                        output.write(("<container size=\"0\">linX</container>").getBytes());
-                        output.write(("<container size=\"0\">linY</container>").getBytes());
-                        output.write(("<container size=\"0\">linZ</container>").getBytes());
-                    }
-                    if (loc) {
-                        output.write(("<container size=\"0\">loc_time</container>").getBytes());
-                        output.write(("<container size=\"0\">locLat</container>").getBytes());
-                        output.write(("<container size=\"0\">locLon</container>").getBytes());
-                        output.write(("<container size=\"0\">locZ</container>").getBytes());
-                        output.write(("<container size=\"0\">locV</container>").getBytes());
-                        output.write(("<container size=\"0\">locDir</container>").getBytes());
-                        output.write(("<container size=\"0\">locAccuracy</container>").getBytes());
-                        output.write(("<container size=\"0\">locZAccuracy</container>").getBytes());
-                        output.write(("<container size=\"0\">locStatus</container>").getBytes());
-                        output.write(("<container size=\"0\">locSatellites</container>").getBytes());
-                    }
-                    if (mag) {
-                        output.write(("<container size=\"0\">mag_time</container>").getBytes());
-                        output.write(("<container size=\"0\">magX</container>").getBytes());
-                        output.write(("<container size=\"0\">magY</container>").getBytes());
-                        output.write(("<container size=\"0\">magZ</container>").getBytes());
-                    }
-                    if (pressure) {
-                        output.write(("<container size=\"0\">pressure_time</container>").getBytes());
-                        output.write(("<container size=\"0\">pressure</container>").getBytes());
-                    }
-                    if (prox) {
-                        output.write(("<container size=\"0\">prox_time</container>").getBytes());
-                        output.write(("<container size=\"0\">prox</container>").getBytes());
-                    }
-                    if (temp) {
-                        output.write(("<container size=\"0\">temp_time</container>").getBytes());
-                        output.write(("<container size=\"0\">temp</container>").getBytes());
-                    }
-                    output.write("</data-containers>".getBytes());
-
-                    //Inputs for each sensor
-                    output.write("<input>".getBytes());
-                    if (acc)
-                        output.write(("<sensor type=\"accelerometer\" rate=\"" + rate + "\" ><output component=\"x\">accX</output><output component=\"y\">accY</output><output component=\"z\">accZ</output><output component=\"t\">acc_time</output></sensor>").getBytes());
-                    if (gyr)
-                        output.write(("<sensor type=\"gyroscope\" rate=\"" + rate + "\" ><output component=\"x\">gyrX</output><output component=\"y\">gyrY</output><output component=\"z\">gyrZ</output><output component=\"t\">gyr_time</output></sensor>").getBytes());
-                    if (hum)
-                        output.write(("<sensor type=\"humidity\" rate=\"" + rate + "\" ><output component=\"x\">hum</output><output component=\"t\">hum_time</output></sensor>").getBytes());
-                    if (light)
-                        output.write(("<sensor type=\"light\" rate=\"" + rate + "\" ><output component=\"x\">light</output><output component=\"t\">light_time</output></sensor>").getBytes());
-                    if (lin)
-                        output.write(("<sensor type=\"linear_acceleration\" rate=\"" + rate + "\" ><output component=\"x\">linX</output><output component=\"y\">linY</output><output component=\"z\">linZ</output><output component=\"t\">lin_time</output></sensor>").getBytes());
-                    if (loc)
-                        output.write(("<location><output component=\"lat\">locLat</output><output component=\"lon\">locLon</output><output component=\"z\">locZ</output><output component=\"t\">loc_time</output><output component=\"v\">locV</output><output component=\"dir\">locDir</output><output component=\"accuracy\">locAccuracy</output><output component=\"zAccuracy\">locZAccuracy</output><output component=\"status\">locStatus</output><output component=\"satellites\">locSatellites</output></location>").getBytes());
-                    if (mag)
-                        output.write(("<sensor type=\"magnetic_field\" rate=\"" + rate + "\" ><output component=\"x\">magX</output><output component=\"y\">magY</output><output component=\"z\">magZ</output><output component=\"t\">mag_time</output></sensor>").getBytes());
-                    if (pressure)
-                        output.write(("<sensor type=\"pressure\" rate=\"" + rate + "\" ><output component=\"x\">pressure</output><output component=\"t\">pressure_time</output></sensor>").getBytes());
-                    if (prox)
-                        output.write(("<sensor type=\"proximity\" rate=\"" + rate + "\" ><output component=\"x\">prox</output><output component=\"t\">prox_time</output></sensor>").getBytes());
-                    if (temp)
-                        output.write(("<sensor type=\"temperature\" rate=\"" + rate + "\" ><output component=\"x\">temp</output><output component=\"t\">temp_time</output></sensor>").getBytes());
-                    output.write("</input>".getBytes());
-
-                    //Views for each sensor
-                    output.write("<views>".getBytes());
-                    if (acc) {
-                        output.write("<view label=\"Accelerometer\">".getBytes());
-                        output.write(("<graph label=\"Acceleration X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Acceleration Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Acceleration Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">acc_time</input><input axis=\"y\">accZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (gyr) {
-                        output.write("<view label=\"Gyroscope\">".getBytes());
-                        output.write(("<graph label=\"Gyroscope X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Gyroscope Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Gyroscope Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w (rad/s)\" partialUpdate=\"true\"><input axis=\"x\">gyr_time</input><input axis=\"y\">gyrZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (hum) {
-                        output.write("<view label=\"Humidity\">".getBytes());
-                        output.write(("<graph label=\"Humidity\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Relative Humidity (%)\" partialUpdate=\"true\"><input axis=\"x\">hum_time</input><input axis=\"y\">hum</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (light) {
-                        output.write("<view label=\"Light\">".getBytes());
-                        output.write(("<graph label=\"Illuminance\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Ev (lx)\" partialUpdate=\"true\"><input axis=\"x\">light_time</input><input axis=\"y\">light</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (lin) {
-                        output.write("<view label=\"Linear Acceleration\">".getBytes());
-                        output.write(("<graph label=\"Linear Acceleration X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Linear Acceleration Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">lin_time</input><input axis=\"y\">linZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (loc) {
-                        output.write("<view label=\"Location\">".getBytes());
-                        output.write(("<graph label=\"Latitude\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Latitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLat</input></graph>").getBytes());
-                        output.write(("<graph label=\"Longitude\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Longitude (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locLon</input></graph>").getBytes());
-                        output.write(("<graph label=\"Height\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"z (m)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locZ</input></graph>").getBytes());
-                        output.write(("<graph label=\"Velocity\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"v (m/s)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locV</input></graph>").getBytes());
-                        output.write(("<graph label=\"Direction\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"heading (°)\" partialUpdate=\"true\"><input axis=\"x\">loc_time</input><input axis=\"y\">locDir</input></graph>").getBytes());
-                        output.write(("<value label=\"Horizontal Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locAccuracy</input></value>").getBytes());
-                        output.write(("<value label=\"Vertical Accuracy\" size=\"1\" precision=\"1\" unit=\"m\"><input>locZAccuracy</input></value>").getBytes());
-                        output.write(("<value label=\"Satellites\" size=\"1\" precision=\"0\"><input>locSatellites</input></value>").getBytes());
-                        output.write(("<value label=\"Status\" size=\"1\" precision=\"0\"><input>locStatus</input><map max=\"-1\">GPS disabled</map><map max=\"0\">Waiting for signal</map><map max=\"1\">Active</map></value>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (mag) {
-                        output.write("<view label=\"Magnetometer\">".getBytes());
-                        output.write(("<graph label=\"Magnetic field X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magX</input></graph>").getBytes());
-                        output.write(("<graph label=\"Magnetic field Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magY</input></graph>").getBytes());
-                        output.write(("<graph label=\"Magnetic field Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"B (µT)\" partialUpdate=\"true\"><input axis=\"x\">mag_time</input><input axis=\"y\">magZ</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (pressure) {
-                        output.write("<view label=\"Pressure\">".getBytes());
-                        output.write(("<graph label=\"Pressure\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"P (hPa)\" partialUpdate=\"true\"><input axis=\"x\">pressure_time</input><input axis=\"y\">pressure</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (prox) {
-                        output.write("<view label=\"Proximity\">".getBytes());
-                        output.write(("<graph label=\"Proximity\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Distance (cm)\" partialUpdate=\"true\"><input axis=\"x\">prox_time</input><input axis=\"y\">prox</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    if (temp) {
-                        output.write("<view label=\"Temperature\">".getBytes());
-                        output.write(("<graph label=\"Temperature\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
-                        output.write("</view>".getBytes());
-                    }
-                    output.write("</views>".getBytes());
-
-                    //Export definitions for each sensor
-                    output.write("<export>".getBytes());
-                    if (acc) {
-                        output.write("<set name=\"Accelerometer\">".getBytes());
-                        output.write("<data name=\"Time (s)\">acc_time</data>".getBytes());
-                        output.write("<data name=\"Acceleration x (m/s^2)\">accX</data>".getBytes());
-                        output.write("<data name=\"Acceleration y (m/s^2)\">accY</data>".getBytes());
-                        output.write("<data name=\"Acceleration z (m/s^2)\">accZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (gyr) {
-                        output.write("<set name=\"Gyroscope\">".getBytes());
-                        output.write("<data name=\"Time (s)\">gyr_time</data>".getBytes());
-                        output.write("<data name=\"Gyroscope x (rad/s)\">gyrX</data>".getBytes());
-                        output.write("<data name=\"Gyroscope y (rad/s)\">gyrY</data>".getBytes());
-                        output.write("<data name=\"Gyroscope z (rad/s)\">gyrZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (hum) {
-                        output.write("<set name=\"Humidity\">".getBytes());
-                        output.write("<data name=\"Time (s)\">hum_time</data>".getBytes());
-                        output.write("<data name=\"Relative Humidity (%)\">hum</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (light) {
-                        output.write("<set name=\"Light\">".getBytes());
-                        output.write("<data name=\"Time (s)\">light_time</data>".getBytes());
-                        output.write("<data name=\"Illuminance (lx)\">light</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (lin) {
-                        output.write("<set name=\"Linear Acceleration\">".getBytes());
-                        output.write("<data name=\"Time (s)\">lin_time</data>".getBytes());
-                        output.write("<data name=\"Linear Acceleration x (m/s^2)\">linX</data>".getBytes());
-                        output.write("<data name=\"Linear Acceleration y (m/s^2)\">linY</data>".getBytes());
-                        output.write("<data name=\"Linear Acceleration z (m/s^2)\">linZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (loc) {
-                        output.write("<set name=\"Location\">".getBytes());
-                        output.write("<data name=\"Time (s)\">loc_time</data>".getBytes());
-                        output.write("<data name=\"Latitude (°)\">locLat</data>".getBytes());
-                        output.write("<data name=\"Longitude (°)\">locLon</data>".getBytes());
-                        output.write("<data name=\"Height (m)\">locZ</data>".getBytes());
-                        output.write("<data name=\"Velocity (m/s)\">locV</data>".getBytes());
-                        output.write("<data name=\"Direction (°)\">locDir</data>".getBytes());
-                        output.write("<data name=\"Horizontal Accuracy (m)\">locAccuracy</data>".getBytes());
-                        output.write("<data name=\"Vertical Accuracy (m)\">locZAccuracy</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (mag) {
-                        output.write("<set name=\"Magnetometer\">".getBytes());
-                        output.write("<data name=\"Time (s)\">mag_time</data>".getBytes());
-                        output.write("<data name=\"Magnetic field x (µT)\">magX</data>".getBytes());
-                        output.write("<data name=\"Magnetic field y (µT)\">magY</data>".getBytes());
-                        output.write("<data name=\"Magnetic field z (µT)\">magZ</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (pressure) {
-                        output.write("<set name=\"Pressure\">".getBytes());
-                        output.write("<data name=\"Time (s)\">pressure_time</data>".getBytes());
-                        output.write("<data name=\"Pressure (hPa)\">pressure</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (prox) {
-                        output.write("<set name=\"Proximity\">".getBytes());
-                        output.write("<data name=\"Time (s)\">prox_time</data>".getBytes());
-                        output.write("<data name=\"Distance (cm)\">prox</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    if (temp) {
-                        output.write("<set name=\"Temperature\">".getBytes());
-                        output.write("<data name=\"Time (s)\">temp_time</data>".getBytes());
-                        output.write("<data name=\"Temperature (°C)\">temp</data>".getBytes());
-                        output.write("</set>".getBytes());
-                    }
-                    output.write("</export>".getBytes());
-
-                    //And finally, the closing tag
-                    output.write("</phyphox>".getBytes());
-
-                    output.close();
-
-                    //Create an intent for this new file
-                    Intent intent = new Intent(c, Experiment.class);
-                    intent.putExtra(EXPERIMENT_XML, file);
-                    intent.putExtra(EXPERIMENT_ISASSET, false);
-                    intent.setAction(Intent.ACTION_VIEW);
-
-                    //Start the new experiment
-                    c.startActivity(intent);
-                } catch (Exception e) {
-                    Log.e("newExperiment", "Could not create new experiment.", e);
-                }
-            }
+        neDialog.setPositiveButton(res.getText(R.string.ok), (dialog, which) -> {
+            //Here we have to create the experiment definition file
+            SimpleExperimentCreator creator = new SimpleExperimentCreator(c, neLayout);
+            creator.generateAndOpenSimpleExperiment();
         });
-        neDialog.setNegativeButton(res.getText(R.string.cancel), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                //If the user aborts the dialog, we don't have to do anything
-            }
+        neDialog.setNegativeButton(res.getText(R.string.cancel), (dialog, which) -> {
+            //If the user aborts the dialog, we don't have to do anything
         });
 
-        //Finally, show the dialog
         neDialog.show();
     }
 
