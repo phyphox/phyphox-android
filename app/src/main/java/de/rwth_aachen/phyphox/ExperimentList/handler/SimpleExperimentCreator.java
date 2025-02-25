@@ -23,7 +23,6 @@ import de.rwth_aachen.phyphox.R;
 public class SimpleExperimentCreator {
 
     private final Context context;
-    private final View layout;
     private final EditText titleEditText;
     private final EditText rateEditText;
 
@@ -41,12 +40,12 @@ public class SimpleExperimentCreator {
         MAGNETOMETER,
         PRESSURE,
         PROXIMITY,
-        TEMPERATURE
+        TEMPERATURE,
+        ATTITUDE
     }
 
     public SimpleExperimentCreator(Context context, View layout){
         this.context = context;
-        this.layout = layout;
         this.titleEditText = layout.findViewById(R.id.neTitle);
         this.rateEditText = layout.findViewById(R.id.neRate);
         this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neAccelerometer), SensorType.ACCELEROMETER));
@@ -59,6 +58,7 @@ public class SimpleExperimentCreator {
         this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.nePressure), SensorType.PRESSURE));
         this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neProximity), SensorType.PROXIMITY));
         this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neTemperature), SensorType.TEMPERATURE));
+        this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neAttitude), SensorType.ATTITUDE));
     }
 
     public void generateAndOpenSimpleExperiment(){
@@ -219,6 +219,13 @@ public class SimpleExperimentCreator {
                     output.write(("<container size=\"0\">temp_time</container>").getBytes());
                     output.write(("<container size=\"0\">temp</container>").getBytes());
                     break;
+                case ATTITUDE:
+                    output.write(("<container size=\"0\">w</container>").getBytes());
+                    output.write(("<container size=\"0\">x</container>").getBytes());
+                    output.write(("<container size=\"0\">y</container>").getBytes());
+                    output.write(("<container size=\"0\">z</container>").getBytes());
+                    output.write(("<container size=\"0\">t</container>").getBytes());
+                    break;
             }
         }
         output.write("</data-containers>".getBytes());
@@ -304,6 +311,15 @@ public class SimpleExperimentCreator {
                             "<output component=\"t\">temp_time</output>" +
                             "</sensor>").getBytes());
                     break;
+                case ATTITUDE:
+                    output.write(("<sensor type=\"attitude\">" +
+                            "<output component=\"x\">x</output>" +
+                            "<output component=\"y\">y</output>" +
+                            "<output component=\"z\">z</output>" +
+                            "<output component=\"abs\">w</output>" +
+                            "<output component=\"t\">t</output>" +
+                            "</sensor>").getBytes());
+                    break;
             }
         }
         output.write("</input>".getBytes());
@@ -377,6 +393,14 @@ public class SimpleExperimentCreator {
                 case TEMPERATURE:
                     output.write("<view label=\"Temperature\">".getBytes());
                     output.write(("<graph label=\"Temperature\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"Temperature (°C)\" partialUpdate=\"true\"><input axis=\"x\">temp_time</input><input axis=\"y\">temp</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                    break;
+                case ATTITUDE:
+                    output.write("<view label=\"Attitude\">".getBytes());
+                    output.write(("<graph label=\"Quaternion w\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">w</input></graph>").getBytes());
+                    output.write(("<graph label=\"Quaternion x\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"x\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">x</input></graph>").getBytes());
+                    output.write(("<graph label=\"Quaternion y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"y\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">y</input></graph>").getBytes());
+                    output.write(("<graph label=\"Quaternion z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"z\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">z</input></graph>").getBytes());
                     output.write("</view>".getBytes());
                     break;
             }
@@ -460,6 +484,15 @@ public class SimpleExperimentCreator {
                     output.write("<set name=\"Temperature\">".getBytes());
                     output.write("<data name=\"Time (s)\">temp_time</data>".getBytes());
                     output.write("<data name=\"Temperature (°C)\">temp</data>".getBytes());
+                    output.write("</set>".getBytes());
+                    break;
+                case ATTITUDE:
+                    output.write("<set name=\"Attitude\">".getBytes());
+                    output.write("<data name=\"Time (s)\">t</data>".getBytes());
+                    output.write("<data name=\"w\">w</data>".getBytes());
+                    output.write("<data name=\"x\">x</data>".getBytes());
+                    output.write("<data name=\"y\">y</data>".getBytes());
+                    output.write("<data name=\"z\">z</data>".getBytes());
                     output.write("</set>".getBytes());
                     break;
             }
