@@ -41,7 +41,8 @@ public class SimpleExperimentCreator {
         PRESSURE,
         PROXIMITY,
         TEMPERATURE,
-        ATTITUDE
+        ATTITUDE,
+        GRAVITY
     }
 
     public SimpleExperimentCreator(Context context, View layout){
@@ -59,6 +60,7 @@ public class SimpleExperimentCreator {
         this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neProximity), SensorType.PROXIMITY));
         this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neTemperature), SensorType.TEMPERATURE));
         this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neAttitude), SensorType.ATTITUDE));
+        this.sensorCheckboxes.add(new SensorCheckbox(layout.findViewById(R.id.neGravity), SensorType.GRAVITY));
     }
 
     public void generateAndOpenSimpleExperiment(){
@@ -220,11 +222,17 @@ public class SimpleExperimentCreator {
                     output.write(("<container size=\"0\">temp</container>").getBytes());
                     break;
                 case ATTITUDE:
-                    output.write(("<container size=\"0\">w</container>").getBytes());
-                    output.write(("<container size=\"0\">x</container>").getBytes());
-                    output.write(("<container size=\"0\">y</container>").getBytes());
-                    output.write(("<container size=\"0\">z</container>").getBytes());
-                    output.write(("<container size=\"0\">t</container>").getBytes());
+                    output.write(("<container size=\"0\">attW</container>").getBytes());
+                    output.write(("<container size=\"0\">attX</container>").getBytes());
+                    output.write(("<container size=\"0\">attY</container>").getBytes());
+                    output.write(("<container size=\"0\">attZ</container>").getBytes());
+                    output.write(("<container size=\"0\">attT</container>").getBytes());
+                    break;
+                case GRAVITY:
+                    output.write(("<container size=\"0\">graT</container>").getBytes());
+                    output.write(("<container size=\"0\">graX</container>").getBytes());
+                    output.write(("<container size=\"0\">graY</container>").getBytes());
+                    output.write(("<container size=\"0\">graZ</container>").getBytes());
                     break;
             }
         }
@@ -313,11 +321,19 @@ public class SimpleExperimentCreator {
                     break;
                 case ATTITUDE:
                     output.write(("<sensor type=\"attitude\">" +
-                            "<output component=\"x\">x</output>" +
-                            "<output component=\"y\">y</output>" +
-                            "<output component=\"z\">z</output>" +
-                            "<output component=\"abs\">w</output>" +
-                            "<output component=\"t\">t</output>" +
+                            "<output component=\"x\">attX</output>" +
+                            "<output component=\"y\">attY</output>" +
+                            "<output component=\"z\">attZ</output>" +
+                            "<output component=\"abs\">attW</output>" +
+                            "<output component=\"t\">attT</output>" +
+                            "</sensor>").getBytes());
+                    break;
+                case GRAVITY:
+                    output.write(("<sensor type=\"gravity\" >" +
+                            "<output component=\"x\">graX</output>" +
+                            "<output component=\"y\">graY</output>" +
+                            "<output component=\"z\">graZ</output>" +
+                            "<output component=\"t\">graT</output>" +
                             "</sensor>").getBytes());
                     break;
             }
@@ -397,10 +413,17 @@ public class SimpleExperimentCreator {
                     break;
                 case ATTITUDE:
                     output.write("<view label=\"Attitude\">".getBytes());
-                    output.write(("<graph label=\"Quaternion w\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">w</input></graph>").getBytes());
-                    output.write(("<graph label=\"Quaternion x\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"x\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">x</input></graph>").getBytes());
-                    output.write(("<graph label=\"Quaternion y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"y\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">y</input></graph>").getBytes());
-                    output.write(("<graph label=\"Quaternion z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"z\" partialUpdate=\"true\"><input axis=\"x\">t</input><input axis=\"y\">z</input></graph>").getBytes());
+                    output.write(("<graph label=\"Quaternion w\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">attW</input></graph>").getBytes());
+                    output.write(("<graph label=\"Quaternion x\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"x\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">attX</input></graph>").getBytes());
+                    output.write(("<graph label=\"Quaternion y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"y\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">attY</input></graph>").getBytes());
+                    output.write(("<graph label=\"Quaternion z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"z\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">attZ</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                    break;
+                case GRAVITY:
+                    output.write("<view label=\"Gravity\">".getBytes());
+                    output.write(("<graph label=\"Gravity X\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">graT</input><input axis=\"y\">graX</input></graph>").getBytes());
+                    output.write(("<graph label=\"Gravity Y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">graT</input><input axis=\"y\">graY</input></graph>").getBytes());
+                    output.write(("<graph label=\"Gravity Z\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"a (m/s²)\" partialUpdate=\"true\"><input axis=\"x\">graT</input><input axis=\"y\">graZ</input></graph>").getBytes());
                     output.write("</view>".getBytes());
                     break;
             }
@@ -488,11 +511,19 @@ public class SimpleExperimentCreator {
                     break;
                 case ATTITUDE:
                     output.write("<set name=\"Attitude\">".getBytes());
-                    output.write("<data name=\"Time (s)\">t</data>".getBytes());
-                    output.write("<data name=\"w\">w</data>".getBytes());
-                    output.write("<data name=\"x\">x</data>".getBytes());
-                    output.write("<data name=\"y\">y</data>".getBytes());
-                    output.write("<data name=\"z\">z</data>".getBytes());
+                    output.write("<data name=\"Time (s)\">attT</data>".getBytes());
+                    output.write("<data name=\"Quaternion w\">attW</data>".getBytes());
+                    output.write("<data name=\"Quaternion x\">attX</data>".getBytes());
+                    output.write("<data name=\"Quaternion y\">attY</data>".getBytes());
+                    output.write("<data name=\"Quaternion z\">attZ</data>".getBytes());
+                    output.write("</set>".getBytes());
+                    break;
+                case GRAVITY:
+                    output.write("<set name=\"Gravity\">".getBytes());
+                    output.write("<data name=\"Time (s)\">graT</data>".getBytes());
+                    output.write("<data name=\"Acceleration x (m/s^2)\">graX</data>".getBytes());
+                    output.write("<data name=\"Acceleration y (m/s^2)\">graY</data>".getBytes());
+                    output.write("<data name=\"Acceleration z (m/s^2)\">graZ</data>".getBytes());
                     output.write("</set>".getBytes());
                     break;
             }
