@@ -21,7 +21,7 @@
 
 ექსპორტის ფორმატი
 - CSV (Comma separated values)
-- CSV (Tab-separated values)
+- TSV (Tab-separated values)
 - Excel
 (თუ გჭირდებათ სხვა ფორმატი, გთხოვთ მოგვმართოთ)
 

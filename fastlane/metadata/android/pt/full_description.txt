@@ -21,7 +21,7 @@ Sensores suportados:
 
 Formatos para exportacão
 - CSV (valores separados por vírgula)
-- CSV (valores separados por tabulação)
+- TSV (valores separados por tabulação)
 - Excel
 (se precisar de outro formato, entre em contato connosco)
 

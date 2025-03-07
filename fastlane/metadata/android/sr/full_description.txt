@@ -21,7 +21,7 @@ Podržani senzori:
 
 Izvozni formati
 - CSV (vrednosti razdvojene zarezom)
-- CSV (vrednosti odvojene tabulatorom)
+- TSV (vrednosti odvojene tabulatorom)
 - Excel
 (ako vam trebaju drugi formati, javite nam se)
 

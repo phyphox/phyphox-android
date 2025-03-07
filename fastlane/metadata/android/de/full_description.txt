@@ -21,7 +21,7 @@ Unterstützte Sensoren
 
 Export Formate
 - CSV (durch Komma getrennte Werte)
-- CSV (durch Tabulator getrennte Werte)
+- TSV (durch Tabulator getrennte Werte)
 - Excel
 (wenn du weitere Formate benötigst, lass es uns wissen)
 

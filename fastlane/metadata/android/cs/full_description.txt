@@ -19,7 +19,7 @@ Podporované senzory:
 
 Formáty pro export
 - CSV (Hodnoty oddělované čárkou)
-- CSV (Hodnoty oddělované tabulátorem)
+- TSV (Hodnoty oddělované tabulátorem)
 - Excel
 (pokud byste potřebovali jiný formát, tak nám neváhejte napsat)
 

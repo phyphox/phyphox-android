@@ -21,7 +21,7 @@ Cảm biến được hỗ trợ:
 
 Định dạng xuất dữ liệu
 - CSV (Giá trị được phân tách bằng dấu phẩy)
-- CSV (Giá trị được phân tách bằng dấu tab)
+- TSV (Giá trị được phân tách bằng dấu tab)
 - Excel
 (nếu bạn cần các định dạng khác, vui lòng cho chúng tôi biết)
 

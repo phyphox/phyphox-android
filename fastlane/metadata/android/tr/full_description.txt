@@ -21,7 +21,7 @@ Desteklenen Sensörler:
 
 Dışa aktarma biçimleri
 - CSV (Virgülle ayrılmış değerler)
-- CSV (Sekmeyle ayrılmış değerler)
+- TSV (Sekmeyle ayrılmış değerler)
 - Excel
 (başka biçimlere ihtiyacınız varsa, lütfen bize bildirin)
 

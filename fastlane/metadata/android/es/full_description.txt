@@ -21,7 +21,7 @@ Sensores compatibles:
 
 Formatos de exportación
 - CSV (valores separados por comas)
-- CSV (valores separados por tabulaciones)
+- TSV (valores separados por tabulaciones)
 - Excel
 (si necesita otros formatos, háganoslo saber)
 
