@@ -2499,7 +2499,7 @@ public abstract class PhyphoxFile {
 
                     experiment.analysis.add(new Analysis.timerAM(experiment, inputs, outputs, linearTime));
                 } break;
-                case "infos": {
+                case "info": {
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -2512,7 +2512,7 @@ public abstract class PhyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.infosAM(experiment, inputs, outputs, parent.getBaseContext()));
+                    experiment.analysis.add(new Analysis.infoAM(experiment, inputs, outputs, parent.getBaseContext()));
                 } break;
                 case "formula": {
                     String formula = getStringAttribute("formula");

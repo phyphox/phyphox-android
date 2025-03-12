@@ -322,11 +322,11 @@ public class Analysis {
         }
     }
 
-    // Get various system status information
-    public static class infosAM extends AnalysisModule implements Serializable{
+    // Get various system status informations
+    public static class infoAM extends AnalysisModule implements Serializable{
         Context context;
 
-        protected infosAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, Context context) {
+        protected infoAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, Context context) {
             super(experiment, inputs, outputs);
             this.context = context;
         }

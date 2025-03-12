@@ -568,7 +568,7 @@ public abstract class Helper {
 
         if(context == null) return NO_BATTERY_SIGNAL_LEVEL;
 
-        if (Build.VERSION.SDK_INT >= 21) { // 21 is version LOLLIPOP
+        if (Build.VERSION.SDK_INT >= 21) {
             BatteryManager bm = (BatteryManager) context.getSystemService(BATTERY_SERVICE);
             if(bm == null) return NO_BATTERY_SIGNAL_LEVEL;
 
@@ -582,8 +582,7 @@ public abstract class Helper {
             int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
             if (level == -1 || scale == -1 || scale == 0) return NO_BATTERY_SIGNAL_LEVEL;
 
-            double batteryPct = (double) level / scale;
-            return (int) (batteryPct * 100);
+            return ( level / scale ) * 100;
         }
     }
 
@@ -616,7 +615,7 @@ public abstract class Helper {
 
         int volumeLevel = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         int maxVolumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        return (int) (((float) volumeLevel / maxVolumeLevel) * 100);
+        return (volumeLevel / maxVolumeLevel) * 100;
 
     }
 }
