@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import de.rwth_aachen.phyphox.Experiment;
@@ -122,25 +123,20 @@ public class SimpleExperimentCreator {
     }
 
     private void writeExperimentData(FileOutputStream output, String title, double rate, List<SensorType> enabledSensors) throws IOException {
-        // Write the header
         output.write("<phyphox version=\"1.14\">".getBytes());
 
-        // Write metadata
         writeMetadata(output, title);
 
-        // Write data containers
         writeDataContainers(output, enabledSensors);
 
-        // Write sensor inputs
         writeSensorInputs(output, rate, enabledSensors);
 
-        // Write views
         writeViews(output, enabledSensors);
 
-        // Write export definitions
+        writeAnalysis(output,enabledSensors);
+
         writeExportDefinitions(output, enabledSensors);
 
-        // Write the closing tag
         output.write("</phyphox>".getBytes());
         output.close();
     }
@@ -154,11 +150,11 @@ public class SimpleExperimentCreator {
     }
 
     private String escapeXml(String input) {
-       return input.replace("<", "&lt;")
-               .replace(">", "&gt;")
-               .replace("\"", "&quot;")
-               .replace("'", "&apos;")
-               .replace("&", "&amp;");
+        return input.replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;")
+                .replace("&", "&amp;");
     }
 
     private void writeDataContainers(FileOutputStream output, List<SensorType> enabledSensors) throws IOException {
@@ -222,11 +218,33 @@ public class SimpleExperimentCreator {
                     output.write(("<container size=\"0\">temp</container>").getBytes());
                     break;
                 case ATTITUDE:
+                    output.write(("<container size=\"0\">attWIn</container>").getBytes());
+                    output.write(("<container size=\"0\">attXIn</container>").getBytes());
+                    output.write(("<container size=\"0\">attYIn</container>").getBytes());
+                    output.write(("<container size=\"0\">attZIn</container>").getBytes());
+                    output.write(("<container size=\"0\">attWOff</container>").getBytes());
+                    output.write(("<container size=\"0\">attXOff</container>").getBytes());
+                    output.write(("<container size=\"0\">attYOff</container>").getBytes());
+                    output.write(("<container size=\"0\">attZOff</container>").getBytes());
                     output.write(("<container size=\"0\">attW</container>").getBytes());
                     output.write(("<container size=\"0\">attX</container>").getBytes());
                     output.write(("<container size=\"0\">attY</container>").getBytes());
                     output.write(("<container size=\"0\">attZ</container>").getBytes());
                     output.write(("<container size=\"0\">attT</container>").getBytes());
+                    output.write(("<container size=\"0\">direct</container>").getBytes());
+                    output.write(("<container size=\"0\">yaw</container>").getBytes());
+                    output.write(("<container size=\"0\">pitch</container>").getBytes());
+                    output.write(("<container size=\"0\">roll</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"1\">attW0</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"0\">attX0</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"0\">attY0</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"0\">attZ0</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"1\">attWLast</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"0\">attXLast</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"0\">attYLast</container>").getBytes());
+                    output.write(("<container size=\"1\" init=\"0\">attZLast</container>").getBytes());
+                    output.write(("<container size=\"1\">count</container>").getBytes());
+                    output.write(("<container size=\"1\">attTMax</container>").getBytes());
                     break;
                 case GRAVITY:
                     output.write(("<container size=\"0\">graT</container>").getBytes());
@@ -321,10 +339,10 @@ public class SimpleExperimentCreator {
                     break;
                 case ATTITUDE:
                     output.write(("<sensor type=\"attitude\">" +
-                            "<output component=\"x\">attX</output>" +
-                            "<output component=\"y\">attY</output>" +
-                            "<output component=\"z\">attZ</output>" +
-                            "<output component=\"abs\">attW</output>" +
+                            "<output component=\"x\">attXIn</output>" +
+                            "<output component=\"y\">attYIn</output>" +
+                            "<output component=\"z\">attZIn</output>" +
+                            "<output component=\"abs\">attWIn</output>" +
                             "<output component=\"t\">attT</output>" +
                             "</sensor>").getBytes());
                     break;
@@ -412,7 +430,14 @@ public class SimpleExperimentCreator {
                     output.write("</view>".getBytes());
                     break;
                 case ATTITUDE:
-                    output.write("<view label=\"Attitude\">".getBytes());
+                    output.write("<view label=\"Attitude with Euler's Angle\">".getBytes());
+                    output.write("<button label=\"Zero\"><input>attWLast</input><output>attW0</output><input>attXLast</input><output>attX0</output><input>attYLast</input><output>attY0</output><input>attZLast</input><output>attZ0</output></button>".getBytes());
+                    output.write(("<graph label=\"Direct\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"⍺\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">direct</input></graph>").getBytes());
+                    output.write(("<graph label=\"Yaw\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"ψ\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">yaw</input></graph>").getBytes());
+                    output.write(("<graph label=\"Pitch\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"θ\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">pitch</input></graph>").getBytes());
+                    output.write(("<graph label=\"Roll\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"φ\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">roll</input></graph>").getBytes());
+                    output.write("</view>".getBytes());
+                    output.write("<view label=\"Quaternions\">".getBytes());
                     output.write(("<graph label=\"Quaternion w\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"w\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">attW</input></graph>").getBytes());
                     output.write(("<graph label=\"Quaternion x\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"x\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">attX</input></graph>").getBytes());
                     output.write(("<graph label=\"Quaternion y\" timeOnX=\"true\" labelX=\"t (s)\" labelY=\"y\" partialUpdate=\"true\"><input axis=\"x\">attT</input><input axis=\"y\">attY</input></graph>").getBytes());
@@ -510,12 +535,16 @@ public class SimpleExperimentCreator {
                     output.write("</set>".getBytes());
                     break;
                 case ATTITUDE:
-                    output.write("<set name=\"Attitude\">".getBytes());
+                    output.write("<set name=\"Orientation\">".getBytes());
                     output.write("<data name=\"Time (s)\">attT</data>".getBytes());
-                    output.write("<data name=\"Quaternion w\">attW</data>".getBytes());
-                    output.write("<data name=\"Quaternion x\">attX</data>".getBytes());
-                    output.write("<data name=\"Quaternion y\">attY</data>".getBytes());
-                    output.write("<data name=\"Quaternion z\">attZ</data>".getBytes());
+                    output.write("<data name=\"w\">attW</data>".getBytes());
+                    output.write("<data name=\"x\">attX</data>".getBytes());
+                    output.write("<data name=\"y\">attY</data>".getBytes());
+                    output.write("<data name=\"z\">attZ</data>".getBytes());
+                    output.write("<data name=\"Direct (°)\">direct</data>".getBytes());
+                    output.write("<data name=\"Yaw (°)\">yaw</data>".getBytes());
+                    output.write("<data name=\"Pitch (°)\">pitch</data>".getBytes());
+                    output.write("<data name=\"Roll (°)\">roll</data>".getBytes());
                     output.write("</set>".getBytes());
                     break;
                 case GRAVITY:
@@ -531,6 +560,48 @@ public class SimpleExperimentCreator {
 
         output.write("</export>".getBytes());
     }
+
+    private void writeAnalysis(FileOutputStream output, List<SensorType> enabledSensors) throws IOException {
+        for (SensorType sensor : enabledSensors) {
+            if (Objects.requireNonNull(sensor) == SensorType.ATTITUDE) {
+                output.write("<analysis>".getBytes());
+                output.write("<append><input clear=\"false\">attWIn</input><output>attWLast</output></append>".getBytes());
+                output.write("<append><input clear=\"false\">attXIn</input><output>attXLast</output></append>".getBytes());
+                output.write("<append><input clear=\"false\">attYIn</input><output>attYLast</output></append>".getBytes());
+                output.write("<append><input clear=\"false\">attZIn</input><output>attZLast</output></append>".getBytes());
+                output.write("<formula formula=\"abs([1]*[5_]+[2]*[6_]+[3]*[7_]+[4]*[8_])\">".getBytes());
+                output.write("<input clear=\"false\">attW0</input><input clear=\"false\">attX0</input><input clear=\"false\">attY0</input><input clear=\"false\">attZ0</input><input clear=\"false\">attWIn</input><input clear=\"false\">attXIn</input><input clear=\"false\">attYIn</input><input clear=\"false\">attZIn</input><output clear=\"true\">attWOff</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<formula formula=\"([1]*[6_]-[2]*[5_]-[3]*[8_]+[4]*[7_])*sign([1]*[5_]+[2]*[6_]+[3]*[7_]+[4]*[8_])\">".getBytes());
+                output.write("<input clear=\"false\">attW0</input><input clear=\"false\">attX0</input><input clear=\"false\">attY0</input><input clear=\"false\">attZ0</input><input clear=\"false\">attWIn</input><input clear=\"false\">attXIn</input><input clear=\"false\">attYIn</input><input clear=\"false\">attZIn</input><output clear=\"true\">attXOff</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<formula formula=\"([1]*[7_]+[2]*[8_]-[3]*[5_]-[4]*[6_])*sign([1]*[5_]+[2]*[6_]+[3]*[7_]+[4]*[8_])\">".getBytes());
+                output.write("<input clear=\"false\">attW0</input><input clear=\"false\">attX0</input><input clear=\"false\">attY0</input><input clear=\"false\">attZ0</input><input clear=\"false\">attWIn</input><input clear=\"false\">attXIn</input><input clear=\"false\">attYIn</input><input clear=\"false\">attZIn</input><output clear=\"true\">attYOff</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<formula formula=\"([1]*[8_]-[2]*[7_]+[3]*[6_]-[4]*[5_])*sign([1]*[5_]+[2]*[6_]+[3]*[7_]+[4]*[8_])\">".getBytes());
+                output.write("<input clear=\"false\">attW0</input><input clear=\"false\">attX0</input><input clear=\"false\">attY0</input><input clear=\"false\">attZ0</input><input clear=\"true\">attWIn</input><input clear=\"true\">attXIn</input><input clear=\"true\">attYIn</input><input clear=\"true\">attZIn</input><output clear=\"true\">attZOff</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<formula formula=\"2*acos([1_])*57.295779513\">".getBytes());
+                output.write("<input clear=\"false\">attWOff</input><input clear=\"false\">attXOff</input><input clear=\"false\">attYOff</input><input clear=\"false\">attZOff</input><output clear=\"false\">direct</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<formula formula=\"atan2(2*([1_]*[2_]+[3_]*[4_]),1-2*([2_]*[2_]+[3_]*[3_]))*57.295779513\">".getBytes());
+                output.write("<input clear=\"false\">attWOff</input><input clear=\"false\">attXOff</input><input clear=\"false\">attYOff</input><input clear=\"false\">attZOff</input><output clear=\"false\">yaw</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<formula formula=\"asin(2*([1_]*[3_]-[2_]*[4_]))*57.295779513\">".getBytes());
+                output.write("<input clear=\"false\">attWOff</input><input clear=\"false\">attXOff</input><input clear=\"false\">attYOff</input><input clear=\"false\">attZOff</input><output clear=\"false\">pitch</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<formula formula=\"atan2(2*([1_]*[4_]+[2_]*[3_]),1-2*([3_]*[3_]+[4_]*[4_]))*57.295779513\">".getBytes());
+                output.write("<input clear=\"false\">attWOff</input><input clear=\"false\">attXOff</input><input clear=\"false\">attYOff</input><input clear=\"false\">attZOff</input><output clear=\"false\">roll</output>".getBytes());
+                output.write("</formula>".getBytes());
+                output.write("<append><input clear=\"true\">attWOff</input><output clear=\"false\">attW</output></append>".getBytes());
+                output.write("<append><input clear=\"true\">attXOff</input><output clear=\"false\">attX</output></append>".getBytes());
+                output.write("<append><input clear=\"true\">attYOff</input><output clear=\"false\">attY</output></append>".getBytes());
+                output.write("<append><input clear=\"true\">attZOff</input><output clear=\"false\">attZ</output></append>".getBytes());
+                output.write("</analysis>".getBytes());
+            }
+            }
+        }
+
 
     static class SensorCheckbox {
         private final CheckBox checkBox;
