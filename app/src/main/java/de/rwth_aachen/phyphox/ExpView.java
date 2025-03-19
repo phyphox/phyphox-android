@@ -321,6 +321,8 @@ public class ExpView implements Serializable{
         private String formatter; //This formatter is created when scientificNotation and precision are set
         private String unit; //A string to display as unit
         private RGB color;
+        private String positiveUnit, negativeUnit;
+        private GpsInput.GpsFormat gpsFormat;
 
         protected class Mapping {
             Double min = Double.NEGATIVE_INFINITY;
@@ -410,6 +412,27 @@ public class ExpView implements Serializable{
 
         protected void setColor(RGB c) {
             this.color = c;
+        }
+
+        public void setGpsFormat(String gpsFormat) {
+            if(gpsFormat != null){
+                if(gpsFormat.equalsIgnoreCase("degree-minutes")){
+                    this.gpsFormat = GpsInput.GpsFormat.DEGREE_MINUTES;
+                } else if(gpsFormat.equalsIgnoreCase("degree-minutes-seconds")){
+                    this.gpsFormat = GpsInput.GpsFormat.DEGREE_MINUTES_SECONDS;
+                } else {
+                    this.gpsFormat = GpsInput.GpsFormat.FLOAT;
+                }
+            }
+
+        }
+
+        public void setNegativeUnit(String negativeUnit) {
+            this.negativeUnit = negativeUnit;
+        }
+
+        public void setPositiveUnit(String positiveUnit) {
+            this.positiveUnit = positiveUnit;
         }
 
         //Interface to set conversion factor. The element will show inputValue times this factor
@@ -515,8 +538,22 @@ public class ExpView implements Serializable{
                         }
                     }
                     if (vStr.isEmpty()) {
-                        vStr = String.format(this.formatter, x * this.factor);
-                        uStr = this.unit;
+                        double factoredValue = x * this.factor;
+                        if(gpsFormat != null){
+                            vStr = formatGeoCoordinate(factoredValue, gpsFormat);
+                        } else {
+                            vStr = String.format(this.formatter, factoredValue);
+                        }
+
+                        if(positiveUnit != null && (factoredValue >= 0) ){
+                            uStr = this.positiveUnit;
+                        } else if(negativeUnit != null && (factoredValue < 0)){
+                            uStr = this.negativeUnit;
+                        } else {
+                            uStr = this.unit;
+                        }
+
+
                     }
                 }
                 String out = vStr+uStr;
@@ -528,6 +565,41 @@ public class ExpView implements Serializable{
                 } else {
                     tv.setText(out);
                 }
+            }
+        }
+
+        /**
+         * Formats a geographical coordinate (latitude or longitude) into a string representation
+         * based on the specified output format.
+         *
+         * @param coordinate   The coordinate value (latitude or longitude) as a double.
+         *                     Positive values represent North/East, negative values represent South/West.
+         * @param outputFormat The desired output format for the coordinate.
+         *                     Can be one of:
+         *                     <ul>
+         *                         <li>{@link GpsInput.GpsFormat#DEGREE_MINUTES}: Degree and decimal minutes (e.g., 40° 26.767')</li>
+         *                         <li>{@link GpsInput.GpsFormat#DEGREE_MINUTES_SECONDS}: Degree, minutes, and decimal seconds (e.g., 40° 26' 46.020'')</li>
+         *                         <li>{@link GpsInput.GpsFormat#FLOAT}: Decimal degrees (e.g., 40.446)</li>
+         *                     </ul>
+         * @return A string representation of the coordinate in the specified format.
+         *         The string will be formatted to three decimal places for the decimal parts.
+         * @see GpsInput.GpsFormat
+         */
+        public String formatGeoCoordinate(Double coordinate, GpsInput.GpsFormat outputFormat) {
+            int degree = coordinate.intValue();
+            double decimalMinutes = Math.abs((coordinate - degree) * 60);
+            int integralMinutes = (int) decimalMinutes;
+            double decimalSeconds = Math.abs((decimalMinutes - integralMinutes) * 60);
+
+            switch (outputFormat) {
+                case DEGREE_MINUTES:
+                    return degree  + "° " + String.format(this.formatter, decimalMinutes) + "' ";
+
+                case DEGREE_MINUTES_SECONDS:
+                    return degree + "° " + integralMinutes + "' "  + String.format(this.formatter, decimalSeconds) + "'' ";
+                case FLOAT:
+                default:
+                    return String.format(this.formatter, coordinate) + " " ;
             }
         }
 

@@ -1297,6 +1297,9 @@ public abstract class PhyphoxFile {
                     boolean scientific = getBooleanAttribute("scientific", false);
                     double size = getDoubleAttribute("size", 1.0);
                     RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
+                    String format = getStringAttribute("format");
+                    String positiveUnit = getTranslatedAttribute("positiveUnit");
+                    String negativeUnit = getTranslatedAttribute("negativeUnit");
                     //Allowed input/output configuration
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -1336,6 +1339,10 @@ public abstract class PhyphoxFile {
                     ve.setFactor(factor); //A conversion factor. Usually for the unit
                     ve.setSize(size); //A conversion factor. Usually for the unit
                     ve.setColor(color);
+                    ve.setGpsFormat(format); // Format for Lat Long to represent in degree/degree-minutes/degree-minutes-seconds
+                    //A unit to represent direction for gps location
+                    ve.setPositiveUnit(positiveUnit);
+                    ve.setNegativeUnit(negativeUnit);
                     newView.elements.add(ve);
                     break;
                 }
