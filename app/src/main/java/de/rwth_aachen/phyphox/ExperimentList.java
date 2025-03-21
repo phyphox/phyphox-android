@@ -346,59 +346,6 @@ public class ExperimentList extends AppCompatActivity {
             ImageButton menuBtn; //A button for a context menu for local experiments (if they are not an asset)
         }
 
-        public void showExperimentInfo(String title, String sensorNotAvailableInfo, String description, Map<String, String> links, Context c){
-            AlertDialog.Builder builder = new AlertDialog.Builder(c);
-            builder.setTitle(title);
-
-            LinearLayout ll = new LinearLayout(builder.getContext());
-            ll.setOrientation(LinearLayout.VERTICAL);
-            int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
-            int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
-            ll.setPadding(marginX, marginY, marginX, marginY);
-
-            TextView stateLabel = new TextView(builder.getContext());
-            stateLabel.setText(sensorNotAvailableInfo);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
-            stateLabel.setLayoutParams(lp);
-            stateLabel.setTextSize(12.0f);
-            ll.addView(stateLabel);
-
-            TextView description_ = new TextView(builder.getContext());
-            description_.setText(description);
-
-            ll.addView(description_);
-
-            for (String label : links.keySet()) {
-                Button btn = new Button(builder.getContext());
-                btn.setText(label);
-                final String url = links.get(label);
-                btn.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View view) {
-                        Uri uri = Uri.parse(url);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        if (intent.resolveActivity(getPackageManager()) != null) {
-                            startActivity(intent);
-                        }
-                    }
-                });
-                ll.addView(btn);
-            }
-
-            ScrollView sv = new ScrollView(builder.getContext());
-            sv.setHorizontalScrollBarEnabled(false);
-            sv.setVerticalScrollBarEnabled(true);
-            sv.addView(ll);
-
-            builder.setView(sv);
-
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        }
 
         //Construct the view for an element.
         public View getView(final int position, View convertView, ViewGroup parent) {
@@ -434,14 +381,22 @@ public class ExperimentList extends AppCompatActivity {
                         } else if (experimentShortInfos.get(position).unavailableSensor < 0)
                             start(position, v);
                         else {
-                            String title = experimentShortInfos.get(position).title;
-                            String sensorNotAvailableWarningText = res.getString(R.string.sensorNotAvailableWarningText1) + " " +
-                                    res.getString(experimentShortInfos.get(position).unavailableSensor) + " " +
-                                    res.getString(R.string.sensorNotAvailableWarningText2);
-                            String description = experimentShortInfos.get(position).fullDescription;
-                            Map<String, String> links = experimentShortInfos.get(position).links;
+                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                            builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(experimentShortInfos.get(position).unavailableSensor) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
+                                    .setTitle(R.string.sensorNotAvailableWarningTitle)
+                                    .setPositiveButton(R.string.ok, (dialog, id) -> {
 
-                            showExperimentInfo(title, sensorNotAvailableWarningText, description, links, parentActivity);
+                                    })
+                                    .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), (dialog, id) -> {
+                                        Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                        if (intent.resolveActivity(getPackageManager()) != null) {
+                                            startActivity(intent);
+                                        }
+                                    });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+
                         }
                     }
                 });
