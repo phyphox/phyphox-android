@@ -322,6 +322,7 @@ public class ExpView implements Serializable{
         private String unit; //A string to display as unit
         private RGB color;
         private String positiveUnit, negativeUnit;
+        private String gpsFormatString = "";
         private GpsInput.GpsFormat gpsFormat;
 
         protected class Mapping {
@@ -416,6 +417,7 @@ public class ExpView implements Serializable{
 
         public void setGpsFormat(String gpsFormat) {
             if(gpsFormat != null){
+                this.gpsFormatString = gpsFormat;
                 if(gpsFormat.equalsIgnoreCase("degree-minutes")){
                     this.gpsFormat = GpsInput.GpsFormat.DEGREE_MINUTES;
                 } else if(gpsFormat.equalsIgnoreCase("degree-minutes-seconds")){
@@ -630,17 +632,47 @@ public class ExpView implements Serializable{
                 }
             }
 
+            sb.append("     var unitLabel = \""+ this.unit + "\";");
+            if(positiveUnit != null){
+                sb.append("     if(x >= 0 ){");
+                sb.append("         unitLabel =  \""+ positiveUnit + "\";");
+                sb.append("     };");
+            } else if(negativeUnit != null){
+                sb.append("     if(x < 0 ){");
+                sb.append("         unitLabel = \""+ negativeUnit + "\";");
+                sb.append("     };");
+            }
+
+            sb.append("     var degree = Math.floor(x);");
+            sb.append("     var decibelMinutes = Math.abs((x - degree) * 60);");
+            sb.append("     var integralMinutes = Math.floor(decibelMinutes);");
+            sb.append("     var decibelSeconds = Math.abs(decibelMinutes - integralMinutes) * 60;");
+            sb.append("     x =  x*" + factor + ";" );
+
+            if(gpsFormat == null){
+                sb.append("     x = x.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
+            } else {
+                if(gpsFormat == GpsInput.GpsFormat.DEGREE_MINUTES){
+                    sb.append("         x =  degree + \"° \" + decibelMinutes.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+")  +  \"' \"  ;");
+                } else if(gpsFormat == GpsInput.GpsFormat.DEGREE_MINUTES_SECONDS){
+                    sb.append("         x = degree + \"° \" + integralMinutes + \"' \" +  decibelSeconds.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+") + \"'' \"  ;");
+                } else {
+                    sb.append("         x = x.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
+                }
+            }
+
             sb.append("     var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];");
             sb.append("     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];");
             sb.append("     var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];");
             sb.append("     if (v == null) {");
-            sb.append("         v = (x*"+factor+").to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
-            sb.append("         valueUnit.textContent = \""+ this.unit + "\";");
+            sb.append("         v = x;");
+            sb.append("         valueUnit.textContent = unitLabel;");
             sb.append("     } else {");
             sb.append("         valueUnit.textContent = \"\";");
             sb.append("     }");
             sb.append("     valueNumber.textContent = v;");
             sb.append("}");
+
             return sb.toString();
         }
     }
