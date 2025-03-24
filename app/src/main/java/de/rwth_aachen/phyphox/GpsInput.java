@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
@@ -38,8 +37,8 @@ public class GpsInput implements Serializable {
     private int lastStatus = 0;
     private GpsGeoid geoid;
 
-    public enum GpsFormat {
-        FLOAT, DEGREE_MINUTES, DEGREE_MINUTES_SECONDS
+    public enum ValueFormat {
+        FLOAT, DEGREE_MINUTES, DEGREE_MINUTES_SECONDS, ASCII_
     }
     public boolean forceGNSS = false;
 

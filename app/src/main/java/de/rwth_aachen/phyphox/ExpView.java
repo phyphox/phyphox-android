@@ -55,6 +55,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -322,8 +323,7 @@ public class ExpView implements Serializable{
         private String unit; //A string to display as unit
         private RGB color;
         private String positiveUnit, negativeUnit;
-        private String gpsFormatString = "";
-        private GpsInput.GpsFormat gpsFormat;
+        private GpsInput.ValueFormat valueFormat;
 
         protected class Mapping {
             Double min = Double.NEGATIVE_INFINITY;
@@ -417,13 +417,14 @@ public class ExpView implements Serializable{
 
         public void setGpsFormat(String gpsFormat) {
             if(gpsFormat != null){
-                this.gpsFormatString = gpsFormat;
                 if(gpsFormat.equalsIgnoreCase("degree-minutes")){
-                    this.gpsFormat = GpsInput.GpsFormat.DEGREE_MINUTES;
+                    this.valueFormat = GpsInput.ValueFormat.DEGREE_MINUTES;
                 } else if(gpsFormat.equalsIgnoreCase("degree-minutes-seconds")){
-                    this.gpsFormat = GpsInput.GpsFormat.DEGREE_MINUTES_SECONDS;
+                    this.valueFormat = GpsInput.ValueFormat.DEGREE_MINUTES_SECONDS;
+                } else if (gpsFormat.equalsIgnoreCase("ascii")) {
+                    this.valueFormat = GpsInput.ValueFormat.ASCII_;
                 } else {
-                    this.gpsFormat = GpsInput.GpsFormat.FLOAT;
+                    this.valueFormat = GpsInput.ValueFormat.FLOAT;
                 }
             }
 
@@ -454,6 +455,9 @@ public class ExpView implements Serializable{
         @Override
         //This is a single value. So the updateMode is "single"
         protected String getUpdateMode() {
+            if(this.valueFormat == GpsInput.ValueFormat.ASCII_){
+                return "full";
+            }
             return "single";
         }
 
@@ -541,8 +545,11 @@ public class ExpView implements Serializable{
                     }
                     if (vStr.isEmpty()) {
                         double factoredValue = x * this.factor;
-                        if(gpsFormat != null){
-                            vStr = formatGeoCoordinate(factoredValue, gpsFormat);
+                        if(valueFormat != null){
+                            if(valueFormat == GpsInput.ValueFormat.ASCII_)
+                                vStr = convertDecimalToAscii(experiment.getBuffer(inputs.get(0)).getArray());
+                            else
+                                vStr = formatGeoCoordinate(factoredValue, valueFormat);
                         } else {
                             vStr = String.format(this.formatter, factoredValue);
                         }
@@ -554,7 +561,6 @@ public class ExpView implements Serializable{
                         } else {
                             uStr = this.unit;
                         }
-
 
                     }
                 }
@@ -579,15 +585,15 @@ public class ExpView implements Serializable{
          * @param outputFormat The desired output format for the coordinate.
          *                     Can be one of:
          *                     <ul>
-         *                         <li>{@link GpsInput.GpsFormat#DEGREE_MINUTES}: Degree and decimal minutes (e.g., 40° 26.767')</li>
-         *                         <li>{@link GpsInput.GpsFormat#DEGREE_MINUTES_SECONDS}: Degree, minutes, and decimal seconds (e.g., 40° 26' 46.020'')</li>
-         *                         <li>{@link GpsInput.GpsFormat#FLOAT}: Decimal degrees (e.g., 40.446)</li>
+         *                         <li>{@link GpsInput.ValueFormat#DEGREE_MINUTES}: Degree and decimal minutes (e.g., 40° 26.767')</li>
+         *                         <li>{@link GpsInput.ValueFormat#DEGREE_MINUTES_SECONDS}: Degree, minutes, and decimal seconds (e.g., 40° 26' 46.020'')</li>
+         *                         <li>{@link GpsInput.ValueFormat#FLOAT}: Decimal degrees (e.g., 40.446)</li>
          *                     </ul>
          * @return A string representation of the coordinate in the specified format.
          *         The string will be formatted to three decimal places for the decimal parts.
-         * @see GpsInput.GpsFormat
+         * @see GpsInput.ValueFormat
          */
-        public String formatGeoCoordinate(Double coordinate, GpsInput.GpsFormat outputFormat) {
+        private String formatGeoCoordinate(Double coordinate, GpsInput.ValueFormat outputFormat) {
             int degree = coordinate.intValue();
             double decimalMinutes = Math.abs((coordinate - degree) * 60);
             int integralMinutes = (int) decimalMinutes;
@@ -603,6 +609,20 @@ public class ExpView implements Serializable{
                 default:
                     return String.format(this.formatter, coordinate) + " " ;
             }
+        }
+
+        private String convertDecimalToAscii(Double[] decimals) {
+            StringBuilder sb = new StringBuilder();
+            for (Double decimal : decimals) {
+                if(decimal == null){
+                    continue;
+                }
+                int ascii = (int) Math.round(decimal);
+                if(ascii < 126 && ascii > 31){
+                    sb.append((char) ascii);
+                }
+            }
+            return sb.toString();
         }
 
         @Override
@@ -649,13 +669,29 @@ public class ExpView implements Serializable{
             sb.append("     var decibelSeconds = Math.abs(decibelMinutes - integralMinutes) * 60;");
             sb.append("     x =  x*" + factor + ";" );
 
-            if(gpsFormat == null){
+            if(valueFormat == null){
                 sb.append("     x = x.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
             } else {
-                if(gpsFormat == GpsInput.GpsFormat.DEGREE_MINUTES){
+                if(valueFormat == GpsInput.ValueFormat.DEGREE_MINUTES){
                     sb.append("         x =  degree + \"° \" + decibelMinutes.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+")  +  \"' \"  ;");
-                } else if(gpsFormat == GpsInput.GpsFormat.DEGREE_MINUTES_SECONDS){
+                } else if(valueFormat == GpsInput.ValueFormat.DEGREE_MINUTES_SECONDS){
                     sb.append("         x = degree + \"° \" + integralMinutes + \"' \" +  decibelSeconds.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+") + \"'' \"  ;");
+                } else if(valueFormat == GpsInput.ValueFormat.ASCII_){
+                    sb.append("         var decimals = data[\""+bufferName+"\"][\"data\"];");
+                    sb.append("         var x_ = \""+"\"  ;");
+                    sb.append("         decimals.forEach(decimal => {");
+                    sb.append("             if (decimal !== null && decimal !== undefined) {");
+                    sb.append("                 const intDecimal = Math.round(decimal);");
+                        sb.append("                 if (intDecimal > 31 && intDecimal < 126) {");
+                    sb.append("                     const asciiCharacter = String.fromCharCode(intDecimal);");
+                    sb.append("                     x_ += asciiCharacter;");
+                    sb.append("                 } else {");
+                    sb.append("                     console.log(`No valid ASCII character for decimal ${intDecimal}.`);");
+                    sb.append("                 }");
+                    sb.append("              }");
+                    sb.append("         x = x_;");
+                    sb.append("         });");
+
                 } else {
                     sb.append("         x = x.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
                 }
