@@ -2094,10 +2094,8 @@ public abstract class PhyphoxFile {
                             featureStr = "photometric";
                         else featureStr = featureStr.toLowerCase();
 
-                        CameraInput.PhyphoxCameraFeature feature;
                         switch (featureStr){
                             case "photometric": {
-                                feature = CameraInput.PhyphoxCameraFeature.Photometric;
                                 break;
                             }
                             default: {
@@ -2136,11 +2134,11 @@ public abstract class PhyphoxFile {
                                 new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                         };
 
-                        //String availableCameraSettings = getStringAttribute("setting");
-                        //ArrayList<ExposureSettingMode> availableSettings = CameraHelper.convertInputSettingToSettingMode(availableCameraSettings);
-
                         Vector<DataOutput> outputs = new Vector<>();
                         (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
+
+                        CameraManager cameraManager = (CameraManager) parent.getSystemService(Context.CAMERA_SERVICE);
+                        CameraHelper.updateCameraList(cameraManager);
 
                         experiment.cameraInput= new CameraInput(
                                 (float) x1,
@@ -2150,12 +2148,11 @@ public abstract class PhyphoxFile {
                                 outputs,
                                 experiment.dataLock,
                                 experiment.experimentTimeReference,
-                                feature,
                                 autoExposure,
                                 lockedSetting.isEmpty() ? null : lockedSetting,
                                 aeStrategy,
-                                thresholdAnalyzerThreshold);
-
+                                thresholdAnalyzerThreshold,
+                                cameraManager);
                         break;
 
                     }

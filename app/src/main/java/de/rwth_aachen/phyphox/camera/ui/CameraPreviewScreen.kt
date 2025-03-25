@@ -282,16 +282,16 @@ class CameraPreviewScreen(
         zoomSlider.value = zoomRatio.indexOf(1.0f).toFloat()
 
         changeZoomButtonColor(SelectedZoomButton.Default)
-
+/* TODO
         zoomSlider.addOnChangeListener { _, value, _ ->
 
             val mappedValue = zoomRatio.getOrElse(value.toInt()) { 1.0f }
-            val listenableZoomRatio: ListenableFuture<Void>? = cameraInput.camera?.cameraControl?.setZoomRatio(mappedValue)
+            // val listenableZoomRatio: ListenableFuture<Void>? = cameraInput.camera?.cameraControl?.setZoomRatio(mappedValue)
             val selectedButton = zoomButtons.firstOrNull { it.zoomValue == mappedValue }?.button ?: SelectedZoomButton.None
             changeZoomButtonColor(selectedButton)
             listenableZoomRatio?.cancel(true) // fix for zoom lagging
         }
-
+*/
         zoomSlider.setLabelFormatter { value: Float ->
             val mappedValue = zoomRatio.getOrElse(value.toInt()) { value }
             "${mappedValue}x"
@@ -322,13 +322,15 @@ class CameraPreviewScreen(
             SelectedZoomButton.FiveTimes to buttonZoomFiveTimes,
             SelectedZoomButton.TenTimes to buttonZoomTenTimes
         )
-
+/* TODO
         buttons[selectedButton]?.setOnClickListener {
             changeZoomButtonColor(SelectedZoomButton.None)
             cameraInput.camera?.cameraControl?.setZoomRatio(zoomRatioValue)
             zoomSlider.value = zoomRatio.indexOf(zoomRatioValue).toFloat()
             changeZoomButtonColor(selectedButton)
         }
+
+ */
     }
 
 

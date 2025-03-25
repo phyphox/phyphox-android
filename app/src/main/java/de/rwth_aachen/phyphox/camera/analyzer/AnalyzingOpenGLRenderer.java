@@ -36,7 +36,7 @@ import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen;
 import kotlinx.coroutines.flow.StateFlow;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, SurfaceTexture.OnFrameAvailableListener {
+public class AnalyzingOpenGLRenderer implements SurfaceTexture.OnFrameAvailableListener {
 
     public interface ExposureStatisticsListener {
         void newExposureStatistics(double minRGB, double maxRGB, double meanLuma);
@@ -293,10 +293,13 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         );
     }
 
-    @Override
-    public void onSurfaceRequested(@NonNull SurfaceRequest request) {
-        previewWidth = request.getResolution().getWidth();
-        previewHeight = request.getResolution().getHeight();
+    public interface CreateSurfaceCallback {
+        void onSurfaceReady(Surface surface);
+    }
+
+    public void createSurface(int w, int h, CreateSurfaceCallback callback) {
+        previewWidth = w;
+        previewHeight = h;
 
         executor.execute(
                 () -> {
@@ -306,14 +309,13 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     cameraSurfaceTexture = new SurfaceTexture(eglCameraTexture);
                     cameraSurfaceTexture.setDefaultBufferSize(previewWidth, previewHeight);
                     cameraSurfaceTexture.setOnFrameAvailableListener(this);
-                    Surface cameraSurface = new Surface(cameraSurfaceTexture);
-                    request.provideSurface(cameraSurface, executor, result -> {
-                        releaseCameraSurface(()->{});
-                        checkGLError("destroy camera surface");
-                    });
-                    checkGLError("onSurfaceRequested");
+                    cameraSurface = new Surface(cameraSurfaceTexture);
+
+                    checkGLError("new surface created");
+                    callback.onSurfaceReady(cameraSurface);
                 }
         );
+
         for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
             previewOutput.cameraPreviewScreen.get().updateTransformation(previewOutput.w, previewOutput.h);
         }

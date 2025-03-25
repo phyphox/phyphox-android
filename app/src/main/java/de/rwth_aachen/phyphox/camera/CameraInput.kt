@@ -1,58 +1,60 @@
 package de.rwth_aachen.phyphox.camera
 
-import android.annotation.SuppressLint
-import android.app.Application
+import android.graphics.ImageFormat
 import android.graphics.RectF
+import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraMetadata
+import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
 import android.util.Log
-import androidx.annotation.OptIn
+import android.util.Range
+import android.util.SizeF
+import android.view.Surface
 import androidx.annotation.RequiresApi
-import androidx.camera.camera2.interop.Camera2CameraControl
-import androidx.camera.camera2.interop.Camera2CameraInfo
-import androidx.camera.camera2.interop.Camera2Interop
-import androidx.camera.camera2.interop.CaptureRequestOptions
-import androidx.camera.camera2.interop.ExperimentalCamera2Interop
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.CameraX
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
-import com.google.common.util.concurrent.ListenableFuture
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
 import de.rwth_aachen.phyphox.camera.analyzer.AnalyzingOpenGLRenderer
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
-import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
-import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
-import de.rwth_aachen.phyphox.camera.model.CameraState
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper.getCameraList
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
-import kotlinx.coroutines.delay
+import de.rwth_aachen.phyphox.camera.model.CameraState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.Serializable
 import java.util.Vector
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.locks.Lock
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlin.math.abs
+import kotlin.math.atan
+import kotlin.math.round
 
 /*
 * Takes the essential input from the PhyphoxExperiment which are provided from XML.
 * */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsListener {
-    @Transient var camera: Camera? = null
-    @Transient private lateinit var cameraProviderListenableFuture: ListenableFuture<ProcessCameraProvider>
-    private var cameraProvider: ProcessCameraProvider? = null
+class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsListener, AnalyzingOpenGLRenderer.CreateSurfaceCallback {
+
+    private val cameraManager: CameraManager
+    private var cameraId: String? = null
+    var w: Int = 0
+    var h: Int = 0
+    private var camera: CameraDevice? = null
+
+    data class CameraFastParameters(
+        val highSpeedMode: Boolean,
+        val w: Int,
+        val h: Int,
+        val fps: Float
+    )
 
     // Holds and release the image analysis value (z) and time value (t) from data buffer
     var dataLuma: DataBuffer? = null
@@ -83,65 +85,201 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     @Transient var analyzingOpenGLRenderer: AnalyzingOpenGLRenderer? = null
 
-    @SuppressLint("UnsafeOptInUsageError")
-    fun setUpPreviewUseCase(): Preview.Builder {
-        val previewBuilder = Preview.Builder()
-        val extender = Camera2Interop.Extender(previewBuilder)
+    var lockedSettings: MutableMap<String, String>? = mutableMapOf()
 
-        extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+    // Status of the play and pause for image analysis
+    var measuring = false
 
-        return previewBuilder
+    lateinit var experimentTimeReference: ExperimentTimeReference
 
-    }
+    class CameraInputException(message: String) : Exception(message)
 
-    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
-    private fun setupWhiteBalance(cameraSettingState: CameraSettingState, extender:  Camera2Interop.Extender<Preview> ){
-        val currentMode = cameraSettingState.cameraCurrentWhiteBalanceMode
-        val currentValue = cameraSettingState.cameraCurrentWhiteBalanceManualValue
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    constructor(
+        x1: Float,
+        x2: Float,
+        y1: Float,
+        y2: Float,
+        buffers: Vector<DataOutput>,
+        lock: Lock,
+        experimentTimeReference: ExperimentTimeReference,
+        autoExposure: Boolean,
+        lockedSettings: String?,
+        aeStrategy: AEStrategy,
+        thresholdAnalyzerThreshold: Double,
+        cameraManager: CameraManager
+    ) {
 
-        when(currentMode) {
-            0 -> {
-                //extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
-                extender.setCaptureRequestOption(
-                        CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
-                )
-                if(currentValue.size == 4){
-                    extender.setCaptureRequestOption(
-                            CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(currentValue[0], currentValue[1],  currentValue[2], currentValue[3])
-                    )
-                }
-            }
-            else -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, currentMode)
+        this._cameraSettingState = MutableStateFlow<CameraSettingState>(
+            setDefaultCameraSettingValueIfAvailable(lockedSettings).copy(
+                cameraPassepartout = RectF(x1, y1, x2, y2),
+                autoExposure = autoExposure
+            )
+        )
 
+        cameraSettingState = _cameraSettingState
+
+        this.experimentTimeReference = experimentTimeReference
+
+        if (buffers.size > 0 && buffers[0] != null) dataT = buffers[0].buffer
+        if (buffers.size > 1 && buffers[1] != null) dataLuma = buffers[1].buffer
+        if (buffers.size > 2 && buffers[2] != null) dataLuminance = buffers[2].buffer
+        if (buffers.size > 3 && buffers[3] != null) dataHue = buffers[3].buffer
+        if (buffers.size > 4 && buffers[4] != null) dataSaturation = buffers[4].buffer
+        if (buffers.size > 5 && buffers[5] != null) dataValue = buffers[5].buffer
+        if (buffers.size > 6 && buffers[6] != null) dataThreshold = buffers[6].buffer
+
+        if (buffers.size > 7 && buffers[7] != null) shutterSpeedDataBuffer = buffers[7].buffer
+        if (buffers.size > 8 && buffers[8] != null) isoDataBuffer = buffers[8].buffer
+        if (buffers.size > 9 && buffers[9] != null) apertureDataBuffer = buffers[9].buffer
+
+        this.dataLock = lock
+        this.aeStrategy = aeStrategy
+        this.thresholdAnalyzerThreshold = thresholdAnalyzerThreshold
+        this.cameraManager = cameraManager
+
+        findBestCamera(-1)?.let {
+            setCamera(it)
         }
     }
 
-    fun startCameraFromProvider(lifecycleOwner: LifecycleOwner, application: Application) {
-        this.lifecycleOwner = lifecycleOwner
-        cameraProviderListenableFuture = ProcessCameraProvider.getInstance(application)
+    fun getFastParameters(cam: CameraCharacteristics): CameraFastParameters? {
+        var highSpeedMode = false
+        var maxFps = 0.0f
+        var w = 0
+        var h = 0
 
-        cameraProviderListenableFuture.addListener({
-            try {
-                cameraProvider = cameraProviderListenableFuture.get()
-                (cameraProvider as ProcessCameraProvider?)?.let {
-                    it.unbindAll()
-                    startCamera()
+        val targetResolution = 720*1280
+
+        val caps = cam.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES) ?: return null
+
+        if (CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO in caps) {
+            highSpeedMode = true
+            cam.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                ?.let { map ->
+                    map.highSpeedVideoSizes?.let { sizes ->
+                        for (size in sizes) {
+                            val resolution = size.width * size.height
+                            map.getHighSpeedVideoFpsRangesFor(size)?.let { fpsRanges ->
+                                for (fpsRange in fpsRanges) {
+                                    if (fpsRange.upper > maxFps || (fpsRange.upper.toFloat() == maxFps && abs(targetResolution - resolution) < abs(targetResolution - h*w))) {
+                                        maxFps = fpsRange.upper.toFloat()
+                                        w = size.width
+                                        h = size.height
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-            } catch (e: ExecutionException) {
-                e.printStackTrace()
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
+        } else {
+            cam.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                ?.let { map ->
+                    map.getOutputSizes(ImageFormat.YUV_420_888)?.let { sizes ->
+                        for (size in sizes) {
+                            val resolution = size.width * size.height
+                            val fps = 1_000_000_000.0f/map.getOutputMinFrameDuration(ImageFormat.YUV_420_888, size)
+                            if (fps > maxFps || (fps == maxFps && abs(targetResolution - resolution) < abs(targetResolution - h*w))) {
+                                maxFps = fps
+                                w = size.width
+                                h = size.height
+                            }
+                        }
+                    }
+                }
+        }
+
+        return CameraFastParameters(highSpeedMode = highSpeedMode, w = w, h = h, fps = maxFps)
+    }
+
+    fun findBestCamera(lensFacing: Int): String? {
+        Log.d("CameraInput", "findDefaultCamera")
+        var cameraId: String? = null
+
+        var bestMatchValue = -1
+
+        getCameraList()?.let {cams ->
+            for ((key, cam) in cams) {
+                var matchValue = 0
+                val foundFacing = cam.get(CameraCharacteristics.LENS_FACING)
+
+                //Strongly prefer requested direction. Only use the other direction if there absolutely is no other camera
+                if (lensFacing >= 0 && lensFacing == foundFacing)
+                    matchValue += 1000000000
+                //Slightly prefer back facing over front facing
+                if (foundFacing == CameraCharacteristics.LENS_FACING_BACK) {
+                    matchValue += 100000000
+                }
+                val caps = cam.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES) ?: continue
+
+                if (CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR !in caps) {
+                    continue
+                }
+
+                val fastParameters = getFastParameters(cam) ?: continue
+
+                if (fastParameters.highSpeedMode)
+                    matchValue += 1000000
+
+                matchValue += (fastParameters.fps * 100).toInt() + fastParameters.w*fastParameters.h / 10000   // maxFps is everything, but in a tie the higher resolution wins
+
+                val sensorSize = cam.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE) ?: SizeF(6.0f, 4.0f)
+
+                var bestFieldOfView = 0.0
+                cam.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
+                    ?.let { focalLengths ->
+                        for (focalLength in focalLengths) {
+                            val fieldOfView = 2.0 * atan(sensorSize.width / (focalLength * 2.0)) * 180.0 / Math.PI
+                            if (abs(fieldOfView - 73.7) < abs(bestFieldOfView - 73.7)) {
+                                bestFieldOfView = fieldOfView
+                            }
+                        }
+                        matchValue += 50 - abs(bestFieldOfView - 73.7).toInt() //Slightly prefer default zoom
+                    }
+
+                Log.d("CameraInput", "Found camera $key with ${fastParameters.fps} fps at ${fastParameters.w}x${fastParameters.h} pixels. (${bestFieldOfView}°) => Score $matchValue")
+
+                if (matchValue > bestMatchValue) {
+                    bestMatchValue = matchValue
+                    cameraId = key
+                }
+
             }
-        }, ContextCompat.getMainExecutor(application))
+        }
+
+        Log.d("CameraInput", "Selected camera $cameraId as best match.")
+
+        return cameraId
+    }
+
+    fun setCamera(cameraId: String) {
+        Log.d("CameraInput", "setCamera")
+        val chars = getCameraList()?.get(cameraId)
+        if (chars == null) {
+            Log.e("depthInput", "setCamera: Camera not found in CameraList.")
+            return
+        }
+
+        val parameters = getFastParameters(chars) ?: return
+        w = parameters.w
+        h = parameters.h
+
+        Log.d("CameraInput", "New resolution ${w}x${h}")
+        this.cameraId = cameraId
+    }
+
+    fun startCameraWithLifecycle(lifecycleOwner: LifecycleOwner) {
+        Log.d("CameraInput", "startCameraWithLifecycle")
+        this.lifecycleOwner = lifecycleOwner
 
         lifecycleOwner.lifecycleScope.launch {
             cameraSettingState.collectLatest { cameraSettingState ->
                 when (cameraSettingState.cameraState) {
                     CameraState.NONE -> Unit
                     CameraState.INITIALIZING -> {
-                        setupZoomControl()
+                        // setupZoomControl() TODO
                         loadAndSetupExposureSettingRanges()
-                        updateCaptureRequestOptions(cameraSettingState)
+                        // updateCaptureRequestOptions(cameraSettingState) TODO
                         _cameraSettingState.emit(
                                 _cameraSettingState.value.copy(
                                         cameraState = CameraState.RUNNING
@@ -150,48 +288,106 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     }
                     CameraState.RUNNING -> Unit
                     CameraState.RESTART -> {
-                        Log.d("TEST", "RESTART")
-                        cameraProvider?.unbindAll()
                         analyzingOpenGLRenderer?.releaseCameraSurface({
                             lifecycleOwner.lifecycleScope.launch {
-                                startCamera()
+                                try {
+                                    startCamera()
+                                } catch (e: CameraInputException) {
+                                    //TODO properly handle...
+                                    Log.e("CameraInput", "Error while starting the camer (${e.message})")
+                                }
                             }
-                        }
-                        )
+                        })
                     }
                 }
             }
         }
+
+        lifecycleOwner.lifecycleScope.launch {
+            startCamera()
+        }
     }
 
-    fun startCamera() {
-        Log.d("TEST", "startCamera")
+    suspend fun startCamera() {
+        Log.d("CameraInput", "startCamera")
+
+        val cameraId = cameraId ?: throw CameraInputException("No camera available")
+
         if (analyzingOpenGLRenderer == null)
-            analyzingOpenGLRenderer = AnalyzingOpenGLRenderer(this, dataLock, cameraSettingState, this)
+            analyzingOpenGLRenderer =
+                AnalyzingOpenGLRenderer(this, dataLock, cameraSettingState, this)
 
-        val cameraSelector = CameraHelper.cameraLensToSelector(cameraSettingState.value.currentLens)
+        // TODO: It might be a good idea to implement an ImageReader as it receives the exact timestamp...?
 
-        val preview = setUpPreviewUseCase().build().also {
-            it.setSurfaceProvider(analyzingOpenGLRenderer)
-        }
+        try {
+            this.camera = suspendCoroutine { cont ->
+                val callback = object : CameraDevice.StateCallback() {
+                    override fun onOpened(camera: CameraDevice) {
+                        cont.resume(camera)
+                    }
 
-        lifecycleOwner?.let {
-            camera = cameraProvider?.bindToLifecycle(
-                    it,
-                    cameraSelector,
-                    preview
-            )
+                    override fun onDisconnected(camera: CameraDevice) {
+                        camera.close()
+                        cont.resume(null)
+                    }
 
-            it.lifecycleScope.launch {
-                _cameraSettingState.emit(
-                        cameraSettingState.value.copy(
-                                cameraState = CameraState.INITIALIZING
-                        )
-                )
+                    override fun onError(camera: CameraDevice, error: Int) {
+                        Log.e("CameraInput", "Open camera error ($error).")
+                        camera.close()
+                        cont.resume(null)
+                    }
+                }
+                cameraManager.openCamera(cameraId, callback, null)
             }
+        } catch (e: SecurityException) {
+            throw CameraInputException("Missing permissions ($e).")
+        } catch (e: Exception) {
+            throw CameraInputException("Unknown exception ($e).")
         }
+
+        analyzingOpenGLRenderer?.createSurface(w, h, this)
     }
 
+    override fun onSurfaceReady(surface: Surface) {
+        lifecycleOwner?.lifecycleScope?.launch {
+            val camera = camera ?: throw CameraInputException("Failed to open the camera.")
+            val captureRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_MANUAL)
+
+            captureRequestBuilder.addTarget(surface)
+
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF)
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(240, 240))
+            captureRequestBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, 1_000_000_000/500)
+            captureRequestBuilder.set(CaptureRequest.SENSOR_FRAME_DURATION, 0)
+
+            val captureSession = suspendCoroutine { cont ->
+                val callback = object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        cont.resume(session)
+                    }
+
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        Log.e("CameraInput", "Camera capture session onConfigureFailed.")
+                        cont.resume(null)
+                    }
+                }
+                camera.createConstrainedHighSpeedCaptureSession(listOf(surface), callback, null)
+            } as CameraConstrainedHighSpeedCaptureSession
+
+            captureSession?.setRepeatingBurst(
+                captureSession.createHighSpeedRequestList(captureRequestBuilder.build()),
+                null,
+                null
+            ) // TODO Can the capture callback be used for timestamps?
+
+            _cameraSettingState.emit(
+                cameraSettingState.value.copy(
+                    cameraState = CameraState.INITIALIZING
+                )
+            )
+        }
+    }
+/* TODO
     fun switchCamera() {
         val camLensFacing = cameraSettingState.value.currentLens
         // Toggle the lens facing
@@ -235,31 +431,27 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 cameraMaxOpticalZoom = maxOpticalZoom?.last()
         )
     }
+    */
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     fun loadAndSetupExposureSettingRanges() {
-        val cameraInfo = camera?.cameraInfo?.let { Camera2CameraInfo.from(it) }
-
         // from the cameraCharacteristic, isoRange is acquired which is in the form of of Range<Int>,
         // which is then mapped into List<String>
-        val isoRange =
-                cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE)
-                        .let { isoRange_ ->
-                            isoRange_?.lower?.let { lower ->
-                                isoRange_.upper?.let { upper ->
-                                    CameraHelper.isoRange(lower, upper).map { it.toString() }
-                                }
-                            }
-                        }
+        val isoRange = getCameraList()?.get(cameraId)?.get(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE)?.let {
+            isoRange ->
+                isoRange.lower?.let { lower ->
+                    isoRange.upper?.let { upper ->
+                        CameraHelper.isoRange(lower, upper).map { it.toString() }
+                    }
+                }
+        }
 
         // from the cameraCharacteristic, shutter speed range is acquired which is in the form of of Range<Long>,
         // which is then mapped into List<String>
         val shutterSpeedRange =
-                cameraInfo?.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
-                        .let { shutterSpeedRange_ ->
-                            shutterSpeedRange_?.lower?.let { lower ->
-                                shutterSpeedRange_.upper?.let { upper ->
+            getCameraList()?.get(cameraId)?.get(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
+                        .let { shutterSpeedRange ->
+                            shutterSpeedRange?.lower?.let { lower ->
+                                shutterSpeedRange.upper?.let { upper ->
                                     CameraHelper.shutterSpeedRange(lower, upper)
                                             .map { "" + it.numerator + "/" + it.denominator }
                                 }
@@ -270,16 +462,16 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         // from the cameraCharacteristic, aperture range is acquired which is in the form of of FloatArray,
         // which is then mapped into List<String>
         val apertureRange =
-                cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)
-                        .let { apertureRange_ ->
-                            apertureRange_?.map { it.toString() }
+            getCameraList()?.get(cameraId)?.get(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)
+                        .let { apertureRange ->
+                            apertureRange?.map { it.toString() }
                         }
-        val fixedAperture = if (apertureRange?.contains(cameraSettingState.value.currentApertureValue.toString()) ?: true) cameraSettingState.value.currentApertureValue else apertureRange!!.first().toFloat()
+        val fixedAperture = if (apertureRange?.contains(cameraSettingState.value.currentApertureValue.toString()) != false) cameraSettingState.value.currentApertureValue else apertureRange.first().toFloat()
 
         val exposureRange = CameraHelper.getExposureValuesDefaultList()
 
-        val awbAvailableModes = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES) ?: intArrayOf()
-        val maxRegionsAWB = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB) ?: 0
+        val awbAvailableModes = getCameraList()?.get(cameraId)?.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES) ?: intArrayOf()
+        val maxRegionsAWB = getCameraList()?.get(cameraId)?.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB) ?: 0
 
         val currentCameraSettingValueState = _cameraSettingState.value
         val newCameraSettingValueState = currentCameraSettingValueState.copy(
@@ -297,6 +489,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     }
 
+/* TODO
     fun setAutoExposure(autoExposure: Boolean) {
         lifecycleOwner?.lifecycleScope?.launch {
             _cameraSettingState.emit(
@@ -400,67 +593,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             ))
         }
     }
-
-    // List of buffers (variables) that is provided in the xml
-    lateinit var buffers: Vector<DataOutput>
-
-    lateinit var cameraFeature: PhyphoxCameraFeature
-    var lockedSettings: MutableMap<String, String>? = mutableMapOf()
-
-    // Status of the play and pause for image analysis
-    var measuring = false
-
-    lateinit var experimentTimeReference: ExperimentTimeReference
-
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    constructor(
-            x1: Float,
-            x2: Float,
-            y1: Float,
-            y2: Float,
-            buffers: Vector<DataOutput>,
-            lock: Lock,
-            experimentTimeReference: ExperimentTimeReference,
-            cameraFeature: PhyphoxCameraFeature,
-            autoExposure: Boolean,
-            lockedSettings: String?,
-            aeStrategy: AEStrategy,
-            thresholdAnalyzerThreshold: Double
-    ) {
-
-        this._cameraSettingState = MutableStateFlow<CameraSettingState>(
-                setDefaultCameraSettingValueIfAvailable(lockedSettings).copy(
-                        cameraPassepartout = RectF(x1, y1, x2, y2),
-                        autoExposure = autoExposure
-                )
-        )
-
-        cameraSettingState = _cameraSettingState
-
-        this.buffers = buffers
-        this.experimentTimeReference = experimentTimeReference
-
-        if (buffers.size > 0 && buffers[0] != null) dataT = buffers[0].buffer
-        if (buffers.size > 1 && buffers[1] != null) dataLuma = buffers[1].buffer
-        if (buffers.size > 2 && buffers[2] != null) dataLuminance = buffers[2].buffer
-        if (buffers.size > 3 && buffers[3] != null) dataHue = buffers[3].buffer
-        if (buffers.size > 4 && buffers[4] != null) dataSaturation = buffers[4].buffer
-        if (buffers.size > 5 && buffers[5] != null) dataValue = buffers[5].buffer
-        if (buffers.size > 6 && buffers[6] != null) dataThreshold = buffers[6].buffer
-
-        if (buffers.size > 7 && buffers[7] != null) shutterSpeedDataBuffer = buffers[7].buffer
-        if (buffers.size > 8 && buffers[8] != null) isoDataBuffer = buffers[8].buffer
-        if (buffers.size > 9 && buffers[9] != null) apertureDataBuffer = buffers[9].buffer
-
-        this.dataLock = lock
-        this.aeStrategy = aeStrategy
-        this.thresholdAnalyzerThreshold = thresholdAnalyzerThreshold
-    }
-
-    enum class PhyphoxCameraFeature {
-        Photometric, ColorDetector, Spectroscopy, MotionAnalysis, OCR
-    }
-
+*/
     fun start() {
         measuring = true
         analyzingOpenGLRenderer?.measuring = true
@@ -563,7 +696,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                         currentShutterValue = shutter
                 )
 
-                updateCaptureRequestOptions(newCameraSettingState)
+                //updateCaptureRequestOptions(newCameraSettingState) TODO
 
                 lifecycleOwner?.lifecycleScope?.launch {
                     _cameraSettingState.emit(

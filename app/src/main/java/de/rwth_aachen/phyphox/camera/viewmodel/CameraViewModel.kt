@@ -215,7 +215,7 @@ class CameraViewModel() : ViewModel() {
             // To switch the camera lens, there has to be at least 2 camera lenses
             if (cameraUiState.value.availableCameraLens.size == 1) return
 
-            cameraInput.switchCamera()
+            // cameraInput.switchCamera() TODO
         }
     }
 
@@ -253,7 +253,7 @@ class CameraViewModel() : ViewModel() {
     }
 
     fun changeAutoExposure(autoExposure: Boolean) {
-        cameraInput.setAutoExposure(autoExposure)
+        // cameraInput.setAutoExposure(autoExposure) TODO
     }
 
 
@@ -274,11 +274,11 @@ class CameraViewModel() : ViewModel() {
     }
 
     fun changeWhiteBalance(value: FloatArray) {
-        cameraInput.setWhiteBalance(value)
+        // cameraInput.setWhiteBalance(value) TODO
     }
 
     fun updateCameraSettingValue(value: String, settingMode: CameraSettingMode) {
-        cameraInput.updateCameraSettingValue(value, settingMode)
+        // cameraInput.updateCameraSettingValue(value, settingMode) TODO
     }
 
     fun updateCameraOverlay() {
@@ -300,7 +300,7 @@ class CameraViewModel() : ViewModel() {
     }
 
     fun setPassepartout(passepartout: RectF) {
-        cameraInput.setPassepartout(passepartout)
+        // cameraInput.setPassepartout(passepartout) TODO
         updateCameraOverlay()
     }
 
