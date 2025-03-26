@@ -9,6 +9,7 @@ import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
 import android.util.Log
+import android.util.Range
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraControl
@@ -84,36 +85,26 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     @Transient var analyzingOpenGLRenderer: AnalyzingOpenGLRenderer? = null
 
     @SuppressLint("UnsafeOptInUsageError")
-    fun setUpPreviewUseCase(): Preview.Builder {
-        val previewBuilder = Preview.Builder()
-        val extender = Camera2Interop.Extender(previewBuilder)
+    fun setUpPreviewUseCase(cameraSelector: CameraSelector): Preview.Builder? {
+        lifecycleOwner?.let { lifecycleOwner ->
+            cameraProvider?.unbindAll()
+            val camera = cameraProvider?.bindToLifecycle(lifecycleOwner, cameraSelector) ?: return null
+            val ranges = Camera2CameraInfo.from(camera.cameraInfo).getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+            val maxFpsRange = ranges?.toList()?.maxBy { it.upper * 1000 + it.lower } ?: return null
+            Log.d("CameraInput", "Aiming for fps range $maxFpsRange")
+            cameraProvider?.unbindAll()
 
-        extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+            val previewBuilder = Preview.Builder()
+                .setTargetFrameRate(maxFpsRange) //Just as fast as possible
+            val extender = Camera2Interop.Extender(previewBuilder)
 
-        return previewBuilder
+            extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+            extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, maxFpsRange)
+            extender.setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 0) //Just as fast as possible
 
-    }
-
-    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
-    private fun setupWhiteBalance(cameraSettingState: CameraSettingState, extender:  Camera2Interop.Extender<Preview> ){
-        val currentMode = cameraSettingState.cameraCurrentWhiteBalanceMode
-        val currentValue = cameraSettingState.cameraCurrentWhiteBalanceManualValue
-
-        when(currentMode) {
-            0 -> {
-                //extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
-                extender.setCaptureRequestOption(
-                        CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
-                )
-                if(currentValue.size == 4){
-                    extender.setCaptureRequestOption(
-                            CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(currentValue[0], currentValue[1],  currentValue[2], currentValue[3])
-                    )
-                }
-            }
-            else -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, currentMode)
-
+            return previewBuilder
         }
+        return null
     }
 
     fun startCameraFromProvider(lifecycleOwner: LifecycleOwner, application: Application) {
@@ -150,7 +141,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     }
                     CameraState.RUNNING -> Unit
                     CameraState.RESTART -> {
-                        Log.d("TEST", "RESTART")
                         cameraProvider?.unbindAll()
                         analyzingOpenGLRenderer?.releaseCameraSurface({
                             lifecycleOwner.lifecycleScope.launch {
@@ -165,13 +155,17 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     }
 
     fun startCamera() {
-        Log.d("TEST", "startCamera")
         if (analyzingOpenGLRenderer == null)
             analyzingOpenGLRenderer = AnalyzingOpenGLRenderer(this, dataLock, cameraSettingState, this)
 
         val cameraSelector = CameraHelper.cameraLensToSelector(cameraSettingState.value.currentLens)
 
-        val preview = setUpPreviewUseCase().build().also {
+        val previewBuilder = setUpPreviewUseCase(cameraSelector) ?: run {
+            Log.e("CameraInput", "Could not create preview builder.")
+            return
+        }
+
+        val preview = previewBuilder.build().also {
             it.setSurfaceProvider(analyzingOpenGLRenderer)
         }
 
