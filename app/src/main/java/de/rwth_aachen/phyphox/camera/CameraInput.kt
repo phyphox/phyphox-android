@@ -10,6 +10,7 @@ import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
 import android.util.Log
 import android.util.Range
+import android.util.Size
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraControl
@@ -21,6 +22,8 @@ import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraX
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -94,8 +97,13 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             Log.d("CameraInput", "Aiming for fps range $maxFpsRange")
             cameraProvider?.unbindAll()
 
+            val resolutionSelector = ResolutionSelector.Builder()
+                .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
+                .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                .build()
             val previewBuilder = Preview.Builder()
-                .setTargetFrameRate(maxFpsRange) //Just as fast as possible
+                .setTargetFrameRate(maxFpsRange)
+                .setResolutionSelector(resolutionSelector)
             val extender = Camera2Interop.Extender(previewBuilder)
 
             extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)

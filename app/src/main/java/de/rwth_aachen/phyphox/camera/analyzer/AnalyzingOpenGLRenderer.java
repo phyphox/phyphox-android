@@ -297,6 +297,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     public void onSurfaceRequested(@NonNull SurfaceRequest request) {
         previewWidth = request.getResolution().getWidth();
         previewHeight = request.getResolution().getHeight();
+        Log.d("AnalyzingOpenGLRenderer", "Surface requested: " + previewWidth + "x" + previewHeight);
 
         executor.execute(
                 () -> {
