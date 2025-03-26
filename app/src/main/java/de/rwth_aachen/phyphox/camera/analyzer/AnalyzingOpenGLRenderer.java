@@ -231,7 +231,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     }
 
     void draw() {
-        double t = experimentTimeReference.getExperimentTime();
         CameraSettingState state = cameraSettingValueState.getValue();
         executor.execute(
                 () -> {
@@ -243,6 +242,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     long start = System.nanoTime();
 
                     cameraSurfaceTexture.updateTexImage();
+                    double t = experimentTimeReference.getExperimentTimeFromEvent(cameraSurfaceTexture.getTimestamp());
 
                     float[] camMatrix = new float[16];
                     cameraSurfaceTexture.getTransformMatrix(camMatrix);
