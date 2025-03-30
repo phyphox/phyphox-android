@@ -606,8 +606,9 @@ public abstract class Helper {
         return WifiManager.calculateSignalLevel(rssi, MAX_SIGNAL_LEVEL);
     }
 
-    public static int getSystemVolume(Context context){
-        final int NO_AUDIO_LEVEL = 0;
+    public static double getSystemVolume(Context context){
+        final int NO_AUDIO_LEVEL = -1;
+
         if(context == null) return NO_AUDIO_LEVEL;
 
         AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -615,7 +616,7 @@ public abstract class Helper {
 
         int volumeLevel = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         int maxVolumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        return (volumeLevel / maxVolumeLevel) * 100;
 
+        return (volumeLevel / (double)maxVolumeLevel) * 100.0;
     }
 }
