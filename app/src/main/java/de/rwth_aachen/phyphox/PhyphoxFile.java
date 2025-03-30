@@ -1608,9 +1608,11 @@ public abstract class PhyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, null, ats)).process(); //Load inputs and outputs
 
-                    String outputValue = (dynamicBuffer != null) ? dynamicBuffer : outputs.get(0).buffer.name;
+                    Vector<String> inStrings = new Vector<>();
+                    if (dynamicBuffer != null)
+                        inStrings.add(dynamicBuffer);
 
-                    ExpView.buttonElement be = newView.new buttonElement(label, outputValue, null, parent.getResources()); //This one is user-event driven and does not regularly read or write values
+                    ExpView.buttonElement be = newView.new buttonElement(label, null, inStrings, parent.getResources()); //This one is user-event driven and does not regularly read or write values
                     be.setIO(inputs, outputs);
                     Vector<String> triggers = new Vector<>();
                     for (ioBlockParser.AdditionalTag at : ats) {
