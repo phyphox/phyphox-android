@@ -920,25 +920,8 @@ public class ExperimentList extends AppCompatActivity {
                                     category = xpp.nextText().trim();
                                 break;
                             case "link": //This should give us a link if the experiment is only a dummy entry with a link
-
-                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1){
-                                    //link = xpp.nextText().trim();
-                                    if(xpp.getAttributeValue(null, "label") != null && xpp.getAttributeValue(null, "label").equals("Wiki")){
-                                        link = xpp.nextText().trim();
-                                        shortInfo.links.put("Wiki", link);
-                                        Log.d("loadExperimentInfo", "Found link: WIKI " + link);
-                                    } else if(xpp.getAttributeValue(null, "label") != null && xpp.getAttributeValue(null, "label").equals("Video")){
-                                        link = xpp.nextText().trim();
-                                        shortInfo.links.put("Video", link);
-                                        Log.d("loadExperimentInfo", "Found link: Video " + link);
-                                    } else if(xpp.getAttributeValue(null, "label") != null && xpp.getAttributeValue(null, "label").equals("x / y / z")){
-                                        link = xpp.nextText().trim();
-                                        shortInfo.links.put("x / y / z", link);
-                                        Log.d("loadExperimentInfo", "Found link: x / y / z " + link);
-                                    }
-
-                                } //May be in phyphox root or from a valid translation
-
+                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
+                                    link = xpp.nextText().trim();
                                 break;
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) { //May be in phyphox root or from a valid translation
