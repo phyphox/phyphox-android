@@ -1742,7 +1742,7 @@ public abstract class PhyphoxFile {
                 }
                 case "toggle": {
 
-                    String defaultValue = getStringAttribute("defaultValue");
+                    double defaultValue = getDoubleAttribute("default", 0.0);
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
@@ -1758,7 +1758,7 @@ public abstract class PhyphoxFile {
 
                 }
                 case "dropdown": {
-                    String defaultValue = getStringAttribute("defaultValue");
+                    double defaultValue = getDoubleAttribute("default", 0.0);
                     RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
 
                     Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
@@ -1795,11 +1795,11 @@ public abstract class PhyphoxFile {
 
                 }
                 case "slider" : {
-                    String defaultValue = getStringAttribute("defaultValue");
-                    String minValue = getStringAttribute("minValue");
-                    String maxValue = getStringAttribute("maxValue");
-                    String stepSize = getStringAttribute("stepSize");
-                    String precision = getStringAttribute("precision");
+                    double defaultValue = getDoubleAttribute("default", 0.0);
+                    double minValue = getDoubleAttribute("minValue", 0.0);
+                    double maxValue = getDoubleAttribute("maxValue", 1.0);
+                    double stepSize = getDoubleAttribute("stepSize", 1.0);
+                    int precision = getIntAttribute("precision", 2);
                     String type = getStringAttribute("type");
                     Boolean showValue = getBooleanAttribute("showValue", true);
                     RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));

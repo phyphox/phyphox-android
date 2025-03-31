@@ -55,7 +55,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -224,15 +223,9 @@ public class ExpView implements Serializable{
         //  partial     the element takes an array, but new values are only appended, so the element
         //              only needs those elements of its array, that have not already been
         //              transferred
-        //  input       the element is a single value input element and will also return a single
-        //              value
+        //  input       the element is a single value input element and will write to buffers in
+        //              onMayWriteToBuffers
         protected abstract String getUpdateMode();
-
-        //getValue is the function that retrieves a value from an input element so the main process
-        //can append it to the output buffer
-        protected double getValue() {
-            return 0.;
-        }
 
         //This function returns a JavaScript function. The argument of this function will receive
         //an array that contains fresh data to be shown to the user.
@@ -1078,7 +1071,6 @@ public class ExpView implements Serializable{
                     "</div>";
         }
 
-        @Override
         //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
         //use that is consistent with that of the valueElement
         protected double getValue() {
@@ -2816,7 +2808,7 @@ public class ExpView implements Serializable{
 
     public class toggleElement extends  expViewElement implements  Serializable {
 
-        String defaultValue;
+        double defaultValue;
 
         private boolean triggered = true;
 
@@ -2867,15 +2859,12 @@ public class ExpView implements Serializable{
             row.addView(labelView);
             row.addView(switchViewRow);
 
-            boolean isSwitchedOn = Integer.parseInt(this.defaultValue) == 1;
+            boolean isSwitchedOn = this.defaultValue != 0.0;
             switchView.setChecked(isSwitchedOn);
 
-            switchView.setOnCheckedChangeListener(new SwitchMaterial.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    compoundButton.setChecked(b);
-                    triggered = true;
-                }
+            switchView.setOnCheckedChangeListener((compoundButton, b) -> {
+                compoundButton.setChecked(b);
+                triggered = true;
             });
 
             rootView = row;
@@ -2886,7 +2875,7 @@ public class ExpView implements Serializable{
 
         }
 
-        public void setDefaultValue(String defaultValue){
+        public void setDefaultValue(double defaultValue){
             this.defaultValue = defaultValue;
 
         }
@@ -2953,12 +2942,6 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        protected double getValue() {
-            switchView.isChecked();
-            return  Double.parseDouble(defaultValue);
-        }
-
-        @Override
         protected String getUpdateMode() {
             return "single";
         }
@@ -2966,7 +2949,7 @@ public class ExpView implements Serializable{
 
     public class dropDownElement extends expViewElement implements Serializable {
 
-        String defaultValue;
+        double defaultValue;
 
         private RGB color;
 
@@ -2990,7 +2973,7 @@ public class ExpView implements Serializable{
             this.mappings.add(mapping);
         }
 
-        public void setDefaultValue(String defaultValue) {
+        public void setDefaultValue(double defaultValue) {
             this.defaultValue = defaultValue;
         }
 
@@ -3076,7 +3059,6 @@ public class ExpView implements Serializable{
             return "single";
         }
 
-        @Override
         protected double getValue() {
             return  Double.parseDouble(mappings.get(spinner.getSelectedItemPosition()).value);
         }
@@ -3187,11 +3169,10 @@ public class ExpView implements Serializable{
 
     public class sliderElement extends expViewElement implements Serializable {
 
-        final int DEFAULT_VALUE = 0, MIN_VALUE = 1, MAX_VALUE = 2;
-        private String defaultValue, maxValue, minValue, stepSize, precision;
+        private double defaultValue, maxValue, minValue, stepSize;
+        private int precision;
         private SliderType type;
         private Boolean showValue;
-        private  boolean getUpperValue = false; // to know if the range slider's getValue currently points to lower or upper value
         private RGB color;
         boolean triggered = false;
         TextView valueTv;
@@ -3202,23 +3183,23 @@ public class ExpView implements Serializable{
             super(label, valueOutput, inputs, res);
         }
 
-        public void setDefaultValue(String defaultValue) {
+        public void setDefaultValue(double defaultValue) {
             this.defaultValue = defaultValue;
         }
 
-        public void setMaxValue(String maxValue) {
+        public void setMaxValue(double maxValue) {
             this.maxValue = maxValue;
         }
 
-        public void setMinValue(String minValue) {
+        public void setMinValue(double minValue) {
             this.minValue = minValue;
         }
 
-        public void setStepSize(String stepSize) {
+        public void setStepSize(double stepSize) {
             this.stepSize = stepSize;
         }
 
-        public void setPrecision(String precision) { this.precision = precision; }
+        public void setPrecision(int precision) { this.precision = precision; }
 
         public void setType(SliderType type) { this.type = type; }
 
@@ -3231,10 +3212,6 @@ public class ExpView implements Serializable{
         @Override
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
             super.createView(ll, c, res, parent, experiment);
-
-            defaultValue = getValue(DEFAULT_VALUE);
-            minValue = getValue(MIN_VALUE);
-            maxValue = getValue(MAX_VALUE);
 
             ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -3271,24 +3248,24 @@ public class ExpView implements Serializable{
             valueTv.setPadding((int) labelSize / 2, 0, 0, 0);
             valueTv.setTypeface(null, Typeface.BOLD);
             valueTv.setTextColor(color.autoLightColor(res).intColor());
-            valueTv.setText(defaultValue);
+            valueTv.setText(numberFormatter(defaultValue));
 
             TextView minValueLabel = new TextView(c);
             minValueLabel.setLayoutParams(getTableRowParams(0.1f));
             minValueLabel.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             minValueLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize / 1.5f);
             minValueLabel.setTextColor(color.autoLightColor(res).intColor());
-            minValueLabel.setText(minValue);
+            minValueLabel.setText(numberFormatter(minValue));
 
             TextView maxValueLabel = new TextView(c);
             maxValueLabel.setLayoutParams(getTableRowParams(0.1f));
             maxValueLabel.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             maxValueLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize / 1.5f);
             maxValueLabel.setTextColor(color.autoLightColor(res).intColor());
-            maxValueLabel.setText(maxValue);
+            maxValueLabel.setText(numberFormatter(maxValue));
 
             //Add label and value to the row
-            if(showValue){
+            if (showValue) {
                 row.addView(labelView);
                 row.addView(valueTv);
             }
@@ -3299,12 +3276,17 @@ public class ExpView implements Serializable{
             if(type == SliderType.Range){
                 View rangeSliderView = inflater.inflate(R.layout.range_slider, null);
                 rangeSlider = rangeSliderView.findViewById(R.id.sliderView);
-                rangeSlider.setValueFrom(Float.parseFloat(minValue));
-                rangeSlider.setValueTo(Float.parseFloat(maxValue));
                 rangeSlider.setLabelBehavior(LabelFormatter.LABEL_GONE);
                 rangeSlider.setLayoutParams(getTableRowParams(0.9f));
-                if(!Objects.equals(stepSize, "0"))
-                    rangeSlider.setStepSize(Float.parseFloat(stepSize));
+                if(stepSize != 0.0) {
+                    //Note: Android's requirements for the step size to perfectly fit into the given range seems rather restrictive and is quite prone to errors given the limited floating point precision and values converted from user strings. So, if we need steps, we make our own and can make sure that the behavior matches our iOS implementation.
+                    rangeSlider.setValueFrom(0);
+                    rangeSlider.setValueTo((float)(Math.ceil(maxValue/stepSize) - Math.floor(minValue/stepSize)));
+                    rangeSlider.setStepSize(1);
+                } else {
+                    rangeSlider.setValueFrom((float)minValue);
+                    rangeSlider.setValueTo((float)maxValue);
+                }
                 secondRow.addView(rangeSlider);
 
                 rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
@@ -3312,23 +3294,28 @@ public class ExpView implements Serializable{
                     float lowerValue = slider.getValues().get(0);
                     float upperValue = slider.getValues().get(1);
                     if(showValue)
-                        valueTv.setText(getFormattedRangeValue(lowerValue, upperValue));
+                        valueTv.setText(getFormattedRangeValue(getSteppedValue(lowerValue), getSteppedValue(upperValue)));
                     rangeSlider.setValues(lowerValue, upperValue);
                 });
 
             }  else {
                 View view = inflater.inflate(R.layout.slider, null);
                 slider = view.findViewById(R.id.sliderView);
-                slider.setValueFrom(Float.parseFloat(minValue));
-                slider.setValueTo(Float.parseFloat(maxValue));
-                if(!Objects.equals(stepSize, "0"))
-                    slider.setStepSize(Float.parseFloat(stepSize));
+                if(stepSize != 0.0) {
+                    //Note: Android's requirements for the step size to perfectly fit into the given range seems rather restrictive and is quite prone to errors given the limited floating point precision and values converted from user strings. So, if we need steps, we make our own and can make sure that the behavior matches our iOS implementation.
+                    slider.setValueFrom(0);
+                    slider.setValueTo((float)(Math.ceil(maxValue/stepSize) - Math.floor(minValue/stepSize)));
+                    slider.setStepSize(1);
+                } else {
+                    slider.setValueFrom((float)minValue);
+                    slider.setValueTo((float)maxValue);
+                }
                 slider.setLabelBehavior(LabelFormatter.LABEL_GONE);
-                slider.setValue(Float.parseFloat(defaultValue));
+                slider.setValue((float)defaultValue);
                 slider.setLayoutParams(getTableRowParams(0.9f));
                 slider.addOnChangeListener((slider, value, fromUser) -> {
                     triggered = true;
-                    valueTv.setText(numberFormatter(String.valueOf(value)));
+                    valueTv.setText(numberFormatter(getSteppedValue(value)));
                     slider.setValue(value);
                 });
                 secondRow.addView(slider);
@@ -3351,64 +3338,27 @@ public class ExpView implements Serializable{
                     weight);
         }
 
-        private String getFormattedRangeValue(Float lowerValue, Float upperValue){
-            return numberFormatter(String.valueOf(lowerValue)) +
+        private String getFormattedRangeValue(double lowerValue, double upperValue){
+            return numberFormatter(lowerValue) +
                     " - " +
-                    numberFormatter(String.valueOf(upperValue));
+                    numberFormatter(upperValue);
         }
 
-        private String numberFormatter(String value){
+        private String numberFormatter(double value){
            return BigDecimal
-                   .valueOf(Double.parseDouble(value))
-                   .setScale(Integer.parseInt(precision), RoundingMode.HALF_UP)
+                   .valueOf(value)
+                   .setScale(precision, RoundingMode.HALF_UP)
                    .toString();
         }
 
-        // Method to adjust the min value to the nearest multiple of stepSize, also for default
-        public double adjustMin(double min, int stepSize) {
-            // Calculate the next multiple of stepSize greater than or equal to min
-            return Math.ceil(min / stepSize) * stepSize;
-        }
-
-        // Method to adjust the max value to the nearest multiple of stepSize
-        public double adjustMax(double max, int stepSize) {
-            // Calculate the previous multiple of stepSize less than or equal to max
-            return Math.floor( max / stepSize) * stepSize;
-        }
-
-        // Method to check if stepSize is a factor of num
-        public boolean isStepSizeFactor(double num, int stepSize) {
-            return num % stepSize == 0;
-        }
-
-        protected String getValue(int valueType){
-            String value = "";
-            switch (valueType){
-                case MIN_VALUE: value = minValue; break;
-                case MAX_VALUE: value = maxValue; break;
-                default: value = defaultValue; break;
-            }
-
-            if(Objects.equals(stepSize, "0"))
-                return numberFormatter(value);
-
-            double value_ = Double.parseDouble(value);
-            int stepSize_ = Integer.parseInt(stepSize);
-
-            if (isStepSizeFactor(value_, stepSize_))
-                return numberFormatter(String.valueOf(value_));
+        protected double getSteppedValue(double value) {
+            double steppedVal;
+            if (stepSize == 0.0)
+                steppedVal = value;
             else
-                return numberFormatter(String.valueOf((valueType == MAX_VALUE) ?
-                        adjustMax(value_, stepSize_) :
-                        adjustMin(value_, stepSize_)));
-        }
+                steppedVal = (value + Math.floor(minValue / stepSize)) * stepSize;
 
-        @Override
-        protected double getValue() {
-            if(type == SliderType.Range)
-                return (!getUpperValue) ? rangeSlider.getValues().get(0) : rangeSlider.getValues().get(1);
-            else
-                return slider.getValue();
+            return Math.min(Math.max(steppedVal, minValue), maxValue);
         }
 
         @Override
@@ -3417,16 +3367,32 @@ public class ExpView implements Serializable{
                 return false;
             triggered = false;
 
-            String value = inputs.get(0);
-            experiment.getBuffer(value).clear(false);
-            experiment.getBuffer(value).append(getValue());
+            DataBuffer mainBuffer = null;
+            if (inputs.size() > 0) {
+                mainBuffer = experiment.getBuffer(inputs.get(0));
+            }
 
             if(type == SliderType.Range){
-                String upperValue = inputs.get(1);
-                experiment.getBuffer(upperValue).clear(false);
-                getUpperValue = true;
-                experiment.getBuffer(upperValue).append(getValue());
-                getUpperValue = false;
+                List<Float> values = rangeSlider.getValues();
+                if (values.size() == 2) {
+                    if (mainBuffer != null) {
+                        mainBuffer.clear(false);
+                        mainBuffer.append(getSteppedValue(values.get(0)));
+                    }
+                    DataBuffer upperBuffer = null;
+                    if (inputs.size() > 1) {
+                        upperBuffer = experiment.getBuffer(inputs.get(1));
+                    }
+                    if (upperBuffer != null) {
+                        upperBuffer.clear(false);
+                        upperBuffer.append(getSteppedValue(values.get(1)));
+                    }
+                }
+            } else {
+                if (mainBuffer != null) {
+                    mainBuffer.clear(false);
+                    mainBuffer.append(getSteppedValue(slider.getValue()));
+                }
             }
             return true;
         }
@@ -3437,22 +3403,46 @@ public class ExpView implements Serializable{
                 return;
             needsUpdate = false;
 
+            if (inputs.size() == 0)
+                return;
             double value = experiment.getBuffer(inputs.get(0)).value;
-            if(Double.isNaN(value) || value == 0.0 )
-                value = Double.parseDouble((type == SliderType.Range) ? minValue: defaultValue);
+            if (Double.isNaN(value))
+                value = (type == SliderType.Range) ? minValue: defaultValue;
+
+            if (stepSize != 0.0)
+                value = Math.round(value/stepSize) -  Math.floor(minValue / stepSize);
 
             if(type == SliderType.Range){
+                if (value < rangeSlider.getValueFrom())
+                    value = rangeSlider.getValueFrom();
+                if (value > rangeSlider.getValueTo())
+                    value = rangeSlider.getValueTo();
+
+                if (inputs.size() != 2)
+                    return;
                 double upperValue = experiment.getBuffer(inputs.get(1)).value;
-                if(Double.isNaN(upperValue) || upperValue == 0.0 )
-                    upperValue = Double.parseDouble(maxValue);
+                if(Double.isNaN(upperValue))
+                    upperValue = maxValue;
+
+                if (stepSize != 0.0)
+                    upperValue = Math.round(upperValue/stepSize) -  Math.floor(minValue / stepSize);
+
+                if (upperValue < rangeSlider.getValueFrom())
+                    upperValue = rangeSlider.getValueFrom();
+                if (upperValue > rangeSlider.getValueTo())
+                    upperValue = rangeSlider.getValueTo();
 
                 rangeSlider.setValues((float) value, (float) upperValue);
                 if(showValue)
-                    valueTv.setText(getFormattedRangeValue((float) value, (float) upperValue));
+                    valueTv.setText(getFormattedRangeValue((float) getSteppedValue(value), (float) getSteppedValue(upperValue)));
             } else {
+                if (value < slider.getValueFrom())
+                    value = slider.getValueFrom();
+                if (value > slider.getValueTo())
+                    value = slider.getValueTo();
                 slider.setValue((float) value);
                 if(showValue)
-                    valueTv.setText(numberFormatter(String.valueOf(value)));
+                    valueTv.setText(numberFormatter(getSteppedValue(value)));
             }
         }
 
@@ -3590,16 +3580,6 @@ public class ExpView implements Serializable{
         @Override
         protected String getUpdateMode() {
             return "single";
-        }
-
-        private String getRangeSliderHTML(){
-            return "<section class =\"range-slider\">" +
-                    "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\" " +
-                    "min=\"1\" max=\"100\" value=\"20\" step="+stepSize+" " +
-                    "onchange=\"ajax('control?cmd=set&buffer="+outputs.get(0)+"&value='+this.value)\">" +
-                    "<input value=\"50\" min=\"0\" max=\"100\" step="+stepSize+" type=\"range\"" +
-                    "onchange=\"ajax('control?cmd=set&buffer="+outputs.get(1) +"&value='+this.value)\">" +
-                    "</section>";
         }
     }
 }
