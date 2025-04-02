@@ -2822,7 +2822,6 @@ public class ExpView implements Serializable{
 
         SwitchMaterial switchView;
 
-        private RGB color;
         protected toggleElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
         }
@@ -2885,18 +2884,13 @@ public class ExpView implements Serializable{
 
         public void setDefaultValue(double defaultValue){
             this.defaultValue = defaultValue;
-
-        }
-
-        protected void setColor(RGB c) {
-            this.color = c;
         }
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
-            int v = (int) experiment.getBuffer(inputs.get(0)).value;
-            switchView.setChecked(v == 1);
-
+            boolean checked = (int) experiment.getBuffer(inputs.get(0)).value != 0;
+            if (checked != switchView.isChecked() && !triggered)
+                switchView.setChecked(checked);
         }
 
         @Override
@@ -3073,7 +3067,7 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
-            if (!needsUpdate)
+            if (!needsUpdate || triggered)
                 return;
             needsUpdate = false;
 
@@ -3407,7 +3401,7 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
-            if (!needsUpdate)
+            if (!needsUpdate || triggered)
                 return;
             needsUpdate = false;
 
