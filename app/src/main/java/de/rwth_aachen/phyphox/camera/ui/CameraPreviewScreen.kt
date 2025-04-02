@@ -58,6 +58,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import java.math.RoundingMode
 import java.text.DecimalFormat
+import kotlin.math.ln
+import kotlin.math.pow
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -261,31 +263,40 @@ class CameraPreviewScreen(
 
     }
 
-    fun setupZoomControl(cameraSettingState: CameraSettingState) {
-        val zoomRatio = cameraSettingState.cameraZoomRatioConverted
+    private fun positionToZoomValue(pos: Float): Float {
+        val min = zoomSlider.valueFrom.toDouble()
+        val max = zoomSlider.valueTo.toDouble()
+        val zoom = Math.round(100.0 * min * (max / min).pow(((pos-min)/(max-min)))) / 100.0
+        return Math.min(Math.max(zoom, min), max).toFloat()
+    }
 
-        if(zoomRatio.isEmpty()){
-            // while loading camera, zoomRatio might be null
-            return
-        }
+    private fun zoomValueToPosition(v: Float): Float {
+        val min = zoomSlider.valueFrom.toDouble()
+        val max = zoomSlider.valueTo.toDouble()
+        val position = min + (max-min)*ln(v / min) / ln(max / min)
+        return Math.min(Math.max(position, min), max).toFloat()
+    }
+
+    fun setupZoomControl(cameraSettingState: CameraSettingState) {
 
         val zoomButtons = listOf(
-            ZoomButtonInfo(zoomRatio.first(), SelectedZoomButton.WiderAngle),
+            ZoomButtonInfo(zoomSlider.valueFrom, SelectedZoomButton.WiderAngle),
             ZoomButtonInfo(1.0f, SelectedZoomButton.Default),
             ZoomButtonInfo(2.0f, SelectedZoomButton.TwoTimes),
             ZoomButtonInfo(5.0f, SelectedZoomButton.FiveTimes),
             ZoomButtonInfo(10.0f, SelectedZoomButton.TenTimes)
         )
 
-        zoomSlider.valueFrom = 0.0f
-        zoomSlider.valueTo = (zoomRatio.size - 1.0f)
-        zoomSlider.value = zoomRatio.indexOf(1.0f).toFloat()
+        zoomSlider.valueFrom = cameraSettingState.cameraMinZoomRatio
+        zoomSlider.valueTo = cameraSettingState.cameraMaxZoomRatio
+        zoomSlider.stepSize = 0.0f
+        zoomSlider.value = zoomValueToPosition(1.0f)
 
         changeZoomButtonColor(SelectedZoomButton.Default)
 
         zoomSlider.addOnChangeListener { _, value, _ ->
 
-            val mappedValue = zoomRatio.getOrElse(value.toInt()) { 1.0f }
+            val mappedValue = positionToZoomValue(value)
             val listenableZoomRatio: ListenableFuture<Void>? = cameraInput.camera?.cameraControl?.setZoomRatio(mappedValue)
             val selectedButton = zoomButtons.firstOrNull { it.zoomValue == mappedValue }?.button ?: SelectedZoomButton.None
             changeZoomButtonColor(selectedButton)
@@ -293,11 +304,11 @@ class CameraPreviewScreen(
         }
 
         zoomSlider.setLabelFormatter { value: Float ->
-            val mappedValue = zoomRatio.getOrElse(value.toInt()) { value }
+            val mappedValue = positionToZoomValue(value)
             "${mappedValue}x"
         }
 
-        buttonWiderAngle.visibility = if (zoomRatio.first() < 1.0) View.VISIBLE else View.GONE
+        buttonWiderAngle.visibility = if (zoomSlider.valueFrom < 1.0) View.VISIBLE else View.GONE
 
         buttonWiderAngle.text = DecimalFormat("#.#")
                 .apply { roundingMode = RoundingMode.FLOOR }
@@ -305,14 +316,13 @@ class CameraPreviewScreen(
                 .plus("x")
 
         zoomButtons.forEach { (zoomValue, button) ->
-            setZoomButtonClickListener(zoomValue, button, zoomRatio)
+            setZoomButtonClickListener(zoomValue, button)
         }
     }
 
     private fun setZoomButtonClickListener(
         zoomRatioValue: Float,
-        selectedButton: SelectedZoomButton,
-        zoomRatio: MutableList<Float>
+        selectedButton: SelectedZoomButton
     ) {
 
         val buttons = mapOf(
@@ -326,7 +336,7 @@ class CameraPreviewScreen(
         buttons[selectedButton]?.setOnClickListener {
             changeZoomButtonColor(SelectedZoomButton.None)
             cameraInput.camera?.cameraControl?.setZoomRatio(zoomRatioValue)
-            zoomSlider.value = zoomRatio.indexOf(zoomRatioValue).toFloat()
+            zoomSlider.value = zoomValueToPosition(zoomRatioValue)
             changeZoomButtonColor(selectedButton)
         }
     }

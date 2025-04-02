@@ -35,7 +35,6 @@ data class CameraSettingState  constructor(
         val cameraMinZoomRatio: Float = 0.0f,
         val cameraZoomRatio: Float = 0.0f,
         val cameraLinearRatio: Float = 0.0f,
-        val cameraZoomRatioConverted: MutableList<Float> = mutableListOf(),
         val cameraMaxOpticalZoom: Float? = 1.0f,
 
         val cameraMaxRegionAWB: Int = 0,

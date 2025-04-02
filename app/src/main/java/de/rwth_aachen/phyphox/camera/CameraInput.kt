@@ -233,14 +233,11 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
         val maxOpticalZoom: FloatArray? = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
 
-        val ratios: MutableList<Float> = CameraHelper.computeZoomRatios(minZoomRatio, maxZoomRatio)
-
         _cameraSettingState.value = cameraSettingState.value.copy(
                 cameraMinZoomRatio = minZoomRatio,
                 cameraMaxZoomRatio = maxZoomRatio,
                 cameraZoomRatio = zoomRatio,
                 cameraLinearRatio = linearZoom,
-                cameraZoomRatioConverted = ratios,
                 cameraMaxOpticalZoom = maxOpticalZoom?.last()
         )
     }

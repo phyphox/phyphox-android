@@ -324,40 +324,6 @@ object CameraHelper {
         return str.dropLast(2).toFloat()
     }
 
-
-    /**
-     * From the range given, compute the list that will be used for zoom ratio
-     * Input: Min and Max zoom ratio, eg: min: 0.5, max: 30.0
-     * Output: [0.5,0,6,...., 9.9, 10, 11, 12,...., 29, 30]
-     */
-    fun computeZoomRatios(minZoom: Float, maxZoom: Float): MutableList<Float> {
-
-        val zoomRatios = mutableListOf<Float>()
-
-        val acceptableDecimalValueMin = 0.1f
-        val acceptableDecimalValueMax = 10.0f
-
-        val roundedMinValue = (minZoom * 10.0f).roundToInt() / 10.0f
-
-        val minRatio = (roundedMinValue.coerceAtLeast(acceptableDecimalValueMin) * 10).toInt()
-        val maxRatio = (maxZoom.coerceAtMost(acceptableDecimalValueMax) * 10).toInt()
-
-        for (ratio in minRatio until maxRatio + 1) {
-            zoomRatios.add(ratio / 10f)
-        }
-
-        if (maxZoom > acceptableDecimalValueMax) {
-            for (intZoom in (acceptableDecimalValueMax.toInt() + 1)..maxZoom.toInt()) {
-                zoomRatios.add(intZoom.toFloat())
-            }
-        }
-
-        System.out.print("zoom ratio : " +zoomRatios.filter { it >= 0.0 }.toString())
-
-        return zoomRatios
-    }
-
-
     fun convertTemperatureToRggb(temperature_kelvin: Int): FloatArray {
         val temperature = temperature_kelvin / 100.0f
         var red: Float
