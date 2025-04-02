@@ -1786,8 +1786,12 @@ public class ExpView implements Serializable{
                                 dataMinX = x.getMin();
                                 dataMaxX = x.getMax();
                             } else {
-                                dataMinX = Math.min(dataMinX, x.getMin());
-                                dataMaxX = Math.max(dataMaxX, x.getMax());
+                                double newMinX = x.getMin();
+                                double newMaxX = x.getMax();
+                                if (Double.isFinite(newMinX))
+                                    dataMinX = Double.isFinite(dataMinX) ? Math.min(dataMinX, newMinX) : newMinX;
+                                if (Double.isFinite(newMaxX))
+                                    dataMaxX = Double.isFinite(dataMaxX) ? Math.max(dataMaxX, newMaxX) : newMaxX;
                             }
                         }
                     } else {
@@ -1810,8 +1814,12 @@ public class ExpView implements Serializable{
                             dataMinY = y.getMin();
                             dataMaxY = y.getMax();
                         } else {
-                            dataMinY = Math.min(dataMinY, y.getMin());
-                            dataMaxY = Math.max(dataMaxY, y.getMax());
+                            double newMinY = y.getMin();
+                            double newMaxY = y.getMax();
+                            if (Double.isFinite(newMinY))
+                                dataMinY = Double.isFinite(dataMinY) ? Math.min(dataMinY, newMinY) : newMinY;
+                            if (Double.isFinite(newMaxY))
+                                dataMaxY = Double.isFinite(dataMaxY) ? Math.max(dataMaxY, newMaxY) : newMaxY;
                         }
                     } else {
                         dataMinZ = y.getMin();
