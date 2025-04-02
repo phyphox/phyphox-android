@@ -455,9 +455,7 @@ object CameraHelper {
         }
     }
 
-    fun adjustExposure(adjust: Double, state: CameraSettingState): Pair<Long, Int> {
-        val shutterTarget = (1e9/30).toLong()
-
+    fun adjustExposure(adjust: Double, state: CameraSettingState, shutterTarget: Long): Pair<Long, Int> {
         var iso = state.currentIsoValue
         var shutter = state.currentShutterValue
         val shutterMax = stringToNanoseconds(state.shutterSpeedRange!!.first())

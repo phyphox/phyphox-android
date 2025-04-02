@@ -14,6 +14,8 @@ data class CameraSettingState  constructor(
         val currentLens : Int = CameraSelector.LENS_FACING_BACK,
         val cameraPassepartout: RectF = RectF(),
 
+        val sensorFrameDuration: Long = 1_000_000_000/60,
+
         val currentIsoValue: Int = 1,
         val isoRange: List<String>? =  emptyList(),
 

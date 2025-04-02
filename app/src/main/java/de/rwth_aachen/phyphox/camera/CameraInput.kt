@@ -72,7 +72,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     var apertureDataBuffer: DataBuffer? = null
 
     enum class AEStrategy {
-        mean, avoidUnderxposure, avoidOverexposure
+        mean, avoidUnderxposure, avoidOverexposure, prioritizeFramerate
     }
     var aeStrategy: AEStrategy = AEStrategy.mean
 
@@ -108,7 +108,14 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
             extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
             extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, maxFpsRange)
-            extender.setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 0) //Just as fast as possible
+            val sensorFrameDuration = 1_000_000_000/maxFpsRange.upper.toLong()
+            extender.setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, sensorFrameDuration)
+
+            val currentCameraSettingValueState = _cameraSettingState.value
+            val newCameraSettingValueState = currentCameraSettingValueState.copy(
+                sensorFrameDuration = sensorFrameDuration
+            )
+            _cameraSettingState.value = newCameraSettingValueState
 
             return previewBuilder
         }
@@ -361,7 +368,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             CameraSettingMode.EXPOSURE -> {
                 val exposure: Float = CameraHelper.exposureValueStringToFloat(value)
                 if (!currentCameraSettingState.autoExposure) {
-                    val (shutter, iso) = CameraHelper.adjustExposure(Math.pow(2.0, (exposure - currentCameraSettingState.currentExposureValue).toDouble()), currentCameraSettingState)
+                    val (shutter, iso) = CameraHelper.adjustExposure(Math.pow(2.0, (exposure - currentCameraSettingState.currentExposureValue).toDouble()), currentCameraSettingState, 1_000_000_000/15)
                     newCameraSettingState = currentCameraSettingState.copy(
                             currentExposureValue = exposure,
                             currentShutterValue = shutter,
@@ -531,34 +538,41 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             lifecycleOwner?.lifecycleScope?.launch {
                 val state = cameraSettingState.value
                 var adjust = 1.0
+                var maxExposureTime: Long = 1_000_000_000/15
+                val fps = Math.min(1.0e9/state.sensorFrameDuration, 1.0e9/state.currentShutterValue)
+                val speedFactor = 30.0 / fps
                 var targetExposure = 0.5* Math.pow(2.0, state.currentExposureValue.toDouble())
                 if (targetExposure > 0.95)
                     targetExposure = 0.95
                 when (aeStrategy) {
                     AEStrategy.mean -> {
-                        adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
+                        adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
+                    }
+                    AEStrategy.prioritizeFramerate -> {
+                        adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
+                        maxExposureTime = state.sensorFrameDuration
                     }
                     AEStrategy.avoidUnderxposure -> {
                         if (minRGB > 0.2) {
-                            adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
+                            adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
                         } else if (minRGB > 0.1) {
-                            adjust = 1.0 - 0.1 * (minRGB - 0.25)
+                            adjust = 1.0 - speedFactor * 0.1 * (minRGB - 0.25)
                         } else {
-                            adjust = 1.0 - 0.2 * (minRGB - 0.25)
+                            adjust = 1.0 - speedFactor * 0.2 * (minRGB - 0.25)
                         }
                     }
                     AEStrategy.avoidOverexposure -> {
                         if (maxRGB < 0.8) {
-                            adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
+                            adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
                         } else if (maxRGB < 0.9) {
-                            adjust = 1.0 - 0.1 * (maxRGB - 0.75)
+                            adjust = 1.0 - speedFactor * 0.1 * (maxRGB - 0.75)
                         } else {
-                            adjust = 1.0 - 0.2 * (maxRGB - 0.75)
+                            adjust = 1.0 - speedFactor * 0.2 * (maxRGB - 0.75)
                         }
                     }
                 }
 
-                val (shutter, iso) = CameraHelper.adjustExposure(adjust, state)
+                val (shutter, iso) = CameraHelper.adjustExposure(adjust, state, maxExposureTime)
 
                 var newCameraSettingState = state.copy(
                         currentIsoValue = iso,

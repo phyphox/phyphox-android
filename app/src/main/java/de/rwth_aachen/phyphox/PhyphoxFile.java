@@ -2086,6 +2086,10 @@ public abstract class PhyphoxFile {
                                 aeStrategy = CameraInput.AEStrategy.avoidUnderxposure;
                                 break;
                             }
+                            case "prioritizeFramerate": {
+                                aeStrategy = CameraInput.AEStrategy.prioritizeFramerate;
+                                break;
+                            }
                             default: {
                                 throw new phyphoxFileException("Unknown aeStrategy: " + aeStrategyStr, xpp.getLineNumber());
                             }
