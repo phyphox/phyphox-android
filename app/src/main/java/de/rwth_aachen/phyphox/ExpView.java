@@ -3292,12 +3292,13 @@ public class ExpView implements Serializable{
                 secondRow.addView(rangeSlider);
 
                 rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
-                    triggered = true;
                     float lowerValue = slider.getValues().get(0);
                     float upperValue = slider.getValues().get(1);
                     if(showValue)
                         valueTv.setText(getFormattedRangeValue(getSteppedValue(lowerValue), getSteppedValue(upperValue)));
                     rangeSlider.setValues(lowerValue, upperValue);
+                    if (fromUser)
+                        triggered = true;
                 });
 
             }  else {
@@ -3316,9 +3317,10 @@ public class ExpView implements Serializable{
                 slider.setValue((float)defaultValue);
                 slider.setLayoutParams(getTableRowParams(0.9f));
                 slider.addOnChangeListener((slider, value, fromUser) -> {
-                    triggered = true;
                     valueTv.setText(numberFormatter(getSteppedValue(value)));
                     slider.setValue(value);
+                    if (fromUser)
+                        triggered = true;
                 });
                 secondRow.addView(slider);
             }
