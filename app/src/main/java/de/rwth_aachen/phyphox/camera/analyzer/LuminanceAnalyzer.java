@@ -157,7 +157,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
 
     @Override
     public void writeToBuffers(CameraSettingState state) {
-        double exposureFactor = linear ? state.getCurrentApertureValue() * 100.0/state.getCurrentIsoValue() * (1.0e9/60.0) / state.getCurrentShutterValue() : 1.0;
+        double exposureFactor = linear ? Math.pow(2.0, state.getCurrentApertureValue())/2.0 * 100.0/state.getCurrentIsoValue() * (1.0e9/60.0) / state.getCurrentShutterValue() : 1.0;
         out.append(latestResult*exposureFactor);
     }
 
