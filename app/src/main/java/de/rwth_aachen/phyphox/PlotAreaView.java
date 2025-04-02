@@ -318,7 +318,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "void main () {" +
             "   if (isinvalid(positionX) || isinvalid(positionY)) {" + //There is a NaN or +/-Inf in any of the
             "       invalid = 1.0;" +                                  //Mark invalid for fragment shader (only works for line to this point if the value is interpolated (i.e. not on the HTC One X)
-            "       gl_Position = vec4(0.0/0.0, -1.0/0.0, 1.0/0.0, 0.0/0.0);" +  //Break calculation by setting positions to NaN/Inf, skips rendering this line on most devices
+            "       gl_Position = vec4(0.0, 0.0, 0.0, 0.0);" +         //Break calculation by setting positions to NaN/Inf, skips rendering this line on most devices
             "       gl_PointSize = 0.0;" +                             //Set point size to zero to skip if all else fails (hopefully)
             "       return;" +
             "   } else" +
