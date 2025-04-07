@@ -1981,6 +1981,10 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "depth": {
+                    if(!parent.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+                        throw new phyphoxFileException("This device doesn't have the camera.");
+                    }
+
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                         throw new phyphoxFileException("Depth input is only supported from API level 23 upwards (Android 6)");
                     } else {
@@ -2059,6 +2063,10 @@ public abstract class PhyphoxFile {
                     break;
                 }
                 case "camera": {
+                    if(!parent.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+                        throw new phyphoxFileException("This device doesn't have the camera.");
+                    }
+
                     if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
                         throw new phyphoxFileException("Camera is only supported from API level 21 upwards (Android 5)");
                     else {
