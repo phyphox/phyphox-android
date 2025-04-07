@@ -5,6 +5,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
+import android.view.View;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
@@ -28,6 +32,10 @@ public class SettingsActivity extends AppCompatActivity {
             ab.setDisplayShowTitleEnabled(true);
         }
 
-        Helper.setWindowInsetListenerForSystemBar(findViewById(R.id.settingsToolbar));
+        final Map<Helper.InsetUtils.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.InsetUtils.AppViewElement.HEADER, findViewById(R.id.settingsToolbar));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY, findViewById(R.id.settingsFrame));
+
+        Helper.InsetUtils.setWindowInsetListenerForSystemBar(appViewElements);
     }
 }

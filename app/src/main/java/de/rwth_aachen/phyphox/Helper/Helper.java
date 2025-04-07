@@ -54,6 +54,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Vector;
 import java.util.zip.CRC32;
 
@@ -66,6 +68,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import de.rwth_aachen.phyphox.App;
 import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
@@ -549,18 +552,6 @@ public abstract class Helper {
         return zipData;
     }
 
-    // From Android 15 (SDK 35), because of edge-to-edge UI, there should be inset at status bar
-    public static void setWindowInsetListenerForSystemBar(View v){
-        ViewCompat.setOnApplyWindowInsetsListener(v, new OnApplyWindowInsetsListener() {
-            @NonNull
-            @Override
-            public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            }
-        });
-    }
 
     public static int getBatteryPercentage(Context context) {
 
@@ -618,5 +609,69 @@ public abstract class Helper {
         int maxVolumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
         return (volumeLevel / (double)maxVolumeLevel) * 100.0;
+    }
+
+    public static class InsetUtils {
+
+        public enum AppViewElement {
+            HEADER, //Denotes the toolbar
+            BODY, // Denotes the main content
+            BODY1,
+            FOOTER // for eg. view to show the battery status of the connected device at the bottom
+        }
+
+        // From Android 15 (SDK 35), because of edge-to-edge UI, there should be inset at status bar
+        public static void setWindowInsetListenerForSystemBar(Map<AppViewElement, View> viewMap) {
+            applyHeaderInsets(viewMap);
+            applyBodyInsets(viewMap, viewMap.get(AppViewElement.BODY));
+            applyBodyInsets(viewMap, viewMap.get(AppViewElement.BODY1));
+            applyFooterInsets(viewMap);
+        }
+
+        private static void applyHeaderInsets(Map<AppViewElement, View> viewMap) {
+            View headerView = viewMap.get(AppViewElement.HEADER);
+            if (headerView != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(headerView, (v, insets) -> {
+                    boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    int topInset = systemBars.top;
+                    int leftInset = isLandscape ? topInset : 0;
+                    v.setPadding(leftInset, topInset, 0, 0);
+                    return insets;
+                });
+            }
+        }
+
+        private static void applyBodyInsets(Map<AppViewElement, View> viewMap, View bodyView) {
+            if (bodyView != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(bodyView, (v, insets) -> {
+                    boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                    int topInset = systemBars.top;
+                    int bottomInset = viewMap.get(AppViewElement.FOOTER) == null ? navigationBars.bottom : 0;
+                    int leftInset = isLandscape ? topInset : 0;
+                    v.setPadding(leftInset, 0, 0, bottomInset);
+                    return insets;
+                });
+            }
+        }
+
+        private static void applyFooterInsets(Map<AppViewElement, View> viewMap) {
+            View footerView = viewMap.get(AppViewElement.FOOTER);
+
+            if (footerView != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(footerView, (v, insets) -> {
+                    boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                    int bottomInset = navigationBars.bottom;
+                    int leftInset =  isLandscape ? systemBars.top : 0;
+                    v.setPadding(leftInset, 0, 0, bottomInset);
+                    return insets;
+                });
+            }
+        }
+
     }
 }

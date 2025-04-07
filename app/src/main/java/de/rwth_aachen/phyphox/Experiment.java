@@ -82,6 +82,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -274,7 +275,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             (new PhyphoxFile.loadXMLAsyncTask(intent, this)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
-        Helper.setWindowInsetListenerForSystemBar(findViewById(R.id.appBarLayout));
+        final Map<Helper.InsetUtils.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.InsetUtils.AppViewElement.HEADER, findViewById(R.id.appBarLayout));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY, findViewById(R.id.view_pager));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY1, findViewById(R.id.tab_layout));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.FOOTER, findViewById(R.id.recycler_view_battery));
+
+        Helper.InsetUtils.setWindowInsetListenerForSystemBar(appViewElements);
 
     }
 

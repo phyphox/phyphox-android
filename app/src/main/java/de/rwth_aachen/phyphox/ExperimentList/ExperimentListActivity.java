@@ -82,6 +82,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
@@ -176,7 +177,11 @@ public class ExperimentListActivity extends AppCompatActivity {
             showSupportHintIfRequired();
         }
 
-        Helper.setWindowInsetListenerForSystemBar(findViewById(R.id.expListHeader));
+        final Map<Helper.InsetUtils.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.InsetUtils.AppViewElement.HEADER, findViewById(R.id.expListHeader));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY, findViewById(R.id.experimentList));
+
+        Helper.InsetUtils.setWindowInsetListenerForSystemBar(appViewElements);
 
         setUpOnClickListener();
 
