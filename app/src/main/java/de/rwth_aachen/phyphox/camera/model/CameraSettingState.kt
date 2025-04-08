@@ -14,6 +14,8 @@ data class CameraSettingState  constructor(
         val currentLens : Int = CameraSelector.LENS_FACING_BACK,
         val cameraPassepartout: RectF = RectF(),
 
+        val sensorFrameDuration: Long = 1_000_000_000/60,
+
         val currentIsoValue: Int = 1,
         val isoRange: List<String>? =  emptyList(),
 
@@ -33,7 +35,6 @@ data class CameraSettingState  constructor(
         val cameraMinZoomRatio: Float = 0.0f,
         val cameraZoomRatio: Float = 0.0f,
         val cameraLinearRatio: Float = 0.0f,
-        val cameraZoomRatioConverted: MutableList<Float> = mutableListOf(),
         val cameraMaxOpticalZoom: Float? = 1.0f,
 
         val cameraMaxRegionAWB: Int = 0,

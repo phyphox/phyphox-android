@@ -24,7 +24,6 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -35,8 +34,6 @@ import androidx.core.widget.ImageViewCompat;
 
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import de.rwth_aachen.phyphox.Helper.Helper;
-
 import de.rwth_aachen.phyphox.Helper.Helper;
 
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
@@ -678,6 +675,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             Log.e("cleanView", "Renderer: Interrupted execution.");
         }
         plotRenderer = null;
+    }
+
+    public void setShowColorScale(boolean showColorScale){
+        if(this.plotRenderer != null)
+            this.plotRenderer.setShowColorScaleForColorMapChart(showColorScale);
+
+        if(this.graphView != null)
+            this.graphView.setShowColorScaleForColorMapChart(showColorScale);
     }
 
 }

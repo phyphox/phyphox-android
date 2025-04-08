@@ -1,5 +1,8 @@
 package de.rwth_aachen.phyphox;
 
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -46,7 +49,6 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -80,6 +82,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -94,6 +97,7 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
+import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -270,6 +274,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
             (new PhyphoxFile.loadXMLAsyncTask(intent, this)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
+
+        final Map<Helper.InsetUtils.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.InsetUtils.AppViewElement.HEADER, findViewById(R.id.appBarLayout));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY, findViewById(R.id.view_pager));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY1, findViewById(R.id.tab_layout));
+        appViewElements.put(Helper.InsetUtils.AppViewElement.FOOTER, findViewById(R.id.recycler_view_battery));
+
+        Helper.InsetUtils.setWindowInsetListenerForSystemBar(appViewElements);
 
     }
 
@@ -513,7 +525,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             timedRunStopDelay = experiment.timedRunStopDelay;
 
             //If the experiment has been launched from a Bluetooth scan, we need to set the bluetooth device in the experiment so it does not ask the user again
-            String btAddress = intent.getStringExtra(ExperimentList.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
+            String btAddress = intent.getStringExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
             if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 for (Bluetooth bt : this.experiment.bluetoothInputs)
                     bt.deviceAddress = btAddress;
@@ -604,7 +616,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             startHintDismissed = true;
 
         //If the hint has been shown a few times, we do not show it again
-        SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
         if (menuHintDismissCount >= 3)
             menuHintDismissed = true;
@@ -818,7 +830,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             public void onDismiss() {
                 popupWindow = null;
                 menuHintDismissed = true;
-                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
                 int menuHintDismissCount= settings.getInt("menuHintDismissCount", 0);
                 settings.edit().putInt("menuHintDismissCount", menuHintDismissCount+1).apply();
             }
@@ -994,7 +1006,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (timedRun) {
                 startTimedMeasurement();
             } else {
-                SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
                 int startHintDismissCount = settings.getInt("startHintDismissCount", 0);
                 settings.edit().putInt("startHintDismissCount", startHintDismissCount + 1).apply();
                 startMeasurement();
@@ -1015,7 +1027,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Play button. Start a measurement
         if (id == R.id.action_play) {
-            SharedPreferences settings = getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
             int startHintDismissCount= settings.getInt("startHintDismissCount", 0);
             settings.edit().putInt("startHintDismissCount", startHintDismissCount+1).apply();
 
@@ -1415,58 +1427,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Desciption-button. Show the experiment description
         if (id == R.id.action_description) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(experiment.title);
-
-            LinearLayout ll = new LinearLayout(builder.getContext());
-            ll.setOrientation(LinearLayout.VERTICAL);
-            int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
-            int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
-            ll.setPadding(marginX, marginY, marginX, marginY);
-
-            if (!experiment.stateTitle.isEmpty()) {
-                TextView stateLabel = new TextView(builder.getContext());
-                stateLabel.setText(experiment.stateTitle);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
-                stateLabel.setLayoutParams(lp);
-                ll.addView(stateLabel);
-            }
-
-            TextView description = new TextView(builder.getContext());
-            description.setText(experiment.description);
-
-            ll.addView(description);
-
-            for (String label : experiment.links.keySet()) {
-                Button btn = new Button(builder.getContext());
-                btn.setText(label);
-                final String url = experiment.links.get(label);
-                btn.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View view) {
-                        Uri uri = Uri.parse(url);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        if (intent.resolveActivity(getPackageManager()) != null) {
-                            startActivity(intent);
-                        }
-                    }
-                });
-                ll.addView(btn);
-            }
-
-            ScrollView sv = new ScrollView(builder.getContext());
-            sv.setHorizontalScrollBarEnabled(false);
-            sv.setVerticalScrollBarEnabled(true);
-            sv.addView(ll);
-
-            builder.setView(sv);
-
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            showExperimentInfo();
             return true;
         }
 
@@ -1591,6 +1552,60 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     };
 
+    public void showExperimentInfo(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(experiment.title);
+
+        LinearLayout ll = new LinearLayout(builder.getContext());
+        ll.setOrientation(LinearLayout.VERTICAL);
+        int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
+        int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
+        ll.setPadding(marginX, marginY, marginX, marginY);
+
+        if (!experiment.stateTitle.isEmpty()) {
+            TextView stateLabel = new TextView(builder.getContext());
+            stateLabel.setText(experiment.stateTitle);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(0,0,0,Math.round(res.getDimension(R.dimen.font)));
+            stateLabel.setLayoutParams(lp);
+            ll.addView(stateLabel);
+        }
+
+        TextView description = new TextView(builder.getContext());
+        description.setText(experiment.description);
+
+        ll.addView(description);
+
+        for (String label : experiment.links.keySet()) {
+            Button btn = new Button(builder.getContext());
+            btn.setText(label);
+            final String url = experiment.links.get(label);
+            btn.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    Uri uri = Uri.parse(url);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    if (intent.resolveActivity(getPackageManager()) != null) {
+                        startActivity(intent);
+                    }
+                }
+            });
+            ll.addView(btn);
+        }
+
+        ScrollView sv = new ScrollView(builder.getContext());
+        sv.setHorizontalScrollBarEnabled(false);
+        sv.setVerticalScrollBarEnabled(true);
+        sv.addView(ll);
+
+        builder.setView(sv);
+
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 
     //Start a measurement
     public void startMeasurement() {
@@ -1804,6 +1819,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public void clearData() {
         //Clear the buffers
 
+        experiment.experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.CLEAR);
         stopMeasurement();
 
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
@@ -1814,6 +1830,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         } finally {
             experiment.dataLock.unlock();
         }
+
         experiment.experimentTimeReference.reset();
         experiment.newData = true;
         experiment.newUserInput = true;
@@ -1935,16 +1952,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return;
 
         //Stop it!
-        remote.stopServer();
-
-        //Wait for the second thread and remove the instance
-        try {
-            remote.join();
-        } catch (Exception e) {
-            Log.e("stopRemoteServer", "Exception on join.", e);
-        }
+        remote.stop();
         remote = null;
-
     }
 
     //Called by remote server to stop the measurement from other thread

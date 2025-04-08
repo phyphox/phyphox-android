@@ -28,13 +28,16 @@ public class HSVAnalyzer extends AnalyzingModule {
 
     final static String hueFragmentShader =
             "#extension GL_OES_EGL_image_external : require\n" +
+            "#define M_PI 3.14159265358\n" +
             "precision highp float;" +
             "uniform samplerExternalOES texture;" +
             "varying vec2 positionInPassepartout;" +
             "varying vec2 texPosition;" +
             "void main () {" +
+            "  float x, y;" +
             "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
-            "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);" +
+            "    x = 0.5;" + //sin(h) and cos(h) are scaled to 0..1, so 0.5 is the center of the color wheel
+            "    y = 0.5;" + //sin(h) and cos(h) are scaled to 0..1, so 0.5 is the center of the color wheel
             "  } else {" +
             "    vec3 rgb = texture2D(texture, texPosition).rgb;" +
             "    float rgbMax = max(max(rgb.r, rgb.g), rgb.b);" +
@@ -44,14 +47,20 @@ public class HSVAnalyzer extends AnalyzingModule {
             "    if (rgbMax == rgbMin) {" +
             "      h = 0.0;" +
             "    } else if (rgbMax == rgb.r) {" +
-            "      h = (rgb.g - rgb.b + d * (rgb.g < rgb.b ? 6.0 : 0.0)) / (6.0 * d);" +
+            "      h = 2.0 * M_PI * (rgb.g - rgb.b + d * (rgb.g < rgb.b ? 6.0 : 0.0)) / (6.0 * d);" +
             "    } else if (rgbMax == rgb.g) {" +
-            "      h = (rgb.b - rgb.r + d * 2.0) / (6.0 * d);" +
+            "      h = 2.0 * M_PI * (rgb.b - rgb.r + d * 2.0) / (6.0 * d);" +
             "    } else {" +
-            "      h = (rgb.r - rgb.g + d * 4.0) / (6.0 * d);" +
+            "      h = 2.0 * M_PI * (rgb.r - rgb.g + d * 4.0) / (6.0 * d);" +
             "    }" +
-            "    gl_FragColor = vec4(0.0, sin(h), 0.0, cos(h));" +
+            "    x = 0.5*(cos(h) + 1.0);" +
+            "    y = 0.5*(sin(h) + 1.0);" +
             "  }" +
+            "  float x2 = fract(255.0 * x);" +
+            "  x -= x2/255.0;" +
+            "  float y2 = fract(255.0 * y);" +
+            "  y -= y2/255.0;" +
+            "  gl_FragColor = vec4(x, x2, y, y2);" +
             "}";
 
     final static String saturationFragmentShader =
@@ -100,21 +109,30 @@ public class HSVAnalyzer extends AnalyzingModule {
             "varying vec2 texPosition2;" +
             "varying vec2 texPosition3;" +
             "varying vec2 texPosition4;" +
+            "vec2 unpack(vec4 rgba) {" +
+                    "return vec2(rgba.r + rgba.g/255.0, rgba.b + rgba.a/255.0);" +
+            "}" +
             "void main () {" +
-            "   vec4 result = texture2D(texture, texPosition1);" +
+            "   vec2 result = unpack(texture2D(texture, texPosition1));" +
             "   if (texPosition2.x <= 1.0)" +
-            "       result += texture2D(texture, texPosition2);" +
+            "       result += unpack(texture2D(texture, texPosition2));" +
+            "   else" +
+            "       result += vec2(0.5, 0.5);" +
             "   if (texPosition3.y <= 1.0)" +
-            "       result += texture2D(texture, texPosition3);" +
+            "       result += unpack(texture2D(texture, texPosition3));" +
+            "   else" +
+            "       result += vec2(0.5, 0.5);" +
             "   if (texPosition4.x <= 1.0 && texPosition4.y <= 1.0)" +
-            "       result += texture2D(texture, texPosition4);" +
-            "   float overflow = floor(result.g);" +
-            "   result.g = result.g - overflow;" +
-            "   result.r = result.r + overflow / 255.0;" +
-            "   overflow = floor(result.a);" +
-            "   result.a = result.a - overflow;" +
-            "   result.b = result.b + overflow / 255.0;" +
-            "   gl_FragColor = result;" +
+            "       result += unpack(texture2D(texture, texPosition4));" +
+            "   else" +
+            "       result += vec2(0.5, 0.5);" +
+            "   result /= vec2(4.0, 4.0);" +
+
+            "  float x2 = fract(255.0 * result.x);" +
+            "  result.x -= x2/255.0;" +
+            "  float y2 = fract(255.0 * result.y);" +
+            "  result.y -= y2/255.0;" +
+            "  gl_FragColor = vec4(result.x, x2, result.y, y2);" +
             "}";
 
     final static String saturationValueDownsamplingFragmentShader =
@@ -150,6 +168,10 @@ public class HSVAnalyzer extends AnalyzingModule {
     int hsvDownsamplingResSourceHandle, hsvDownsamplingResTargetHandle;
 
     double latestResult = Double.NaN;
+
+    ByteBuffer resultBuffer = null;
+    int resultBufferSize = 0;
+
     public HSVAnalyzer(DataBuffer out, Mode mode) {
         this.mode = mode;
         this.out = out;
@@ -204,7 +226,10 @@ public class HSVAnalyzer extends AnalyzingModule {
         int outW = wDownsampleStep[nDownsampleSteps -1];
         int outH = hDownsampleStep[nDownsampleSteps -1];
 
-        ByteBuffer resultBuffer = ByteBuffer.allocateDirect(outW * outH * 4).order(ByteOrder.nativeOrder());
+        if (resultBuffer == null || resultBufferSize != outH * outW) {
+            resultBufferSize = outH*outW;
+            resultBuffer = ByteBuffer.allocateDirect(resultBufferSize * 4).order(ByteOrder.nativeOrder());
+        }
         resultBuffer.rewind();
 
         GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);
@@ -218,10 +243,11 @@ public class HSVAnalyzer extends AnalyzingModule {
                 long g = resultBuffer.get() & 0xff;
                 long b = resultBuffer.get() & 0xff;
                 long a = resultBuffer.get() & 0xff;
-                y += ((r << 8) + g);
-                x += ((b << 8) + a);
+                x += ((r << 8) + g) - 0x7f7f;
+                y += ((b << 8) + a) - 0x7f7f;
             }
-            latestResult = Math.atan2(y, x) * RGB.HUE_MAX;
+            double h = Math.atan2(y, x) * RGB.HUE_MAX / (2.0 * Math.PI);
+            latestResult = h < 0 ? h + RGB.HUE_MAX : h;
         } else {
             long sum = 0;
             long totalContribution = 0;
@@ -255,7 +281,10 @@ public class HSVAnalyzer extends AnalyzingModule {
     void drawHSV(float[] camMatrix, RectF passepartout) {
         makeCurrent(analyzingSurface, w, h);
 
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        if (mode == Mode.hue)
+            GLES20.glClearColor(0.498039216f, 0.498039216f, 0.498039216f, 0.498039216f);
+        else
+            GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);

@@ -14,10 +14,12 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.UUID;
 
+import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 
 import static android.content.Context.SENSOR_SERVICE;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
 
 public class Metadata {
 
@@ -58,7 +60,7 @@ public class Metadata {
         switch (metadata) {
             case uniqueID:
                 final String settingName = "NetworkMetadataUUID";
-                SharedPreferences settings = ctx.getSharedPreferences(ExperimentList.PREFS_NAME, 0);
+                SharedPreferences settings = ctx.getSharedPreferences(PREFS_NAME, 0);
                 String userId = settings.getString(settingName, null);
                 if (userId == null) {
                     userId = UUID.randomUUID().toString();
@@ -118,7 +120,7 @@ public class Metadata {
             case sensorMetadata:
                 SensorManager sensorManager = (SensorManager) ctx.getSystemService(SENSOR_SERVICE);
                 try {
-                    SensorInput testSensor = new SensorInput(sensor.name(), true, 0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
+                    SensorInput testSensor = new SensorInput(sensor.name(), null, -1, true, 0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
                     testSensor.attachSensorManager(sensorManager);
                     if (testSensor.sensor == null)
                         return null;

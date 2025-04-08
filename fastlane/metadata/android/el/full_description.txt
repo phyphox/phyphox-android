@@ -21,7 +21,7 @@
 
 Format Εξαγωγής
 - CSV (Comma separated values)
-- CSV (Tab-separated values)
+- TSV (Tab-separated values)
 - Excel
 (Αν χρειάζεστε παραπάνω format, παρακαλούμε ενημερώστε μας)
 

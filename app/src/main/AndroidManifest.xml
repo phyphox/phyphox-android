@@ -2,6 +2,7 @@
 <manifest xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android"
     android:installLocation="auto">
 
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -31,7 +32,7 @@
         android:usesCleartextTraffic="true"><!-- While not recommended, there are plenty of use cases for phyphox on local networks where unencrypted communication is not unreasonable. -->
 
         <activity
-            android:name="de.rwth_aachen.phyphox.ExperimentList"
+            android:name="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity"
             android:exported="true"
             android:theme="@style/splashTheme"
             android:configChanges="keyboardHidden|orientation|screenSize">
@@ -86,18 +87,18 @@
             android:name="de.rwth_aachen.phyphox.Experiment"
             android:label="@string/title_activity_experiment"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList">
+            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.rwth_aachen.phyphox.ExperimentList" />
+                android:value="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity" />
         </activity>
         <activity
-            android:name="de.rwth_aachen.phyphox.Settings"
+            android:name="de.rwth_aachen.phyphox.SettingsActivity.SettingsActivity"
             android:label="@string/settings"
-            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList">
+            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.rwth_aachen.phyphox.ExperimentList" />
+                android:value="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity" />
         </activity>
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"

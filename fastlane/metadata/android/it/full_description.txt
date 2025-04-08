@@ -21,7 +21,7 @@ Principali sensori utilizzabili:
 
 Formati esterni:
 -CSV (Comma separated values)
--CSV (Tab-separated values)
+-TSV (Tab-separated values)
 -Excel
 (se hai bisogno di altri formati, puoi scriverci)
 

@@ -146,6 +146,9 @@ public class ExposureAnalyzer extends AnalyzingModule {
     public double maxRGB = Double.NaN;
     public double meanLuma = Double.NaN;
 
+    ByteBuffer resultBuffer = null;
+    int resultBufferSize = 0;
+
     public ExposureAnalyzer() {
 
     }
@@ -186,7 +189,10 @@ public class ExposureAnalyzer extends AnalyzingModule {
         long vMax = 0;
         long totalContribution = 0;
 
-        ByteBuffer resultBuffer = ByteBuffer.allocateDirect(outW * outH * 4).order(ByteOrder.nativeOrder());
+        if (resultBuffer == null || resultBufferSize != outH * outW) {
+            resultBufferSize = outH*outW;
+            resultBuffer = ByteBuffer.allocateDirect(resultBufferSize * 4).order(ByteOrder.nativeOrder());
+        }
         resultBuffer.rewind();
 
         GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);

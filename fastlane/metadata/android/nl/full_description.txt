@@ -21,7 +21,7 @@ Ondersteunde sensoren:
 
 Export formaten
 - CSV (Comma separated values)
-- CSV (Tab-separated values)
+- TSV (Tab-separated values)
 - Excel
 (als u andere bestandsformaten wenst, laat het ons weten)
 

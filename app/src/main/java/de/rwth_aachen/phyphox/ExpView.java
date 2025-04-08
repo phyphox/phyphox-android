@@ -31,6 +31,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -43,12 +44,20 @@ import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.FragmentContainerView;
 
+import com.google.android.material.slider.LabelFormatter;
+import com.google.android.material.slider.RangeSlider;
+import com.google.android.material.slider.Slider;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -86,6 +95,10 @@ public class ExpView implements Serializable{
         hidden, normal, maximized;
     }
 
+    public enum SliderType {
+        Normal, Range
+    }
+
     //Remember? We are in the expView class.
     //An experiment view has a name and holds a bunch of expViewElement instances
     public String name;
@@ -97,6 +110,7 @@ public class ExpView implements Serializable{
         protected float labelSize; //Size of the label
         protected String valueOutput; //User input will be directed to this output, so the experiment can write it to a dataBuffer
         protected Vector<String> inputs;
+        protected Vector<String> outputs;
         protected boolean needsUpdate = true;
 
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
@@ -117,6 +131,21 @@ public class ExpView implements Serializable{
             if (this.inputs == null && this.valueOutput != null) {
                 this.inputs = new Vector<>();
                 this.inputs.add(this.getValueOutput());
+            }
+        }
+
+        // Same as the above Constructor, only change is that it accepts output vector
+        protected expViewElement(String label, Vector<String> valueOutputs, Vector<String> inputs, Resources res) {
+            this.label = label;
+            this.labelSize = res.getDimension(R.dimen.label_font);
+            this.outputs = valueOutputs;
+            this.inputs = inputs;
+
+            //If not set otherwise, set the input buffer to be identical to the output buffer
+            //This allows to receive the old user-set value after the view has changed
+            if (this.inputs == null && this.outputs != null) {
+                this.inputs = new Vector<>();
+                this.inputs.addAll(this.getValueOutputs());
             }
         }
 
@@ -145,6 +174,13 @@ public class ExpView implements Serializable{
             if (valueOutput != null) {
                 experiment.getBuffer(valueOutput).register(this);
             }
+
+            if(outputs != null){
+                for (String buffer : outputs) {
+                    if (buffer != null)
+                        experiment.getBuffer(buffer).register(this);
+                }
+            }
             needsUpdate = true;
         }
 
@@ -154,6 +190,13 @@ public class ExpView implements Serializable{
         protected void onFragmentStop(PhyphoxExperiment experiment) {
             if (inputs != null) {
                 for (String buffer : inputs) {
+                    if (buffer != null)
+                        experiment.getBuffer(buffer).unregister(this);
+                }
+            }
+
+            if (outputs != null) {
+                for (String buffer : outputs) {
                     if (buffer != null)
                         experiment.getBuffer(buffer).unregister(this);
                 }
@@ -180,15 +223,9 @@ public class ExpView implements Serializable{
         //  partial     the element takes an array, but new values are only appended, so the element
         //              only needs those elements of its array, that have not already been
         //              transferred
-        //  input       the element is a single value input element and will also return a single
-        //              value
+        //  input       the element is a single value input element and will write to buffers in
+        //              onMayWriteToBuffers
         protected abstract String getUpdateMode();
-
-        //getValue is the function that retrieves a value from an input element so the main process
-        //can append it to the output buffer
-        protected double getValue() {
-            return 0.;
-        }
 
         //This function returns a JavaScript function. The argument of this function will receive
         //an array that contains fresh data to be shown to the user.
@@ -212,6 +249,10 @@ public class ExpView implements Serializable{
         //where to store user input
         protected String getValueOutput() {
             return this.valueOutput;
+        }
+
+        protected Vector<String> getValueOutputs() {
+            return this.outputs;
         }
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
@@ -274,6 +315,8 @@ public class ExpView implements Serializable{
         private String formatter; //This formatter is created when scientificNotation and precision are set
         private String unit; //A string to display as unit
         private RGB color;
+        private String positiveUnit, negativeUnit;
+        private GpsInput.ValueFormat valueFormat;
 
         protected class Mapping {
             Double min = Double.NEGATIVE_INFINITY;
@@ -365,6 +408,29 @@ public class ExpView implements Serializable{
             this.color = c;
         }
 
+        public void setGpsFormat(String gpsFormat) {
+            if(gpsFormat != null){
+                if(gpsFormat.equalsIgnoreCase("degree-minutes")){
+                    this.valueFormat = GpsInput.ValueFormat.DEGREE_MINUTES;
+                } else if(gpsFormat.equalsIgnoreCase("degree-minutes-seconds")){
+                    this.valueFormat = GpsInput.ValueFormat.DEGREE_MINUTES_SECONDS;
+                } else if (gpsFormat.equalsIgnoreCase("ascii")) {
+                    this.valueFormat = GpsInput.ValueFormat.ASCII_;
+                } else {
+                    this.valueFormat = GpsInput.ValueFormat.FLOAT;
+                }
+            }
+
+        }
+
+        public void setNegativeUnit(String negativeUnit) {
+            this.negativeUnit = negativeUnit;
+        }
+
+        public void setPositiveUnit(String positiveUnit) {
+            this.positiveUnit = positiveUnit;
+        }
+
         //Interface to set conversion factor. The element will show inputValue times this factor
         protected void setFactor(double factor) {
             this.factor = factor;
@@ -382,6 +448,9 @@ public class ExpView implements Serializable{
         @Override
         //This is a single value. So the updateMode is "single"
         protected String getUpdateMode() {
+            if(this.valueFormat == GpsInput.ValueFormat.ASCII_){
+                return "full";
+            }
             return "single";
         }
 
@@ -405,7 +474,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //left half should be label
             labelView.setText(this.label);
-            labelView.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL); //Align right to the center of the row
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
             labelView.setTextColor(color.autoLightColor(res).intColor());
@@ -416,7 +485,7 @@ public class ExpView implements Serializable{
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //right half should be value+unit
-            tv.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+            tv.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize*(float)size); //Align left to the center of the row
             tv.setPadding((int) labelSize / 2, 0, 0, 0);
             tv.setTypeface(null, Typeface.BOLD);
@@ -468,8 +537,24 @@ public class ExpView implements Serializable{
                         }
                     }
                     if (vStr.isEmpty()) {
-                        vStr = String.format(this.formatter, x * this.factor);
-                        uStr = this.unit;
+                        double factoredValue = x * this.factor;
+                        if(valueFormat != null){
+                            if(valueFormat == GpsInput.ValueFormat.ASCII_)
+                                vStr = convertDecimalToAscii(experiment.getBuffer(inputs.get(0)).getArray());
+                            else
+                                vStr = formatGeoCoordinate(factoredValue, valueFormat);
+                        } else {
+                            vStr = String.format(this.formatter, factoredValue);
+                        }
+
+                        if(positiveUnit != null && (factoredValue >= 0) ){
+                            uStr = this.positiveUnit;
+                        } else if(negativeUnit != null && (factoredValue < 0)){
+                            uStr = this.negativeUnit;
+                        } else {
+                            uStr = this.unit;
+                        }
+
                     }
                 }
                 String out = vStr+uStr;
@@ -482,6 +567,55 @@ public class ExpView implements Serializable{
                     tv.setText(out);
                 }
             }
+        }
+
+        /**
+         * Formats a geographical coordinate (latitude or longitude) into a string representation
+         * based on the specified output format.
+         *
+         * @param coordinate   The coordinate value (latitude or longitude) as a double.
+         *                     Positive values represent North/East, negative values represent South/West.
+         * @param outputFormat The desired output format for the coordinate.
+         *                     Can be one of:
+         *                     <ul>
+         *                         <li>{@link GpsInput.ValueFormat#DEGREE_MINUTES}: Degree and decimal minutes (e.g., 40° 26.767')</li>
+         *                         <li>{@link GpsInput.ValueFormat#DEGREE_MINUTES_SECONDS}: Degree, minutes, and decimal seconds (e.g., 40° 26' 46.020'')</li>
+         *                         <li>{@link GpsInput.ValueFormat#FLOAT}: Decimal degrees (e.g., 40.446)</li>
+         *                     </ul>
+         * @return A string representation of the coordinate in the specified format.
+         *         The string will be formatted to three decimal places for the decimal parts.
+         * @see GpsInput.ValueFormat
+         */
+        private String formatGeoCoordinate(Double coordinate, GpsInput.ValueFormat outputFormat) {
+            int degree = coordinate.intValue();
+            double decimalMinutes = Math.abs((coordinate - degree) * 60);
+            int integralMinutes = (int) decimalMinutes;
+            double decimalSeconds = Math.abs((decimalMinutes - integralMinutes) * 60);
+
+            switch (outputFormat) {
+                case DEGREE_MINUTES:
+                    return degree  + "° " + String.format(this.formatter, decimalMinutes) + "' ";
+
+                case DEGREE_MINUTES_SECONDS:
+                    return degree + "° " + integralMinutes + "' "  + String.format(this.formatter, decimalSeconds) + "'' ";
+                case FLOAT:
+                default:
+                    return String.format(this.formatter, coordinate) + " " ;
+            }
+        }
+
+        private String convertDecimalToAscii(Double[] decimals) {
+            StringBuilder sb = new StringBuilder();
+            for (Double decimal : decimals) {
+                if(decimal == null){
+                    continue;
+                }
+                int ascii = (int) Math.round(decimal);
+                if(ascii < 126 && ascii > 31){
+                    sb.append((char) ascii);
+                }
+            }
+            return sb.toString();
         }
 
         @Override
@@ -511,17 +645,63 @@ public class ExpView implements Serializable{
                 }
             }
 
+            sb.append("     var unitLabel = \""+ this.unit + "\";");
+            if(positiveUnit != null){
+                sb.append("     if(x >= 0 ){");
+                sb.append("         unitLabel =  \""+ positiveUnit + "\";");
+                sb.append("     };");
+            } else if(negativeUnit != null){
+                sb.append("     if(x < 0 ){");
+                sb.append("         unitLabel = \""+ negativeUnit + "\";");
+                sb.append("     };");
+            }
+
+            sb.append("     var degree = Math.floor(x);");
+            sb.append("     var decibelMinutes = Math.abs((x - degree) * 60);");
+            sb.append("     var integralMinutes = Math.floor(decibelMinutes);");
+            sb.append("     var decibelSeconds = Math.abs(decibelMinutes - integralMinutes) * 60;");
+            sb.append("     x =  x*" + factor + ";" );
+
+            if(valueFormat == null){
+                sb.append("     x = x.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
+            } else {
+                if(valueFormat == GpsInput.ValueFormat.DEGREE_MINUTES){
+                    sb.append("         x =  degree + \"° \" + decibelMinutes.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+")  +  \"' \"  ;");
+                } else if(valueFormat == GpsInput.ValueFormat.DEGREE_MINUTES_SECONDS){
+                    sb.append("         x = degree + \"° \" + integralMinutes + \"' \" +  decibelSeconds.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+") + \"'' \"  ;");
+                } else if(valueFormat == GpsInput.ValueFormat.ASCII_){
+                    sb.append("         var decimals = data[\""+bufferName+"\"][\"data\"];");
+                    sb.append("         var x_ = \""+"\"  ;");
+                    sb.append("         decimals.forEach(decimal => {");
+                    sb.append("             if (decimal !== null && decimal !== undefined) {");
+                    sb.append("                 const intDecimal = Math.round(decimal);");
+                        sb.append("                 if (intDecimal > 31 && intDecimal < 126) {");
+                    sb.append("                     const asciiCharacter = String.fromCharCode(intDecimal);");
+                    sb.append("                     x_ += asciiCharacter;");
+                    sb.append("                 } else {");
+                    sb.append("                     console.log(`No valid ASCII character for decimal ${intDecimal}.`);");
+                    sb.append("                 }");
+                    sb.append("              }");
+                    sb.append("         x = x_;");
+                    sb.append("         });");
+
+                } else {
+                    sb.append("         x = x.to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
+                }
+            }
+
             sb.append("     var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];");
             sb.append("     var valueNumber = valueElement.getElementsByClassName(\"valueNumber\")[0];");
             sb.append("     var valueUnit = valueElement.getElementsByClassName(\"valueUnit\")[0];");
             sb.append("     if (v == null) {");
-            sb.append("         v = (x*"+factor+").to"+(scientificNotation ? "Exponential" : "Fixed")+"("+precision+");");
-            sb.append("         valueUnit.textContent = \""+ this.unit + "\";");
+            sb.append("         v = x;");
+            sb.append("         valueUnit.textContent = unitLabel;");
             sb.append("     } else {");
             sb.append("         valueUnit.textContent = \"\";");
             sb.append("     }");
             sb.append("     valueNumber.textContent = v;");
             sb.append("}");
+
             return sb.toString();
         }
     }
@@ -891,7 +1071,6 @@ public class ExpView implements Serializable{
                     "</div>";
         }
 
-        @Override
         //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
         //use that is consistent with that of the valueElement
         protected double getValue() {
@@ -978,6 +1157,24 @@ public class ExpView implements Serializable{
         private List<NetworkConnection> networkConnections = null;
         private boolean triggered = false;
         private ExpViewFragment parent;
+        private DataBuffer buffer;
+        Button b;
+
+        protected class ButtonMapping {
+            Double min = Double.NEGATIVE_INFINITY;
+            Double max = Double.POSITIVE_INFINITY;
+            String str;
+
+            protected ButtonMapping(String str) {
+                this.str = str;
+            }
+        }
+
+        protected Vector<ButtonMapping> mappings = new Vector<>();
+
+        protected void addMapping(ButtonMapping mapping) {
+            this.mappings.add(mapping);
+        }
 
         //No special constructor.
         buttonElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
@@ -993,10 +1190,17 @@ public class ExpView implements Serializable{
             this.triggers = triggers;
         }
 
+        public void setBuffer(DataBuffer buffer) {
+            this.buffer = buffer;
+        }
+
         @Override
         //This is not automatically updated, but triggered by the user, so it's "none"
         protected String getUpdateMode() {
-            return "none";
+            if(buffer == null){
+                return "none";
+            }
+            return "single";
         }
 
         @Override
@@ -1008,17 +1212,19 @@ public class ExpView implements Serializable{
 
             networkConnections = experiment.networkConnections;
 
-            //The button
-            Button b = new Button(c);
+            b = new Button(c);
 
             LinearLayout.LayoutParams vglp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-//            int margin = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, context.getDimension(R.dimen.info_element_margin), context.getDisplayMetrics());
-//            vglp.setMargins(0, margin, 0, 0);
             vglp.gravity = Gravity.CENTER;
 
             b.setLayoutParams(vglp);
             b.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             b.setText(this.label);
+
+            if(buffer != null){
+                // Register the buffer of the dynamic label which is defined as string in xml
+                experiment.getBuffer(buffer.name).register(this);
+            }
 
             //Add the button to the main linear layout passed to this function
             rootView = b;
@@ -1086,6 +1292,29 @@ public class ExpView implements Serializable{
         }
 
         @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            if (!needsUpdate)
+                return;
+            needsUpdate = false;
+
+            double x = buffer.value;
+
+            String buttonLabel = this.label;
+
+            if (Double.isNaN(x)) {
+                buttonLabel = this.label;
+            } else {
+                for (ButtonMapping map : mappings)  {
+                    if (x >= map.min && x <= map.max) {
+                        buttonLabel = map.str;
+                        break;
+                    }
+                }
+            }
+            b.setText(buttonLabel);
+        }
+
+        @Override
         //Create the HTML markup for this element
         //<div>
         //  <span>Label</span> <input /> <span>unit</span>
@@ -1093,9 +1322,53 @@ public class ExpView implements Serializable{
         //Note that the input is send from here as well as the AJAX-request is placed in the
         //onchange-listener in the markup
         protected String createViewHTML(){
+
+            if(buffer == null){
+                return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
+                        "<button onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
+                        "</div>";
+            }
+
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"buttonElement\" id=\"element"+htmlID+"\">" +
-                    "<button onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\">" + this.label +"</button>" +
+                    "<button class=\"valueNumber\" id=\"button"+htmlID+"\" onclick=\"ajax('control?cmd=trigger&element="+htmlID+"');\" " +
+                    "onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value)\">" + this.label +"</button>" +
                     "</div>";
+        }
+
+        @Override
+        protected String setDataHTML() {
+            if(buffer == null){
+                return "function() {}";
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            String bufferName = super.inputs.get(0).replace("\"", "\\\"");
+
+            sb.append("function (data) {");
+            sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
+            sb.append("         return;");
+            sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
+            sb.append(      "var v = \""+this.label+"\";");
+
+            sb.append(      "if (isNaN(x) || x == null) { v = \" "+this.label+"\" }");
+            for (ButtonMapping map : mappings) {
+                String str = map.str.replace("<","&lt;").replace(">","&gt;").replace("\"","\\\"");
+                if (!map.max.isInfinite() && !map.min.isInfinite()) {
+                    sb.append("else if (x >= " + map.min + " && x <= " + map.max + ") {v = \"" + str + "\";}");
+                } else if (!map.max.isInfinite()) {
+                    sb.append("else if (x <= " + map.max + ") {v = \"" + str + "\";}");
+                } else if (!map.min.isInfinite()) {
+                    sb.append("else if (x >= " + map.min + ") {v = \"" + str + "\";}");
+                } else {
+                    sb.append("else if (true) {v = \"" + str + "\";}");
+                }
+            }
+
+            sb.append("     var valueNumber = document.getElementById(\"button"+htmlID+"\");");
+            sb.append("     valueNumber.textContent = v;");
+            sb.append("}");
+            return sb.toString();
         }
     }
 
@@ -1120,6 +1393,7 @@ public class ExpView implements Serializable{
         private Vector<GraphView.Style> style = new Vector<>(); //Show lines instead of points?
         private Vector<Integer> mapWidth = new Vector<>();
         private Vector<Integer> colorScale = new Vector<>();
+        private boolean showColorScale;
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
         private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
@@ -1138,6 +1412,7 @@ public class ExpView implements Serializable{
         private boolean logX = false; //logarithmic scale for the x-axis?
         private boolean logY = false; //logarithmic scale for the y-axis?
         private boolean logZ = false; //logarithmic scale for the z-axis?
+        private boolean suppressScientificNotation = false;
         private int xPrecision = -1;
         private int yPrecision = -1;
         private int zPrecision = -1;
@@ -1253,6 +1528,10 @@ public class ExpView implements Serializable{
                 setMapWidth(width, i);
         }
 
+        protected  void setShowColorScale(boolean showColorScale){
+            this.showColorScale = showColorScale;
+        }
+
         public void setScaleModeX(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
             this.scaleMinX = minMode;
             this.scaleMaxX = maxMode;
@@ -1321,6 +1600,10 @@ public class ExpView implements Serializable{
             this.hideTimeMarkers = hideTimeMarkers;
         }
 
+        protected void setSuppressScientificNotation(boolean suppressScientificNotation) {
+            this.suppressScientificNotation = suppressScientificNotation;
+        }
+
         //Interface to set log scales
         protected void setLogScale(boolean logX, boolean logY, boolean logZ) {
             this.logX = logX;
@@ -1382,6 +1665,7 @@ public class ExpView implements Serializable{
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             interactiveGV.setLayoutParams(lp);
             interactiveGV.setLabel(this.label);
+            interactiveGV.setShowColorScale(showColorScale);
 
             if (act instanceof Experiment) {
                 DataExport dataExport = new DataExport(experiment);
@@ -1424,6 +1708,7 @@ public class ExpView implements Serializable{
             gv.setFollowX(followX);
             gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
             gv.setTimeAxes(timeOnX, timeOnY);
+            gv.setSuppressScientificNotation(suppressScientificNotation);
             gv.setAbsoluteTime(absoluteTime);
             gv.setLinearTime(linearTime);
             gv.setHideTimeMarkers(hideTimeMarkers);
@@ -1501,8 +1786,12 @@ public class ExpView implements Serializable{
                                 dataMinX = x.getMin();
                                 dataMaxX = x.getMax();
                             } else {
-                                dataMinX = Math.min(dataMinX, x.getMin());
-                                dataMaxX = Math.max(dataMaxX, x.getMax());
+                                double newMinX = x.getMin();
+                                double newMaxX = x.getMax();
+                                if (Double.isFinite(newMinX))
+                                    dataMinX = Double.isFinite(dataMinX) ? Math.min(dataMinX, newMinX) : newMinX;
+                                if (Double.isFinite(newMaxX))
+                                    dataMaxX = Double.isFinite(dataMaxX) ? Math.max(dataMaxX, newMaxX) : newMaxX;
                             }
                         }
                     } else {
@@ -1525,8 +1814,12 @@ public class ExpView implements Serializable{
                             dataMinY = y.getMin();
                             dataMaxY = y.getMax();
                         } else {
-                            dataMinY = Math.min(dataMinY, y.getMin());
-                            dataMaxY = Math.max(dataMaxY, y.getMax());
+                            double newMinY = y.getMin();
+                            double newMaxY = y.getMax();
+                            if (Double.isFinite(newMinY))
+                                dataMinY = Double.isFinite(dataMinY) ? Math.min(dataMinY, newMinY) : newMinY;
+                            if (Double.isFinite(newMaxY))
+                                dataMaxY = Double.isFinite(dataMaxY) ? Math.max(dataMaxY, newMaxY) : newMaxY;
                         }
                     } else {
                         dataMinZ = y.getMin();
@@ -2378,6 +2671,8 @@ public class ExpView implements Serializable{
         CameraSettingLevel cameraSettingLevel = CameraSettingLevel.ADVANCED;
         String lockedSettings;
 
+        final String warningText;
+
         Scrollable scrollable = new Scrollable() {
             @Override
             public void enableScrollable() {
@@ -2395,6 +2690,7 @@ public class ExpView implements Serializable{
 
         protected cameraElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
             super(label, valueOutput, inputs, res);
+            warningText = res.getString(R.string.remoteCameraPreviewWarning).replace("'", "\\'");
         }
 
         public void applyControlSettings(ShowCameraControls showCameraControls, int exposureAdjustmentLevel) {
@@ -2461,13 +2757,14 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        protected String createViewHTML() {
-            return null;
+        //Create the HTML markup. We do not stream the video to the web interface, so this is just a placeholder and notification
+        protected String createViewHTML(){
+            return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"" + htmlID + "\"><span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span><div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
         }
 
         @Override
         protected String getUpdateMode() {
-            return null;
+            return "none";
         }
 
         @Override
@@ -2517,4 +2814,791 @@ public class ExpView implements Serializable{
         }
     }
 
+    public class toggleElement extends  expViewElement implements  Serializable {
+
+        double defaultValue;
+
+        private boolean triggered = true;
+
+        SwitchMaterial switchView;
+
+        protected toggleElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+        @Override
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+            super.createView(ll, c, res, parent, experiment);
+
+            LinearLayout row = new LinearLayout(c);
+            row.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setVerticalGravity(Gravity.CENTER_VERTICAL);
+
+            //Create the label in the left half of the row
+            TextView labelView = new TextView(c);
+            labelView.setLayoutParams(new LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //Left half of the whole row
+            labelView.setText(this.label);
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            labelView.setPadding(0, 0, (int) labelSize / 2, 0);
+
+            //Create a horizontal linear layout, which seperates the right half into the edit field
+            //and a textView to show the unit next to the user input
+            switchView = new SwitchMaterial(c);
+            LinearLayout.LayoutParams tableRow = new LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f);
+            switchView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            switchView.setPadding((int) labelSize / 2, 0, 0, 0);
+
+            //wrap switchMaterial into linearlayout as the gravity of the switch is not working as expected.
+            LinearLayout switchViewRow = new LinearLayout(c);
+            switchViewRow.setLayoutParams(tableRow);
+            switchViewRow.addView(switchView);
+
+            row.addView(labelView);
+            row.addView(switchViewRow);
+
+            boolean isSwitchedOn = this.defaultValue != 0.0;
+            switchView.setChecked(isSwitchedOn);
+
+            switchView.setOnCheckedChangeListener((compoundButton, b) -> {
+                compoundButton.setChecked(b);
+                triggered = true;
+            });
+
+            rootView = row;
+            rootView.setFocusableInTouchMode(true);
+
+            //Add it to the linear layout
+            ll.addView(rootView);
+
+        }
+
+        public void setDefaultValue(double defaultValue){
+            this.defaultValue = defaultValue;
+        }
+
+        @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            boolean checked = (int) experiment.getBuffer(inputs.get(0)).value != 0;
+            if (checked != switchView.isChecked() && !triggered)
+                switchView.setChecked(checked);
+        }
+
+        @Override
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if(!triggered){
+                return false;
+            }
+            triggered = false;
+            experiment.getBuffer(inputs.get(0)).clear(false);
+            double switchValue = switchView.isChecked() ? 1.0 : 0.0;
+            experiment.getBuffer(inputs.get(0)).append(switchValue);
+            return  true;
+        }
+
+        @Override
+        protected void clear() {
+            triggered = true;
+        }
+
+        @Override
+        protected String createViewHTML() {
+
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"switchElement\" id=\"element"+htmlID+"\">" +
+                    "<span class=\"label\">"+this.label+"</span>" +
+                    "</span><input type=\"checkbox\" class=\"value\" id=\"radio"+htmlID+"\" "+defaultValue+" ></input>" +
+                    "</div>";
+        }
+
+        @Override
+        protected String setDataHTML() {
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+            return "function (data) {\n" +
+                    "                if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                    return;\n" +
+                    "\n" +
+                    "                var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                var radioButton = document.getElementById(\"radio"+htmlID+"\");\n" +
+                    "            \n" +
+                    "                if (isNaN(x) || x == null || x == 0 || x == 0.0) {\n" +
+                    "                    radioButton.checked = false;\n" +
+                    "                } else {\n" +
+                    "                    radioButton.checked = true;\n" +
+                    "                }\n" +
+                    "            \n" +
+                    "                // Update value when checkbox state changes\n" +
+                    "                radioButton.onchange = function() {\n" +
+                    "                    var value = radioButton.checked ? 1.0 : 0.0;\n" +
+                    "                    ajax('control?cmd=set&buffer="+bufferName+"&value='+value);\n" +
+                    "                };\n" +
+                    "            }";
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return "single";
+        }
+    }
+
+    public class dropDownElement extends expViewElement implements Serializable {
+
+        double defaultValue;
+
+        private RGB color;
+
+        Spinner spinner;
+
+        private boolean triggered = false;
+
+        protected class Mapping {
+            String value;
+            String str;
+
+            protected Mapping(String str) {
+                this.str = str;
+            }
+
+        }
+
+        protected Vector<dropDownElement.Mapping> mappings = new Vector<>();
+
+        protected void addMapping(dropDownElement.Mapping mapping) {
+            this.mappings.add(mapping);
+        }
+
+        public void setDefaultValue(double defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        protected void setColor(RGB c) {
+            this.color = c;
+        }
+
+        protected dropDownElement(String label, String valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+        @Override
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+            super.createView(ll, c, res, parent, experiment);
+
+            //Create a row consisting of label and value
+            LinearLayout row = new LinearLayout(c);
+            row.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+
+            //Create the label as textView
+            TextView labelView = new TextView(c);
+            labelView.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //left half should be label
+            labelView.setText(this.label);
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            labelView.setPadding(0, 0, (int) labelSize / 2, 0);
+
+            //Create the value (and unit) as textView
+            spinner = new Spinner(c);
+            spinner.setLayoutParams(new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0.5f)); //right half should be value+unit
+            spinner.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+
+            spinner.setPadding((int) labelSize / 2, 0, 0, 0);
+            ArrayList<String> options = new ArrayList<>();
+
+            for(Mapping title: mappings){
+                if(title.str.isEmpty()){
+                    options.add(title.value);
+                } else {
+                    options.add(title.str);
+                }
+            }
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(c.getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, options);
+            spinner.setAdapter(adapter);
+
+            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    ((TextView) spinner.getChildAt(0)).setTextColor(color.autoLightColor(res).intColor());
+                    triggered = true;
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> adapterView) {
+
+                }
+            });
+
+            //Add label and value to the row
+            row.addView(labelView);
+            row.addView(spinner);
+
+            //Add the row to the linear layout
+            rootView = row;
+            rootView.setFocusableInTouchMode(true);
+            ll.addView(rootView);
+
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return "single";
+        }
+
+        protected double getValue() {
+            return  Double.parseDouble(mappings.get(spinner.getSelectedItemPosition()).value);
+        }
+
+        @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            if (!needsUpdate || triggered)
+                return;
+            needsUpdate = false;
+
+            double x = experiment.getBuffer(inputs.get(0)).value;
+
+            int index= -1;
+
+            for(int i = 0; i < mappings.size(); i++){
+                if(Double.parseDouble(mappings.get(i).value) == x){
+                    index = i;
+                    break;
+                }
+            }
+            spinner.setSelection((index == -1)? 0 : index);
+
+        }
+
+        @Override
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if (!triggered)
+                return false;
+            triggered = false;
+            experiment.getBuffer(inputs.get(0)).clear(false);
+            experiment.getBuffer(inputs.get(0)).append(getValue());
+            return true;
+        }
+
+        @Override
+        protected String createViewHTML() {
+
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"dropdownElement\" id=\"element"+htmlID+"\">" +
+                    "<span class=\"label\">"+this.label+"</span>" +
+                    "<select onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value)\" class=\"value\" id=\"select"+htmlID+"\" />" +
+                    "</div>";
+
+        }
+
+
+
+        @Override
+        protected String setDataHTML() {
+
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+
+            ArrayList<String> options = new ArrayList<>();
+            ArrayList<String> values = new ArrayList<>();
+
+            for(Mapping maps: mappings){
+                options.add(maps.str);
+                values.add(maps.value);
+            }
+
+            // Create a string in JSON-like format
+            StringBuilder jsonArray = new StringBuilder("[");
+            for (int i = 0; i < options.size(); i++) {
+                jsonArray.append("\"").append(options.get(i)).append("\"");
+                if (i < options.size() - 1) {
+                    jsonArray.append(", ");
+                }
+            }
+            jsonArray.append("]");
+
+
+            return "function (data) {\n" +
+                    "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                        return;\n" +
+                    "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                    \n" +
+                    "                    var dropdownElement = document.getElementById(\"select"+htmlID+"\")\n" +
+                    "            \n" +
+                    "                    var selectedValue = x\n" +
+                    "                    dropdownElement.innerHTML = \"\"\n" +
+                    "            \n" +
+                    "                    var values = "+values+" \n" +
+                    "                    var options =  "+ jsonArray +"\n" +
+                    "                    for (var i = 0; i < options.length ; i++){\n" +
+                    "                        var option = document.createElement(\"option\")\n" +
+                    "                        option.value = values[i]\n" +
+                    "                        if(options[i] == \"\"){\n" +
+                    "                            option.text = values[i]\n" +
+                    "                        } else {\n" +
+                    "                            option.text = options[i]\n" +
+                    "                        }\n" +
+                    "                        \n" +
+                    "                        dropdownElement.appendChild(option)\n" +
+                    "                    }\n" +
+                    "            \n" +
+                    "            \n" +
+
+                    "                    if (values.includes(selectedValue)) {\n" +
+                    "                        dropdownElement.selectedIndex = values.indexOf(selectedValue)\n" +
+                    "                    } else {\n" +
+                    "                      dropdownElement.selectedIndex = 0\n" +
+                    "                    }\n" +
+                    "            \n" +
+                    "             \n" +
+                    "            }";
+        }
+
+    }
+
+    public class sliderElement extends expViewElement implements Serializable {
+
+        private double defaultValue, maxValue, minValue, stepSize;
+        private int precision;
+        private SliderType type;
+        private Boolean showValue;
+        private RGB color;
+        boolean triggered = false;
+        TextView valueTv;
+        Slider slider;
+        RangeSlider rangeSlider;
+
+        protected sliderElement(String label,  Vector<String> valueOutput, Vector<String> inputs, Resources res) {
+            super(label, valueOutput, inputs, res);
+        }
+
+        public void setDefaultValue(double defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        public void setMaxValue(double maxValue) {
+            this.maxValue = maxValue;
+        }
+
+        public void setMinValue(double minValue) {
+            this.minValue = minValue;
+        }
+
+        public void setStepSize(double stepSize) {
+            this.stepSize = stepSize;
+        }
+
+        public void setPrecision(int precision) { this.precision = precision; }
+
+        public void setType(SliderType type) { this.type = type; }
+
+        public void setShowValue(Boolean showValue) { this.showValue = showValue; }
+
+        public void setColor(RGB color) {
+            this.color = color;
+        }
+
+        @Override
+        protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+            super.createView(ll, c, res, parent, experiment);
+
+            ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            LinearLayout column = new LinearLayout(c);
+            column.setLayoutParams(layoutParams);
+            column.setOrientation(LinearLayout.VERTICAL);
+            column.setGravity(Gravity.CENTER_HORIZONTAL);
+
+            LinearLayout row = new LinearLayout(c);
+            row.setLayoutParams(layoutParams);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+
+            // Second row is for slider view
+            LinearLayout secondRow = new LinearLayout(c);
+            secondRow.setLayoutParams(layoutParams);
+            secondRow.setOrientation(LinearLayout.HORIZONTAL);
+            secondRow.setGravity(Gravity.CENTER | Gravity.CENTER_HORIZONTAL);
+
+            TextView labelView = new TextView(c);
+            labelView.setLayoutParams(getTableRowParams(0.5f)); //left half should be label
+            labelView.setText(this.label);
+            labelView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL); //Align right to the center of the row
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
+            labelView.setPadding(0, 0, (int) labelSize / 2, 0);
+            labelView.setTextColor(color.autoLightColor(res).intColor());
+
+            valueTv = new TextView(c);
+            valueTv.setLayoutParams(getTableRowParams(0.5f)); //right half should be value+unit
+            valueTv.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            valueTv.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize); //Align left to the center of the row
+            valueTv.setPadding((int) labelSize / 2, 0, 0, 0);
+            valueTv.setTypeface(null, Typeface.BOLD);
+            valueTv.setTextColor(color.autoLightColor(res).intColor());
+            valueTv.setText(numberFormatter(defaultValue));
+
+            TextView minValueLabel = new TextView(c);
+            minValueLabel.setLayoutParams(getTableRowParams(0.1f));
+            minValueLabel.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            minValueLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize / 1.5f);
+            minValueLabel.setTextColor(color.autoLightColor(res).intColor());
+            minValueLabel.setText(numberFormatter(minValue));
+
+            TextView maxValueLabel = new TextView(c);
+            maxValueLabel.setLayoutParams(getTableRowParams(0.1f));
+            maxValueLabel.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            maxValueLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize / 1.5f);
+            maxValueLabel.setTextColor(color.autoLightColor(res).intColor());
+            maxValueLabel.setText(numberFormatter(maxValue));
+
+            //Add label and value to the row
+            if (showValue) {
+                row.addView(labelView);
+                row.addView(valueTv);
+            }
+
+            secondRow.addView(minValueLabel);
+
+            LayoutInflater inflater = (LayoutInflater) c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            if(type == SliderType.Range){
+                View rangeSliderView = inflater.inflate(R.layout.range_slider, null);
+                rangeSlider = rangeSliderView.findViewById(R.id.sliderView);
+                rangeSlider.setLabelBehavior(LabelFormatter.LABEL_GONE);
+                rangeSlider.setLayoutParams(getTableRowParams(0.9f));
+                if(stepSize != 0.0) {
+                    //Note: Android's requirements for the step size to perfectly fit into the given range seems rather restrictive and is quite prone to errors given the limited floating point precision and values converted from user strings. So, if we need steps, we make our own and can make sure that the behavior matches our iOS implementation.
+                    rangeSlider.setValueFrom(0);
+                    rangeSlider.setValueTo((float)(Math.ceil(maxValue/stepSize) - Math.floor(minValue/stepSize)));
+                    rangeSlider.setStepSize(1);
+                } else {
+                    rangeSlider.setValueFrom((float)minValue);
+                    rangeSlider.setValueTo((float)maxValue);
+                }
+                secondRow.addView(rangeSlider);
+
+                rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
+                    float lowerValue = slider.getValues().get(0);
+                    float upperValue = slider.getValues().get(1);
+                    if(showValue)
+                        valueTv.setText(getFormattedRangeValue(getSteppedValue(lowerValue), getSteppedValue(upperValue)));
+                    rangeSlider.setValues(lowerValue, upperValue);
+                    if (fromUser)
+                        triggered = true;
+                });
+
+            }  else {
+                View view = inflater.inflate(R.layout.slider, null);
+                slider = view.findViewById(R.id.sliderView);
+                if(stepSize != 0.0) {
+                    //Note: Android's requirements for the step size to perfectly fit into the given range seems rather restrictive and is quite prone to errors given the limited floating point precision and values converted from user strings. So, if we need steps, we make our own and can make sure that the behavior matches our iOS implementation.
+                    slider.setValueFrom(0);
+                    slider.setValueTo((float)(Math.ceil(maxValue/stepSize) - Math.floor(minValue/stepSize)));
+                    slider.setStepSize(1);
+                } else {
+                    slider.setValueFrom((float)minValue);
+                    slider.setValueTo((float)maxValue);
+                }
+                slider.setLabelBehavior(LabelFormatter.LABEL_GONE);
+                slider.setValue((float)defaultValue);
+                slider.setLayoutParams(getTableRowParams(0.9f));
+                slider.addOnChangeListener((slider, value, fromUser) -> {
+                    valueTv.setText(numberFormatter(getSteppedValue(value)));
+                    slider.setValue(value);
+                    if (fromUser)
+                        triggered = true;
+                });
+                secondRow.addView(slider);
+            }
+
+            secondRow.addView(maxValueLabel);
+            column.addView(row);
+            column.addView(secondRow);
+            //Add the row to the linear layout
+            rootView = column;
+            rootView.setFocusableInTouchMode(true);
+            ll.addView(rootView);
+
+        }
+
+        private TableRow.LayoutParams getTableRowParams(float weight){
+            return new TableRow.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    weight);
+        }
+
+        private String getFormattedRangeValue(double lowerValue, double upperValue){
+            return numberFormatter(lowerValue) +
+                    " - " +
+                    numberFormatter(upperValue);
+        }
+
+        private String numberFormatter(double value){
+           return BigDecimal
+                   .valueOf(value)
+                   .setScale(precision, RoundingMode.HALF_UP)
+                   .toString();
+        }
+
+        protected double getSteppedValue(double value) {
+            double steppedVal;
+            if (stepSize == 0.0)
+                steppedVal = value;
+            else
+                steppedVal = (value + Math.floor(minValue / stepSize)) * stepSize;
+
+            return Math.min(Math.max(steppedVal, minValue), maxValue);
+        }
+
+        @Override
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if(!triggered)
+                return false;
+            triggered = false;
+
+            DataBuffer mainBuffer = null;
+            if (inputs.size() > 0) {
+                mainBuffer = experiment.getBuffer(inputs.get(0));
+            }
+
+            if(type == SliderType.Range){
+                List<Float> values = rangeSlider.getValues();
+                if (values.size() == 2) {
+                    if (mainBuffer != null) {
+                        mainBuffer.clear(false);
+                        mainBuffer.append(getSteppedValue(values.get(0)));
+                    }
+                    DataBuffer upperBuffer = null;
+                    if (inputs.size() > 1) {
+                        upperBuffer = experiment.getBuffer(inputs.get(1));
+                    }
+                    if (upperBuffer != null) {
+                        upperBuffer.clear(false);
+                        upperBuffer.append(getSteppedValue(values.get(1)));
+                    }
+                }
+            } else {
+                if (mainBuffer != null) {
+                    mainBuffer.clear(false);
+                    mainBuffer.append(getSteppedValue(slider.getValue()));
+                }
+            }
+            return true;
+        }
+
+        @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            if (!needsUpdate || triggered)
+                return;
+            needsUpdate = false;
+
+            if (inputs.size() == 0)
+                return;
+            double value = experiment.getBuffer(inputs.get(0)).value;
+            if (Double.isNaN(value))
+                value = (type == SliderType.Range) ? minValue: defaultValue;
+
+            if (stepSize != 0.0)
+                value = Math.round(value/stepSize) -  Math.floor(minValue / stepSize);
+
+            if(type == SliderType.Range){
+                if (value < rangeSlider.getValueFrom())
+                    value = rangeSlider.getValueFrom();
+                if (value > rangeSlider.getValueTo())
+                    value = rangeSlider.getValueTo();
+
+                if (inputs.size() != 2)
+                    return;
+                double upperValue = experiment.getBuffer(inputs.get(1)).value;
+                if(Double.isNaN(upperValue))
+                    upperValue = maxValue;
+
+                if (stepSize != 0.0)
+                    upperValue = Math.round(upperValue/stepSize) -  Math.floor(minValue / stepSize);
+
+                if (upperValue < rangeSlider.getValueFrom())
+                    upperValue = rangeSlider.getValueFrom();
+                if (upperValue > rangeSlider.getValueTo())
+                    upperValue = rangeSlider.getValueTo();
+
+                rangeSlider.setValues((float) value, (float) upperValue);
+                if(showValue)
+                    valueTv.setText(getFormattedRangeValue((float) getSteppedValue(value), (float) getSteppedValue(upperValue)));
+            } else {
+                if (value < slider.getValueFrom())
+                    value = slider.getValueFrom();
+                if (value > slider.getValueTo())
+                    value = slider.getValueTo();
+                slider.setValue((float) value);
+                if(showValue)
+                    valueTv.setText(numberFormatter(getSteppedValue(value)));
+            }
+        }
+
+        @Override
+        protected String createViewHTML() {
+            return (type == SliderType.Range) ? getTwoSlidersVerticallyHTML() :
+
+                 "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
+                        "<span class=\"label\">"+this.label+"</span>" +
+                        "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" +
+                        "<div class=\"sliderContainer\">" +
+                            "<span class=\"minValue\" >"+minValue+"</span>" +
+                                "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
+                                    "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                    ">" +
+                                "</input>" +
+                            "<span class=\"maxValue\">"+maxValue+"</span>" +
+                         "</div>" +
+                    "</div>";
+
+        }
+
+
+        private String getTwoSlidersVerticallyHTML(){
+            return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
+                                            "<span class=\"label\">"+this.label+"</span>" +
+                                            "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" +
+                                            "<div class=\"sliderContainer\">" +
+                                            "<span class=\"minValue\" >"+minValue+"</span>" +
+                                                "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
+                                                    "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                                    ">" +
+                                                "</input>" +
+                                            "<span class=\"maxValue\"></span>" +
+                                            "</div>" +
+                                            "<div class=\"sliderContainer\">" +
+                                            "<span class=\"minValue\"></span>" +
+                                            "<input type=\"range\" class=\"slider\" id=\"input1"+htmlID+"\"" +
+                                                "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                                    ">" +
+                                                    "</input>" +
+                                                "<span class=\"maxValue\">"+maxValue+"</span>" +
+                                            "</div>" +
+                                    "</div>";
+        }
+
+        @Override
+        protected String setDataHTML() {
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+
+            return type == SliderType.Range ? setHTMLForRangeSlider() :
+
+                "function (data) {\n" +
+                    "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                        return;\n" +
+                    "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                    var selectedValue = parseFloat(x).toFixed("+precision+")\n" +
+                    "                    var sliderElement = document.getElementById(\"input"+htmlID+"\")\n" +
+                    "                    var valueDisplay = document.getElementById(\"value"+htmlID+"\");\n" +
+                    "                    if (sliderElement) {\n" +
+                    "                        sliderElement.min = "+minValue+";\n" +
+                    "                        sliderElement.max = "+maxValue+";\n" +
+                        "                    sliderElement.step = "+stepSize+";\n" +
+                    "                        sliderElement.value = selectedValue || "+defaultValue+" \n" +
+                    "                    }\n" +
+                    "                    if(valueDisplay){ \n"+
+                    "                        valueDisplay.textContent = parseFloat(sliderElement.value).toFixed("+precision+");\n"+
+                    "                    }\n" +
+                    "                   sliderElement.onchange = function() {\n"+
+                    "                            if (valueDisplay) {\n" +
+                    "                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed("+precision+");\n" +
+                        "                        }\n" +
+                    "                       ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElement.value)\n"+
+                    "                   }\n" +
+                    "            }";
+        }
+
+        private String setHTMLForRangeSlider() {
+            String bufferName = inputs.get(0).replace("\"", "\\\"");
+            String upperValueBufferName = inputs.get(1).replace("\"", "\\\"");
+
+            return "function (data) {\n" +
+                    "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+                    "                        return;\n" +
+                    "                    if (!data.hasOwnProperty(\""+upperValueBufferName+"\"))\n" +
+                    "                        return;\n" +
+
+                    "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                    var y = data[\""+upperValueBufferName+"\"][\"data\"][data[\""+upperValueBufferName+"\"][\"data\"].length - 1];\n" +
+
+                    "                    var selectedValueX = parseFloat(x).toFixed("+precision+")\n" +
+                    "                    var selectedValueY = parseFloat(y).toFixed("+precision+")\n" +
+
+                    "                    var sliderElementOne = document.getElementById(\"input"+htmlID+"\")\n" +
+                    "                    var sliderElementTwo = document.getElementById(\"input1"+htmlID+"\")\n" +
+                    "                    var valueDisplay = document.getElementById(\"value"+htmlID+"\");\n" +
+
+                    "                    if (sliderElementOne && sliderElementTwo) {\n" +
+                    "                        sliderElementOne.min = "+minValue+";\n" +
+                    "                        sliderElementTwo.min = "+minValue+";\n" +
+                    "                        sliderElementOne.max = "+maxValue+";\n" +
+                    "                        sliderElementTwo.max = "+maxValue+";\n" +
+                    "                        sliderElementOne.step = "+stepSize+";\n" +
+                    "                        sliderElementTwo.step = "+stepSize+";\n" +
+                    "                        sliderElementOne.value = selectedValueX || "+defaultValue+" \n" +
+                    "                        sliderElementTwo.value = selectedValueY || "+defaultValue+" \n" +
+                    "                    }\n" +
+
+                    "                    if(valueDisplay){ \n"+
+                    "                        valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n"+
+                    "                    }\n" +
+
+                    "                    if (sliderElementOne || sliderElementTwo){\n" +
+                    "                       sliderElementOne.onchange = function() {\n"+
+                    "                            if(sliderElementOne.value <= sliderElementTwo.value) {\n"+
+                    "                                if (valueDisplay) {\n" +
+                    "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
+                    "                               }\n" +
+                    "                               ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElementOne.value)\n"+
+                    "                            }\n" +
+                    "                        }\n" +
+
+                    "                        sliderElementTwo.onchange = function() {\n"+
+                    "                            if(sliderElementOne.value <= sliderElementTwo.value) {\n"+
+                    "                                if (valueDisplay) {\n" +
+                    "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
+                    "                               }\n" +
+                    "                            ajax('control?cmd=set&buffer="+getValueOutputs().get(1)+"&value='+sliderElementTwo.value)\n"+
+                    "                            }\n" +
+                    "                       }\n" +
+                    "            }\n" +
+                    "       }";
+        }
+
+        @Override
+        protected String getUpdateMode() {
+            return "single";
+        }
+    }
 }
+
+/*
+
+  if (sliderElement){\n" +
+                    "                        sliderElement.addEventListener('input', function () {\n" +
+                    "                            if (valueDisplay) {\n" +
+                    "                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(1);\n" +
+                    "                            }\n" +
+                    "                            x = parseFloat(sliderElement.value)\n" +
+                    "                            data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1] = x\n" +
+                    "                        });\n" +
+                    "                        \n" +
+                    "                   }\n" +
+
+ */

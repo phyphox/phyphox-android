@@ -71,6 +71,9 @@ public class ThresholdAnalyzer extends AnalyzingModule {
     int thresholdDownsamplingResSourceHandle, thresholdDownsamplingResTargetHandle;
 
     double latestResult = Double.NaN;
+
+    ByteBuffer resultBuffer = null;
+    int resultBufferSize = 0;
     public ThresholdAnalyzer(DataBuffer out, double threshold) {
         this.threshold = threshold;
         this.out = out;
@@ -108,7 +111,10 @@ public class ThresholdAnalyzer extends AnalyzingModule {
 
         long totalContribution = 0;
 
-        ByteBuffer resultBuffer = ByteBuffer.allocateDirect(outW * outH * 4).order(ByteOrder.nativeOrder());
+        if (resultBuffer == null || resultBufferSize != outH * outW) {
+            resultBufferSize = outH*outW;
+            resultBuffer = ByteBuffer.allocateDirect(resultBufferSize * 4).order(ByteOrder.nativeOrder());
+        }
         resultBuffer.rewind();
 
         GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);

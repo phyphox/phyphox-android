@@ -21,7 +21,7 @@ Obsługiwane czujniki:
 
 Formaty eksportowanych danych:
 - CSV (Przecinek jako separator)
-- CSV (Tabulator jako separator)
+- TSV (Tabulator jako separator)
 - Excel
 (jeśli niezbędne są inne formaty, prosimy o kontakt)
 

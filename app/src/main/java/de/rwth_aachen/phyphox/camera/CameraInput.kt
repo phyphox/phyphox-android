@@ -9,6 +9,8 @@ import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
 import android.util.Log
+import android.util.Range
+import android.util.Size
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraControl
@@ -20,6 +22,8 @@ import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraX
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -68,7 +72,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     var apertureDataBuffer: DataBuffer? = null
 
     enum class AEStrategy {
-        mean, avoidUnderxposure, avoidOverexposure
+        mean, avoidUnderxposure, avoidOverexposure, prioritizeFramerate
     }
     var aeStrategy: AEStrategy = AEStrategy.mean
 
@@ -84,36 +88,38 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     @Transient var analyzingOpenGLRenderer: AnalyzingOpenGLRenderer? = null
 
     @SuppressLint("UnsafeOptInUsageError")
-    fun setUpPreviewUseCase(): Preview.Builder {
-        val previewBuilder = Preview.Builder()
-        val extender = Camera2Interop.Extender(previewBuilder)
+    fun setUpPreviewUseCase(cameraSelector: CameraSelector): Preview.Builder? {
+        lifecycleOwner?.let { lifecycleOwner ->
+            cameraProvider?.unbindAll()
+            val camera = cameraProvider?.bindToLifecycle(lifecycleOwner, cameraSelector) ?: return null
+            val ranges = Camera2CameraInfo.from(camera.cameraInfo).getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+            val maxFpsRange = ranges?.toList()?.maxBy { it.upper * 1000 + it.lower } ?: return null
+            Log.d("CameraInput", "Aiming for fps range $maxFpsRange")
+            cameraProvider?.unbindAll()
 
-        extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+            val resolutionSelector = ResolutionSelector.Builder()
+                .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
+                .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                .build()
+            val previewBuilder = Preview.Builder()
+                .setTargetFrameRate(maxFpsRange)
+                .setResolutionSelector(resolutionSelector)
+            val extender = Camera2Interop.Extender(previewBuilder)
 
-        return previewBuilder
+            extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+            extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, maxFpsRange)
+            val sensorFrameDuration = 1_000_000_000/maxFpsRange.upper.toLong()
+            extender.setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, sensorFrameDuration)
 
-    }
+            val currentCameraSettingValueState = _cameraSettingState.value
+            val newCameraSettingValueState = currentCameraSettingValueState.copy(
+                sensorFrameDuration = sensorFrameDuration
+            )
+            _cameraSettingState.value = newCameraSettingValueState
 
-    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
-    private fun setupWhiteBalance(cameraSettingState: CameraSettingState, extender:  Camera2Interop.Extender<Preview> ){
-        val currentMode = cameraSettingState.cameraCurrentWhiteBalanceMode
-        val currentValue = cameraSettingState.cameraCurrentWhiteBalanceManualValue
-
-        when(currentMode) {
-            0 -> {
-                //extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF)
-                extender.setCaptureRequestOption(
-                        CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
-                )
-                if(currentValue.size == 4){
-                    extender.setCaptureRequestOption(
-                            CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(currentValue[0], currentValue[1],  currentValue[2], currentValue[3])
-                    )
-                }
-            }
-            else -> extender.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, currentMode)
-
+            return previewBuilder
         }
+        return null
     }
 
     fun startCameraFromProvider(lifecycleOwner: LifecycleOwner, application: Application) {
@@ -150,7 +156,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     }
                     CameraState.RUNNING -> Unit
                     CameraState.RESTART -> {
-                        Log.d("TEST", "RESTART")
                         cameraProvider?.unbindAll()
                         analyzingOpenGLRenderer?.releaseCameraSurface({
                             lifecycleOwner.lifecycleScope.launch {
@@ -165,13 +170,17 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     }
 
     fun startCamera() {
-        Log.d("TEST", "startCamera")
         if (analyzingOpenGLRenderer == null)
             analyzingOpenGLRenderer = AnalyzingOpenGLRenderer(this, dataLock, cameraSettingState, this)
 
         val cameraSelector = CameraHelper.cameraLensToSelector(cameraSettingState.value.currentLens)
 
-        val preview = setUpPreviewUseCase().build().also {
+        val previewBuilder = setUpPreviewUseCase(cameraSelector) ?: run {
+            Log.e("CameraInput", "Could not create preview builder.")
+            return
+        }
+
+        val preview = previewBuilder.build().also {
             it.setSurfaceProvider(analyzingOpenGLRenderer)
         }
 
@@ -224,14 +233,11 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
         val maxOpticalZoom: FloatArray? = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)
 
-        val ratios: MutableList<Float> = CameraHelper.computeZoomRatios(minZoomRatio, maxZoomRatio)
-
         _cameraSettingState.value = cameraSettingState.value.copy(
                 cameraMinZoomRatio = minZoomRatio,
                 cameraMaxZoomRatio = maxZoomRatio,
                 cameraZoomRatio = zoomRatio,
                 cameraLinearRatio = linearZoom,
-                cameraZoomRatioConverted = ratios,
                 cameraMaxOpticalZoom = maxOpticalZoom?.last()
         )
     }
@@ -359,7 +365,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             CameraSettingMode.EXPOSURE -> {
                 val exposure: Float = CameraHelper.exposureValueStringToFloat(value)
                 if (!currentCameraSettingState.autoExposure) {
-                    val (shutter, iso) = CameraHelper.adjustExposure(Math.pow(2.0, (exposure - currentCameraSettingState.currentExposureValue).toDouble()), currentCameraSettingState)
+                    val (shutter, iso) = CameraHelper.adjustExposure(Math.pow(2.0, (exposure - currentCameraSettingState.currentExposureValue).toDouble()), currentCameraSettingState, 1_000_000_000/15)
                     newCameraSettingState = currentCameraSettingState.copy(
                             currentExposureValue = exposure,
                             currentShutterValue = shutter,
@@ -529,34 +535,41 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             lifecycleOwner?.lifecycleScope?.launch {
                 val state = cameraSettingState.value
                 var adjust = 1.0
+                var maxExposureTime: Long = 1_000_000_000/15
+                val fps = Math.min(1.0e9/state.sensorFrameDuration, 1.0e9/state.currentShutterValue)
+                val speedFactor = 30.0 / fps
                 var targetExposure = 0.5* Math.pow(2.0, state.currentExposureValue.toDouble())
                 if (targetExposure > 0.95)
                     targetExposure = 0.95
                 when (aeStrategy) {
                     AEStrategy.mean -> {
-                        adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
+                        adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
+                    }
+                    AEStrategy.prioritizeFramerate -> {
+                        adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
+                        maxExposureTime = state.sensorFrameDuration
                     }
                     AEStrategy.avoidUnderxposure -> {
                         if (minRGB > 0.2) {
-                            adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
+                            adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
                         } else if (minRGB > 0.1) {
-                            adjust = 1.0 - 0.1 * (minRGB - 0.25)
+                            adjust = 1.0 - speedFactor * 0.1 * (minRGB - 0.25)
                         } else {
-                            adjust = 1.0 - 0.2 * (minRGB - 0.25)
+                            adjust = 1.0 - speedFactor * 0.2 * (minRGB - 0.25)
                         }
                     }
                     AEStrategy.avoidOverexposure -> {
                         if (maxRGB < 0.8) {
-                            adjust = 1.0 - 0.1 * (meanLuma - targetExposure)
+                            adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
                         } else if (maxRGB < 0.9) {
-                            adjust = 1.0 - 0.1 * (maxRGB - 0.75)
+                            adjust = 1.0 - speedFactor * 0.1 * (maxRGB - 0.75)
                         } else {
-                            adjust = 1.0 - 0.2 * (maxRGB - 0.75)
+                            adjust = 1.0 - speedFactor * 0.2 * (maxRGB - 0.75)
                         }
                     }
                 }
 
-                val (shutter, iso) = CameraHelper.adjustExposure(adjust, state)
+                val (shutter, iso) = CameraHelper.adjustExposure(adjust, state, maxExposureTime)
 
                 var newCameraSettingState = state.copy(
                         currentIsoValue = iso,

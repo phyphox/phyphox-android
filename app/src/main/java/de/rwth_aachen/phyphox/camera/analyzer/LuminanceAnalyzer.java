@@ -98,6 +98,9 @@ public class LuminanceAnalyzer extends AnalyzingModule {
     int luminanceDownsamplingResSourceHandle, luminanceDownsamplingResTargetHandle;
 
     double latestResult = Double.NaN;
+
+    ByteBuffer resultBuffer = null;
+    int resultBufferSize = 0;
     public LuminanceAnalyzer(DataBuffer out, boolean linear) {
         this.linear = linear;
         this.out = out;
@@ -135,7 +138,10 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         long luminance = 0;
         long totalContribution = 0;
 
-        ByteBuffer resultBuffer = ByteBuffer.allocateDirect(outW * outH * 4).order(ByteOrder.nativeOrder());
+        if (resultBuffer == null || resultBufferSize != outH * outW) {
+            resultBufferSize = outH*outW;
+            resultBuffer = ByteBuffer.allocateDirect(resultBufferSize * 4).order(ByteOrder.nativeOrder());
+        }
         resultBuffer.rewind();
 
         GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);
@@ -157,7 +163,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
 
     @Override
     public void writeToBuffers(CameraSettingState state) {
-        double exposureFactor = linear ? state.getCurrentApertureValue() * 100.0/state.getCurrentIsoValue() * (1.0e9/60.0) / state.getCurrentShutterValue() : 1.0;
+        double exposureFactor = linear ? Math.pow(2.0, state.getCurrentApertureValue())/2.0 * 100.0/state.getCurrentIsoValue() * (1.0e9/60.0) / state.getCurrentShutterValue() : 1.0;
         out.append(latestResult*exposureFactor);
     }
 

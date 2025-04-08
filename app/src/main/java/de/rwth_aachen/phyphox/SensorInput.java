@@ -19,6 +19,8 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     public int type; //Sensor type (Android identifier)
     public SensorName sensorName; //Sensor name (phyphox identifier)
+    public String sensorNameFilter = null; //Used to identify custom sensors by name
+    public int sensorTypeFilter = -1; //Used to identify custom sensors by sensor type
     public boolean calibrated = true;
     public long period; //Sensor aquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible
     public int stride;
@@ -50,7 +52,7 @@ public class SensorInput implements SensorEventListener, Serializable {
     public Sensor sensor;
 
     public enum SensorName {
-        accelerometer, linear_acceleration, gravity, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity, attitude
+        accelerometer, linear_acceleration, gravity, gyroscope, magnetic_field, pressure, light, proximity, temperature, humidity, attitude, custom
     }
 
     public enum SensorRateStrategy {
@@ -77,7 +79,8 @@ public class SensorInput implements SensorEventListener, Serializable {
             case temperature: return Sensor.TYPE_AMBIENT_TEMPERATURE;
             case humidity: return Sensor.TYPE_RELATIVE_HUMIDITY;
             case attitude: return Sensor.TYPE_ROTATION_VECTOR;
-            default: return -1;
+            case custom: return -1;
+            default: return -2;
         }
     }
 
@@ -85,7 +88,7 @@ public class SensorInput implements SensorEventListener, Serializable {
         try {
             return resolveSensorName(SensorName.valueOf(type));
         } catch (InvalidParameterException e) {
-            return -1;
+            return -2;
         }
     }
 
@@ -125,63 +128,79 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     //The constructor needs the phyphox identifier of the sensor type, the desired aquisition rate,
     // and the four buffers to receive x, y, z and t. The data buffers may be null to be left unused.
-    public SensorInput(SensorName type, boolean ignoreUnavailable, double rate, SensorRateStrategy rateStrategy, int stride, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
+    public SensorInput(SensorName type, String nameFilter, Integer typeFilter, boolean ignoreUnavailable, double rate, SensorRateStrategy rateStrategy, int stride, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
         this(ignoreUnavailable, rate, rateStrategy, stride, average, buffers, lock, experimentTimeReference);
 
         this.type = resolveSensorName(type);
         this.sensorName = type;
-        if (this.type < 0)
+        this.sensorNameFilter = nameFilter;
+        this.sensorTypeFilter = typeFilter;
+        if (this.type < -1)
             throw new SensorException("Unknown sensor.");
     }
 
-    public SensorInput(String type, boolean ignoreUnavailable, double rate, SensorRateStrategy rateStrategy, int stride, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
+    public SensorInput(String type, String nameFilter, Integer typeFilter, boolean ignoreUnavailable, double rate, SensorRateStrategy rateStrategy, int stride, boolean average, Vector<DataOutput> buffers, Lock lock, ExperimentTimeReference experimentTimeReference) throws SensorException {
         this(ignoreUnavailable, rate, rateStrategy, stride, average, buffers, lock, experimentTimeReference);
 
         this.type = resolveSensorString(type);
-        if (this.type < 0)
+        this.sensorNameFilter = nameFilter;
+        this.sensorTypeFilter = typeFilter;
+        if (this.type < -1)
             throw new SensorException("Unknown sensor.");
 
         this.sensorName = SensorName.valueOf(type);
     }
 
     private Sensor findSensor() {
-        Sensor sensor = sensorManager.getDefaultSensor(type);
+
+        Sensor sensor = null;
+        vendorSensor = false;
+        if (type >= 0)
+            sensor = sensorManager.getDefaultSensor(type);
+        else if (type == -1 && sensorTypeFilter >= 0 && sensorNameFilter == null)
+            sensor = sensorManager.getDefaultSensor(sensorTypeFilter);
 
         if (sensor != null) {
-            vendorSensor = false;
             return sensor;
         } else {
             for (Sensor s : sensorManager.getSensorList(Sensor.TYPE_ALL)) {
-                if (s.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE)
-                    continue;
                 String name = s.getName().toLowerCase();
                 if (type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+                    if (s.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE)
+                        continue;
                     if (name.toLowerCase().contains("temperature") || name.toLowerCase().contains("thermo")) { //Samsung devices have an entry "thermistor", but we do not get any data by naively reading it, so do not add it unless there are other devices that benefit from accepting this name.
                         sensor = s;
+                        vendorSensor = true;
                         break;
                     }
-                }
-                if (type == Sensor.TYPE_RELATIVE_HUMIDITY) {
+                } else if (type == Sensor.TYPE_RELATIVE_HUMIDITY) {
+                    if (s.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE)
+                        continue;
                     if (name.toLowerCase().contains("humidity")) {
                         sensor = s;
+                        vendorSensor = true;
                         break;
                     }
-                }
-                if (type == Sensor.TYPE_PRESSURE) {
+                } else if (type == Sensor.TYPE_PRESSURE) {
+                    if (s.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE)
+                        continue;
                     if (name.toLowerCase().contains("pressure")) {
                         sensor = s;
+                        vendorSensor = true;
                         break;
                     }
+                } else if (type == -1) {
+                    if (sensorTypeFilter >= 0 && s.getType() != sensorTypeFilter)
+                        continue;
+                    if (sensorNameFilter != null && !name.toLowerCase().contains(sensorNameFilter.toLowerCase()))
+                        continue;
+                    sensor = s;
+                    break;
                 }
             }
         }
 
-        if (sensor != null) {
-            vendorSensor = true;
-            return sensor;
-        }
-
-        return null;
+        return sensor;
     }
 
     public void attachSensorManager(SensorManager sensorManager) {
@@ -258,7 +277,7 @@ public class SensorInput implements SensorEventListener, Serializable {
         return "";
     }
 
-    //Start the data aquisition by registering a listener for this sensor.
+    //Start the data acquisition by registering a listener for this sensor.
     public void start() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)) {
             if (calibrated)
@@ -288,7 +307,7 @@ public class SensorInput implements SensorEventListener, Serializable {
             this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-    //Stop the data aquisition by unregistering the listener for this sensor
+    //Stop the data acquisition by unregistering the listener for this sensor
     public void stop() {
         if (sensor == null)
             return;

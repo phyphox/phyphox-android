@@ -6,7 +6,7 @@
     android:layout_height="match_parent" android:paddingLeft="0dp"
     android:paddingRight="0dp"
     android:paddingTop="0dp"
-    android:paddingBottom="0dp" tools:context=".ExperimentList"
+    android:paddingBottom="0dp" tools:context=".ExperimentList.ExperimentListActivity"
     android:id="@+id/rootExperimentList">
 
     <RelativeLayout
@@ -14,7 +14,10 @@
         android:background="@color/phyphox_black_60"
         android:elevation="8dp"
         android:layout_width="match_parent"
+        android:fitsSystemWindows="true"
         android:layout_height="wrap_content">
+
+
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="@dimen/titleIconSizeCustom"
@@ -42,6 +45,9 @@
             android:layout_alignParentLeft="false"
             android:layout_alignTop="@+id/logo"
             android:contentDescription="@string/info"/>
+
+
+
     </RelativeLayout>
 
     <de.rwth_aachen.phyphox.Helper.ReportingScrollView

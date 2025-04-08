@@ -65,6 +65,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     DataBuffer timeOutput;
     DataBuffer shutterSpeedOutput, apertureOutput, isoOutput;
 
+    Long lastPreviewFrame = 0L;
+
     public AnalyzingOpenGLRenderer(CameraInput cameraInput, Lock lock, StateFlow<CameraSettingState> cameraSettingValueState, ExposureStatisticsListener exposureStatisticsListener) {
         this.cameraSettingValueState = cameraSettingValueState;
         this.experimentTimeReference = cameraInput.experimentTimeReference;
@@ -231,7 +233,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     }
 
     void draw() {
-        double t = experimentTimeReference.getExperimentTime();
         CameraSettingState state = cameraSettingValueState.getValue();
         executor.execute(
                 () -> {
@@ -243,6 +244,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     long start = System.nanoTime();
 
                     cameraSurfaceTexture.updateTexImage();
+                    double t = experimentTimeReference.getExperimentTimeFromEvent(cameraSurfaceTexture.getTimestamp());
 
                     float[] camMatrix = new float[16];
                     cameraSurfaceTexture.getTransformMatrix(camMatrix);
@@ -271,8 +273,11 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     } else
                         exposureAnalyzer.reset();
 
-                    for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
-                        previewOutput.draw(camMatrix, passepartout);
+                    if (System.currentTimeMillis() - lastPreviewFrame > 1000/30) {
+                        for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
+                            previewOutput.draw(camMatrix, passepartout);
+                        }
+                        lastPreviewFrame = System.currentTimeMillis();
                     }
 
                     if (dataNeedsToBeWrittenToBuffers && measuring) {
@@ -297,6 +302,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     public void onSurfaceRequested(@NonNull SurfaceRequest request) {
         previewWidth = request.getResolution().getWidth();
         previewHeight = request.getResolution().getHeight();
+        Log.d("AnalyzingOpenGLRenderer", "Surface requested: " + previewWidth + "x" + previewHeight);
 
         executor.execute(
                 () -> {

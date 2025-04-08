@@ -10,7 +10,6 @@ import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.Uri;
 import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
@@ -18,24 +17,9 @@ import android.util.Log;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.preference.PreferenceManager;
 
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.DefaultHttpResponseFactory;
-import org.apache.http.impl.DefaultHttpServerConnection;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.BasicHttpProcessor;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpRequestHandler;
-import org.apache.http.protocol.HttpRequestHandlerRegistry;
-import org.apache.http.protocol.HttpService;
-import org.apache.http.protocol.ResponseConnControl;
-import org.apache.http.protocol.ResponseContent;
-import org.apache.http.protocol.ResponseDate;
-import org.apache.http.protocol.ResponseServer;
+import net.freeutils.httpserver.HTTPServer;
+import net.freeutils.httpserver.HTTPServer.Request;
+import net.freeutils.httpserver.HTTPServer.Response;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,38 +35,33 @@ import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.Vector;
 
-//remoteServer implements a web-interface to remote control the experiment and receive the data
-//Unfortunately, Google decided to depricate org.apache.http in Android 6, so until we move to
-//something else, we need to suppress deprication warnings if we do not want to get flooded.
+//RemoteServer implements a web interface to remote control the experiment and receive the data
 
-@SuppressWarnings( "deprecation" )
-public class RemoteServer extends Thread {
+public class RemoteServer {
 
     private final PhyphoxExperiment experiment; //Reference to the experiment we want to control
 
-    HttpService httpService; //Holds our http service
-    BasicHttpContext basicHttpContext; //A simple http context...
+    HTTPServer httpServer; //Holds our http service
+    ExecutorService executor;
     static int httpServerPort = 8080; //We have to pick a high port number. We may not use 80...
-    boolean RUNNING = false; //Keeps the main loop alive...
     Context context; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
 
     public String sessionID = "";
 
-    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it neccessary to force a full buffer update to the remote interface
+    public boolean forceFullUpdate = false; //Something has happened (clear) that makes it necessary to force a full buffer update to the remote interface
 
     static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
 
@@ -165,6 +144,96 @@ public class RemoteServer extends Thread {
 
     }
 
+    protected void buildViewsJson(StringBuilder sb) {
+        //The viewLayout is a JSON object with our view setup. All the experiment views
+        //and their view elements and their JavaScript functions and so on...
+
+        //Beginning of the JSON block
+        sb.append("var views = [");
+
+        int id = 0; //We will give each view a unique id to address them in JavaScript
+        //via a HTML id
+        htmlID2View.clear();
+        htmlID2Element.clear();
+
+        for (int i = 0; i < experiment.experimentViews.size(); i++) {
+            //For each experiment view
+            ExpView view = experiment.experimentViews.get(i);
+
+            if (i > 0)  //Add a colon if this is not the first item to separate the previous one.
+                sb.append(",\n"); //Not necessary, but debugging is so much more fun with a line-break.
+
+            //The name of this view
+            sb.append("{\"name\": \"");
+            sb.append(view.name.replace("\"","\\\""));
+
+            //Now for its elements
+            sb.append("\", \"elements\":[\n");
+            for (int j = 0; j < view.elements.size(); j++) {
+                //For each element within this view
+                ExpView.expViewElement element = view.elements.get(j);
+
+                //Store the mapping of htmlID to the experiment view hierarchy
+                htmlID2View.add(i);
+                htmlID2Element.add(j);
+
+                if (j > 0)  //Add a colon if this is not the first item to separate the previous one.
+                    sb.append(",");
+
+                //The element's label
+                sb.append("{\"label\":\"");
+                sb.append(element.label.replace("\"","\\\""));
+
+                //The id, we just created
+                sb.append("\",\"index\":\"");
+                sb.append(id);
+
+                //The update method
+                sb.append("\",\"updateMode\":\"");
+                sb.append(element.getUpdateMode());
+
+                //The label size
+                sb.append("\",\"labelSize\":\"");
+                sb.append(element.labelSize);
+
+                //The HTML markup for this element - on this occasion we notify the element about its id
+                sb.append("\",\"html\":\"");
+                sb.append(element.getViewHTML(id).replace("\"","\\\""));
+
+                //The Javascript function that handles data completion
+                sb.append("\",\"dataCompleteFunction\":");
+                sb.append(element.dataCompleteHTML());
+
+                //If this element takes an x array, set the buffer and the JS function
+                if (element.inputs != null) {
+                    sb.append(",\"dataInput\":[");
+                    boolean first = true;
+                    for (String input : element.inputs) {
+                        if (first)
+                            first = false;
+                        else
+                            sb.append(",");
+                        if (input == null)
+                            sb.append("null");
+                        else {
+                            sb.append("\"");
+                            sb.append(input.replace("\"", "\\\""));
+                            sb.append("\"");
+                        }
+                    }
+                    sb.append("],\"dataInputFunction\":\n");
+                    sb.append(element.setDataHTML());
+                    sb.append("\n");
+                }
+
+                sb.append("}"); //The element is complete
+                id++;
+            }
+            sb.append("\n]}"); //The view is complete
+        }
+        sb.append("\n];"); //The views are complete -> JSON object complete
+    }
+
     //Constructs the HTML file and replaces some placeholder.
     //This is where the experiment views place their HTML code.
     protected void buildIndexHTML () {
@@ -178,138 +247,42 @@ public class RemoteServer extends Thread {
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) { //The title. This one is easy...
                     sb.append(line.replace("<!-- [[title]] -->", experiment.title));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[clearDataTranslation]] -->")) { //The localized string for "clear data"
-                        sb.append(line.replace("<!-- [[clearDataTranslation]] -->", context.getString(R.string.clear_data)));
-                        sb.append("\n");
+                    sb.append(line.replace("<!-- [[clearDataTranslation]] -->", context.getString(R.string.clear_data)));
                 } else if (line.contains("<!-- [[clearConfirmTranslation]] -->")) { //The localized string for "Clear data?"
                     sb.append(line.replace("<!-- [[clearConfirmTranslation]] -->", context.getString(R.string.clear_data_question)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[exportTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[exportTranslation]] -->", context.getString(R.string.export)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchToPhoneLayoutTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchToPhoneLayoutTranslation]] -->", context.getString(R.string.switchToPhoneLayout)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns1Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns1Translation]] -->", context.getString(R.string.switchColumns1)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns2Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns2Translation]] -->", context.getString(R.string.switchColumns2)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[switchColumns3Translation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[switchColumns3Translation]] -->", context.getString(R.string.switchColumns3)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[toggleBrightModeTranslation]] -->")) {
                     sb.append(line.replace("<!-- [[toggleBrightModeTranslation]] -->", context.getString(R.string.toggleBrightMode)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[fontSizeTranslation]] -->")) {
                     sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", context.getString(R.string.fontSize)));
-                    sb.append("\n");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
-                    //The viewLayout is a JSON object with our view setup. All the experiment views
-                    //and their view elements and their JavaScript functions and so on...
-
-                    //Beginning of the JSON block
-                    sb.append("var views = [");
-
-                    int id = 0; //We will give each view a unique id to address them in JavaScript
-                                //via a HTML id
-                    htmlID2View.clear();
-                    htmlID2Element.clear();
-
-                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                        //For each ecperiment view
-
-                        if (i > 0)  //Add a colon if this is not the first item to seperate the previous one.
-                            sb.append(",\n"); //Not necessary, but debugging is so much more fun with a line-break.
-
-                        //The name of this view
-                        sb.append("{\"name\": \"");
-                        sb.append(experiment.experimentViews.get(i).name.replace("\"","\\\""));
-
-                        //Now for its elements
-                        sb.append("\", \"elements\":[\n");
-                        for (int j = 0; j < experiment.experimentViews.get(i).elements.size(); j++) {
-                            //For each element within this view
-
-                            //Store the mapping of htmlID to the experiment view hierarchy
-                            htmlID2View.add(i);
-                            htmlID2Element.add(j);
-
-                            if (j > 0)  //Add a colon if this is not the first item to seperate the previous one.
-                                sb.append(",");
-
-                            //The element's label
-                            sb.append("{\"label\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).label.replace("\"","\\\""));
-
-                            //The id, we just created
-                            sb.append("\",\"index\":\"");
-                            sb.append(id);
-
-                            //The update method
-                            sb.append("\",\"updateMode\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).getUpdateMode());
-
-                            //The label size
-                            sb.append("\",\"labelSize\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).labelSize);
-
-                            //The HTML markup for this element - on this occasion we notify the element about its id
-                            sb.append("\",\"html\":\"");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).getViewHTML(id).replace("\"","\\\""));
-
-                            //The Javascript function that handles data completion
-                            sb.append("\",\"dataCompleteFunction\":");
-                            sb.append(experiment.experimentViews.get(i).elements.get(j).dataCompleteHTML());
-
-                            //If this element takes an x array, set the buffer and the JS function
-                            if (experiment.experimentViews.get(i).elements.get(j).inputs != null) {
-                                sb.append(",\"dataInput\":[");
-                                boolean first = true;
-                                for (String input : experiment.experimentViews.get(i).elements.get(j).inputs) {
-                                    if (first)
-                                        first = false;
-                                    else
-                                        sb.append(",");
-                                    if (input == null)
-                                        sb.append("null");
-                                    else {
-                                        sb.append("\"");
-                                        sb.append(input.replace("\"", "\\\""));
-                                        sb.append("\"");
-                                    }
-                                }
-                                sb.append("],\"dataInputFunction\":\n");
-                                sb.append(experiment.experimentViews.get(i).elements.get(j).setDataHTML());
-                                sb.append("\n");
-                            }
-
-                            sb.append("}"); //The element is complete
-                            id++;
-                        }
-                        sb.append("\n]}"); //The view is complete
-                    }
-                    sb.append("\n];\n"); //The views are complete -> JSON object complete
-                    //That's it!
+                    buildViewsJson(sb);
                 } else if (line.contains("<!-- [[viewOptions]] -->")) {
                     //The option list for the view selector. Simple.
-                    for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                        //For each view
-                        sb.append("<li>");
-                        sb.append(experiment.experimentViews.get(i).name);
-                        sb.append("</li>\n");
+                    for (ExpView view : experiment.experimentViews) {
+                        sb.append("<li>").append(view.name).append("</li>\n");
                     }
                 } else if (line.contains("<!-- [[exportFormatOptions]] -->")) {
                     //The export format
-                    for (int i = 0; i < experiment.exporter.exportFormats.length; i++)
-                        sb.append("<option value=\"").append(i).append("\">").append(experiment.exporter.exportFormats[i].getName()).append("</option>\n");
+                    for (int i = 0; i < experiment.exporter.exportFormats.length; i++) {
+                        DataExport.ExportFormat format = experiment.exporter.exportFormats[i];
+                        sb.append("<option value=\"").append(i).append("\">").append(format.getName()).append("</option>\n");
+                    }
                 } else {
                     //No placeholder. Just append this.
                     sb.append(line);
-                    sb.append("\n");
                 }
+                sb.append("\n");
             }
         } catch (Exception e) {
             Log.e("remoteServer","Error loading index.html", e);
@@ -329,32 +302,26 @@ public class RemoteServer extends Thread {
         buildIndexHTML();
 
         this.sessionID = sessionID;
-
-        //Start the service...
-        RUNNING = true;
-        startHttpService();
     }
 
     RemoteServer(PhyphoxExperiment experiment, Experiment callActivity) {
         this(experiment, callActivity, String.format("%06x", (System.nanoTime() & 0xffffff)));
     }
 
-    //This helper function lists all external IP adresses, so the user can be told, how to reach the webinterface
+    //This helper function lists all external IP addresses, so the user can be told, how to reach the webinterface
     public static String getAddresses(Context context) {
         String ret = "";
         Inet4Address filterMobile = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            Network networks[] = connectivityManager.getAllNetworks();
+            Network[] networks = connectivityManager.getAllNetworks();
             for (Network network : networks) {
                 NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
                 if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
                     continue;
                 }
                 LinkProperties properties = connectivityManager.getLinkProperties(network);
-                Iterator<LinkAddress> iterator = properties.getLinkAddresses().iterator();
-                while (iterator.hasNext()) {
-                    LinkAddress address = iterator.next();
+                for (LinkAddress address : properties.getLinkAddresses()) {
                     if (address.getAddress() instanceof Inet4Address) {
                         filterMobile = (Inet4Address) address.getAddress();
                         break;
@@ -367,7 +334,7 @@ public class RemoteServer extends Thread {
             while (enumNetworkInterfaces.hasMoreElements()) { //For each network interface
                 NetworkInterface networkInterface = enumNetworkInterfaces.nextElement();
                 Enumeration<InetAddress> enumInetAddress = networkInterface.getInetAddresses();
-                while (enumInetAddress.hasMoreElements()) { //For each adress of this interface
+                while (enumInetAddress.hasMoreElements()) { //For each address of this interface
                     InetAddress inetAddress = enumInetAddress.nextElement();
 
                     //We want non-local, non-loopback IPv4 addresses (nobody really uses IPv6 on local networks and phyphox is not supposed to run over the internet - let's not make it too complicated for the user)
@@ -380,150 +347,195 @@ public class RemoteServer extends Thread {
             }
 
         } catch (SocketException e) {
-            Log.e("getAdresses", "Error getting the IP.", e);
+            Log.e("getAddresses", "Error getting the IP.", e);
         }
         return ret;
     }
 
-    @Override
-    //This is the main thread, which keeps running in a loop und handles incoming requests.
-    public void run() {
-        try {
-            //Setup server socket
-            ServerSocket serverSocket = new ServerSocket(httpServerPort);
-            serverSocket.setReuseAddress(true);
-            serverSocket.setSoTimeout(3000);
-
-            //The actual loop
-            while (RUNNING) {
-                try {
-                    //Wait for an incoming connection and accept it as a socket instance
-                    Socket socket = serverSocket.accept();
-
-                    //Turn this into a http server connection
-                    DefaultHttpServerConnection httpServerConnection = new DefaultHttpServerConnection();
-                    try {
-                        //Take the connection
-                        httpServerConnection.bind(socket, new BasicHttpParams());
-                        //Do what has been requested and answer (see handle registry below)
-                        //while (httpServerConnection.isOpen() && RUNNING) {
-                            httpService.handleRequest(httpServerConnection, basicHttpContext);
-                        //}
-                        //Note about the commented while-loop:
-                        //In theory, this loop should improve performance by allowing persistent connections, but for some reason many requests
-                        //fail if they are send in rapid succession. Not sure why... One idea is, that the second request is send while the first
-                        //one is still being handled and hence entirely ignored. If we close the connection instead, the browser is forced to
-                        //send it again at a more convenient timing... Not entirely convinced. For now let's use the version that works better...
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        httpServerConnection.shutdown();
-                    }
-                } catch (SocketTimeoutException e) {
-                    //A timeout is ok. We will just start listening again
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            //The loop has been shut down, so close our server socket
-            serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    //This starts the http service and registers the handlers for several requests
-    private synchronized void startHttpService() {
+    //This starts the http server and registers the handlers for several requests
+    public synchronized void start() {
         httpServerPort = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", "8080"));
-
-        BasicHttpProcessor basicHttpProcessor = new BasicHttpProcessor();
-        basicHttpContext = new BasicHttpContext();
-
-        basicHttpProcessor.addInterceptor(new ResponseDate());
-        basicHttpProcessor.addInterceptor(new ResponseServer());
-        basicHttpProcessor.addInterceptor(new ResponseContent());
-        basicHttpProcessor.addInterceptor(new ResponseConnControl());
-
-        httpService = new HttpService(basicHttpProcessor,
-                new DefaultConnectionReuseStrategy(),
-                new DefaultHttpResponseFactory());
+        httpServer = new HTTPServer(httpServerPort);
+        executor = Executors.newCachedThreadPool();
+        httpServer.setExecutor(executor);
+        HTTPServer.VirtualHost host = httpServer.getVirtualHost(null);
 
         //Now register a handler for different requests
-        HttpRequestHandlerRegistry registry = new HttpRequestHandlerRegistry();
-        registry.register("/", new HomeCommandHandler()); //The basic interface (index.html) when the user just calls the address
-        registry.register("/style.css", new StyleCommandHandler()); //The style sheet (style.css) linked from index.html
-        registry.register("/logo", new logoHandler()); //The phyphox logo, also included in style.css
-        registry.register("/get", new getCommandHandler()); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
-        registry.register("/control", new controlCommandHandler()); //The control command starts and stops measurements
-        registry.register("/export", new exportCommandHandler()); //The export command requests a data file containing sets as requested by the paramters
-        registry.register("/config", new configCommandHandler()); //The config command requests information on the currently active experiment configuration
-        registry.register("/meta", new metaCommandHandler()); //The meta command requests information on the device
-        registry.register("/time", new timeCommandHandler()); //The meta command requests information on the current time reference
-        registry.register("/res", new resCommandHandler()); //Fetch resource files (like images embedded in the experiment configuration)
-        httpService.setHandlerResolver(registry);
+        host.addContext("/", this::handleHome); //The basic interface (index.html) when the user just calls the address
+        host.addContext("/style.css", this::handleStyle); //The style sheet (style.css) linked from index.html
+        host.addContext("/logo", this::handleLogo); //The phyphox logo, also included in style.css
+        host.addContext("/get", this::handleGet); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
+        host.addContext("/control", this::handleControl, "GET", "POST"); //The control command starts and stops measurements
+        host.addContext("/export", this::handleExport); //The export command requests a data file containing sets as requested by the parameters
+        host.addContext("/config", this::handleConfig); //The config command requests information on the currently active experiment configuration
+        host.addContext("/meta", this::handleMeta); //The meta command requests information on the device
+        host.addContext("/time", this::handleTime); //The meta command requests information on the current time reference
+        host.addContext("/res", this::handleRes); //Fetch resource files (like images embedded in the experiment configuration)
+        try {
+            httpServer.start();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-
-    //Stop the server by siply setting RUNNING to false
-    public synchronized void stopServer() {
-        RUNNING = false;
+    //Stop the server by simply setting RUNNING to false
+    public synchronized void stop() {
+        httpServer.stop();
+        executor.shutdown();
     }
 
-    //The home handler simply takes the already compiled index.html and pushes it through an OutputStreamWriter
-    class HomeCommandHandler implements HttpRequestHandler {
+    protected int respond(Response response, String contentType, InputStream in, long length) throws IOException {
+        try {
+            response.sendHeaders(200, length, System.currentTimeMillis(), null, contentType, null);
+            response.sendBody(in, -1, null);
+        } finally {
+            in.close();
+        }
+        return 0; // response fully handled
+    }
 
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
+    protected int respond(Response response, String contentType, String content) throws IOException {
+        byte[] bytes = content.getBytes();
+        InputStream in = new ByteArrayInputStream(bytes);
+        return respond(response, contentType, in, bytes.length);
+    }
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(indexHTML.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
+    protected int respond(Response response, String contentType, File content) throws IOException {
+        InputStream in = new FileInputStream(content);
+        return respond(response, contentType, in, content.length());
+    }
 
-            //Set the header and THEN send the file
-            response.setHeader("Content-Type", "text/html");
-            response.setEntity(entity);
+    protected int respond(Response response, String json) throws IOException {
+        return respond(response, "application/json", json);
+    }
+
+    protected int respond(Response response, boolean result) throws IOException {
+        return respond(response, result ? "{\"result\": true}" : "{\"result\": false}");
+    }
+
+    //The home handler simply sends the already compiled index.html
+    public int handleHome(Request request, Response response) throws IOException {
+        return respond(response, "text/html", indexHTML);
+    }
+
+    //The style handler simply sends the already compiled style.css
+    public int handleStyle(Request request, Response response) throws IOException {
+        return respond(response, "text/css", styleCSS);
+    }
+
+    //The logo handler simply reads the logo from resources and sends it
+    public int handleLogo(Request request, Response response) throws IOException {
+        InputStream inputStream = context.getAssets().open("remote/phyphox_orange.png");
+        return respond(response, "image/png", inputStream, -1);
+    }
+
+    //This structure (ok, class) holds one element of the request corresponding to a buffer
+    protected static class BufferRequest {
+        public String name;         //Name of the requested buffer
+        public Double threshold;    //Threshold from which to read data
+        public String reference;    //The buffer to which the threshold should be applied
+    }
+
+    protected BufferRequest parseBufferRequest(String name, String value, boolean forceFullUpdate) {
+        BufferRequest br = new BufferRequest();
+        br.name = name;
+        br.reference = "";
+        if (value == null || value.isEmpty()) {
+            br.threshold = Double.NaN; //No special request - the last value should be ok
+        } else if (value.equals("full") || forceFullUpdate) {
+            br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
+        } else {
+            //So we get a threshold. We just have to figure out the reference buffer
+            int subsplit = value.indexOf('|');
+            if (subsplit == -1)
+                br.threshold = Double.valueOf(value); //No reference specified
+            else { //A reference is given
+                br.threshold = Double.valueOf(value.substring(0, subsplit));
+                br.reference = value.substring(subsplit + 1);
+            }
+            //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
+            //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
+            br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold / 1e7)));
+        }
+        return br;
+    }
+
+    protected Set<BufferRequest> getBufferRequests(Request request) throws IOException {
+        Set<BufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
+        List<String[]> params = request.getParamsList();
+        if (!params.isEmpty()) {
+            for (String[] param : params) {
+                BufferRequest br = parseBufferRequest(param[0], param[1], forceFullUpdate);
+                buffers.add(br);
+            }
+            forceFullUpdate = false;
+        }
+        return buffers;
+    }
+
+    protected void buildBuffer(BufferRequest buffer, DataBuffer db, DecimalFormat format, StringBuilder sb) {
+        //Get the threshold reference data buffer
+        DataBuffer db_reference = buffer.reference.isEmpty() ? db : experiment.getBuffer(buffer.reference);
+
+        //Buffer name
+        sb.append("\"");
+        sb.append(db.name);
+
+        //Buffer size
+        sb.append("\":{\"size\":");
+        sb.append(db.size);
+
+        //Does the response contain a single value, the whole buffer or a part of it?
+        sb.append(",\"updateMode\":\"");
+        if (Double.isNaN(buffer.threshold))
+            sb.append("single");
+        else if (Double.isInfinite(buffer.threshold))
+            sb.append("full");
+        else
+            sb.append("partial");
+        sb.append("\", \"buffer\":[");
+
+        if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
+            if (Double.isNaN(db.value) || Double.isInfinite(db.value))
+                sb.append("null");
+            else
+                sb.append(format.format(db.value));
+        else {
+            //Get all the values...
+            boolean firstValue = true; //Find first iteration, so the other ones can add a separator
+            Double[] data = db.getArray();
+            int n = db.getFilledSize();
+            Double[] dataRef;
+            if (db_reference == db)
+                dataRef = data;
+            else {
+                dataRef = db_reference.getArray();
+                n = Math.min(n, db_reference.getFilledSize());
+            }
+
+
+            Double v;
+            for (int i = 0; i < n; i++) {
+                //Simultaneously get the values from both iterators
+                v = data[i];
+                Double v_dep = dataRef[i];
+                if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
+                    continue;
+
+                //Add a separator if this is not the first value
+                if (firstValue)
+                    firstValue = false;
+                else
+                    sb.append(",");
+
+                if (Double.isNaN(v) || Double.isInfinite(v))
+                    sb.append("null");
+                else
+                    sb.append(format.format(v));
+            }
         }
 
-    }
-
-    //The style handler simply takes the already compiled style.css and pushes it through an OutputStreamWriter
-    class StyleCommandHandler implements HttpRequestHandler {
-
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
-
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(styleCSS.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            //Set the header and THEN send the file
-            response.setHeader("Content-Type", "text/css");
-            response.setEntity(entity);
-        }
-
-    }
-
-    //The logo handler simply reads the logo from resources and pushes it through an OutputStreamWriter
-    class logoHandler implements HttpRequestHandler {
-
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
-
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = context.getAssets().open("remote/phyphox_orange.png");
-            entity.setContent(inputStream);
-
-            //Set the header and THEN send the file
-            response.setHeader("Content-Type", "image/png");
-            response.setEntity(entity);
-        }
-
+        sb.append("]}");
     }
 
     //The get query has the form
@@ -532,608 +544,344 @@ public class RemoteServer extends Thread {
     // values from buffer3 at indices at which values of buffer2 are greater than 67890
     //Example: If you have a graph of sensor data y against time t and already have data to
     // 20 seconds, you would request t=20 and y=20|t to receive any data beyond 20 seconds
-    class getCommandHandler implements HttpRequestHandler {
+    public int handleGet(Request request, Response response) throws IOException {
+        Set<BufferRequest> buffers = getBufferRequests(request);
 
-        //This structure (ok, class) holds one element of the request corresponding to a buffer
-        protected class bufferRequest {
-            public String name;         //Name of the requested buffer
-            public Double threshold;    //Threshold from which to read data
-            public String reference;    //The buffer to which the threshold should be applied
-        }
+        //We now know what the query request. Let's build our answer
+        StringBuilder sb;
 
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
-
-            Uri uri=Uri.parse(request.getRequestLine().getUri());
-
-            //Based on code from getQueryParameterNames, see http://stackoverflow.com/questions/11642494/android-net-uri-getqueryparameternames-alternative
-            String query = uri.getQuery();
-            Set<bufferRequest> bufferList = new LinkedHashSet<>(); //This list will hold all requests
-            int start = 0;
-            if (query != null) {
-                do { //We will iterate through each element of the query
-                    int next = query.indexOf('&', start);
-                    int end = (next == -1) ? query.length() : next;
-                    int separator = query.indexOf('=', start);
-                    if (separator > end || separator == -1) {
-                        separator = end;
-                    }
-
-                    //Now the current element is query.substring(start, end) and the "=" will be at seperator
-
-                    //Intrepret the request
-                    bufferRequest br = new bufferRequest();
-                    br.name = Uri.decode(query.substring(start, separator)); //The name (the part before "=")
-                    br.reference = "";
-                    if (separator == end)
-                        br.threshold = Double.NaN; //No special request - the last value should be ok
-                    else {
-                        String th = query.substring(separator+1, end); //The part after "="
-                        if (th.equals("full") || forceFullUpdate) {
-                            br.threshold = Double.NEGATIVE_INFINITY; //Get every single value
-                        } else {
-                            //So we get a threshold. We just have to figure out the reference buffer
-                            int subsplit = th.indexOf('|');
-                            if (subsplit == -1)
-                                br.threshold = Double.valueOf(th); //No reference specified
-                            else { //A reference is given
-                                br.threshold = Double.valueOf(th.substring(0, subsplit));
-                                br.reference = th.substring(subsplit+1);
-                            }
-                            //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
-                            //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-                            br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold/1e7)));
-                        }
-                    }
-
-                    bufferList.add(br);
-                    start = end + 1;
-                } while (start < query.length());
-                forceFullUpdate = false;
+        //Lock the data, to get a consistent data block
+        experiment.dataLock.lock();
+        try {
+            //First let's take a guess at how much memory we will need
+            int sizeEstimate = 0;
+            for (BufferRequest buffer : buffers) {
+                DataBuffer db = experiment.getBuffer(buffer.name);
+                if (db != null)
+                    sizeEstimate += 14 * db.size + 100;
             }
 
-            //We now know what the query request. Let's build our answer
-            StringBuilder sb;
+            //Create the string builder
+            sb = new StringBuilder(sizeEstimate);
 
-            //Lock the data, to get a consistent data block
-            experiment.dataLock.lock();
-            try {
-                //First let's take a guess at how much memory we will need
-                int sizeEstimate = 0;
-                for (bufferRequest buffer : bufferList) {
-                    if (experiment.dataMap.containsKey(buffer.name)) {
-                        sizeEstimate += 14 * experiment.dataBuffers.get(experiment.dataMap.get(buffer.name)).size + 100;
-                    }
-                }
+            boolean firstBuffer = true; //Helper to recognize the first iteration
 
-                //Create the string builder
-                sb = new StringBuilder(sizeEstimate);
+            //Set our decimal format (English to make sure we use decimal points, not comma
+            DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+            format.applyPattern("0.#######E0");
 
-                boolean firstBuffer = true; //Helper to recognize the first iteration
-
-                //Set our decimal format (English to make sure we use decimal points, not comma
-                DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
-                format.applyPattern("0.#######E0");
-
-                //Start building...
-                sb.append("{\"buffer\":{\n");
-                for (bufferRequest buffer : bufferList) {
-                    if (experiment.dataMap.containsKey(buffer.name)) { //For each buffer that is requested
-                        if (firstBuffer)
-                            firstBuffer = false;
-                        else
-                            sb.append(",\n"); //Seperate the object with a comma, if this is not the first item
-
-                        //Get the databuffers. The one requested and the threshold reference
-                        DataBuffer db = experiment.getBuffer(buffer.name);
-                        DataBuffer db_reference;
-                        if (buffer.reference.equals(""))
-                            db_reference = db;
-                        else
-                            db_reference = experiment.getBuffer(buffer.reference);
-
-                        //Buffer name
-                        sb.append("\"");
-                        sb.append(db.name);
-
-                        //Buffer size
-                        sb.append("\":{\"size\":");
-                        sb.append(db.size);
-
-                        //Does the response contain a single value, the whole buffer or a part of it?
-                        sb.append(",\"updateMode\":\"");
-                        if (Double.isNaN(buffer.threshold))
-                            sb.append("single");
-                        else if (Double.isInfinite(buffer.threshold))
-                            sb.append("full");
-                        else
-                            sb.append("partial");
-                        sb.append("\", \"buffer\":[");
-
-                        if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
-                            if (Double.isNaN(db.value) || Double.isInfinite(db.value))
-                                sb.append("null");
-                            else
-                                sb.append(format.format(db.value));
-                        else {
-                            //Get all the values...
-                            boolean firstValue = true; //Find first iteration, so the other ones can add a seperator
-                            Double data[] = db.getArray();
-                            int n = db.getFilledSize();
-                            Double dataRef[];
-                            if (db_reference == db)
-                                dataRef = data;
-                            else {
-                                dataRef = db_reference.getArray();
-                                n = Math.min(n, db_reference.getFilledSize());
-                            }
-
-
-                            Double v;
-                            for (int i = 0; i < n; i++) {
-                                //Simultaneously get the values from both iterators
-                                v = data[i];
-                                Double v_dep = dataRef[i];
-                                if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
-                                    continue;
-
-                                //Add a seperator if this is not the first value
-                                if (firstValue)
-                                    firstValue = false;
-                                else
-                                    sb.append(",");
-
-                                if (Double.isNaN(v) || Double.isInfinite(v))
-                                    sb.append("null");
-                                else
-                                    sb.append(format.format(v));
-                            }
-                        }
-
-                        sb.append("]}");
-                    }
-                }
-
-                //We also send the experiment status
-                sb.append("\n},\n\"status\":{\n");
-
-                //Session ID
-                sb.append("\"session\":\"");
-                sb.append(sessionID);
-
-                //Measuring?
-                sb.append("\", \"measuring\":");
-                if (callActivity.measuring)
-                    sb.append("true");
+            //Start building...
+            sb.append("{\"buffer\":{\n");
+            for (BufferRequest buffer : buffers) {
+                DataBuffer db = experiment.getBuffer(buffer.name);
+                if (db == null)
+                    continue;
+                if (firstBuffer)
+                    firstBuffer = false;
                 else
-                    sb.append("false");
+                    sb.append(",\n"); //Separate the object with a comma, if this is not the first item
 
-                //Timed run?
-                sb.append(", \"timedRun\":");
-                if (callActivity.timedRun)
-                    sb.append("true");
-                else
-                    sb.append("false");
-
-                //Countdown state
-                sb.append(", \"countDown\":");
-                sb.append(String.valueOf(callActivity.millisUntilFinished));
-                sb.append("\n}\n}\n");
-            } finally {
-                experiment.dataLock.unlock();
+                buildBuffer(buffer, db, format, sb);
             }
 
-            //Done. Build a string and return it as usual
-            final String result = sb.toString();
+            //We also send the experiment status
+            sb.append("\n},\n\"status\":{\n");
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
+            //Session ID
+            sb.append("\"session\":\"");
+            sb.append(sessionID);
 
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
+            //Measuring?
+            sb.append("\", \"measuring\":");
+            sb.append(callActivity.measuring);
+
+            //Timed run?
+            sb.append(", \"timedRun\":");
+            sb.append(callActivity.timedRun);
+
+            //Countdown state
+            sb.append(", \"countDown\":");
+            sb.append(callActivity.millisUntilFinished);
+            sb.append("\n}\n}\n");
+        } finally {
+            experiment.dataLock.unlock();
         }
 
+        //Done. Build a string and return it as usual
+        return respond(response, sb.toString());
     }
 
     //This query has the simple form control?cmd=start or control?cmd=set&buffer=name&value=42
     //The first form starts or stops the measurement. The second one sends a user-given value (from
     //an editElement) to a buffer
-    class controlCommandHandler implements HttpRequestHandler {
+    public int handleControl(Request request, Response response) throws IOException {
+        String cmd = request.getParams().get("cmd");
 
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
-
-            Uri uri = Uri.parse(request.getRequestLine().getUri());
-            String cmd = uri.getQueryParameter("cmd");
-
-            final String result;
-
-            if (cmd != null) {
-                switch (cmd) {
-                    case "start": //Start the measurement
-                        callActivity.remoteStartMeasurement();
-                        result = "{\"result\": true}";
-                        break;
-                    case "stop": //Stop the measurement
-                        callActivity.remoteStopMeasurement();
-                        result = "{\"result\": true}";
-                        break;
-                    case "clear": //Clear measurement data
-                        callActivity.clearData();
-                        result = "{\"result\": true}";
-                        break;
-                    case "set": //Set the value of a buffer
-                        String buffer = uri.getQueryParameter("buffer"); //Which buffer?
-                        String value = uri.getQueryParameter("value"); //Which value?
-                        if (buffer != null && value != null) {
-                            double v;
-                            try {
-                                v = Double.valueOf(value);
-                            } catch (Exception e) {
-                                //Invalid input
-                                result = "{\"result\": false}";
-                                break;
-                            }
-                            if (Double.isNaN(v)) {
-                                //We do not allow to explicitly set NaN. The buffer initially contains NaN and this is probably a mistake
-                                result = "{\"result\": false}";
-                            } else {
-                                callActivity.remoteInput = true;
-                                experiment.newData = true;
-
-                                //Defocus the input element in the API interface or it might not be updated and will reenter the old value
-                                callActivity.requestDefocus();
-
-                                //Send the value to the buffer, but aquire a lock first, so it does not interfere with data analysis
-                                experiment.dataLock.lock();
-                                try {
-                                    experiment.dataBuffers.get(experiment.dataMap.get(buffer)).append(v);
-                                } finally {
-                                    experiment.dataLock.unlock();
-                                }
-                                result = "{\"result\": true}";
-                            }
-                        } else
-                            result = "{\"result\": false}";
-                        break;
-                    case "trigger":
-                        String elementStr = uri.getQueryParameter("element"); //Which element?
-                        if (elementStr != null) {
-                            int htmlID;
-                            try {
-                                htmlID = Integer.valueOf(elementStr);
-                            } catch (Exception e) {
-                                //Invalid input
-                                result = "{\"result\": false}";
-                                break;
-                            }
-                            experiment.experimentViews.get(htmlID2View.get(htmlID)).elements.get(htmlID2Element.get(htmlID)).trigger();
-                            result = "{\"result\": true}";
-                        } else {
-                            result = "{\"result\": false}";
+        if (cmd != null) {
+            switch (cmd) {
+                case "start": //Start the measurement
+                    callActivity.remoteStartMeasurement();
+                    return respond(response, true);
+                case "stop": //Stop the measurement
+                    callActivity.remoteStopMeasurement();
+                    return respond(response, true);
+                case "clear": //Clear measurement data
+                    callActivity.clearData();
+                    return respond(response, true);
+                case "set": //Set the value of a buffer
+                    String buffer = request.getParams().get("buffer"); //Which buffer?
+                    String value = request.getParams().get("value"); //Which value?
+                    if (buffer != null && value != null) {
+                        double v;
+                        try {
+                            v = Double.valueOf(value);
+                        } catch (Exception e) {
+                            //Invalid input
+                            return respond(response, false);
                         }
-                        break;
-                    default:
-                        result = "{\"result\": false}";
-                        break;
-                }
-            } else
-                result = "{\"result\": false}";
+                        if (Double.isNaN(v)) {
+                            //We do not allow to explicitly set NaN. The buffer initially contains NaN and this is probably a mistake
+                            return respond(response, false);
+                        } else {
+                            callActivity.remoteInput = true;
+                            experiment.newData = true;
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
+                            //Defocus the input element in the API interface otherwise it might not be updated and will reenter the old value
+                            callActivity.requestDefocus();
 
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
-        }
-
+                            //Send the value to the buffer, but acquire a lock first, so it does not interfere with data analysis
+                            experiment.dataLock.lock();
+                            try {
+                                experiment.getBuffer(buffer).append(v);
+                            } finally {
+                                experiment.dataLock.unlock();
+                            }
+                            return respond(response, true);
+                        }
+                    }
+                    return respond(response, false);
+                case "trigger":
+                    String elementStr = request.getParams().get("element"); //Which element?
+                    if (elementStr != null) {
+                        int htmlID;
+                        try {
+                            htmlID = Integer.valueOf(elementStr);
+                        } catch (Exception e) {
+                            //Invalid input
+                            return respond(response, false);
+                        }
+                        experiment.experimentViews.get(htmlID2View.get(htmlID)).elements.get(htmlID2Element.get(htmlID)).trigger();
+                        return respond(response, true);
+                    }
+                    return respond(response, false);
+                default:
+                    return respond(response, false);
+            }
+        } else
+            return respond(response, false);
     }
 
     //The export query has the form export?format=1&set1=On&set3=On
     //format gives the index of the export format selected by the user
     //Any set (set0, set1, set2...) given should be included in this export
-    class exportCommandHandler implements HttpRequestHandler {
+    public int handleExport(Request request, Response response) throws IOException {
+        //Get the parameters
+        String format = request.getParams().get("format");
 
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
+        int formatInt = Integer.parseInt(format);
+        if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
+            //Not good. Build an error entity
+            return respond(response, "{\"error\": \"Format out of range.\"}");
+        } else {
+            //Alright, let's go on with the export
 
-            //Get the parameters
-            Uri uri = Uri.parse(request.getRequestLine().getUri());
-            String format = uri.getQueryParameter("format");
+            //Get the content-type
+            DataExport.ExportFormat exportFormat = experiment.exporter.exportFormats[formatInt];
+            String type = exportFormat.getType(false);
 
-            //We will build this entity depending on the format. If it is invalid we will repons
-            //with an error
-            BasicHttpEntity entity;
-            int formatInt = Integer.parseInt(format);
-            if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
-                //Not good. Build an error entity
-                final String result = "{\"error\" = \"Format out of range.\"}";
+            //Use the experiment's exporter to create the file
+            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+            final File exportFile = experiment.exporter.exportDirect(exportFormat, callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName, context);
 
-                entity = new BasicHttpEntity();
-                InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-                entity.setContent(inputStream);
-                entity.setContentLength(inputStream.available());
-
-                response.setHeader("Content-Type", "application/json");
-            } else {
-                //Alright, let's go on with the export
-
-                //Get the content-type
-                String type = experiment.exporter.exportFormats[formatInt].getType(false);
-
-                //Use the experiment's exporter to create the file
-                final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-                final File exportFile = experiment.exporter.exportDirect(experiment.exporter.exportFormats[formatInt], callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName, context);
-
-                entity = new BasicHttpEntity();
-                InputStream inputStream = new FileInputStream(exportFile);
-                entity.setContent(inputStream);
-                entity.setContentLength(inputStream.available());
-
-                //Set the content type and set "Content-Disposition" to force the browser to handle this as a download with a default file name
-                response.setHeader("Content-Type", type);
-                response.setHeader("Content-Disposition", "attachment; filename=\""+experiment.exporter.exportFormats[formatInt].getFilename(false) + "\"");
-            }
-
-            //Send error or file
-            response.setEntity(entity);
-
+            //Set "Content-Disposition" to force the browser to handle this as a download with a default file name
+            response.getHeaders().add("Content-Disposition", "attachment; filename=\"" + exportFormat.getFilename(false) + "\"");
+            return respond(response, type, exportFile);
         }
-
     }
 
     //The config query does not take any parameters
     //It returns information on the currently active experiment configuration like title, category, checksum, inputs, buffers, ...
-    class configCommandHandler implements HttpRequestHandler {
+    public int handleConfig(Request request, Response response) throws IOException {
+        try {
+            JSONObject json = new JSONObject();
 
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
+            json.put("crc32", Long.toHexString(experiment.crc32).toLowerCase());
+            json.put("title", experiment.baseTitle);
+            json.put("localTitle", experiment.title);
+            json.put("category", experiment.baseCategory);
+            json.put("localCategory", experiment.category);
 
-            String result;
-            try {
-                JSONObject json = new JSONObject();
-
-                json.put("crc32", Long.toHexString(experiment.crc32).toLowerCase());
-                json.put("title", experiment.baseTitle);
-                json.put("localTitle", experiment.title);
-                json.put("category", experiment.baseCategory);
-                json.put("localCategory", experiment.category);
-
-                JSONArray buffers = new JSONArray();
-                for (DataBuffer buffer : experiment.dataBuffers) {
-                    buffers.put(new JSONObject().put("name", buffer.name).put("size", buffer.size));
-                }
-                json.put("buffers", buffers);
-
-                JSONArray inputs = new JSONArray();
-                if (experiment.audioRecord != null) {
-                    JSONArray outputs = new JSONArray();
-                    outputs.put(new JSONObject().put("out", experiment.micOutput));
-                    if (!experiment.micRateOutput.isEmpty())
-                        outputs.put(new JSONObject().put("rate", experiment.micRateOutput));
-
-                    inputs.put(new JSONObject()
-                            .put("source", "audio")
-                            .put("outputs", outputs)
-                    );
-                }
-                if (experiment.gpsIn != null) {
-                    JSONArray outputs = new JSONArray();
-                    if (experiment.gpsIn.dataLat != null)
-                        outputs.put(new JSONObject().put("lat", experiment.gpsIn.dataLat.name));
-                    if (experiment.gpsIn.dataLon != null)
-                        outputs.put(new JSONObject().put("lon", experiment.gpsIn.dataLon.name));
-                    if (experiment.gpsIn.dataZ != null)
-                        outputs.put(new JSONObject().put("z", experiment.gpsIn.dataZ.name));
-                    if (experiment.gpsIn.dataZWGS84 != null)
-                        outputs.put(new JSONObject().put("zwgs84", experiment.gpsIn.dataZWGS84.name));
-                    if (experiment.gpsIn.dataV != null)
-                        outputs.put(new JSONObject().put("v", experiment.gpsIn.dataV.name));
-                    if (experiment.gpsIn.dataDir != null)
-                        outputs.put(new JSONObject().put("dir", experiment.gpsIn.dataDir.name));
-                    if (experiment.gpsIn.dataT != null)
-                        outputs.put(new JSONObject().put("t", experiment.gpsIn.dataT.name));
-                    if (experiment.gpsIn.dataAccuracy != null)
-                        outputs.put(new JSONObject().put("accuracy", experiment.gpsIn.dataAccuracy.name));
-                    if (experiment.gpsIn.dataZAccuracy != null)
-                        outputs.put(new JSONObject().put("zAccuracy", experiment.gpsIn.dataZAccuracy.name));
-                    if (experiment.gpsIn.dataStatus != null)
-                        outputs.put(new JSONObject().put("status", experiment.gpsIn.dataStatus.name));
-                    if (experiment.gpsIn.dataSatellites != null)
-                        outputs.put(new JSONObject().put("satellites", experiment.gpsIn.dataSatellites.name));
-
-                    inputs.put(new JSONObject()
-                            .put("source", "location")
-                            .put("outputs", outputs)
-                    );
-                }
-                for (SensorInput input : experiment.inputSensors) {
-                    JSONArray outputs = new JSONArray();
-
-                    if (input.dataX != null)
-                        outputs.put(new JSONObject().put("x", input.dataX.name));
-                    if (input.dataY != null)
-                        outputs.put(new JSONObject().put("y", input.dataY.name));
-                    if (input.dataZ != null)
-                        outputs.put(new JSONObject().put("z", input.dataZ.name));
-                    if (input.dataAbs != null)
-                        outputs.put(new JSONObject().put("abs", input.dataAbs.name));
-                    if (input.dataT != null)
-                        outputs.put(new JSONObject().put("t", input.dataT.name));
-                    if (input.dataAccuracy != null)
-                        outputs.put(new JSONObject().put("accuracy", input.dataAccuracy.name));
-
-                    inputs.put(new JSONObject()
-                            .put("source", input.sensorName.name())
-                            .put("outputs", outputs)
-                    );
-                }
-                if (experiment.bluetoothInputs.size() > 0) {
-                    inputs.put(new JSONObject()
-                            .put("source", "bluetooth"));
-                }
-                json.put("inputs", inputs);
-
-                JSONArray export = new JSONArray();
-                for (DataExport.ExportSet set : experiment.exporter.exportSets) {
-                    JSONArray sources = new JSONArray();
-                    for (DataExport.ExportSet.SourceMapping mapping : set.sources) {
-                        sources.put(new JSONObject()
-                                .put("label", mapping.name)
-                                .put("buffer", mapping.source)
-                        );
-                    }
-                    export.put(new JSONObject().put("set", set.name).put("sources", sources));
-                }
-                json.put("export", export);
-
-                result = json.toString();
-            } catch (JSONException e) {
-                result = "{\"result\": false}";
-                Log.e("configHandler", "Error: " + e.getMessage());
+            JSONArray buffers = new JSONArray();
+            for (DataBuffer buffer : experiment.dataBuffers) {
+                buffers.put(new JSONObject().put("name", buffer.name).put("size", buffer.size));
             }
+            json.put("buffers", buffers);
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
+            JSONArray inputs = new JSONArray();
+            if (experiment.audioRecord != null) {
+                JSONArray outputs = new JSONArray();
+                outputs.put(new JSONObject().put("out", experiment.micOutput));
+                if (!experiment.micRateOutput.isEmpty())
+                    outputs.put(new JSONObject().put("rate", experiment.micRateOutput));
 
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
+                inputs.put(new JSONObject()
+                        .put("source", "audio")
+                        .put("outputs", outputs)
+                );
+            }
+            if (experiment.gpsIn != null) {
+                JSONArray outputs = new JSONArray();
+                if (experiment.gpsIn.dataLat != null)
+                    outputs.put(new JSONObject().put("lat", experiment.gpsIn.dataLat.name));
+                if (experiment.gpsIn.dataLon != null)
+                    outputs.put(new JSONObject().put("lon", experiment.gpsIn.dataLon.name));
+                if (experiment.gpsIn.dataZ != null)
+                    outputs.put(new JSONObject().put("z", experiment.gpsIn.dataZ.name));
+                if (experiment.gpsIn.dataZWGS84 != null)
+                    outputs.put(new JSONObject().put("zwgs84", experiment.gpsIn.dataZWGS84.name));
+                if (experiment.gpsIn.dataV != null)
+                    outputs.put(new JSONObject().put("v", experiment.gpsIn.dataV.name));
+                if (experiment.gpsIn.dataDir != null)
+                    outputs.put(new JSONObject().put("dir", experiment.gpsIn.dataDir.name));
+                if (experiment.gpsIn.dataT != null)
+                    outputs.put(new JSONObject().put("t", experiment.gpsIn.dataT.name));
+                if (experiment.gpsIn.dataAccuracy != null)
+                    outputs.put(new JSONObject().put("accuracy", experiment.gpsIn.dataAccuracy.name));
+                if (experiment.gpsIn.dataZAccuracy != null)
+                    outputs.put(new JSONObject().put("zAccuracy", experiment.gpsIn.dataZAccuracy.name));
+                if (experiment.gpsIn.dataStatus != null)
+                    outputs.put(new JSONObject().put("status", experiment.gpsIn.dataStatus.name));
+                if (experiment.gpsIn.dataSatellites != null)
+                    outputs.put(new JSONObject().put("satellites", experiment.gpsIn.dataSatellites.name));
 
+                inputs.put(new JSONObject()
+                        .put("source", "location")
+                        .put("outputs", outputs)
+                );
+            }
+            for (SensorInput input : experiment.inputSensors) {
+                JSONArray outputs = new JSONArray();
+
+                if (input.dataX != null)
+                    outputs.put(new JSONObject().put("x", input.dataX.name));
+                if (input.dataY != null)
+                    outputs.put(new JSONObject().put("y", input.dataY.name));
+                if (input.dataZ != null)
+                    outputs.put(new JSONObject().put("z", input.dataZ.name));
+                if (input.dataAbs != null)
+                    outputs.put(new JSONObject().put("abs", input.dataAbs.name));
+                if (input.dataT != null)
+                    outputs.put(new JSONObject().put("t", input.dataT.name));
+                if (input.dataAccuracy != null)
+                    outputs.put(new JSONObject().put("accuracy", input.dataAccuracy.name));
+
+                inputs.put(new JSONObject()
+                        .put("source", input.sensorName.name())
+                        .put("outputs", outputs)
+                );
+            }
+            if (experiment.bluetoothInputs.size() > 0) {
+                inputs.put(new JSONObject()
+                        .put("source", "bluetooth"));
+            }
+            json.put("inputs", inputs);
+
+            JSONArray export = new JSONArray();
+            for (DataExport.ExportSet set : experiment.exporter.exportSets) {
+                JSONArray sources = new JSONArray();
+                for (DataExport.ExportSet.SourceMapping mapping : set.sources) {
+                    sources.put(new JSONObject()
+                            .put("label", mapping.name)
+                            .put("buffer", mapping.source)
+                    );
+                }
+                export.put(new JSONObject().put("set", set.name).put("sources", sources));
+            }
+            json.put("export", export);
+
+            return respond(response, json.toString());
+        } catch (JSONException e) {
+            Log.e("configHandler", "Error: " + e.getMessage());
+            return respond(response, false);
         }
-
     }
 
     //The meta query does not take any parameters
     //It returns information on the currently used device
-    class metaCommandHandler implements HttpRequestHandler {
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
+    public int handleMeta(Request request, Response response) throws IOException {
+        try {
 
-            String result;
-
-            try {
-
-                JSONObject deviceJson = new JSONObject();
-                for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
-                    if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID)
-                        continue;
-                    String identifier = deviceMetadata.toString();
-                    deviceJson.put(identifier, new Metadata(identifier, context).get(""));
-                }
-
-                JSONObject sensorsJson = new JSONObject();
-                for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
-                    JSONObject sensorJson = new JSONObject();
-                    for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
-                        String identifier = sensorMetadata.toString();
-                        sensorJson.put(identifier, new Metadata(sensor.name()+identifier, context).get(""));
-                    }
-                    sensorsJson.put(sensor.name(), sensorJson);
-                }
-                deviceJson.put("sensors", sensorsJson);
-
-
-                result = deviceJson.toString();
-            } catch (JSONException e) {
-                result = "{\"result\": false}";
-                Log.e("configHandler", "Error: " + e.getMessage());
+            JSONObject deviceJson = new JSONObject();
+            for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
+                if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID)
+                    continue;
+                String identifier = deviceMetadata.toString();
+                deviceJson.put(identifier, new Metadata(identifier, context).get(""));
             }
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
+            JSONObject sensorsJson = new JSONObject();
+            for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                JSONObject sensorJson = new JSONObject();
+                for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
+                    String identifier = sensorMetadata.toString();
+                    sensorJson.put(identifier, new Metadata(sensor.name()+identifier, context).get(""));
+                }
+                sensorsJson.put(sensor.name(), sensorJson);
+            }
+            deviceJson.put("sensors", sensorsJson);
 
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
-
+            return respond(response, deviceJson.toString());
+        } catch (JSONException e) {
+            Log.e("configHandler", "Error: " + e.getMessage());
+            return respond(response, false);
         }
     }
 
     //The time query does not take any parameters
     //It returns a list of time reference points, i.e. start and stop times of the current experiment
-    class timeCommandHandler implements HttpRequestHandler {
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
+    public int handleTime(Request request, Response response) throws IOException {
+        try {
 
-            String result;
-
-            try {
-
-                JSONArray json = new JSONArray();
-                for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
-                    JSONObject eventJson = new JSONObject();
-                    eventJson.put("event", timeMapping.event.name());
-                    eventJson.put("experimentTime", timeMapping.experimentTime);
-                    eventJson.put("systemTime", timeMapping.systemTime/1000.);
-                    json.put(eventJson);
-                }
-
-                result = json.toString();
-            } catch (JSONException e) {
-                result = "{\"result\": false}";
-                Log.e("configHandler", "Error: " + e.getMessage());
+            JSONArray json = new JSONArray();
+            for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+                JSONObject eventJson = new JSONObject();
+                eventJson.put("event", timeMapping.event.name());
+                eventJson.put("experimentTime", timeMapping.experimentTime);
+                eventJson.put("systemTime", timeMapping.systemTime/1000.);
+                json.put(eventJson);
             }
 
-            BasicHttpEntity entity = new BasicHttpEntity();
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
-
+            return respond(response, json.toString());
+        } catch (JSONException e) {
+            Log.e("configHandler", "Error: " + e.getMessage());
+            return respond(response, false);
         }
     }
 
     //The res handler serves resource files (like images embedded in the experiment configuration)
-    class resCommandHandler implements HttpRequestHandler {
-
-        @Override
-        public void handle(HttpRequest request, HttpResponse response,
-                           HttpContext httpContext) throws HttpException, IOException {
-
-            //Get the parameters
-            Uri uri = Uri.parse(request.getRequestLine().getUri());
-            String src = uri.getQueryParameter("src");
-
-            BasicHttpEntity entity = new BasicHttpEntity();
-            final String result;
-
-            if (src != null && !src.isEmpty() && experiment.resources.contains(src)) {
-                try {
-                    File file = new File(experiment.resourceFolder, src);
-                    InputStream inputStream = new FileInputStream(file);
-                    entity.setContent(inputStream);
-                    entity.setContentLength(file.length());
-                    response.setEntity(entity);
-                    return;
-                } catch (Exception e) {
-                    result = "{\"error\" = \"Unknown file.\"}";
-                }
-            } else {
-                result = "{\"error\" = \"Unknown file.\"}";
+    public int handleRes(Request request, Response response) throws IOException {
+        //Get the parameters
+        String src = request.getParams().get("src");
+        if (src != null && !src.isEmpty() && experiment.resources.contains(src)) {
+            try {
+                File file = new File(experiment.resourceFolder, src);
+                return respond(response, null, file);
+            } catch (Exception e) {
+                return respond(response, "{\"error\": \"Unknown file.\"}");
             }
-            InputStream inputStream = new ByteArrayInputStream(result.getBytes());
-            entity.setContent(inputStream);
-            entity.setContentLength(inputStream.available());
-
-            response.setHeader("Content-Type", "application/json");
-            response.setEntity(entity);
+        } else {
+            return respond(response, "{\"error\": \"Unknown file.\"}");
         }
-
     }
 
 }

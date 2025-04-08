@@ -29,6 +29,15 @@ import de.rwth_aachen.phyphox.Helper.Helper;
 
 //The graphView class implements an Android view which displays a data graph
 
+/*
+How code might be working in case of fourier transform color map plot
+
+1) there are two plots drawn each with difference coloring
+    this might indicate that there are two drawplot function and there should be indicator which plot it is
+2) both plot has different x and y labeling and common thing is that both has x axis tick label
+3) second plot uses the color provided in the first plot.
+ */
+
 public class GraphView extends View {
     public enum Style {
         lines, dots, hbars, vbars, mapXY, mapZ, unknown;
@@ -79,8 +88,7 @@ public class GraphView extends View {
 
     Style[] style; //Styles for each graph
     int[] mapWidth; //MapWidth for each graph (if applicable)
-    Vector<Integer> colorScale = new Vector<>();
-
+    boolean showColorScaleForColorMapChart;
     private final static int maxXRegularTics = 5; //Constant to set a target number of tics on the x axis
     private final static int maxYRegularTics = 5; //Constant to set a target number of tics on the y axis
     private final static int maxZRegularTics = 5; //Constant to set a target number of tics on the y axis
@@ -95,6 +103,7 @@ public class GraphView extends View {
     private String unitYX = null; //Unit for the slope, i.e. y/x
     public boolean timeOnX = false; //x-axis is time axis?
     public boolean timeOnY = false; //y-axis is time axis?
+    public boolean suppressScientificNotation = false; //Always avoid scientific notation on axis labels
     public boolean absoluteTime = false; //Use system time on time axis instead of experiment time
     public boolean linearTime = false; //Time data is given in seconds since 1970, ignoring pauses (in constrast to experiment time)
     public boolean hideTimeMarkers = false; //Do not show the red markers that indicate times while the phyphox experiment was not running.
@@ -292,6 +301,10 @@ public class GraphView extends View {
             pickedPointIndex[i] = -1;
             pointInfoListener.hidePointInfo(i);
         }
+    }
+
+    public void setShowColorScaleForColorMapChart(boolean show){
+        this.showColorScaleForColorMapChart = show;
     }
 
     public void setTouchMode(TouchMode touchMode) {
@@ -924,6 +937,12 @@ public class GraphView extends View {
         this.invalidate();
     }
 
+    //Interface to prevent scientific notation
+    public void setSuppressScientificNotation(boolean suppressScientificNotation) {
+        this.suppressScientificNotation = suppressScientificNotation;
+        this.invalidate();
+    }
+
     //Interface to configure logarithmic scales
     public void setLogScale(boolean logX, boolean logY, boolean logZ) {
         this.logX = logX;
@@ -1115,7 +1134,7 @@ public class GraphView extends View {
             return String.format("%." + Math.max(tic.precision, 0) + "f", tic.value);
         else {
             try {
-                return String.format("%." + (precision < 0 ? 3 : precision) + "g", tic.value);
+                return String.format("%." + (precision < 0 ? 3 : precision) + (suppressScientificNotation ? "f" : "g"), tic.value);
             } catch (ArrayIndexOutOfBoundsException e) {
                 //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
                 return String.format("%." + (precision < 0 ? 3 : precision) + "f", tic.value);
@@ -1294,6 +1313,9 @@ public class GraphView extends View {
         Tic[] zTics = null;
         if (zScale)
             zTics = getTics(workingMinZ, workingMaxZ, maxZTics, logZ, false, 0);
+
+        if(!showColorScaleForColorMapChart)
+            zScale = false;
 
         //Calculate area...
         int w = this.getWidth();

@@ -102,6 +102,25 @@
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="@string/sensorAttitude"
+                    android:id="@+id/neAttitude" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sensorCamera"
+                    android:id="@+id/neCamera" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sensorGravity"
+                    android:id="@+id/neGravity" />
+
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="@string/sensorGyroscope"
                     android:id="@+id/neGyroscope" />
 
@@ -153,11 +172,6 @@
                     android:text="@string/sensorTemperature"
                     android:id="@+id/neTemperature" />
 
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sensorCamera"
-                    android:id="@+id/neCamera" />
 
             </LinearLayout>
 

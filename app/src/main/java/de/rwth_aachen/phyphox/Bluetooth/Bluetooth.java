@@ -1539,6 +1539,9 @@ public class Bluetooth implements Serializable {
                     case START:
                         out[0] = 0x01;
                         break;
+                    case CLEAR:
+                        out[0] = 0x02;
+                        break;
                 }
             } else
                 out[0] = (byte)0xff;

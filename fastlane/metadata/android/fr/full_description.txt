@@ -21,7 +21,7 @@ Capteurs compatibles :
 
 Formats d'exportation des données
 - CSV (valeurs séparées par des virgules)
-- CSV (valeurs séparées par des tabulations)
+- TSV (valeurs séparées par des tabulations)
 - Excel
 (si vous avez besoin d'autres formats, veuillez nous le faire savoir)
 

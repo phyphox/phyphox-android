@@ -11,7 +11,7 @@ public class DataInput implements Serializable {
     boolean isEmpty = false;
     double value = Double.NaN;
     public DataBuffer buffer = null;
-    boolean keep = false;
+    public boolean keep = false;
 
     //Get value
     public double getValue() {

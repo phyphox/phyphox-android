@@ -9,9 +9,9 @@ android {
         targetSdkVersion rootProject.ext.compileSdkVersion
         compileSdk rootProject.ext.compileSdkVersion
 
-        versionName "1.2.0-beta1"
+        versionName "1.2.0-beta2a"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1020003 //1.02.00-03
+        versionCode 1020006 //1.02.00-06
 
         def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
@@ -60,7 +60,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    useLibrary 'org.apache.http.legacy'
     namespace 'de.rwth_aachen.phyphox'
     testNamespace 'de.rwth_aachen.phyphoxTest'
 
@@ -94,6 +93,8 @@ dependencies {
 
     //https://poi.apache.org/changes.html
     implementation 'org.apache.poi:poi:3.13'
+
+    implementation 'net.freeutils:jlhttp:3.1'
 
     //https://bigbadaboom.github.io/androidsvg/release_notes.html
     implementation 'com.caverock:androidsvg:1.4'

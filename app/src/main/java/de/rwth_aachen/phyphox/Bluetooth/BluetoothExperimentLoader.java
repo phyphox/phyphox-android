@@ -10,10 +10,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
-import android.content.ContentProvider;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Build;
 
@@ -23,8 +20,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.zip.CRC32;
 
-import de.rwth_aachen.phyphox.Experiment;
-import de.rwth_aachen.phyphox.ExperimentList;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
 

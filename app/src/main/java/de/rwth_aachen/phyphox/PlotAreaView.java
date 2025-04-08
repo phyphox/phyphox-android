@@ -292,6 +292,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             EGL10.EGL_NONE
     };
 
+    boolean showColorScaleForColorMapChart;
+
     final String vertexShader =
             "uniform vec4 in_color;" +
             "uniform mat4 positionMatrix;" +
@@ -316,7 +318,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "void main () {" +
             "   if (isinvalid(positionX) || isinvalid(positionY)) {" + //There is a NaN or +/-Inf in any of the
             "       invalid = 1.0;" +                                  //Mark invalid for fragment shader (only works for line to this point if the value is interpolated (i.e. not on the HTC One X)
-            "       gl_Position = vec4(0.0/0.0, -1.0/0.0, 1.0/0.0, 0.0/0.0);" +  //Break calculation by setting positions to NaN/Inf, skips rendering this line on most devices
+            "       gl_Position = vec4(0.0, 0.0, 0.0, 0.0);" +         //Break calculation by setting positions to NaN/Inf, skips rendering this line on most devices
             "       gl_PointSize = 0.0;" +                             //Set point size to zero to skip if all else fails (hopefully)
             "       return;" +
             "   } else" +
@@ -1143,38 +1145,40 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         if (graphSetup.zTics == null)
             return;
 
-        FloatBuffer zGridData = ByteBuffer.allocateDirect((graphSetup.zTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        for (GraphView.Tic tic : graphSetup.zTics) {
-            double z = tic.value;
-            zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
-            zGridData.put((float)(0.));
-            zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
-            zGridData.put((float)(1.));
-            nZGridLines++;
+        if(showColorScaleForColorMapChart){
+            FloatBuffer zGridData = ByteBuffer.allocateDirect((graphSetup.zTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            for (GraphView.Tic tic : graphSetup.zTics) {
+                double z = tic.value;
+                zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
+                zGridData.put((float)(0.));
+                zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
+                zGridData.put((float)(1.));
+                nZGridLines++;
+            }
+            zGridData.position(0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZGrid);
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, nZGridLines * 2 * 2 * 4, zGridData, GLES20.GL_DYNAMIC_DRAW);
+
+            FloatBuffer zRange = ByteBuffer.allocateDirect(4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            zRange.put((float)graphSetup.minZ).put((float)graphSetup.minZ).put((float)graphSetup.maxZ).put((float)graphSetup.maxZ);
+
+            FloatBuffer zScaleY = ByteBuffer.allocateDirect(4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            zScaleY.put(0).put(1).put(0).put(1);
+
+            zRange.position(0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleX);
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * 4, zRange, GLES20.GL_DYNAMIC_DRAW);
+
+            zScaleY.position(0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleY);
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * 4, zScaleY, GLES20.GL_DYNAMIC_DRAW);
+
+            zRange.position(0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleZ);
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * 4, zRange, GLES20.GL_DYNAMIC_DRAW);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
         }
-        zGridData.position(0);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZGrid);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, nZGridLines * 2 * 2 * 4, zGridData, GLES20.GL_DYNAMIC_DRAW);
-
-        FloatBuffer zRange = ByteBuffer.allocateDirect(4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        zRange.put((float)graphSetup.minZ).put((float)graphSetup.minZ).put((float)graphSetup.maxZ).put((float)graphSetup.maxZ);
-
-        FloatBuffer zScaleY = ByteBuffer.allocateDirect(4 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        zScaleY.put(0).put(1).put(0).put(1);
-
-        zRange.position(0);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleX);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * 4, zRange, GLES20.GL_DYNAMIC_DRAW);
-
-        zScaleY.position(0);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleY);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * 4, zScaleY, GLES20.GL_DYNAMIC_DRAW);
-
-        zRange.position(0);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleZ);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * 4, zRange, GLES20.GL_DYNAMIC_DRAW);
-
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         if (graphSetup.colorScale.size() > 1) {
             int nSteps = graphSetup.colorScale.size();
@@ -1248,6 +1252,10 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     public void setGraphSetup(GraphSetup gs) {
         this.graphSetup = gs;
+    }
+
+    public void setShowColorScaleForColorMapChart(boolean show){
+        this.showColorScaleForColorMapChart = show;
     }
 
     public void requestRender() {

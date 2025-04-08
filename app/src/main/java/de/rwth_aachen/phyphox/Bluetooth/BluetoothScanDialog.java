@@ -278,7 +278,7 @@ public class BluetoothScanDialog {
         return true;
     }
 
-    public BluetoothDeviceInfo getBluetoothDevice(final String nameFilter,
+    public BluetoothDeviceInfo  getBluetoothDevice(final String nameFilter,
                                                   final UUID uuidFilter,
                                                   final Set<String> supportedNameFilter,
                                                   final Set<UUID> supportedUUIDFilter,

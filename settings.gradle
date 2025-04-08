@@ -1,4 +1,3 @@
 include ':app'
 include ':org.eclipse.paho.android.service'
 project(':org.eclipse.paho.android.service').projectDir = file(new File(rootDir, 'paho.mqtt.android\\org.eclipse.paho.android.service'))
-include ':opencvsdk'
