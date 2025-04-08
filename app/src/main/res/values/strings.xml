@@ -374,7 +374,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_quantity_short_longitude">λ</string>
     <string name="common_quantity_short_altitude">z</string>
     <string name="common_quantity_short_luminance">Lv</string>
-    <string name="common_quantity_short_luma">Y'</string>
+    <string name="common_quantity_short_luma">Y\'</string>
     <string name="common_quantity_percentage">Percent</string>
 
     <string name="common_direction_short_north">N</string>

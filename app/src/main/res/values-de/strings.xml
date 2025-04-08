@@ -382,7 +382,6 @@
     <string name="on">An</string>
     <string name="camera_preview">Kamera Vorschau</string>
     <string name="camera_not_ready">Kamera nicht bereit</string>
-    <string name="common_unit_short_luminance">cd/m²</string>
     <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_percentage">Percent</string>
