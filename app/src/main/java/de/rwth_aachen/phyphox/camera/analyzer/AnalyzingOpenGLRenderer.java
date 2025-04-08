@@ -65,6 +65,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     DataBuffer timeOutput;
     DataBuffer shutterSpeedOutput, apertureOutput, isoOutput;
 
+    Long lastPreviewFrame = 0L;
+
     public AnalyzingOpenGLRenderer(CameraInput cameraInput, Lock lock, StateFlow<CameraSettingState> cameraSettingValueState, ExposureStatisticsListener exposureStatisticsListener) {
         this.cameraSettingValueState = cameraSettingValueState;
         this.experimentTimeReference = cameraInput.experimentTimeReference;
@@ -271,8 +273,11 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     } else
                         exposureAnalyzer.reset();
 
-                    for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
-                        previewOutput.draw(camMatrix, passepartout);
+                    if (System.currentTimeMillis() - lastPreviewFrame > 1000/30) {
+                        for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
+                            previewOutput.draw(camMatrix, passepartout);
+                        }
+                        lastPreviewFrame = System.currentTimeMillis();
                     }
 
                     if (dataNeedsToBeWrittenToBuffers && measuring) {
