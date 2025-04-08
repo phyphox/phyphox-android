@@ -386,4 +386,5 @@
     <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_percentage">Percent</string>
+    <string name="remoteCameraPreviewWarning">Vorschau und Steuerung der Kamera wird im Fernzugriff nicht unterstützt.</string>
 </resources>
