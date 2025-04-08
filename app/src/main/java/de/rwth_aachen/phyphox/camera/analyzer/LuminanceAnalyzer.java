@@ -98,6 +98,9 @@ public class LuminanceAnalyzer extends AnalyzingModule {
     int luminanceDownsamplingResSourceHandle, luminanceDownsamplingResTargetHandle;
 
     double latestResult = Double.NaN;
+
+    ByteBuffer resultBuffer = null;
+    int resultBufferSize = 0;
     public LuminanceAnalyzer(DataBuffer out, boolean linear) {
         this.linear = linear;
         this.out = out;
@@ -135,7 +138,10 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         long luminance = 0;
         long totalContribution = 0;
 
-        ByteBuffer resultBuffer = ByteBuffer.allocateDirect(outW * outH * 4).order(ByteOrder.nativeOrder());
+        if (resultBuffer == null || resultBufferSize != outH * outW) {
+            resultBufferSize = outH*outW;
+            resultBuffer = ByteBuffer.allocateDirect(resultBufferSize * 4).order(ByteOrder.nativeOrder());
+        }
         resultBuffer.rewind();
 
         GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);

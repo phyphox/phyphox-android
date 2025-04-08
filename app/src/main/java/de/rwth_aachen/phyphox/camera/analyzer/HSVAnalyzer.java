@@ -168,6 +168,10 @@ public class HSVAnalyzer extends AnalyzingModule {
     int hsvDownsamplingResSourceHandle, hsvDownsamplingResTargetHandle;
 
     double latestResult = Double.NaN;
+
+    ByteBuffer resultBuffer = null;
+    int resultBufferSize = 0;
+
     public HSVAnalyzer(DataBuffer out, Mode mode) {
         this.mode = mode;
         this.out = out;
@@ -222,7 +226,10 @@ public class HSVAnalyzer extends AnalyzingModule {
         int outW = wDownsampleStep[nDownsampleSteps -1];
         int outH = hDownsampleStep[nDownsampleSteps -1];
 
-        ByteBuffer resultBuffer = ByteBuffer.allocateDirect(outW * outH * 4).order(ByteOrder.nativeOrder());
+        if (resultBuffer == null || resultBufferSize != outH * outW) {
+            resultBufferSize = outH*outW;
+            resultBuffer = ByteBuffer.allocateDirect(resultBufferSize * 4).order(ByteOrder.nativeOrder());
+        }
         resultBuffer.rewind();
 
         GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);
