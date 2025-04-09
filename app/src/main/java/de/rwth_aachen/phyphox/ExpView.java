@@ -230,7 +230,11 @@ public class ExpView implements Serializable{
         //This function returns a JavaScript function. The argument of this function will receive
         //an array that contains fresh data to be shown to the user.
         protected String setDataHTML() {
-            return "function(x) {}";
+            return "function(x, y) {}";
+        }
+
+        protected boolean isFocused(){
+            return false;
         }
 
         //dataComplete will be called after all set-function have been called. This signifies that
@@ -625,7 +629,7 @@ public class ExpView implements Serializable{
 
             String bufferName = inputs.get(0).replace("\"", "\\\"");
 
-            sb.append("function (data) {");
+            sb.append("function (data, focused) {");
             sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
             sb.append("         return;");
             sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
@@ -1138,7 +1142,7 @@ public class ExpView implements Serializable{
         //The javascript function which updates the content of the input as it is updated on the phone
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
-            return "function (data) {" +
+            return "function (data, focused) {" +
                     "var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];" +
                     "if (!data.hasOwnProperty(\""+bufferName+"\"))" +
                     "    return;" +
@@ -1345,7 +1349,7 @@ public class ExpView implements Serializable{
 
             String bufferName = super.inputs.get(0).replace("\"", "\\\"");
 
-            sb.append("function (data) {");
+            sb.append("function (data, focused) {");
             sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
             sb.append("         return;");
             sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
@@ -1869,7 +1873,7 @@ public class ExpView implements Serializable{
         //Return a javascript function which stores the x data array for later use
         protected String setDataHTML() {
             StringBuilder sb = new StringBuilder();
-            sb.append("function (data) {");
+            sb.append("function (data, focused) {");
             sb.append("     elementData[" + htmlID + "][\"datasets\"] = [];");
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null)
@@ -2922,7 +2926,7 @@ public class ExpView implements Serializable{
         @Override
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
-            return "function (data) {\n" +
+            return "function (data, focused) {\n" +
                     "                if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                    return;\n" +
                     "\n" +
@@ -3131,7 +3135,7 @@ public class ExpView implements Serializable{
             jsonArray.append("]");
 
 
-            return "function (data) {\n" +
+            return "function (data, focused) {\n" +
                     "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
@@ -3450,6 +3454,13 @@ public class ExpView implements Serializable{
             }
         }
 
+        boolean isTriggered = false;
+
+        @Override
+        protected boolean isFocused() {
+            return isTriggered;
+        }
+
         @Override
         protected String createViewHTML() {
             return (type == SliderType.Range) ? getTwoSlidersVerticallyHTML() :
@@ -3477,7 +3488,7 @@ public class ExpView implements Serializable{
                                             "<div class=\"sliderContainer\">" +
                                             "<span class=\"minValue\" >"+minValue+"</span>" +
                                                 "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
-                                                    "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                                    "min="+minValue+"\" max="+maxValue+"\" value="+defaultValue+"\" step="+stepSize+"\" "+
                                                     ">" +
                                                 "</input>" +
                                             "<span class=\"maxValue\"></span>" +
@@ -3485,7 +3496,7 @@ public class ExpView implements Serializable{
                                             "<div class=\"sliderContainer\">" +
                                             "<span class=\"minValue\"></span>" +
                                             "<input type=\"range\" class=\"slider\" id=\"input1"+htmlID+"\"" +
-                                                "min=\"1\" max=\"100\" value=\"100\" step="+stepSize+"\""+
+                                                "min="+minValue+"\" max="+maxValue+"\" value="+defaultValue+"\" step="+stepSize+"\""+
                                                     ">" +
                                                     "</input>" +
                                                 "<span class=\"maxValue\">"+maxValue+"</span>" +
@@ -3499,7 +3510,7 @@ public class ExpView implements Serializable{
 
             return type == SliderType.Range ? setHTMLForRangeSlider() :
 
-                "function (data) {\n" +
+                "function (data, focused) {\n" +
                     "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
@@ -3525,17 +3536,27 @@ public class ExpView implements Serializable{
         }
 
         private String setHTMLForRangeSlider() {
-            String bufferName = inputs.get(0).replace("\"", "\\\"");
+            String lowerValueBufferName = inputs.get(0).replace("\"", "\\\"");
             String upperValueBufferName = inputs.get(1).replace("\"", "\\\"");
 
-            return "function (data) {\n" +
-                    "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
+            boolean isTriggerActive = false;
+
+           Log.d("ExpView", minValue + " minValue");
+           Log.d("ExpView", maxValue + " maxValue");
+
+            return "function (data, focused) {\n" +
+
+                    "if(focused){ \n" +
+                    "                        return;\n" +
+                    "}\n"+
+                    "                    if (!data.hasOwnProperty(\""+lowerValueBufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    if (!data.hasOwnProperty(\""+upperValueBufferName+"\"))\n" +
                     "                        return;\n" +
 
-                    "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
+                    "                    var x = data[\""+lowerValueBufferName+"\"][\"data\"][data[\""+lowerValueBufferName+"\"][\"data\"].length - 1];\n" +
                     "                    var y = data[\""+upperValueBufferName+"\"][\"data\"][data[\""+upperValueBufferName+"\"][\"data\"].length - 1];\n" +
+
 
                     "                    var selectedValueX = parseFloat(x).toFixed("+precision+")\n" +
                     "                    var selectedValueY = parseFloat(y).toFixed("+precision+")\n" +
@@ -3551,8 +3572,6 @@ public class ExpView implements Serializable{
                     "                        sliderElementTwo.max = "+maxValue+";\n" +
                     "                        sliderElementOne.step = "+stepSize+";\n" +
                     "                        sliderElementTwo.step = "+stepSize+";\n" +
-                    "                        sliderElementOne.value = selectedValueX || "+defaultValue+" \n" +
-                    "                        sliderElementTwo.value = selectedValueY || "+defaultValue+" \n" +
                     "                    }\n" +
 
                     "                    if(valueDisplay){ \n"+
@@ -3560,23 +3579,50 @@ public class ExpView implements Serializable{
                     "                    }\n" +
 
                     "                    if (sliderElementOne || sliderElementTwo){\n" +
-                    "                       sliderElementOne.onchange = function() {\n"+
+                    "                       sliderElementOne.addEventListener('create', function() {\n"+
+                    "console.log(\"create\");"+
+                    "                        });\n" +
+                    "                       sliderElementOne.addEventListener('slide', function() {\n"+
+                    "console.log(\"slide\");"+
+                    "                        });\n" +
+                    "                       sliderElementOne.addEventListener('start', function() {\n"+
+                    "console.log(\"start\");"+
+                    "                        });\n" +
+                    "                       sliderElementOne.addEventListener('stop', function() {\n"+
+                    "console.log(\"stop\");"+
+                    "                        });\n" +
+                    "                       sliderElementOne.addEventListener('input', function() {\n"+
+                    "console.log(\"input\");"+
+                    "focused = true;"+
+                    "                        if(sliderElementOne.value > sliderElementTwo.value ) {\n"+
+                    "                               sliderElementOne.value = sliderElementTwo.value\n"+
+                    "                            }\n" +
+                    "                        });\n" +
+
+                    "                       sliderElementOne.addEventListener('change', function() {\n"+
+                    "console.log(\"change\");"+
+                    "focused = false;"+
                     "                            if(sliderElementOne.value <= sliderElementTwo.value) {\n"+
                     "                                if (valueDisplay) {\n" +
                     "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
                     "                               }\n" +
+
                     "                               ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElementOne.value)\n"+
                     "                            }\n" +
-                    "                        }\n" +
 
-                    "                        sliderElementTwo.onchange = function() {\n"+
-                    "                            if(sliderElementOne.value <= sliderElementTwo.value) {\n"+
-                    "                                if (valueDisplay) {\n" +
-                    "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
-                    "                               }\n" +
-                    "                            ajax('control?cmd=set&buffer="+getValueOutputs().get(1)+"&value='+sliderElementTwo.value)\n"+
+
+                    "                        });\n" +
+
+                    "                       sliderElementTwo.addEventListener('change', function() {\n"+
+
+                    "                        if(sliderElementTwo.value <= sliderElementOne.value ) {\n"+
+                    "                               sliderElementTwo.value = sliderElementOne.value\n"+
                     "                            }\n" +
-                    "                       }\n" +
+                    "                       else {\n" +
+                    "                           ajax('control?cmd=set&buffer="+getValueOutputs().get(1)+"&value='+sliderElementTwo.value)\n" +
+                    "                           }\n"+
+                    "                        });\n" +
+
                     "            }\n" +
                     "       }";
         }
@@ -3587,18 +3633,3 @@ public class ExpView implements Serializable{
         }
     }
 }
-
-/*
-
-  if (sliderElement){\n" +
-                    "                        sliderElement.addEventListener('input', function () {\n" +
-                    "                            if (valueDisplay) {\n" +
-                    "                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed(1);\n" +
-                    "                            }\n" +
-                    "                            x = parseFloat(sliderElement.value)\n" +
-                    "                            data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1] = x\n" +
-                    "                        });\n" +
-                    "                        \n" +
-                    "                   }\n" +
-
- */
