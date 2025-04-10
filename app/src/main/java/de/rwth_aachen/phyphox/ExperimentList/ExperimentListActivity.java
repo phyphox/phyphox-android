@@ -35,7 +35,6 @@ import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -57,11 +56,6 @@ import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.core.graphics.Insets;
-import androidx.core.view.OnApplyWindowInsetsListener;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -177,11 +171,11 @@ public class ExperimentListActivity extends AppCompatActivity {
             showSupportHintIfRequired();
         }
 
-        final Map<Helper.InsetUtils.AppViewElement, View> appViewElements = new HashMap<>();
-        appViewElements.put(Helper.InsetUtils.AppViewElement.HEADER, findViewById(R.id.expListHeader));
-        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY, findViewById(R.id.experimentList));
-
-        Helper.InsetUtils.setWindowInsetListenerForSystemBar(appViewElements);
+        final Map<Helper.WindowInsetHelper.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.HEADER, findViewById(R.id.expListHeader));
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY, findViewById(R.id.experimentScroller));
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY1, findViewById(R.id.newExperiment)); //Floating button inset unchanged!
+        Helper.WindowInsetHelper.setWindowInsetListenerForSystemBar(appViewElements);
 
         setUpOnClickListener();
 
@@ -191,6 +185,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         handleIntent(getIntent());
 
     }
+
+
 
     @Override
     //If we return to this activity we want to reload the experiment list as other activities may

@@ -32,10 +32,10 @@ public class SettingsActivity extends AppCompatActivity {
             ab.setDisplayShowTitleEnabled(true);
         }
 
-        final Map<Helper.InsetUtils.AppViewElement, View> appViewElements = new HashMap<>();
-        appViewElements.put(Helper.InsetUtils.AppViewElement.HEADER, findViewById(R.id.settingsToolbar));
-        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY, findViewById(R.id.settingsFrame));
+        final Map<Helper.WindowInsetHelper.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.HEADER, findViewById(R.id.settingsToolbar));
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY, findViewById(R.id.settingsFrame));
 
-        Helper.InsetUtils.setWindowInsetListenerForSystemBar(appViewElements);
+        Helper.WindowInsetHelper.setWindowInsetListenerForSystemBar(appViewElements);
     }
 }

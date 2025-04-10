@@ -97,7 +97,6 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
-import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -275,13 +274,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             (new PhyphoxFile.loadXMLAsyncTask(intent, this)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
-        final Map<Helper.InsetUtils.AppViewElement, View> appViewElements = new HashMap<>();
-        appViewElements.put(Helper.InsetUtils.AppViewElement.HEADER, findViewById(R.id.appBarLayout));
-        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY, findViewById(R.id.view_pager));
-        appViewElements.put(Helper.InsetUtils.AppViewElement.BODY1, findViewById(R.id.tab_layout));
-        appViewElements.put(Helper.InsetUtils.AppViewElement.FOOTER, findViewById(R.id.recycler_view_battery));
+        final Map<Helper.WindowInsetHelper.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.HEADER, findViewById(R.id.appBarLayout));
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY, findViewById(R.id.view_pager));
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY1, findViewById(R.id.tab_layout));
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.FOOTER, findViewById(R.id.recycler_view_battery));
 
-        Helper.InsetUtils.setWindowInsetListenerForSystemBar(appViewElements);
+        Helper.WindowInsetHelper.setWindowInsetListenerForSystemBar(appViewElements);
 
     }
 

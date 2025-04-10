@@ -1,13 +1,15 @@
 package de.rwth_aachen.phyphox.Helper;
 
-import static android.content.Context.AUDIO_SERVICE;
 import static android.content.Context.BATTERY_SERVICE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -20,25 +22,24 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.PixelCopy;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
-import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import androidx.core.graphics.Insets;
-import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
@@ -55,7 +56,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Vector;
 import java.util.zip.CRC32;
 
@@ -68,7 +68,6 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
-import de.rwth_aachen.phyphox.App;
 import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
@@ -611,13 +610,54 @@ public abstract class Helper {
         return (volumeLevel / (double)maxVolumeLevel) * 100.0;
     }
 
-    public static class InsetUtils {
+    //Converts Context to Activity by unpacking ContextWrapper recursively
+    public static Activity getActivity(Context context)
+    {
+        if (context == null)
+        {
+            return null;
+        }
+        else if (context instanceof ContextWrapper)
+        {
+            if (context instanceof Activity)
+            {
+                return (Activity) context;
+            }
+            else
+            {
+                return getActivity(((ContextWrapper) context).getBaseContext());
+            }
+        }
+
+        return null;
+    }
+
+
+    public static class WindowInsetHelper {
 
         public enum AppViewElement {
             HEADER, //Denotes the toolbar
             BODY, // Denotes the main content
             BODY1,
             FOOTER // for eg. view to show the battery status of the connected device at the bottom
+        }
+
+        static final class SideInsets {
+            private final int left;
+            private final int right;
+
+            SideInsets(int left, int right) {
+                this.left = left;
+                this.right = right;
+            }
+
+            public int getLeft() {
+                return left;
+            }
+
+            public int getRight() {
+                return right;
+            }
         }
 
         // From Android 15 (SDK 35), because of edge-to-edge UI, there should be inset at status bar
@@ -632,11 +672,11 @@ public abstract class Helper {
             View headerView = viewMap.get(AppViewElement.HEADER);
             if (headerView != null) {
                 ViewCompat.setOnApplyWindowInsetsListener(headerView, (v, insets) -> {
-                    boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
                     Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
                     int topInset = systemBars.top;
-                    int leftInset = isLandscape ? topInset : 0;
-                    v.setPadding(leftInset, topInset, 0, 0);
+                    SideInsets sideInsets = getSideInsets(systemBars.top, navigationBars.bottom, v);
+                    v.setPadding(sideInsets.left, topInset, sideInsets.right, 0);
                     return insets;
                 });
             }
@@ -645,13 +685,13 @@ public abstract class Helper {
         private static void applyBodyInsets(Map<AppViewElement, View> viewMap, View bodyView) {
             if (bodyView != null) {
                 ViewCompat.setOnApplyWindowInsetsListener(bodyView, (v, insets) -> {
-                    boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
                     Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
                     Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-                    int topInset = systemBars.top;
+
                     int bottomInset = viewMap.get(AppViewElement.FOOTER) == null ? navigationBars.bottom : 0;
-                    int leftInset = isLandscape ? topInset : 0;
-                    v.setPadding(leftInset, 0, 0, bottomInset);
+                    SideInsets sideInsets = getSideInsets(systemBars.top, navigationBars.bottom, v);
+
+                    v.setPadding(sideInsets.left, 0, sideInsets.right, bottomInset);
                     return insets;
                 });
             }
@@ -662,15 +702,101 @@ public abstract class Helper {
 
             if (footerView != null) {
                 ViewCompat.setOnApplyWindowInsetsListener(footerView, (v, insets) -> {
-                    boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
                     Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
                     Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+
                     int bottomInset = navigationBars.bottom;
-                    int leftInset =  isLandscape ? systemBars.top : 0;
-                    v.setPadding(leftInset, 0, 0, bottomInset);
+                    SideInsets sideInsets = getSideInsets(systemBars.top, navigationBars.bottom, v);
+
+                    v.setPadding(sideInsets.left, 0, sideInsets.right, bottomInset);
                     return insets;
                 });
             }
+        }
+
+        private static SideInsets getSideInsets(int systemBar, int navigationBar, View v) {
+            boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+            int leftInset = 0;
+            int rightInset = 0;
+            if(isLandscape){
+                Activity act = getActivity(v.getContext());
+                if(act !=null){
+                    if(getScreenOrientation(act) == SCREEN_ORIENTATION_LANDSCAPE){
+                        leftInset = systemBar;
+                        rightInset = navigationBar;
+                    }  else { // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+                        leftInset = navigationBar;
+                        rightInset = systemBar;
+                    }
+                } else {
+                    // Provide both sides with the same inset as which landscape orientation is undefined
+                    leftInset = systemBar;
+                    rightInset = systemBar;
+                }
+            }
+            return new SideInsets(leftInset, rightInset);
+        }
+
+        //https://stackoverflow.com/questions/10380989/how-do-i-get-the-current-orientation-activityinfo-screen-orientation-of-an-a
+        private static int getScreenOrientation(Activity context) {
+            int rotation = context.getWindowManager().getDefaultDisplay().getRotation();
+            DisplayMetrics dm = new DisplayMetrics();
+            context.getWindowManager().getDefaultDisplay().getMetrics(dm);
+            int width = dm.widthPixels;
+            int height = dm.heightPixels;
+            int orientation;
+            // if the device's natural orientation is portrait:
+            if ((rotation == Surface.ROTATION_0
+                    || rotation == Surface.ROTATION_180) && height > width ||
+                    (rotation == Surface.ROTATION_90
+                            || rotation == Surface.ROTATION_270) && width > height) {
+                switch(rotation) {
+                    case Surface.ROTATION_0:
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                        break;
+                    case Surface.ROTATION_90:
+                        orientation = SCREEN_ORIENTATION_LANDSCAPE;
+                        break;
+                    case Surface.ROTATION_180:
+                        orientation =
+                                ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+                        break;
+                    case Surface.ROTATION_270:
+                        orientation =
+                                ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                        break;
+                    default:
+                        Log.e("ExpList", "Unknown screen orientation. Defaulting to " +
+                                "portrait.");
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                        break;
+                }
+            }
+            // if the device's natural orientation is landscape or if the device
+            // is square:
+            else {
+                switch(rotation) {
+                    case Surface.ROTATION_0:
+                        orientation = SCREEN_ORIENTATION_LANDSCAPE;
+                        break;
+                    case Surface.ROTATION_90:
+                        orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                        break;
+                    case Surface.ROTATION_180:
+                        orientation =
+                                ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                        break;
+                    case Surface.ROTATION_270:
+                        orientation =
+                                ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+                        break;
+                    default:
+                        orientation = SCREEN_ORIENTATION_LANDSCAPE;
+                        break;
+                }
+            }
+
+            return orientation;
         }
 
     }
