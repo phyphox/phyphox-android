@@ -387,4 +387,5 @@
     <string name="common_quantity_percentage">Percent</string>
     <string name="remoteCameraPreviewWarning">Vorschau und Steuerung der Kamera wird im Fernzugriff nicht unterstützt.</string>
     <string name="common_quantity_short_luma">Y\'</string>
+    <string name="cameraZoom">Zoom</string>
 </resources>
