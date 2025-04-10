@@ -189,16 +189,6 @@ public class ExperimentsInCategory {
     LinearLayout catList;
 
     public void addToParent(LinearLayout catList) {
-
-        /**
-         if(isDialogView){
-         catList = parentActivity.findViewById(R.id.open_multiple_dialog_list);
-         } else {
-         catList = parentActivity.findViewById(R.id.experimentList);
-         }
-
-         */
-
         //Add the layout to the layout designated by the caller
         catList.addView(catLayout);
     }

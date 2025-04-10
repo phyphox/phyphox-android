@@ -233,14 +233,21 @@ public class ExperimentItemAdapter extends BaseAdapter {
                     } else if (experimentShortInfos.get(position).unavailableSensor < 0)
                         start(position, v);
                     else {
-                        String title = experimentShortInfos.get(position).title;
-                        String sensorNotAvailableWarningText = res.getString(R.string.sensorNotAvailableWarningText1) + " " +
-                                res.getString(experimentShortInfos.get(position).unavailableSensor) + " " +
-                                res.getString(R.string.sensorNotAvailableWarningText2);
-                        String description = experimentShortInfos.get(position).fullDescription;
-                        Map<String, String> links = experimentShortInfos.get(position).links;
+                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                        builder.setMessage(res.getString(R.string.sensorNotAvailableWarningText1) + " " + res.getString(experimentShortInfos.get(position).unavailableSensor) + " " + res.getString(R.string.sensorNotAvailableWarningText2))
+                                .setTitle(R.string.sensorNotAvailableWarningTitle)
+                                .setPositiveButton(R.string.ok, (dialog, id) -> {
 
-                        showExperimentInfo(title, sensorNotAvailableWarningText, description, links, parentActivity);
+                                })
+                                .setNeutralButton(res.getString(R.string.sensorNotAvailableWarningMoreInfo), (dialog, id) -> {
+                                    Uri uri = Uri.parse(res.getString(R.string.sensorNotAvailableWarningMoreInfoURL));
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                    if (intent.resolveActivity(parentActivity.getPackageManager()) != null) {
+                                        parentActivity.startActivity(intent);
+                                    }
+                                });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
                     }
                 }
             });

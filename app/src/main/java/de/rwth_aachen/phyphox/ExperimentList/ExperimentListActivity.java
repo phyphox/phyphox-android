@@ -696,34 +696,8 @@ public class ExperimentListActivity extends AppCompatActivity {
                 LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
                 View view = inflater.inflate(R.layout.open_multipe_dialog, null);
-                final Activity parent = this;
                 builder.setView(view)
                         .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
-                            /**
-                             for (ExperimentsInCategory experimentCats : zipExperiments) {
-                             for (ExperimentShortInfo experimentShortInfo : experimentCats.experimentItemAdapter.experimentShortInfos) {
-                             File file = new File(tempPath, experimentShortInfo.xmlFile);
-                             long crc32 = Helper.getCRC32(file);
-                             if (!Helper.experimentInCollection(crc32, parent)) {
-                             file.renameTo(new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
-                             if (!experimentShortInfo.resources.isEmpty()) {
-                             File resFolder = new File(tempPath, "res");
-                             File targetFolder = new File(getFilesDir(), Long.toHexString(crc32).toLowerCase());
-                             targetFolder.mkdirs();
-                             for (String src : experimentShortInfo.resources) {
-                             File srcFile = new File(resFolder, src);
-                             File dstFile = new File(targetFolder, src);
-                             try {
-                             Helper.copyFile(srcFile, dstFile);
-                             } catch (Exception e) {
-                             Toast.makeText(ExperimentList.this, "Error while copying " + srcFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                             }
-                             }
-                             }
-                             }
-                             }
-                             }
-                             */
                             experimentRepository.loadExperimentList();
                             dialog.dismiss();
                         })
@@ -737,14 +711,6 @@ public class ExperimentListActivity extends AppCompatActivity {
                 dialog.setTitle(getResources().getString(R.string.open_zip_title));
 
                 experimentRepository.addExperimentCategoryToParent();
-
-                /**
-                 for (ExperimentsInCategory cat : zipExperiments) {
-                 if (preselectedDevice != null)
-                 cat.setPreselectedBluetoothAddress(preselectedDevice.getAddress());
-                 cat.addToParent(true);
-                 }
-                 */
 
                 dialog.show();
             }
