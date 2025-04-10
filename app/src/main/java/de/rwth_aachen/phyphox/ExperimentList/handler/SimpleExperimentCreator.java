@@ -338,7 +338,7 @@ public class SimpleExperimentCreator {
                             "</sensor>").getBytes());
                     break;
                 case ATTITUDE:
-                    output.write(("<sensor type=\"attitude\">" +
+                    output.write(("<sensor type=\"attitude\" rate=\"" + rate + "\" >" +
                             "<output component=\"x\">attXIn</output>" +
                             "<output component=\"y\">attYIn</output>" +
                             "<output component=\"z\">attZIn</output>" +
@@ -347,7 +347,7 @@ public class SimpleExperimentCreator {
                             "</sensor>").getBytes());
                     break;
                 case GRAVITY:
-                    output.write(("<sensor type=\"gravity\" >" +
+                    output.write(("<sensor type=\"gravity\"  rate=\"" + rate + "\" >" +
                             "<output component=\"x\">graX</output>" +
                             "<output component=\"y\">graY</output>" +
                             "<output component=\"z\">graZ</output>" +
