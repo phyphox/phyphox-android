@@ -309,6 +309,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="cameraFront">Front</string>
     <string name="cameraBackFacing">Back facing camera</string>
     <string name="cameraBack">Back</string>
+    <string name="cameraZoom">Zoom</string>
     <string name="cameraExternal">External camera</string>
 
     <string name="off">Off</string>
