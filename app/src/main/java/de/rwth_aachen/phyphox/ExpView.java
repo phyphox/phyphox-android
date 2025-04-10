@@ -230,7 +230,7 @@ public class ExpView implements Serializable{
         //This function returns a JavaScript function. The argument of this function will receive
         //an array that contains fresh data to be shown to the user.
         protected String setDataHTML() {
-            return "function(x, y) {}";
+            return "function(x) {}";
         }
 
         protected boolean isFocused(){
@@ -629,7 +629,7 @@ public class ExpView implements Serializable{
 
             String bufferName = inputs.get(0).replace("\"", "\\\"");
 
-            sb.append("function (data, focused) {");
+            sb.append("function (data) {");
             sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
             sb.append("         return;");
             sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
@@ -1142,7 +1142,7 @@ public class ExpView implements Serializable{
         //The javascript function which updates the content of the input as it is updated on the phone
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
-            return "function (data, focused) {" +
+            return "function (data) {" +
                     "var valueElement = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"value\")[0];" +
                     "if (!data.hasOwnProperty(\""+bufferName+"\"))" +
                     "    return;" +
@@ -1349,7 +1349,7 @@ public class ExpView implements Serializable{
 
             String bufferName = super.inputs.get(0).replace("\"", "\\\"");
 
-            sb.append("function (data, focused) {");
+            sb.append("function (data) {");
             sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
             sb.append("         return;");
             sb.append(      "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];");
@@ -1873,7 +1873,7 @@ public class ExpView implements Serializable{
         //Return a javascript function which stores the x data array for later use
         protected String setDataHTML() {
             StringBuilder sb = new StringBuilder();
-            sb.append("function (data, focused) {");
+            sb.append("function (data) {");
             sb.append("     elementData[" + htmlID + "][\"datasets\"] = [];");
             for (int i = 0; i < inputs.size(); i++) {
                 if (inputs.get(i) == null)
@@ -2926,7 +2926,7 @@ public class ExpView implements Serializable{
         @Override
         protected String setDataHTML() {
             String bufferName = inputs.get(0).replace("\"", "\\\"");
-            return "function (data, focused) {\n" +
+            return "function (data) {\n" +
                     "                if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                    return;\n" +
                     "\n" +
@@ -3135,7 +3135,7 @@ public class ExpView implements Serializable{
             jsonArray.append("]");
 
 
-            return "function (data, focused) {\n" +
+            return "function (data) {\n" +
                     "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
@@ -3496,7 +3496,7 @@ public class ExpView implements Serializable{
                                             "<div class=\"sliderContainer\">" +
                                             "<span class=\"minValue\"></span>" +
                                             "<input type=\"range\" class=\"slider\" id=\"input1"+htmlID+"\"" +
-                                                "min="+minValue+"\" max="+maxValue+"\" value="+defaultValue+"\" step="+stepSize+"\""+
+                                                "min="+minValue+"\" max="+maxValue+"\" step="+stepSize+"\""+
                                                     ">" +
                                                     "</input>" +
                                                 "<span class=\"maxValue\">"+maxValue+"</span>" +
@@ -3510,7 +3510,7 @@ public class ExpView implements Serializable{
 
             return type == SliderType.Range ? setHTMLForRangeSlider() :
 
-                "function (data, focused) {\n" +
+                "function (data) {\n" +
                     "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
@@ -3539,16 +3539,8 @@ public class ExpView implements Serializable{
             String lowerValueBufferName = inputs.get(0).replace("\"", "\\\"");
             String upperValueBufferName = inputs.get(1).replace("\"", "\\\"");
 
-            boolean isTriggerActive = false;
+            return "function (data) {\n" +
 
-           Log.d("ExpView", minValue + " minValue");
-           Log.d("ExpView", maxValue + " maxValue");
-
-            return "function (data, focused) {\n" +
-
-                    "if(focused){ \n" +
-                    "                        return;\n" +
-                    "}\n"+
                     "                    if (!data.hasOwnProperty(\""+lowerValueBufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    if (!data.hasOwnProperty(\""+upperValueBufferName+"\"))\n" +
@@ -3556,7 +3548,6 @@ public class ExpView implements Serializable{
 
                     "                    var x = data[\""+lowerValueBufferName+"\"][\"data\"][data[\""+lowerValueBufferName+"\"][\"data\"].length - 1];\n" +
                     "                    var y = data[\""+upperValueBufferName+"\"][\"data\"][data[\""+upperValueBufferName+"\"][\"data\"].length - 1];\n" +
-
 
                     "                    var selectedValueX = parseFloat(x).toFixed("+precision+")\n" +
                     "                    var selectedValueY = parseFloat(y).toFixed("+precision+")\n" +
@@ -3572,58 +3563,63 @@ public class ExpView implements Serializable{
                     "                        sliderElementTwo.max = "+maxValue+";\n" +
                     "                        sliderElementOne.step = "+stepSize+";\n" +
                     "                        sliderElementTwo.step = "+stepSize+";\n" +
-                    "                    }\n" +
+                    "                    }\n else { return; } \n" +
+
+                                        //The following check is done so that it doesn't update the slider element when the user is interacting with it.
+                                        //When the user is sliding the slider the class name 'focus' is added and when the slider is released the class is deleted
+                                        //This lets us to check when the user is not interacting with the slider, so that slider can be updated with the new buffer value
+                    "                   if (!sliderElementOne.classList.contains(\"isSliderOneUpdating\")) {\n"+
+                    "                        sliderElementOne.value = x;\n" +
+                    "                   }\n"+
+                    "                   if (!sliderElementTwo.classList.contains(\"isSliderTwoUpdating\")) {\n"+
+                    "                        sliderElementTwo.value = y;\n" +
+                    "                   }\n"+
 
                     "                    if(valueDisplay){ \n"+
                     "                        valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n"+
                     "                    }\n" +
 
-                    "                    if (sliderElementOne || sliderElementTwo){\n" +
-                    "                       sliderElementOne.addEventListener('create', function() {\n"+
-                    "console.log(\"create\");"+
-                    "                        });\n" +
-                    "                       sliderElementOne.addEventListener('slide', function() {\n"+
-                    "console.log(\"slide\");"+
-                    "                        });\n" +
-                    "                       sliderElementOne.addEventListener('start', function() {\n"+
-                    "console.log(\"start\");"+
-                    "                        });\n" +
-                    "                       sliderElementOne.addEventListener('stop', function() {\n"+
-                    "console.log(\"stop\");"+
-                    "                        });\n" +
                     "                       sliderElementOne.addEventListener('input', function() {\n"+
-                    "console.log(\"input\");"+
-                    "focused = true;"+
-                    "                        if(sliderElementOne.value > sliderElementTwo.value ) {\n"+
+                    "                           if (!sliderElementOne.classList.contains(\"isSliderOneUpdating\")) {\n"+
+                    "                               sliderElementOne.classList.add(\"isSliderOneUpdating\")\n"+
+                    "                           }\n" +
+                    "                           if(Number(sliderElementOne.value) > Number(sliderElementTwo.value)) {\n"+
                     "                               sliderElementOne.value = sliderElementTwo.value\n"+
                     "                            }\n" +
                     "                        });\n" +
 
                     "                       sliderElementOne.addEventListener('change', function() {\n"+
-                    "console.log(\"change\");"+
-                    "focused = false;"+
-                    "                            if(sliderElementOne.value <= sliderElementTwo.value) {\n"+
+                    "                            if(Number(sliderElementOne.value) <= Number(sliderElementTwo.value)) {\n"+
                     "                                if (valueDisplay) {\n" +
                     "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
+                    "                                 }\n" +
+                    "                               if (sliderElementOne.classList.contains(\"isSliderOneUpdating\")) {"+
+                    "                                   ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElementOne.value)\n"+
+                    "                                   sliderElementOne.classList.remove(\"isSliderOneUpdating\")"+
                     "                               }\n" +
-
-                    "                               ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElementOne.value)\n"+
                     "                            }\n" +
+                    "                        });\n" +
 
-
+                    "                       sliderElementTwo.addEventListener('input', function() {\n"+
+                    "                           if (!sliderElementTwo.classList.contains(\"isSliderTwoUpdating\")) {\n"+
+                    "                               sliderElementTwo.classList.add(\"isSliderTwoUpdating\")\n"+
+                    "                           }\n" +
+                    "                           if(Number(sliderElementOne.value) > Number(sliderElementTwo.value)) {\n"+
+                    "                               sliderElementTwo.value = sliderElementOne.value\n"+
+                    "                            }\n" +
                     "                        });\n" +
 
                     "                       sliderElementTwo.addEventListener('change', function() {\n"+
-
-                    "                        if(sliderElementTwo.value <= sliderElementOne.value ) {\n"+
-                    "                               sliderElementTwo.value = sliderElementOne.value\n"+
+                    "                            if(Number(sliderElementOne.value) <= Number(sliderElementTwo.value)) {\n"+
+                    "                                if (valueDisplay) {\n" +
+                    "                                   valueDisplay.textContent = parseFloat(sliderElementOne.value).toFixed("+precision+").concat(\" - \", parseFloat(sliderElementTwo.value).toFixed("+precision+"));\n" +
+                    "                                 }\n" +
+                    "                               if (sliderElementTwo.classList.contains(\"isSliderTwoUpdating\")) {"+
+                    "                                   ajax('control?cmd=set&buffer="+getValueOutputs().get(1)+"&value='+sliderElementTwo.value)\n"+
+                    "                                   sliderElementTwo.classList.remove(\"isSliderTwoUpdating\")"+
+                    "                               }\n" +
                     "                            }\n" +
-                    "                       else {\n" +
-                    "                           ajax('control?cmd=set&buffer="+getValueOutputs().get(1)+"&value='+sliderElementTwo.value)\n" +
-                    "                           }\n"+
                     "                        });\n" +
-
-                    "            }\n" +
                     "       }";
         }
 
