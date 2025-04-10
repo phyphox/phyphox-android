@@ -34,6 +34,10 @@ import androidx.core.widget.ImageViewCompat;
 
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import de.rwth_aachen.phyphox.Helper.Helper;
 
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
@@ -109,6 +113,12 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         collapseImage = (ImageView)this.findViewById(R.id.graph_collapse_image);
         toolbar = (BottomNavigationView) this.findViewById(R.id.graph_toolbar);
         setExpandCollapseImageColor(context);
+
+        // Because of edge to edge feature from Android 15, bottom nav bar need to be handled as the bottom padding for this will be automatically set
+        // Removing the bottom navigation bar inset, as this inset is already applied in its main class, i.e Experiment class
+        final Map<Helper.WindowInsetHelper.AppViewElement, View> appViewElements = new HashMap<>();
+        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BOTTOM_NAV_BAR, findViewById(R.id.graph_toolbar));
+        Helper.WindowInsetHelper.setWindowInsetListenerForBottomNavBar(appViewElements);
 
         toolbar.inflateMenu(R.menu.graph_menu);
         toolbar.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {

@@ -638,8 +638,9 @@ public abstract class Helper {
         public enum AppViewElement {
             HEADER, //Denotes the toolbar
             BODY, // Denotes the main content
-            BODY1,
-            FOOTER // for eg. view to show the battery status of the connected device at the bottom
+            BODY1, // Denotes the another view which is also part of main content
+            FOOTER, // for eg. view to show the battery status of the connected device at the bottom
+            BOTTOM_NAV_BAR
         }
 
         static final class SideInsets {
@@ -659,6 +660,17 @@ public abstract class Helper {
                 return right;
             }
         }
+
+        public static void setWindowInsetListenerForBottomNavBar(Map<AppViewElement, View> viewMap) {
+            View bottomNavBar = viewMap.get(AppViewElement.BOTTOM_NAV_BAR);
+            if (bottomNavBar != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(bottomNavBar, (v, insets) -> {
+                    v.setPadding(0, 0, 0, 0);
+                    return insets;
+                });
+            }
+        }
+
 
         // From Android 15 (SDK 35), because of edge-to-edge UI, there should be inset at status bar
         public static void setWindowInsetListenerForSystemBar(Map<AppViewElement, View> viewMap) {
