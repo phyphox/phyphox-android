@@ -3520,18 +3520,31 @@ public class ExpView implements Serializable{
                     "                    if (sliderElement) {\n" +
                     "                        sliderElement.min = "+minValue+";\n" +
                     "                        sliderElement.max = "+maxValue+";\n" +
-                        "                    sliderElement.step = "+stepSize+";\n" +
-                    "                        sliderElement.value = selectedValue || "+defaultValue+" \n" +
+                    "                        sliderElement.step = "+stepSize+";\n" +
                     "                    }\n" +
+                    "                   if (!sliderElement.classList.contains(\"isSliderUpdating\")) {\n"+
+                    "                        sliderElement.value = selectedValue || "+defaultValue+" ; \n" +
+                    "                   }\n"+
+
                     "                    if(valueDisplay){ \n"+
                     "                        valueDisplay.textContent = parseFloat(sliderElement.value).toFixed("+precision+");\n"+
                     "                    }\n" +
-                    "                   sliderElement.onchange = function() {\n"+
-                    "                            if (valueDisplay) {\n" +
-                    "                                valueDisplay.textContent = parseFloat(sliderElement.value).toFixed("+precision+");\n" +
-                        "                        }\n" +
-                    "                       ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElement.value)\n"+
-                    "                   }\n" +
+
+                    "                    sliderElement.addEventListener('input', function() {\n"+
+                    "                        if (!sliderElement.classList.contains(\"isSliderUpdating\")) {\n"+
+                    "                            sliderElement.classList.add(\"isSliderUpdating\");\n"+
+                    "                         }\n" +
+                    "                     });\n" +
+
+                    "                      sliderElement.addEventListener('change', function() {\n"+
+                    "                              if (valueDisplay) {\n" +
+                    "                                  valueDisplay.textContent = parseFloat(sliderElement.value).toFixed("+precision+");\n" +
+                    "                               }\n" +
+                    "                               if (sliderElement.classList.contains(\"isSliderUpdating\")) {"+
+                    "                                   ajax('control?cmd=set&buffer="+getValueOutputs().get(0)+"&value='+sliderElement.value);\n"+
+                    "                                   sliderElement.classList.remove(\"isSliderUpdating\");"+
+                    "                               }\n" +
+                    "                        });\n" +
                     "            }";
         }
 
@@ -3569,10 +3582,10 @@ public class ExpView implements Serializable{
                                         //When the user is sliding the slider the class name 'focus' is added and when the slider is released the class is deleted
                                         //This lets us to check when the user is not interacting with the slider, so that slider can be updated with the new buffer value
                     "                   if (!sliderElementOne.classList.contains(\"isSliderOneUpdating\")) {\n"+
-                    "                        sliderElementOne.value = x;\n" +
+                    "                        sliderElementOne.value = selectedValueX;\n" +
                     "                   }\n"+
                     "                   if (!sliderElementTwo.classList.contains(\"isSliderTwoUpdating\")) {\n"+
-                    "                        sliderElementTwo.value = y;\n" +
+                    "                        sliderElementTwo.value = selectedValueY;\n" +
                     "                   }\n"+
 
                     "                    if(valueDisplay){ \n"+
