@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox.camera.helper
 
+import android.content.res.Resources
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -8,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
+import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import org.json.JSONArray
@@ -316,8 +318,8 @@ object CameraHelper {
     //Since we implement our own AE algorithm we do not care about device AE compensation option
     //The downside is that we are limited to the dynamic range of the preview, so +/-1EV is all we
     //can offer reasonably
-    fun getExposureValuesDefaultList(): List<String> {
-        return listOf("-1.0EV", "-0.7EV", "-0.3EV", "0.0EV", "0.3EV", "0.7EV", "1.0EV")
+    fun getExposureValuesDefaultList(): List<Float> {
+        return listOf(-1.0f, -0.7f, -0.3f, 0.0f, 0.3f, 0.7f, 1.0f)
     }
 
     fun exposureValueStringToFloat(str: String): Float {
@@ -380,18 +382,14 @@ object CameraHelper {
         return mutableListOf(3000, 4000, 5000, 6000, 6600, 7000, 8000, 9000, 10000 , 12000, 15000)
     }
 
-    fun getWhiteBalanceModes(): MutableMap<Int, String> {
+    fun getWhiteBalanceModes(): MutableMap<Int, Int> {
         return mutableMapOf(
-            /*Currently, Manual is ignored*/
-            CaptureRequest.CONTROL_AWB_MODE_OFF to "Manual",
-            CaptureRequest.CONTROL_AWB_MODE_AUTO to "Auto",
-            CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT to "Incandescent",
-            CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT to "Fluorescent",
-            CaptureRequest.CONTROL_AWB_MODE_WARM_FLUORESCENT to "Warm Fluorescent",
-            CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT to "Daylight",
-            CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT to "Cloudy Daylight",
-            CaptureRequest.CONTROL_AWB_MODE_TWILIGHT to "Twilight",
-            CaptureRequest.CONTROL_AWB_MODE_SHADE to "Shade"
+            // We limit the presets to the most common one, which we also implement on iOS
+            CaptureRequest.CONTROL_AWB_MODE_AUTO to R.string.wb_auto,
+            CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT to R.string.wb_incandescent,
+            CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT to R.string.wb_fluorescent,
+            CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT to R.string.wb_daylight,
+            CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT to R.string.wb_cloudy,
         )
     }
 
@@ -424,8 +422,8 @@ object CameraHelper {
     fun adjustExposure(adjust: Double, state: CameraSettingState, shutterTarget: Long): Pair<Long, Int> {
         var iso = state.currentIsoValue
         var shutter = state.currentShutterValue
-        val shutterMax = stringToNanoseconds(state.shutterSpeedRange!!.first())
-        val shutterMin = stringToNanoseconds(state.shutterSpeedRange!!.last())
+        val shutterMax = 1_000_000_000 * state.shutterSpeedRange!!.first().numerator / state.shutterSpeedRange!!.first().denominator
+        val shutterMin = 1_000_000_000 * state.shutterSpeedRange!!.last().numerator / state.shutterSpeedRange!!.last().denominator
         val isoMax = state.isoRange?.last()?.toInt() ?: 100
         val isoMin = state.isoRange?.first()?.toInt() ?: 100
 

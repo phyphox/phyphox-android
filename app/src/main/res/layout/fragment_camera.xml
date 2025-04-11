@@ -432,21 +432,4 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-
-    <com.google.android.material.slider.Slider
-        android:id="@+id/whiteBalanceSlider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:theme="@style/MaterialSeekbarTheme"
-        android:visibility="gone"
-        app:labelBehavior="gone"
-        app:trackColorActive="@color/phyphox_white_100"
-        app:trackColorInactive="@color/phyphox_white_100"
-        app:thumbColor="@color/phyphox_primary"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-     />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

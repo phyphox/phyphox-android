@@ -19,6 +19,7 @@ import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.ShowCameraControls
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
+import de.rwth_aachen.phyphox.camera.ui.ChooseCameraSettingValue
 import de.rwth_aachen.phyphox.camera.viewstate.CameraScreenViewState
 import de.rwth_aachen.phyphox.camera.viewstate.CameraZoomControlViewState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -94,7 +95,6 @@ class CameraViewModel() : ViewModel() {
                         }
 
                         cameraPreviewScreen.setupZoomControl(cameraInput.cameraSettingState.value)
-                        cameraPreviewScreen.setUpWhiteBalanceControl(cameraInput.cameraSettingState.value)
 
                         _cameraUiState.emit(
                                 cameraUiState.copy(cameraPreviewState = CameraPreviewState.UPDATING)
@@ -277,7 +277,7 @@ class CameraViewModel() : ViewModel() {
         cameraInput.setWhiteBalance(value)
     }
 
-    fun updateCameraSettingValue(value: String, settingMode: CameraSettingMode) {
+    fun updateCameraSettingValue(value: ChooseCameraSettingValue, settingMode: CameraSettingMode) {
         cameraInput.updateCameraSettingValue(value, settingMode)
     }
 

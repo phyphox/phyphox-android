@@ -312,6 +312,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="cameraZoom">Zoom</string>
     <string name="cameraExternal">External camera</string>
 
+    <string name="wb_auto">Auto</string>
+    <string name="wb_incandescent">Incandescent</string>
+    <string name="wb_fluorescent">Fluorescent</string>
+    <string name="wb_daylight">Daylight</string>
+    <string name="wb_cloudy">Cloudy</string>
+
     <string name="off">Off</string>
     <string name="on">On</string>
     <string name="camera_preview">Camera Preview</string>

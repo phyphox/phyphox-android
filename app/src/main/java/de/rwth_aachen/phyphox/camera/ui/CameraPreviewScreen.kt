@@ -87,7 +87,6 @@ class CameraPreviewScreen(
     private val buttonMinimize: ImageView = root.findViewById(R.id.imageMinimize)
 
     private val zoomSlider: Slider = root.findViewById(R.id.zoomSlider)
-    private val whiteBalanceSlider: Slider = root.findViewById(R.id.whiteBalanceSlider)
 
     private val lnrCameraSetting: LinearLayoutCompat = root.findViewById(R.id.cameraSetting)
     private val lnrZoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
@@ -252,17 +251,6 @@ class CameraPreviewScreen(
         }
     }
 
-    fun setUpWhiteBalanceControl(cameraSettingState: CameraSettingState){
-        val wbRange = cameraSettingState.cameraWhiteBalanceManualRange
-        if(wbRange.isEmpty())
-            return
-
-        whiteBalanceSlider.valueFrom = 0.0f
-        whiteBalanceSlider.valueTo = 10.0f
-        whiteBalanceSlider.value = 5.0f
-
-    }
-
     private fun positionToZoomValue(pos: Float): Float {
         val min = zoomSlider.valueFrom.toDouble()
         val max = zoomSlider.valueTo.toDouble()
@@ -404,7 +392,7 @@ class CameraPreviewScreen(
             textViewExposureStatus.text = currentExposureValue.toString().plus("EV")
 
             textWhiteBalance.text =
-                CameraHelper.getWhiteBalanceModes()[cameraCurrentWhiteBalanceMode]
+                context.getString(CameraHelper.getWhiteBalanceModes()[cameraCurrentWhiteBalanceMode] ?: R.string.wb_auto)
         }
 
     }
@@ -541,7 +529,7 @@ class CameraPreviewScreen(
         }
     }
 
-    private fun onClickCameraExposureSetting(settingMode: CameraSettingMode, value: String) {
+    private fun onClickCameraExposureSetting(settingMode: CameraSettingMode, value: ChooseCameraSettingValue) {
         root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             _action.emit(CameraUiAction.UpdateCameraExposureSettingValue(settingMode, value))
         }
@@ -592,7 +580,6 @@ class CameraPreviewScreen(
             } else {
                 recyclerViewCameraSetting.isVisible = false
                 lnrZoomControl.isVisible = false
-                whiteBalanceSlider.isVisible = false
             }
             currentState = currentState!!.copy(isVisible = newState.isVisible)
         }
@@ -684,7 +671,6 @@ class CameraPreviewScreen(
             if (newState.subControls.whiteBalanceControl.isVisible) {
                 loadRecyclerViewContent(CameraSettingMode.WHITE_BALANCE)
             }
-            whiteBalanceSlider.isVisible = newState.subControls.whiteBalanceControl.sliderIsVisible
             currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(whiteBalanceControl = newState.subControls.whiteBalanceControl.copy()))
         }
 
@@ -700,39 +686,58 @@ class CameraPreviewScreen(
     fun loadRecyclerViewContent(mode: CameraSettingMode) {
         val currentValue = when (mode) {
             CameraSettingMode.ISO -> cameraInput.cameraSettingState.value.isoRange?.map { it.toInt() }
-                    ?.let { isoRange ->
-                        CameraHelper.findIsoNearestNumber(
-                                cameraInput.cameraSettingState.value.currentIsoValue,
-                                isoRange
-                        )
-                    }
+                ?.let { isoRange ->
+                    CameraHelper.findIsoNearestNumber(
+                        cameraInput.cameraSettingState.value.currentIsoValue,
+                        isoRange
+                    )
+                }?.toDouble()
 
             CameraSettingMode.SHUTTER_SPEED -> {
-                val fraction =
-                        CameraHelper.convertNanoSecondToSecond(cameraInput.cameraSettingState.value.currentShutterValue)
-                "${fraction.numerator}/${fraction.denominator}"
+                cameraInput.cameraSettingState.value.currentShutterValue.toDouble()
             }
 
-            CameraSettingMode.APERTURE -> cameraInput.cameraSettingState.value.currentApertureValue
+            CameraSettingMode.APERTURE -> cameraInput.cameraSettingState.value.currentApertureValue.toDouble()
 
-            CameraSettingMode.EXPOSURE -> cameraInput.cameraSettingState.value.currentExposureValue
+            CameraSettingMode.EXPOSURE -> cameraInput.cameraSettingState.value.currentExposureValue.toDouble()
 
             CameraSettingMode.WHITE_BALANCE ->
-                CameraHelper.getWhiteBalanceModes().getValue(cameraInput.cameraSettingState.value.cameraCurrentWhiteBalanceMode)
+                cameraInput.cameraSettingState.value.cameraCurrentWhiteBalanceMode.toDouble()
 
-            else -> ""
-        }.toString()
+            else -> 0.0
+        }
 
         val exposureSettingRange = when (mode) {
-            CameraSettingMode.ISO -> cameraInput.cameraSettingState.value.isoRange
-            CameraSettingMode.SHUTTER_SPEED -> cameraInput.cameraSettingState.value.shutterSpeedRange
-            CameraSettingMode.APERTURE -> cameraInput.cameraSettingState.value.apertureRange
-            CameraSettingMode.EXPOSURE -> cameraInput.cameraSettingState.value.exposureRange
+            CameraSettingMode.ISO -> cameraInput.cameraSettingState.value.isoRange?.map {
+                ChooseCameraSettingValue(
+                    label = it.toString(),
+                    value = it.toDouble()
+                )
+            }
+            CameraSettingMode.SHUTTER_SPEED -> cameraInput.cameraSettingState.value.shutterSpeedRange?.map {
+                ChooseCameraSettingValue(
+                    label = "${it.numerator}/${it.denominator}",
+                    value = (1_000_000_000 * it.numerator / it.denominator).toDouble()
+                )
+            }
+            CameraSettingMode.APERTURE -> cameraInput.cameraSettingState.value.apertureRange?.map {
+                ChooseCameraSettingValue(
+                    label = "f/$it",
+                    value = it.toDouble()
+                )
+            }
+            CameraSettingMode.EXPOSURE -> cameraInput.cameraSettingState.value.exposureRange?.map {
+                ChooseCameraSettingValue(
+                    label = "${if (it > 0) "+" else ""}${it}EV",
+                    value = it.toDouble()
+                )
+            }
             CameraSettingMode.WHITE_BALANCE ->
-                CameraHelper.getWhiteBalanceModes().filter {
-                    cameraInput.cameraSettingState.value.cameraWhiteBalanceModes.contains(it.key)
-                }.values.toList().filter {
-                    it != "Manual"
+                CameraHelper.getWhiteBalanceModes().map {
+                    ChooseCameraSettingValue(
+                        label = context.getString(it.value),
+                        value = it.key.toDouble()
+                    )
                 }
             else -> emptyList()
         }
@@ -773,21 +778,19 @@ class CameraPreviewScreen(
      * Camera Setting includes: ISO, ShutterSpeed, Exposure and White Balance
     */
     fun populateAndShowCameraSettingValueIntoRecyclerView(
-        dataList: List<String>?,
+        dataList: List<ChooseCameraSettingValue>?,
         settingMode: CameraSettingMode,
-        currentValue: String
+        currentValue: Double?
     ) {
         if (dataList.isNullOrEmpty() || dataList.size == 1) {
             return
         }
 
-        if(settingMode == CameraSettingMode.WHITE_BALANCE && currentValue == "Manual"){
-            whiteBalanceSlider.visibility = View.VISIBLE
-        }
-
         val settingChangeListener = object : SettingChooseListener {
-            override fun onSettingClicked(value: String) {
-                onClickCameraExposureSetting(settingMode, value)
+            override fun onSettingClicked(value: ChooseCameraSettingValue?) {
+                value?.let {
+                    onClickCameraExposureSetting(settingMode, it)
+                }
             }
         }
 
@@ -800,7 +803,7 @@ class CameraPreviewScreen(
             recyclerViewCameraSetting.adapter =
                 ChooseCameraSettingValueAdapter(dataList, settingChangeListener, currentValue)
 
-            selectedPosition = dataList.indexOf(currentValue)
+            selectedPosition = dataList.indexOfFirst { it.value == currentValue }
             recyclerViewCameraSetting.postDelayed({
                 recyclerViewCameraSetting.scrollToPosition(selectedPosition) }, 100)
         }

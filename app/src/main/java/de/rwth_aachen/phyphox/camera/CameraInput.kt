@@ -39,6 +39,7 @@ import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
+import de.rwth_aachen.phyphox.camera.ui.ChooseCameraSettingValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -254,7 +255,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                         .let { isoRange_ ->
                             isoRange_?.lower?.let { lower ->
                                 isoRange_.upper?.let { upper ->
-                                    CameraHelper.isoRange(lower, upper).map { it.toString() }
+                                    CameraHelper.isoRange(lower, upper)
                                 }
                             }
                         }
@@ -267,7 +268,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                             shutterSpeedRange_?.lower?.let { lower ->
                                 shutterSpeedRange_.upper?.let { upper ->
                                     CameraHelper.shutterSpeedRange(lower, upper)
-                                            .map { "" + it.numerator + "/" + it.denominator }
                                 }
                             }
 
@@ -278,9 +278,9 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         val apertureRange =
                 cameraInfo?.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)
                         .let { apertureRange_ ->
-                            apertureRange_?.map { it.toString() }
+                            apertureRange_?.map { it }
                         }
-        val fixedAperture = if (apertureRange?.contains(cameraSettingState.value.currentApertureValue.toString()) ?: true) cameraSettingState.value.currentApertureValue else apertureRange!!.first().toFloat()
+        val fixedAperture = if (apertureRange?.contains(cameraSettingState.value.currentApertureValue) != false) cameraSettingState.value.currentApertureValue else apertureRange.first().toFloat()
 
         val exposureRange = CameraHelper.getExposureValuesDefaultList()
 
@@ -337,7 +337,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         }
     }
 
-    fun updateCameraSettingValue(value: String, settingMode: CameraSettingMode) {
+    fun updateCameraSettingValue(value: ChooseCameraSettingValue, settingMode: CameraSettingMode) {
 
         val currentCameraSettingState = cameraSettingState.value
         var newCameraSettingState: CameraSettingState
@@ -345,25 +345,25 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
         when (settingMode) {
             CameraSettingMode.ISO -> {
-                val iso: Int = value.toInt()
+                val iso: Int = value.value.toInt()
                 newCameraSettingState = currentCameraSettingState.copy(
                         currentIsoValue = iso,
                 )
             }
             CameraSettingMode.SHUTTER_SPEED -> {
-                val shutterSpeed: Long = CameraHelper.stringToNanoseconds(value)
+                val shutterSpeed: Long = value.value.toLong()
                 newCameraSettingState = currentCameraSettingState.copy(
                         currentShutterValue = shutterSpeed,
                 )
             }
             CameraSettingMode.APERTURE -> {
-                val aperture: Float = value.toFloat()
+                val aperture: Float = value.value.toFloat()
                 newCameraSettingState = currentCameraSettingState.copy(
                         currentApertureValue = aperture,
                 )
             }
             CameraSettingMode.EXPOSURE -> {
-                val exposure: Float = CameraHelper.exposureValueStringToFloat(value)
+                val exposure: Float = value.value.toFloat()
                 if (!currentCameraSettingState.autoExposure) {
                     val (shutter, iso) = CameraHelper.adjustExposure(Math.pow(2.0, (exposure - currentCameraSettingState.currentExposureValue).toDouble()), currentCameraSettingState, 1_000_000_000/15)
                     newCameraSettingState = currentCameraSettingState.copy(
@@ -378,7 +378,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 }
             }
             CameraSettingMode.WHITE_BALANCE -> {
-                val wb: Int = CameraHelper.getWhiteBalanceModes().filter { value == it.value }.keys.first()
+                val wb: Int = CameraHelper.getWhiteBalanceModes().filter { value.value.toInt() == it.key }.keys.first()
                 newCameraSettingState = currentCameraSettingState.copy(
                         cameraCurrentWhiteBalanceMode = wb,
                 )

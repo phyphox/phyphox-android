@@ -15,18 +15,25 @@ import androidx.recyclerview.widget.RecyclerView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 
+data class ChooseCameraSettingValue(
+    val label: String,
+    val value: Double
+)
+
 class ChooseCameraSettingValueAdapter(
-    private val dataList: List<String>?,
+
+
+    private val dataList: List<ChooseCameraSettingValue>?,
     private val settingChooseListener: SettingChooseListener,
-    private val currentValue: String
+    private val currentValue: Double?
 ) : RecyclerView.Adapter<ChooseCameraSettingValueAdapter.ViewHolder>() {
 
     private val buttonClick = AlphaAnimation(1f, 0.4f)
     private lateinit var context: Context
-    private var trackSelectedItem: MutableMap<String, Boolean> = mutableMapOf()
+    private var trackSelectedItem: MutableMap<ChooseCameraSettingValue, Boolean> = mutableMapOf()
 
     init {
-        dataList?.map { trackSelectedItem[it] = it == currentValue }
+        dataList?.map { trackSelectedItem[it] = it.value == currentValue }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -38,7 +45,7 @@ class ChooseCameraSettingValueAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = dataList?.get(position)
-        holder.textView.text = item
+        holder.textView.text = item?.label
 
         if (trackSelectedItem[item] == true) {
             holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_primary))
@@ -56,7 +63,7 @@ class ChooseCameraSettingValueAdapter(
 
             notifyDataSetChanged()
 
-            settingChooseListener.onSettingClicked(item ?: "")
+            settingChooseListener.onSettingClicked(item)
         }
 
     }
