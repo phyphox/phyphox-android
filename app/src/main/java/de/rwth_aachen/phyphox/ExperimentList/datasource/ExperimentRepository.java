@@ -1,53 +1,75 @@
 package de.rwth_aachen.phyphox.ExperimentList.datasource;
 
+import android.app.Activity;
 import android.widget.LinearLayout;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.Vector;
 
 import de.rwth_aachen.phyphox.ExperimentList.handler.CategoryComparator;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
+import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.ExperimentList.ui.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.R;
 
 public class ExperimentRepository{
 
-    ExperimentListEnvironment environment;
-    private final AssetExperimentLoader assetExperimentLoader;
+    Vector<ExperimentsInCategory> categories;
 
-    public ExperimentRepository(ExperimentListEnvironment environment) {
-        this.environment = environment;
+    /**
+     * Collects names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
+     */
+    public final HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>();
 
-        assetExperimentLoader = new AssetExperimentLoader(environment, this);
+    /**
+     *  Collects uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
+     */
+    public final HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>();
+
+    public ExperimentRepository() {
+
     }
 
-    public AssetExperimentLoader getAssetExperimentLoader(){
-        return this.assetExperimentLoader;
+    public void addExperiment(ExperimentShortInfo shortInfo, Activity parent) {
+        AssetExperimentLoader assetExperimentLoader = new AssetExperimentLoader(parent, this);
+        assetExperimentLoader.addExperiment(shortInfo);
     }
 
-    public void loadExperimentList(){
+    public void loadExperimentList(Activity parent) {
+        AssetExperimentLoader assetExperimentLoader = new AssetExperimentLoader(parent, this);
 
         //Clear the old list first
-        assetExperimentLoader.categories.clear();
+        categories.clear();
         assetExperimentLoader.showCurrentCameraAvailability();
 
-        assetExperimentLoader.loadAndAddExperimentFromLocalFile();
-        assetExperimentLoader.loadAndAddExperimentFromAsset();
+        assetExperimentLoader.loadAndAddExperimentsFromLocalFiles();
+        assetExperimentLoader.loadAndAddExperimentsFromAssets();
 
-        addExperimentCategoryToParent();
+        addExperimentCategoryToParent(parent);
 
-        assetExperimentLoader.loadAndAddExperimentFromHiddenBluetooth();
+        assetExperimentLoader.loadAndAddExperimentsFromHiddenBluetoothAssets();
 
     }
 
-    public void addExperimentCategoryToParent(){
-        Collections.sort(getAssetExperimentLoader().categories, new CategoryComparator(assetExperimentLoader.environment.resources));
+    public void addExperimentCategoryToParent(Activity parent){
+        Collections.sort(categories, new CategoryComparator(parent.getResources()));
 
-        LinearLayout parentLayout = environment.parent.findViewById(R.id.experimentList);
+        LinearLayout parentLayout = parent.findViewById(R.id.experimentList);
         parentLayout.removeAllViews();
 
-        for (ExperimentsInCategory cat : getAssetExperimentLoader().categories) {
+        for (ExperimentsInCategory cat : categories) {
             cat.addToParent(parentLayout);
         }
+    }
+
+    public HashMap<String, Vector<String>> getBluetoothDeviceNameList() {
+        return bluetoothDeviceNameList;
+    }
+
+    public HashMap<UUID, Vector<String>> getBluetoothDeviceUUIDList() {
+        return bluetoothDeviceUUIDList;
     }
 }
 

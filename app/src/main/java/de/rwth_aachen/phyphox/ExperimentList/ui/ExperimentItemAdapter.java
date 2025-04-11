@@ -72,9 +72,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
         this.isSavedState = category.equals(res.getString(R.string.save_state_category));
         this.isSimpleExperiment = category.equals(res.getString(R.string.categoryNewExperiment));
 
-        ExperimentListEnvironment environment = new ExperimentListEnvironment(parentActivity.getAssets(), parentActivity.getResources(), parentActivity, parentActivity);
         this.experimentRepository = experimentRepository;
-
     }
 
     public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
@@ -347,7 +345,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
                                             } else {
                                                 Log.d("ExperimentList", "No resource folder found at " + resFolder.getAbsolutePath());
                                             }
-                                            experimentRepository.loadExperimentList();
+                                            experimentRepository.loadExperimentList(parentActivity);
                                         }
                                     })
                                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -393,7 +391,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
                                             }
                                         }
 
-                                        experimentRepository.loadExperimentList();
+                                        experimentRepository.loadExperimentList(parentActivity);
                                     })
                                     .setNegativeButton(R.string.cancel, (dialog, id) -> {
                                         //Aborted by user. Nothing to do.

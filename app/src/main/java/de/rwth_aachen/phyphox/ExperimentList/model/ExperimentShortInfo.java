@@ -2,8 +2,12 @@ package de.rwth_aachen.phyphox.ExperimentList.model;
 
 import android.graphics.drawable.Drawable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Helper.RGB;
 
@@ -21,4 +25,7 @@ public class ExperimentShortInfo {
     public String isLink;
     public Map<String, String> links;
     public String categoryName;
+
+    public final Set<String> bluetoothDeviceNames = new HashSet<>();
+    public final Set<UUID> bluetoothDeviceUUIDs = new HashSet<>();
 }

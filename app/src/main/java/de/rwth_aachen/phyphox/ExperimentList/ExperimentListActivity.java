@@ -87,6 +87,7 @@ import java.util.zip.CRC32;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Experiment;
+import de.rwth_aachen.phyphox.ExperimentList.datasource.AssetExperimentLoader;
 import de.rwth_aachen.phyphox.ExperimentList.handler.BluetoothScanner;
 import de.rwth_aachen.phyphox.ExperimentList.handler.CategoryComparator;
 import de.rwth_aachen.phyphox.ExperimentList.handler.CopyIntentHandler;
@@ -179,8 +180,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         setUpOnClickListener();
 
-        ExperimentListEnvironment environment = new ExperimentListEnvironment(getAssets(), getResources(), getApplicationContext(), this);
-        experimentRepository = new ExperimentRepository(environment);
+        experimentRepository = new ExperimentRepository();
 
         handleIntent(getIntent());
 
@@ -193,7 +193,7 @@ public class ExperimentListActivity extends AppCompatActivity {
     //have changed it
     protected void onResume() {
         super.onResume();
-        experimentRepository.loadExperimentList();
+        experimentRepository.loadExperimentList(this);
     }
 
     @Override
@@ -242,8 +242,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         Button.OnClickListener neoclBluetooth = v -> {
             hideNewExperimentDialog();
 
-            Set<String> bluetoothNameKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceNameList().keySet();
-            Set<UUID> bluetoothUUIDKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceUUIDList().keySet();
+            Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
+            Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();
 
             new BluetoothScanner(this, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {
                 @Override
@@ -679,10 +679,9 @@ public class ExperimentListActivity extends AppCompatActivity {
                     try {
                         InputStream input = new FileInputStream(file);
                         ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, tempPath.toURI().relativize(file.toURI()).getPath(), "temp_zip", false);
-                        ExperimentShortInfo shortInfo = experimentRepository.getAssetExperimentLoader().loadExperimentShortInfo(data);
+                        ExperimentShortInfo shortInfo = AssetExperimentLoader.loadExperimentShortInfo(data, new ExperimentListEnvironment(this));
                         if (shortInfo != null) {
-                            experimentRepository.getAssetExperimentLoader().
-                                    addExperiment(shortInfo, shortInfo.categoryName);
+                            experimentRepository.addExperiment(shortInfo, this); // TODO: This needs to be a separate experiment repository
                         }
                         //loadExperimentInfo(input, tempPath.toURI().relativize(file.toURI()).getPath(), "temp_zip", false, zipExperiments, null, null);
                         input.close();
@@ -698,7 +697,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 View view = inflater.inflate(R.layout.open_multipe_dialog, null);
                 builder.setView(view)
                         .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
-                            experimentRepository.loadExperimentList();
+                            experimentRepository.loadExperimentList(this);
                             dialog.dismiss();
                         })
                         .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
@@ -710,7 +709,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
                 dialog.setTitle(getResources().getString(R.string.open_zip_title));
 
-                experimentRepository.addExperimentCategoryToParent();
+                experimentRepository.addExperimentCategoryToParent(this);
 
                 dialog.show();
             }
@@ -1080,8 +1079,8 @@ public class ExperimentListActivity extends AppCompatActivity {
     //TODO: The permission is actually checked when entering the entire BLE dialog and I do not see how we could reach this part of the code if it failed. However, I cannot rule out some other mechanism of revoking permissions during an app switch or from the notifications bar (?), so a cleaner implementation might be good idea
     public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {
 
-        final HashMap<String, Vector<String>> mBluetoothDeviceNameList = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceNameList();
-        final HashMap<UUID, Vector<String>> mBluetoothDeviceUUIDList = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceUUIDList();
+        final HashMap<String, Vector<String>> mBluetoothDeviceNameList = experimentRepository.getBluetoothDeviceNameList();
+        final HashMap<UUID, Vector<String>> mBluetoothDeviceUUIDList = experimentRepository.getBluetoothDeviceUUIDList();
 
         final ExperimentListActivity parent = this;
         Set<String> experiments = new HashSet<>();
@@ -1135,7 +1134,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                     } catch (Exception e) {
                         Toast.makeText(parent, "Error: Could not retrieve assets.", Toast.LENGTH_LONG).show();
                     }
-                    experimentRepository.loadExperimentList();
+                    experimentRepository.loadExperimentList(parent);
                     dialog.dismiss();
                 }
 
@@ -1172,9 +1171,9 @@ public class ExperimentListActivity extends AppCompatActivity {
             try {
                 InputStream input = assetManager.open("experiments/bluetooth/" + file);
                 ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, "bluetooth/" + file, "bluetooth", true);
-                ExperimentShortInfo shortInfo = experimentRepository.getAssetExperimentLoader().loadExperimentShortInfo(data);
+                ExperimentShortInfo shortInfo = AssetExperimentLoader.loadExperimentShortInfo(data, new ExperimentListEnvironment(parent));
                 if (shortInfo != null) {
-                    experimentRepository.getAssetExperimentLoader().addExperiment(shortInfo, shortInfo.categoryName);
+                    experimentRepository.addExperiment(shortInfo, this); //TODO: This needs to be a separate experiment repository
                 }
                 input.close();
             } catch (IOException e) {
@@ -1184,7 +1183,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
 
         Collections.sort(bluetoothExperiments, new CategoryComparator(res));
-        experimentRepository.getAssetExperimentLoader().setCategories(bluetoothExperiments);
+        //experimentRepository.getAssetExperimentLoader().setCategories(bluetoothExperiments);
 
         LinearLayout parentLayout = view.findViewById(R.id.open_multiple_dialog_list);
         parentLayout.removeAllViews();
@@ -1206,8 +1205,8 @@ public class ExperimentListActivity extends AppCompatActivity {
             builder.setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     //(new RunBluetoothScan()).execute();
-                    Set<String> bluetoothNameKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceNameList().keySet();
-                    Set<UUID> bluetoothUUIDKeySet = experimentRepository.getAssetExperimentLoader().getBluetoothDeviceUUIDList().keySet();
+                    Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
+                    Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();
 
                     new BluetoothScanner(parent, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {
                         @Override

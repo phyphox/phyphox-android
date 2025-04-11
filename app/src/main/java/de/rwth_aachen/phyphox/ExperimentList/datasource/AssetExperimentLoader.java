@@ -2,6 +2,7 @@ package de.rwth_aachen.phyphox.ExperimentList.datasource;
 
 import static android.content.Context.SENSOR_SERVICE;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -51,37 +52,17 @@ public class AssetExperimentLoader {
 
     private final ExperimentRepository repository;
 
-    Vector<ExperimentsInCategory> categories;
-
-    /**
-     * Collects names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
-     */
-    private final HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>();
-
-    /**
-     *  Collects uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
-     */
-    private final HashMap<UUID, Vector<String>> bluetoothDeviceUUIDList = new HashMap<>();
-
-
-    public AssetExperimentLoader(ExperimentListEnvironment environment, ExperimentRepository repository) {
-        this.environment = environment;
+    public AssetExperimentLoader(Activity parent, ExperimentRepository repository) {
+        this.environment = new ExperimentListEnvironment(parent);
         this.repository = repository;
-        categories = new Vector<>();
+        if (repository.categories == null)
+            repository.categories = new Vector<>();
     }
 
     public void setCategories(Vector<ExperimentsInCategory> categories) {
-        if (!new HashSet<>(this.categories).containsAll(categories)) {
-            this.categories.addAll(categories);
+        if (!new HashSet<>(repository.categories).containsAll(categories)) {
+            repository.categories.addAll(categories);
         }
-    }
-
-    public HashMap<String, Vector<String>> getBluetoothDeviceNameList() {
-        return bluetoothDeviceNameList;
-    }
-
-    public HashMap<UUID, Vector<String>> getBluetoothDeviceUUIDList() {
-        return bluetoothDeviceUUIDList;
     }
 
     /**
@@ -91,21 +72,32 @@ public class AssetExperimentLoader {
      *  This addExperiment(...) is called for each experiment found. It checks if the experiment's
      *   category already exists and adds it to this category or creates a category for the experiment
      */
-    public void addExperiment(ExperimentShortInfo shortInfo, String cat) {
+    public void addExperiment(ExperimentShortInfo shortInfo) {
+        for (String bluetoothDeviceName : shortInfo.bluetoothDeviceNames) {
+            if (!repository.bluetoothDeviceNameList.containsKey(bluetoothDeviceName))
+                repository.bluetoothDeviceNameList.put(bluetoothDeviceName, new Vector<>());
+            repository.bluetoothDeviceNameList.get(bluetoothDeviceName).add(shortInfo.xmlFile);
+        }
+        for (UUID bluetoothDeviceUUID : shortInfo.bluetoothDeviceUUIDs) {
+            if (!repository.bluetoothDeviceUUIDList.containsKey(bluetoothDeviceUUID))
+                repository.bluetoothDeviceUUIDList.put(bluetoothDeviceUUID, new Vector<String>());
+            repository.bluetoothDeviceUUIDList.get(bluetoothDeviceUUID).add(shortInfo.xmlFile);
+        }
+
         //Check all categories for the category of the new experiment
-        for (ExperimentsInCategory icat : this.categories) {
-            if (icat.hasName(cat)) {
+        for (ExperimentsInCategory icat : repository.categories) {
+            if (icat.hasName(shortInfo.categoryName)) {
                 //Found it. Add the experiment and return
                 icat.addExperiment(shortInfo);
                 return;
             }
         }
         //Category does not yet exist. Create it and add the experiment
-        categories.add(new ExperimentsInCategory(cat, environment.parent, repository));
-        categories.lastElement().addExperiment(shortInfo);
+        repository.categories.add(new ExperimentsInCategory(shortInfo.categoryName, environment.parent, repository));
+        repository.categories.lastElement().addExperiment(shortInfo);
     }
 
-    private void addInvalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, Vector<ExperimentsInCategory> categories) {
+    private static ExperimentShortInfo invalidExperiment(String xmlFile, String message, String isTemp, boolean isAsset, ExperimentListEnvironment environment) {
         Toast.makeText(environment.context, message, Toast.LENGTH_LONG).show();
         Log.e("list:loadExperiment", message);
         ExperimentShortInfo shortInfo = new ExperimentShortInfo();
@@ -118,8 +110,8 @@ public class AssetExperimentLoader {
         shortInfo.isAsset = isAsset;
         shortInfo.unavailableSensor = -1;
         shortInfo.isLink = null;
-        if (categories != null)
-            addExperiment(shortInfo, environment.resources.getString(R.string.unknown));
+        shortInfo.categoryName = environment.resources.getString(R.string.unknown);
+        return shortInfo;
     }
 
     public void showCurrentCameraAvailability() {
@@ -133,7 +125,7 @@ public class AssetExperimentLoader {
     /**
      * Minimalistic loading function. This only retrieves the data necessary to list the experiment.
      */
-    public ExperimentShortInfo loadExperimentShortInfo(ExperimentLoadInfoData data) {
+    public static ExperimentShortInfo loadExperimentShortInfo(ExperimentLoadInfoData data, ExperimentListEnvironment environment) {
         //Class to hold results of the few items we care about
         ExperimentShortInfo shortInfo = new ExperimentShortInfo();
 
@@ -359,18 +351,10 @@ public class AssetExperimentLoader {
 
 
                                 if (name != null && !name.isEmpty()) {
-                                    if (bluetoothDeviceNameList != null) {
-                                        if (!bluetoothDeviceNameList.containsKey(name))
-                                            bluetoothDeviceNameList.put(name, new Vector<>());
-                                        bluetoothDeviceNameList.get(name).add(data.experimentXML);
-                                    }
+                                    shortInfo.bluetoothDeviceNames.add(name);
                                 }
                                 if (uuid != null) {
-                                    if (bluetoothDeviceUUIDList != null) {
-                                        if (!bluetoothDeviceUUIDList.containsKey(uuid))
-                                            bluetoothDeviceUUIDList.put(uuid, new Vector<String>());
-                                        bluetoothDeviceUUIDList.get(uuid).add(data.experimentXML);
-                                    }
+                                   shortInfo.bluetoothDeviceUUIDs.add(uuid);
                                 }
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
                                     shortInfo.unavailableSensor = R.string.bluetooth;
@@ -423,14 +407,12 @@ public class AssetExperimentLoader {
             }
             //Sanity check: We need a title!
             if (shortInfo.title == null) {
-                addInvalidExperiment(data.experimentXML, "Invalid: \" + experimentXML + \" misses a title.", data.isTemp, data.isAsset, categories);
-                return null; // TODO implement better approach
+                return invalidExperiment(data.experimentXML, "Invalid: \" + experimentXML + \" misses a title.", data.isTemp, data.isAsset, environment);
             }
 
             //Sanity check: We need a category!
             if (category == null) {
-                addInvalidExperiment(data.experimentXML, "Invalid: \" + experimentXML + \" misses a category.", data.isTemp, data.isAsset, categories);
-                return null;
+                return invalidExperiment(data.experimentXML, "Invalid: \" + experimentXML + \" misses a category.", data.isTemp, data.isAsset, environment);
             }
 
             if (stateTitle != null) {
@@ -445,21 +427,19 @@ public class AssetExperimentLoader {
 
             //We have all the information. Add the experiment.
             image.setBaseColor(shortInfo.color);
-            if (categories != null) {
-                shortInfo.icon = image;
-                shortInfo.description = isLink ? "Link: " + link : shortInfo.description;
-                shortInfo.xmlFile = data.experimentXML;
-                shortInfo.isTemp = data.isTemp;
-                shortInfo.isAsset = data.isAsset;
-                shortInfo.isLink = isLink ? link : null;
-                shortInfo.categoryName = category;
 
-                //addExperiment(shortInfo, category, data.categories);
-            }
+            shortInfo.icon = image;
+            shortInfo.description = isLink ? "Link: " + link : shortInfo.description;
+            shortInfo.xmlFile = data.experimentXML;
+            shortInfo.isTemp = data.isTemp;
+            shortInfo.isAsset = data.isAsset;
+            shortInfo.isLink = isLink ? link : null;
+            shortInfo.categoryName = category;
+
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
-            addInvalidExperiment(data.experimentXML, "Error loading " + data.experimentXML + " (XML Exception)", data.isTemp, data.isAsset, categories);
+            return invalidExperiment(data.experimentXML, "Error loading " + data.experimentXML + " (XML Exception)", data.isTemp, data.isAsset, environment);
         } catch (IOException e) { //IOException... Abort and notify user.
-            addInvalidExperiment(data.experimentXML, "Error loading " + data.experimentXML + " (IOException)", data.isTemp, data.isAsset, categories);
+            return invalidExperiment(data.experimentXML, "Error loading " + data.experimentXML + " (IOException)", data.isTemp, data.isAsset, environment);
         }
         return shortInfo;
     }
@@ -467,7 +447,7 @@ public class AssetExperimentLoader {
     /**
      * Load experiments from local files
      */
-    protected void loadAndAddExperimentFromLocalFile() {
+    protected void loadAndAddExperimentsFromLocalFiles() {
         try {
             //Get all files that end on ".phyphox"
             File[] files = environment.getFilesDir().listFiles((dir, filename) -> filename.endsWith(".phyphox"));
@@ -478,9 +458,9 @@ public class AssetExperimentLoader {
                 //Load details for each experiment
                 InputStream input = environment.context.openFileInput(file.getName());
                 ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, file.getName(), null, false);
-                ExperimentShortInfo shortInfo = loadExperimentShortInfo(data);
+                ExperimentShortInfo shortInfo = loadExperimentShortInfo(data, environment);
                 if (shortInfo != null) {
-                    addExperiment(shortInfo, shortInfo.categoryName);
+                    addExperiment(shortInfo);
                 }
 
             }
@@ -494,7 +474,7 @@ public class AssetExperimentLoader {
     /**
      * Load experiments from assets
      */
-    protected void loadAndAddExperimentFromAsset() {
+    protected void loadAndAddExperimentsFromAssets() {
         try {
 
             final String[] experimentXMLs = environment.assetManager.list("experiments"); //All experiments are placed in the experiments folder
@@ -504,9 +484,9 @@ public class AssetExperimentLoader {
                     continue;
                 InputStream input = environment.assetManager.open("experiments/" + experimentXML);
                 ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, experimentXML, null, true);
-                ExperimentShortInfo shortInfo = loadExperimentShortInfo(data);
+                ExperimentShortInfo shortInfo = loadExperimentShortInfo(data, environment);
                 if (shortInfo != null) {
-                    addExperiment(shortInfo, shortInfo.categoryName);
+                    addExperiment(shortInfo);
                 }
                 //loadExperimentInfo(input, experimentXML, null,true, categories, null, null);
             }
@@ -519,16 +499,16 @@ public class AssetExperimentLoader {
     /**
      * Load hidden bluetooth experiments - these are not shown but will be offered if a matching Bluetooth device is found during a scan
      */
-    protected void loadAndAddExperimentFromHiddenBluetooth() {
+    protected void loadAndAddExperimentsFromHiddenBluetoothAssets() {
         try {
             final String[] experimentXMLs = environment.assetManager.list("experiments/bluetooth");
             for (String experimentXML : experimentXMLs) {
                 //Load details for each experiment
                 InputStream input = environment.assetManager.open("experiments/bluetooth/" + experimentXML);
                 ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, experimentXML, null, true);
-                ExperimentShortInfo shortInfo = loadExperimentShortInfo(data);
+                ExperimentShortInfo shortInfo = loadExperimentShortInfo(data, environment);
                 if (shortInfo != null) {
-                    addExperiment(shortInfo, shortInfo.categoryName);
+                    addExperiment(shortInfo);
                 }
             }
         } catch (IOException e) {

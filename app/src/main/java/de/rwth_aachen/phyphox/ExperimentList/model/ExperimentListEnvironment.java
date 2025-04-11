@@ -13,14 +13,13 @@ public class ExperimentListEnvironment {
     public Context context;
     public Activity parent;
 
-    public ExperimentListEnvironment(AssetManager assetManager, Resources resources,
-                                     Context context, Activity parent) {
-        if (context == null) {
-            throw new NullPointerException("Context cannot be null");
+    public ExperimentListEnvironment(Activity parent) {
+        if (parent == null) {
+            throw new NullPointerException("Parent cannot be null");
         }
-        this.context = context.getApplicationContext();
-        this.assetManager = assetManager;
-        this.resources = resources;
+        this.context = parent.getApplicationContext();
+        this.assetManager = parent.getAssets();
+        this.resources = parent.getResources();
         this.parent = parent;
 
     }
