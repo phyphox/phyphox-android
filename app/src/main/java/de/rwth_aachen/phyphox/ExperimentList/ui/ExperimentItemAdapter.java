@@ -41,7 +41,6 @@ import java.util.Vector;
 
 import de.rwth_aachen.phyphox.BuildConfig;
 import de.rwth_aachen.phyphox.Experiment;
-import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -345,7 +344,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
                                             } else {
                                                 Log.d("ExperimentList", "No resource folder found at " + resFolder.getAbsolutePath());
                                             }
-                                            experimentRepository.loadExperimentList(parentActivity);
+                                            experimentRepository.loadAndShowMainExperimentList(parentActivity);
                                         }
                                     })
                                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -391,7 +390,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
                                             }
                                         }
 
-                                        experimentRepository.loadExperimentList(parentActivity);
+                                        experimentRepository.loadAndShowMainExperimentList(parentActivity);
                                     })
                                     .setNegativeButton(R.string.cancel, (dialog, id) -> {
                                         //Aborted by user. Nothing to do.

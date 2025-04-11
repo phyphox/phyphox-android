@@ -505,7 +505,7 @@ public class AssetExperimentLoader {
             for (String experimentXML : experimentXMLs) {
                 //Load details for each experiment
                 InputStream input = environment.assetManager.open("experiments/bluetooth/" + experimentXML);
-                ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, experimentXML, null, true);
+                ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, "bluetooth/" + experimentXML, null, true);
                 ExperimentShortInfo shortInfo = loadExperimentShortInfo(data, environment);
                 if (shortInfo != null) {
                     addExperiment(shortInfo);

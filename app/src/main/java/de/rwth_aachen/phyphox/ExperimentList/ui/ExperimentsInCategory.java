@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
@@ -37,6 +38,14 @@ public class ExperimentsInCategory {
 
     final public String name; //Category name (headline)
     final public Map<RGB, Integer> colorCount = new HashMap<>();
+
+    public Vector<ExperimentShortInfo> retrieveExperiments() {
+         return experimentItemAdapter.experimentShortInfos;
+    }
+
+    public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
+        experimentItemAdapter.setPreselectedBluetoothAddress(preselectedBluetoothAddress);
+    }
 
     //ExpandableHeightGridView is derived from the original Android GridView.
     //The structure of our experiment list is such that we want to scroll the entire list, which
@@ -166,10 +175,6 @@ public class ExperimentsInCategory {
         //Add headline and experiment list to our base layout
         catLayout.addView(categoryHeadline);
         catLayout.addView(experimentSubList);
-    }
-
-    public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
-        experimentItemAdapter.setPreselectedBluetoothAddress(preselectedBluetoothAddress);
     }
 
     public void getParentScrollViewPosition() {

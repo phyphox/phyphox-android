@@ -7,7 +7,6 @@ import static de.rwth_aachen.phyphox.ExperimentList.model.Const.phyphoxCatHintRe
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.ClipData;
@@ -70,10 +69,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -89,7 +86,6 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.AssetExperimentLoader;
 import de.rwth_aachen.phyphox.ExperimentList.handler.BluetoothScanner;
-import de.rwth_aachen.phyphox.ExperimentList.handler.CategoryComparator;
 import de.rwth_aachen.phyphox.ExperimentList.handler.CopyIntentHandler;
 import de.rwth_aachen.phyphox.ExperimentList.handler.ZipIntentHandler;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
@@ -193,7 +189,7 @@ public class ExperimentListActivity extends AppCompatActivity {
     //have changed it
     protected void onResume() {
         super.onResume();
-        experimentRepository.loadExperimentList(this);
+        experimentRepository.loadAndShowMainExperimentList(this);
     }
 
     @Override
@@ -674,6 +670,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 startActivity(intent);
             } else {
                 //Load experiments from local files
+                ExperimentRepository zipRepository = new ExperimentRepository();
                 for (File file : files) {
                     //Load details for each experiment
                     try {
@@ -681,7 +678,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                         ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, tempPath.toURI().relativize(file.toURI()).getPath(), "temp_zip", false);
                         ExperimentShortInfo shortInfo = AssetExperimentLoader.loadExperimentShortInfo(data, new ExperimentListEnvironment(this));
                         if (shortInfo != null) {
-                            experimentRepository.addExperiment(shortInfo, this); // TODO: This needs to be a separate experiment repository
+                            zipRepository.addExperiment(shortInfo, this);
                         }
                         //loadExperimentInfo(input, tempPath.toURI().relativize(file.toURI()).getPath(), "temp_zip", false, zipExperiments, null, null);
                         input.close();
@@ -697,7 +694,8 @@ public class ExperimentListActivity extends AppCompatActivity {
                 View view = inflater.inflate(R.layout.open_multipe_dialog, null);
                 builder.setView(view)
                         .setPositiveButton(R.string.open_save_all, (dialog, id) -> {
-                            experimentRepository.loadExperimentList(this);
+                            zipRepository.saveExperimentsToMainList(new ExperimentListEnvironment(this));
+                            experimentRepository.loadAndShowMainExperimentList(this);
                             dialog.dismiss();
                         })
                         .setNegativeButton(R.string.cancel, (dialog, id) -> dialog.dismiss());
@@ -709,7 +707,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
                 dialog.setTitle(getResources().getString(R.string.open_zip_title));
 
-                experimentRepository.addExperimentCategoryToParent(this);
+                zipRepository.addExperimentCategoriesToLinearLayout(catList, this.getResources());
 
                 dialog.show();
             }
@@ -1079,15 +1077,16 @@ public class ExperimentListActivity extends AppCompatActivity {
     //TODO: The permission is actually checked when entering the entire BLE dialog and I do not see how we could reach this part of the code if it failed. However, I cannot rule out some other mechanism of revoking permissions during an app switch or from the notifications bar (?), so a cleaner implementation might be good idea
     public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {
 
-        final HashMap<String, Vector<String>> mBluetoothDeviceNameList = experimentRepository.getBluetoothDeviceNameList();
-        final HashMap<UUID, Vector<String>> mBluetoothDeviceUUIDList = experimentRepository.getBluetoothDeviceUUIDList();
-
         final ExperimentListActivity parent = this;
+
+        ExperimentRepository hiddenBluetoothRepository = new ExperimentRepository();
+        hiddenBluetoothRepository.loadHiddenBluetoothExperiments(this);
+
         Set<String> experiments = new HashSet<>();
         if (device.getName() != null) {
-            for (String name : mBluetoothDeviceNameList.keySet()) {
+            for (String name : hiddenBluetoothRepository.getBluetoothDeviceNameList().keySet()) {
                 if (device.getName().contains(name)) {
-                    Vector<String> experimentsForName = mBluetoothDeviceNameList.get(name);
+                    Vector<String> experimentsForName = hiddenBluetoothRepository.getBluetoothDeviceNameList().get(name);
                     if (experimentsForName != null)
                         experiments.addAll(experimentsForName);
                 }
@@ -1095,7 +1094,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
 
         for (UUID uuid : uuids) {
-            Vector<String> experimentsForUUID = mBluetoothDeviceUUIDList.get(uuid);
+            Vector<String> experimentsForUUID = hiddenBluetoothRepository.getBluetoothDeviceUUIDList().get(uuid);
             if (experimentsForUUID != null)
                 experiments.addAll(experimentsForUUID);
         }
@@ -1113,28 +1112,14 @@ public class ExperimentListActivity extends AppCompatActivity {
         View view = inflater.inflate(R.layout.open_multipe_dialog, null);
         builder.setView(view);
 
+        ExperimentRepository bleRepository = new ExperimentRepository();
+
         if (!supportedExperiments.isEmpty()) {
             builder.setPositiveButton(R.string.open_save_all, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int id) {
-                    AssetManager assetManager = parent.getAssets();
-                    try {
-                        for (String file : supportedExperiments) {
-                            InputStream in = assetManager.open("experiments/bluetooth/" + file);
-                            OutputStream out = new FileOutputStream(new File(parent.getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
-                            byte[] buffer = new byte[1024];
-                            int count;
-                            while ((count = in.read(buffer)) != -1) {
-                                out.write(buffer, 0, count);
-                            }
-                            in.close();
-                            out.flush();
-                            out.close();
-                        }
-                    } catch (Exception e) {
-                        Toast.makeText(parent, "Error: Could not retrieve assets.", Toast.LENGTH_LONG).show();
-                    }
-                    experimentRepository.loadExperimentList(parent);
+                    bleRepository.saveExperimentsToMainList(new ExperimentListEnvironment(parent));
+                    experimentRepository.loadAndShowMainExperimentList(parent);
                     dialog.dismiss();
                 }
 
@@ -1164,34 +1149,27 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         dialog.setTitle(parent.getResources().getString(R.string.open_bluetooth_assets_title));
 
-        Vector<ExperimentsInCategory> bluetoothExperiments = new Vector<>();
         AssetManager assetManager = parent.getAssets();
         for (String file : supportedExperiments) {
             //Load details for each experiment
             try {
-                InputStream input = assetManager.open("experiments/bluetooth/" + file);
-                ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, "bluetooth/" + file, "bluetooth", true);
+                InputStream input = assetManager.open("experiments/" + file);
+                ExperimentLoadInfoData data = new ExperimentLoadInfoData(input, file, null, true);
                 ExperimentShortInfo shortInfo = AssetExperimentLoader.loadExperimentShortInfo(data, new ExperimentListEnvironment(parent));
                 if (shortInfo != null) {
-                    experimentRepository.addExperiment(shortInfo, this); //TODO: This needs to be a separate experiment repository
+                    bleRepository.addExperiment(shortInfo, this);
                 }
                 input.close();
             } catch (IOException e) {
-                Log.e("bluetooth", e.getMessage());
+                Log.e("ExperimentList", "Error: Could not load experiment \"" + file + "\" from asset.");
                 Toast.makeText(parent, "Error: Could not load experiment \"" + file + "\" from asset.", Toast.LENGTH_LONG).show();
             }
         }
 
-        Collections.sort(bluetoothExperiments, new CategoryComparator(res));
-        //experimentRepository.getAssetExperimentLoader().setCategories(bluetoothExperiments);
-
         LinearLayout parentLayout = view.findViewById(R.id.open_multiple_dialog_list);
-        parentLayout.removeAllViews();
+        bleRepository.setPreselectedBluetoothAddress(device.getAddress());
+        bleRepository.addExperimentCategoriesToLinearLayout(parentLayout, this.getResources());
 
-        for (ExperimentsInCategory cat : bluetoothExperiments) {
-            cat.setPreselectedBluetoothAddress(device.getAddress());
-            cat.addToParent(parentLayout);
-        }
         dialog.show();
     }
 
