@@ -3463,11 +3463,12 @@ public class ExpView implements Serializable{
 
         @Override
         protected String createViewHTML() {
+            String valueTag = showValue ? "<span class=\"label\">"+this.label+"</span>" +
+                    "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" : "";
             return (type == SliderType.Range) ? getTwoSlidersVerticallyHTML() :
 
                  "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
-                        "<span class=\"label\">"+this.label+"</span>" +
-                        "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" +
+                         valueTag +
                         "<div class=\"sliderContainer\">" +
                             "<span class=\"minValue\" >"+minValue+"</span>" +
                                 "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
@@ -3482,9 +3483,10 @@ public class ExpView implements Serializable{
 
 
         private String getTwoSlidersVerticallyHTML(){
+            String valueTag = showValue ? "<span class=\"label\">"+this.label+"</span>" +
+                    "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" : "" ;
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
-                                            "<span class=\"label\">"+this.label+"</span>" +
-                                            "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" +
+                                            valueTag +
                                             "<div class=\"sliderContainer\">" +
                                             "<span class=\"minValue\" >"+minValue+"</span>" +
                                                 "<input type=\"range\" class=\"slider\" id=\"input"+htmlID+"\"" +
