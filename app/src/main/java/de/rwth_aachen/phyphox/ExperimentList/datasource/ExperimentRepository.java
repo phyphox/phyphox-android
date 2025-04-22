@@ -78,10 +78,10 @@ public class ExperimentRepository{
         if (!Helper.experimentInCollection(crc32, environment.parent)) {
             file.renameTo(new File(environment.getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"));
             if (!experimentShortInfo.resources.isEmpty()) {
-                File resFolder = new File(folder, "res");
                 File targetFolder = new File(environment.getFilesDir(), Long.toHexString(crc32).toLowerCase());
                 targetFolder.mkdirs();
                 for (String src : experimentShortInfo.resources) {
+                    File resFolder = new File(file.getParentFile().getAbsolutePath(), "res");
                     File srcFile = new File(resFolder, src);
                     File dstFile = new File(targetFolder, src);
                     try {
