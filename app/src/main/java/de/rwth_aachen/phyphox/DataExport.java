@@ -14,13 +14,13 @@ import android.util.Log;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -300,7 +300,7 @@ public class DataExport implements Serializable {
             File file = new File(exportPath, "/"+getFilename(minimalistic)); //Create file with default filename
 
             //New excel workbook
-            Workbook wb = new HSSFWorkbook();
+            Workbook wb = new XSSFWorkbook();
             //Create a style (just bold font) for the table header
             Font font= wb.createFont();
             font.setBold(true);
@@ -428,7 +428,7 @@ public class DataExport implements Serializable {
 
         @Override
         protected String getFilename (boolean minimalistic) {
-            return filenameBase + ".xls";
+            return filenameBase + ".xlsx";
         }
     }
 
