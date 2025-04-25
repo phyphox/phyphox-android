@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox.camera.model
 
 import android.graphics.RectF
+import android.hardware.camera2.CaptureRequest
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
@@ -39,9 +40,9 @@ data class CameraSettingState  constructor(
 
     val cameraMaxRegionAWB: Int = 0,
     val cameraWhiteBalanceManualRange: List<Int> = CameraHelper.getWhiteBalanceTemperatureList(),
-    val cameraCurrentWhiteBalanceManualValue: FloatArray = CameraHelper.convertTemperatureToRggb(15000),
+    val cameraCurrentWhiteBalanceManualValue: FloatArray = CameraHelper.convertTemperatureToRggb(5600),
     val cameraWhiteBalanceModes: List<Int> = CameraHelper.getWhiteBalanceModes().keys.toList(),
-    val cameraCurrentWhiteBalanceMode : Int = 0
+    val cameraCurrentWhiteBalanceMode : Int = CaptureRequest.CONTROL_AWB_MODE_AUTO
 )
 
 enum class CameraState{
