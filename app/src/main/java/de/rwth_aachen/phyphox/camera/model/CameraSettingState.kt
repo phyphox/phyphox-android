@@ -49,7 +49,8 @@ enum class CameraState{
     NONE,
     INITIALIZING,
     RUNNING,
-    RESTART
+    RESTART,
+    SHUTDOWN
 }
 
 

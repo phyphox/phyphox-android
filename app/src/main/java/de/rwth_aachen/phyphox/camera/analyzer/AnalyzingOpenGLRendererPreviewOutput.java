@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 
 import android.opengl.EGLContext;
 
@@ -220,16 +221,20 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture st) {
         surfaceTexture = null;
-        executor.execute(
-                () -> {
-                    if (eglSurface != null) {
-                        EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
-                        EGL14.eglDestroySurface(eglDisplay, eglSurface);
-                        eglSurface = null;
-                        checkGLError("destroySurface");
+        try {
+            executor.execute(
+                    () -> {
+                        if (eglSurface != null) {
+                            EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+                            EGL14.eglDestroySurface(eglDisplay, eglSurface);
+                            eglSurface = null;
+                            checkGLError("destroySurface");
+                        }
                     }
-                }
-        );
+            );
+        } catch (RejectedExecutionException e) {
+            //Expected behavior when the executor is shutdown when the camera is being closed
+        }
         return true;
     }
 

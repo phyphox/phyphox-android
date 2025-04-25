@@ -42,6 +42,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         void newExposureStatistics(double minRGB, double maxRGB, double meanLuma);
     }
 
+    boolean running = false;
+
     StateFlow<CameraSettingState> cameraSettingValueState;
     Executor executor = Executors.newSingleThreadExecutor();
     public int previewWidth = 0;
@@ -186,6 +188,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         AnalyzingOpenGLRendererPreviewOutput.prepareOpenGL(eglContext, eglDisplay, eglConfig, eglCameraTexture);
 
         checkGLError("prepareOpenGL (preview)");
+
+        running = true;
     }
 
     public void attachTexturePreviewView(CameraPreviewScreen cameraPreviewScreen) {
@@ -234,9 +238,11 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
     void draw() {
         CameraSettingState state = cameraSettingValueState.getValue();
+        if (!running)
+            return;
         executor.execute(
                 () -> {
-                    if (eglContext == null || cameraSurfaceTexture == null)
+                    if (!running || eglContext == null || cameraSurfaceTexture == null)
                         return;
 
                     EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
@@ -254,8 +260,13 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     boolean dataNeedsToBeWrittenToBuffers = true;
                     if (measuring) {
                         for (AnalyzingModule analyzingModule : analyzingModules) {
+                            if (!running)
+                                return;
                             analyzingModule.analyze(camMatrix, passepartout);
                         }
+
+                        if (!running)
+                            return;
 
                         if (dataLock.tryLock()) { //First try to write to buffers. If they available at the moment, draw preview first
                             if (measuring) //This might have changed while analyzing
@@ -266,6 +277,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     } else
                         dataNeedsToBeWrittenToBuffers = false;
 
+                    if (!running)
+                        return;
                     if (state.getAutoExposure()) {
                         exposureAnalyzer.analyze(camMatrix, passepartout);
                         if (exposureStatisticsListener != null)
@@ -275,11 +288,15 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
                     if (System.currentTimeMillis() - lastPreviewFrame > 1000/30) {
                         for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
+                            if (!running)
+                                return;
                             previewOutput.draw(camMatrix, passepartout);
                         }
                         lastPreviewFrame = System.currentTimeMillis();
                     }
 
+                    if (!running)
+                        return;
                     if (dataNeedsToBeWrittenToBuffers && measuring) {
                         dataLock.lock();
                         if (measuring) //This might still have changed while waiting for the lock. In fact, if the user clears all data without explicitly stopping the measurement we would otherwise add old data to the freshly cleared buffers
@@ -330,5 +347,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         draw();
     }
 
+    public void shutdown() {
+        running = false;
+    }
 
 }

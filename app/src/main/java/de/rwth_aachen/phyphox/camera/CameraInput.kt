@@ -158,12 +158,16 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     CameraState.RUNNING -> Unit
                     CameraState.RESTART -> {
                         cameraProvider?.unbindAll()
-                        analyzingOpenGLRenderer?.releaseCameraSurface({
+                        analyzingOpenGLRenderer?.releaseCameraSurface {
                             lifecycleOwner.lifecycleScope.launch {
                                 startCamera()
                             }
                         }
-                        )
+                    }
+                    CameraState.SHUTDOWN -> {
+                        cameraProvider?.unbindAll()
+                        analyzingOpenGLRenderer?.shutdown()
+                        analyzingOpenGLRenderer?.releaseCameraSurface {}
                     }
                 }
             }
@@ -197,6 +201,18 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                         cameraSettingState.value.copy(
                                 cameraState = CameraState.INITIALIZING
                         )
+                )
+            }
+        }
+    }
+
+    fun stopCamera() {
+        lifecycleOwner?.let {
+            it.lifecycleScope.launch {
+                _cameraSettingState.emit(
+                    cameraSettingState.value.copy(
+                        cameraState = CameraState.SHUTDOWN
+                    )
                 )
             }
         }

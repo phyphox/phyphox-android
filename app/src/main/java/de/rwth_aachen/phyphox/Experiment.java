@@ -196,6 +196,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     .addNextIntent(upIntent)
                     .startActivities();
         }
+        shutdownIO();
         finish();
     }
 
@@ -284,22 +285,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     }
 
-    @Override
-    //onPause event
-    public void onStop() {
-        super.onStop();
-        hidePlayHintAnimation();
-
-        try {
-            progress.dismiss(); //Close progress display
-        } catch (Exception e) {
-            //This should only fail if the window has already been destroyed. Ignore.
-        } finally {
-            progress = null;
-        }
-
-        stopRemoteServer(); //Remote server should stop when the app is not active
+    private void shutdownIO() {
+        if (shutdown)
+            return;
         shutdown = true; //Stop the loop
+
         stopMeasurement(); //Stop the measurement
 
         if (experiment != null && experiment.loaded) {
@@ -316,7 +306,27 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
             if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 experiment.depthInput.stopCameras();
+            if (experiment.cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                experiment.cameraInput.stopCamera();
         }
+    }
+
+    @Override
+    //onPause event
+    public void onStop() {
+        super.onStop();
+        hidePlayHintAnimation();
+
+        try {
+            progress.dismiss(); //Close progress display
+        } catch (Exception e) {
+            //This should only fail if the window has already been destroyed. Ignore.
+        } finally {
+            progress = null;
+        }
+
+        stopRemoteServer(); //Remote server should stop when the app is not active
+        shutdownIO();
 
         if (popupWindow != null)
             popupWindow.dismiss();
