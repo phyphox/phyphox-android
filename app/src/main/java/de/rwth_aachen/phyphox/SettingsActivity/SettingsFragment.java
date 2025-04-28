@@ -33,7 +33,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        PreferenceManager.setDefaultValues(getContext(), R.xml.settings, false);
+        PreferenceManager.setDefaultValues(requireContext(), R.xml.settings, false);
         setPreferencesFromResource(R.xml.settings, rootKey);
 
         setupPortEditText();

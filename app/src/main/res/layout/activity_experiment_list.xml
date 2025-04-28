@@ -9,8 +9,7 @@
     android:paddingBottom="0dp" tools:context=".ExperimentList.ExperimentListActivity"
     android:id="@+id/rootExperimentList">
 
-    <RelativeLayout
-        android:id="@+id/expListHeader"
+    <RelativeLayout android:id="@+id/expListHeader"
         android:background="@color/phyphox_black_60"
         android:elevation="8dp"
         android:layout_width="match_parent"
@@ -50,42 +49,40 @@
 
     </RelativeLayout>
 
-    <de.rwth_aachen.phyphox.Helper.ReportingScrollView
+    <de.rwth_aachen.phyphox.Helper.ReportingScrollView android:id="@+id/experimentScroller"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/experimentScroller"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:fillViewport="false"
+        android:clipToPadding="false"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
+
         android:layout_below="@+id/expListHeader">
 
-        <LinearLayout
+        <LinearLayout android:id="@+id/experimentList"
             android:clipChildren="true"
-            android:clipToPadding="true"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/experimentList"
            />
+
     </de.rwth_aachen.phyphox.Helper.ReportingScrollView>
 
-    <View
+    <View android:id="@+id/experimentListDimmer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"
-        android:id="@+id/experimentListDimmer"
         android:background="@color/phyphox_black_60"/>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/newExperimentQR"
         app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperimentQR"
         android:text="@string/newExperimentQR"
-        android:id="@+id/newExperimentQR"
         android:backgroundTint="@color/phyphox_white_80"
         app:srcCompat="@drawable/new_experiment_qr"
         android:theme="@style/Widget.Phyphox.Fab.QR"
@@ -100,8 +97,7 @@
         android:elevation="12dp"
         />
 
-    <TextView
-        android:id="@+id/newExperimentQRLabel"
+    <TextView android:id="@+id/newExperimentQRLabel"
         android:text="@string/newExperimentQR"
         android:layout_toLeftOf="@id/newExperimentQR"
         android:layout_alignTop="@id/newExperimentQR"
@@ -111,13 +107,12 @@
         android:visibility="invisible"
         android:layout_height="72dp" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/newExperimentBluetooth"
         app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperimentBluetooth"
         android:text="@string/newExperimentBluetooth"
-        android:id="@+id/newExperimentBluetooth"
         app:srcCompat="@drawable/new_experiment_bluetooth"
         android:backgroundTint="@color/phyphox_blue_100"
         app:borderWidth="0dp"
@@ -131,8 +126,7 @@
         android:elevation="12dp"
         />
 
-    <TextView
-        android:id="@+id/newExperimentBluetoothLabel"
+    <TextView android:id="@+id/newExperimentBluetoothLabel"
         android:text="@string/newExperimentBluetooth"
         android:layout_toLeftOf="@id/newExperimentBluetooth"
         android:layout_alignTop="@id/newExperimentBluetooth"
@@ -142,13 +136,12 @@
         android:visibility="invisible"
         android:layout_height="72dp" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/newExperimentSimple"
         app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperimentSimple"
         android:text="@string/newExperimentSimple"
-        android:id="@+id/newExperimentSimple"
         app:srcCompat="@drawable/new_experiment_simple"
         app:fabSize="mini"
         app:borderWidth="0dp"
@@ -162,9 +155,7 @@
         android:elevation="12dp"
         />
 
-
-    <TextView
-        android:id="@+id/newExperimentSimpleLabel"
+    <TextView android:id="@+id/newExperimentSimpleLabel"
         android:text="@string/newExperimentSimple"
         android:layout_toLeftOf="@id/newExperimentSimple"
         android:layout_alignTop="@id/newExperimentSimple"
@@ -174,13 +165,12 @@
         android:visibility="invisible"
         android:layout_height="72dp" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/newExperiment"
         app:useCompatPadding="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/newExperiment"
         android:text="@string/newExperiment"
-        android:id="@+id/newExperiment"
         app:srcCompat="@drawable/new_experiment"
         app:fabSize="normal"
         android:layout_alignParentRight="true"

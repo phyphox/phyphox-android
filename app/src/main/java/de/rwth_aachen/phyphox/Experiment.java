@@ -63,6 +63,9 @@ import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
@@ -186,7 +189,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PopupWindow popupWindow = null;
     AudioOutput audioOutput = null;
 
+    public static boolean bluetoothConnectionSuccessful = false;
+    ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
+    ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
 
+    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
+    private  RecyclerView recyclerView;
 
 
     private void doLeaveExperiment() {
@@ -275,13 +283,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             (new PhyphoxFile.loadXMLAsyncTask(intent, this)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
-        final Map<Helper.WindowInsetHelper.AppViewElement, View> appViewElements = new HashMap<>();
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.HEADER, findViewById(R.id.appBarLayout));
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY, findViewById(R.id.view_pager));
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY1, findViewById(R.id.tab_layout));
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.FOOTER, findViewById(R.id.recycler_view_battery));
-
-        Helper.WindowInsetHelper.setWindowInsetListenerForSystemBar(appViewElements);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.view_pager), this, false, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.tab_layout), this, false, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.appBarLayout), this, false, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.recycler_view_battery), this, false, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.fl_remoteInfo), this, false, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.rootLayout), this, true, true);
 
     }
 
@@ -744,12 +751,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
         }
     }
-    public static boolean bluetoothConnectionSuccessful = false;
-    ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
-    ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
-
-    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
-    private  RecyclerView recyclerView;
 
     private void showBluetoothConnectedDeviceInfo(){
 
@@ -1894,6 +1895,28 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
 
         btn_moreInfo.setOnClickListener(v -> openDialogWithQrCode(addressList));
+
+        /*ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fl_remoteInfo), (v, insets) -> {
+
+            Insets innerPadding = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars());
+            Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+
+            Helper.WindowInsetHelper.SideInsets sideInsets = getSideInsets(innerPadding.top, navigationBars.bottom, v);
+
+            mlp.leftMargin = (getScreenOrientation(this) == SCREEN_ORIENTATION_LANDSCAPE) ? sideInsets.getLeft() : innerPadding.left;
+            mlp.bottomMargin = 0;
+            mlp.rightMargin = (getScreenOrientation(this) == SCREEN_ORIENTATION_LANDSCAPE) ? innerPadding.right : sideInsets.getRight();
+            mlp.topMargin = 0;
+
+            v.setLayoutParams(mlp);
+
+            Log.d("Experiment", "fl_remoteInfo");
+
+            return WindowInsetsCompat.CONSUMED;
+        });*/
+
 
         //Also we want to keep the device active for remote access
         setKeepScreenOn(true);

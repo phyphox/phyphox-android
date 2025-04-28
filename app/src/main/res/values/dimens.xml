@@ -60,4 +60,7 @@
    <dimen name="border_width_bigger">2.3dp</dimen>
 
 
+   <dimen name="tab_height_default">36dp</dimen>
+
+
 </resources>

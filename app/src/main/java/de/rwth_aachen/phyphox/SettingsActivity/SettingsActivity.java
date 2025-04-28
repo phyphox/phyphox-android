@@ -1,14 +1,14 @@
 package de.rwth_aachen.phyphox.SettingsActivity;
 
+
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.R;
@@ -18,6 +18,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_settings);
 
         SettingsFragment settingsFragment = new SettingsFragment();
@@ -31,11 +32,9 @@ public class SettingsActivity extends AppCompatActivity {
             ab.setDisplayHomeAsUpEnabled(true);
             ab.setDisplayShowTitleEnabled(true);
         }
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.settingsFrame), this, false, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.settingsToolbar), this, false, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.settingsRootView), this, true, true);
 
-        final Map<Helper.WindowInsetHelper.AppViewElement, View> appViewElements = new HashMap<>();
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.HEADER, findViewById(R.id.settingsToolbar));
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY, findViewById(R.id.settingsFrame));
-
-        Helper.WindowInsetHelper.setWindowInsetListenerForSystemBar(appViewElements);
     }
 }

@@ -71,9 +71,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
@@ -92,7 +90,6 @@ import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentLoadInfoData;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
-import de.rwth_aachen.phyphox.ExperimentList.ui.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.ExperimentList.handler.SimpleExperimentCreator;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
@@ -168,11 +165,9 @@ public class ExperimentListActivity extends AppCompatActivity {
             showSupportHintIfRequired();
         }
 
-        final Map<Helper.WindowInsetHelper.AppViewElement, View> appViewElements = new HashMap<>();
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.HEADER, findViewById(R.id.expListHeader));
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY, findViewById(R.id.experimentScroller));
-        appViewElements.put(Helper.WindowInsetHelper.AppViewElement.BODY1, findViewById(R.id.newExperiment)); //Floating button inset unchanged!
-        Helper.WindowInsetHelper.setWindowInsetListenerForSystemBar(appViewElements);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.experimentScroller), this, true, false);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.expListHeader), this, false, true);
+        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.newExperiment), this, true, false);
 
         setUpOnClickListener();
 

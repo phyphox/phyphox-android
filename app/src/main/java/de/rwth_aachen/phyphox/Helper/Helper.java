@@ -635,15 +635,7 @@ public abstract class Helper {
 
     public static class WindowInsetHelper {
 
-        public enum AppViewElement {
-            HEADER, //Denotes the toolbar
-            BODY, // Denotes the main content
-            BODY1, // Denotes the another view which is also part of main content
-            FOOTER, // for eg. view to show the battery status of the connected device at the bottom
-            BOTTOM_NAV_BAR
-        }
-
-        static final class SideInsets {
+        public static final class SideInsets {
             private final int left;
             private final int right;
 
@@ -661,69 +653,25 @@ public abstract class Helper {
             }
         }
 
-        public static void setWindowInsetListenerForBottomNavBar(Map<AppViewElement, View> viewMap) {
-            View bottomNavBar = viewMap.get(AppViewElement.BOTTOM_NAV_BAR);
-            if (bottomNavBar != null) {
-                ViewCompat.setOnApplyWindowInsetsListener(bottomNavBar, (v, insets) -> {
-                    v.setPadding(0, 0, 0, 0);
-                    return insets;
-                });
-            }
-        }
-
-
         // From Android 15 (SDK 35), because of edge-to-edge UI, there should be inset at status bar
-        public static void setWindowInsetListenerForSystemBar(Map<AppViewElement, View> viewMap) {
-            applyHeaderInsets(viewMap);
-            applyBodyInsets(viewMap, viewMap.get(AppViewElement.BODY));
-            applyBodyInsets(viewMap, viewMap.get(AppViewElement.BODY1));
-            applyFooterInsets(viewMap);
-        }
+        public static void setWindowInsets(View view, Activity activity, boolean setBottomMargin, boolean setTopMargin) {
+            ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
 
-        private static void applyHeaderInsets(Map<AppViewElement, View> viewMap) {
-            View headerView = viewMap.get(AppViewElement.HEADER);
-            if (headerView != null) {
-                ViewCompat.setOnApplyWindowInsetsListener(headerView, (v, insets) -> {
-                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                    Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-                    int topInset = systemBars.top;
-                    SideInsets sideInsets = getSideInsets(systemBars.top, navigationBars.bottom, v);
-                    v.setPadding(sideInsets.left, topInset, sideInsets.right, 0);
-                    return insets;
-                });
-            }
-        }
+                Insets innerPadding = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 
-        private static void applyBodyInsets(Map<AppViewElement, View> viewMap, View bodyView) {
-            if (bodyView != null) {
-                ViewCompat.setOnApplyWindowInsetsListener(bodyView, (v, insets) -> {
-                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                    Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                Helper.WindowInsetHelper.SideInsets sideInsets = getSideInsets(innerPadding.top, navigationBars.bottom, v);
 
-                    int bottomInset = viewMap.get(AppViewElement.FOOTER) == null ? navigationBars.bottom : 0;
-                    SideInsets sideInsets = getSideInsets(systemBars.top, navigationBars.bottom, v);
+                mlp.leftMargin = (getScreenOrientation(activity) == SCREEN_ORIENTATION_LANDSCAPE) ? sideInsets.getLeft() : innerPadding.left;
+                mlp.bottomMargin = setBottomMargin ? innerPadding.bottom : 0;
+                mlp.rightMargin = (getScreenOrientation(activity) == SCREEN_ORIENTATION_LANDSCAPE) ? innerPadding.right : sideInsets.getRight();
+                mlp.topMargin = setTopMargin ? innerPadding.top : 0;
 
-                    v.setPadding(sideInsets.left, 0, sideInsets.right, bottomInset);
-                    return insets;
-                });
-            }
-        }
+                v.setLayoutParams(mlp);
 
-        private static void applyFooterInsets(Map<AppViewElement, View> viewMap) {
-            View footerView = viewMap.get(AppViewElement.FOOTER);
-
-            if (footerView != null) {
-                ViewCompat.setOnApplyWindowInsetsListener(footerView, (v, insets) -> {
-                    Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                    Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-
-                    int bottomInset = navigationBars.bottom;
-                    SideInsets sideInsets = getSideInsets(systemBars.top, navigationBars.bottom, v);
-
-                    v.setPadding(sideInsets.left, 0, sideInsets.right, bottomInset);
-                    return insets;
-                });
-            }
+                return WindowInsetsCompat.CONSUMED;
+            });
         }
 
         private static SideInsets getSideInsets(int systemBar, int navigationBar, View v) {
