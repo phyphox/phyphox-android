@@ -1896,28 +1896,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         btn_moreInfo.setOnClickListener(v -> openDialogWithQrCode(addressList));
 
-        /*ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fl_remoteInfo), (v, insets) -> {
-
-            Insets innerPadding = insets.getInsets(
-                    WindowInsetsCompat.Type.systemBars());
-            Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-
-            Helper.WindowInsetHelper.SideInsets sideInsets = getSideInsets(innerPadding.top, navigationBars.bottom, v);
-
-            mlp.leftMargin = (getScreenOrientation(this) == SCREEN_ORIENTATION_LANDSCAPE) ? sideInsets.getLeft() : innerPadding.left;
-            mlp.bottomMargin = 0;
-            mlp.rightMargin = (getScreenOrientation(this) == SCREEN_ORIENTATION_LANDSCAPE) ? innerPadding.right : sideInsets.getRight();
-            mlp.topMargin = 0;
-
-            v.setLayoutParams(mlp);
-
-            Log.d("Experiment", "fl_remoteInfo");
-
-            return WindowInsetsCompat.CONSUMED;
-        });*/
-
-
         //Also we want to keep the device active for remote access
         setKeepScreenOn(true);
     }
