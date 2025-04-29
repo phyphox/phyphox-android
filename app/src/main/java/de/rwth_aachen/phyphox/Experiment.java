@@ -63,9 +63,6 @@ import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
@@ -85,7 +82,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -333,7 +329,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         stopRemoteServer(); //Remote server should stop when the app is not active
-        shutdownIO();
 
         if (popupWindow != null)
             popupWindow.dismiss();
@@ -355,9 +350,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 Toast.makeText(this, "DepthPreview: setCamera could not restart depthInput: " + e.getMessage(), Toast.LENGTH_LONG).show(); //Present message
             }
         }
-
-        if (experiment != null && experiment.cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            experiment.cameraInput.startCameraFromProvider(this, this.getApplication());
 
         updateViewsHandler.postDelayed(updateViews, 40); //Start the "main loop" again
         startRemoteServer();  //Restart the remote server (if it is activated)

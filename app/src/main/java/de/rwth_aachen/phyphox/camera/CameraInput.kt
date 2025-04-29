@@ -6,21 +6,16 @@ import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.params.RggbChannelVector
 import android.os.Build
 import android.util.Log
-import android.util.Range
 import android.util.Size
-import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.camera2.interop.CaptureRequestOptions
-import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.CameraX
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -28,19 +23,16 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
 import com.google.common.util.concurrent.ListenableFuture
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
 import de.rwth_aachen.phyphox.camera.analyzer.AnalyzingOpenGLRenderer
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
-import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.ui.ChooseCameraSettingValue
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -174,7 +166,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         }
     }
 
-    fun startCamera() {
+    private fun startCamera() {
         if (analyzingOpenGLRenderer == null)
             analyzingOpenGLRenderer = AnalyzingOpenGLRenderer(this, dataLock, cameraSettingState, this)
 
