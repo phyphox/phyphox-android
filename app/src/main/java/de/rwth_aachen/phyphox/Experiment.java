@@ -309,8 +309,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
             if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 experiment.depthInput.stopCameras();
-            if (experiment.cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                experiment.cameraInput.stopCamera();
         }
     }
 
@@ -329,6 +327,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         stopRemoteServer(); //Remote server should stop when the app is not active
+        shutdownIO();
 
         if (popupWindow != null)
             popupWindow.dismiss();
