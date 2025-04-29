@@ -125,6 +125,7 @@ class CameraPreviewFragment (
     override fun onPause() {
         super.onPause()
         cameraViewModel.stopCameraPreviewView(cameraPreviewScreen)
+        cameraPreviewScreen.previewTextureView.visibility = View.GONE
     }
 
     fun onPageVisibleToUser(visible: Boolean) {
