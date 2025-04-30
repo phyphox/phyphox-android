@@ -52,6 +52,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -63,6 +64,8 @@ import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.FileProvider;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
@@ -252,7 +255,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
-
+        EdgeToEdge.enable(this);
         //Set our custom action bar
         Toolbar toolbar = (Toolbar) findViewById(R.id.customActionBar);
         setSupportActionBar(toolbar);
@@ -281,10 +284,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.view_pager), this, false, false);
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.tab_layout), this, false, false);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.appBarLayout), this, false, false);
+        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.appBarLayout), this);
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.recycler_view_battery), this, false, false);
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.fl_remoteInfo), this, false, false);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.rootLayout), this, true, true);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootLayout), (v, inset) -> {
+            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            mlp.bottomMargin = inset.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            return inset;
+        });
 
     }
 

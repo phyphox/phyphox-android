@@ -674,7 +674,30 @@ public abstract class Helper {
             });
         }
 
-        private static SideInsets getSideInsets(int systemBar, int navigationBar, View v) {
+        public static void setToolbarWindowInset(View view, Activity activity){
+            ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                Insets navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+
+                Helper.WindowInsetHelper.SideInsets sideInsets = getSideInsets(systemBars.top, navigationBars.bottom, v);
+
+                v.setPadding(0, systemBars.top, 0, 0);
+
+                ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+
+                mlp.leftMargin = (getScreenOrientation(activity) == SCREEN_ORIENTATION_LANDSCAPE) ? sideInsets.getLeft() : systemBars.left;
+                mlp.bottomMargin = 0;
+                mlp.rightMargin = (getScreenOrientation(activity) == SCREEN_ORIENTATION_LANDSCAPE) ? systemBars.right : sideInsets.getRight();
+                mlp.topMargin = 0;
+
+                v.setLayoutParams(mlp);
+
+                return insets;
+            });
+        }
+
+
+        public static SideInsets getSideInsets(int systemBar, int navigationBar, View v) {
             boolean isLandscape = v.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
             int leftInset = 0;
             int rightInset = 0;
@@ -698,7 +721,7 @@ public abstract class Helper {
         }
 
         //https://stackoverflow.com/questions/10380989/how-do-i-get-the-current-orientation-activityinfo-screen-orientation-of-an-a
-        private static int getScreenOrientation(Activity context) {
+        public static int getScreenOrientation(Activity context) {
             int rotation = context.getWindowManager().getDefaultDisplay().getRotation();
             DisplayMetrics dm = new DisplayMetrics();
             context.getWindowManager().getDefaultDisplay().getMetrics(dm);

@@ -5,9 +5,11 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.os.Bundle;
-import android.util.Log;
+import android.view.ViewGroup;
 
 
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -33,8 +35,13 @@ public class SettingsActivity extends AppCompatActivity {
             ab.setDisplayShowTitleEnabled(true);
         }
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.settingsFrame), this, false, false);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.settingsToolbar), this, false, false);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.settingsRootView), this, true, true);
+        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.settingsToolbar), this);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.settingsRootView), (v, inset) -> {
+            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            mlp.bottomMargin = inset.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            return inset;
+        });
 
     }
 }

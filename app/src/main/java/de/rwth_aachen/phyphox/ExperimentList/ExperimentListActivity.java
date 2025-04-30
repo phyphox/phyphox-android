@@ -47,6 +47,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -55,6 +56,9 @@ import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -166,7 +170,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
 
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.experimentScroller), this, true, false);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.expListHeader), this, false, true);
+        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.expListHeader), this);
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.newExperiment), this, true, false);
 
         setUpOnClickListener();
