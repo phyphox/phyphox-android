@@ -441,6 +441,13 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append("- Name: ");
                 sb.append(sensor.getName());
                 sb.append("<br />");
+                sb.append("- Reporting Mode: ");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    sb.append(sensor.getReportingMode());
+                } else {
+                    sb.append("API < 21");
+                }
+                sb.append("<br />");
                 sb.append("- Range: ");
                 sb.append(sensor.getMaximumRange());
                 sb.append(" ");
