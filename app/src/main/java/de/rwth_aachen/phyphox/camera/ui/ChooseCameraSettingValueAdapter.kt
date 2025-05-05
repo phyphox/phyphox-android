@@ -2,16 +2,13 @@ package de.rwth_aachen.phyphox.camera.ui
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.widget.TextView
 import androidx.cardview.widget.CardView
-import androidx.recyclerview.selection.ItemDetailsLookup
-import androidx.recyclerview.selection.ItemKeyProvider
-import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.widget.RecyclerView
+import de.rwth_aachen.phyphox.Helper.Helper
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 
@@ -50,7 +47,11 @@ class ChooseCameraSettingValueAdapter(
         if (trackSelectedItem[item] == true) {
             holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_primary))
         } else {
-            holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_black_50))
+            if(Helper.isDarkTheme(context.resources)){
+                holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_black_50))
+            }else{
+                holder.textView.setBackgroundColor(context.resources.getColor(R.color.phyphox_white_100))
+            }
         }
 
         holder.textView.animation = buttonClick
