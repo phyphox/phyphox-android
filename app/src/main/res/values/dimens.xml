@@ -16,7 +16,7 @@
     <dimen name="info_element_margin">16dp</dimen>
     <dimen name="lib_margin">32dp</dimen>
 
-    <dimen name="font">16sp</dimen>
+    <dimen name="font">15sp</dimen>
     <dimen name="font_half">8sp</dimen>
     <dimen name="label_font">16sp</dimen>
     <dimen name="info_element_font">14sp</dimen>

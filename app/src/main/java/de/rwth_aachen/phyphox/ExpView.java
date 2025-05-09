@@ -30,7 +30,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
+import com.google.android.material.button.MaterialButton;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -1162,7 +1162,7 @@ public class ExpView implements Serializable{
         private boolean triggered = false;
         private ExpViewFragment parent;
         private DataBuffer buffer;
-        Button b;
+        MaterialButton b;
 
         protected class ButtonMapping {
             Double min = Double.NEGATIVE_INFINITY;
@@ -1216,11 +1216,13 @@ public class ExpView implements Serializable{
 
             networkConnections = experiment.networkConnections;
 
-            b = new Button(c);
+            b = new MaterialButton(c);
 
             LinearLayout.LayoutParams vglp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             vglp.gravity = Gravity.CENTER;
 
+            b.setBackgroundColor(c.getResources().getColor(R.color.phyphox_white_70));
+            b.setTextColor(c.getResources().getColor(R.color.phyphox_black_80));
             b.setLayoutParams(vglp);
             b.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             b.setText(this.label);
@@ -1253,8 +1255,8 @@ public class ExpView implements Serializable{
                         List<NetworkService.RequestCallback> requestCallbacks = new ArrayList<>();
                         requestCallbacks.add(this);
                         nc.execute(requestCallbacks);
-                        ((Button)rootView).setEnabled(false);
-                        ((Button)rootView).setAlpha(0.5f);
+                        ((MaterialButton)rootView).setEnabled(false);
+                        ((MaterialButton)rootView).setAlpha(0.5f);
                     }
                 }
             }
@@ -1266,8 +1268,8 @@ public class ExpView implements Serializable{
             parent.getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    ((Button)rootView).setEnabled(true);
-                    ((Button)rootView).setAlpha(1f);
+                    ((MaterialButton)rootView).setEnabled(true);
+                    ((MaterialButton)rootView).setAlpha(1f);
                 }
             });
         }

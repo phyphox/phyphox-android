@@ -13,18 +13,25 @@
         <item name="android:textColorSecondary">@color/phyphox_white_100</item>
     </style>
 
-  <style name="Widget.Phyphox.PopupMenu.Overflow" parent="Widget.AppCompat.PopupMenu.Overflow">
-      <item name="android:textColor">@color/phyphox_white_100</item>
-      <item name="android:colorBackground">@color/phyphox_black_40</item>
+
+  <style name="Widget.Phyphox.PopupMenu.Overflow" parent="Widget.Material3.PopupMenu">
+      <item name="android:textColor">@color/phyphox_black_100</item>
+      <item name="android:popupBackground">@drawable/custom_popup_background</item>
   </style>
 
-    <style name="Theme.Phyphox.Dialog.Alert.Light" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+    <style name="Widget.Phyphox.PopupMenu.Overflow.Dark" parent="Widget.Material3.PopupMenu">
+        <item name="android:textColor">@color/phyphox_white_100</item>
+        <item name="android:popupBackground">@drawable/custom_popup_background_dark</item>
+    </style>
+
+    <style name="Theme.Phyphox.Dialog.Alert.Light" parent="ThemeOverlay.Material3.Dialog.Alert">
         <item name="textColorAlertDialogListItem">@color/phyphox_black_100</item>
         <item name="colorAccent">@color/phyphox_primary</item>
         <item name="android:colorBackground">@color/phyphox_white_100</item>
     </style>
 
-    <style name="Theme.Phyphox.Dialog.Alert.Dark" parent="Theme.AppCompat.Dialog.Alert">
+
+    <style name="Theme.Phyphox.Dialog.Alert.Dark" parent="ThemeOverlay.Material3.Dialog.Alert">
         <item name="textColorAlertDialogListItem">@color/phyphox_white_100</item>
         <item name="colorAccent">@color/phyphox_primary</item>
         <item name="android:colorBackground">@color/phyphox_black_60</item>
@@ -41,6 +48,10 @@
 
     <style name="BottomNavigationView.Active" parent="@style/TextAppearance.AppCompat.Caption">
         <item name="android:textSize">@dimen/graph_tools_font</item>
+    </style>
+
+    <style name="BottomNavigationView.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/phyphox_primary</item>
     </style>
 
     <style name="PreferenceThemeOverlay.v14.Phyphox.Dark" parent="PreferenceThemeOverlay.v14">
