@@ -7,19 +7,14 @@
     android:clickable="false"
     android:id="@+id/rootLayout">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
-        android:layout_width="match_parent"
-        android:fitsSystemWindows="true"
-        android:layout_height="wrap_content">
+
 
         <androidx.appcompat.widget.Toolbar
             android:layout_alignParentTop="true"
             android:layout_width="match_parent"
-            android:layout_height="?actionBarSize"
+            android:layout_height="wrap_content"
             android:id="@+id/customActionBar"
-            android:background="?attr/colorPrimary"
-            android:elevation="8dp">
+            android:background="?attr/colorPrimary">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -30,14 +25,13 @@
                 android:id="@+id/titleText" />
         </androidx.appcompat.widget.Toolbar>
 
-    </com.google.android.material.appbar.AppBarLayout>
 
     <com.google.android.material.tabs.TabLayout
         android:elevation="4dp"
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="@dimen/tab_height_default"
-        android:layout_below="@+id/appBarLayout"
+        android:layout_below="@+id/customActionBar"
         app:tabMode="scrollable"
     />
 
