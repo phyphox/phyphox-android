@@ -2,7 +2,7 @@
 <resources>
 
     <color name="phyphox_primary">#ffff7e22</color>
-    <color name="phyphox_primary_weak">#ffffc399</color>
+    <color name="phyphox_primary_weak">#ffffa500</color>
     <color name="phyphox_rwth_primary">#ff00549f</color>
 
     <color name="phyphox_white_100">#ffffffff</color>
@@ -35,5 +35,7 @@
     <color name="phyphox_yellow_weak">#ffe7e09b</color>
     <color name="phyphox_yellow">#ffedf668</color>
     <color name="phyphox_yellow_strong">#ff8d9709</color>
+
+    <color name="icon_tint_color">#FFFFFF</color>
 
 </resources>

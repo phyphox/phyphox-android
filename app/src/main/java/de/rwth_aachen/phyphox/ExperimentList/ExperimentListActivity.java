@@ -547,7 +547,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     private void openCreditDialog() {
         //Create the credits as an AlertDialog
-        ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentListActivity.this, R.style.rwth);
+        ContextThemeWrapper ctw = new ContextThemeWrapper(ExperimentListActivity.this, R.style.Theme_Phyphox);
         AlertDialog.Builder credits = new AlertDialog.Builder(ctw);
         LayoutInflater creditsInflater = (LayoutInflater) ctw.getSystemService(LAYOUT_INFLATER_SERVICE);
         View creditLayout = creditsInflater.inflate(R.layout.credits, null);

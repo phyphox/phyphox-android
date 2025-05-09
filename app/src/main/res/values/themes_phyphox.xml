@@ -7,7 +7,7 @@
 
     <style name="Widget.Phyphox.DayNight" parent="Widget.Phyphox.Light"/>
 
-    <style name="Theme.Phyphox" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="Theme.Phyphox" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:textColor">@color/phyphox_black_60</item>
         <item name="android:textColorPrimary">@color/phyphox_black_60</item>
         <item name="android:textColorSecondary">@color/phyphox_black_60</item>
@@ -19,7 +19,9 @@
         <item name="colorPrimaryDark">@color/phyphox_black_80</item>
         <item name="android:textSize">@dimen/font</item>
         <item name="itemBackground">@color/phyphox_white_90</item>
+        <item name="android:itemBackground">@color/phyphox_white_100</item>
         <item name="android:actionMenuTextColor">@color/phyphox_white_100</item>
+        <item name="android:actionDropDownStyle">@style/Widget.AppCompat.ActionButton</item>
 
         <!-- Provides the icon color in whole application, like in toolbar icon, settings icon.
         But some widgets are overwritten with its specific tint, for example, in BottomNavigationView-->
@@ -57,6 +59,7 @@
 
     <style name="Widget.Phyphox.Fab.QR" parent="Theme.Phyphox.DayNight">
         <item name="tint">@color/phyphox_black_100</item>
+        <item name="backgroundTint">@color/phyphox_black_100</item>
     </style>
 
     <style name="support_phyphox_hint_root" parent="Theme.Phyphox">
@@ -64,8 +67,7 @@
     </style>
 
     <style name="Widget.Phyphox.BottomNavigationView" parent="Widget.Phyphox.Light">
-        <item name="tint">@null</item> <!-- The tint would override the dynamic highlight of the selected item -->
-        <item name="android:tint">@null</item>
+        <item name="android:color">@color/phyphox_primary</item>
     </style>
 
     <style name="SliderMaterialTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
