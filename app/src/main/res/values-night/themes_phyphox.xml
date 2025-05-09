@@ -16,17 +16,15 @@
         <item name="android:textColorHighlight">@color/phyphox_primary</item>
         <item name="backgroundColor">@color/phyphox_black_50</item>
         <item name="android:itemBackground">@color/phyphox_black_50</item>
+        <item name="colorSurfaceContainer">@color/phyphox_black_50</item>
 
         <item name="android:windowBackground">@color/phyphox_black_60</item>
 
         <item name="alertDialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
 
-        <item name="popupMenuStyle">@style/Widget.Phyphox.PopupMenu.Overflow.Dark</item>
-
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Dark</item>
     </style>
-
 
 
     <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">

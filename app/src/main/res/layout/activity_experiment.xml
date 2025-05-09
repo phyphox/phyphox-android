@@ -7,8 +7,6 @@
     android:clickable="false"
     android:id="@+id/rootLayout">
 
-
-
         <androidx.appcompat.widget.Toolbar
             android:layout_alignParentTop="true"
             android:layout_width="match_parent"
@@ -24,7 +22,6 @@
                 style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
                 android:id="@+id/titleText" />
         </androidx.appcompat.widget.Toolbar>
-
 
     <com.google.android.material.tabs.TabLayout
         android:elevation="4dp"
