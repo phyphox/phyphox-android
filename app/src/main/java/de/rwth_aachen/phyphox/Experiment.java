@@ -284,7 +284,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.view_pager), this, false, false);
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.tab_layout), this, false, false);
-        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.appBarLayout), this);
+        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.customActionBar), this);
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.recycler_view_battery), this, false, false);
         Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.fl_remoteInfo), this, false, false);
 
