@@ -8,28 +8,11 @@
         <item name="android:windowSplashScreenBrandingImage">@drawable/rwth_white</item>
     </style>
 
-    <style name="ActionBarPhyphox" parent="@style/ThemeOverlay.AppCompat.ActionBar">
-        <item name="android:textColorPrimary">@color/phyphox_white_100</item>
-        <item name="android:textColorSecondary">@color/phyphox_white_100</item>
-    </style>
-
-
-  <style name="Widget.Phyphox.PopupMenu.Overflow" parent="Widget.Material3.PopupMenu">
-      <item name="android:textColor">@color/phyphox_black_100</item>
-      <item name="android:popupBackground">@drawable/custom_popup_background</item>
-  </style>
-
-    <style name="Widget.Phyphox.PopupMenu.Overflow.Dark" parent="Widget.Material3.PopupMenu">
-        <item name="android:textColor">@color/phyphox_white_100</item>
-        <item name="android:popupBackground">@drawable/custom_popup_background_dark</item>
-    </style>
-
     <style name="Theme.Phyphox.Dialog.Alert.Light" parent="ThemeOverlay.Material3.Dialog.Alert">
         <item name="textColorAlertDialogListItem">@color/phyphox_black_100</item>
         <item name="colorAccent">@color/phyphox_primary</item>
         <item name="android:colorBackground">@color/phyphox_white_100</item>
     </style>
-
 
     <style name="Theme.Phyphox.Dialog.Alert.Dark" parent="ThemeOverlay.Material3.Dialog.Alert">
         <item name="textColorAlertDialogListItem">@color/phyphox_white_100</item>
@@ -39,7 +22,6 @@
 
     <style name="rwthDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="colorAccent">@color/phyphox_rwth_primary</item>
-
     </style>
 
     <style name="BottomNavigationView" parent="@style/TextAppearance.AppCompat.Caption">
