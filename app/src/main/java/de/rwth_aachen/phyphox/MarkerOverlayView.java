@@ -19,13 +19,18 @@ public class MarkerOverlayView extends View {
     RectF passepartout = null;
     RectF clip = null;
     GraphSetup graphSetup = null;
+    boolean autoColor = true;
 
     private void init(Context ctx) {
         paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(3.f);
         paint.setAntiAlias(true);
-        paint.setColor((new RGB(0xffffff)).autoLightColor(ctx.getResources()).intColor());
+
+        if (autoColor)
+            paint.setColor((new RGB(0xffffff)).autoLightColor(ctx.getResources()).intColor());
+        else
+            paint.setColor((new RGB(0xffffff)).intColor());
 
         paintPP = new Paint();
         paintPP.setStyle(Paint.Style.FILL);
@@ -36,8 +41,10 @@ public class MarkerOverlayView extends View {
         init(ctx);
     }
 
+    //This constructor is loaded when the view is created from XML, which is called from the camera view
     public MarkerOverlayView(Context ctx, AttributeSet attrs) {
         super(ctx, attrs);
+        autoColor = false;
         init(ctx);
     }
 
