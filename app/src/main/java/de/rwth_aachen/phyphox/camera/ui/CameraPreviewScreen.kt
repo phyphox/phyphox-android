@@ -458,11 +458,6 @@ class CameraPreviewScreen(
                     else if (panningIndexY == 2) passepartout.bottom = y
 
                     cameraViewModel.setPassepartout(passepartout)
-
-                    Log.d("setFrameTouchOnListener","x: "+x);
-                    Log.d("setFrameTouchOnListener","y: "+y);
-                    Log.d("setFrameTouchOnListener","height: "+frameLayoutPreviewView.height);
-                    Log.d("setFrameTouchOnListener","width: "+frameLayoutPreviewView.width);
                 }
 
                 MotionEvent.ACTION_UP -> {
