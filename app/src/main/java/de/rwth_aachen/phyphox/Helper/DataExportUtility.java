@@ -52,7 +52,7 @@ public class DataExportUtility{
 
                 if (ActivityCompat.shouldShowRequestPermissionRationale(c,
                         "android.permission.WRITE_EXTERNAL_STORAGE")) {
-                    Toast.makeText(c, "Storage permission is needed to save files to Downloads", Toast.LENGTH_LONG).show();
+                    Toast.makeText(c, R.string.permissionRequiredToSaveToDownloads, Toast.LENGTH_LONG).show();
                 }
 
                 ActivityCompat.requestPermissions(c,
@@ -86,7 +86,7 @@ public class DataExportUtility{
                     out.write(buffer, 0, len);
                 }
 
-                Toast.makeText(activity, "File saved to Downloads", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, R.string.savedToDownloadsMessage, Toast.LENGTH_SHORT).show();
 
                 values.clear();
                 values.put(MediaStore.Downloads.IS_PENDING, 0); // Mark as finished
@@ -111,7 +111,7 @@ public class DataExportUtility{
                 out.write(buffer, 0, len);
             }
 
-            Toast.makeText(context, "File saved to Downloads", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.savedToDownloadsMessage, Toast.LENGTH_SHORT).show();
 
         } catch (IOException e) {
             e.printStackTrace();

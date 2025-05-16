@@ -1278,7 +1278,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         return;
                     }
                 } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
                     Log.e("updateData", "Unhandled exception.", e);
                     return;
                 }
@@ -1297,7 +1297,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         return;
                     }
                 } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
                     Log.e("updateData", "Unhandled exception.", e);
                     return;
                 }
@@ -1316,8 +1316,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         return;
                     }
                 } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), "Error writing state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    Log.e("updateData", "Unhandled exception.", e);
+                    Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
                     return;
                 }
                 Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();

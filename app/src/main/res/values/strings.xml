@@ -199,6 +199,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="export_pick_share">Pick an export method</string>
     <string name="share">Share screenshot</string>
     <string name="download">Download</string>
+    <string name="savedToDownloadsMessage">File saved to Downloads</string>
+    <string name="permissionRequiredToSaveToDownloads">Storage permission is needed to save files to Downloads</string>
+    <string name="errorWritingStateFile">Error writing state file: </string>
     <string name="share_subject">Screenshot from phyphox</string>
     <string name="share_pick_share">Pick a share method</string>
     <string name="remoteServer">Allow remote access</string>
