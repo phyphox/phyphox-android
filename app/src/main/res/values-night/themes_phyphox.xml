@@ -22,6 +22,8 @@
         <item name="dialogTheme">@style/Theme.Phyphox.Dialog.Alert.Dark</item>
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Dark</item>
+
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.App.BottomSheetDialog</item>
     </style>
 
     <style name="experimentList" parent="Theme.AppCompat.NoActionBar">
@@ -61,6 +63,10 @@
     <style name="Widget.Phyphox.BottomNavigationView" parent="Widget.Phyphox.Dark">
         <item name="tint">@null</item> <!-- The tint would override the dynamic highlight of the selected item -->
         <item name="android:tint">@null</item>
+    </style>
+
+    <style name="ThemeOverlay.App.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/BottomSheetDialog.Dark</item>
     </style>
 
 </resources>

@@ -57,5 +57,21 @@
 
     </style>
 
+    <style name="BottomSheetDialog.Light" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">@color/phyphox_white_100</item>
+        <item name="android:textColor">@color/phyphox_black_60</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.LargeComponent</item>
+    </style>
+
+    <style name="BottomSheetDialog.Dark" parent="Widget.Material3.BottomSheet">
+        <item name="backgroundTint">@color/phyphox_black_40</item>
+        <item name="android:textColor">@color/phyphox_white_100</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.LargeComponent</item>
+    </style>
+
+    <style name="ShapeAppearance.App.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">24dp</item>
+    </style>
+
 
 </resources>

@@ -1,18 +1,22 @@
 package de.rwth_aachen.phyphox;
 
+import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_MINI;
+import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
+import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_XLSX;
+
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.ResolveInfo;
-import android.net.Uri;
 import android.os.Build;
-import android.util.Log;
 
-import androidx.core.app.ShareCompat;
-import androidx.core.content.FileProvider;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -21,22 +25,21 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Serializable;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import de.rwth_aachen.phyphox.Helper.DataExportUtility;
 
 //The DataExport class provides export functionality for a phyphoxExperiment.
 //it provides multiple export formats and the dialogs to control them
@@ -271,9 +274,9 @@ public class DataExport implements Serializable {
         @Override
         protected String getType (boolean minimalistic) {
             if (minimalistic)
-                return "text/csv";
+                return MIME_TYPE_CSV_MINI;
             else
-                return "application/zip";
+                return MIME_TYPE_CSV_ZIP;
         }
         @Override
         protected String getFilename (boolean minimalistic) {
@@ -423,7 +426,7 @@ public class DataExport implements Serializable {
         @Override
         //This mime-typ is ugly, but seems to be the "official" one, while there are many others in use.
         protected String getType (boolean minimalistic) {
-            return "application/vnd.ms-excel";
+            return MIME_TYPE_XLSX;
         }
 
         @Override
@@ -478,98 +481,51 @@ public class DataExport implements Serializable {
     protected void showFormatDialog(final Vector<ExportSet> chosenSets, final Activity c, final boolean minimalistic, final String fileName) {
         final mutableInteger selected = new mutableInteger(); //This will hold the result
 
-        //Create the charsequences that should be presented to the user
-        final CharSequence[] options = new CharSequence[exportFormats.length];
-        for (int i = 0; i < exportFormats.length; i++) {
-            options[i] = exportFormats[i].getName();
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(c);
+        View view = LayoutInflater.from(c).inflate(R.layout.action_bottom_sheet, null);
+        RadioGroup radioGroup = view.findViewById(R.id.radioButtonFormat);
+        Button imageShare = view.findViewById(R.id.imageShare);
+        Button imageDownload = view.findViewById(R.id.imageDownload);
+
+        int index = 0;
+        for (ExportFormat exportFormat : exportFormats) {
+            RadioButton radioButton = new RadioButton(c);
+            radioButton.setText(exportFormat.getName());
+            radioButton.setId("RadioButton".hashCode() + index);
+            radioGroup.addView(radioButton);
+            if(index == 0){
+                radioGroup.check(radioButton.getId());
+                selected.value = 0;
+            }
+            index ++;
         }
 
-        //Build the dialog...
-        AlertDialog.Builder builder = new AlertDialog.Builder(c);
-        builder.setTitle(R.string.pick_exportFormat) //Title from internationalization
-                .setSingleChoiceItems(options, 0, //Callback if the user changes the selection
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                               selected.value = which; //Remember the selection
-                            }
-                        })
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) { //Callback when the user confirms his selection
-                        //Lets do the actual export
+        radioGroup.setOnCheckedChangeListener((radioGroup1, i) -> selected.value = radioGroup1.indexOfChild(radioGroup1.findViewById(i)));
 
-                        //Set a file name including the current date
-                        exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
+        imageShare.setOnClickListener(v -> {
 
-                        //Call the export filter to write the data to a file
-                        File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic, c);
+            exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
 
-                        //Use a FileProvider so we can send this file to other apps
-                        final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", exportFile);
+            //Call the export filter to write the data to a file
+            File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic, c);
 
-                        //Create a share intent
-                        final Intent intent = ShareCompat.IntentBuilder.from(c)
-                                .setType(exportFormats[selected.value].getType(minimalistic)) //mime type from the export filter
-                                .setSubject(c.getString(R.string.export_subject))
-                                .setStream(uri)
-                                .getIntent()
-                                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            String mimeType = exportFormats[selected.value].getType(minimalistic);
+            DataExportUtility.shareFile(exportFile, mimeType, c);
+            bottomSheetDialog.dismiss();
+        });
+        imageDownload.setOnClickListener(view1 -> {
+            exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
 
-                        List<ResolveInfo> resInfoList = c.getPackageManager().queryIntentActivities(intent, 0);
-                        for (ResolveInfo ri : resInfoList) {
-                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        }
+            //Call the export filter to write the data to a file
+            File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic, c);
 
-                        //Create intents for apps that support viewing or editing the file
-                        final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
-                        viewIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
-                        viewIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            String mimeType = exportFormats[selected.value].getType(minimalistic);
+            DataExportUtility.createFileInDownloads(exportFile, fileName, mimeType, c);
+            bottomSheetDialog.dismiss();
+        });
 
-                        resInfoList = c.getPackageManager().queryIntentActivities(viewIntent, 0);
-                        Vector<Intent> extraIntents = new Vector<>();
-                        for (ResolveInfo ri : resInfoList) {
-                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                            ))
-                                continue;
-                            Intent appIntent = new Intent();
-                            appIntent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
-                            appIntent.setAction(Intent.ACTION_VIEW);
-                            appIntent.setDataAndType(uri, exportFormats[selected.value].getType(minimalistic));
-                            appIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            extraIntents.add(appIntent);
-                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        }
-
-                        final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[extraIntents.size()]);
-
-                        //Create chooser
-                        Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
-                        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntentsArray);
-
-                        //And finally grant permissions again for any activities created by the chooser
-                        resInfoList = c.getPackageManager().queryIntentActivities(chooser, 0);
-                        for (ResolveInfo ri : resInfoList) {
-                            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                            ))
-                                continue;
-                            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        }
-
-
-                        //Execute this intent
-                        c.startActivity(chooser);
-                    }
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {//Callback if the user aborts the dialog.
-                        //Nothing to do here. We shall not export.
-                    }
-                });
-
-        //Show the dialog which we have just built
-        builder.create().show();
+        bottomSheetDialog.setContentView(view);
+        bottomSheetDialog.show();
     }
 
     //This function allows to export the data without dialogs. Hence it takes a list of selected

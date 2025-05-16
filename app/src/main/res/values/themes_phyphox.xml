@@ -37,6 +37,8 @@
 
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Phyphox.Light</item>
 
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.App.BottomSheetDialog</item>
+
     </style>
 
     <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">
@@ -68,6 +70,10 @@
 
     <style name="SliderMaterialTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/phyphox_primary</item>
+    </style>
+
+    <style name="ThemeOverlay.App.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/BottomSheetDialog.Light</item>
     </style>
 
 </resources>

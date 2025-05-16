@@ -2,6 +2,9 @@ package de.rwth_aachen.phyphox;
 
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
+import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
+import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_PHYPHOX;
+import static de.rwth_aachen.phyphox.Helper.DataExportUtility.REQUEST_WRITE_EXTERNAL_STORAGE;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -73,6 +76,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.tabs.TabLayout;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -99,6 +103,7 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
+import de.rwth_aachen.phyphox.Helper.DataExportUtility;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -377,6 +382,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //   with the formerly missing permission
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQUEST_WRITE_EXTERNAL_STORAGE){
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permission granted. You can now save the file.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission denied. Cannot save file.", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
@@ -1234,90 +1248,119 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Saving the state - either locally or through a share intent
         if (id == R.id.action_saveState) {
             stopMeasurement();
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            final View dialogView = this.getLayoutInflater().inflate(R.layout.savestate_dialog, null);
-            builder.setView(dialogView);
-            final EditText customTitleET = (EditText) dialogView.findViewById(R.id.customTitle);
+
+            BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+            View view = LayoutInflater.from(this).inflate(R.layout.action_bottom_sheet_save_state, null);
+            EditText customTitleET = view.findViewById(R.id.editTextMeasurementName);
+            Button buttonShare = view.findViewById(R.id.imageShare);
+            Button buttonDownload = view.findViewById(R.id.imageDownload);
+            Button buttonToCollection = view.findViewById(R.id.imageSave);
+
             DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
             final Date now = Calendar.getInstance().getTime();
             customTitleET.setText(getString(R.string.save_state_default_title) + " " + df.format(now));
-            builder.setMessage(res.getString(R.string.save_state_message))
-                    .setTitle(R.string.save_state)
-                    .setPositiveButton(R.string.save_state_save, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            try {
-                                String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
-                                FileOutputStream output = openFileOutput(file, Activity.MODE_PRIVATE);
-                                String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
-                                output.close();
-                                if (result != null) {
-                                    Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
-                                    return;
-                                }
-                            } catch (Exception e) {
-                                Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                Log.e("updateData", "Unhandled exception.", e);
-                                return;
-                            }
-                            Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
+
+            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+            String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
+            File file = new File(getCacheDir(), "/"+filename);
+
+            bottomSheetDialog.setContentView(view);
+
+            buttonShare.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    try {
+                        FileOutputStream output = new FileOutputStream(file);
+                        String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
+                        output.close();
+                        if (result != null) {
+                            Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
+                            return;
                         }
-                    })
-                    .setNeutralButton(R.string.save_state_share, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
+                    } catch (Exception e) {
+                        Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Log.e("updateData", "Unhandled exception.", e);
+                        return;
+                    }
 
-                            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-                            String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
-                            File file = new File(getCacheDir(), "/"+filename);
-                            try {
-                                FileOutputStream output = new FileOutputStream(file);
-                                String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
-                                output.close();
-                                if (result != null) {
-                                    Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
-                                    return;
-                                }
-                            } catch (Exception e) {
-                                Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                Log.e("updateData", "Unhandled exception.", e);
-                                return;
-                            }
+                    final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
+                    final Intent intent = ShareCompat.IntentBuilder.from(Experiment.this)
+                            .setType(MIME_TYPE_PHYPHOX) //mime type from the export filter
+                            .setSubject(getString(R.string.save_state_subject))
+                            .setStream(uri)
+                            .getIntent()
+                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                            final Uri uri = FileProvider.getUriForFile(getBaseContext(), getPackageName() + ".exportProvider", file);
-                            final Intent intent = ShareCompat.IntentBuilder.from(Experiment.this)
-                                    .setType("application/octet-stream") //mime type from the export filter
-                                    .setSubject(getString(R.string.save_state_subject))
-                                    .setStream(uri)
-                                    .getIntent()
-                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
-                            for (ResolveInfo ri : resInfoList) {
-                                grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            }
+                    List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, 0);
+                    for (ResolveInfo ri : resInfoList) {
+                        grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    }
 
 
-                            //Create chooser
-                            Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
-                            //And finally grant permissions again for any activities created by the chooser
-                            resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
-                            for (ResolveInfo ri : resInfoList) {
-                                if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                                ))
-                                    continue;
-                                grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            }
-                            //Execute this intent
-                            startActivity(chooser);
+                    //Create chooser
+                    Intent chooser = Intent.createChooser(intent, getString(R.string.share_pick_share));
+                    //And finally grant permissions again for any activities created by the chooser
+                    resInfoList = getPackageManager().queryIntentActivities(chooser, 0);
+                    for (ResolveInfo ri : resInfoList) {
+                        if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
+                        ))
+                            continue;
+                        grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    }
+                    //Execute this intent
+                    startActivity(chooser);
+
+                    bottomSheetDialog.dismiss();
+                }
+            });
+
+            buttonDownload.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        FileOutputStream output = new FileOutputStream(file);
+                        String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
+                        output.close();
+                        if (result != null) {
+                            Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
+                            return;
                         }
-                    })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
+                    } catch (Exception e) {
+                        Toast.makeText(getBaseContext(), "Error wirting state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Log.e("updateData", "Unhandled exception.", e);
+                        return;
+                    }
+                    DataExportUtility.createFileInDownloads(file, filename, MIME_TYPE_PHYPHOX, Experiment.this);
+                    bottomSheetDialog.dismiss();
+                }
+            });
 
+            buttonToCollection.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        String file = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
+                        FileOutputStream output = openFileOutput(file, Activity.MODE_PRIVATE);
+                        String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
+                        output.close();
+                        if (result != null) {
+                            Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
+                            return;
                         }
-                    });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+                    } catch (Exception e) {
+                        Toast.makeText(getBaseContext(), "Error writing state file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Log.e("updateData", "Unhandled exception.", e);
+                        return;
+                    }
+                    Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
+                    bottomSheetDialog.dismiss();
+                }
+            });
+
+            bottomSheetDialog.show();
+
             return true;
         }
 

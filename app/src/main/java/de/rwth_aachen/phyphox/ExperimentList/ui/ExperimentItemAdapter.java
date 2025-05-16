@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.BuildConfig;
+import de.rwth_aachen.phyphox.Helper.DataExportUtility;
 import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
@@ -61,7 +62,6 @@ public class ExperimentItemAdapter extends BaseAdapter {
     Resources res;
 
     //Experiment data
-
     Vector<ExperimentShortInfo> experimentShortInfos = new Vector<>();
 
     //The constructor takes the activity reference. That's all.
@@ -140,60 +140,6 @@ public class ExperimentItemAdapter extends BaseAdapter {
         TextView title; //The title text
         TextView info;  //The short description text
         ImageButton menuBtn; //A button for a context menu for local experiments (if they are not an asset)
-    }
-
-    public void showExperimentInfo(String title, String sensorNotAvailableInfo, String description, Map<String, String> links, Context c) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(c);
-        builder.setTitle(title);
-
-        LinearLayout ll = new LinearLayout(builder.getContext());
-        ll.setOrientation(LinearLayout.VERTICAL);
-        int marginX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_horizontal_padding), res.getDisplayMetrics());
-        int marginY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, res.getDimension(R.dimen.activity_vertical_padding), res.getDisplayMetrics());
-        ll.setPadding(marginX, marginY, marginX, marginY);
-
-        TextView stateLabel = new TextView(builder.getContext());
-        stateLabel.setText(sensorNotAvailableInfo);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(0, 0, 0, Math.round(res.getDimension(R.dimen.font)));
-        stateLabel.setLayoutParams(lp);
-        stateLabel.setTextSize(12.0f);
-        ll.addView(stateLabel);
-
-        TextView description_ = new TextView(builder.getContext());
-        description_.setText(description);
-
-        ll.addView(description_);
-
-        for (String label : links.keySet()) {
-            Button btn = new Button(builder.getContext());
-            btn.setText(label);
-            final String url = links.get(label);
-            btn.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View view) {
-                    Uri uri = Uri.parse(url);
-                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                    if (intent.resolveActivity(parentActivity.getPackageManager()) != null) {
-                        parentActivity.startActivity(intent);
-                    }
-                }
-            });
-            ll.addView(btn);
-        }
-
-        ScrollView sv = new ScrollView(builder.getContext());
-        sv.setHorizontalScrollBarEnabled(false);
-        sv.setVerticalScrollBarEnabled(true);
-        sv.addView(ll);
-
-        builder.setView(sv);
-
-        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-            }
-        });
-        AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     //Construct the view for an element.
@@ -286,12 +232,12 @@ public class ExperimentItemAdapter extends BaseAdapter {
 
                 popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
 
+                File xmlFile = new File(parentActivity.getFilesDir(), "/" + experimentShortInfos.get(position).xmlFile);
                 popup.setOnMenuItemClickListener(menuItem -> {
                     switch (menuItem.getItemId()) {
                         case R.id.experiment_item_share: {
-                            File file = new File(parentActivity.getFilesDir(), "/" + experimentShortInfos.get(position).xmlFile);
 
-                            final Uri uri = FileProvider.getUriForFile(parentActivity.getBaseContext(), parentActivity.getPackageName() + ".exportProvider", file);
+                            final Uri uri = FileProvider.getUriForFile(parentActivity.getBaseContext(), parentActivity.getPackageName() + ".exportProvider", xmlFile);
                             final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
                                     .setType("application/octet-stream") //mime type from the export filter
                                     .setSubject(parentActivity.getString(R.string.save_state_subject))
@@ -317,6 +263,11 @@ public class ExperimentItemAdapter extends BaseAdapter {
                             }
                             //Execute this intent
                             parentActivity.startActivity(chooser);
+                            return true;
+                        }
+
+                        case R.id.experiment_item_download: {
+                            DataExportUtility.createFileInDownloads(xmlFile, xmlFile.getName(), DataExportUtility.MIME_TYPE_PHYPHOX, parentActivity  );
                             return true;
                         }
                         case R.id.experiment_item_delete: {

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout android:id="@+id/llActionButtons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:layout_marginBottom="18dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/line1"
+        app:layout_constraintTop_toTopOf="parent"
+        >
+
+        <Button
+            android:id="@+id/imageShare"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:background="@drawable/rounded_button"
+            android:drawableLeft="@drawable/baseline_share_24"
+            android:drawableStart="@drawable/baseline_share_24"
+            android:drawableTint="@color/phyphox_primary"
+            android:foreground="?attr/selectableItemBackground"
+            android:focusable="true"
+            android:text="@string/save_state_share"
+            android:drawablePadding="8dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginEnd="4dp"
+            android:paddingLeft="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:clickable="true"
+            android:textColor="@color/phyphox_primary"/>
+
+        <Button
+            android:id="@+id/imageDownload"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/rounded_button"
+            android:drawableLeft="@android:drawable/stat_sys_download_done"
+            android:drawableStart="@android:drawable/stat_sys_download_done"
+            android:drawableTint="@color/phyphox_primary"
+            android:drawablePadding="8dp"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:layout_marginLeft="4dp"
+            android:paddingLeft="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/download"
+            android:clickable="true"
+            android:textColor="@color/phyphox_primary"/>
+
+    </LinearLayout>
+
+    <com.google.android.material.divider.MaterialDivider android:id="@+id/line1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        app:dividerColor="@color/phyphox_primary"
+        app:dividerThickness="2dp"
+        app:layout_constraintTop_toBottomOf="@id/llActionButtons"
+        app:dividerInsetStart="10dp"
+        app:dividerInsetEnd="10dp"
+        />
+
+    <TextView android:id="@+id/bottomSheetTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pick_exportFormat"
+        android:textSize="@dimen/text_size_bigger"
+        android:layout_margin="10dp"
+        app:layout_constraintTop_toBottomOf="@id/line1"
+       app:layout_constraintLeft_toLeftOf="parent"
+
+        />
+
+
+
+    <RadioGroup android:id="@+id/radioButtonFormat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:paddingBottom="28dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bottomSheetTitle"
+        android:orientation="vertical"/>
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
