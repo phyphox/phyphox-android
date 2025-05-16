@@ -236,33 +236,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
                 popup.setOnMenuItemClickListener(menuItem -> {
                     switch (menuItem.getItemId()) {
                         case R.id.experiment_item_share: {
-
-                            final Uri uri = FileProvider.getUriForFile(parentActivity.getBaseContext(), parentActivity.getPackageName() + ".exportProvider", xmlFile);
-                            final Intent intent = ShareCompat.IntentBuilder.from(parentActivity)
-                                    .setType("application/octet-stream") //mime type from the export filter
-                                    .setSubject(parentActivity.getString(R.string.save_state_subject))
-                                    .setStream(uri)
-                                    .getIntent()
-                                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET)
-                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                            List<ResolveInfo> resInfoList = parentActivity.getPackageManager().queryIntentActivities(intent, 0);
-                            for (ResolveInfo ri : resInfoList) {
-                                parentActivity.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            }
-
-                            //Create chooser
-                            Intent chooser = Intent.createChooser(intent, parentActivity.getString(R.string.share_pick_share));
-                            //And finally grant permissions again for any activities created by the chooser
-                            resInfoList = parentActivity.getPackageManager().queryIntentActivities(chooser, 0);
-                            for (ResolveInfo ri : resInfoList) {
-                                if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-                                ))
-                                    continue;
-                                parentActivity.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            }
-                            //Execute this intent
-                            parentActivity.startActivity(chooser);
+                            DataExportUtility.startPhyphoxFileSharing(parentActivity, xmlFile);
                             return true;
                         }
 

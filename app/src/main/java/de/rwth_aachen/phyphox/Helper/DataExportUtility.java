@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.BuildConfig;
+import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.R;
 
 public class DataExportUtility{
@@ -63,64 +64,7 @@ public class DataExportUtility{
         }
     }
 
-    public static void shareFile(File file, String mimeType, Activity c){
-        //Lets do the actual export
-        //Set a file name including the current date
 
-        //Use a FileProvider so we can send this file to other apps
-        final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", file);
-
-        //Create a share intent
-        final Intent intent = ShareCompat.IntentBuilder.from(c)
-                .setType(mimeType) //mime type from the export filter
-                .setSubject(c.getString(R.string.export_subject))
-                .setStream(uri)
-                .getIntent()
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        List<ResolveInfo> resInfoList = c.getPackageManager().queryIntentActivities(intent, 0);
-        for (ResolveInfo ri : resInfoList) {
-            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
-
-        //Create intents for apps that support viewing or editing the file
-        final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
-        viewIntent.setDataAndType(uri, mimeType);
-        viewIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        resInfoList = c.getPackageManager().queryIntentActivities(viewIntent, 0);
-        Vector<Intent> extraIntents = new Vector<>();
-        for (ResolveInfo ri : resInfoList) {
-            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-            ))
-                continue;
-            Intent appIntent = new Intent();
-            appIntent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
-            appIntent.setAction(Intent.ACTION_VIEW);
-            appIntent.setDataAndType(uri, mimeType);
-            appIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            extraIntents.add(appIntent);
-            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
-
-        final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[extraIntents.size()]);
-
-        //Create chooser
-        Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
-        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntentsArray);
-
-        //And finally grant permissions again for any activities created by the chooser
-        resInfoList = c.getPackageManager().queryIntentActivities(chooser, 0);
-        for (ResolveInfo ri : resInfoList) {
-            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID
-            ))
-                continue;
-            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
-
-        //Execute this intent
-        c.startActivity(chooser);
-    }
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private static void createFileInDownloadsFromQ(File file, String fileName, String mimeType, Activity activity){
         ContentValues values = new ContentValues();
@@ -172,6 +116,78 @@ public class DataExportUtility{
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void shareFile(File file, String mimeType, Activity c){
+        //Use a FileProvider so we can send this file to other apps
+        final Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".exportProvider", file);
+
+        final Intent intent = createShareIntent(c, uri ,mimeType);
+        grantUriPermission(c, intent, uri);
+
+        //Create intents for apps that support viewing or editing the file
+        final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+        viewIntent.setDataAndType(uri, mimeType);
+        viewIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        List<ResolveInfo> resInfoList = c.getPackageManager().queryIntentActivities(viewIntent, 0);
+        Vector<Intent> extraIntents = new Vector<>();
+        for (ResolveInfo ri : resInfoList) {
+            if (ri.activityInfo.packageName.equals(BuildConfig.APPLICATION_ID))
+                continue;
+            Intent appIntent = new Intent();
+            appIntent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
+            appIntent.setAction(Intent.ACTION_VIEW);
+            appIntent.setDataAndType(uri, mimeType);
+            appIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            extraIntents.add(appIntent);
+            c.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+
+        final Intent[] extraIntentsArray = extraIntents.toArray(new Intent[extraIntents.size()]);
+
+        //Create chooser
+        Intent chooser = Intent.createChooser(intent, c.getString(R.string.share_pick_share));
+        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntentsArray);
+        //And finally grant permissions again for any activities created by the chooser
+        grantUriPermission(c, chooser, uri);
+
+        //Execute this intent
+        c.startActivity(chooser);
+    }
+
+    public static void startPhyphoxFileSharing(Activity a, File file){
+
+        final Uri uri = FileProvider.getUriForFile(a.getBaseContext(), a.getPackageName() + ".exportProvider", file);
+
+        final Intent intent = createShareIntent(a, uri , MIME_TYPE_PHYPHOX);
+        grantUriPermission(a, intent, uri);
+
+        //Create chooser
+        Intent chooser = Intent.createChooser(intent, a.getString(R.string.share_pick_share));
+        //And finally grant permissions again for any activities created by the chooser
+        grantUriPermission(a, chooser, uri);
+        //Execute this intent
+        a.startActivity(chooser);
+    }
+
+    private static void grantUriPermission(Activity activity, Intent intent, Uri uri){
+        List<ResolveInfo> resInfoList = activity.getPackageManager().queryIntentActivities(intent, 0);
+        for (ResolveInfo ri : resInfoList) {
+            String packageName = ri.activityInfo.packageName;
+            if (packageName.equals(BuildConfig.APPLICATION_ID)) continue;
+            activity.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+    }
+
+    private static Intent createShareIntent(Activity c, Uri uri, String mimeType){
+        return ShareCompat.IntentBuilder.from(c)
+                .setType(mimeType) //mime type from the export filter
+                .setSubject(c.getString(R.string.export_subject))
+                .setStream(uri)
+                .getIntent()
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
     }
 
 }

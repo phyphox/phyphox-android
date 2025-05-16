@@ -33,7 +33,9 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
@@ -105,18 +107,18 @@ public class DataExport implements Serializable {
     }
 
     private PhyphoxExperiment experiment; //The phyphoxExperiment which uses this DataExport
-    public Vector<ExportSet> exportSets = new Vector<>(); //The available export sets
+    public List<ExportSet> exportSets = new ArrayList<>(); //The available export sets
 
     //This abstract class defines the interface for a specific export format
     protected abstract class ExportFormat implements Serializable {
         protected String filenameBase = "phyphox";
 
         public void setFilenameBase (String fb) {
-            filenameBase = fb;
+            filenameBase = fb + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date());
         }
 
         protected abstract String getName(); //Returns the name or description of the format
-        protected abstract File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx); //The actual export routine, which returns a datafile
+        protected abstract File export (List<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx); //The actual export routine, which returns a datafile
         protected abstract String getType(boolean minimalistic); //Returns the mime-type of the exported file.
         protected abstract String getFilename(boolean minimalistic); //Returns a default file name for the exported file
     }
@@ -147,7 +149,7 @@ public class DataExport implements Serializable {
         }
 
         @Override
-        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx) {
+        protected File export (List<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx) {
             File file = new File(exportPath, "/"+getFilename(minimalistic)); // Create a file with default filename in the given path
 
             DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
@@ -299,7 +301,7 @@ public class DataExport implements Serializable {
         }
 
         @Override
-        protected File export (Vector<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx) {
+        protected File export (List<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx) {
             File file = new File(exportPath, "/"+getFilename(minimalistic)); //Create file with default filename
 
             //New excel workbook
@@ -475,51 +477,55 @@ public class DataExport implements Serializable {
         public int value;
     }
 
-    //Let the user select a fiile format. This takes a list of chosen sets as it is supposed to be
-    //  called after the user has already chosen the sets to export.
-    //If successfull it will trigger the actual export as a share intent
-    protected void showFormatDialog(final Vector<ExportSet> chosenSets, final Activity c, final boolean minimalistic, final String fileName) {
+    /**
+     * Displays a Bottom Sheet to the user to select a file format for exporting data.
+     * <p>
+     * Upon successful selection of a format and an action (share or download), it will trigger the actual export process.
+     *
+     * @param chosenSets A Vector of {@link ExportSet} objects representing the data sets selected by the user for export.
+     * @param c The Activity context from which this dialog is being displayed.
+     * @param minimalistic A boolean flag indicating whether to perform a minimalistic export.
+     *                     This might affect the content or formatting of the exported file.
+     * @param fileName The base name for the exported file (without the extension or timestamp).
+     */
+    protected void showFormatDialog(final List<ExportSet> chosenSets, final Activity c, final boolean minimalistic, final String fileName) {
         final mutableInteger selected = new mutableInteger(); //This will hold the result
 
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(c);
         View view = LayoutInflater.from(c).inflate(R.layout.action_bottom_sheet, null);
-        RadioGroup radioGroup = view.findViewById(R.id.radioButtonFormat);
-        Button imageShare = view.findViewById(R.id.imageShare);
-        Button imageDownload = view.findViewById(R.id.imageDownload);
+        RadioGroup radioGroupFileFormat = view.findViewById(R.id.radioGroupFormat);
+        Button buttonShare = view.findViewById(R.id.buttonShare);
+        Button buttonDownload = view.findViewById(R.id.buttonDownload);
 
-        int index = 0;
+        //Populate the radio buttons with the available export formats
+        int selectedIndex = 0;
         for (ExportFormat exportFormat : exportFormats) {
             RadioButton radioButton = new RadioButton(c);
             radioButton.setText(exportFormat.getName());
-            radioButton.setId("RadioButton".hashCode() + index);
-            radioGroup.addView(radioButton);
-            if(index == 0){
-                radioGroup.check(radioButton.getId());
+            radioButton.setId("RadioButton".hashCode() + selectedIndex);
+            radioGroupFileFormat.addView(radioButton);
+            if(selectedIndex == 0){
+                radioGroupFileFormat.check(radioButton.getId());
                 selected.value = 0;
             }
-            index ++;
+            selectedIndex ++;
         }
 
-        radioGroup.setOnCheckedChangeListener((radioGroup1, i) -> selected.value = radioGroup1.indexOfChild(radioGroup1.findViewById(i)));
+        radioGroupFileFormat.setOnCheckedChangeListener((radioGroup1, i) -> selected.value = radioGroup1.indexOfChild(radioGroup1.findViewById(i)));
 
-        imageShare.setOnClickListener(v -> {
-
-            exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
-
-            //Call the export filter to write the data to a file
+        buttonShare.setOnClickListener(v -> {
+            exportFormats[selected.value].setFilenameBase(fileName );
             File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic, c);
-
             String mimeType = exportFormats[selected.value].getType(minimalistic);
+
             DataExportUtility.shareFile(exportFile, mimeType, c);
             bottomSheetDialog.dismiss();
         });
-        imageDownload.setOnClickListener(view1 -> {
-            exportFormats[selected.value].setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date()));
-
-            //Call the export filter to write the data to a file
+        buttonDownload.setOnClickListener(view1 -> {
+            exportFormats[selected.value].setFilenameBase(fileName);
             File exportFile = exportFormats[selected.value].export(chosenSets, c.getCacheDir(), minimalistic, c);
-
             String mimeType = exportFormats[selected.value].getType(minimalistic);
+
             DataExportUtility.createFileInDownloads(exportFile, fileName, mimeType, c);
             bottomSheetDialog.dismiss();
         });
@@ -539,7 +545,7 @@ public class DataExport implements Serializable {
             exportSets.get(i).getData();
         }
 
-        format.setFilenameBase(fileName + " " + (new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")).format(new Date()));
+        format.setFilenameBase(fileName);
 
         return format.export(exportSets, cacheDir, minimalistic, ctx);
     }

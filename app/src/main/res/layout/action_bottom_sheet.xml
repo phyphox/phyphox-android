@@ -19,7 +19,7 @@
         >
 
         <Button
-            android:id="@+id/imageShare"
+            android:id="@+id/buttonShare"
             android:layout_width="wrap_content"
             android:layout_height="38dp"
             android:background="@drawable/rounded_button"
@@ -39,7 +39,7 @@
             android:textColor="@color/phyphox_primary"/>
 
         <Button
-            android:id="@+id/imageDownload"
+            android:id="@+id/buttonDownload"
             android:layout_width="wrap_content"
             android:layout_height="38dp"
             android:layout_marginStart="4dp"
@@ -85,7 +85,7 @@
 
 
 
-    <RadioGroup android:id="@+id/radioButtonFormat"
+    <RadioGroup android:id="@+id/radioGroupFormat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
