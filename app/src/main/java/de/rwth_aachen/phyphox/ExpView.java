@@ -13,6 +13,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
@@ -23,6 +24,7 @@ import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -31,7 +33,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import com.google.android.material.button.MaterialButton;
-import android.widget.CompoundButton;
+
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,6 +43,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatEditText;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.FragmentContainerView;
 
@@ -48,6 +51,8 @@ import com.google.android.material.slider.LabelFormatter;
 import com.google.android.material.slider.RangeSlider;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
 import java.io.InputStream;
@@ -57,7 +62,6 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -2961,7 +2965,7 @@ public class ExpView implements Serializable{
 
         private RGB color;
 
-        Spinner spinner;
+        MaterialAutoCompleteTextView autoCompleteTextView;
 
         private boolean triggered = false;
 
@@ -3016,46 +3020,57 @@ public class ExpView implements Serializable{
             labelView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
             labelView.setPadding(0, 0, (int) labelSize / 2, 0);
 
-            //Create the value (and unit) as textView
-            spinner = new Spinner(c);
-            spinner.setLayoutParams(new TableRow.LayoutParams(
+            //Material Design 3 uses TextInputLayout and AutoCompleteTextView for dropdowns instead of Spinner
+            TextInputLayout textInputLayout = new TextInputLayout(
+                    new ContextThemeWrapper(c, com.google.android.material.R.style.Widget_Material3_TextInputLayout_FilledBox_ExposedDropdownMenu)
+            );
+
+            textInputLayout.setLayoutParams(new TableRow.LayoutParams(
                     0,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     0.5f)); //right half should be value+unit
-            spinner.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            textInputLayout.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
 
-            spinner.setPadding((int) labelSize / 2, 0, 0, 0);
-            ArrayList<String> options = new ArrayList<>();
+            textInputLayout.setPadding((int) labelSize / 2, 0, 0, 0);
 
+            autoCompleteTextView = new MaterialAutoCompleteTextView(c);
+            autoCompleteTextView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            autoCompleteTextView.setInputType(InputType.TYPE_NULL);
+
+            textInputLayout.addView(autoCompleteTextView);
+
+            String[] options = new String[mappings.size()];
+            int index = 0;
             for(Mapping title: mappings){
                 if(title.str.isEmpty()){
-                    options.add(title.value);
+                    options[index] = title.value;
                 } else {
-                    options.add(title.str);
+                    options[index] = title.str;
                 }
+                index++;
             }
 
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(c.getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, options);
-            spinner.setAdapter(adapter);
+            autoCompleteTextView.setSimpleItems(options);
 
-            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                    ((TextView) spinner.getChildAt(0)).setTextColor(color.autoLightColor(res).intColor());
-                    triggered = true;
-                }
+            autoCompleteTextView.setDropDownBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(c, Helper.isDarkTheme(res) ?
+                                            R.color.phyphox_black_50 :
+                                            R.color.phyphox_white_100)));
 
-                @Override
-                public void onNothingSelected(AdapterView<?> adapterView) {
 
-                }
-            });
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                autoCompleteTextView.setText(options[0], false);
+            } else {
+                autoCompleteTextView.setText(options[0]);
+            }
 
-            //Add label and value to the row
+            autoCompleteTextView.setOnItemClickListener((adapterView, view, i, l) -> triggered = true);
+
             row.addView(labelView);
-            row.addView(spinner);
+            row.addView(textInputLayout);
 
-            //Add the row to the linear layout
             rootView = row;
             rootView.setFocusableInTouchMode(true);
             ll.addView(rootView);
@@ -3068,7 +3083,7 @@ public class ExpView implements Serializable{
         }
 
         protected double getValue() {
-            return  Double.parseDouble(mappings.get(spinner.getSelectedItemPosition()).value);
+            return  Double.parseDouble(mappings.get(Integer.parseInt(autoCompleteTextView.getText().toString())).value);
         }
 
         @Override
@@ -3087,7 +3102,7 @@ public class ExpView implements Serializable{
                     break;
                 }
             }
-            spinner.setSelection((index == -1)? 0 : index);
+            autoCompleteTextView.setSelection((index == -1)? 0 : index);
 
         }
 
