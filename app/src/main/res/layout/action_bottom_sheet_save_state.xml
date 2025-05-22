@@ -19,66 +19,58 @@
         app:layout_constraintTop_toTopOf="parent"
         >
 
-        <Button
-            android:id="@+id/imageShare"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:background="@drawable/rounded_button"
 
-            android:drawableTint="@color/phyphox_primary"
-            android:foreground="?attr/selectableItemBackground"
-            android:focusable="true"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/imageShare"
+            style="@style/Widget.Material3.Button.IconButton.Filled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:iconGravity="start"
+            app:iconPadding="4dp"
             android:text="@string/save_state_share"
-            android:textSize="@dimen/text_size_small"
-            android:drawablePadding="8dp"
+            android:gravity="center"
             android:layout_marginRight="4dp"
             android:layout_marginEnd="4dp"
             android:paddingLeft="16dp"
             android:paddingStart="16dp"
+            android:paddingRight="16dp"
             android:paddingEnd="16dp"
-            android:clickable="true"
-            android:textColor="@color/phyphox_primary"/>
+             />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/imageDownload"
+            style="@style/Widget.Material3.Button.IconButton.Filled"
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:layout_marginStart="4dp"
-            android:background="@drawable/rounded_button"
-
-            android:drawableTint="@color/phyphox_primary"
-            android:drawablePadding="8dp"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:layout_marginLeft="4dp"
-            android:paddingLeft="16dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
+            android:layout_height="wrap_content"
+            app:iconGravity="start"
+            app:iconPadding="4dp"
             android:text="@string/download"
-            android:textSize="@dimen/text_size_small"
-            android:clickable="true"
-            android:textColor="@color/phyphox_primary"/>
-
-        <Button
-            android:id="@+id/imageSave"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:layout_marginStart="4dp"
-            android:background="@drawable/rounded_button"
-
-            android:drawableTint="@color/phyphox_primary"
-            android:drawablePadding="8dp"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:layout_marginLeft="4dp"
+            android:gravity="center"
+            android:layout_marginRight="4dp"
+            android:layout_marginEnd="4dp"
             android:paddingLeft="16dp"
             android:paddingStart="16dp"
+            android:paddingRight="16dp"
             android:paddingEnd="16dp"
+            />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/imageSave"
+            style="@style/Widget.Material3.Button.IconButton.Filled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:iconGravity="start"
+            app:iconPadding="4dp"
             android:text="@string/save_state_save"
-            android:textSize="@dimen/text_size_small"
-            android:clickable="true"
-            android:singleLine="true"
-            android:textColor="@color/phyphox_primary"/>
+            android:gravity="center"
+            android:layout_marginRight="4dp"
+            android:layout_marginEnd="4dp"
+            android:paddingLeft="16dp"
+            android:paddingStart="16dp"
+            android:paddingRight="16dp"
+            android:paddingEnd="16dp"
+            />
+
 
     </LinearLayout>
 
@@ -113,6 +105,7 @@
         android:textSize="@dimen/text_size_medium"
         android:layout_margin="10dp"
         android:padding="8dp"
+        android:textStyle="italic"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/bottomSheetTitle"
         app:layout_constraintLeft_toLeftOf="parent"

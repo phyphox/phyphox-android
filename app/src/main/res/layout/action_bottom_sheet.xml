@@ -8,8 +8,10 @@
     <LinearLayout android:id="@+id/llActionButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
         android:layout_marginTop="28dp"
         android:layout_marginBottom="18dp"
+        android:layout_marginStart="10dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintRight_toRightOf="parent"
@@ -18,45 +20,41 @@
         app:layout_constraintTop_toTopOf="parent"
         >
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonShare"
+            style="@style/Widget.Material3.Button.IconButton.Filled"
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:background="@drawable/rounded_button"
-            android:drawableLeft="@drawable/baseline_share_24"
-            android:drawableStart="@drawable/baseline_share_24"
-            android:drawableTint="@color/phyphox_primary"
-            android:foreground="?attr/selectableItemBackground"
-            android:focusable="true"
+            android:layout_height="wrap_content"
+            app:icon="@drawable/share"
+            app:iconGravity="start"
+            app:iconPadding="4dp"
             android:text="@string/save_state_share"
-            android:drawablePadding="8dp"
+            android:autoSizeTextType="uniform"
+            android:gravity="center"
             android:layout_marginRight="4dp"
             android:layout_marginEnd="4dp"
             android:paddingLeft="16dp"
             android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:clickable="true"
-            android:textColor="@color/phyphox_primary"/>
+            android:paddingRight="16dp"
+            android:paddingEnd="16dp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonDownload"
+            style="@style/Widget.Material3.Button.IconButton.Filled"
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:layout_marginStart="4dp"
-            android:background="@drawable/rounded_button"
-            android:drawableLeft="@android:drawable/stat_sys_download_done"
-            android:drawableStart="@android:drawable/stat_sys_download_done"
-            android:drawableTint="@color/phyphox_primary"
-            android:drawablePadding="8dp"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:layout_marginLeft="4dp"
+            android:layout_height="wrap_content"
+            app:icon="@drawable/download"
+            app:iconGravity="start"
+            app:iconPadding="4dp"
+            android:text="@string/download"
+            android:autoSizeTextType="uniform"
+            android:gravity="center"
+            android:layout_marginRight="4dp"
+            android:layout_marginEnd="4dp"
             android:paddingLeft="16dp"
             android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:text="@string/download"
-            android:clickable="true"
-            android:textColor="@color/phyphox_primary"/>
+            android:paddingRight="16dp"
+            android:paddingEnd="16dp"/>
 
     </LinearLayout>
 
