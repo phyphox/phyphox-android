@@ -2276,6 +2276,7 @@ public class ExpView implements Serializable{
         transient ImageView expandImage = null;
         transient Spinner modeControl = null;
         transient Spinner cameraSelection = null;
+        TextInputLayout textInputCameraSelection;
 
         private double aspectRatio;
 
@@ -2417,13 +2418,28 @@ public class ExpView implements Serializable{
                 }
             });
 
-            //Camera selection controls
-            cameraSelection = new Spinner(c);
-            cameraSelection.setLayoutParams(new LinearLayout.LayoutParams(
+            textInputCameraSelection = new TextInputLayout(
+                    new ContextThemeWrapper(c, com.google.android.material.R.style.Widget_Material3_TextInputLayout_FilledBox_ExposedDropdownMenu)
+            );
+
+            textInputCameraSelection.setLayoutParams(new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            textInputCameraSelection.setGravity(Gravity.CENTER | Gravity.CENTER_VERTICAL);
+
+            MaterialAutoCompleteTextView autoCompleteTvCameraSelection = new MaterialAutoCompleteTextView(c);
+            autoCompleteTvCameraSelection.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
             ));
-            cameraSelection.setVisibility(View.GONE);
+            autoCompleteTvCameraSelection.setInputType(InputType.TYPE_NULL);
+            autoCompleteTvCameraSelection.setGravity(Gravity.CENTER);
+
+            textInputCameraSelection.addView(autoCompleteTvCameraSelection);
+            layout.addView(textInputCameraSelection);
+
+            textInputCameraSelection.setVisibility(View.GONE);
             class CameraItem {
                 public final String key, value;
                 CameraItem(String key, String value) {
@@ -2445,22 +2461,31 @@ public class ExpView implements Serializable{
             String extCam = DepthInput.findCamera(CameraCharacteristics.LENS_FACING_EXTERNAL);
             if (extCam != null)
                 camOptions.add(new CameraItem(extCam, res.getString(R.string.cameraExternal)));
-            cameraSelection.setAdapter(new ArrayAdapter<>(c, android.R.layout.simple_spinner_dropdown_item, camOptions));
+
+            String[] options = new String[camOptions.size()];
+            for (int i = 0; i < camOptions.size(); i++) {
+                options[i] = camOptions.get(i).value;
+            }
+
+            autoCompleteTvCameraSelection.setSimpleItems(options);
+
             for (int i = 0; i < camOptions.size(); i++) {
                 if (camOptions.get(i).key.equals(experiment.depthInput.getCurrentCameraId()))
-                    cameraSelection.setSelection(i);
+                   autoCompleteTvCameraSelection.setSelection(i);
             }
-            layout.addView(cameraSelection);
-            cameraSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    cv.setCamera(camOptions.get(position).key);
-                }
 
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                }
-            });
+            autoCompleteTvCameraSelection.setDropDownBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(c, Helper.isDarkTheme(res) ?
+                    R.color.phyphox_black_50 :
+                    R.color.phyphox_white_100)));
+
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                autoCompleteTvCameraSelection.setText(options[0], false);
+            } else {
+                autoCompleteTvCameraSelection.setText(options[0]);
+            }
+
+            autoCompleteTvCameraSelection.setOnItemClickListener((adapterView, view, i, l) -> cv.setCamera(camOptions.get(i).key));
 
             layout.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -2509,6 +2534,8 @@ public class ExpView implements Serializable{
                     modeControl.setVisibility(View.GONE);
                 if (cameraSelection != null)
                     cameraSelection.setVisibility(View.GONE);
+                if(textInputCameraSelection != null)
+                    textInputCameraSelection.setVisibility(View.GONE);
 
                 rootView.getLayoutParams().height = LinearLayout.LayoutParams.WRAP_CONTENT;
                 rootView.requestLayout();
@@ -2531,6 +2558,8 @@ public class ExpView implements Serializable{
                     modeControl.setVisibility(VISIBLE);
                 if (cameraSelection != null)
                     cameraSelection.setVisibility(VISIBLE);
+                if(textInputCameraSelection != null)
+                    textInputCameraSelection.setVisibility(VISIBLE);
 
                 rootView.getLayoutParams().height = LinearLayout.LayoutParams.MATCH_PARENT;
                 rootView.requestLayout();
