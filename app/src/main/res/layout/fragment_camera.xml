@@ -90,7 +90,6 @@
         android:id="@+id/cameraSetting"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/phyphox_black_100"
         android:elevation="5dp"
         android:gravity="center_horizontal"
         android:orientation="horizontal"

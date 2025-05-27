@@ -36,6 +36,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import com.google.common.util.concurrent.ListenableFuture
+import de.rwth_aachen.phyphox.Helper.Helper
 import de.rwth_aachen.phyphox.Helper.RGB
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
@@ -765,13 +766,22 @@ class CameraPreviewScreen(
         val drawable = AppCompatResources.getDrawable(context, viewState.drawableResId)
         if (!viewState.isEnabled) {
             drawable?.setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_IN)
+        } else {
+            if(Helper.isDarkTheme(context.resources)){
+                drawable?.setColorFilter(ContextCompat.getColor(context, R.color.phyphox_white_100), PorterDuff.Mode.SRC_IN)
+            } else {
+                drawable?.setColorFilter(ContextCompat.getColor(context, R.color.phyphox_black_100), PorterDuff.Mode.SRC_IN)
+            }
         }
         viewState.imageView.setImageDrawable(drawable)
     }
 
     private fun setTextViewColor(viewState: TextViewCameraSettingViewState){
         val inactiveTextColor = ContextCompat.getColor(context, R.color.phyphox_white_50_black_50)
-        val activeTextColor = ContextCompat.getColor(context, R.color.phyphox_white_100)
+        var activeTextColor = ContextCompat.getColor(context, R.color.phyphox_black_100)
+
+        if(Helper.isDarkTheme(context.resources))
+            activeTextColor = ContextCompat.getColor(context, R.color.phyphox_white_100)
 
         viewState.textView.setTextColor(if (viewState.isEnabled) activeTextColor else inactiveTextColor)
     }
