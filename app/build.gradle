@@ -68,6 +68,12 @@ android {
             enableSplit = false
         }
     }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    ndkVersion rootProject.ext.ndk_version
 }
 
 dependencies {
