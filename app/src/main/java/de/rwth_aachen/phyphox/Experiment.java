@@ -51,6 +51,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -1083,128 +1084,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Timed Run button. Show the dialog to set up the timed run
         if (id == R.id.action_timedRun) {
             final MenuItem itemRef = item;
-            LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
-            View vLayout = inflater.inflate(R.layout.timed_run_layout, null);
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-            final CheckBox cbTimedRunEnabled = (CheckBox) vLayout.findViewById(R.id.timedRunEnabled);
-            final RelativeLayout tTimedRunTimeOptions = (RelativeLayout) vLayout.findViewById(R.id.timedRunTimeOptions);
-
-            cbTimedRunEnabled.setChecked(timedRun);
-
-            final CompoundButton.OnCheckedChangeListener enabledChanged = new CompoundButton.OnCheckedChangeListener() {
-                  @Override
-                  public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                      tTimedRunTimeOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-                  }
-
-            };
-
-            cbTimedRunEnabled.setOnCheckedChangeListener(enabledChanged);
-            enabledChanged.onCheckedChanged(cbTimedRunEnabled, timedRun);
-
-            final EditText etTimedRunStartDelay = (EditText) vLayout.findViewById(R.id.timedRunStartDelay);
-            etTimedRunStartDelay.addTextChangedListener(new DecimalTextWatcher());
-            etTimedRunStartDelay.setText(String.valueOf(timedRunStartDelay));
-            final EditText etTimedRunStopDelay = (EditText) vLayout.findViewById(R.id.timedRunStopDelay);
-            etTimedRunStopDelay.addTextChangedListener(new DecimalTextWatcher());
-            etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
-
-            final class IgnoreChanges {
-                boolean ignore = true;
-            }
-            final IgnoreChanges ignoreChanges = new IgnoreChanges();
-            final Button cbTimedRunBeeperAll = (Button) vLayout.findViewById(R.id.timedRunBeepAll);
-            final class AllButtonOn {
-                boolean on = false;
-            }
-            final AllButtonOn allButtonOn = new AllButtonOn();
-            final SwitchCompat cbTimedRunBeeperCountdown = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepCountdown);
-            final SwitchCompat cbTimedRunBeeperStart = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepStart);
-            final SwitchCompat cbTimedRunBeeperRunning = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepRunning);
-            final SwitchCompat cbTimedRunBeeperStop = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepStop);
-
-            final View.OnClickListener allButtonClicked;
-
-            final CompoundButton.OnCheckedChangeListener updateAllButton = new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if (ignoreChanges.ignore)
-                        return;
-
-                    allButtonOn.on = (cbTimedRunBeeperCountdown.isChecked() || cbTimedRunBeeperStart.isChecked() || cbTimedRunBeeperRunning.isChecked() || cbTimedRunBeeperStop.isChecked());
-                    cbTimedRunBeeperAll.setText(allButtonOn.on ? R.string.deactivate_all : R.string.activate_all);
-                }
-            };
-
-            allButtonClicked = new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    ignoreChanges.ignore = true;
-
-                    allButtonOn.on = !allButtonOn.on;
-                    cbTimedRunBeeperAll.setText(allButtonOn.on ? R.string.deactivate_all : R.string.activate_all);
-                    cbTimedRunBeeperCountdown.setChecked(allButtonOn.on);
-                    cbTimedRunBeeperStart.setChecked(allButtonOn.on);
-                    cbTimedRunBeeperRunning.setChecked(allButtonOn.on);
-                    cbTimedRunBeeperStop.setChecked(allButtonOn.on);
-
-                    ignoreChanges.ignore = false;
-                }
-            };
-
-            cbTimedRunBeeperAll.setOnClickListener(allButtonClicked);
-            cbTimedRunBeeperCountdown.setOnCheckedChangeListener(updateAllButton);
-            cbTimedRunBeeperStart.setOnCheckedChangeListener(updateAllButton);
-            cbTimedRunBeeperRunning.setOnCheckedChangeListener(updateAllButton);
-            cbTimedRunBeeperStop.setOnCheckedChangeListener(updateAllButton);
-
-            cbTimedRunBeeperCountdown.setChecked(timedRunBeepCountdown);
-            cbTimedRunBeeperStart.setChecked(timedRunBeepStart);
-            cbTimedRunBeeperRunning.setChecked(timedRunBeepRunning);
-            cbTimedRunBeeperStop.setChecked(timedRunBeepStop);
-            ignoreChanges.ignore = false;
-            updateAllButton.onCheckedChanged(cbTimedRunBeeperStop, timedRunBeepStop);
-
-            builder.setView(vLayout)
-                    .setTitle(R.string.timedRunDialogTitle)
-                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            timedRun = cbTimedRunEnabled.isChecked();
-                            itemRef.setChecked(timedRun);
-
-                            String startDelayRaw = etTimedRunStartDelay.getText().toString().replace(",",".");
-                            try {
-                                timedRunStartDelay = Double.valueOf(startDelayRaw);
-                            } catch (Exception e) {
-                                timedRunStartDelay = 0.;
-                            }
-
-                            String stopDelayRaw = etTimedRunStopDelay.getText().toString().replace(",", ".");
-                            try {
-                                timedRunStopDelay = Double.valueOf(stopDelayRaw);
-                            } catch (Exception e) {
-                                timedRunStopDelay = 0.;
-                            }
-
-                            timedRunBeepCountdown = cbTimedRunBeeperCountdown.isChecked();
-                            timedRunBeepStart = cbTimedRunBeeperStart.isChecked();
-                            timedRunBeepRunning = cbTimedRunBeeperRunning.isChecked();
-                            timedRunBeepStop = cbTimedRunBeeperStop.isChecked();
-
-                            if (timedRun && measuring)
-                                stopMeasurement();
-                            else
-                                invalidateOptionsMenu();
-                        }
-                    })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-
-                        }
-                    });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            new TimedRun(this, itemRef);
             return true;
         }
 
@@ -1249,82 +1129,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Saving the state - either locally or through a share intent
         if (id == R.id.action_saveState) {
             stopMeasurement();
-
-            BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
-            View view = LayoutInflater.from(this).inflate(R.layout.action_bottom_sheet_save_state, null);
-            EditText customTitleET = view.findViewById(R.id.editTextMeasurementName);
-            Button buttonShare = view.findViewById(R.id.imageShare);
-            Button buttonDownload = view.findViewById(R.id.imageDownload);
-            Button buttonToCollection = view.findViewById(R.id.imageSave);
-
-            DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-            final Date now = Calendar.getInstance().getTime();
-            customTitleET.setText(getString(R.string.save_state_default_title) + " " + df.format(now));
-
-            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-            String filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
-            File file = new File(getCacheDir(), "/"+filename);
-
-            bottomSheetDialog.setContentView(view);
-
-            buttonShare.setOnClickListener(v -> {
-
-                try {
-                    FileOutputStream output = new FileOutputStream(file);
-                    String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
-                    output.close();
-                    if (result != null) {
-                        Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
-                    Log.e("updateData", "Unhandled exception.", e);
-                    return;
-                }
-                DataExportUtility.startPhyphoxFileSharing(Experiment.this, file);
-
-                bottomSheetDialog.dismiss();
-            });
-
-            buttonDownload.setOnClickListener(v -> {
-                try {
-                    FileOutputStream output = new FileOutputStream(file);
-                    String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
-                    output.close();
-                    if (result != null) {
-                        Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
-                    Log.e("updateData", "Unhandled exception.", e);
-                    return;
-                }
-                DataExportUtility.createFileInDownloads(file, filename, MIME_TYPE_PHYPHOX, Experiment.this);
-                bottomSheetDialog.dismiss();
-            });
-
-            buttonToCollection.setOnClickListener(v -> {
-                try {
-                    String file1 = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
-                    FileOutputStream output = openFileOutput(file1, Activity.MODE_PRIVATE);
-                    String result = experiment.writeStateFile(customTitleET.getText().toString(), output);
-                    output.close();
-                    if (result != null) {
-                        Toast.makeText(getBaseContext(), "Error: " + result, Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
-                    return;
-                }
-                Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
-                bottomSheetDialog.dismiss();
-            });
-
-            bottomSheetDialog.show();
-
+            new SaveStateBottomSheetView(this);
             return true;
         }
 
@@ -2074,4 +1879,277 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         Log.d("ConnectedDeivce", "updateConnectedDevice: "+connectedDeviceInfos);
         runOnUiThread(runDeviceUpdate);
     }
+
+    class TimedRun {
+
+        Context parentContext;
+        MenuItem itemRef;
+
+        public TimedRun(Context context, MenuItem itemRef){
+            parentContext = context;
+            this.itemRef = itemRef;
+
+            openDialog();
+        }
+
+        private void openDialog(){
+            LayoutInflater inflater = (LayoutInflater) parentContext.getSystemService(LAYOUT_INFLATER_SERVICE);
+            View vLayout = inflater.inflate(R.layout.timed_run_layout, null);
+            AlertDialog.Builder builder = new AlertDialog.Builder(parentContext);
+
+            final CheckBox cbTimedRunEnabled = (CheckBox) vLayout.findViewById(R.id.timedRunEnabled);
+            final RelativeLayout tTimedRunTimeOptions = (RelativeLayout) vLayout.findViewById(R.id.timedRunTimeOptions);
+
+            cbTimedRunEnabled.setChecked(timedRun);
+
+            final CompoundButton.OnCheckedChangeListener enabledChanged =
+                    (buttonView, isChecked) -> tTimedRunTimeOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+
+            cbTimedRunEnabled.setOnCheckedChangeListener(enabledChanged);
+            enabledChanged.onCheckedChanged(cbTimedRunEnabled, timedRun);
+
+            final EditText etTimedRunStartDelay = (EditText) vLayout.findViewById(R.id.timedRunStartDelay);
+            etTimedRunStartDelay.addTextChangedListener(new DecimalTextWatcher());
+            etTimedRunStartDelay.setText(String.valueOf(timedRunStartDelay));
+            final EditText etTimedRunStopDelay = (EditText) vLayout.findViewById(R.id.timedRunStopDelay);
+            etTimedRunStopDelay.addTextChangedListener(new DecimalTextWatcher());
+            etTimedRunStopDelay.setText(String.valueOf(timedRunStopDelay));
+
+            final class IgnoreChanges {
+                boolean ignore = true;
+            }
+            final IgnoreChanges ignoreChanges = new IgnoreChanges();
+            final Button cbTimedRunBeeperAll = (Button) vLayout.findViewById(R.id.timedRunBeepAll);
+            final class AllButtonOn {
+                boolean on = false;
+            }
+            final AllButtonOn allButtonOn = new AllButtonOn();
+            final SwitchCompat cbTimedRunBeeperCountdown = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepCountdown);
+            final SwitchCompat cbTimedRunBeeperStart = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepStart);
+            final SwitchCompat cbTimedRunBeeperRunning = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepRunning);
+            final SwitchCompat cbTimedRunBeeperStop = (SwitchCompat) vLayout.findViewById(R.id.timedRunBeepStop);
+
+            final View.OnClickListener allButtonClicked;
+
+            final CompoundButton.OnCheckedChangeListener updateAllButton = new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (ignoreChanges.ignore)
+                        return;
+
+                    allButtonOn.on = (cbTimedRunBeeperCountdown.isChecked() || cbTimedRunBeeperStart.isChecked() || cbTimedRunBeeperRunning.isChecked() || cbTimedRunBeeperStop.isChecked());
+                    cbTimedRunBeeperAll.setText(allButtonOn.on ? R.string.deactivate_all : R.string.activate_all);
+                }
+            };
+
+            allButtonClicked = view -> {
+                ignoreChanges.ignore = true;
+
+                allButtonOn.on = !allButtonOn.on;
+                cbTimedRunBeeperAll.setText(allButtonOn.on ? R.string.deactivate_all : R.string.activate_all);
+                cbTimedRunBeeperCountdown.setChecked(allButtonOn.on);
+                cbTimedRunBeeperStart.setChecked(allButtonOn.on);
+                cbTimedRunBeeperRunning.setChecked(allButtonOn.on);
+                cbTimedRunBeeperStop.setChecked(allButtonOn.on);
+
+                ignoreChanges.ignore = false;
+            };
+
+            cbTimedRunBeeperAll.setOnClickListener(allButtonClicked);
+            cbTimedRunBeeperCountdown.setOnCheckedChangeListener(updateAllButton);
+            cbTimedRunBeeperStart.setOnCheckedChangeListener(updateAllButton);
+            cbTimedRunBeeperRunning.setOnCheckedChangeListener(updateAllButton);
+            cbTimedRunBeeperStop.setOnCheckedChangeListener(updateAllButton);
+
+            cbTimedRunBeeperCountdown.setChecked(timedRunBeepCountdown);
+            cbTimedRunBeeperStart.setChecked(timedRunBeepStart);
+            cbTimedRunBeeperRunning.setChecked(timedRunBeepRunning);
+            cbTimedRunBeeperStop.setChecked(timedRunBeepStop);
+            ignoreChanges.ignore = false;
+            updateAllButton.onCheckedChanged(cbTimedRunBeeperStop, timedRunBeepStop);
+
+            builder.setView(vLayout)
+                    .setTitle(R.string.timedRunDialogTitle)
+                    .setPositiveButton(R.string.ok, (dialog, id) -> {
+                        timedRun = cbTimedRunEnabled.isChecked();
+                        itemRef.setChecked(timedRun);
+
+                        String startDelayRaw = etTimedRunStartDelay.getText().toString().replace(",",".");
+                        try {
+                            timedRunStartDelay = Double.valueOf(startDelayRaw);
+                        } catch (Exception e) {
+                            timedRunStartDelay = 0.;
+                        }
+
+                        String stopDelayRaw = etTimedRunStopDelay.getText().toString().replace(",", ".");
+                        try {
+                            timedRunStopDelay = Double.valueOf(stopDelayRaw);
+                        } catch (Exception e) {
+                            timedRunStopDelay = 0.;
+                        }
+
+                        timedRunBeepCountdown = cbTimedRunBeeperCountdown.isChecked();
+                        timedRunBeepStart = cbTimedRunBeeperStart.isChecked();
+                        timedRunBeepRunning = cbTimedRunBeeperRunning.isChecked();
+                        timedRunBeepStop = cbTimedRunBeeperStop.isChecked();
+
+                        if (timedRun && measuring)
+                            stopMeasurement();
+                        else
+                            invalidateOptionsMenu();
+                    })
+                    .setNegativeButton(R.string.cancel, (dialog, id) -> {
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+    }
+
+    class SaveStateBottomSheetView {
+
+        Context parentContext;
+        BottomSheetDialog bottomSheetDialog;
+        EditText customTitleET;
+        Button buttonShare, buttonDownload, buttonToCollection;
+        File file;
+        ProgressBar progressBar;
+        String filename;
+
+        public SaveStateBottomSheetView(Context context) {
+
+            parentContext = context;
+            bottomSheetDialog = new BottomSheetDialog(parentContext);
+            View view = LayoutInflater.from(parentContext).inflate(R.layout.action_bottom_sheet_save_state, null);
+
+            customTitleET = view.findViewById(R.id.editTextMeasurementName);
+            DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+            final Date now = Calendar.getInstance().getTime();
+            customTitleET.setText(getString(R.string.save_state_default_title) + " " + df.format(now));
+
+            buttonShare = view.findViewById(R.id.imageShare);
+            buttonShare.setOnClickListener(v -> buttonShareClicked());
+
+            buttonDownload = view.findViewById(R.id.imageDownload);
+            buttonDownload.setOnClickListener(v -> buttonDownloadClicked());
+
+            buttonToCollection = view.findViewById(R.id.imageSave);
+            buttonToCollection.setOnClickListener(v -> buttonCollectionClicked());
+
+            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
+            filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
+            file = new File(getCacheDir(), "/"+filename);
+
+            progressBar = view.findViewById(R.id.progressBar);
+
+            bottomSheetDialog.setContentView(view);
+            bottomSheetDialog.show();
+
+        }
+
+        private void buttonShareClicked(){
+            try {
+                updateUIForProgress(true, buttonShare);
+                FileOutputStream output = new FileOutputStream(file);
+
+                experiment.writeStateFileAsync(customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                    @Override
+                    public void onSuccess() {
+                        updateUIForProgress(false, buttonShare);
+                        DataExportUtility.startPhyphoxFileSharing(Experiment.this, file);
+                        bottomSheetDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        updateUIForProgress(false, buttonShare);
+                        Toast.makeText(getBaseContext(), "Error: " + errorMessage, Toast.LENGTH_LONG).show();
+                    }
+                });
+
+            } catch (Exception e) {
+                updateUIForProgress(false, buttonShare);
+                Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
+                Log.e("updateData", "Unhandled exception.", e);
+            }
+        }
+
+        private void buttonDownloadClicked(){
+
+            try {
+                updateUIForProgress(true, buttonDownload);
+                FileOutputStream output = new FileOutputStream(file);
+
+                experiment.writeStateFileAsync(customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                    @Override
+                    public void onSuccess() {
+                        updateUIForProgress(false, buttonDownload);
+                        DataExportUtility.createFileInDownloads(file, filename, MIME_TYPE_PHYPHOX, Experiment.this);
+                        bottomSheetDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        updateUIForProgress(false, buttonDownload);
+                        Toast.makeText(getBaseContext(), "Error: " + errorMessage, Toast.LENGTH_LONG).show();
+                    }
+                });
+
+            } catch (Exception e) {
+                updateUIForProgress(false, buttonDownload);
+                Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
+                Log.e("updateData", "Unhandled exception.", e);
+            }
+
+        }
+
+        private void buttonCollectionClicked() {
+            try {
+                updateUIForProgress(true,  buttonToCollection);
+                String file1 = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
+                FileOutputStream output = openFileOutput(file1, Activity.MODE_PRIVATE);
+
+                experiment.writeStateFileAsync(customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                    @Override
+                    public void onSuccess() {
+                        updateUIForProgress(false,  buttonToCollection);
+                        Toast.makeText(getBaseContext(), getString(R.string.save_state_success), Toast.LENGTH_LONG).show();
+                        bottomSheetDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        updateUIForProgress(false,  buttonToCollection);
+                        Toast.makeText(getBaseContext(), "Error: " + errorMessage, Toast.LENGTH_LONG).show();
+
+                    }
+                });
+
+            } catch (Exception e) {
+                updateUIForProgress(false, buttonToCollection);
+                Toast.makeText(getBaseContext(), R.string.errorWritingStateFile + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+
+        }
+
+        private void updateUIForProgress(boolean inProgress, Button button) {
+            if(inProgress){
+                bottomSheetDialog.setCanceledOnTouchOutside(false);
+                progressBar.setVisibility(View.VISIBLE);
+                button.setEnabled(false);
+            } else {
+                bottomSheetDialog.setCanceledOnTouchOutside(true);
+                progressBar.setVisibility(View.GONE);
+                button.setEnabled(true);
+            }
+        }
+
+
+    }
+
+    public interface WriteStateFileCallback {
+        void onSuccess(); // Or void onSuccess(String successMessage); if you want to return something on success
+        void onError(String errorMessage);
+    }
 }
+
+

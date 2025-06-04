@@ -7,6 +7,8 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.collection.ArraySet;
@@ -17,6 +19,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -31,6 +34,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -515,7 +520,46 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     }
 
-    public String writeStateFile(String customTitle, OutputStream os) {
+    public void writeStateFileAsync(String customTitle, OutputStream os, Experiment.WriteStateFileCallback writeStateFileCallback){
+
+        ExecutorService stateWriterExecutor = Executors.newSingleThreadExecutor();
+
+        Handler mainThreadHandler = new Handler(Looper.getMainLooper());
+
+        stateWriterExecutor.execute(() -> {
+            String result = null;
+
+            try {
+                result = writeStateFile(customTitle, os);
+            } catch (Exception e){
+                result = e.getMessage();
+            } finally {
+                try {
+                    os.close();
+                } catch (IOException e){
+                    e.printStackTrace();
+                    if (result == null)
+                        result = "Failed to close stream: " +e.getMessage();
+                }
+            }
+
+            String finalResult = result;
+
+            mainThreadHandler.post(() -> {
+                if (finalResult == null)
+                    writeStateFileCallback.onSuccess();
+                else
+                    writeStateFileCallback.onError(finalResult);
+            });
+
+            stateWriterExecutor.shutdown();
+
+        });
+
+    }
+
+    private String writeStateFile(String customTitle, OutputStream os) {
+
         if (source == null)
             return "Source is null.";
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
