@@ -29,6 +29,7 @@ import de.rwth_aachen.phyphox.DataOutput;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 
+@RequiresApi(api = Build.VERSION_CODES.M)
 public class DepthInput {
     public enum DepthExtractionMode {
         average, closest, weighted
@@ -67,8 +68,6 @@ public class DepthInput {
     }
 
     public static boolean isAvailable() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-            return false;
         Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
         for (CameraCharacteristics cam : cams.values()) {
             int[] caps = cam.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
@@ -101,8 +100,6 @@ public class DepthInput {
         if (buffers.size() > 1 && buffers.get(1) != null)
             this.dataT = buffers.get(1).buffer;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            setCamera(findCamera(-1));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

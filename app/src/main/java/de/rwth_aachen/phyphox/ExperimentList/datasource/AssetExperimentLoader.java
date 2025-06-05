@@ -325,7 +325,7 @@ public class AssetExperimentLoader {
                             case "depth":
                                 if (!inInput || shortInfo.unavailableSensor >= 0)
                                     break;
-                                if (!DepthInput.isAvailable()) {
+                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !DepthInput.isAvailable()) {
                                     shortInfo.unavailableSensor = R.string.sensorDepth;
                                 }
                                 break;
