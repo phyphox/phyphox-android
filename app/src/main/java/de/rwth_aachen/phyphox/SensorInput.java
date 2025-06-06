@@ -59,7 +59,7 @@ public class SensorInput implements SensorEventListener, Serializable {
         auto, request, generate, limit
     }
 
-    public class SensorException extends Exception {
+    public static class SensorException extends Exception {
         public SensorException(String message) {
             super(message);
         }
