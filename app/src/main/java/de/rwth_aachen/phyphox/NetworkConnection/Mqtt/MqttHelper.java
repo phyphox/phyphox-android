@@ -228,7 +228,7 @@ public class MqttHelper{
         longformat.setGroupingUsed(false);
 
         NetworkService.ServiceResult result;
-        try {
+
         if (!mqttService.isConnected()) {
             result = new NetworkService.ServiceResult(NetworkService.ResultEnum.noConnection, null);
         } else if (!mqttService.subscribed && !mqttService.receiveTopic.isEmpty()) {
@@ -251,10 +251,6 @@ public class MqttHelper{
                 result = new NetworkService.ServiceResult(NetworkService.ResultEnum.success, "");
         }
 
-    } catch (MqttException e) {
-        Log.e("MQTT","Could not publish: " +  e.getMessage());
-        result = new NetworkService.ServiceResult(NetworkService.ResultEnum.genericError, "Could not publish. " + e.getMessage());
-    }
         for (NetworkService.RequestCallback callback : requestCallbacks) {
             callback.requestFinished(result);
         }

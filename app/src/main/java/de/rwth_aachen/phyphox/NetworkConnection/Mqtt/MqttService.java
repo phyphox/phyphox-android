@@ -4,7 +4,8 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.eclipse.paho.android.service.MqttAndroidClient;
+import info.mqtt.android.service.Ack;
+import info.mqtt.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
@@ -47,29 +48,24 @@ public abstract class MqttService extends NetworkService.Service {
 
         mqttConnectOptions.setAutomaticReconnect(true);
 
-        client = new MqttAndroidClient(context, this.address, clientID, dataStore);
+        client = new MqttAndroidClient(context, this.address, clientID, Ack.AUTO_ACK, dataStore, false, 0);
 
         client.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
                 if (!receiveTopic.isEmpty()) {
-                    try {
-                        client.subscribe(receiveTopic, 0, null, new IMqttActionListener() {
-                            @Override
-                            public void onSuccess(IMqttToken asyncActionToken) {
-                                subscribed = true;
-                            }
+                    client.subscribe(receiveTopic, 0, null, new IMqttActionListener() {
+                        @Override
+                        public void onSuccess(IMqttToken asyncActionToken) {
+                            subscribed = true;
+                        }
 
-                            @Override
-                            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                                subscribed = false;
-                                Log.e("MQTT", "Connection failure: " + exception.getMessage());
-                            }
-                        });
-
-                    } catch (MqttException ex) {
-                        Log.e("MQTT", "Could not subscribe: " + ex.getMessage());
-                    }
+                        @Override
+                        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                            subscribed = false;
+                            Log.e("MQTT", "Connection failure: " + exception.getMessage());
+                        }
+                    });
                 }
             }
 
@@ -90,33 +86,39 @@ public abstract class MqttService extends NetworkService.Service {
             }
         });
 
-        try {
-            client.connect(mqttConnectOptions, null, new IMqttActionListener() {
-                @Override
-                public void onSuccess(IMqttToken asyncActionToken) {
-                    toast = Toast.makeText(context, "MQTT: Connected", Toast.LENGTH_SHORT);
-                    toast.show();
-                }
 
-                @Override
-                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    subscribed = false;
-                    toast = Toast.makeText(context, "MQTT: " + exception.getMessage(), Toast.LENGTH_SHORT);
-                    toast.show();
-                }
-            });
 
-        } catch (MqttException ex){
-            Log.e("MQTT", "Could not connect: " + ex.getMessage());
-        }
+        client.connect(mqttConnectOptions, null, new IMqttActionListener() {
+            @Override
+            public void onSuccess(IMqttToken asyncActionToken) {
+                (new android.os.Handler(context.getMainLooper())).post(new Runnable() {
+                       @Override
+                       public void run() {
+                           toast = Toast.makeText(context, "MQTT: Connected", Toast.LENGTH_SHORT);
+                           toast.show();
+                       }
+                   }
+                );
+            }
+
+            @Override
+            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                subscribed = false;
+                (new android.os.Handler(context.getMainLooper())).post(new Runnable() {
+                                                                           @Override
+                   public void run() {
+                       toast = Toast.makeText(context, "MQTT: " + exception.getMessage(), Toast.LENGTH_SHORT);
+                       toast.show();
+                    }
+                }
+                );
+            }
+        });
+
     }
 
     public void disconnect() {
-        try {
-            client.disconnect();
-        } catch (MqttException ex){
-            Log.e("MQTT","Could not disconnect: " +  ex.getMessage());
-        }
+        client.disconnect();
         client = null;
         subscribed = false;
     }

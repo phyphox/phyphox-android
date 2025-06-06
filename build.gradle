@@ -7,30 +7,18 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.20"
-        classpath 'com.android.tools.build:gradle:8.5.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.21"
+        classpath 'com.android.tools.build:gradle:8.10.1'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
 }
 
-ext{
-    compileSdkVersion = 35
-    serviceVersion = '1.1.1' //Paho MQTT Service
-    clientVersion = '1.1.0' //Paho MQTT Client
-    serviceArchivesBaseName = 'org.eclipse.paho.android.service'
-    kotlin_version = '1.7.20'
-    ndk_version = '28.0.13004108'
-}
-
 allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
 }
