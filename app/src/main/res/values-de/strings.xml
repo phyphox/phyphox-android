@@ -393,4 +393,8 @@
     <string name="wb_fluorescent">Leuchtstoffröhre</string>
     <string name="wb_daylight">Tageslicht</string>
     <string name="wb_cloudy">Bewölkt</string>
+    <string name="download">Download</string>
+    <string name="savedToDownloadsMessage">Detei in Dowloads gespeichert</string>
+    <string name="permissionRequiredToSaveToDownloads">Die Zugriffsberechtigung für den Speicher wird benötigt um Dateien im Download-Ordner zu speichern</string>
+    <string name="errorWritingStateFile">Fehler beim Schreiben des Zustands:</string>
 </resources>
