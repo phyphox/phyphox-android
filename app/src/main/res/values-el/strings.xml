@@ -383,4 +383,16 @@
     <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_percentage">Ποσοστό</string>
+    <string name="remoteCameraPreviewWarning">Δεν υποστηρίζεται η προεπισκόπιση και ο έλεγχος της κάμερας στην απομακρυσμένη πρόσβαση.</string>
+    <string name="common_quantity_short_luma">Y\'</string>
+    <string name="cameraZoom">Μεγέθυνση</string>
+    <string name="download">Download</string>
+    <string name="savedToDownloadsMessage">Αρχείο αποθηκευμένο στο Downloads</string>
+    <string name="permissionRequiredToSaveToDownloads">Απαιτείται άδεια αποθήκευσης για να αποθηκευτεί το αρχείο στα Downloads</string>
+    <string name="errorWritingStateFile">Σφάλμα κατά την εγγραφή του αρχείου κατάστασης:</string>
+    <string name="wb_auto">Αυτόματα</string>
+    <string name="wb_incandescent">Πυρακτώσεως</string>
+    <string name="wb_fluorescent">Φθορισμού</string>
+    <string name="wb_daylight">Ημερήσιο Φως</string>
+    <string name="wb_cloudy">Συννεφιά</string>
 </resources>
