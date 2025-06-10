@@ -63,5 +63,6 @@
 
    <dimen name="tab_height_default">36dp</dimen>
 
+   <dimen name="experiment_list_optional_top_padding">0dp</dimen>
 
 </resources>

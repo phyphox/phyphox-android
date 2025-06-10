@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="experiment_list_optional_top_padding">@dimen/activity_horizontal_margin</dimen>
+</resources>
