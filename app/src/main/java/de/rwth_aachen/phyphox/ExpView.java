@@ -2934,7 +2934,7 @@ public class ExpView implements Serializable{
 
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
-            if(!triggered){
+            if(!triggered || switchView == null){
                 return false;
             }
             triggered = false;
