@@ -19,6 +19,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
@@ -76,6 +77,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
@@ -569,12 +571,19 @@ public class ExperimentListActivity extends AppCompatActivity {
             creditsNamesSpannable.setSpan(new StyleSpan(Typeface.BOLD), matcher.start(), matcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
         tv.setText(creditsNamesSpannable);
+
+        //The following texts are not translateable. Get them from the basic English version.
+        Configuration conf = res.getConfiguration();
+        conf = new Configuration(conf);
+        conf.setLocale(Locale.ENGLISH);
+        Resources localizedRes = getBaseContext().createConfigurationContext(conf).getResources();
+
         TextView tvA = (TextView) creditLayout.findViewById(R.id.creditsApache);
-        tvA.setText(Html.fromHtml(res.getString(R.string.creditsApache)));
+        tvA.setText(Html.fromHtml(localizedRes.getString(R.string.creditsApache)));
         TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
-        tvB.setText(Html.fromHtml(res.getString(R.string.creditsZxing)));
+        tvB.setText(Html.fromHtml(localizedRes.getString(R.string.creditsZxing)));
         TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
-        tvC.setText(Html.fromHtml(res.getString(R.string.creditsPahoMQTT)));
+        tvC.setText(Html.fromHtml(localizedRes.getString(R.string.creditsPahoMQTT)));
 
         //Finish alertDialog builder
         credits.setView(creditLayout);
