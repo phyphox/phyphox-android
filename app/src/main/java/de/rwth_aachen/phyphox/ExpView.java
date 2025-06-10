@@ -2984,7 +2984,7 @@ public class ExpView implements Serializable{
 
         @Override
         protected String getUpdateMode() {
-            return "single";
+            return "input";
         }
     }
 
@@ -3108,7 +3108,7 @@ public class ExpView implements Serializable{
 
         @Override
         protected String getUpdateMode() {
-            return "single";
+            return "input";
         }
 
         protected double getValue() {
@@ -3686,7 +3686,7 @@ public class ExpView implements Serializable{
 
         @Override
         protected String getUpdateMode() {
-            return "single";
+            return "input";
         }
     }
 }
