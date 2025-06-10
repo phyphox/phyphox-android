@@ -122,8 +122,8 @@ Copyright 2010 Cedric Beust cedric@beust.com
     </string>
     <string name="creditsPahoMQTT" translatable="false">
         <![CDATA[
-        <b>Eclipse Paho MQTT</b><br />
-        MQTT communication uses the Eclipse Paho MQTT library (https://www.eclipse.org/paho), licenced under the Eclipse Distribution Licence 1.0 (please see the webpage for details on the licence and contributors). <br />
+        <b>Paho MQTT</b><br />
+        MQTT communication uses the MQTT Android Service by Hannes Achleitner (https://github.com/hannesa2/paho.mqtt.android, Apache Licence 2.0), which in turn uses the Eclipse Paho MQTT library (https://www.eclipse.org/paho, Eclipse Distribution Licence 1.0), please see the respective webpages for details on the licence and contributors. <br />
         <br />
 Eclipse Distribution License - v 1.0<br />
 <br />
