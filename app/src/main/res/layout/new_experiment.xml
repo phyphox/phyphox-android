@@ -104,7 +104,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/sensorAttitude"
                     android:id="@+id/neAttitude" />
-                
+
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

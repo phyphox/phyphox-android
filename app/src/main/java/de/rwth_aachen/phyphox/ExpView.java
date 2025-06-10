@@ -2929,7 +2929,7 @@ public class ExpView implements Serializable{
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             if (switchView == null)
                 return;
-            
+
             boolean checked = (int) experiment.getBuffer(inputs.get(0)).value != 0;
             if (checked != switchView.isChecked() && !triggered)
                 switchView.setChecked(checked);
@@ -3000,6 +3000,7 @@ public class ExpView implements Serializable{
         MaterialAutoCompleteTextView autoCompleteTextView;
 
         private boolean triggered = false;
+        private int currentIndex = 0;
 
         protected class Mapping {
             String value;
@@ -3098,7 +3099,10 @@ public class ExpView implements Serializable{
                 autoCompleteTextView.setText(options[0]);
             }
 
-            autoCompleteTextView.setOnItemClickListener((adapterView, view, i, l) -> triggered = true);
+            autoCompleteTextView.setOnItemClickListener((adapterView, view, position, id) -> {
+                triggered = true;
+                currentIndex = position;
+            });
 
             row.addView(labelView);
             row.addView(textInputLayout);
@@ -3115,12 +3119,12 @@ public class ExpView implements Serializable{
         }
 
         protected double getValue() {
-            return  Double.parseDouble(mappings.get(Integer.parseInt(autoCompleteTextView.getText().toString())).value);
+            return  Double.parseDouble(mappings.get(currentIndex).value);
         }
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
-            if (!needsUpdate || triggered)
+            if (!needsUpdate || triggered || autoCompleteTextView == null)
                 return;
             needsUpdate = false;
 
@@ -3134,13 +3138,13 @@ public class ExpView implements Serializable{
                     break;
                 }
             }
-            autoCompleteTextView.setSelection((index == -1)? 0 : index);
-
+            currentIndex = (index == -1)? 0 : index;
+            autoCompleteTextView.setText(mappings.get(currentIndex).str, false);
         }
 
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
-            if (!triggered)
+            if (!triggered || autoCompleteTextView == null)
                 return false;
             triggered = false;
             experiment.getBuffer(inputs.get(0)).clear(false);
