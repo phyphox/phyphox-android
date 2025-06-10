@@ -24,7 +24,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -305,7 +305,7 @@ public class DataExport implements Serializable {
             File file = new File(exportPath, "/"+getFilename(minimalistic)); //Create file with default filename
 
             //New excel workbook
-            Workbook wb = new XSSFWorkbook();
+            Workbook wb = new HSSFWorkbook();
             //Create a style (just bold font) for the table header
             Font font= wb.createFont();
             font.setBold(true);

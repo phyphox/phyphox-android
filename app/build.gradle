@@ -97,12 +97,7 @@ dependencies {
     //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
 
-    //https://poi.apache.org/changes.html
-    //Above 4.0.1, there is the requirement to have minSDKVersion as 26,
-    // and below this version there is the Duplicate class error because
-    // both apache and StaX has same classes. Also, for this specific version we need to add the stax dependencies ourself
-    implementation 'org.apache.poi:poi-ooxml:4.0.1'
-    implementation 'javax.xml.stream:stax-api:1.0-2'
+    implementation ('org.apache.poi:poi:3.13')
 
     implementation 'net.freeutils:jlhttp:3.1'
 
