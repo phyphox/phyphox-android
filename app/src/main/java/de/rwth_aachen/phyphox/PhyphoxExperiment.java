@@ -363,6 +363,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             } else
                 return false; //This is not urgent. Try another time instead of blocking the UI thread!
         } catch (Exception e) {
+            Log.d("updateViews", e.getMessage());
             return false;
         }
 

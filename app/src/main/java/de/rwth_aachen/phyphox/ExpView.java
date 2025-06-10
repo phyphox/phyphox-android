@@ -2927,6 +2927,9 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            if (switchView == null)
+                return;
+            
             boolean checked = (int) experiment.getBuffer(inputs.get(0)).value != 0;
             if (checked != switchView.isChecked() && !triggered)
                 switchView.setChecked(checked);
