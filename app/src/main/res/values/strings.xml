@@ -80,9 +80,7 @@
     <string name="gpl">
         Phyphox® is open source software released under the GNU General Public Licence. Please visit http://phyphox.org for further information and to get access to its source code. However, the name \"phyphox\" and \"RWTH Aachen\" are registered trademarks.
     </string>
-    <string name="creditsLibs">
-        The web-interface for remote access uses the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later). GPS elevation data is converted from the WGS84 ellipsoid to the EGM84 geoid using EGM84 data (30\' resolution) and a ported function from the GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).
-    </string>
+    <string name="creditsLibs">The web-interface for remote access uses the Java Lightweight HTTP Server (jlhttp) under the GNU General Public Licence v2 and plots data with the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later). GPS elevation data is converted from the WGS84 ellipsoid to the EGM84 geoid using EGM84 data (30\' resolution) and a ported function from the GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
     <string name="creditsApache" translatable="false">
         <![CDATA[
         <b>Apache POI</b><br />
@@ -315,19 +313,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="cameraBack">Back</string>
     <string name="cameraZoom">Zoom</string>
     <string name="cameraExternal">External camera</string>
-
     <string name="wb_auto">Auto</string>
     <string name="wb_incandescent">Incandescent</string>
     <string name="wb_fluorescent">Fluorescent</string>
     <string name="wb_daylight">Daylight</string>
     <string name="wb_cloudy">Cloudy</string>
-
     <string name="off">Off</string>
     <string name="on">On</string>
     <string name="camera_preview">Camera Preview</string>
-
     <string name="camera_not_ready">Camera Not Ready</string>
-
     <string name="settingsDefault">Default</string>
     <string name="settings">Settings</string>
     <string name="settingsHeadLanguage">Language</string>
@@ -368,7 +362,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
     <string name="common_unit_percentage">%</string>
-
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
     <string name="common_quantity_short_magnetic_field">B</string>
@@ -387,7 +380,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_short_luma">Y\'</string>
     <string name="common_quantity_percentage">Percent</string>
-
     <string name="common_direction_short_north">N</string>
     <string name="common_direction_short_south">S</string>
     <string name="common_direction_short_east">E</string>
