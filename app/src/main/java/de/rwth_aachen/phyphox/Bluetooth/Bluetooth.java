@@ -285,7 +285,8 @@ public class Bluetooth implements Serializable {
         // First check paired devices - those get precedence
         for (BluetoothDevice d : getPairedDevices()) {
             if (!deviceName.isEmpty() && (deviceAddress == null || deviceAddress.isEmpty())) {
-                if (d.getName().contains(deviceName)) {
+                String name = d.getName();
+                if (name != null && name.contains(deviceName)) {
                     btDevice = d;
                     break;
                 }
