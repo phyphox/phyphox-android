@@ -106,6 +106,7 @@ import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
 import de.rwth_aachen.phyphox.Helper.DataExportUtility;
+import de.rwth_aachen.phyphox.Helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.Helper.Helper;
@@ -289,17 +290,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             (new PhyphoxFile.loadXMLAsyncTask(intent, this)).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.view_pager), this, false, false);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.tab_layout), this, false, false);
-        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.customActionBar), this);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.recycler_view_battery), this, false, false);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.fl_remoteInfo), this, false, false);
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootLayout), (v, inset) -> {
-            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            mlp.bottomMargin = inset.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-            return inset;
-        });
+        WindowInsetHelper.setInsets(findViewById(R.id.customActionBar), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
+        WindowInsetHelper.setInsets(findViewById(R.id.tab_layout), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
+        WindowInsetHelper.setInsets(findViewById(R.id.view_pager), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
+        WindowInsetHelper.setInsets(findViewById(R.id.fl_remoteInfo), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
+        WindowInsetHelper.setInsets(findViewById(R.id.errorMessage), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
+        WindowInsetHelper.setInsets(findViewById(R.id.recycler_view_battery), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING);
 
     }
 

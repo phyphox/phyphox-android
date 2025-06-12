@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 
 
 import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.Helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.R;
 
 
@@ -34,14 +35,8 @@ public class SettingsActivity extends AppCompatActivity {
             ab.setDisplayHomeAsUpEnabled(true);
             ab.setDisplayShowTitleEnabled(true);
         }
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.settingsFrame), this, false, false);
-        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.settingsToolbar), this);
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.settingsRootView), (v, inset) -> {
-            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            mlp.bottomMargin = inset.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-            return inset;
-        });
+        WindowInsetHelper.setInsets(findViewById(R.id.settingsFrame), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.MARGIN);
+        WindowInsetHelper.setInsets(findViewById(R.id.settingsToolbar), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
 
     }
 }

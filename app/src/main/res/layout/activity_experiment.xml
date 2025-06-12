@@ -16,6 +16,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/phyphox_white_90"
@@ -56,8 +58,6 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_above="@id/recycler_view_battery"
-        android:paddingLeft="@dimen/activity_horizontal_padding"
-        android:paddingRight="@dimen/activity_horizontal_padding"
         android:theme="@style/Widget.Phyphox.DayNight"
         android:visibility="invisible">
 
@@ -67,6 +67,8 @@
             android:id="@+id/remoteInfo"
             android:layout_gravity="top|start"
             android:textIsSelectable="true"
+            android:paddingLeft="@dimen/activity_horizontal_padding"
+            android:paddingRight="@dimen/activity_horizontal_padding"
             android:text="@string/remoteServerActive"
             />
 
@@ -74,7 +76,7 @@
             android:id="@+id/iv_remoteInfo"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:paddingEnd="4dp"
+            android:paddingEnd="12dp"
             android:paddingLeft="4dp"
             android:paddingBottom="4dp"
             android:layout_gravity="bottom|end"

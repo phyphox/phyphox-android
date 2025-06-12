@@ -99,6 +99,7 @@ import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.ExperimentList.handler.SimpleExperimentCreator;
 import de.rwth_aachen.phyphox.Helper.Helper;
 import de.rwth_aachen.phyphox.Helper.ReportingScrollView;
+import de.rwth_aachen.phyphox.Helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.SensorInput;
@@ -171,9 +172,9 @@ public class ExperimentListActivity extends AppCompatActivity {
             showSupportHintIfRequired();
         }
 
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.experimentScroller), this, true, false);
-        Helper.WindowInsetHelper.setToolbarWindowInset(findViewById(R.id.expListHeader), this);
-        Helper.WindowInsetHelper.setWindowInsets(findViewById(R.id.newExperiment), this, true, false);
+        WindowInsetHelper.setInsets(findViewById(R.id.experimentList), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING);
+        WindowInsetHelper.setInsets(findViewById(R.id.expListHeader), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
+        WindowInsetHelper.setInsets(findViewById(R.id.newExperiment), WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.MARGIN, WindowInsetHelper.ApplyTo.MARGIN);
 
         setUpOnClickListener();
 
