@@ -117,8 +117,6 @@
                 android:resource="@xml/export_provider" />
 
         </provider>
-        <service android:name="org.eclipse.paho.android.service.MqttService">
-        </service>
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
