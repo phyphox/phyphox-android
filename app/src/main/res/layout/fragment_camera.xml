@@ -328,7 +328,7 @@
         android:layout_height="wrap_content"
         app:barrierDirection="top"
         app:barrierAllowsGoneWidgets="false"
-        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting,whiteBalanceSlider" />
+        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewCameraSetting"

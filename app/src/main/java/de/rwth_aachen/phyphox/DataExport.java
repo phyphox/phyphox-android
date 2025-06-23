@@ -2,7 +2,7 @@ package de.rwth_aachen.phyphox;
 
 import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_MINI;
 import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
-import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_XLSX;
+import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_XLS;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -428,12 +428,12 @@ public class DataExport implements Serializable {
         @Override
         //This mime-typ is ugly, but seems to be the "official" one, while there are many others in use.
         protected String getType (boolean minimalistic) {
-            return MIME_TYPE_XLSX;
+            return MIME_TYPE_XLS;
         }
 
         @Override
         protected String getFilename (boolean minimalistic) {
-            return filenameBase + ".xlsx";
+            return filenameBase + ".xls";
         }
     }
 

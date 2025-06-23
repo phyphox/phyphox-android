@@ -293,7 +293,6 @@
     <string name="common_unit_short_hecto_pascal">hPa</string>
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
-    <string name="common_unit_short_luminance">cd/m²</string>
     <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
