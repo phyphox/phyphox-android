@@ -1,7 +1,6 @@
 package de.rwth_aachen.phyphox.Helper;
 
 import static android.content.Context.BATTERY_SERVICE;
-import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 
 import android.Manifest;
 import android.app.Activity;
@@ -9,7 +8,6 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -28,10 +26,8 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Base64;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.PixelCopy;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -39,9 +35,6 @@ import android.view.Window;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import org.w3c.dom.Document;
@@ -55,7 +48,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Vector;
 import java.util.zip.CRC32;
 

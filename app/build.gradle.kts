@@ -211,6 +211,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     detektPlugins(libs.detekt.compose)
 
+    implementation(libs.androidx.datastore.preferences)
+
     add("androidTestScreenshotImplementation", libs.junit)
     add("androidTestScreenshotImplementation", libs.fastlane.screengrab)
     add("androidTestScreenshotImplementation", libs.androidx.test.rules)

@@ -41,6 +41,7 @@ agp = "31.13.2"
 ktlint = "14.0.1"
 detekt = "1.23.8"
 detektCompose = "0.5.3"
+datastore = "1.1.2"
 
 [libraries]
 androidx-multidex = { group = "androidx.multidex", name = "multidex", version.ref = "multidex" }
@@ -89,6 +90,9 @@ androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lif
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+
+# DataStore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 #lint
 androidx-lint = { module = "com.android.tools.lint:lint", version.ref = "agp" }
