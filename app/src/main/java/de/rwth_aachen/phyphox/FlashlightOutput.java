@@ -68,10 +68,10 @@ public class FlashlightOutput {
             if (flashLightManager == null) return;
             double frequency = dataInput.getValue();
             if (frequency <= 0) {
-                flashLightManager.stopStrobe();
-                strobeActive = false;
+                stop();
             } else {
-                flashLightManager.startStrobe(frequency);
+                flashLightManager.updateRate(frequency);
+                flashLightManager.startStrobeLoop();
                 strobeActive = true;
             }
         }
@@ -103,16 +103,15 @@ public class FlashlightOutput {
 
             int intensity = (int) dataInput.getValue();
             if(intensity == 0) {
-                if(flashLightActive){
-                    flashLightManager.performToggle(false);
-                }
+                flashLightManager.turnOfFlashLight();
+                flashLightActive = false;
                 return;
             }
 
             if(intensity > 1){
                 flashLightManager.setIntensity(intensity);
             } else {
-                flashLightManager.performToggle(true);
+                flashLightManager.setIntensity(1);
             }
             flashLightActive = true;
         }

@@ -279,7 +279,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
 
         if(flashlightOutput != null){
-                flashlightOutput.start(newUserInput);
+            flashlightOutput.start(newUserInput);
         }
 
         newUserInput = false;
