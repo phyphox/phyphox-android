@@ -141,6 +141,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private static final String STATE_NETWORK_SCAN_DISMISSED = "network_scan_dismissed";
     private static final String STATE_DATA_POLICY_DISMISSED = "data_policy_dismissed";
     private static final String STATE_SENSOR_WARNING_DISMISSED = "sensor_warning_dismissed";
+    private static final String STATE_PHOTOSENSITIVITY_DISMISSED = "photosensitivity_warning_dismissed";
+    private static final String PREF_PHOTOSENSITIVITY_DISMISSED = "photosensitivity_dismissed_pref";
 
     //This handler creates the "main loop" as it is repeatedly called using postDelayed
     //Not a real loop to keep some resources available
@@ -158,6 +160,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean networkScanDismissed = false;
     boolean dataPolicyDismissed = false;
     boolean sensorWarningDismissed = false;
+    boolean photosensitivityWarningDismissed = false;
 
     //Remote server
     private RemoteServer remote = null; //The remote server (see remoteServer class)
@@ -447,6 +450,24 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
             }
         }
+
+        if (!photosensitivityWarningDismissed &&
+                experiment.flashlightOutput != null &&
+                experiment.flashlightOutput.hasStrobeController() &&
+                (experiment.flashlightOutput.isStrobeActiveWithFrequency() || experiment.flashlightOutput.isStrobeUsingBuffer())) {
+
+
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            photosensitivityWarningDismissed = prefs.getBoolean(PREF_PHOTOSENSITIVITY_DISMISSED, false);
+
+            if(!photosensitivityWarningDismissed){
+                showPhotosensitivityWarning();
+                return;
+            }
+
+
+        }
+
 
         //Save locally
         if (!saveLocallyDismissed && !experiment.isLocal) { //If this experiment has been loaded from a external source, we offer to save it locally
@@ -930,6 +951,33 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             startMenuItem.setActionView(null);
             startMenuItem = null;
         }
+    }
+
+    private void showPhotosensitivityWarning() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(res.getString(R.string.warning_photosensitivity_message))
+                .setTitle(res.getString(R.string.warning_photosensitivity))
+                .setOnDismissListener(dialogInterface -> {
+                    photosensitivityWarningDismissed = true;
+                    showInitialDialogs();
+                })
+                .setPositiveButton(R.string.dont_remind, (dialog, id) -> {
+                    savePhotosensitivityDismissed();
+                    showInitialDialogs();
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void savePhotosensitivityDismissed() {
+        photosensitivityWarningDismissed = true;
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(PREF_PHOTOSENSITIVITY_DISMISSED, true);
+        editor.apply();
     }
 
     @Override
@@ -1862,6 +1910,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putBoolean(STATE_NETWORK_SCAN_DISMISSED, networkScanDismissed);
             outState.putBoolean(STATE_SENSOR_WARNING_DISMISSED, sensorWarningDismissed);
             outState.putBoolean(STATE_DATA_POLICY_DISMISSED, dataPolicyDismissed);
+            outState.putBoolean(STATE_PHOTOSENSITIVITY_DISMISSED, photosensitivityWarningDismissed);
         } catch (Exception e) {
             //Something went wrong?
             //Discard all the data to get a clean new activity and start fresh.

@@ -423,7 +423,7 @@ public abstract class PhyphoxFile {
                             break;
                         }
                         case "frequency":{
-                            flashlightController = flashlightOutput.new FlashLightStobe(input);
+                            flashlightController = flashlightOutput.new FlashLightStrobe(input);
                             break;
                         }
                         default: throw new PhyphoxFile.phyphoxFileException("Unexpected flashlight input parameter.");
@@ -3464,7 +3464,7 @@ public abstract class PhyphoxFile {
                 }
                 case "flashlight":{
                     CameraManager cameraManager =  (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ? (CameraManager) parent.getSystemService(Context.CAMERA_SERVICE) : null;
-                    FlashlightOutput flashlightOutput = new FlashlightOutput(cameraManager);
+                    FlashlightOutput flashlightOutput = new FlashlightOutput(parent, cameraManager);
                     (new FlashlightBlockParser(xpp, experiment, parent, flashlightOutput)).process();
                     experiment.flashlightOutput = flashlightOutput;
                     break;

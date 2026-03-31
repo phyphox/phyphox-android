@@ -36,7 +36,13 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
     private val hardwareMutex = Mutex()
     private var isHardwareOn = false
 
-
+    var isOverheated: Boolean = false
+        set(value) {
+            field = value
+            if (value) {
+                turnOfFlashLight()
+            }
+        }
     // Get the maximum strength level supported by the device
     private val maxIntensityLevel: Int by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && cameraId != null) {
@@ -51,6 +57,10 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
     suspend fun performToggle(enabled: Boolean) = hardwareMutex.withLock {
         // Don't send command if hardware is already in that state
         if (isHardwareOn == enabled && !enabled) return@withLock
+
+        if (enabled && isOverheated) {
+            return@withLock
+        }
 
         try {
             if (cameraControl != null) {

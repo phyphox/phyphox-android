@@ -1,6 +1,14 @@
 package de.rwth_aachen.phyphox;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.camera2.CameraManager;
+import android.os.BatteryManager;
+import android.widget.Toast;
 
 import androidx.camera.core.CameraControl;
 
@@ -11,8 +19,35 @@ public class FlashlightOutput {
     private CameraManager cameraManager;
     private ArrayList<FlashlightController> controllers = new ArrayList<>();
 
-    public FlashlightOutput(CameraManager cameraManager) {
+    private final Context context;
+    private BroadcastReceiver batteryReceiver;
+    private boolean receiverRegistered = false;
+    private static final int OVERHEAT_THRESHOLD = 450;
+    private static final int COOLDOWN_THRESHOLD = 400;
+
+    public FlashlightOutput(Context context,CameraManager cameraManager) {
+        this.context = context;
         this.cameraManager = cameraManager;
+        setupThermalMonitoring();
+    }
+
+    private void setupThermalMonitoring() {
+        batteryReceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0);
+                if (flashLightManager != null) {
+                    if (temp >= OVERHEAT_THRESHOLD && !flashLightManager.isOverheated()) {
+                        flashLightManager.setOverheated(true);
+                        stop();
+                        notifyUserOfOverheat();
+                    } else if (temp <= COOLDOWN_THRESHOLD && flashLightManager.isOverheated()) {
+                        flashLightManager.setOverheated(false);
+                    }
+                }
+            }
+        };
     }
 
     public void initHardware(CameraControl cameraControl) {
@@ -27,6 +62,10 @@ public class FlashlightOutput {
     }
 
     public void start(boolean restart){
+        if (!receiverRegistered && context != null) {
+            context.registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            receiverRegistered = true;
+        }
         for(FlashlightController flashlightController: controllers){
             if(restart){
                 flashlightController.start();
@@ -35,6 +74,14 @@ public class FlashlightOutput {
     }
 
     public void stop(){
+        if (receiverRegistered && context != null) {
+            try {
+                context.unregisterReceiver(batteryReceiver);
+            } catch (IllegalArgumentException e) {
+            }
+            receiverRegistered = false;
+        }
+
         for(FlashlightController flashlightController: controllers){
             if(flashlightController.isActive()){
                 flashlightController.stop();
@@ -42,8 +89,56 @@ public class FlashlightOutput {
         }
     }
 
+    public boolean hasStrobeController() {
+        for (FlashlightController controller : controllers) {
+            if (controller instanceof FlashLightStrobe) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isStrobeActiveWithFrequency() {
+        for (FlashlightController controller : controllers) {
+            if (controller instanceof FlashLightStrobe) {
+                FlashLightStrobe strobe = (FlashLightStrobe) controller;
+
+                if (strobe.dataInput != null && strobe.dataInput.getValue() > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isStrobeUsingBuffer() {
+        for (FlashlightController controller : controllers) {
+            if (controller instanceof FlashLightStrobe) {
+                FlashLightStrobe strobe = (FlashLightStrobe) controller;
+                if (strobe.dataInput != null && strobe.dataInput.isBuffer) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public void attachController(FlashlightController controller){
         this.controllers.add(controller);
+    }
+
+    private void notifyUserOfOverheat() {
+        if (context instanceof Activity && !((Activity) context).isFinishing()) {
+            new AlertDialog.Builder(context)
+                    .setTitle(context.getString(R.string.device_overheating))
+                    .setMessage(context.getString(R.string.device_heating_serious))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setCancelable(false)
+                    .show();
+        } else {
+            Toast.makeText(context, context.getString(R.string.device_heating_serious), Toast.LENGTH_LONG).show();
+        }
     }
 
     public abstract class FlashlightController {
@@ -54,12 +149,12 @@ public class FlashlightOutput {
         public abstract void stop();
     }
 
-    public class FlashLightStobe extends FlashlightController {
+    public class FlashLightStrobe extends FlashlightController {
 
         DataInput dataInput;
         boolean strobeActive = false;
 
-        FlashLightStobe(DataInput input){
+        FlashLightStrobe(DataInput input){
             this.dataInput = input;
         }
 
