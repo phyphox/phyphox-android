@@ -386,11 +386,8 @@ public class RemoteServer {
 
     protected int respond(Response response, String contentType, InputStream in, long length) throws IOException {
         try {
-            // CORS: allow any origin to read remote-access responses so standalone
-            // browser pages (and bookmarklets served from other origins) can fetch /get etc.
+            // CORS: allow cross-origin browser pages to read remote-access responses.
             response.getHeaders().add("Access-Control-Allow-Origin", "*");
-            response.getHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-            response.getHeaders().add("Access-Control-Allow-Headers", "Content-Type");
             response.sendHeaders(200, length, System.currentTimeMillis(), null, contentType, null);
             response.sendBody(in, -1, null);
         } finally {
