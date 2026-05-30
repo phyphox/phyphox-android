@@ -343,8 +343,8 @@ public class ExpView implements Serializable{
         }
 
         private void updateViewElementVisibility(){
-            if(visibilityBuffer != null){
-                if(visibilityBuffer.value <= 0 || visibilityBuffer.size == 0){
+            if (visibilityBuffer != null) {
+                if (Double.isNaN(visibilityBuffer.value) || visibilityBuffer.value <= 0) {
                     if (state == State.maximized) {
                         //This prevents from leaving the user with an entirely empty UI, when an element might be maximized while it becomes hidden.
                         restore();
