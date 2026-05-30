@@ -123,6 +123,7 @@ public class ExpView implements Serializable{
         protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
         transient protected View rootView; //Holds the root view of the element
+        transient protected ExpViewFragment parent = null;
 
         public State state = State.normal;
 
@@ -175,6 +176,7 @@ public class ExpView implements Serializable{
         //Abstract function to force child classes to implement createView
         //This will take a linear layout, which should be filled by this function
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment) {
+            this.parent = parent;
             if (inputs != null) {
                 for (String buffer : inputs) {
                     if (buffer != null)
@@ -347,11 +349,9 @@ public class ExpView implements Serializable{
                 if (Double.isNaN(visibilityBuffer.value) || visibilityBuffer.value <= 0) {
                     if (state == State.maximized) {
                         //This prevents from leaving the user with an entirely empty UI, when an element might be maximized while it becomes hidden.
-                        restore();
-                    } else {
-                        rootView.setVisibility(GONE);
+                        parent.leaveExclusive();
                     }
-
+                    rootView.setVisibility(GONE);
                 } else {
                     rootView.setVisibility(VISIBLE);
                 }
@@ -1259,7 +1259,6 @@ public class ExpView implements Serializable{
         private Vector<String> triggers = null;
         private List<NetworkConnection> networkConnections = null;
         private boolean triggered = false;
-        private ExpViewFragment parent;
         private DataBuffer dynamicBuffer;
         MaterialButton b;
 
@@ -1310,8 +1309,6 @@ public class ExpView implements Serializable{
         //Create the view in Android and append it to the linear layout
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
-
-            this.parent =parent;
 
             networkConnections = experiment.networkConnections;
 
@@ -1512,7 +1509,6 @@ public class ExpView implements Serializable{
     //class. See graphView.java...
     public class graphElement extends expViewElement implements Serializable {
         private final graphElement self;
-        transient private ExpViewFragment parent = null;
         transient private GraphView gv = null;
         transient private InteractiveGraphView interactiveGV = null;
         private double aspectRatio; //The aspect ratio defines the height of the graph view based on its width (aspectRatio=width/height)
@@ -1783,8 +1779,6 @@ public class ExpView implements Serializable{
         //Create the actual view in Android
         protected void createView(LinearLayout ll, Context c, Resources res, final ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
-
-            this.parent = parent;
 
             Context ctx = c;
             Activity act = null;
@@ -2422,7 +2416,6 @@ public class ExpView implements Serializable{
     // depth sensor (LiDAR/ToF)
     public class depthGuiElement extends expViewElement implements Serializable {
         private final depthGuiElement self;
-        transient private ExpViewFragment parent = null;
         transient private DepthPreview cv = null;
         transient ImageView collapseImage = null;
         transient ImageView expandImage = null;
@@ -2466,7 +2459,6 @@ public class ExpView implements Serializable{
                 return;
 
             super.createView(ll, c, res, parent, experiment);
-            this.parent = parent;
 
             Context ctx = c;
             Activity act = null;
@@ -2892,7 +2884,6 @@ public class ExpView implements Serializable{
 
         private cameraElement self;
         private boolean isExclusive = false;
-        transient private ExpViewFragment parent = null;
         transient private CameraPreviewFragment cameraPreviewFragment = null;
         float height = 300; //dp, might be settable in the future
 
@@ -2962,7 +2953,6 @@ public class ExpView implements Serializable{
                return;
 
             super.createView(ll, c, res, parent, experiment);
-            this.parent = parent;
             this.self = this;
 
             LayoutInflater inflater = LayoutInflater.from(c);
