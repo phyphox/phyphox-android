@@ -249,10 +249,6 @@ public class ExpView implements Serializable{
         //              onMayWriteToBuffers
         protected abstract String getUpdateMode();
 
-        protected String getVisibilityUpdateMode() {
-            return "single";
-        }
-
         //This function returns a JavaScript function. The argument of this function will receive
         //an array that contains fresh data to be shown to the user.
         protected String setDataHTML() {
@@ -757,16 +753,6 @@ public class ExpView implements Serializable{
             sb.append("     }");
             sb.append("     valueNumber.textContent = v;");
 
-            sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-            sb.append("         var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-            sb.append("         var valueMainElement = document.getElementById(\"element"+htmlID+"\");");
-            sb.append("         if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {");
-            sb.append("             valueMainElement.style.display = \"none\";");
-            sb.append("         } else {");
-            sb.append("             valueMainElement.style.display = \"block\";");
-            sb.append("         }");
-            sb.append("     }");
-
             sb.append("}");
 
             return sb.toString();
@@ -860,21 +846,6 @@ public class ExpView implements Serializable{
             super.onMayReadFromBuffers(experiment);
         }
 
-        protected String setDataHTML() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("function (data) {");
-            sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-            sb.append(      "   var x = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-            sb.append("         var infoElement = document.getElementById(\"element"+htmlID+"\");");
-            sb.append("         if (x <= 0.0) {");
-            sb.append("             infoElement.style.display = \"none\";");
-            sb.append("         } else {");
-            sb.append("             infoElement.style.display = \"block\";");
-            sb.append("         }");
-            sb.append("     }");
-            sb.append("}");
-            return sb.toString();
-        }
     }
 
     //separatorElement implements a simple spacing, optionally showing line
@@ -1233,21 +1204,6 @@ public class ExpView implements Serializable{
                     "var x = data[\""+bufferName+"\"][\"data\"][data[\"" + bufferName + "\"][\"data\"].length-1];" +
                     "if (valueElement !== document.activeElement)" +
                     "   valueElement.value = (x*"+factor+");" +
-
-                    "   console.log(\"editElement value outside\");"+
-                    "if (data.hasOwnProperty(\""+visibility+"\")) {" +
-                    "   console.log(\"editElement value inside\");"+
-                    "   var editElement = document.getElementById(\"element"+htmlID+"\");" +
-                    "   var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];"+
-                    "   console.log(\"editElement value\");"+
-                    "   console.log(elementVisibilityIndicator);"+
-                    "   if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {"+
-                    "       editElement.style.display = \"none\";"+
-                    "    } else {"+
-                    "       editElement.style.display = \"block\";"+
-                    "    }"+
-                    "}"+
-
                     "}";
         }
     }
@@ -1444,21 +1400,6 @@ public class ExpView implements Serializable{
         @Override
         protected String setDataHTML() {
             if(dynamicBuffer == null){
-                if(visibility != null){
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("function (data) {");
-                    sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-                    sb.append("     var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-                    sb.append("     var buttonElement = document.getElementById(\"element"+htmlID+"\");");
-                    sb.append("     if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {");
-                    sb.append("         buttonElement.style.display = \"none\";");
-                    sb.append("     } else {");
-                    sb.append("         buttonElement.style.display = \"block\";");
-                    sb.append("     }");
-                    sb.append("}");
-                    sb.append("}");
-                    return sb.toString();
-                }
                 return "function() {}";
             }
 
@@ -1467,16 +1408,6 @@ public class ExpView implements Serializable{
             String bufferName = super.inputs.get(0).replace("\"", "\\\"");
 
             sb.append("function (data) {");
-
-            sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-            sb.append("     var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-            sb.append("     var buttonElement = document.getElementById(\"element"+htmlID+"\");");
-            sb.append("     if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {");
-            sb.append("         buttonElement.style.display = \"none\";");
-            sb.append("     } else {");
-            sb.append("         buttonElement.style.display = \"block\";");
-            sb.append("     }");
-            sb.append("}");
 
             sb.append("     if (!data.hasOwnProperty(\""+bufferName+"\"))");
             sb.append("         return;");
@@ -2011,18 +1942,6 @@ public class ExpView implements Serializable{
         protected String setDataHTML() {
             StringBuilder sb = new StringBuilder();
             sb.append("function (data) {");
-
-            sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-            sb.append("         var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-            sb.append("         var graphElement = document.getElementById(\"element"+htmlID+"\");");
-            sb.append("         if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {");
-            sb.append("             graphElement.style.display = \"none\";");
-            sb.append("             if ((graphElement.classList && graphElement.classList.contains(\"exclusive\")) || (graphElement.className.indexOf(\"exclusive\") > -1)) {;");
-            sb.append("             leaveExclusive(); }");
-            sb.append("         } else {");
-            sb.append("             graphElement.style.display = \"block\";");
-            sb.append("         }");
-            sb.append("      }");
 
             sb.append("     elementData[" + htmlID + "][\"datasets\"] = [];");
             for (int i = 0; i < inputs.size(); i++) {
@@ -2716,22 +2635,6 @@ public class ExpView implements Serializable{
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             super.onMayReadFromBuffers(experiment);
         }
-
-        protected String setDataHTML() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("function (data) {");
-            sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-            sb.append(      "var x = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-            sb.append("     var depthGuiElement = document.getElementById(\"element"+htmlID+"\");");
-            sb.append("     if (x <= 0.0 || x.length == 0) {");
-            sb.append("         depthGuiElement.style.display = \"none\";");
-            sb.append("     } else {");
-            sb.append("         depthGuiElement.style.display = \"block\";");
-            sb.append("     }");
-            sb.append("}");
-            sb.append("}");
-            return sb.toString();
-        }
     }
 
     enum ImageFilter {
@@ -2861,22 +2764,6 @@ public class ExpView implements Serializable{
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             super.onMayReadFromBuffers(experiment);
-        }
-
-        protected String setDataHTML() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("function (data) {");
-            sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-            sb.append(      "var x = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-            sb.append("     var imageElement = document.getElementById(\"element"+htmlID+"\");");
-            sb.append("     if (x <= 0.0 || x.length == 0) {");
-            sb.append("         imageElement.style.display = \"none\";");
-            sb.append("     } else {");
-            sb.append("         imageElement.style.display = \"block\";");
-            sb.append("     }");
-            sb.append("}");
-            sb.append("}");
-            return sb.toString();
         }
     }
 
@@ -3034,22 +2921,6 @@ public class ExpView implements Serializable{
             if (cameraPreviewFragment != null)
                 cameraPreviewFragment.onPageVisibleToUser(parentViewIsVisible);
         }
-
-        protected String setDataHTML() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("function (data) {");
-            sb.append("     if (data.hasOwnProperty(\""+visibility+"\")) {");
-            sb.append(      "var x = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];");
-            sb.append("     var cameraElement = document.getElementById(\"element"+htmlID+"\");");
-            sb.append("     if (x <= 0.0 || x.length == 0) {");
-            sb.append("         cameraElement.style.display = \"none\";");
-            sb.append("     } else {");
-            sb.append("         cameraElement.style.display = \"block\";");
-            sb.append("     }");
-            sb.append("}");
-            sb.append("}");
-            return sb.toString();
-        }
     }
 
     public class toggleElement extends  expViewElement implements  Serializable {
@@ -3170,17 +3041,6 @@ public class ExpView implements Serializable{
                     "                if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                    return;\n" +
                     "\n" +
-
-                    "     if (data.hasOwnProperty(\""+visibility+"\")) {" +
-                    "       var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];"+
-                    "       var toggleElement = document.getElementById(\"element"+htmlID+"\");" +
-                    "       if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length ) {"+
-                    "         toggleElement.style.display = \"none\";"+
-                    "       } else {"+
-                    "         toggleElement.style.display = \"block\";"+
-                    "       }"+
-                    "     }"+
-
                     "                var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
                     "                var radioButton = document.getElementById(\"radio"+htmlID+"\");\n" +
                     "            \n" +
@@ -3408,17 +3268,6 @@ public class ExpView implements Serializable{
                     "                    \n" +
                     "                    var dropdownElement = document.getElementById(\"select"+htmlID+"\")\n" +
                     "            \n" +
-
-                    "                   if (data.hasOwnProperty(\""+visibility+"\")) {" +
-                    "                       var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];"+
-                    "                       var dropDownElement = document.getElementById(\"element"+htmlID+"\");" +
-                    "                       if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {"+
-                    "                           dropDownElement.style.display = \"none\";"+
-                    "                       } else {"+
-                    "                           dropDownElement.style.display = \"block\";"+
-                    "                       }"+
-                    "                    }"+
-
                     "                    var selectedValue = x\n" +
                     "                    dropdownElement.innerHTML = \"\"\n" +
                     "            \n" +
@@ -3792,17 +3641,6 @@ public class ExpView implements Serializable{
                 "function (data) {\n" +
                     "                    if (!data.hasOwnProperty(\""+bufferName+"\"))\n" +
                     "                        return;\n" +
-
-                    "                   if (data.hasOwnProperty(\""+visibility+"\")) {" +
-                    "                       var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];"+
-                    "                       var sliderElement = document.getElementById(\"element"+htmlID+"\");" +
-                    "                       if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {"+
-                    "                           sliderElement.style.display = \"none\";"+
-                    "                       } else {"+
-                    "                           sliderElement.style.display = \"block\";"+
-                    "                       }"+
-                    "                   }"+
-
                     "                    var x = data[\""+bufferName+"\"][\"data\"][data[\""+bufferName+"\"][\"data\"].length - 1];\n" +
                     "                    var selectedValue = parseFloat(x).toFixed("+precision+")\n" +
                     "                    var sliderElement = document.getElementById(\"input"+htmlID+"\")\n" +
@@ -3842,26 +3680,11 @@ public class ExpView implements Serializable{
             String lowerValueBufferName = inputs.get(0).replace("\"", "\\\"");
             String upperValueBufferName = inputs.get(1).replace("\"", "\\\"");
 
-            String visibilityScript = (visibility == null) ? "" :
-
-                "                   if (data.hasOwnProperty(\""+visibility+"\")) {" +
-                        "                       var elementVisibilityIndicator = data[\""+visibility+"\"][\"data\"][data[\"" + visibility + "\"][\"data\"].length-1];"+
-                        "                       var sliderElement = document.getElementById(\"element"+htmlID+"\");" +
-                        "                       console.log(\"slider element\");"+
-                        "                       if (elementVisibilityIndicator <= 0.0 || elementVisibilityIndicator.length == 0) {"+
-                        "                           sliderElement.style.display = \"none\";"+
-                        "                       } else {"+
-                        "                           sliderElement.style.display = \"block\";"+
-                        "                       }"+
-                        "                   }";
-
             return "function (data) {\n" +
                     "                    if (!data.hasOwnProperty(\""+lowerValueBufferName+"\"))\n" +
                     "                        return;\n" +
                     "                    if (!data.hasOwnProperty(\""+upperValueBufferName+"\"))\n" +
                     "                        return;\n" +
-
-                    visibilityScript +
 
                     "                    var x = data[\""+lowerValueBufferName+"\"][\"data\"][data[\""+lowerValueBufferName+"\"][\"data\"].length - 1];\n" +
                     "                    var y = data[\""+upperValueBufferName+"\"][\"data\"][data[\""+upperValueBufferName+"\"][\"data\"].length - 1];\n" +

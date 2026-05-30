@@ -47,8 +47,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.Vector;
 
-import kotlin.reflect.KVisibility;
-
 //RemoteServer implements a web interface to remote control the experiment and receive the data
 
 public class RemoteServer {
@@ -194,11 +192,6 @@ public class RemoteServer {
                 sb.append("\",\"updateMode\":\"");
                 sb.append(element.getUpdateMode());
 
-                if(element.visibility != null ) {
-                    sb.append("\",\"visibilityUpdateMode\":\"");
-                    sb.append(element.getVisibilityUpdateMode());
-                }
-
                 //The label size
                 sb.append("\",\"labelSize\":\"");
                 sb.append(element.labelSize);
@@ -212,10 +205,10 @@ public class RemoteServer {
                 sb.append(element.dataCompleteHTML());
 
                 if(element.visibility != null ){
-                    sb.append(",\"visibilityInput\":[");
+                    sb.append(",\"visibilityInput\":");
                     sb.append("\"");
                     sb.append(element.visibility.replace("\"", "\\\""));
-                    sb.append("\"]");
+                    sb.append("\"");
                 }
 
                 //If this element takes an x array, set the buffer and the JS function
@@ -236,12 +229,6 @@ public class RemoteServer {
                         }
                     }
                     sb.append("],\"dataInputFunction\":\n");
-                    sb.append(element.setDataHTML());
-                    sb.append("\n");
-                }
-
-                if(element.visibility != null && element.inputs == null){
-                    sb.append(",\"dataInputFunction\":\n");
                     sb.append(element.setDataHTML());
                     sb.append("\n");
                 }
