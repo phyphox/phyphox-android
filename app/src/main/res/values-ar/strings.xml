@@ -40,9 +40,9 @@
     <string name="newExperimentBluetoothLoadFromDevice">إستيراد من الجهاز</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">يقدّم هذا الجهاز تجربة خاصة بـ Phyphox. اختر \"تحميل من الجهاز\" لفتحها.</string>
     <string name="newExperimentQR">إضافة تجربة باستخدام رمز QR</string>
-    <string name="newExperimentQRscan">امسح رمز QR يحتوي على تجربة Phyphox</string>
-    <string name="newExperimentQRErrorTitle">خطأ في رمز QR</string>
-    <string name="newExperimentQRNoExperiment">يتعذر العثور على رمز QR الذي يحتوي على تجربة Phyphox</string>
+    <string name="newExperimentQRscan">امسح رمز QR الذي يحتوي على تجربة Phyphox.</string>
+    <string name="newExperimentQRErrorTitle">خطأ في رمز QR.</string>
+    <string name="newExperimentQRNoExperiment">يتعذر العثور على رمز QR الذي يحتوي على تجربة Phyphox.</string>
     <string name="newExperimentQRcrcMismatch">يبدو أن رمز QR الذي مسحته للتو لا يتطابق مع الرموز السابقة. يرجى التأكد من مسح الرموز التابعة لنفس التجربة فقط.</string>
     <string name="newExperimentQRCodesMissing1">رمز QR الذي مسحته للتو هو جزء من مجموعة من</string>
     <string name="newExperimentQRCodesMissing2">الرموز. يرجى الضغط على متابعة لمسح الرموز المتبقية. الرموز لا تزال مفقودة:</string>
@@ -50,7 +50,7 @@
     <string name="deactivate_all">إلغاء تفعيل الكل</string>
     <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
     <string name="newExperimentQRBadCRC">فشلت خوارزمية التأكد. هذا يعني إما أن رمز QR تالف أو حدث خطأ أثناء مسحه.</string>
-    <string name="newExperimentBTReadErrorTitle">خطأ في تجربة بلوتوث</string>
+    <string name="newExperimentBTReadErrorTitle">خطأ في تجربة بلوتوث.</string>
     <string name="newExperimentBTReadErrorCorrupted">بيانات التجربة التي تم إرسالها تالفة.</string>
     <string name="generalErrorDialog">حدث خطأ ما.</string>
     <string name="help">دعم و معلومات</string>
