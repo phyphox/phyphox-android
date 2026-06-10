@@ -85,4 +85,25 @@
 \nಕ್ಯಾಮಿಲ್ಲಾ ಲುಮ್ಮರ್ಝೈಮ್</string>
     <string name="gpl">Phyphox® ಎಂಬುದು GNU ಜನರಲ್ ಪಬ್ಲಿಕ್ ಲೈಸೆನ್ಸ್ ಅಡಿಯಲ್ಲಿ ಬಿಡುಗಡೆಯಾದ ಓಪನ್ ಸೋರ್ಸ್ ಸಾಫ್ಟ್‌ವೇರ್ ಆಗಿದೆ. ಹೆಚ್ಚಿನ ಮಾಹಿತಿಗಾಗಿ ಮತ್ತು ಅದರ ಮೂಲ ಕೋಡ್‌ಗೆ ಪ್ರವೇಶ ಪಡೆಯಲು ದಯವಿಟ್ಟು http://phyphox.org ಗೆ ಭೇಟಿ ನೀಡಿ. ಆದಾಗ್ಯೂ, \"phyphox\" ಮತ್ತು \"RWTH ಆಚೆನ್\" ಹೆಸರುಗಳು ನೋಂದಾಯಿತ ಟ್ರೇಡ್‌ಮಾರ್ಕ್‌ಗಳಾಗಿವೆ.</string>
     <string name="creditsLibs">ರಿಮೋಟ್ ಪ್ರವೇಶಕ್ಕಾಗಿ ವೆಬ್-ಇಂಟರ್ಫೇಸ್ GNU ಜನರಲ್ ಪಬ್ಲಿಕ್ ಲೈಸೆನ್ಸ್ v2 ಅಡಿಯಲ್ಲಿ ಜಾವಾ ಲೈಟ್‌ವೇಟ್ HTTP ಸರ್ವರ್ (jlhttp) ಅನ್ನು ಬಳಸುತ್ತದೆ ಮತ್ತು MIT ಪರವಾನಗಿ ಅಡಿಯಲ್ಲಿ ಲಭ್ಯವಿರುವ ಜಾವಾಸ್ಕ್ರಿಪ್ಟ್ ಲೈಬ್ರರಿ \"Chart.js\" (http://chartjs.org) ನೊಂದಿಗೆ ಡೇಟಾವನ್ನು ಪ್ಲಾಟ್ ಮಾಡುತ್ತದೆ. ಫೋರಿಯರ್ ರೂಪಾಂತರಕ್ಕಾಗಿ, ನಾವು FFTW ಲೈಬ್ರರಿ (http://fftw.org), ಹಕ್ಕುಸ್ವಾಮ್ಯ © 2003, 2007-11 ಮ್ಯಾಟಿಯೊ ಫ್ರಿಗೊ, ಹಕ್ಕುಸ್ವಾಮ್ಯ © 2003, 2007-11 ಮ್ಯಾಸಚೂಸೆಟ್ಸ್ ಇನ್‌ಸ್ಟಿಟ್ಯೂಟ್ ಆಫ್ ಟೆಕ್ನಾಲಜಿಯನ್ನು ಬಳಸುತ್ತೇವೆ, ಇದು GNU ಜನರಲ್ ಪಬ್ಲಿಕ್ ಲೈಸೆನ್ಸ್ (ಆವೃತ್ತಿ 2 ಅಥವಾ ನಂತರದ) ಅಡಿಯಲ್ಲಿ ಲಭ್ಯವಿದೆ. GPS ಎತ್ತರದ ಡೇಟಾವನ್ನು EGM84 ಡೇಟಾ (30\' ರೆಸಲ್ಯೂಶನ್) ಮತ್ತು GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 ಪರವಾನಗಿ) ನಿಂದ ಪೋರ್ಟ್ ಮಾಡಲಾದ ಕಾರ್ಯವನ್ನು ಬಳಸಿಕೊಂಡು WGS84 ಎಲಿಪ್ಸಾಯ್ಡ್‌ನಿಂದ EGM84 ಜಿಯಾಯ್ಡ್‌ಗೆ ಪರಿವರ್ತಿಸಲಾಗುತ್ತದೆ.</string>
+    <string name="sensorPressure">ಒತ್ತಡ</string>
+    <string name="sensorTemperature">ಉಷ್ಣಾ೦ಶ</string>
+    <string name="sensorHumidity">ಆರ್ದ್ರತೆ ಅಥವಾ ತೇವವಾಗಿರುವಿಕೆ</string>
+    <string name="sensorProximity">ಸಾಮೀಪ್ಯ</string>
+    <string name="sensorAttitude">ಎತ್ತರ</string>
+    <string name="sensorVendor">ಮಾರಾಟಗಾರ ನಿರ್ದಿಷ್ಟ</string>
+    <string name="sensorDepth">ಆಳ (LiDAR - Light Detection and Ranging/ToF - Time of Flight)</string>
+    <string name="sensorCamera">ಕ್ಯಾಮೆರಾ</string>
+    <string name="vendorSensorTitle">ಮಾರಾಟಗಾರ-ನಿರ್ದಿಷ್ಟ ಸಂವೇದಕ</string>
+    <string name="vendorSensorWarning1">ಸಂವೇದಕ ಎಚ್ಚರಿಕೆ</string>
+    <string name="vendorSensorWarning2">ಇದು ಸರಿಯಾದ ಸೆನ್ಸರ್ ಪ್ರಕಾರವನ್ನು ವರದಿ ಮಾಡದಿರಬಹುದು ಮತ್ತು ಮಾರಾಟಗಾರ ನಿರ್ದಿಷ್ಟವಾಗಿರುತ್ತದೆ. ನಾವು ಸಂದರ್ಭದಿಂದ ಒಂದು ಊಹೆಯನ್ನು ಮಾಡುತ್ತೇವೆ. ಆದ್ದರಿಂದ ಇದು ನಿರೀಕ್ಷೆಯಂತೆ ಕಾರ್ಯನಿರ್ವಹಿಸದಿರಬಹುದು.</string>
+    <string name="location">ಸ್ಥಳ</string>
+    <string name="sensorNotAvailableWarningTitle">ಸೆನ್ಸರ್ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="sensorNotAvailableWarningText1">ಸಂವೇದಕ</string>
+    <string name="sensorNotAvailableWarningText2">ಸೆನ್ಸರ್ ಲಭ್ಯವಿಲ್ಲ. ಸಾಮಾನ್ಯವಾಗಿ ಇದರರ್ಥ, ನಿಮ್ಮ ಸಾಧನವು ಈ ರೀತಿಯ ಸೆನ್ಸರ್ ಅನ್ನು ಹೊಂದಿಲ್ಲ.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">ಹೆಚ್ಚಿನ ಮಾಹಿತಿ</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+    <string name="ok">ಸರಿ</string>
+    <string name="tryagain">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
+    <string name="doContinue">ಮುಂದುವರಿಸಿ</string>
+    <string name="close">ಮುಚ್ಚಿ</string>
 </resources>
