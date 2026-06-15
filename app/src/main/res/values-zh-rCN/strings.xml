@@ -32,7 +32,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="sensorLinearAcceleration">线加速度</string>
+    <string name="sensorLinearAcceleration">线性加速度</string>
     <string name="sensorLight">光传感器</string>
     <string name="sensorGyroscope">陀螺仪</string>
     <string name="sensorAccelerometer">加速度计</string>
@@ -46,7 +46,7 @@
     <string name="sensorNotAvailableWarningText2">不可用。通常这表示您的设备没有这种类型的传感器。</string>
     <string name="sensorNotAvailableWarningMoreInfo">更多信息</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
-    <string name="ok">确认</string>
+    <string name="ok">确定</string>
     <string name="close">关闭</string>
     <string name="next">下一步</string>
     <string name="cancel">取消</string>
@@ -132,7 +132,7 @@
     <string name="newExperimentQRCodesMissing1">你刚扫描的二维码是一组二维码的一部分</string>
     <string name="newExperimentQRCodesMissing2">。请按继续来扫描剩下的二维码。还缺失的码数：</string>
     <string name="newExperimentQRBadCRC">无效校验码。这意味二维码失效或者扫描时出现了问题。</string>
-    <string name="newExperimentBTReadErrorTitle">蓝牙实验错误</string>
+    <string name="newExperimentBTReadErrorTitle">蓝牙实验错误。</string>
     <string name="newExperimentBTReadErrorCorrupted">传输的实验数据被损坏。</string>
     <string name="generalErrorDialog">发生错误。</string>
     <string name="deviceInfo">设备信息</string>
@@ -141,9 +141,9 @@
     <string name="gpl">Phyphox是在GNU通用公共许可证下发布的开源软件。请访问http://phyphox.org获取更多信息和访问源代码。但，“phyphox”和“RWTH Aachen”是已注册商标。</string>
     <string name="sensorVendor">供应商特定</string>
     <string name="vendorSensorTitle">供应商特定传感器</string>
-    <string name="save_state_subject">Phyphox的实验状态</string>
+    <string name="save_state_subject">Phyphox 的实验状态</string>
     <string name="save_state_default_title">测量</string>
-    <string name="save_state_success">状态已存至你的收藏。</string>
+    <string name="save_state_success">状态已保存至你的收藏。</string>
     <string name="timedRun">定时运行</string>
     <string name="pick_exportSets">选择数据组导出。</string>
     <string name="pick_exportFormat">选择数据格式。</string>
@@ -351,7 +351,7 @@
     <string name="cameraFrontFacing">前置摄像头</string>
     <string name="cameraBackFacing">后置摄像头</string>
     <string name="cameraExternal">外置摄像头</string>
-    <string name="sensorGravity">重力</string>
+    <string name="sensorGravity">重力传感器</string>
     <string name="settingsDefault">默认</string>
     <string name="settings">设置</string>
     <string name="settingsHeadLanguage">语言</string>
@@ -360,7 +360,7 @@
     <string name="settingsTranslationMore">了解更多关于可用语言及如何提供帮助的信息</string>
     <string name="settingsHeadAdvanced">高级</string>
     <string name="settingsProximityLock">靠近自动锁屏</string>
-    <string name="settingsProximityLockDetail">当接近觉传感器被触发时禁用屏幕，避免误触（如在口袋中时）</string>
+    <string name="settingsProximityLockDetail">当距离传感器被触发时禁用屏幕，避免误触（如在口袋中时）</string>
     <string name="settingsPort">远程访问端口</string>
     <string name="settings_theme_night">默认</string>
     <string name="settings_theme_no_night">浅色模式</string>
@@ -369,8 +369,8 @@
     <string name="settingGraphSize">图表尺寸</string>
     <string name="settingGraphSizeSubTitle">放大或缩小图表尺寸</string>
     <string name="settings_theme_title">深色模式</string>
-    <string name="settings_mode_dark">启用 (默认)</string>
-    <string name="settings_mode_no_dark">关闭</string>
+    <string name="settings_mode_dark">开（默认）</string>
+    <string name="settings_mode_no_dark">关</string>
     <string name="settings_mode_dark_system">跟随系统</string>
     <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
     <string name="cameraFront">前</string>
