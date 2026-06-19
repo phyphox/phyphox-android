@@ -12,11 +12,4 @@
         <item>70.0</item>
     </array>
 
-    <string-array name="spectroscopy_orientation_array">
-        <item>Horizontal Red Right</item>
-        <item>Horizontal Blue Right</item>
-        <item>Vertical Red Top</item>
-        <item>Vertical Blue Top</item>
-    </string-array>
-
 </resources>

@@ -3,6 +3,8 @@ package de.rwth_aachen.phyphox;
 
 import android.animation.LayoutTransition;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,6 +14,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 public class ExpViewFragment extends Fragment {
@@ -112,6 +115,11 @@ public class ExpViewFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+
     public void recreateView() {
         if (root == null)
             return;
@@ -169,11 +177,17 @@ public class ExpViewFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if(getActivity() == null){
+            return;
+        }
         recreateView();
     }
 
     public void onPause() {
         super.onPause();
+        if(getActivity() == null){
+            return;
+        }
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
             for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.destroyView();

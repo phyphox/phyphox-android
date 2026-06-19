@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
 /**

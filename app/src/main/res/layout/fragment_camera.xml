@@ -99,21 +99,18 @@
         app:layout_constraintTop_toBottomOf="@id/fl_preview_view"
         app:layout_constraintBottom_toTopOf="@id/cameraSetting">
 
-        <TextView
-            android:id="@+id/textSpec"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginEnd="8dp"
-            android:text="Analysis orientation"/>
-
-        <Spinner
-            android:id="@+id/btnSelectSpectroscopyOrientation"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/imgAnalysisSetting"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layerType="software"
-            />
+            app:icon="@drawable/arrow_gradient_right"
+            app:iconTint="@null"
+            app:iconGravity="textStart"
+            android:textSize="12sp"
+            android:text="Orientation" />
+
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.zip.CRC32;
 
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)

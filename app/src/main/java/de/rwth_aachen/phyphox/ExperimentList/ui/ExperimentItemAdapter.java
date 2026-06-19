@@ -40,12 +40,12 @@ import java.util.Map;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.BuildConfig;
-import de.rwth_aachen.phyphox.Helper.DataExportUtility;
+import de.rwth_aachen.phyphox.helper.DataExportUtility;
 import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
-import de.rwth_aachen.phyphox.Helper.Helper;
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.Helper;
+import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.R;
 
 //This adapter is used to fill the gridView of the categories in the experiment list.

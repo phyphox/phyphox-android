@@ -8,7 +8,7 @@ import android.view.animation.AlphaAnimation
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
-import de.rwth_aachen.phyphox.Helper.Helper
+import de.rwth_aachen.phyphox.helper.Helper
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
 

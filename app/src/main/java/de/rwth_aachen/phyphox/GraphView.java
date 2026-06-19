@@ -25,7 +25,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 //The graphView class implements an Android view which displays a data graph
 

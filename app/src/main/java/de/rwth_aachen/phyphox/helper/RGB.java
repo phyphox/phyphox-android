@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Helper;
+package de.rwth_aachen.phyphox.helper;
 
 import android.content.res.Resources;
 import android.util.Log;

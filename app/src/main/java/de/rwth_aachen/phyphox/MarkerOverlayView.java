@@ -8,7 +8,7 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.RGB;
 
 public class MarkerOverlayView extends View {
 

@@ -66,13 +66,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
 import de.rwth_aachen.phyphox.camera.Scrollable;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthPreview;
-import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel;
@@ -341,16 +341,20 @@ public class ExpView implements Serializable{
         }
 
         private void updateViewElementVisibility(){
-            if (visibilityBuffer != null) {
-                if (Double.isNaN(visibilityBuffer.value) || visibilityBuffer.value <= 0) {
-                    if (state == State.maximized) {
-                        //This prevents from leaving the user with an entirely empty UI, when an element might be maximized while it becomes hidden.
-                        parent.leaveExclusive();
-                    }
-                    rootView.setVisibility(GONE);
-                } else {
-                    rootView.setVisibility(VISIBLE);
+            if(rootView == null){
+                return;
+            }
+            if(visibilityBuffer == null){
+                return;
+            }
+            if (Double.isNaN(visibilityBuffer.value) || visibilityBuffer.value <= 0) {
+                if (state == State.maximized) {
+                    //This prevents from leaving the user with an entirely empty UI, when an element might be maximized while it becomes hidden.
+                    parent.leaveExclusive();
                 }
+                rootView.setVisibility(GONE);
+            } else {
+                rootView.setVisibility(VISIBLE);
             }
         }
 
@@ -570,10 +574,10 @@ public class ExpView implements Serializable{
         @Override
         //We just have to send calculated value and the unit to the textView
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            super.onMayReadFromBuffers(experiment);
             if (!needsUpdate)
                 return;
             needsUpdate = false;
-            super.onMayReadFromBuffers(experiment);
             double x = experiment.getBuffer(inputs.get(0)).value;
             if (tv != null) {
                 String vStr = "";
@@ -1351,10 +1355,10 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            super.onMayReadFromBuffers(experiment);
             if (!needsUpdate)
                 return;
             needsUpdate = false;
-            super.onMayReadFromBuffers(experiment);
 
             if(dynamicBuffer == null){
                 return;
@@ -1837,10 +1841,10 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            super.onMayReadFromBuffers(experiment);
             if (!needsUpdate)
                 return;
             needsUpdate = false;
-            super.onMayReadFromBuffers(experiment);
             for (int i = 0; i < inputs.size(); i+=2) {
                 if (inputs.size() > i+1) {
                     DataBuffer x = experiment.getBuffer(inputs.get(i+1));
@@ -3197,10 +3201,10 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered || autoCompleteTextView == null)
                 return;
             needsUpdate = false;
-            super.onMayReadFromBuffers(experiment);
             double x = experiment.getBuffer(inputs.get(0)).value;
 
             int index= -1;
@@ -3533,10 +3537,10 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered)
                 return;
             needsUpdate = false;
-            super.onMayReadFromBuffers(experiment);
             if (inputs.size() == 0)
                 return;
             double value = experiment.getBuffer(inputs.get(0)).value;

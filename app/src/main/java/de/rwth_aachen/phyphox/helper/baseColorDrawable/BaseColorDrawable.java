@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Helper.baseColorDrawable;
+package de.rwth_aachen.phyphox.helper.baseColorDrawable;
 
 import android.content.Context;
 import android.graphics.ColorFilter;
@@ -8,7 +8,7 @@ import android.graphics.drawable.Drawable;
 
 import androidx.core.content.ContextCompat;
 
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.R;
 
 //This is the base class of our experiment icons. It is basically just stuff drawn on a colored background.

@@ -6,14 +6,19 @@ import static android.view.View.VISIBLE;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.text.InputType;
+import android.view.OrientationEventListener;
+import android.view.WindowManager;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AlertDialog;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+import de.rwth_aachen.phyphox.camera.analyzer.SpectrumOrientation;
 
 public class SpectroscopyCalibrationManager {
 
@@ -254,20 +259,6 @@ public class SpectroscopyCalibrationManager {
         }
     }
 
-    public String getCalibrationInfo() {
-        if (calibrationParameters == null) {
-            return null;
-        }
-
-        DecimalFormat formatter = new DecimalFormat("#.####");
-        formatter.setMinimumFractionDigits(2);
-
-        String slopeStr = formatter.format(calibrationParameters.slope);
-        String interceptStr = formatter.format(calibrationParameters.intercept);
-
-        return "Calibrated: a- " + slopeStr + ",  b- " + interceptStr;
-    }
-
     // Helper method for getting localized strings
     private String getString(String key) {
         int resId = context.getResources().getIdentifier(key, "string", context.getPackageName());
@@ -323,3 +314,7 @@ class CalibrationGraphUtility {
         }
     }
 }
+
+
+
+

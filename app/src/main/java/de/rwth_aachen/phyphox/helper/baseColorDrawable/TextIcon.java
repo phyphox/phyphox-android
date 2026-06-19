@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Helper.baseColorDrawable;
+package de.rwth_aachen.phyphox.helper.baseColorDrawable;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -7,12 +7,12 @@ import android.graphics.Rect;
 
 import androidx.core.content.ContextCompat;
 
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.R;
 
 //The class TextIcon is a drawable that displays up to three characters in a rectangle as a
 //substitution icon, used if an experiment does not have its own icon
-public class TextIcon extends BaseColorDrawable {
+public class TextIcon extends de.rwth_aachen.phyphox.helper.baseColorDrawable.BaseColorDrawable {
 
     private final String text; //The characters too be displayed
     private final Paint paint; //The paint for the characters

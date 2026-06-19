@@ -33,7 +33,7 @@ import android.opengl.EGLContext;
 
 import javax.microedition.khronos.egl.EGL10;
 
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)

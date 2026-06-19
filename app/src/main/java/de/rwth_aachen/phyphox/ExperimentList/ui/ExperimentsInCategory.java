@@ -22,7 +22,7 @@ import java.util.Vector;
 
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 

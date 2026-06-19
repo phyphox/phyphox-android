@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Helper.baseColorDrawable;
+package de.rwth_aachen.phyphox.helper.baseColorDrawable;
 
 import android.content.Context;
 import android.graphics.Bitmap;

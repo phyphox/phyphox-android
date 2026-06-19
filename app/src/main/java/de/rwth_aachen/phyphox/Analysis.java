@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 // The analysis class is used to to do math operations on dataBuffers
 

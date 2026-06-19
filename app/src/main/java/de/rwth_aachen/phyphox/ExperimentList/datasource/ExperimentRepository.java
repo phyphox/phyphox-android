@@ -19,7 +19,7 @@ import de.rwth_aachen.phyphox.ExperimentList.handler.CategoryComparator;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.ExperimentList.ui.ExperimentsInCategory;
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.R;
 
 public class ExperimentRepository{

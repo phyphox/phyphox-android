@@ -11,6 +11,7 @@ import android.graphics.PorterDuff
 import android.graphics.RectF
 import android.os.Build
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.Surface
 import android.view.TextureView
@@ -18,32 +19,29 @@ import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.Spinner
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.core.content.ContextCompat
-import androidx.core.view.get
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.Visibility
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.slider.Slider
 import com.google.common.util.concurrent.ListenableFuture
-import de.rwth_aachen.phyphox.Helper.Helper
-import de.rwth_aachen.phyphox.Helper.RGB
+import de.rwth_aachen.phyphox.helper.Helper
+import de.rwth_aachen.phyphox.helper.RGB
 import de.rwth_aachen.phyphox.MarkerOverlayView
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.CameraInput
@@ -68,6 +66,8 @@ import java.math.RoundingMode
 import java.text.DecimalFormat
 import kotlin.math.ln
 import kotlin.math.pow
+import de.rwth_aachen.phyphox.camera.DeviceOrientation
+import de.rwth_aachen.phyphox.camera.helper.SpectrumDispersionManager
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -78,8 +78,7 @@ class CameraPreviewScreen(
         private val toggleExclusive: () -> Boolean,
         val grayscale: Boolean,
         val markOverexposure: RGB?,
-        val markUnderexposure: RGB?
-): AdapterView.OnItemSelectedListener {
+        val markUnderexposure: RGB?) {
 
     private val context: Context = root.context
 
@@ -94,7 +93,7 @@ class CameraPreviewScreen(
     private val buttonMaximize: ImageView = root.findViewById(R.id.imageMaximize)
     private val buttonMinimize: ImageView = root.findViewById(R.id.imageMinimize)
 
-    private val spinnerSpectrumOrientation: Spinner = root.findViewById(R.id.btnSelectSpectroscopyOrientation)
+    private val btnAnalysisSetting: MaterialButton = root.findViewById(R.id.imgAnalysisSetting)
     private val lnrSpectrumOrientation: LinearLayoutCompat = root.findViewById(R.id.lnrSpectroscopyAnalysisControl)
 
     private val zoomSlider: Slider = root.findViewById(R.id.zoomSlider)
@@ -158,6 +157,11 @@ class CameraPreviewScreen(
     private var currentState: CameraScreenViewState? = null
 
     var resizableState = ResizableViewModuleState.Normal
+
+    var isHorizontal = true
+    var isRedToBlue = false
+
+    var orientationManager: SpectrumDispersionManager? = null
 
     init {
 
@@ -229,9 +233,9 @@ class CameraPreviewScreen(
         }
 
         if(cameraInput.isFeatureSpectroscopy()){
-            Log.d("CameraPreviewScreen","isFeatSpec")
-            createSpinnerForSpectrumOrientation()
-            spinnerSpectrumOrientation.onItemSelectedListener  = this
+            lnrSpectrumOrientation.visibility = View.VISIBLE
+            orientationManager = SpectrumDispersionManager()
+            btnAnalysisSetting.setOnClickListener {  openSpectrumAnalysisConfigurationDialog() }
         }
     }
 
@@ -849,37 +853,133 @@ class CameraPreviewScreen(
         }
     }
 
-    fun createSpinnerForSpectrumOrientation(){
-        lnrSpectrumOrientation.visibility = View.VISIBLE
-        ArrayAdapter.createFromResource(
-            context,
-            R.array.spectroscopy_orientation_array,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinnerSpectrumOrientation.adapter = adapter
+    private fun openSpectrumAnalysisConfigurationDialog() {
+
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_analysis_settings, null)
+        // Proper image resource needs to be created to add in this imageview.
+        val imageOrientation : ImageView = dialogView.findViewById(R.id.imgAnalysisOrientation)
+        val btnBR: Button = dialogView.findViewById(R.id.btnBR)
+        val btnRB: Button = dialogView.findViewById(R.id.btnRB)
+        val axisToggle: MaterialButtonToggleGroup = dialogView.findViewById(R.id.axisToggle)
+        val directionToggle: MaterialButtonToggleGroup = dialogView.findViewById(R.id.directionToggle)
+
+        fun updateLabels() {
+            if (isHorizontal) {
+                btnBR.text = context.resources.getString(R.string.spectrum_left_to_right)
+                btnRB.text = context.resources.getString(R.string.spectrum_right_to_left)
+            } else {
+                btnBR.text = context.resources.getString(R.string.spectrum_bottom_to_top)
+                btnRB.text = context.resources.getString(R.string.spectrum_top_to_bottom)
+            }
+        }
+
+        updateLabels()
+
+        axisToggle.check(if (isHorizontal) R.id.btnHorizontal else R.id.btnVertical)
+        directionToggle.check(if (isRedToBlue) R.id.btnRB else R.id.btnBR)
+
+        axisToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                isHorizontal = (checkedId == R.id.btnHorizontal)
+                updateLabels()
+                applySpectrumOrientationChanges()
+                imageOrientation.apply {
+                    setImageResource(getSpectrumOrientationIcon(getSelectedSpectrumOrientation()))
+                }
+            }
+        }
+
+        directionToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                isRedToBlue = (checkedId == R.id.btnRB)
+                applySpectrumOrientationChanges()
+                imageOrientation.apply {
+                    setImageResource(getSpectrumOrientationIcon(getSelectedSpectrumOrientation()))
+                }
+            }
+        }
+
+        AlertDialog.Builder(context)
+            .setView(dialogView)
+            .setPositiveButton(context.resources.getString(R.string.ok)) { dialog, _ -> dialog.dismiss() }
+            .create()
+            .show()
+    }
+
+    fun getSelectedSpectrumOrientation() : SpectrumOrientation {
+        val orientation: SpectrumOrientation = if(isHorizontal){
+            if(isRedToBlue){
+                SpectrumOrientation.HORIZONTAL_BLUE_RIGHT
+            } else{
+                SpectrumOrientation.HORIZONTAL_RED_RIGHT
+            }
+
+        } else {
+            if(isRedToBlue){
+                SpectrumOrientation.VERTICAL_RED_UP
+            } else{
+                SpectrumOrientation.VERTICAL_BLUE_UP
+            }
+        }
+        return orientation;
+    }
+
+    fun setSpectrumOrientation(spectrumOrientation: SpectrumOrientation){
+        when(spectrumOrientation){
+            SpectrumOrientation.VERTICAL_BLUE_UP -> {
+                isHorizontal = false
+                isRedToBlue = false
+            }
+            SpectrumOrientation.VERTICAL_RED_UP -> {
+                isHorizontal = false
+                isRedToBlue = true
+            }
+            SpectrumOrientation.HORIZONTAL_BLUE_RIGHT -> {
+                isHorizontal = true
+                isRedToBlue = true
+            }
+            SpectrumOrientation.HORIZONTAL_RED_RIGHT -> {
+                isHorizontal = true
+                isRedToBlue = false
+            }
+            SpectrumOrientation.INVALID -> {
+                isHorizontal = true
+                isRedToBlue = false
+            }
         }
     }
 
-    override fun onItemSelected(parent: AdapterView<*>, view: View?, pos: Int, id: Long) {
-        // An item is selected. You can retrieve the selected item using
-        // parent.getItemAtPosition(pos).
-        Log.d("Spinner", "item: "+ parent.getItemAtPosition(pos))
-        var orientation: SpectrumOrientation = SpectrumOrientation.INVALID
-        when(parent.getItemAtPosition(pos)){
-            "Horizontal Red Right" -> orientation = SpectrumOrientation.HORIZONTAL_RED_RIGHT
-            "Horizontal Blue Right" -> orientation = SpectrumOrientation.HORIZONTAL_BLUE_RIGHT
-            "Vertical Red Top" -> orientation = SpectrumOrientation.VERTICAL_RED_UP
-            "Vertical Blue Top" -> orientation = SpectrumOrientation.VERTICAL_BLUE_UP
-        }
+    fun applySpectrumOrientationChanges() {
+        val orientation = getSelectedSpectrumOrientation()
+        orientationManager?.onUserDispersionSelected(orientation)
         cameraInput.changeSpectrumAnalysisOrientation(orientation)
+
+        btnAnalysisSetting.apply {
+            setIconResource(getSpectrumOrientationIcon(orientation))
+            iconTint = null
+        }
     }
 
-    override fun onNothingSelected(parent: AdapterView<*>) {
-        // Another interface callback.
+    fun getSpectrumOrientationIcon(orientation: SpectrumOrientation) : Int {
+        val iconRes = when (orientation) {
+            SpectrumOrientation.HORIZONTAL_RED_RIGHT -> R.drawable.arrow_gradient_right
+            SpectrumOrientation.VERTICAL_RED_UP -> R.drawable.arrow_gradient_bottom
+            SpectrumOrientation.HORIZONTAL_BLUE_RIGHT -> R.drawable.arrow_gradient_left
+            SpectrumOrientation.VERTICAL_BLUE_UP -> R.drawable.arrow_gradient_top
+            else -> R.drawable.arrow_gradient_right
+        }
+        return iconRes
     }
 
-
+    fun updateSpectrumOrientation(deviceOrientation: DeviceOrientation){
+        orientationManager?.onDeviceRotated(deviceOrientation)
+        setSpectrumOrientation(orientationManager?.currentDispersionOrientation!!)
+        btnAnalysisSetting.apply {
+            setIconResource(getSpectrumOrientationIcon(getSelectedSpectrumOrientation()))
+            iconTint = null
+        }
+    }
 }
+
 
 

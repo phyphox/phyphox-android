@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox.Helper;
+package de.rwth_aachen.phyphox.helper;
 
 import static android.content.Context.BATTERY_SERVICE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.OrientationEventListener;
 import android.view.PixelCopy;
 import android.view.Surface;
 import android.view.View;
@@ -72,6 +73,7 @@ import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
+import de.rwth_aachen.phyphox.camera.DeviceOrientation;
 
 public abstract class Helper {
 
@@ -631,5 +633,20 @@ public abstract class Helper {
 
         return null;
     }
+    public static DeviceOrientation getOrientationFromAngle(int angle) {
 
+        if (angle == OrientationEventListener.ORIENTATION_UNKNOWN) {
+            return DeviceOrientation.PORTRAIT;
+        }
+
+        if (angle >= 315 || angle < 45) {
+            return DeviceOrientation.PORTRAIT;
+        } else if (angle >= 45 && angle < 135) {
+            return DeviceOrientation.LANDSCAPE_REVERSE;
+        } else if (angle >= 135 && angle < 225) {
+            return DeviceOrientation.PORTRAIT_REVERSE;
+        } else { // angle >= 225 && angle < 315
+            return DeviceOrientation.LANDSCAPE;
+        }
+    }
 }

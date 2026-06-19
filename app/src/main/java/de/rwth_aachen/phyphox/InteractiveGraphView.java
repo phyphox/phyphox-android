@@ -41,7 +41,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo, SpectroscopyCalibrationManager.SpectroscopyCalibrationDelegate {
 
@@ -100,7 +100,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
     private SpectroscopyCalibrationManager spectroscopyCalibrationManager;
-    private TextView spectroscopyStatusLabel;
 
     private List<View> calibrationMarkerViews = new ArrayList<>();
     private boolean needsCalibrationMarkerUpdate = false;
@@ -156,14 +155,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                         return true;
                     case R.id.graph_tools_calibrate:
                         removePopUpAndMarkerOverlayView();
-                        Log.d("Interactive", "calibrationMode"+calibrationMode);
-                        Log.d("Interactive", "calibrationMarkerViews"+calibrationMarkerViews.size());
-                        if(calibrationMarkerViews.size() > 0){
-                            Log.d("Interactive", "calibrationMarkerViews"+calibrationMarkerViews.get(0).getVisibility());
-                        }
-
-                        Log.d("Interactive", "enableCalibrationMode"+enableCalibrationMode);
-                        Log.d("Interactive", "marker"+marker.length);
                         graphView.setTouchMode(GraphView.TouchMode.calibrate);
                         if(!graphView.isSpectroscopyCalibrated) spectroscopyCalibrationManager.resetCalibration();
                         return true;
@@ -750,6 +741,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
         }
         else if (marker[0].active || marker[1].active) {
+            if(graphView.isSpectroscopyCalibrated){
+                return;
+            }
 
             int pos[] = new int[2];
             graphView.getLocationInWindow(pos);
@@ -826,12 +820,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             this.calibrationMode = calibrationMode;
             this.enableCalibrationMode = true;
         } else {
+            this.enableCalibrationMode = false;
             return;
         }
-
-        spectroscopyStatusLabel = createStatusLabel(context);
-        spectroscopyStatusLabel.setText(getResources().getString(R.string.calibration_invalid));
-        graphFrame.addView(spectroscopyStatusLabel);
 
         if(spectroscopyCalibrationManager == null){
             spectroscopyCalibrationManager = new SpectroscopyCalibrationManager(context, parent);
@@ -858,16 +849,12 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     @Override
     public void spectroscopyUnCalibrated(SpectroscopyCalibrationManager manager) {
-        spectroscopyStatusLabel.setText("");
-        spectroscopyStatusLabel.setVisibility(GONE);
         clearCalibrationMarkers();
         markerOverlayView.update(null, null);
     }
 
     @Override
     public void spectroscopyCalibrationDidStart(SpectroscopyCalibrationManager manager) {
-        spectroscopyStatusLabel.setText(getResources().getString(R.string.spectroscopy_tap_first_point));
-        spectroscopyStatusLabel.setVisibility(VISIBLE);
         clearCalibrationMarkers();
         markerOverlayView.update(null, null);
         graphView.resetPicks();
@@ -881,11 +868,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
         switch (state) {
             case FIRST_POINT_SELECTED:
-                spectroscopyStatusLabel.setText(getResources().getString(R.string.spectroscopy_tap_second_point));
                 showCalibrationPointMarkers(points);
                 break;
             case SECOND_POINT_SELECTED:
-                spectroscopyStatusLabel.setText(getResources().getString(R.string.spectroscopy_calculating));
                 showCalibrationPointMarkers(points);
                 break;
             default:
@@ -896,11 +881,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     @Override
     public void spectroscopyCalibrationDidComplete(SpectroscopyCalibrationManager manager,
                                                    double slope, double intercept) {
-        String calibrationInfo = manager.getCalibrationInfo();
-        if (calibrationInfo != null) {
-            spectroscopyStatusLabel.setText(calibrationInfo);
-        }
-
         markerOverlayView.update(null, null);
 
         updateCalibrationParametersBuffer(slope,intercept);
@@ -912,7 +892,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     @Override
     public void spectroscopyCalibrationDidReset(SpectroscopyCalibrationManager manager) {
-        spectroscopyStatusLabel.setText(getResources().getString(R.string.spectroscopy_tap_first_point));
         clearCalibrationMarkers();
         markerOverlayView.update(null, null);
         graphView.resetPicks();
@@ -934,8 +913,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     @Override
     public void spectroscopyDidFailWithError(SpectroscopyCalibrationManager manager, String error) {
-        spectroscopyStatusLabel.setText(getResources().getString(R.string.spectroscopy_calibration_failed));
-
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle(getResources().getString(R.string.error))
                 .setMessage(error)

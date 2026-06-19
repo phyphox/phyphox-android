@@ -134,7 +134,17 @@
     <string name="spectroscopy_confirm_point">Confirm this calibration point?</string>
     <string name="calibration_reset">Reset Calibration</string>
     <string name="not_calibrated">Not calibrated</string>
-    <string name="calibration_invalid">Calibration parameters invalid</string>
+    <string name="spectrum_left_to_right">Left → Right</string>
+    <string name="spectrum_right_to_left">Right → Left</string>
+    <string name="spectrum_bottom_to_top">Bottom → Top</string>
+    <string name="spectrum_top_to_bottom">Top → Bottom</string>
+    <string name="which_spectrum_orientation">Which orientation to scan the spectrum?</string>
+    <string name="which_spectrum_direction">Which direction is the spectrum dispersion?</string>
+    <string name="vertical">↕ Vertical</string>
+    <string name="horizontal">↔ Horizontal</string>
+    <string name="spectrum_analysis_setting">Spectrum Analysis Settings</string>
+    <string name="spectrum_analysis_setting_message">This setting lets you choose the orientation of the scan of the image. For example if the spectrum in camera preview is vertical and the blue is at the top and red is at the bottom, You can shoow oritation as verticle and direction as  Blue -> Red.</string>
+
     <!-- Graph Zooms  -->
     <string name="applyZoomTitle">Apply zoom</string>
     <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.</string>

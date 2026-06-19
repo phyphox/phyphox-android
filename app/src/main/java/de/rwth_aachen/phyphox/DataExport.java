@@ -1,8 +1,8 @@
 package de.rwth_aachen.phyphox;
 
-import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_MINI;
-import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
-import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_XLS;
+import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_CSV_MINI;
+import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
+import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_XLS;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -41,7 +41,7 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import de.rwth_aachen.phyphox.Helper.DataExportUtility;
+import de.rwth_aachen.phyphox.helper.DataExportUtility;
 
 //The DataExport class provides export functionality for a phyphoxExperiment.
 //it provides multiple export formats and the dialogs to control them

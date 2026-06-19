@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
-import de.rwth_aachen.phyphox.Helper.RGB;
+import de.rwth_aachen.phyphox.helper.RGB;
 
 public class ExperimentShortInfo {
     public RGB color;

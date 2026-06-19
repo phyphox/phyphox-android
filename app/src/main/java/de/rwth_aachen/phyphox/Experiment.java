@@ -2,9 +2,9 @@ package de.rwth_aachen.phyphox;
 
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
-import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
-import static de.rwth_aachen.phyphox.Helper.DataExportUtility.MIME_TYPE_PHYPHOX;
-import static de.rwth_aachen.phyphox.Helper.DataExportUtility.REQUEST_WRITE_EXTERNAL_STORAGE;
+import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
+import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_PHYPHOX;
+import static de.rwth_aachen.phyphox.helper.DataExportUtility.REQUEST_WRITE_EXTERNAL_STORAGE;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -105,11 +105,11 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
-import de.rwth_aachen.phyphox.Helper.DataExportUtility;
-import de.rwth_aachen.phyphox.Helper.WindowInsetHelper;
+import de.rwth_aachen.phyphox.helper.DataExportUtility;
+import de.rwth_aachen.phyphox.helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
-import de.rwth_aachen.phyphox.Helper.DecimalTextWatcher;
-import de.rwth_aachen.phyphox.Helper.Helper;
+import de.rwth_aachen.phyphox.helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
 // Experiments are performed in this activity, which reacts to various intents.

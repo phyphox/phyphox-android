@@ -12,8 +12,8 @@ import android.os.Bundle;
 import android.view.ViewGroup;
 
 
-import de.rwth_aachen.phyphox.Helper.Helper;
-import de.rwth_aachen.phyphox.Helper.WindowInsetHelper;
+import de.rwth_aachen.phyphox.helper.Helper;
+import de.rwth_aachen.phyphox.helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.R;
 
 

@@ -3,13 +3,15 @@ package de.rwth_aachen.phyphox.camera
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.OrientationEventListener
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import de.rwth_aachen.phyphox.Helper.RGB
+import de.rwth_aachen.phyphox.helper.RGB
+import de.rwth_aachen.phyphox.helper.Helper
 import de.rwth_aachen.phyphox.PhyphoxExperiment
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.model.CameraSettingLevel
@@ -43,6 +45,9 @@ class CameraPreviewFragment (
 
     /* handles all the UI elements for camera preview */
     private lateinit var cameraPreviewScreen: CameraPreviewScreen
+
+    private var orientationEventListener: OrientationEventListener? = null
+    private var currentOrientation = DeviceOrientation.PORTRAIT
 
     /* tracks the current view state */
     private val cameraScreenViewState = MutableStateFlow(CameraScreenViewState())
@@ -118,12 +123,36 @@ class CameraPreviewFragment (
                 }
             }
         }
+
+        orientationEventListener = object : OrientationEventListener(context) {
+            override fun onOrientationChanged(angle: Int) {
+                val newOrientation: DeviceOrientation = Helper.getOrientationFromAngle(angle)
+                if(newOrientation == DeviceOrientation.PORTRAIT_REVERSE) return
+
+                if (newOrientation !== currentOrientation) {
+                    currentOrientation = newOrientation
+                    cameraPreviewScreen.updateSpectrumOrientation(newOrientation)
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (orientationEventListener!!.canDetectOrientation()) {
+            orientationEventListener?.enable();
+        }
     }
 
     override fun onPause() {
         super.onPause()
         cameraViewModel.stopCameraPreviewView(cameraPreviewScreen)
         cameraPreviewScreen.previewTextureView.visibility = View.GONE
+    }
+
+    override fun onStop() {
+        super.onStop()
+        orientationEventListener?.disable();
     }
 
     fun onPageVisibleToUser(visible: Boolean) {
@@ -137,4 +166,11 @@ interface Scrollable: Serializable {
 
     fun disableScrollable()
 
+}
+
+enum class DeviceOrientation {
+    PORTRAIT,
+    LANDSCAPE,
+    PORTRAIT_REVERSE,
+    LANDSCAPE_REVERSE
 }
