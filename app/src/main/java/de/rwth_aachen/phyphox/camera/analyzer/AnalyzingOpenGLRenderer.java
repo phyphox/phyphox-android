@@ -272,7 +272,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
             return;
         executor.execute(
                 () -> {
-                    Log.d("Renderer","draw()");
                     if (!running || eglContext == null || cameraSurfaceTexture == null)
                         return;
 
