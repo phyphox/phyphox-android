@@ -921,7 +921,7 @@ public class ExperimentListActivity extends AppCompatActivity {
     protected void scanQRCode() {
         IntentIntegrator qrScan = new IntentIntegrator(this);
 
-        qrScan.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+        qrScan.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
         qrScan.setPrompt(getResources().getString(R.string.newExperimentQRscan));
         qrScan.setBeepEnabled(false);
         qrScan.setOrientationLocked(true);

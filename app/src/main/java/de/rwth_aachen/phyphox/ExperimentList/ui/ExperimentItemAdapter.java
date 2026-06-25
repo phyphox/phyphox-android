@@ -234,97 +234,91 @@ public class ExperimentItemAdapter extends BaseAdapter {
 
                 File xmlFile = new File(parentActivity.getFilesDir(), "/" + experimentShortInfos.get(position).xmlFile);
                 popup.setOnMenuItemClickListener(menuItem -> {
-                    switch (menuItem.getItemId()) {
-                        case R.id.experiment_item_share: {
-                            DataExportUtility.startPhyphoxFileSharing(parentActivity, xmlFile);
-                            return true;
-                        }
-
-                        case R.id.experiment_item_download: {
-                            DataExportUtility.createFileInDownloads(xmlFile, xmlFile.getName(), DataExportUtility.MIME_TYPE_PHYPHOX, parentActivity  );
-                            return true;
-                        }
-                        case R.id.experiment_item_delete: {
-                            //Create dialog to ask the user if he REALLY wants to delete...
-                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                            builder.setMessage(res.getString(R.string.confirmDelete))
-                                    .setTitle(R.string.confirmDeleteTitle)
-                                    .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            //Confirmed. Delete the item and reload the list
-                                            long crc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
-                                            File resFolder = new File(parentActivity.getFilesDir(), Long.toHexString(crc32).toLowerCase());
-                                            Log.d("ExperimentList", "Deleting " + experimentShortInfos.get(position).xmlFile);
-                                            parentActivity.deleteFile(experimentShortInfos.get(position).xmlFile);
-                                            if (resFolder.isDirectory()) {
-                                                Log.d("ExperimentList", "Also deleting resource folder " + Long.toHexString(crc32).toLowerCase());
-                                                String[] files = resFolder.list();
-                                                for (String file : files) {
-                                                    if (new File(resFolder, file).delete()) {
-                                                        Log.d("ExperimentList", "Done.");
-                                                    } else {
-                                                        Log.d("ExperimentList", "Failed.");
-                                                    }
-                                                }
-                                            } else {
-                                                Log.d("ExperimentList", "No resource folder found at " + resFolder.getAbsolutePath());
-                                            }
-                                            experimentRepository.loadAndShowMainExperimentList(parentActivity);
-                                        }
-                                    })
-                                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            //Aborted by user. Nothing to do.
-                                        }
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                            return true;
-                        }
-                        case R.id.experiment_item_rename: {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-                            final EditText edit = new EditText(parentActivity);
-                            edit.setText(experimentShortInfos.get(position).title);
-                            builder.setView(edit)
-                                    .setTitle(R.string.rename)
-                                    .setPositiveButton(R.string.rename, (dialog, id) -> {
-                                        String newName = edit.getText().toString();
-                                        if (newName.replaceAll("\\s+", "").isEmpty())
-                                            return;
-                                        //Confirmed. Rename the item and reload the list
-
-                                        long oldCrc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
-                                        File oldResFolder = new File(parentActivity.getFilesDir(), Long.toHexString(oldCrc32).toLowerCase());
-
-                                        if (isSavedState)
-                                            Helper.replaceTagInFile(experimentShortInfos.get(position).xmlFile, parentActivity.getApplicationContext(), "/phyphox/state-title", newName);
-
-                                        long newCrc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
-                                        File newResFolder = new File(parentActivity.getFilesDir(), Long.toHexString(newCrc32).toLowerCase());
-
-                                        if (oldResFolder.isDirectory()) {
-                                            newResFolder.mkdirs();
-                                            String[] files = oldResFolder.list();
+                    int itemId = menuItem.getItemId();
+                    if (itemId == R.id.experiment_item_share) {
+                        DataExportUtility.startPhyphoxFileSharing(parentActivity, xmlFile);
+                        return true;
+                    } else if (itemId == R.id.experiment_item_download) {
+                        DataExportUtility.createFileInDownloads(xmlFile, xmlFile.getName(), DataExportUtility.MIME_TYPE_PHYPHOX, parentActivity  );
+                        return true;
+                    } else if (itemId == R.id.experiment_item_delete) {
+                        //Create dialog to ask the user if he REALLY wants to delete...
+                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                        builder.setMessage(res.getString(R.string.confirmDelete))
+                                .setTitle(R.string.confirmDeleteTitle)
+                                .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        //Confirmed. Delete the item and reload the list
+                                        long crc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
+                                        File resFolder = new File(parentActivity.getFilesDir(), Long.toHexString(crc32).toLowerCase());
+                                        Log.d("ExperimentList", "Deleting " + experimentShortInfos.get(position).xmlFile);
+                                        parentActivity.deleteFile(experimentShortInfos.get(position).xmlFile);
+                                        if (resFolder.isDirectory()) {
+                                            Log.d("ExperimentList", "Also deleting resource folder " + Long.toHexString(crc32).toLowerCase());
+                                            String[] files = resFolder.list();
                                             for (String file : files) {
-                                                Log.d("ExperimentList", "Moving resource file " + file);
-                                                if (new File(oldResFolder, file).renameTo(new File(newResFolder, file))) {
+                                                if (new File(resFolder, file).delete()) {
                                                     Log.d("ExperimentList", "Done.");
                                                 } else {
                                                     Log.d("ExperimentList", "Failed.");
                                                 }
                                             }
+                                        } else {
+                                            Log.d("ExperimentList", "No resource folder found at " + resFolder.getAbsolutePath());
                                         }
-
                                         experimentRepository.loadAndShowMainExperimentList(parentActivity);
-                                    })
-                                    .setNegativeButton(R.string.cancel, (dialog, id) -> {
+                                    }
+                                })
+                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
                                         //Aborted by user. Nothing to do.
-                                    });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                            return true;
-                        }
+                                    }
+                                });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                        return true;
+                    } else if (itemId == R.id.experiment_item_rename) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                        final EditText edit = new EditText(parentActivity);
+                        edit.setText(experimentShortInfos.get(position).title);
+                        builder.setView(edit)
+                                .setTitle(R.string.rename)
+                                .setPositiveButton(R.string.rename, (dialog, id) -> {
+                                    String newName = edit.getText().toString();
+                                    if (newName.replaceAll("\\s+", "").isEmpty())
+                                        return;
+                                    //Confirmed. Rename the item and reload the list
 
+                                    long oldCrc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
+                                    File oldResFolder = new File(parentActivity.getFilesDir(), Long.toHexString(oldCrc32).toLowerCase());
+
+                                    if (isSavedState)
+                                        Helper.replaceTagInFile(experimentShortInfos.get(position).xmlFile, parentActivity.getApplicationContext(), "/phyphox/state-title", newName);
+
+                                    long newCrc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
+                                    File newResFolder = new File(parentActivity.getFilesDir(), Long.toHexString(newCrc32).toLowerCase());
+
+                                    if (oldResFolder.isDirectory()) {
+                                        newResFolder.mkdirs();
+                                        String[] files = oldResFolder.list();
+                                        for (String file : files) {
+                                            Log.d("ExperimentList", "Moving resource file " + file);
+                                            if (new File(oldResFolder, file).renameTo(new File(newResFolder, file))) {
+                                                Log.d("ExperimentList", "Done.");
+                                            } else {
+                                                Log.d("ExperimentList", "Failed.");
+                                            }
+                                        }
+                                    }
+
+                                    experimentRepository.loadAndShowMainExperimentList(parentActivity);
+                                })
+                                .setNegativeButton(R.string.cancel, (dialog, id) -> {
+                                    //Aborted by user. Nothing to do.
+                                });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                        return true;
                     }
                     return false;
                 });

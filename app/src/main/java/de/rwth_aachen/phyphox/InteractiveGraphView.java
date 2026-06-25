@@ -139,28 +139,31 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         toolbar.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.graph_tools_pan:
-                        if(enableCalibrationMode){
-                            if(!graphView.isSpectroscopyCalibrated) spectroscopyCalibrationManager.resetCalibration();
-                        }
-                        graphView.setTouchMode(GraphView.TouchMode.zoom);
-                        return true;
-                    case R.id.graph_tools_pick:
-                        if(enableCalibrationMode){
-                            removePopUpAndMarkerOverlayView();
-                            if(!graphView.isSpectroscopyCalibrated) spectroscopyCalibrationManager.resetCalibration();
-                        }
-                        graphView.setTouchMode(GraphView.TouchMode.pick);
-                        return true;
-                    case R.id.graph_tools_calibrate:
+                int itemId = item.getItemId();
+                if (itemId == R.id.graph_tools_pan) {
+                    if (enableCalibrationMode) {
+                        if (!graphView.isSpectroscopyCalibrated)
+                            spectroscopyCalibrationManager.resetCalibration();
+                    }
+                    graphView.setTouchMode(GraphView.TouchMode.zoom);
+                    return true;
+                } else if (itemId == R.id.graph_tools_pick) {
+                    if (enableCalibrationMode) {
                         removePopUpAndMarkerOverlayView();
-                        graphView.setTouchMode(GraphView.TouchMode.calibrate);
-                        if(!graphView.isSpectroscopyCalibrated) spectroscopyCalibrationManager.resetCalibration();
-                        return true;
-                    case R.id.graph_tools_more:
-                        PopupMenu popup = createGraphToolPopUpMenu();
-                        popup.setOnMenuItemClickListener(menuItem -> {
+                        if (!graphView.isSpectroscopyCalibrated)
+                            spectroscopyCalibrationManager.resetCalibration();
+                    }
+                    graphView.setTouchMode(GraphView.TouchMode.pick);
+                    return true;
+                } else if (itemId == R.id.graph_tools_calibrate) {
+                    removePopUpAndMarkerOverlayView();
+                    graphView.setTouchMode(GraphView.TouchMode.calibrate);
+                    if (!graphView.isSpectroscopyCalibrated)
+                        spectroscopyCalibrationManager.resetCalibration();
+                    return true;
+                } else if (itemId == R.id.graph_tools_more) {
+                    PopupMenu popup = createGraphToolPopUpMenu();
+                    popup.setOnMenuItemClickListener(menuItem -> {
                             int id = menuItem.getItemId();
                             if (id == R.id.graph_tools_linear_fit) {
                                 linearRegression = !linearRegression;

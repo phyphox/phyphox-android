@@ -1249,19 +1249,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         int highlightLink = -1;
-        switch (id) {
-            case R.id.action_link1: highlightLink = 0;
-                break;
-            case R.id.action_link2: highlightLink = 1;
-                break;
-            case R.id.action_link3: highlightLink = 2;
-                break;
-            case R.id.action_link4: highlightLink = 3;
-                break;
-            case R.id.action_link5: highlightLink = 4;
-                break;
-            default: highlightLink = -1;
-                break;
+        if (id == R.id.action_link1) {
+            highlightLink = 0;
+        } else if (id == R.id.action_link2) {
+            highlightLink = 1;
+        } else if (id == R.id.action_link3) {
+            highlightLink = 2;
+        } else if (id == R.id.action_link4) {
+            highlightLink = 3;
+        } else if (id == R.id.action_link5) {
+            highlightLink = 4;
         }
         if (highlightLink >= 0) {
             Map.Entry entry = (Map.Entry)experiment.highlightedLinks.entrySet().toArray()[highlightLink];
