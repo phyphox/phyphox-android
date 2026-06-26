@@ -96,7 +96,7 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
         if (eglContext == null)
             return false;
         if (newSurface != null) {
-            if (surfaceTexture != null) {
+            if (surfaceTexture != null && eglSurface != null && eglSurface != EGL14.EGL_NO_SURFACE) {
                 EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
                 EGL14.eglDestroySurface(eglDisplay, eglSurface);
             }
@@ -105,7 +105,7 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
             newSurface = null;
 
             eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, surfaceTexture, surfaceAttribs, 0);
-            if (eglSurface == null) {
+            if (eglSurface == null || eglSurface == EGL14.EGL_NO_SURFACE) {
                 throw new RuntimeException("Camera Preview: Surface was null");
             }
 
@@ -114,7 +114,7 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
             }
         }
 
-        if (eglSurface == null)
+        if (eglSurface == null || eglSurface == EGL14.EGL_NO_SURFACE)
             return false;
 
         if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
@@ -149,7 +149,8 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
     }
 
     void draw(float[] camMatrix, RectF passepartout) {
-        if (!cameraPreviewScreen.get().getVisibleToUser())
+        CameraPreviewScreen screen = cameraPreviewScreen.get();
+        if (screen == null || !screen.getVisibleToUser())
             return;
 
         if (!makeCurrent())
@@ -201,7 +202,9 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
         newSurface = st;
         this.w = width;
         this.h = height;
-        cameraPreviewScreen.get().updateTransformation(width, height);
+        CameraPreviewScreen screen = cameraPreviewScreen.get();
+        if (screen != null)
+            screen.updateTransformation(width, height);
     }
 
     @Override
@@ -209,7 +212,9 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
         newSurface = st;
         this.w = width;
         this.h = height;
-        cameraPreviewScreen.get().updateTransformation(width, height);
+        CameraPreviewScreen screen = cameraPreviewScreen.get();
+        if (screen != null)
+            screen.updateTransformation(width, height);
     }
 
     @Override

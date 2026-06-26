@@ -94,9 +94,7 @@ class CameraViewModel() : ViewModel() {
                     }
 
                     CameraPreviewState.ATTACHING_TO_CAMERA -> {
-                        cameraPreviewScreen.previewTextureView.doOnLayout {
-                            startCameraPreviewView(cameraPreviewScreen)
-                        }
+                        startCameraPreviewView(cameraPreviewScreen)
 
                         cameraPreviewScreen.setupZoomControl(cameraInput.cameraSettingState.value)
 

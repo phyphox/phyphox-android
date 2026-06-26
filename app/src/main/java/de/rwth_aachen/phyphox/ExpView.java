@@ -2858,13 +2858,13 @@ public class ExpView implements Serializable{
             if (cameraPreviewFragment == null)
                 cameraPreviewFragment = new CameraPreviewFragment(experiment, scrollable, this::toggleExclusive, showCameraControls, cameraSettingLevel, grayscale, markOverexposure, markUnderexposure);
 
-            parent.getChildFragmentManager().beginTransaction().add(containerView.getId(), cameraPreviewFragment).commit();
+            parent.getChildFragmentManager().beginTransaction().add(containerView.getId(), cameraPreviewFragment).commitNow();
         }
 
         @Override
         protected void destroyView() {
             if (parent != null && cameraPreviewFragment != null)
-                parent.getChildFragmentManager().beginTransaction().remove(cameraPreviewFragment).commit();
+                parent.getChildFragmentManager().beginTransaction().remove(cameraPreviewFragment).commitNow();
             cameraPreviewFragment = null;
 
         }

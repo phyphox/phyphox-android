@@ -158,7 +158,7 @@ class CameraPreviewScreen(
     var isLandscape = true
 
     init {
-
+        previewTextureView.visibility = View.VISIBLE
         initializeAndSetupCameraDimension()
         setFrameTouchOnListener()
 

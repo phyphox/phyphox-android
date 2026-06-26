@@ -119,6 +119,11 @@ class CameraPreviewFragment (
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        cameraPreviewScreen.previewTextureView.visibility = View.VISIBLE
+    }
+
     override fun onPause() {
         super.onPause()
         cameraViewModel.stopCameraPreviewView(cameraPreviewScreen)

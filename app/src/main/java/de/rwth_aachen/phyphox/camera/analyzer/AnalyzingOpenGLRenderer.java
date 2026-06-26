@@ -229,10 +229,11 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         TextureView previewTextureView = cameraPreviewScreen.getPreviewTextureView();
         previewTextureView.setSurfaceTextureListener(analyzingOpenGLRendererPreviewOutput);
 
+        previewOutputs.add(analyzingOpenGLRendererPreviewOutput);
+
         if (previewTextureView.isAvailable()) {
             analyzingOpenGLRendererPreviewOutput.onSurfaceTextureAvailable(previewTextureView.getSurfaceTexture(), previewTextureView.getWidth(), previewTextureView.getHeight());
         }
-        previewOutputs.add(analyzingOpenGLRendererPreviewOutput);
     }
 
     public void detachTexturePreviewView(CameraPreviewScreen cameraPreviewScreen) {
