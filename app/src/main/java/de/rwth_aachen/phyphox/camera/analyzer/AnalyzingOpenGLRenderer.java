@@ -43,7 +43,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     public int previewWidth = 0;
     public int previewHeight = 0;
 
-    AnalyzerConfig currentConfig;
     EGLDisplay eglDisplay = null;
     EGLContext eglContext = null;
     EGLConfig eglConfig = null;
@@ -56,7 +55,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     Lock dataLock;
     List<AnalyzingModule> analyzingModules = new ArrayList<>();
     ExposureAnalyzer exposureAnalyzer;
-    public Deque<AnalyzingOpenGLRendererPreviewOutput> previewOutputs = new ConcurrentLinkedDeque<>();
+    Deque<AnalyzingOpenGLRendererPreviewOutput> previewOutputs = new ConcurrentLinkedDeque<>();
 
     public boolean measuring = false;
     ExperimentTimeReference experimentTimeReference;
@@ -65,6 +64,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
     Long lastPreviewFrame = 0L;
 
+    Boolean isFeaturePhotometry;
     Boolean isFeatureSpectroscopy;
 
     public AnalyzingOpenGLRenderer(CameraInput cameraInput, Lock lock, StateFlow<CameraSettingState> cameraSettingValueState, ExposureStatisticsListener exposureStatisticsListener) {
@@ -77,6 +77,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         this.apertureOutput = cameraInput.getApertureDataBuffer();
         this.isoOutput = cameraInput.getIsoDataBuffer();
 
+        isFeaturePhotometry = cameraInput.isFeaturePhotometry();
         isFeatureSpectroscopy = cameraInput.isFeatureSpectroscopy();
 
         this.dataLock = lock;
@@ -186,18 +187,18 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
             OpenGLHelper.prepareFullScreenVertices();
         }
 
+        AnalyzingModule.release();
+        AnalyzingModule.init(w, h, eglContext, eglDisplay, eglConfig, eglCameraTexture);
+        if (isFeaturePhotometry || isFeatureSpectroscopy) {
+            AnalyzingModule.photometrySetupGL(); // Required for auto exposure analysis and shared among photometry analyzers
+        }
+
         checkGLError("prepareOpenGL");
 
-        this.currentConfig = new AnalyzerConfig(w,h,eglContext,eglDisplay,eglConfig, eglCameraTexture);
-
         for (AnalyzingModule analyzingModule : analyzingModules) {
-            analyzingModule.release();
-            analyzingModule.setupGL(this.currentConfig);
             analyzingModule.prepare();
         }
 
-        exposureAnalyzer.release();
-        exposureAnalyzer.setupGL(this.currentConfig);
         exposureAnalyzer.prepare();
 
         checkGLError("prepareOpenGL (modules)");
@@ -213,7 +214,12 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         //Check if TV is already attached
         TextureView attachingTV = cameraPreviewScreen.getPreviewTextureView();
         for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
-            TextureView thisTV = previewOutput.cameraPreviewScreen.get().getPreviewTextureView();
+            CameraPreviewScreen screen = previewOutput.cameraPreviewScreen.get();
+            if (screen == null) {
+                previewOutputs.remove(previewOutput);
+                continue;
+            }
+            TextureView thisTV = screen.getPreviewTextureView();
             if (thisTV == attachingTV) {
                 return;
             }
@@ -222,15 +228,22 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         AnalyzingOpenGLRendererPreviewOutput analyzingOpenGLRendererPreviewOutput = new AnalyzingOpenGLRendererPreviewOutput(cameraPreviewScreen);
         TextureView previewTextureView = cameraPreviewScreen.getPreviewTextureView();
         previewTextureView.setSurfaceTextureListener(analyzingOpenGLRendererPreviewOutput);
-        if (previewTextureView.isAvailable())
+
+        if (previewTextureView.isAvailable()) {
             analyzingOpenGLRendererPreviewOutput.onSurfaceTextureAvailable(previewTextureView.getSurfaceTexture(), previewTextureView.getWidth(), previewTextureView.getHeight());
+        }
         previewOutputs.add(analyzingOpenGLRendererPreviewOutput);
     }
 
     public void detachTexturePreviewView(CameraPreviewScreen cameraPreviewScreen) {
         TextureView detachingTV = cameraPreviewScreen.getPreviewTextureView();
         for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
-            TextureView thisTV = previewOutput.cameraPreviewScreen.get().getPreviewTextureView();
+            CameraPreviewScreen screen = previewOutput.cameraPreviewScreen.get();
+            if (screen == null) {
+                previewOutputs.remove(previewOutput);
+                continue;
+            }
+            TextureView thisTV = screen.getPreviewTextureView();
             if (thisTV == detachingTV) {
                 previewOutputs.remove(previewOutput);
             }
@@ -337,11 +350,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
             for (AnalyzingModule analyzingModule : analyzingModules) {
                 if (analyzingModule instanceof SpectroscopyAnalyzer) {
                     ((SpectroscopyAnalyzer) analyzingModule).setAnalysisSpectrumOrientation(spectrumOrientation);
-                    if (currentConfig != null) {
-                        analyzingModule.release();
-                        analyzingModule.setupGL(currentConfig);
+                    if (AnalyzingModule.eglContext != null)
                         analyzingModule.prepare();
-                    }
                 }
             }
         });
@@ -368,7 +378,10 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                 }
         );
         for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
-            previewOutput.cameraPreviewScreen.get().updateTransformation(previewOutput.w, previewOutput.h);
+            CameraPreviewScreen screen = previewOutput.cameraPreviewScreen.get();
+            if (screen != null && previewOutput.w > 0 && previewOutput.h > 0) {
+                screen.updateTransformation(previewOutput.w, previewOutput.h);
+            }
         }
     }
 

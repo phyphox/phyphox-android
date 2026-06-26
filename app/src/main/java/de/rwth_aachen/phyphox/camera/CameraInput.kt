@@ -46,7 +46,6 @@ import java.util.concurrent.locks.Lock
 /*
 * Takes the essential input from the PhyphoxExperiment which are provided from XML.
 * */
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsListener {
     @Transient var camera: Camera? = null
     @Transient private lateinit var cameraProviderListenableFuture: ListenableFuture<ProcessCameraProvider>
@@ -277,7 +276,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     fun loadAndSetupExposureSettingRanges() {
         val cameraInfo = camera?.cameraInfo?.let { Camera2CameraInfo.from(it) }
@@ -455,7 +453,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     lateinit var experimentTimeReference: ExperimentTimeReference
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     constructor(
             x1: Float,
             x2: Float,
@@ -517,7 +514,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         analyzingOpenGLRenderer?.measuring = false
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun setDefaultCameraSettingValueIfAvailable(setting: String?): CameraSettingState {
         parseMapFromString(setting)
 

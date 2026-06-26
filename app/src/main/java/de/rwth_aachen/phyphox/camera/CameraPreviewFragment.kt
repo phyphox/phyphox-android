@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 import java.io.Serializable
 
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraPreviewFragment (
         private val experiment: PhyphoxExperiment,
         private val scrollable: Scrollable,

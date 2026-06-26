@@ -25,7 +25,13 @@ import java.util.Arrays;
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
-public class SpectroscopyAnalyzer extends AnalyzingModule{
+public class SpectroscopyAnalyzer extends AnalyzingModule {
+
+    int nSpecDownsampleSteps = 4;
+    EGLSurface[] specDownsampleSurfaces = new EGLSurface[nSpecDownsampleSteps];
+    int[] wSpecDownsampleStep = new int[nSpecDownsampleSteps];
+    int[] hSpecDownsampleStep = new int[nSpecDownsampleSteps];
+    int[] specDownsamplingTextures = new int[nSpecDownsampleSteps];
 
     final static String verticalHeightReductionFragmentShader =
             "precision highp float;" +
@@ -109,25 +115,34 @@ public class SpectroscopyAnalyzer extends AnalyzingModule{
     }
 
     @Override
-    protected void configureDownSampling() {
-        nDownsampleSteps = 4;
-    }
-
-    @Override
-    protected void calculateStepDimensions(int i) {
-        if (analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE) {
-            wDownsampleStep[i] = analyzerConfig.width(); // Keep width, shrink height
-            int prevH = (i == 0) ? analyzerConfig.height() : hDownsampleStep[i - 1];
-            hDownsampleStep[i] = (prevH + 3) / 4;
-        } else {
-            hDownsampleStep[i] = analyzerConfig.height(); // Keep height, shrink width
-            int prevW = (i == 0) ? analyzerConfig.width() : wDownsampleStep[i - 1];
-            wDownsampleStep[i] = (prevW + 3) / 4;
-        }
-    }
-
-    @Override
     public void prepare() {
+
+        if (specDownsampleSurfaces != null) {
+            for (EGLSurface surface : specDownsampleSurfaces) {
+                if (surface != null) EGL14.eglDestroySurface(eglDisplay, surface);
+            }
+        }
+        if (specDownsamplingTextures != null) {
+            GLES20.glDeleteTextures(nSpecDownsampleSteps, specDownsamplingTextures, 0);
+        }
+
+        GLES20.glGenTextures(nSpecDownsampleSteps, specDownsamplingTextures, 0);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+
+        for (int i = 0; i < nSpecDownsampleSteps; i++) {
+            if (analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE) {
+                wSpecDownsampleStep[i] = width; // Keep width, shrink height
+                int prevH = (i == 0) ? height : hSpecDownsampleStep[i - 1];
+                hSpecDownsampleStep[i] = (prevH + 3) / 4;
+            } else {
+                hSpecDownsampleStep[i] = height; // Keep height, shrink width
+                int prevW = (i == 0) ? width : wSpecDownsampleStep[i - 1];
+                wSpecDownsampleStep[i] = (prevW + 3) / 4;
+            }
+
+            specDownsampleSurfaces[i] = AnalyzingModule.createPbufferSurface( wSpecDownsampleStep[i], hSpecDownsampleStep[i]);
+        }
+
         // Prepare spectroscopy conversion program
         if (spectroscopyProgram == -1) {
             spectroscopyProgram = buildProgram(fullScreenVertexShader, luminanceFragmentShader);
@@ -161,14 +176,14 @@ public class SpectroscopyAnalyzer extends AnalyzingModule{
         // --- Phase 1: OpenGL Drawing/Downsampling ---
         drawLuminance(camMatrix, passepartout);
 
-        for(int i = 0; i < nDownsampleSteps; i++){
+        for(int i = 0; i < nSpecDownsampleSteps; i++){
             drawVerticalReduction(i, camMatrix);
         }
 
         // --- Phase 2: Setup and GL Read ---
 
-        int outW = wDownsampleStep[nDownsampleSteps -1];
-        int outH = hDownsampleStep[nDownsampleSteps -1];
+        int outW = wSpecDownsampleStep[nSpecDownsampleSteps -1];
+        int outH = hSpecDownsampleStep[nSpecDownsampleSteps -1];
 
         if (resultBuffer == null || resultBufferSize != outW * outH) {
             resultBufferSize = outW * outH;
@@ -191,7 +206,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule{
         final int averagingWidth = isHorizontal ? outH : outW;
 
         // The normalization factor is applied to all sums
-        final double normalizationFactor = (double) (averagingWidth * Math.pow(4, nDownsampleSteps));
+        final double normalizationFactor = (double) (averagingWidth * Math.pow(4, nSpecDownsampleSteps));
 
         double[] dispersionSums = new double[dispersionLength];
 
@@ -257,23 +272,23 @@ public class SpectroscopyAnalyzer extends AnalyzingModule{
     }
 
     public void makeCurrent(EGLSurface eglSurface, int w, int h) {
-        if (!EGL14.eglMakeCurrent(analyzerConfig.eglDisplay(), eglSurface, eglSurface, analyzerConfig.eglContext())) {
+        if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
             throw new RuntimeException("Camera preview: eglMakeCurrent failed");
         }
         GLES20.glViewport(0, 0, w, h);
     }
 
     void drawLuminance(float[] camMatrix, RectF passepartout) {
-        makeCurrent(analyzingSurface, analyzerConfig.width(), analyzerConfig.height());
+        makeCurrent(analyzingSurface, width, height);
 
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         // Calculate scissor rect
-        int scissorX = (int)Math.floor(analyzerConfig.width() *(1.0-Math.max(passepartout.top, passepartout.bottom)));
-        int scissorY = (int)Math.floor(analyzerConfig.height() *(1.0-Math.max(passepartout.left, passepartout.right)));
-        int scissorW = (int)Math.ceil(analyzerConfig.width() *Math.abs(passepartout.height()));
-        int scissorH = (int)Math.ceil(analyzerConfig.height() *Math.abs(passepartout.width()));
+        int scissorX = (int)Math.floor(width *(1.0-Math.max(passepartout.top, passepartout.bottom)));
+        int scissorY = (int)Math.floor(height *(1.0-Math.max(passepartout.left, passepartout.right)));
+        int scissorW = (int)Math.ceil(width *Math.abs(passepartout.height()));
+        int scissorH = (int)Math.ceil(height *Math.abs(passepartout.width()));
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
         GLES20.glScissor(scissorX, scissorY, scissorW, scissorH);
@@ -289,7 +304,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule{
         GLES20.glVertexAttribPointer(spectroscopyProgramTexCoordinatesHandle, 2, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, analyzerConfig.cameraTexture());
+        GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, cameraTexture);
         GLES20.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
         GLES20.glUniform1i(spectroscopyProgramTextureHandle, 0);
@@ -311,7 +326,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule{
     }
 
     void drawVerticalReduction(int step, float[] camMatrix) {
-        makeCurrent(downsampleSurfaces[step], wDownsampleStep[step], hDownsampleStep[step]);
+        makeCurrent(specDownsampleSurfaces[step], wSpecDownsampleStep[step], hSpecDownsampleStep[step]);
 
         GLES20.glUseProgram(verticalReductionProgram);
 
@@ -324,21 +339,21 @@ public class SpectroscopyAnalyzer extends AnalyzingModule{
         GLES20.glVertexAttribPointer(reductionProgramTexCoordinatesHandle, 2, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, downsamplingTextures[step]);
-        EGL14.eglBindTexImage(analyzerConfig.eglDisplay(), (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, specDownsamplingTextures[step]);
+        EGL14.eglBindTexImage(eglDisplay, (step == 0) ? analyzingSurface : specDownsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glUniform1i(reductionProgramTextureHandle, 0);
 
-        GLES20.glUniform2f(reductionResSourceHandle, step == 0 ? analyzerConfig.width() : wDownsampleStep[step-1], step == 0 ? analyzerConfig.height() : hDownsampleStep[step-1]);
-        GLES20.glUniform2f(reductionResTargetHandle, wDownsampleStep[step], hDownsampleStep[step]);
+        GLES20.glUniform2f(reductionResSourceHandle, step == 0 ? width : wSpecDownsampleStep[step-1], step == 0 ? height : hSpecDownsampleStep[step-1]);
+        GLES20.glUniform2f(reductionResTargetHandle, wSpecDownsampleStep[step], hSpecDownsampleStep[step]);
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-        EGL14.eglReleaseTexImage(analyzerConfig.eglDisplay(), (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
+        EGL14.eglReleaseTexImage(eglDisplay, (step == 0) ? analyzingSurface : specDownsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
         GLES20.glDisableVertexAttribArray(reductionProgramVerticesHandle);
         GLES20.glDisableVertexAttribArray(reductionProgramTexCoordinatesHandle);
 

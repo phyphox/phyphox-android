@@ -13,19 +13,13 @@ import android.opengl.EGLConfig;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
-import android.opengl.Matrix;
 import android.os.Build;
-import android.util.Log;
-import android.view.Display;
 import android.view.TextureView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -77,9 +71,9 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
 
     WeakReference<CameraPreviewScreen> cameraPreviewScreen;
     EGLSurface eglSurface;
-    private SurfaceTexture surfaceTexture = null;
-    private SurfaceTexture newSurface = null;
-    int w, h;
+    private volatile SurfaceTexture surfaceTexture = null;
+    private volatile SurfaceTexture newSurface = null;
+    volatile int w, h;
 
     boolean grayscale;
     RGB markOverexposure, markUnderexposure;

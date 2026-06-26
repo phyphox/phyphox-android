@@ -167,24 +167,24 @@ public class LuminanceAnalyzer extends AnalyzingModule {
     }
 
     public void makeCurrent(EGLSurface eglSurface, int w, int h) {
-        if (!EGL14.eglMakeCurrent(analyzerConfig.eglDisplay(), eglSurface, eglSurface, analyzerConfig.eglContext())) {
+        if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
             throw new RuntimeException("Camera preview: eglMakeCurrent failed");
         }
         GLES20.glViewport(0,0, w, h);
     }
 
     void drawLuminance(float[] camMatrix, RectF passepartout) {
-        makeCurrent(analyzingSurface, analyzerConfig.width(), analyzerConfig.height());
+        makeCurrent(analyzingSurface, width, height);
 
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
         GLES20.glScissor(
-                (int)Math.floor(analyzerConfig.width() *(1.0-Math.max(passepartout.top, passepartout.bottom))),
-                (int)Math.floor(analyzerConfig.height() *(1.0-Math.max(passepartout.left, passepartout.right))),
-                (int)Math.ceil(analyzerConfig.width() *Math.abs(passepartout.height())),
-                (int)Math.ceil(analyzerConfig.height() *Math.abs(passepartout.width())));
+                (int)Math.floor(width*(1.0-Math.max(passepartout.top, passepartout.bottom))),
+                (int)Math.floor(height*(1.0-Math.max(passepartout.left, passepartout.right))),
+                (int)Math.ceil(width*Math.abs(passepartout.height())),
+                (int)Math.ceil(height*Math.abs(passepartout.width())));
 
         GLES20.glUseProgram(luminanceProgram);
 
@@ -197,7 +197,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         GLES20.glVertexAttribPointer(luminanceProgramTexCoordinatesHandle, 2, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, analyzerConfig.cameraTexture());
+        GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, cameraTexture);
         GLES20.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
         GLES20.glUniform1i(luminanceProgramTextureHandle, 0);
@@ -234,20 +234,20 @@ public class LuminanceAnalyzer extends AnalyzingModule {
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, downsamplingTextures[step]);
-        EGL14.eglBindTexImage(analyzerConfig.eglDisplay(), (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
+        EGL14.eglBindTexImage(eglDisplay, (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glUniform1i(luminanceDownsamplingProgramTextureHandle, 0);
 
-        GLES20.glUniform2f(luminanceDownsamplingResSourceHandle, step == 0 ? analyzerConfig.width() : wDownsampleStep[step-1], step == 0 ? analyzerConfig.height() : hDownsampleStep[step-1]);
+        GLES20.glUniform2f(luminanceDownsamplingResSourceHandle, step == 0 ? width : wDownsampleStep[step-1], step == 0 ? height : hDownsampleStep[step-1]);
         GLES20.glUniform2f(luminanceDownsamplingResTargetHandle, wDownsampleStep[step], hDownsampleStep[step]);
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-        EGL14.eglReleaseTexImage(analyzerConfig.eglDisplay(), (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
+        EGL14.eglReleaseTexImage(eglDisplay, (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
         GLES20.glDisableVertexAttribArray(luminanceDownsamplingProgramVerticesHandle);
         GLES20.glDisableVertexAttribArray(luminanceDownsamplingProgramTexCoordinatesHandle);
 

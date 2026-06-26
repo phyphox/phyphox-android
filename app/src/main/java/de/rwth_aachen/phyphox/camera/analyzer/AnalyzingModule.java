@@ -2,43 +2,52 @@ package de.rwth_aachen.phyphox.camera.analyzer;
 
 import android.graphics.RectF;
 import android.opengl.EGL14;
+import android.opengl.EGLConfig;
+import android.opengl.EGLContext;
+import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
-import android.os.Build;
-
-import androidx.annotation.CallSuper;
-import androidx.annotation.RequiresApi;
 
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public abstract class AnalyzingModule {
 
-    AnalyzerConfig analyzerConfig;
-    EGLSurface analyzingSurface = null;
+    //Important: Many resources and references here are static as they either have to be shared
+    // between the various AnalyzingModule instances or because we can save resources by doing so
 
-    int nDownsampleSteps = 3; // Must be <= 4 (analyzing modules are designed with this limit in mind)
+    static int width, height;
+    static EGLDisplay eglDisplay;
+    static EGLContext eglContext;
+    static EGLConfig eglConfig;
+    static int cameraTexture;
+    static EGLSurface analyzingSurface = null;
+    static final int nDownsampleSteps = 3; // Must be <= 4 (analyzing modules are designed with this limit in mind)
     // 3 downsampling steps seem to be a good trade-off between fixed costs of each step and reducing CPU load.
     // However, this was only tested on a Nexus 5x which had its optimum at 3 and a Pixel 6 where 3 and 4 steps were
     // nearly indistinguishable. Note, that this probably also heavily depends on the resolution that the video
     // stream gets on this device. Both devices used a 1600x1200 stream, but older devices with lower resolutions
     // might reduce the preview stream resolution, hopefully evening out the lower performance of such devices.
 
-    EGLSurface[] downsampleSurfaces = new EGLSurface[nDownsampleSteps];
-    int[] wDownsampleStep = new int[nDownsampleSteps];
-    int[] hDownsampleStep = new int[nDownsampleSteps];
+    static EGLSurface[] downsampleSurfaces = new EGLSurface[nDownsampleSteps];
+    static int[] wDownsampleStep = new int[nDownsampleSteps];
+    static int[] hDownsampleStep = new int[nDownsampleSteps];
 
-    int[] downsamplingTextures = new int[nDownsampleSteps];
+    static int[] downsamplingTextures = new int[nDownsampleSteps];
 
     public AnalyzingModule(){}
 
-    protected void setupGL(AnalyzerConfig analyzerConfig) {
-        this.analyzerConfig = analyzerConfig;
+    static protected void init(int width, int height, EGLContext eglContext, EGLDisplay eglDisplay, EGLConfig eglConfig, int cameraTexture) {
+        AnalyzingModule.width = width;
+        AnalyzingModule.height = height;
+        AnalyzingModule.eglContext = eglContext;
+        AnalyzingModule.eglConfig = eglConfig;
+        AnalyzingModule.eglDisplay = eglDisplay;
+        AnalyzingModule.cameraTexture = cameraTexture;
 
-        analyzingSurface = createPbufferSurface(analyzerConfig.width(), analyzerConfig.height());
+        analyzingSurface = createPbufferSurface(width, height);
+    }
 
-        configureDownSampling();
-
+    protected static void photometrySetupGL() {
         downsampleSurfaces = new EGLSurface[nDownsampleSteps];
         wDownsampleStep = new int[nDownsampleSteps];
         hDownsampleStep = new int[nDownsampleSteps];
@@ -48,32 +57,25 @@ public abstract class AnalyzingModule {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
         for (int i = 0; i < nDownsampleSteps; i++) {
-            calculateStepDimensions(i);
+            int prevW = (i == 0) ? width : wDownsampleStep[i - 1];
+            int prevH = (i == 0) ? height : hDownsampleStep[i - 1];
+
+            wDownsampleStep[i] = (prevW + 3) / 4;
+            hDownsampleStep[i] = (prevH + 3) / 4;
+
             downsampleSurfaces[i] = createPbufferSurface( wDownsampleStep[i], hDownsampleStep[i]);
         }
 
     }
 
-    protected void configureDownSampling(){
-        nDownsampleSteps = 3;
-    }
 
-    protected void calculateStepDimensions(int i){
-        int prevW = (i == 0) ? analyzerConfig.width() : wDownsampleStep[i - 1];
-        int prevH = (i == 0) ? analyzerConfig.height() : hDownsampleStep[i - 1];
-
-        wDownsampleStep[i] = (prevW + 3) / 4;
-        hDownsampleStep[i] = (prevH + 3) / 4;
-    }
-
-    @CallSuper
-     protected void release() {
+     protected static void release() {
          if (analyzingSurface != null) {
-             EGL14.eglDestroySurface(analyzerConfig.eglDisplay(), analyzingSurface);
+             EGL14.eglDestroySurface(eglDisplay, analyzingSurface);
          }
          if (downsampleSurfaces != null) {
              for (EGLSurface surface : downsampleSurfaces) {
-                 if (surface != null) EGL14.eglDestroySurface(analyzerConfig.eglDisplay(), surface);
+                 if (surface != null) EGL14.eglDestroySurface(eglDisplay, surface);
              }
          }
          if (downsamplingTextures != null) {
@@ -81,7 +83,7 @@ public abstract class AnalyzingModule {
          }
     }
 
-    private EGLSurface createPbufferSurface(int w, int h) {
+    protected static EGLSurface createPbufferSurface(int w, int h) {
         int[] surfaceAttr = {
                 EGL14.EGL_WIDTH, w,
                 EGL14.EGL_HEIGHT, h,
@@ -90,7 +92,7 @@ public abstract class AnalyzingModule {
                 EGL14.EGL_MIPMAP_TEXTURE, EGL14.EGL_FALSE,
                 EGL14.EGL_NONE
         };
-        return EGL14.eglCreatePbufferSurface(analyzerConfig.eglDisplay(), analyzerConfig.eglConfig(), surfaceAttr, 0);
+        return EGL14.eglCreatePbufferSurface(eglDisplay, eglConfig, surfaceAttr, 0);
     }
 
     public abstract void prepare();

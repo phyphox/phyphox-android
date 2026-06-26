@@ -67,7 +67,6 @@ import kotlin.math.ln
 import kotlin.math.pow
 import de.rwth_aachen.phyphox.camera.analyzer.SpectroscopyAnalyzer
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraPreviewScreen(
         private val root: View,
         private val cameraInput: CameraInput,
@@ -79,6 +78,7 @@ class CameraPreviewScreen(
 
     private val context: Context = root.context
 
+    @Volatile
     var visibleToUser: Boolean = true
 
     val TAG = "CameraPreviewScreen"
@@ -486,7 +486,7 @@ class CameraPreviewScreen(
         cameraInput.analyzingOpenGLRenderer?.let {
             val w: Int = it.previewWidth
             val h: Int = it.previewHeight
-            if (w == 0 || h == 0) return
+            if (w == 0 || h == 0 || outWidth == 0 || outHeight == 0) return
             val rotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
             transformation = Matrix()
             val landscape = Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation
