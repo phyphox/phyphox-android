@@ -8,7 +8,6 @@ import androidx.camera.core.CameraSelector.LENS_FACING_BACK
 /**
  * Defines the current UI state of the camera
  */
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 data class CameraUiState  constructor(
     val cameraPreviewState: CameraPreviewState = CameraPreviewState.INITIALIZING,
     val availableSettings: List<CameraSettingMode> = emptyList(),

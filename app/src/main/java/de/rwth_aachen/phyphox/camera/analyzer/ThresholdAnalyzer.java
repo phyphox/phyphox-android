@@ -22,7 +22,6 @@ import java.nio.ByteOrder;
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class ThresholdAnalyzer extends AnalyzingModule {
 
     final static String thresholdFragmentShader =

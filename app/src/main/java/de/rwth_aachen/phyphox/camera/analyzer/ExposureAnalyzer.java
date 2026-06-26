@@ -19,7 +19,6 @@ import java.nio.ByteOrder;
 
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class ExposureAnalyzer extends AnalyzingModule {
 
     final static String downsamplingFullScreenVertexShader =

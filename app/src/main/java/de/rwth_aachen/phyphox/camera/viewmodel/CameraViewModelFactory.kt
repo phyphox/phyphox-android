@@ -6,7 +6,6 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraViewModelFactory(
 ) : ViewModelProvider.Factory{
 

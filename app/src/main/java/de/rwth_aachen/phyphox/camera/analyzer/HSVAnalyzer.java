@@ -23,7 +23,6 @@ import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class HSVAnalyzer extends AnalyzingModule {
 
     final static String hueFragmentShader =

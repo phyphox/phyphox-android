@@ -22,7 +22,6 @@ import java.nio.ByteOrder;
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class LuminanceAnalyzer extends AnalyzingModule {
 
     final static String luminanceFragmentShader =

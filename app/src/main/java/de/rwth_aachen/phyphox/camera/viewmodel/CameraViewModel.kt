@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class CameraViewModel() : ViewModel() {
 
     val TAG = "CameraViewModel"

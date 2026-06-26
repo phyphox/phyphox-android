@@ -30,7 +30,6 @@ import javax.microedition.khronos.egl.EGL10;
 import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.SurfaceTextureListener {
     static Executor executor;
 

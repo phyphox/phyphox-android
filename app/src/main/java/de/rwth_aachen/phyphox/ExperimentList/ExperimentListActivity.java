@@ -398,14 +398,10 @@ public class ExperimentListActivity extends AppCompatActivity {
         sb.append(Build.MANUFACTURER);
         sb.append("<br />");
         sb.append("ABIS: ");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
-                if (i > 0)
-                    sb.append(", ");
-                sb.append(Build.SUPPORTED_ABIS[i]);
-            }
-        } else {
-            sb.append("API < 21");
+        for (int i = 0; i < Build.SUPPORTED_ABIS.length; i++) {
+            if (i > 0)
+                sb.append(", ");
+            sb.append(Build.SUPPORTED_ABIS[i]);
         }
         sb.append("<br />");
         sb.append("Base OS: ");
@@ -445,11 +441,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append(sensor.getName());
                 sb.append("<br />");
                 sb.append("- Reporting Mode: ");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    sb.append(sensor.getReportingMode());
-                } else {
-                    sb.append("API < 21");
-                }
+                sb.append(sensor.getReportingMode());
                 sb.append("<br />");
                 sb.append("- Range: ");
                 sb.append(sensor.getMaximumRange());
@@ -466,11 +458,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append(" µs");
                 sb.append("<br />");
                 sb.append("- Max delay: ");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    sb.append(sensor.getMaxDelay());
-                } else {
-                    sb.append("API < 21");
-                }
+                sb.append(sensor.getMaxDelay());
                 sb.append(" µs");
                 sb.append("<br />");
                 sb.append("- Power: ");
@@ -516,11 +504,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         sb.append("<br /><br />");
 
         sb.append("<b>Camera 2 API</b><br />");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            sb.append(CameraHelper.getCamera2FormattedCaps(false));
-        } else {
-            sb.append("API < 21");
-        }
+        sb.append(CameraHelper.getCamera2FormattedCaps(false));
         sb.append("</font>");
 
         final Spanned text = Html.fromHtml(sb.toString());

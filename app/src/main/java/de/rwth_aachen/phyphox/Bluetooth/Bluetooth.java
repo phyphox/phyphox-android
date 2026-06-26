@@ -1090,10 +1090,7 @@ public class Bluetooth implements Serializable {
          */
         @Override
         public boolean execute() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                return gatt.requestMtu(mtu);
-            } else
-                return false;
+            return gatt.requestMtu(mtu);
         }
 
         /**

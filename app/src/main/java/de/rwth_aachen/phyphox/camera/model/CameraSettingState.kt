@@ -11,7 +11,6 @@ import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 /**
  * Defines the current Camera Settings state of camera
  */
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 data class CameraSettingState  constructor(
     val currentLens : Int = CameraSelector.LENS_FACING_BACK,
     val cameraPassepartout: RectF = RectF(),

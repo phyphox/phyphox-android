@@ -136,10 +136,7 @@ public class Metadata {
                         case MinDelay:
                             return String.valueOf(testSensor.sensor.getMinDelay());
                         case MaxDelay:
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                                return String.valueOf(testSensor.sensor.getMaxDelay());
-                            else
-                                return null;
+                            return String.valueOf(testSensor.sensor.getMaxDelay());
                         case Power:
                             return String.valueOf(testSensor.sensor.getPower());
                         case Version:
@@ -185,13 +182,9 @@ public class Metadata {
                 return null;
 
             case camera2api:
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-                    return null;
                 return CameraHelper.getCamera2FormattedCaps(false);
 
             case camera2apiFull:
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-                    return null;
                 return CameraHelper.getCamera2FormattedCaps(true);
         }
         return null;

@@ -74,7 +74,7 @@ class CameraPreviewFragment (
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        cameraPreviewScreen = CameraPreviewScreen(view, experiment?.cameraInput!!, cameraViewModel, toggleExclusive, grayscale, markOverexposure, markUnderexposure)
+        cameraPreviewScreen = CameraPreviewScreen(view, experiment.cameraInput!!, cameraViewModel, toggleExclusive, grayscale, markOverexposure, markUnderexposure)
         cameraViewModel.start(cameraScreenViewState, cameraPreviewScreen)
 
         lifecycleScope.launch {

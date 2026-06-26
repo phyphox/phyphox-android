@@ -87,10 +87,8 @@ public class ExpViewFragment extends Fragment {
         layoutTransition.setDuration(150);
         layoutTransition.setStartDelay(LayoutTransition.APPEARING, 0);
         layoutTransition.setStartDelay(LayoutTransition.CHANGE_APPEARING, 0);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
-            layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
-        }
+        layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
+        layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
         for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {

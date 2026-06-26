@@ -118,10 +118,8 @@ public class AssetExperimentLoader {
 
     public void showCurrentCameraAvailability() {
         //We want to show current availability of experiments requiring cameras
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            CameraManager cm = (CameraManager) environment.context.getSystemService(Context.CAMERA_SERVICE);
-            CameraHelper.updateCameraList(cm);
-        }
+        CameraManager cm = (CameraManager) environment.context.getSystemService(Context.CAMERA_SERVICE);
+        CameraHelper.updateCameraList(cm);
     }
 
     /**

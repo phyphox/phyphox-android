@@ -662,7 +662,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         settings =  PreferenceManager.getDefaultSharedPreferences(this);
         proximityLock = settings.getBoolean("proximityLock", false);
-        if (proximityLock && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (proximityLock) {
             PowerManager powerManager = (PowerManager) getBaseContext().getSystemService(Context.POWER_SERVICE);
             if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK))
                 wakeLock = powerManager.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "phyphox:measuring");
@@ -1664,12 +1664,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         if (remote != null || !serverEnabled) { //Check if it is actually activated. If not, just stop
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-                tv_announcer.animate().translationY(tv_announcer.getMeasuredHeight());
-                btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight());
-            }
-            else
-                fl_announcer.setVisibility(View.INVISIBLE);
+            tv_announcer.animate().translationY(tv_announcer.getMeasuredHeight());
+            btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight());
             return;
         }
 
@@ -1688,10 +1684,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         else
             tv_announcer.setText(res.getString(R.string.remoteServerActive, addressList));
         fl_announcer.setVisibility(View.VISIBLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-            btn_moreInfo.animate().translationY(0).alpha(1.0f);
-            tv_announcer.animate().translationY(0).alpha(1.0f);
-        }
+        btn_moreInfo.animate().translationY(0).alpha(1.0f);
+        tv_announcer.animate().translationY(0).alpha(1.0f);
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
@@ -1745,17 +1739,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         } else {
             fl_announcer.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-            btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight()).alpha(0.0f);
-            announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
-            fl_announcer.setVisibility(View.GONE);
-        }
-        else{
-            btn_moreInfo.setVisibility(View.INVISIBLE);
-            announcer.setVisibility(View.INVISIBLE);
-            fl_announcer.setVisibility(View.GONE);
-        }
-
+        btn_moreInfo.animate().translationY(btn_moreInfo.getMeasuredHeight()).alpha(0.0f);
+        announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
+        fl_announcer.setVisibility(View.GONE);
 
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);

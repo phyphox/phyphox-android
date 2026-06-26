@@ -319,20 +319,18 @@ public class RemoteServer {
     public static String getAddresses(Context context) {
         String ret = "";
         Inet4Address filterMobile = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            Network[] networks = connectivityManager.getAllNetworks();
-            for (Network network : networks) {
-                NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
-                if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                    continue;
-                }
-                LinkProperties properties = connectivityManager.getLinkProperties(network);
-                for (LinkAddress address : properties.getLinkAddresses()) {
-                    if (address.getAddress() instanceof Inet4Address) {
-                        filterMobile = (Inet4Address) address.getAddress();
-                        break;
-                    }
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Network[] networks = connectivityManager.getAllNetworks();
+        for (Network network : networks) {
+            NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+            if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                continue;
+            }
+            LinkProperties properties = connectivityManager.getLinkProperties(network);
+            for (LinkAddress address : properties.getLinkAddresses()) {
+                if (address.getAddress() instanceof Inet4Address) {
+                    filterMobile = (Inet4Address) address.getAddress();
+                    break;
                 }
             }
         }

@@ -164,13 +164,11 @@ public class ExperimentsInCategory {
         experimentItemAdapter = new ExperimentItemAdapter(parentActivity, name, experimentRepository);
         experimentSubList.setAdapter(experimentItemAdapter);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            catLayout.setElevation(res.getDimensionPixelOffset(R.dimen.expElementElevation));
-            catLayout.setClipToPadding(false);
-            catLayout.setClipChildren(false);
-            experimentSubList.setClipToPadding(false);
-            experimentSubList.setClipChildren(false);
-        }
+        catLayout.setElevation(res.getDimensionPixelOffset(R.dimen.expElementElevation));
+        catLayout.setClipToPadding(false);
+        catLayout.setClipChildren(false);
+        experimentSubList.setClipToPadding(false);
+        experimentSubList.setClipChildren(false);
 
         //Add headline and experiment list to our base layout
         catLayout.addView(categoryHeadline);
@@ -179,10 +177,8 @@ public class ExperimentsInCategory {
 
     public void getParentScrollViewPosition() {
         //We want to show current availability of experiments requiring cameras
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            CameraManager cm = (CameraManager) parentContext.getSystemService(Context.CAMERA_SERVICE);
-            CameraHelper.updateCameraList(cm);
-        }
+        CameraManager cm = (CameraManager) parentContext.getSystemService(Context.CAMERA_SERVICE);
+        CameraHelper.updateCameraList(cm);
 
         //Save scroll position to restore this later
         ScrollView sv = parentActivity.findViewById(R.id.experimentScroller);

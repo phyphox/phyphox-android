@@ -2858,13 +2858,13 @@ public class ExpView implements Serializable{
             if (cameraPreviewFragment == null)
                 cameraPreviewFragment = new CameraPreviewFragment(experiment, scrollable, this::toggleExclusive, showCameraControls, cameraSettingLevel, grayscale, markOverexposure, markUnderexposure);
 
-            parent.getChildFragmentManager().beginTransaction().add(containerView.getId(), cameraPreviewFragment).commitNow();
+            parent.getChildFragmentManager().beginTransaction().add(containerView.getId(), cameraPreviewFragment).commit();
         }
 
         @Override
         protected void destroyView() {
             if (parent != null && cameraPreviewFragment != null)
-                parent.getChildFragmentManager().beginTransaction().remove(cameraPreviewFragment).commitNow();
+                parent.getChildFragmentManager().beginTransaction().remove(cameraPreviewFragment).commit();
             cameraPreviewFragment = null;
 
         }
@@ -2888,9 +2888,6 @@ public class ExpView implements Serializable{
 
         @Override
         protected void restore() {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-                return;
-
             super.restore();
             if (rootView != null && cameraPreviewFragment != null && parent != null) {
                 isExclusive = false;
@@ -2904,9 +2901,6 @@ public class ExpView implements Serializable{
 
         @Override
         protected void maximize() {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-                return;
-
             super.maximize();
             if (rootView != null && cameraPreviewFragment != null && parent != null) {
                 isExclusive = true;
@@ -2920,8 +2914,6 @@ public class ExpView implements Serializable{
 
         @Override
         protected void onViewSelected(boolean parentViewIsVisible) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-                return;
             if (cameraPreviewFragment != null)
                 cameraPreviewFragment.onPageVisibleToUser(parentViewIsVisible);
         }
