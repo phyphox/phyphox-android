@@ -28,7 +28,7 @@ import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
 import de.rwth_aachen.phyphox.camera.analyzer.AnalyzingOpenGLRenderer
-import de.rwth_aachen.phyphox.camera.analyzer.SpectrumOrientation
+import de.rwth_aachen.phyphox.camera.analyzer.SpectroscopyAnalyzer
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.CameraState
@@ -218,7 +218,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         }
     }
 
-    fun changeSpectrumAnalysisOrientation(currentOrientation: SpectrumOrientation){
+    fun changeSpectrumAnalysisOrientation(currentOrientation: SpectroscopyAnalyzer.SpectrumOrientation){
 
         val newState = cameraSettingState.value.copy(
             spectrumAnalysisOrientation = currentOrientation,

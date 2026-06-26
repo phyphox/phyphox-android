@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-
-import de.rwth_aachen.phyphox.camera.analyzer.SpectrumOrientation;
-
 public class SpectroscopyCalibrationManager {
 
     public enum CalibrationState {

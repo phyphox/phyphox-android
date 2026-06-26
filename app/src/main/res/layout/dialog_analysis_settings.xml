@@ -60,43 +60,6 @@
             android:text="@string/vertical" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/which_spectrum_direction"
-        android:layout_marginTop="16dp"
-        android:alpha="0.7" />
-
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/directionToggle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        app:singleSelection="true"
-        app:selectionRequired="true"
-        app:checkedButton="@+id/btnBR">
-
-        <Button
-            android:id="@+id/btnBR"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            app:backgroundTint="@color/toggle_selector_background"
-            android:textSize="12dp"
-            android:text="@string/spectrum_left_to_right" />
-
-        <Button
-            android:id="@+id/btnRB"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="12dp"
-            app:backgroundTint="@color/toggle_selector_background"
-            android:text="@string/toggleBrightMode" />
-    </com.google.android.material.button.MaterialButtonToggleGroup>
-
 </LinearLayout>
 
 </ScrollView>

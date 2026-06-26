@@ -54,6 +54,15 @@ public abstract class OpenGLHelper {
         return program;
     }
 
+    static void deleteProgram(int program) {
+        int[] count = new int[1];
+        int[] shaders = new int[2];
+        GLES20.glGetAttachedShaders(program, 2, count, 0, shaders, 0);
+        for (int i = 0; i < count[0]; i++)
+            GLES20.glDeleteShader(shaders[i]);
+        GLES20.glDeleteProgram(program);
+    }
+
     final static String fullScreenVertexShader =
             "precision highp float;" +
             "attribute vec2 vertices;" +

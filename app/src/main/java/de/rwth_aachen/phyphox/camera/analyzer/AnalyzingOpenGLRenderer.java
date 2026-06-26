@@ -8,13 +8,10 @@ import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.GLES20;
-import android.os.Build;
-import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.camera.core.Preview;
 import androidx.camera.core.SurfaceRequest;
 
@@ -33,7 +30,6 @@ import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen;
 import kotlinx.coroutines.flow.StateFlow;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, SurfaceTexture.OnFrameAvailableListener {
 
     public interface ExposureStatisticsListener {
@@ -70,7 +66,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     Long lastPreviewFrame = 0L;
 
     Boolean isFeatureSpectroscopy;
-    SpectrumOrientation spectrumOrientation;
 
     public AnalyzingOpenGLRenderer(CameraInput cameraInput, Lock lock, StateFlow<CameraSettingState> cameraSettingValueState, ExposureStatisticsListener exposureStatisticsListener) {
         this.cameraSettingValueState = cameraSettingValueState;
@@ -83,7 +78,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         this.isoOutput = cameraInput.getIsoDataBuffer();
 
         isFeatureSpectroscopy = cameraInput.isFeatureSpectroscopy();
-        this.spectrumOrientation = cameraSettingValueState.getValue().getSpectrumAnalysisOrientation();
 
         this.dataLock = lock;
 
@@ -113,8 +107,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                 analyzingModules.add(new SpectroscopyAnalyzer(
                         cameraInput.getDataLuminance(),
                         cameraInput.getDataPixelPosition(),
-                        true,
-                        spectrumOrientation));
+                        cameraSettingValueState.getValue().getSpectrumAnalysisOrientation()));
             }
         }
 
@@ -198,16 +191,10 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         this.currentConfig = new AnalyzerConfig(w,h,eglContext,eglDisplay,eglConfig, eglCameraTexture);
 
         for (AnalyzingModule analyzingModule : analyzingModules) {
-
-            if(analyzingModule instanceof SpectroscopyAnalyzer){
-                ((SpectroscopyAnalyzer) analyzingModule).setAnalysisSpectrumOrientation(this.spectrumOrientation);
-            }
-
             analyzingModule.release();
             analyzingModule.setupGL(this.currentConfig);
             analyzingModule.prepare();
         }
-
 
         exposureAnalyzer.release();
         exposureAnalyzer.setupGL(this.currentConfig);
@@ -345,21 +332,19 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         );
     }
 
-    public void setSpectrumOrientation(SpectrumOrientation spectrumOrientation) {
-        this.spectrumOrientation = spectrumOrientation;
-
-        // If we are currently running, we might need to trigger a re-setup.
-        // However, usually orientation changes come with a surface change or configuration change
-        // which triggers onSurfaceRequested anyway.
-        // If dynamic updates are needed without surface change:
-        /*
+    public void setSpectrumOrientation(SpectroscopyAnalyzer.SpectrumOrientation spectrumOrientation) {
         executor.execute(() -> {
-            if (running) {
-                // Re-run setupGL for spectroscopy modules specifically or all modules
-                prepareOpenGL(previewWidth, previewHeight);
+            for (AnalyzingModule analyzingModule : analyzingModules) {
+                if (analyzingModule instanceof SpectroscopyAnalyzer) {
+                    ((SpectroscopyAnalyzer) analyzingModule).setAnalysisSpectrumOrientation(spectrumOrientation);
+                    if (currentConfig != null) {
+                        analyzingModule.release();
+                        analyzingModule.setupGL(currentConfig);
+                        analyzingModule.prepare();
+                    }
+                }
             }
         });
-        */
     }
 
     @Override

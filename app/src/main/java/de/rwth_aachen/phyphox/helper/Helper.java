@@ -73,7 +73,6 @@ import de.rwth_aachen.phyphox.InteractiveGraphView;
 import de.rwth_aachen.phyphox.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
-import de.rwth_aachen.phyphox.camera.DeviceOrientation;
 
 public abstract class Helper {
 
@@ -632,21 +631,5 @@ public abstract class Helper {
         }
 
         return null;
-    }
-    public static DeviceOrientation getOrientationFromAngle(int angle) {
-
-        if (angle == OrientationEventListener.ORIENTATION_UNKNOWN) {
-            return DeviceOrientation.PORTRAIT;
-        }
-
-        if (angle >= 315 || angle < 45) {
-            return DeviceOrientation.PORTRAIT;
-        } else if (angle >= 45 && angle < 135) {
-            return DeviceOrientation.LANDSCAPE_REVERSE;
-        } else if (angle >= 135 && angle < 225) {
-            return DeviceOrientation.PORTRAIT_REVERSE;
-        } else { // angle >= 225 && angle < 315
-            return DeviceOrientation.LANDSCAPE;
-        }
     }
 }
