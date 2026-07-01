@@ -17,18 +17,21 @@
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
 
-    <ImageView
-        android:id="@+id/imgAnalysisOrientation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/arrow_gradient_right"
-        android:layout_marginBottom="16dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/which_spectrum_orientation"
+        android:layout_marginBottom="16dp"
         android:alpha="0.7" />
+
+    <ImageView
+        android:id="@+id/imgAnalysisOrientation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:tint="@null"
+        android:src="@drawable/spectrometer_orientation_landscape"
+        android:layout_marginBottom="16dp" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/axisToggle"
@@ -37,27 +40,25 @@
         android:layout_marginTop="8dp"
         app:singleSelection="true"
         app:selectionRequired="true"
-        app:checkedButton="@+id/btnHorizontal">
+        app:checkedButton="@+id/btnLandscape">
 
         <Button
-            android:id="@+id/btnHorizontal"
+            android:id="@+id/btnLandscape"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="12dp"
             app:backgroundTint="@color/toggle_selector_background"
-            android:text="@string/horizontal" />
+            android:text="@string/landscape_orientation" />
 
         <Button
-            android:id="@+id/btnVertical"
+            android:id="@+id/btnPortrait"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="12dp"
             app:backgroundTint="@color/toggle_selector_background"
-            android:text="@string/vertical" />
+            android:text="@string/portrait_orientation" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
 </LinearLayout>

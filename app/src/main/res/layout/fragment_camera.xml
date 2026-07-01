@@ -114,7 +114,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            app:icon="@drawable/arrow_gradient_right"
+            app:icon="@drawable/spectrometer_orientation_landscape"
             app:iconTint="@null"
             app:iconGravity="textStart"
             android:textSize="12sp"

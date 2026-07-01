@@ -130,7 +130,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
         for (int i = 0; i < nSpecDownsampleSteps; i++) {
-            if (analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE) {
+            if (analysisSpectrumOrientation == SpectrumOrientation.PORTRAIT) {
                 wSpecDownsampleStep[i] = width; // Keep width, shrink height
                 int prevH = (i == 0) ? height : hSpecDownsampleStep[i - 1];
                 hSpecDownsampleStep[i] = (prevH + 3) / 4;
@@ -156,7 +156,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
 
         if (verticalReductionProgram >= 0)
             deleteProgram(verticalReductionProgram);
-        if(analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE){
+        if(analysisSpectrumOrientation == SpectrumOrientation.PORTRAIT){
             verticalReductionProgram = buildProgram(interpolatingHeightFullScreenVertexShader, verticalHeightReductionFragmentShader);
         } else {
             verticalReductionProgram = buildProgram(interpolatingWidthFullScreenVertexShader, verticalWidthReductionFragmentShader);
@@ -200,7 +200,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
 
         // --- Phase 3: Processing ---
 
-        final boolean isHorizontal = analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE;
+        final boolean isHorizontal = analysisSpectrumOrientation == SpectrumOrientation.PORTRAIT;
         // Define which dimension is the dispersion (length) and which is the averaging (width)
         final int dispersionLength = isHorizontal ? outW : outH;
         final int averagingWidth = isHorizontal ? outH : outW;

@@ -9,8 +9,6 @@ import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.PorterDuff
 import android.graphics.RectF
-import android.os.Build
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.Surface
@@ -19,11 +17,9 @@ import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.LinearLayoutCompat
@@ -848,16 +844,19 @@ class CameraPreviewScreen(
 
     private fun openSpectrumAnalysisConfigurationDialog() {
 
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_analysis_settings, null)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_spectroscopy_analysis_settings, null)
         // Proper image resource needs to be created to add in this imageview.
         val imageOrientation : ImageView = dialogView.findViewById(R.id.imgAnalysisOrientation)
         val axisToggle: MaterialButtonToggleGroup = dialogView.findViewById(R.id.axisToggle)
 
-        axisToggle.check(if (isLandscape) R.id.btnHorizontal else R.id.btnVertical)
+        axisToggle.check(if (isLandscape) R.id.btnLandscape else R.id.btnPortrait)
+        imageOrientation.apply {
+            setImageResource(getSpectrumOrientationIcon(getSelectedSpectrumOrientation()))
+        }
 
         axisToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
-                isLandscape = (checkedId == R.id.btnHorizontal)
+                isLandscape = (checkedId == R.id.btnLandscape)
                 applySpectrumOrientationChanges()
                 imageOrientation.apply {
                     setImageResource(getSpectrumOrientationIcon(getSelectedSpectrumOrientation()))
@@ -880,13 +879,6 @@ class CameraPreviewScreen(
         }
     }
 
-    fun setSpectrumOrientation(spectrumOrientation: SpectroscopyAnalyzer.SpectrumOrientation){
-        isLandscape = when (spectrumOrientation) {
-            SpectroscopyAnalyzer.SpectrumOrientation.LANDSCAPE -> true
-            SpectroscopyAnalyzer.SpectrumOrientation.PORTRAIT -> false
-        }
-    }
-
     fun applySpectrumOrientationChanges() {
         val orientation = getSelectedSpectrumOrientation()
         cameraInput.changeSpectrumAnalysisOrientation(orientation)
@@ -899,8 +891,8 @@ class CameraPreviewScreen(
 
     fun getSpectrumOrientationIcon(orientation: SpectroscopyAnalyzer.SpectrumOrientation) : Int {
         val iconRes = when (orientation) {
-            SpectroscopyAnalyzer.SpectrumOrientation.LANDSCAPE -> R.drawable.arrow_gradient_right
-            SpectroscopyAnalyzer.SpectrumOrientation.PORTRAIT -> R.drawable.arrow_gradient_bottom
+            SpectroscopyAnalyzer.SpectrumOrientation.LANDSCAPE -> R.drawable.spectrometer_orientation_landscape
+            SpectroscopyAnalyzer.SpectrumOrientation.PORTRAIT -> R.drawable.spectrometer_orientation_portrait
         }
         return iconRes
     }
