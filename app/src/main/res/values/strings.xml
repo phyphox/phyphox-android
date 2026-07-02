@@ -12,6 +12,7 @@
 
     <!-- Generals  -->
     <string name="error">Error</string>
+    <string name="invalidValue">Invalid Value</string>
     <string name="generalErrorDialog">An error has occurred.</string>
     <string name="help">Help and info</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
@@ -121,19 +122,8 @@
     <string name="graph_slope_label">Slope</string>
     <string name="graph_difference_label">Difference</string>
     <string name="graph_fit_label">Linear fit: y = a x + b</string>
-    <!-- Graph Calibration  -->
-    <string name="confirmCalibrationPoint">Do you want to continue with this calibration point?</string>
-    <string name="enterFirstCalibrationPoint">First Calibration Point</string>
-    <string name="enterSecondCalibrationPoint">SecondCalibrationPoint</string>
-    <string name="enterWavelengthValue">Enter the wavelength (nm) for pixel intensity </string>
-    <string name="spectroscopyWavelengthPlaceholder">Wavelength (nm)</string>
-    <string name="spectroscopy_tap_first_point">Tap to select first calibration point</string>
-    <string name="spectroscopy_tap_second_point">Tap to select second calibration point</string>
-    <string name="spectroscopy_calculating">Calculating calibration…</string>
-    <string name="spectroscopy_calibration_failed">Calibration failed</string>
-    <string name="spectroscopy_confirm_point">Confirm this calibration point?</string>
-    <string name="calibration_reset">Reset Calibration</string>
-    <string name="not_calibrated">Not calibrated</string>
+
+    <!-- Spectroscopy camera UI -->
     <string name="which_spectrum_orientation">What is your device\'s orientation in regard to the spectrum?</string>
     <string name="portrait_orientation">Portrait</string>
     <string name="landscape_orientation">Landscape</string>

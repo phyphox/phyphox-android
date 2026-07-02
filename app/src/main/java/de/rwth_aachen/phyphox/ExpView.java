@@ -1487,8 +1487,6 @@ public class ExpView implements Serializable{
 
         private String gridColor;
 
-        private SpectroscopyCalibrationManager.CalibrationMode calibrationMode;
-
         GraphView.scaleMode scaleMinX = GraphView.scaleMode.auto;
         GraphView.scaleMode scaleMaxX = GraphView.scaleMode.auto;
         GraphView.scaleMode scaleMinY = GraphView.scaleMode.auto;
@@ -1508,6 +1506,13 @@ public class ExpView implements Serializable{
         GraphView.ZoomState zoomState = null;
 
         final String warningText;
+
+        // Picker feature
+        String pickLabel = null;
+        private Vector<DataOutput> outputs = null;
+        private Double[] newPickData = null;
+        private Double[] currentPickData = null;
+        private boolean pickDataChangedExternally = false;
 
         //Quite usual constructor...
         graphElement(String label, String visibility, Vector<String> valueOutputs, Vector<String> inputs, Resources res) {
@@ -1532,6 +1537,11 @@ public class ExpView implements Serializable{
             }
 
             warningText = res.getString(R.string.remoteColorMapWarning).replace("'", "\\'");
+        }
+
+        protected void setPickConfig(String pickLabel, Vector<DataOutput> outputs) {
+            this.pickLabel = pickLabel;
+            this.outputs = outputs;
         }
 
         //Interface to change the height of the graph
@@ -1560,11 +1570,6 @@ public class ExpView implements Serializable{
             for (int i = 0; i < nCurves || i < historyLength; i++) {
                 setColor(color, i, res);
             }
-        }
-
-        protected void refreshColors(Resources res) {
-            for (int i = 0; i < nCurves || i < historyLength; i++)
-                gv.setColor(this.color.get(i).autoLightColor(res).intColor(), i);
         }
 
         protected void setStyle(GraphView.Style style, int i) {
@@ -1692,11 +1697,6 @@ public class ExpView implements Serializable{
                 gv.graphSetup.incrementalX = pu;
         }
 
-        protected void setCalibrationMode(SpectroscopyCalibrationManager.CalibrationMode calibrationMode){
-            this.calibrationMode = calibrationMode;
-        }
-
-
         @Override
         //The update mode is "partial" or "full" as this element uses arrays. The experiment may
         //decide if partial updates are sufficient
@@ -1726,6 +1726,9 @@ public class ExpView implements Serializable{
 
             //Create the graphView
             interactiveGV = new InteractiveGraphView(c);
+            interactiveGV.setPickConfig(pickLabel, outputs, data -> newPickData = data);
+            if (currentPickData != null)
+                interactiveGV.updatePickData(currentPickData);
             gv = interactiveGV.graphView;
             if (zoomState != null)
                 gv.zoomState = zoomState;
@@ -1737,11 +1740,6 @@ public class ExpView implements Serializable{
             interactiveGV.setLayoutParams(lp);
             interactiveGV.setLabel(this.label);
             interactiveGV.setShowColorScale(showColorScale);
-            interactiveGV.setCalibrationMode(calibrationMode, c,  self.parent);
-            if(calibrationMode == SpectroscopyCalibrationManager.CalibrationMode.X_LINEAR){
-                interactiveGV.setSlopeBuffer(experiment.getBuffer(outputs.get(0)));
-                interactiveGV.setInterceptBuffer(experiment.getBuffer(outputs.get(1)));
-            }
 
             if (act instanceof Experiment) {
                 DataExport dataExport = new DataExport(experiment);
@@ -1840,6 +1838,23 @@ public class ExpView implements Serializable{
         }
 
         @Override
+        protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            if (newPickData == null || outputs == null)
+                return false;
+            if (outputs.size() != newPickData.length)
+                return false;
+            for (int i = 0; i < outputs.size(); i++) {
+                if (outputs.get(i) == null || outputs.get(i).buffer == null)
+                    continue;
+                outputs.get(i).clear(false);
+                if (newPickData[i] != null)
+                    outputs.get(i).append(newPickData[i]);
+            }
+            newPickData = null;
+            return true;
+        }
+
+        @Override
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             super.onMayReadFromBuffers(experiment);
             if (!needsUpdate)
@@ -1903,6 +1918,20 @@ public class ExpView implements Serializable{
                     }
                 } else {
                     dataY[i/2] = null;
+                }
+            }
+            if (outputs != null) {
+                if (currentPickData == null) {
+                    currentPickData = new Double[outputs.size()];
+                }
+                for (int i = 0; i < outputs.size(); i++) {
+                    if (outputs.get(i) != null && outputs.get(i).buffer != null) {
+                        Double value = outputs.get(i).buffer.value;
+                        if (!value.equals(currentPickData[i])) {
+                            currentPickData[i] = value;
+                            pickDataChangedExternally = true;
+                        }
+                    }
                 }
             }
         }
@@ -1975,6 +2004,10 @@ public class ExpView implements Serializable{
                 } else
                     gv.addGraphData(dataY, dataMinY, dataMaxY);
                 dataY[0] = null;
+            }
+            if (pickDataChangedExternally && interactiveGV != null) {
+                pickDataChangedExternally = false;
+                interactiveGV.updatePickData(currentPickData);
             }
         }
 

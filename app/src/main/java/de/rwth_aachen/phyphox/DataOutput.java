@@ -9,16 +9,23 @@ import java.util.Iterator;
 public class DataOutput implements Serializable {
     public DataBuffer buffer = null;
     boolean append;
+    String label; //Used by some view elements for user actions that are mapped to specific outputs, like assigning calibration data points in graph views
 
     //Get value
     public double getValue() {
         return buffer.value;
     }
 
-    //Constructor with specified clear attribute
-    protected DataOutput(DataBuffer buffer, boolean append) {
+    //Constructor with specified append and label attribute
+    protected DataOutput(DataBuffer buffer, boolean append, String label) {
         this.append = append;
         this.buffer = buffer;
+        this.label = label;
+    }
+
+    //Constructor without label attribute
+    protected DataOutput(DataBuffer buffer, boolean append) {
+        this(buffer, append, null);
     }
 
     //Get the number of elements actually filled into the buffer

@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Point;
 import android.os.Build;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -16,9 +17,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
@@ -26,6 +29,7 @@ import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -40,10 +44,11 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import de.rwth_aachen.phyphox.helper.Helper;
 
-public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo, SpectroscopyCalibrationManager.SpectroscopyCalibrationDelegate {
+public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
 
     private boolean interactive = false;
     private boolean linearRegression = false;
@@ -58,14 +63,16 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     private DataExport dataExport = null;
 
+    String pickLabel = null;
+    Vector<DataOutput> outputs = null;
+    Double[] pickData = null;
+    public interface PickerObserver {
+        void onPick(Double[] data);
+    }
+    PickerObserver observer = null;
+
     View rootView;
     FrameLayout graphFrame;
-
-    private boolean enableCalibrationMode = true;
-    private SpectroscopyCalibrationManager.CalibrationMode calibrationMode = SpectroscopyCalibrationManager.CalibrationMode.UNKNOWN;
-
-    private DataBuffer slopeBuffer = null;
-    private  DataBuffer interceptBuffer = null;
 
     private class Marker {
         boolean active = false;
@@ -99,10 +106,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     public PopupWindow popupWindowInfo = null;
     TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
-    private SpectroscopyCalibrationManager spectroscopyCalibrationManager;
-
-    private List<View> calibrationMarkerViews = new ArrayList<>();
-    private boolean needsCalibrationMarkerUpdate = false;
 
     public InteractiveGraphView(Context context) {
         super(context);
@@ -141,25 +144,10 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 int itemId = item.getItemId();
                 if (itemId == R.id.graph_tools_pan) {
-                    if (enableCalibrationMode) {
-                        if (!graphView.isSpectroscopyCalibrated)
-                            spectroscopyCalibrationManager.resetCalibration();
-                    }
                     graphView.setTouchMode(GraphView.TouchMode.zoom);
                     return true;
                 } else if (itemId == R.id.graph_tools_pick) {
-                    if (enableCalibrationMode) {
-                        removePopUpAndMarkerOverlayView();
-                        if (!graphView.isSpectroscopyCalibrated)
-                            spectroscopyCalibrationManager.resetCalibration();
-                    }
                     graphView.setTouchMode(GraphView.TouchMode.pick);
-                    return true;
-                } else if (itemId == R.id.graph_tools_calibrate) {
-                    removePopUpAndMarkerOverlayView();
-                    graphView.setTouchMode(GraphView.TouchMode.calibrate);
-                    if (!graphView.isSpectroscopyCalibrated)
-                        spectroscopyCalibrationManager.resetCalibration();
                     return true;
                 } else if (itemId == R.id.graph_tools_more) {
                     PopupMenu popup = createGraphToolPopUpMenu();
@@ -216,9 +204,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                                 graphView.setLogScale(graphView.logX, !graphView.logY, graphView.logZ);
                                 graphView.invalidate();
                             }
-                            else  if(id == R.id.graph_reset_calibration){
-                                resetSpectroscopyCalibration();
-                            }
                             return false;
                         });
                         popup.show();
@@ -251,43 +236,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 ViewGroup.LayoutParams.MATCH_PARENT));
         markerOverlayView.setGraphSetup(graphView.graphSetup);
         graphFrame.addView(markerOverlayView);
-
-        if(!enableCalibrationMode) return;
-        // Since the height of the graph is updated during plot rendering, the update of
-        // the calibration confirmation marker height need to be readjusted after the rendering is complete.
-        plotRenderer.getGraphSetup().setOnRenderedPlotResizedListener(graphHeight -> {
-            if (needsCalibrationMarkerUpdate) {
-                updateCalibrationConfirmationMarkerWith(graphHeight);
-                needsCalibrationMarkerUpdate = false;
-            }
-        });
-    }
-
-    private TextView createStatusLabel(Context context){
-        // Add spectroscopy status label
-        TextView spectroscopyStatusLabel = new TextView(context);
-
-        FrameLayout.LayoutParams statusParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-
-        statusParams.gravity = Gravity.TOP | Gravity.END;
-
-        statusParams.topMargin = 8;
-        statusParams.rightMargin = 24;
-        spectroscopyStatusLabel.setLayoutParams(statusParams);
-        spectroscopyStatusLabel.setTextSize(14);
-
-        if (Helper.isDarkTheme(getResources())) {
-            spectroscopyStatusLabel.setBackgroundColor(getResources().getColor(R.color.phyphox_black_60));
-            spectroscopyStatusLabel.setTextColor(getResources().getColor(R.color.phyphox_white_100));
-        } else {
-            spectroscopyStatusLabel.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
-            spectroscopyStatusLabel.setTextColor(getResources().getColor(R.color.phyphox_black_100));
-        }
-
-        return spectroscopyStatusLabel;
     }
 
     private PopupMenu createGraphToolPopUpMenu(){
@@ -302,7 +250,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         popup.getMenu().findItem(R.id.graph_tools_log_y).setVisible(allowLogY);
         popup.getMenu().findItem(R.id.graph_tools_log_x).setChecked(graphView.logX);
         popup.getMenu().findItem(R.id.graph_tools_log_y).setChecked(graphView.logY);
-        popup.getMenu().findItem(R.id.graph_reset_calibration).setVisible(enableCalibrationMode);
         boolean hasMap = false;
         for (GraphView.Style style : graphView.style)
             if (style == GraphView.Style.mapXY)
@@ -526,9 +473,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             graphView.setTouchMode(GraphView.TouchMode.zoom);
         else if (toolbar.getSelectedItemId() == R.id.graph_tools_pick)
             graphView.setTouchMode(GraphView.TouchMode.pick);
-        else if (toolbar.getSelectedItemId() == R.id.graph_tools_calibrate)
-            graphView.setTouchMode(GraphView.TouchMode.calibrate);
-        resizeCalibrationConfirmationHeight();
 
         toolbar.setVisibility(interactive ? VISIBLE : GONE);
         expandImage.setVisibility(interactive ? INVISIBLE : VISIBLE);
@@ -546,42 +490,112 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         graphLabel.setTextSize(textSizeAsDisplay);
     }
 
-    private void setPopupInfo(int x, int y, String text) {
+    private void requestPickMappingValue(Marker pickableMarker, int outputIndex) {
+        String title = outputs.get(outputIndex).label;
+        String message = outputs.get(outputIndex+1).label;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(title);
+        builder.setMessage(message);
+
+        final EditText input = new EditText(getContext());
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
+        if (pickData != null && pickData[outputIndex+1] != null && !pickData[outputIndex+1].isNaN())
+            input.setText(String.valueOf(pickData[outputIndex+1]));
+
+        builder.setView(input);
+
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    double userValue = Double.valueOf(input.getText().toString().replace(",", "."));
+                    double markerValue = Double.NaN;
+                    switch ((outputIndex / 2) % 3) {
+                        case 0: //x axis
+                            markerValue = pickableMarker.dataX;
+                            break;
+                        case 1: //y axis
+                            markerValue = pickableMarker.dataY;
+                            break;
+                        case 2: //z axis
+                            markerValue = pickableMarker.dataZ;
+                            break;
+                    }
+                    if (pickData == null)
+                        pickData = new Double[outputs.size()];
+                    pickData[outputIndex] = markerValue;
+                    pickData[outputIndex+1] = userValue;
+                    observer.onPick(pickData);
+                    updatePickMarker();
+                } catch (NumberFormatException e) {
+                    Toast.makeText(getContext(), R.string.invalidValue, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private void updatePopupInfoButtons(Marker pickableMarker) {
+        LinearLayout ll = popupWindowInfo.getContentView().findViewById(R.id.pickButtonList);
+        if (outputs != null && pickableMarker != null) {
+            if (ll.getChildCount() == 0) {
+                for (int i = 0; i < outputs.size(); i++) {
+                    if (outputs.get(i) == null || (i & 0x01) == 1)
+                        continue;
+                    final int finalI = i;
+                    Button b = new Button(getContext());
+                    b.setText(outputs.get(i).label);
+                    b.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (outputs.size() > finalI+1 && outputs.get(finalI+1) != null && outputs.get(finalI+1).label != null) {
+                                requestPickMappingValue(pickableMarker, finalI);
+                            } else {
+                                double markerValue = Double.NaN;
+                                switch ((finalI / 2) % 3) {
+                                    case 0: //x axis
+                                        markerValue = pickableMarker.dataX;
+                                        break;
+                                    case 1: //y axis
+                                        markerValue = pickableMarker.dataY;
+                                        break;
+                                    case 2: //z axis
+                                        markerValue = pickableMarker.dataZ;
+                                        break;
+                                }
+                                if (pickData == null)
+                                    pickData = new Double[outputs.size()];
+                                pickData[finalI] = markerValue;
+                                observer.onPick(pickData);
+                                updatePickMarker();
+                            }
+                        }
+                    });
+                    ll.addView(b);
+                }
+            }
+            ll.setVisibility(VISIBLE);
+            popupWindowInfo.setTouchable(true);
+        } else {
+            ll.setVisibility(GONE);
+            popupWindowInfo.setTouchable(false);
+        }
+    }
+
+    private void setPopupInfo(int x, int y, String text, Marker pickableMarker) {
+
         if (popupWindowInfo == null) {
             View pointInfoView = inflate(getContext(), R.layout.point_info, null);
             popupWindowText = pointInfoView.findViewById(R.id.pointInfoText);
-            TextView pointConfirmationTextView = pointInfoView.findViewById(R.id.pointInfoConfirmationText);
-            Button btnContinue = pointInfoView.findViewById(R.id.btnContinue);
-            Button btnCancel = pointInfoView.findViewById(R.id.btnCancel);
-            btnContinue.setOnClickListener(view -> {
-                // Get the current marker position
-                Marker activeMarker = marker[0].active ? marker[0] : marker[1];
-                if (activeMarker.active) {
-                    onCalibrationPointSelected(
-                            activeMarker.viewX,
-                            activeMarker.viewY,
-                            activeMarker.dataX,
-                            activeMarker.dataY
-                    );
-                    popupWindowInfo.dismiss();
-                    popupWindowInfo = null;
-                }
-            });
-
-            btnCancel.setOnClickListener(view -> {
-                popupWindowInfo.dismiss();
-                popupWindowInfo = null;
-            });
-            if(toolbar.getSelectedItemId() == R.id.graph_tools_calibrate){
-                pointConfirmationTextView.setVisibility(VISIBLE);
-                btnContinue.setVisibility(VISIBLE);
-                btnCancel.setVisibility(VISIBLE);
-                pointConfirmationTextView.setText(getResources().getString(R.string.spectroscopy_confirm_point));
-            } else {
-                pointConfirmationTextView.setVisibility(GONE);
-                btnContinue.setVisibility(GONE);
-                btnCancel.setVisibility(GONE);
-            }
             popupWindowInfo = new PopupWindow(
                     pointInfoView,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -590,22 +604,19 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             if(Helper.isDarkTheme(getResources())){
                 pointInfoView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
                 popupWindowText.setTextColor(getResources().getColor(R.color.phyphox_black_100));
-                pointConfirmationTextView.setTextColor(getResources().getColor(R.color.phyphox_black_100));
             } else{
                 pointInfoView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_100));
                 popupWindowText.setTextColor(getResources().getColor(R.color.phyphox_white_100));
-                pointConfirmationTextView.setTextColor(getResources().getColor(R.color.phyphox_white_100));
-            }
-            if (Build.VERSION.SDK_INT >= 21){
-                popupWindowInfo.setElevation(4.0f);
             }
 
             popupWindowInfo.setFocusable(false);
             popupWindowInfo.setOutsideTouchable(false);
-            popupWindowInfo.setTouchable(toolbar.getSelectedItemId() == R.id.graph_tools_calibrate);
+
+            updatePopupInfoButtons(pickableMarker);
 
             popupWindowInfo.showAtLocation(graphFrame, Gravity.BOTTOM | Gravity.CENTER, x, y);
         } else {
+            updatePopupInfoButtons(pickableMarker);
             popupWindowInfo.update(x, y, -1, -1);
         }
         popupWindowText.setText(text);
@@ -693,11 +704,10 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             int infoX = Math.round((viewX1 + viewX2)/2.f + pos[0] - getRootView().getWidth()/2.f);
             int infoY = getRootView().getHeight() - pos[1] - Math.round(Math.min(viewY1, viewY2) - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
 
-            setPopupInfo(infoX, infoY, sb.toString());
+            setPopupInfo(infoX, infoY, sb.toString(), null);
 
 
-        }
-        else if (marker[0].active && marker[1].active) {
+        } else if (marker[0].active && marker[1].active) {
 
             Point[] points = new Point[2];
             points[0] = new Point(Math.round(marker[0].viewX), Math.round(marker[0].viewY));
@@ -740,13 +750,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 sb.append("-");
             }
 
-            setPopupInfo(infoX, infoY, sb.toString());
+            setPopupInfo(infoX, infoY, sb.toString(), null);
 
-        }
-        else if (marker[0].active || marker[1].active) {
-            if(graphView.isSpectroscopyCalibrated){
-                return;
-            }
+        } else if (marker[0].active || marker[1].active) {
 
             int pos[] = new int[2];
             graphView.getLocationInWindow(pos);
@@ -775,12 +781,12 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             }
 
 
-            setPopupInfo(infoX, infoY, sb.toString());
+            setPopupInfo(infoX, infoY, sb.toString(), activeMarker);
 
-        }
-        else {
+        } else {
             removePopUpAndMarkerOverlayView();
         }
+        updatePickMarker();
     }
 
     public void hidePointInfo(int index) {
@@ -818,190 +824,37 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             this.graphView.setShowColorScaleForColorMapChart(showColorScale);
     }
 
-    public void setCalibrationMode(SpectroscopyCalibrationManager.CalibrationMode calibrationMode, Context context, ExpViewFragment parent){
-        if(calibrationMode != SpectroscopyCalibrationManager.CalibrationMode.UNKNOWN){
-            this.calibrationMode = calibrationMode;
-            this.enableCalibrationMode = true;
-        } else {
-            this.enableCalibrationMode = false;
-            return;
+    public void setPickConfig(String pickLabel, Vector<DataOutput> outputs, PickerObserver observer) {
+        this.pickLabel = pickLabel;
+        this.outputs = outputs;
+        this.observer = observer;
+
+        if (pickLabel != null) {
+            toolbar.getMenu().findItem(R.id.graph_tools_pick).setTitle(pickLabel);
         }
 
-        if(spectroscopyCalibrationManager == null){
-            spectroscopyCalibrationManager = new SpectroscopyCalibrationManager(context, parent);
-            spectroscopyCalibrationManager.setDelegate(this);
-        }
-
-        setCalibrationMenuItemVisibility();
     }
 
-    private void setCalibrationMenuItemVisibility(){
-        MenuItem calibrationItem = toolbar.getMenu().findItem(R.id.graph_tools_calibrate);
-        if(calibrationItem != null){
-            calibrationItem.setVisible(enableCalibrationMode);
-        }
+    public void updatePickData(Double[] newData) {
+        pickData = newData;
+        updatePickMarker();
     }
 
-    public void  setSlopeBuffer(DataBuffer slopeBuffer){
-        this.slopeBuffer = slopeBuffer;
-    }
-
-    public void  setInterceptBuffer(DataBuffer interceptBuffer){
-        this.interceptBuffer = interceptBuffer;
-    }
-
-    @Override
-    public void spectroscopyUnCalibrated(SpectroscopyCalibrationManager manager) {
-        clearCalibrationMarkers();
-        markerOverlayView.update(null, null);
-    }
-
-    @Override
-    public void spectroscopyCalibrationDidStart(SpectroscopyCalibrationManager manager) {
-        clearCalibrationMarkers();
-        markerOverlayView.update(null, null);
-        graphView.resetPicks();
-        this.graphView.isSpectroscopyCalibrated = false;
-    }
-
-    @Override
-    public void spectroscopyCalibrationDidUpdatePoints(SpectroscopyCalibrationManager manager,
-                                                       List<SpectroscopyCalibrationManager.CalibrationPoint> points,
-                                                       SpectroscopyCalibrationManager.CalibrationState state) {
-
-        switch (state) {
-            case FIRST_POINT_SELECTED:
-                showCalibrationPointMarkers(points);
-                break;
-            case SECOND_POINT_SELECTED:
-                showCalibrationPointMarkers(points);
-                break;
-            default:
-                break;
-        }
-    }
-
-    @Override
-    public void spectroscopyCalibrationDidComplete(SpectroscopyCalibrationManager manager,
-                                                   double slope, double intercept) {
-        markerOverlayView.update(null, null);
-
-        updateCalibrationParametersBuffer(slope,intercept);
-
-        this.graphView.isSpectroscopyCalibrated = true;
-        graphView.setTouchMode(GraphView.TouchMode.off);
-
-    }
-
-    @Override
-    public void spectroscopyCalibrationDidReset(SpectroscopyCalibrationManager manager) {
-        clearCalibrationMarkers();
-        markerOverlayView.update(null, null);
-        graphView.resetPicks();
-
-        updateCalibrationParametersBuffer(1,0);
-        this.graphView.isSpectroscopyCalibrated = false;
-    }
-
-    @Override
-    public void spectroscopyCalibrationDidDismiss(SpectroscopyCalibrationManager manager) {
-        clearCalibrationMarkers();
-    }
-
-    @Override
-    public void spectroscopyCalibrationShouldPresentDialog(SpectroscopyCalibrationManager manager,
-                                                            AlertDialog dialog) {
-        dialog.show();
-    }
-
-    @Override
-    public void spectroscopyDidFailWithError(SpectroscopyCalibrationManager manager, String error) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle(getResources().getString(R.string.error))
-                .setMessage(error)
-                .setPositiveButton(getResources().getString(R.string.ok), null)
-                .show();
-    }
-
-
-    private void updateCalibrationConfirmationMarkerWith(int newHeight) {
-        if(!calibrationMarkerViews.isEmpty()){
-            for(View marker: calibrationMarkerViews){
-                marker.setVisibility(VISIBLE);
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(1, newHeight);
-                marker.setLayoutParams(params);
-                marker.requestLayout();
+    public void updatePickMarker() {
+        Vector<MarkerOverlayView.LineAnnotation> lineAnnotations = new Vector<>();
+        for (int i = 0; i < outputs.size(); i+=2) {
+            if ((i / 2) % 3 == 2)
+                continue; // z axis annotations are not shown
+            if (outputs.get(i) != null && pickData[i] != null && !pickData[i].isNaN()) {
+                String label = outputs.get(i).label;
+                if (outputs.size() > i+1 && outputs.get(i+1) != null && pickData[i+1] != null && !pickData[i+1].isNaN())
+                    label += " → " + String.valueOf(pickData[i+1]);
+                boolean vertical = (i / 2) % 3 == 0;
+                float xy = (float)(vertical ? graphView.dataXToViewX(pickData[i].floatValue()) : graphView.dataYToViewY(pickData[i].floatValue()));
+                lineAnnotations.add((markerOverlayView.new LineAnnotation(label, xy, (i / 2) % 3 == 0, getResources().getColor(R.color.phyphox_green))));
             }
         }
+
+        markerOverlayView.setLineAnnotations(lineAnnotations.toArray(new MarkerOverlayView.LineAnnotation[0]));
     }
-
-    private void resizeCalibrationConfirmationHeight(){
-        if(!calibrationMarkerViews.isEmpty()){
-            for(View marker: calibrationMarkerViews){
-                marker.setVisibility(GONE);
-                needsCalibrationMarkerUpdate = true;
-            }
-        }
-    }
-
-    public void onCalibrationPointSelected(float viewX, float viewY, float dataX, float dataY) {
-        spectroscopyCalibrationManager.addCalibrationReferencePoint(dataX,
-                calibrationMarkerViews.size());
-
-        spectroscopyCalibrationManager.requestToAddCalibratedPoint(dataX);
-    }
-
-    private void addCalibrationMarker(float x, float y) {
-        View calibrationConfirmationMarkerView = new View(getContext());
-        int markerHeight = plotRenderer.getPlotBoundH();
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(1, markerHeight);
-        calibrationConfirmationMarkerView.setLayoutParams(params);
-        calibrationConfirmationMarkerView.setBackgroundColor(getResources().getColor(R.color.phyphox_red));
-
-        calibrationConfirmationMarkerView.setX(x);
-
-        graphFrame.addView(calibrationConfirmationMarkerView);
-        calibrationMarkerViews.add(calibrationConfirmationMarkerView);
-    }
-
-    private void showCalibrationPointMarkers(
-            List<SpectroscopyCalibrationManager.CalibrationPoint> points) {
-        clearCalibrationMarkers();
-
-        for (int i = 0; i < points.size(); i++) {
-            SpectroscopyCalibrationManager.CalibrationPoint point = points.get(i);
-
-            // Convert data coordinates to view coordinates
-            float viewX = (float) graphView.dataXToViewX(point.pixelPosition);
-            float viewY = graphView.getHeight() / 2f; // Center vertically for spectroscopy
-
-            addCalibrationMarker(viewX, viewY);
-        }
-    }
-
-    private void clearCalibrationMarkers() {
-        for (View marker : calibrationMarkerViews) {
-            graphFrame.removeView(marker);
-        }
-        calibrationMarkerViews.clear();
-    }
-
-    public void resetSpectroscopyCalibration() {
-        if (spectroscopyCalibrationManager != null) {
-            spectroscopyCalibrationManager.resetCalibration();
-        }
-    }
-
-
-    private void updateCalibrationParametersBuffer(double slope, double intercept){
-        if(slopeBuffer != null && interceptBuffer != null){
-            slopeBuffer.clear(true);
-            slopeBuffer.append(slope);
-            interceptBuffer.clear(true);
-            interceptBuffer.append(intercept);
-        }
-    }
-
-
 }

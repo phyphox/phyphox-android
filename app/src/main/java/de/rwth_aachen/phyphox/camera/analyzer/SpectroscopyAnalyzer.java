@@ -260,8 +260,6 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         out.clear(true);
         pixelPosition.clear(true); // Clear pixel position buffer too
 
-        Log.d("TEST", "Writing " + latestResult.length + " values.");
-
         if (latestResult != null) {
             for (int i = 0; i < latestResult.length; i++) {
                 pixelPosition.append(i);

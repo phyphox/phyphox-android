@@ -26,7 +26,4 @@
         android:title="@string/graph_tools_log_y"
         android:checkable="true"
         android:orderInCategory="7" />
-    <item android:id="@+id/graph_reset_calibration"
-        android:title="@string/calibration_reset"
-        android:orderInCategory="8" />
 </menu>

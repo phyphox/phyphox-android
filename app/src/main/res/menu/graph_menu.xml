@@ -8,13 +8,8 @@
         android:title="@string/graph_tools_pick"
         android:icon="@drawable/pick_point"
         android:orderInCategory="2"/>
-    <item android:id="@+id/graph_tools_calibrate"
-        android:title="@string/graph_tools_calibrate"
-        android:icon="@drawable/ic_calibration"
-        android:visible="false"
-        android:orderInCategory="3" />
     <item android:id="@+id/graph_tools_more"
         android:title="@string/graph_tools_more"
         android:icon="@drawable/more_horiz"
-        android:orderInCategory="3" />
+        android:orderInCategory="4" />
 </menu>

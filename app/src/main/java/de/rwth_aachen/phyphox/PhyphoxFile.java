@@ -875,6 +875,7 @@ public abstract class PhyphoxFile {
                     //Check the type
                     boolean clearBeforeWrite = getBooleanAttribute("clear", true); //Deprecated
                     boolean append = getBooleanAttribute("append", !clearBeforeWrite); //New attribute append = !clear,
+                    String label = getTranslatedAttribute("label");
 
                     if (mapping != null) {
                         for (int i = 0; i < outputMapping.length; i++) {
@@ -951,7 +952,7 @@ public abstract class PhyphoxFile {
                     if (buffer == null)
                         throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
                     else {
-                        outputList.set(targetIndex, new DataOutput(buffer, append));
+                        outputList.set(targetIndex, new DataOutput(buffer, append, label));
                     }
                     break;
                 default: //Unknown tag...
@@ -1393,7 +1394,7 @@ public abstract class PhyphoxFile {
                     String unitY = getTranslatedAttribute("unitY");
                     String unitZ = getTranslatedAttribute("unitZ");
                     String unitYX = getTranslatedAttribute("unitYperX");
-                    String calibrationMode = getStringAttribute("calibrationMode");
+                    String pickLabel = getStringAttribute("pickLabel");
 
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
@@ -1473,8 +1474,12 @@ public abstract class PhyphoxFile {
                     };
 
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{ name = "slope"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
-                            new ioBlockParser.ioMapping() {{ name = "intercept"; asRequired = false; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}}
+                            new ioBlockParser.ioMapping() {{ name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
+                            new ioBlockParser.ioMapping() {{ name = "xcal"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}},
+                            new ioBlockParser.ioMapping() {{ name = "y"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 2;}},
+                            new ioBlockParser.ioMapping() {{ name = "ycal"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 3;}},
+                            new ioBlockParser.ioMapping() {{ name = "z"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 4;}},
+                            new ioBlockParser.ioMapping() {{ name = "zcal"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 5;}},
                     };
 
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "axis", ats)).process(); //Load inputs and outputs
@@ -1509,6 +1514,7 @@ public abstract class PhyphoxFile {
                     }
 
                     ExpView.graphElement ge = newView.new graphElement(label, visibility, outStrings, inStrings, parent.getResources()); //Two array inputs
+                    ge.setPickConfig(pickLabel, outputs);
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
 
                     if (lineStyle != null) {
@@ -1530,10 +1536,9 @@ public abstract class PhyphoxFile {
                     ge.setLogScale(logX, logY, logZ); //logarithmic scales for x/y axes
                     ge.setPrecision(xPrecision, yPrecision, zPrecision); //logarithmic scales for x/y axes
                     ge.setSuppressScientificNotation(suppressScientificNotation);
-                    ge.setCalibrationMode(SpectroscopyCalibrationManager.calibrationModeFromString(calibrationMode));
 
                     if (!globalColor) {
-                        for (int i = 0; i < Math.ceil(ats.size() / 3); i++) {
+                        for (int i = 0; i < Math.ceil(inputs.size() / 3); i++) {
                             switch (i % 6) {
                                 case 0: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_primary)), i, parent.getResources());
                                     break;
@@ -3536,6 +3541,7 @@ public abstract class PhyphoxFile {
                 return experiment;
             } catch (RuntimeException e) { //Those are a thing, too... For example, for some reason an undefined xml prefix throws a RuntimeException.
                 experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
+                e.printStackTrace();
                 return experiment;
 
             }
