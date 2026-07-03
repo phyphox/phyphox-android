@@ -8,6 +8,9 @@ import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.GLES20;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
@@ -16,6 +19,7 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.SurfaceRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -37,11 +41,14 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     }
 
     boolean running = false;
+    boolean surfaceTextureIsNew = false;
 
     StateFlow<CameraSettingState> cameraSettingValueState;
     Executor executor = Executors.newSingleThreadExecutor();
-    public int previewWidth = 0;
-    public int previewHeight = 0;
+    public int camNativeWidth = 0; // Size of the requested surface
+    public int camNativeHeight = 0;
+    public int camWidth = 0; // Size after applying the camera's transformation matrix
+    public int camHeight = 0;
 
     EGLDisplay eglDisplay = null;
     EGLContext eglContext = null;
@@ -49,6 +56,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     int eglCameraTexture = -1;
     SurfaceTexture cameraSurfaceTexture = null;
     Surface cameraSurface = null;
+
+    float[] camMatrix = new float[16];
 
     ExposureStatisticsListener exposureStatisticsListener;
 
@@ -171,21 +180,12 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     }
 
     public void prepareOpenGL(int w, int h) {
-        if (eglContext == null)
-            createContext();
-
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glDisable(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 
-        if (eglCameraTexture == -1) {
-            int[] textures = new int[1];
-            GLES20.glGenTextures(1, textures, 0);
-            eglCameraTexture = textures[0];
-
-            OpenGLHelper.prepareFullScreenVertices();
-        }
+        OpenGLHelper.prepareFullScreenVertices();
 
         AnalyzingModule.release();
         AnalyzingModule.init(w, h, eglContext, eglDisplay, eglConfig, eglCameraTexture);
@@ -269,10 +269,32 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
     void draw() {
         CameraSettingState state = cameraSettingValueState.getValue();
-        if (!running)
+        if (!running && !surfaceTextureIsNew)
             return;
         executor.execute(
                 () -> {
+                    if (surfaceTextureIsNew) {
+                        cameraSurfaceTexture.updateTexImage();
+                        cameraSurfaceTexture.getTransformMatrix(camMatrix);
+                        camWidth = Math.abs(Math.round(camMatrix[0] * camNativeWidth + camMatrix[1] * camNativeHeight));
+                        camHeight = Math.abs(Math.round(camMatrix[4] * camNativeWidth + camMatrix[5] * camNativeHeight));
+                        Log.i("AnalyzingOpenGLRenderer", "camMatrix: " + Arrays.toString(camMatrix));
+                        Log.i("AnalyzingOpenGLRenderer", "native size: " + camNativeWidth + "x" + camNativeHeight + " => transformed cam size: " + camWidth + "x" + camHeight);
+
+                        prepareOpenGL(camWidth, camHeight);
+
+                        for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
+                            CameraPreviewScreen screen = previewOutput.cameraPreviewScreen.get();
+                            if (screen != null && previewOutput.w > 0 && previewOutput.h > 0) {
+                                final int w = previewOutput.w;
+                                final int h = previewOutput.h;
+                                new Handler(Looper.getMainLooper()).post(() -> screen.updateTransformation(w, h));
+                            }
+                        }
+
+                        surfaceTextureIsNew = false;
+                    }
+
                     if (!running || eglContext == null || cameraSurfaceTexture == null)
                         return;
 
@@ -282,10 +304,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
                     cameraSurfaceTexture.updateTexImage();
                     double t = experimentTimeReference.getExperimentTimeFromEvent(cameraSurfaceTexture.getTimestamp());
-
-                    float[] camMatrix = new float[16];
-                    cameraSurfaceTexture.getTransformMatrix(camMatrix);
-
                     RectF passepartout = state.getCameraPassepartout();
 
                     boolean dataNeedsToBeWrittenToBuffers = true;
@@ -360,15 +378,26 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
     @Override
     public void onSurfaceRequested(@NonNull SurfaceRequest request) {
-        previewWidth = request.getResolution().getWidth();
-        previewHeight = request.getResolution().getHeight();
+
+        camNativeWidth = request.getResolution().getWidth();
+        camNativeHeight = request.getResolution().getHeight();
+
+        surfaceTextureIsNew = true;
 
         executor.execute(
                 () -> {
-                    prepareOpenGL(previewWidth, previewHeight);
+                    if (eglContext == null)
+                        createContext();
+
+                    if (eglCameraTexture == -1) {
+                        int[] textures = new int[1];
+                        GLES20.glGenTextures(1, textures, 0);
+                        eglCameraTexture = textures[0];
+                    }
+                    checkGLError("Create eglCameraTexture");
 
                     cameraSurfaceTexture = new SurfaceTexture(eglCameraTexture);
-                    cameraSurfaceTexture.setDefaultBufferSize(previewWidth, previewHeight);
+                    cameraSurfaceTexture.setDefaultBufferSize(camNativeWidth, camNativeHeight);
                     cameraSurfaceTexture.setOnFrameAvailableListener(this);
                     Surface cameraSurface = new Surface(cameraSurfaceTexture);
                     request.provideSurface(cameraSurface, executor, result -> {
@@ -378,12 +407,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     checkGLError("onSurfaceRequested");
                 }
         );
-        for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
-            CameraPreviewScreen screen = previewOutput.cameraPreviewScreen.get();
-            if (screen != null && previewOutput.w > 0 && previewOutput.h > 0) {
-                screen.updateTransformation(previewOutput.w, previewOutput.h);
-            }
-        }
     }
 
     @Override

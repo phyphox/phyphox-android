@@ -36,10 +36,11 @@ public class ExposureAnalyzer extends AnalyzingModule {
             "varying vec2 texPosition3;" +
             "varying vec2 texPosition4;" +
             "void main () {" +
-            "   float x1 = (4.0*resTarget.x*texCoordinates.x - 1.0)/resSource.x;" +
-            "   float x2 = (4.0*resTarget.x*texCoordinates.x + 1.0)/resSource.x;" +
-            "   float y1 = (4.0*resTarget.y*texCoordinates.y - 1.0)/resSource.y;" +
-            "   float y2 = (4.0*resTarget.y*texCoordinates.y + 1.0)/resSource.y;" +
+            "   vec2 texPosition = (camMatrix * vec4(texCoordinates, 0., 1.)).xy;" +
+            "   float x1 = (4.0*resTarget.x*texPosition.x - 1.0)/resSource.x;" +
+            "   float x2 = (4.0*resTarget.x*texPosition.x + 1.0)/resSource.x;" +
+            "   float y1 = (4.0*resTarget.y*texPosition.y - 1.0)/resSource.y;" +
+            "   float y2 = (4.0*resTarget.y*texPosition.y + 1.0)/resSource.y;" +
             "   texPosition1 = vec2(x1, y1);" +
             "   texPosition2 = vec2(x2, y1);" +
             "   texPosition3 = vec2(x1, y2);" +

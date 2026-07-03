@@ -33,6 +33,37 @@ public abstract class OpenGLHelper {
         }
     }
 
+    // This is a little tool to output a representation of the current drawing target to the logs.
+    static void logCurrentOutput() {
+        int [] viewport = new int[4];
+        GLES20.glGetIntegerv(GLES20.GL_VIEWPORT, viewport, 0);
+        int reduce = Math.max(viewport[2], viewport[3]) / 20;
+        Log.d("LOGOUTPUT", "Viewport: " + viewport[0] + " " + viewport[1] + " " + viewport[2] + " " + viewport[3] + " (reduce: " + reduce + ")");
+
+        int buffersize = viewport[2]*viewport[3];
+        ByteBuffer data = ByteBuffer.allocateDirect(buffersize * 4).order(ByteOrder.nativeOrder());
+        data.rewind();
+
+        GLES20.glReadPixels(0, 0, viewport[2], viewport[3], GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, data);
+        data.rewind();
+
+        byte[] bytes = new byte[data.remaining()];
+        data.get(bytes);
+
+        for (int y = 0; y < viewport[3]; y+=reduce) {
+            String line = "";
+            for (int x = 0; x < viewport[2]; x+=reduce) {
+                int i = 4*(x + viewport[2]*y);
+                int r = bytes[i] & 0xff;
+                int g = bytes[i+1] & 0xff;
+                int b = bytes[i+2] & 0xff;
+                int a = bytes[i+3] & 0xff;
+                line += String.format("%02x%02x%02x%02x ", r, g, b, a);
+            }
+            Log.d("LOGOUTPUT", line);
+        }
+    }
+
     static int buildProgram(String vertexShader, String fragmentShader) {
         int iVertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
         GLES20.glShaderSource(iVertexShader, vertexShader);

@@ -1,7 +1,6 @@
 package de.rwth_aachen.phyphox.camera.analyzer;
 
 import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-import static de.rwth_aachen.phyphox.camera.analyzer.LuminanceAnalyzer.lumaFragmentShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.LuminanceAnalyzer.luminanceFragmentShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.buildProgram;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.checkGLError;
@@ -91,7 +90,11 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
     int reductionProgramVerticesHandle, reductionProgramTexCoordinatesHandle;
     int reductionProgramTextureHandle, reductionResSourceHandle, reductionResTargetHandle;
 
-    double[] latestResult = null;
+    static class Result {
+        double[] luminance;
+        double[] pixelPosition;
+    }
+    Result latestResult = null;
     int outputWidth = 0;
 
     ByteBuffer resultBuffer = null;
@@ -130,14 +133,14 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
         for (int i = 0; i < nSpecDownsampleSteps; i++) {
-            if (analysisSpectrumOrientation == SpectrumOrientation.PORTRAIT) {
-                wSpecDownsampleStep[i] = width; // Keep width, shrink height
-                int prevH = (i == 0) ? height : hSpecDownsampleStep[i - 1];
-                hSpecDownsampleStep[i] = (prevH + 3) / 4;
-            } else {
+            if (analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE) {
                 hSpecDownsampleStep[i] = height; // Keep height, shrink width
                 int prevW = (i == 0) ? width : wSpecDownsampleStep[i - 1];
                 wSpecDownsampleStep[i] = (prevW + 3) / 4;
+            } else {
+                wSpecDownsampleStep[i] = width; // Keep width, shrink height
+                int prevH = (i == 0) ? height : hSpecDownsampleStep[i - 1];
+                hSpecDownsampleStep[i] = (prevH + 3) / 4;
             }
 
             specDownsampleSurfaces[i] = AnalyzingModule.createPbufferSurface( wSpecDownsampleStep[i], hSpecDownsampleStep[i]);
@@ -157,10 +160,10 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
 
         if (verticalReductionProgram >= 0)
             deleteProgram(verticalReductionProgram);
-        if(analysisSpectrumOrientation == SpectrumOrientation.PORTRAIT){
-            verticalReductionProgram = buildProgram(interpolatingHeightFullScreenVertexShader, verticalHeightReductionFragmentShader);
-        } else {
+        if(analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE){
             verticalReductionProgram = buildProgram(interpolatingWidthFullScreenVertexShader, verticalWidthReductionFragmentShader);
+        } else {
+            verticalReductionProgram = buildProgram(interpolatingHeightFullScreenVertexShader, verticalHeightReductionFragmentShader);
         }
 
         reductionProgramVerticesHandle = GLES20.glGetAttribLocation(verticalReductionProgram, "vertices");
@@ -174,17 +177,15 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
 
     @Override
     public void analyze(float[] camMatrix, RectF passepartout) {
-        // --- Phase 1: OpenGL Drawing/Downsampling ---
         drawLuminance(camMatrix, passepartout);
 
         for(int i = 0; i < nSpecDownsampleSteps; i++){
             drawVerticalReduction(i, camMatrix);
         }
 
-        // --- Phase 2: Setup and GL Read ---
+        int outW = wSpecDownsampleStep[nSpecDownsampleSteps-1];
+        int outH = hSpecDownsampleStep[nSpecDownsampleSteps-1];
 
-        int outW = wSpecDownsampleStep[nSpecDownsampleSteps -1];
-        int outH = hSpecDownsampleStep[nSpecDownsampleSteps -1];
 
         if (resultBuffer == null || resultBufferSize != outW * outH) {
             resultBufferSize = outW * outH;
@@ -192,63 +193,53 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         }
         resultBuffer.rewind();
 
-        // Read pixels from the OpenGL framebuffer
         GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);
-        resultBuffer.rewind();
 
+        resultBuffer.rewind();
         byte[] bytes = new byte[resultBuffer.remaining()];
         resultBuffer.get(bytes);
 
-        // --- Phase 3: Processing ---
+        final boolean isLandscape = (analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE);
+        final int spectrumPixels = isLandscape ? outH : outW;
 
-        final boolean isHorizontal = analysisSpectrumOrientation == SpectrumOrientation.PORTRAIT;
-        // Define which dimension is the dispersion (length) and which is the averaging (width)
-        final int dispersionLength = isHorizontal ? outW : outH;
-        final int averagingWidth = isHorizontal ? outH : outW;
+        Result result = new Result();
+        result.luminance = new double[spectrumPixels];
+        result.pixelPosition = new double[spectrumPixels];
 
-        // The normalization factor is applied to all sums
-        final double normalizationFactor = (double) (averagingWidth * Math.pow(4, nSpecDownsampleSteps));
-
-        double[] dispersionSums = new double[dispersionLength];
+        long[] totalContributions = new long[spectrumPixels];
 
         for (int pixelIndex = 0; pixelIndex < bytes.length / 4 ; pixelIndex++) {
+            int spectrumPixel = isLandscape ? (pixelIndex / outW) : (pixelIndex % outW);
+
             int byteIndex = pixelIndex * 4;
             int r = bytes[byteIndex] & 0xff;
             int g = bytes[byteIndex+1] & 0xff;
+            int b = bytes[byteIndex+2] & 0xff;
             long luminance  = (r << 8) + g;
 
-            // Calculate the index along the dispersion axis
-            int dispersionIndex = isHorizontal ? (pixelIndex % outW) : (pixelIndex / outW);
-
-            dispersionSums[dispersionIndex] += (double) luminance;
+            result.pixelPosition[spectrumPixel] = spectrumPixel;
+            result.luminance[spectrumPixel] += (double) luminance;
+            totalContributions[spectrumPixel] += b;
         }
 
-        // Normalize the final aggregated sums by the factor
-        for (int i = 0; i < dispersionLength; i++) {
-            dispersionSums[i] /= normalizationFactor;
+        final double normalizationFactor = Math.pow(4, nSpecDownsampleSteps);
+        int minContribution = -1;
+        int maxContribution = spectrumPixels-1;
+        for (int i = 0; i < spectrumPixels; i++) {
+            if (totalContributions[i] == 0)
+                continue;
+            if (minContribution < 0)
+                minContribution = i;
+            maxContribution = i;
+            result.luminance[i] /= totalContributions[i] * normalizationFactor;
         }
 
-        // Calculate the normalized passepartout boundaries
-        final float normalizedYMin = 1.0f - Math.min(passepartout.top, passepartout.bottom);
-        final float normalizedYMax = 1.0f - Math.max(passepartout.top, passepartout.bottom);
+        result.pixelPosition = Arrays.copyOfRange(result.pixelPosition, minContribution, maxContribution+1);
+        result.luminance = Arrays.copyOfRange(result.luminance, minContribution, maxContribution+1);
 
-        final float normalizedXMin = 1.0f - Math.min(passepartout.left, passepartout.right);
-        final float normalizedXMax = 1.0f - Math.max(passepartout.left, passepartout.right);
+        checkGLError("spectroscopy analyze");
 
-        // Calculate the region of interest indices
-        int roiStartIndex = (int) ((isHorizontal? normalizedYMax : normalizedXMax) * dispersionLength);
-        int roiEndIndex = (int) ((isHorizontal? normalizedYMin : normalizedXMin) * dispersionLength);
-
-        // Clamp indices to safe bounds
-        roiStartIndex = Math.clamp(roiStartIndex, 0, dispersionSums.length);
-        roiEndIndex = Math.clamp(roiEndIndex, 0, dispersionSums.length);
-
-        if (roiStartIndex < roiEndIndex) {
-            latestResult = Arrays.copyOfRange(dispersionSums, roiStartIndex, roiEndIndex);
-        } else {
-            // Handle edge case where indices might be flipped or equal
-            latestResult = Arrays.copyOfRange(dispersionSums, roiEndIndex, roiStartIndex);
-        }
+        latestResult = result;
 
     }
 
@@ -257,13 +248,13 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         double exposureFactor = Math.pow(2.0, state.getCurrentApertureValue())/2.0 * 100.0/state.getCurrentIsoValue() *
                         (1.0e9/60.0) / state.getCurrentShutterValue();
 
-        out.clear(true);
-        pixelPosition.clear(true); // Clear pixel position buffer too
+        out.clear(false);
+        pixelPosition.clear(false); // Clear pixel position buffer too
 
         if (latestResult != null) {
-            for (int i = 0; i < latestResult.length; i++) {
-                pixelPosition.append(i);
-                out.append(latestResult[i] * exposureFactor);
+            for (int i = 0; i < latestResult.pixelPosition.length; i++) {
+                pixelPosition.append(latestResult.pixelPosition[i]);
+                out.append(latestResult.luminance[i] * exposureFactor);
             }
         }
 

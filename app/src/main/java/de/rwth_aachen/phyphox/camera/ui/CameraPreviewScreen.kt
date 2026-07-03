@@ -222,7 +222,8 @@ class CameraPreviewScreen(
             onSettingClicked(CameraSettingMode.WHITE_BALANCE)
         }
 
-        if(cameraInput.isFeatureSpectroscopy()){
+        if (cameraInput.isFeatureSpectroscopy()){
+            isLandscape = cameraInput.cameraSettingState.value.spectrumAnalysisOrientation == SpectroscopyAnalyzer.SpectrumOrientation.LANDSCAPE
             lnrSpectrumOrientation.visibility = View.VISIBLE
             btnAnalysisSetting.setOnClickListener {  openSpectrumAnalysisConfigurationDialog() }
         }
@@ -480,13 +481,13 @@ class CameraPreviewScreen(
 
     public fun updateTransformation(outWidth: Int, outHeight: Int) {
         cameraInput.analyzingOpenGLRenderer?.let {
-            val w: Int = it.previewWidth
-            val h: Int = it.previewHeight
-            if (w == 0 || h == 0 || outWidth == 0 || outHeight == 0) return
+            val whmax: Int = Math.max(it.camNativeWidth, it.camNativeHeight)
+            val whmin: Int = Math.min(it.camNativeWidth, it.camNativeHeight)
+            if (whmax == 0 || whmin == 0 || outWidth == 0 || outHeight == 0) return
             val rotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
             transformation = Matrix()
             val landscape = Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation
-            val targetAspect = if (landscape) w.toFloat() / h.toFloat() else h.toFloat() / w.toFloat() //Careful: We calculate relative to a portrait orientation, so h and w of the camera start flipped
+            val targetAspect = if (landscape) whmax.toFloat() / whmin.toFloat() else whmin.toFloat() / whmax.toFloat()
             val sx: Float
             val sy: Float
             if (outWidth.toFloat() / outHeight.toFloat() > targetAspect) {
