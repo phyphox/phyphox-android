@@ -95,11 +95,7 @@ public class ExperimentTimeReference implements Serializable {
 
     public double getExperimentTime() {
         long eventTime;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            eventTime = SystemClock.elapsedRealtimeNanos();
-        } else {
-            eventTime = SystemClock.elapsedRealtime() * 1000000L;
-        }
+        eventTime = SystemClock.elapsedRealtimeNanos();
         return getExperimentTimeFromEvent(eventTime);
     }
 

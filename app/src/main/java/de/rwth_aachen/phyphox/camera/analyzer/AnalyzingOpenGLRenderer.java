@@ -10,6 +10,7 @@ import android.opengl.EGLDisplay;
 import android.opengl.GLES20;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
@@ -69,6 +70,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     public boolean measuring = false;
     ExperimentTimeReference experimentTimeReference;
     DataBuffer timeOutput;
+    long timeAdjustment = 0;
     DataBuffer shutterSpeedOutput, apertureOutput, isoOutput;
 
     Long lastPreviewFrame = 0L;
@@ -303,7 +305,14 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     long start = System.nanoTime();
 
                     cameraSurfaceTexture.updateTexImage();
-                    double t = experimentTimeReference.getExperimentTimeFromEvent(cameraSurfaceTexture.getTimestamp());
+                    long reportedTime = cameraSurfaceTexture.getTimestamp();
+                    long timestampDelta = reportedTime + timeAdjustment - SystemClock.elapsedRealtimeNanos();
+                    if (Math.abs(timestampDelta) > 60e9) {
+                        //The reported time stamp is off by a whole minute. This is nonsense. The reported time is not even trying to relate to uptime, so we need to adjust the timestamps.
+                        timeAdjustment -= timestampDelta;
+                        Log.w("AnalyzingOpenGLRenderer", "timestampDelta too large: " + timestampDelta + ", timeAdjustment: " + timeAdjustment);
+                    }
+                    double t = experimentTimeReference.getExperimentTimeFromEvent(reportedTime + timeAdjustment);
                     RectF passepartout = state.getCameraPassepartout();
 
                     boolean dataNeedsToBeWrittenToBuffers = true;
