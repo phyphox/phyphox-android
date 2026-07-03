@@ -392,6 +392,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_unit_short_degree">°</string>
     <string name="common_unit_short_degree_celsius">°C</string>
     <string name="common_unit_short_meter">m</string>
+    <string name="common_unit_short_nano_meter">nm</string>
+    <string name="common_unit_short_micro_meter">μm</string>
     <string name="common_unit_short_milli_meter">mm</string>
     <string name="common_unit_short_centi_meter">cm</string>
     <string name="common_unit_short_kilo_meter">km</string>
@@ -420,8 +422,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_quantity_short_altitude">z</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_short_luma">Y\'</string>
-    <string name="common_quantity_short_wavelength">λ [nm]</string>
-    <string name="common_quantity_short_pixel_position">pixel position</string>
+    <string name="common_quantity_short_wavelength">λ</string>
     <string name="common_quantity_percentage">Percent</string>
     <string name="common_direction_short_north">N</string>
     <string name="common_direction_short_south">S</string>
