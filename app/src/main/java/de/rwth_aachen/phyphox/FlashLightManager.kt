@@ -18,8 +18,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -28,15 +26,17 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
 
     private var camera: Camera? = null // For API 21/22
     private val cameraId: String? = try { cameraManager?.cameraIdList?.getOrNull(0) } catch (e: Exception) { null }
+
     private val strobeJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Default + strobeJob)
     private var activeStrobeJob: Job? = null
     private var nextStrobeCycle = 0L
     private var currentStrobeCycleInterval = 0L
 
-    // Mutex ensures that Strobe and Intensity calls dont overlap.
-    private val hardwareMutex = Mutex()
     private var isHardwareOn = false
+
+    private val useTorchWithStrength = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+    private val useSetTorchMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 
     data class FlashState constructor(
         val intensity: Double = 0.0,
@@ -64,35 +64,33 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
         }
     }
 
-    // Centralized hardware access with Mutex synchronization
-    suspend fun performToggle(enabled: Boolean) = hardwareMutex.withLock {
-        // Don't send command if hardware is already in that state
-        if (isHardwareOn == enabled && !enabled) return@withLock
+    private fun performToggle(enabled: Boolean) {
+        if (isHardwareOn == enabled && !enabled) return
 
         if (enabled && isOverheated) {
-            return@withLock
+            return
         }
 
         try {
-            if (cameraControl != null) {
-                cameraControl?.enableTorch(enabled)
+            val control = cameraControl
+            if (control != null) {
+                control.enableTorch(enabled)
             } else {
-                val id = cameraId ?: return@withLock
+                val id = cameraId ?: return
                 if (enabled) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && flashState.value.intensity > 0) {
+                    val state = flashState.value
+                    if (useTorchWithStrength && state.intensity > 0) {
                         cameraManager?.turnOnTorchWithStrengthLevel(id,
-                            (flashState.value.intensity * maxIntensityLevel).roundToInt()
+                            (state.intensity * maxIntensityLevel).roundToInt()
                         )
+                    } else if (useSetTorchMode) {
+                        cameraManager?.setTorchMode(id, true)
                     } else {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            cameraManager?.setTorchMode(id, true)
-                        } else {
-                            // Legacy Way (API 21/22)
-                            handleLegacyFlash(true)
-                        }
+                        // Legacy Way (API 21/22)
+                        handleLegacyFlash(true)
                     }
                 } else {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (useSetTorchMode) {
                         cameraManager?.setTorchMode(id, false)
                     } else {
                         // Legacy Way (API 21/22)
@@ -148,9 +146,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
                     else 1.0
                     if (currentCycle > 1)
                         currentCycle -= 1.0
-                    currentCycle.coerceIn(0.0, 1.0)
-                    if (currentStrobeCycleInterval > 0)
-
+                    currentCycle = currentCycle.coerceIn(0.0, 1.0)
 
                     if (currentStrobeCycleInterval != state.interval) {
                         nextStrobeCycle = SystemClock.uptimeMillis() - (currentCycle * state.interval).roundToLong()
@@ -170,6 +166,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
                             delay(dutyCycleDelay)
                             performToggle(false)
                         }
+
                         nextStrobeCycle += state.interval
                     }
                 }
