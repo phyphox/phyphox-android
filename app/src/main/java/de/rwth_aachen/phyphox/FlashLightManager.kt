@@ -21,12 +21,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 class FlashLightManager(private var cameraManager: CameraManager?, private var cameraControl: CameraControl? = null) {
 
     private var camera: Camera? = null // For API 21/22
     private val cameraId: String? = try { cameraManager?.cameraIdList?.getOrNull(0) } catch (e: Exception) { null }
-    private var currentIntensity: Int = 1
+    private var currentIntensity: Double = 1.0
     private val strobeJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Default + strobeJob)
     private var activeStrobeJob: Job? = null
@@ -68,8 +69,10 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
             } else {
                 val id = cameraId ?: return@withLock
                 if (enabled) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && currentIntensity > 1) {
-                        cameraManager?.turnOnTorchWithStrengthLevel(id, currentIntensity)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && currentIntensity > 0) {
+                        cameraManager?.turnOnTorchWithStrengthLevel(id,
+                            (currentIntensity * maxIntensityLevel).roundToInt()
+                        )
                     } else {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             cameraManager?.setTorchMode(id, true)
@@ -157,9 +160,9 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
         activeStrobeJob = null
     }
 
-    fun setIntensity(level: Int) {
+    fun setIntensity(level: Double) {
 
-        this.currentIntensity = level.coerceIn(1, maxIntensityLevel)
+        this.currentIntensity = level.coerceIn(0.0, 1.0)
         // If strobe is running, the loop will pick up the new intensity on the next toggle.
         // Otherwise, apply it now.
         if (activeStrobeJob == null || activeStrobeJob?.isActive == false) {
