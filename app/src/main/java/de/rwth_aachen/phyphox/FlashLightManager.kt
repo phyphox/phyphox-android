@@ -5,7 +5,7 @@ import android.hardware.Camera
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Build
-import android.util.Log
+import android.os.SystemClock
 import androidx.camera.core.CameraControl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,20 +22,30 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 class FlashLightManager(private var cameraManager: CameraManager?, private var cameraControl: CameraControl? = null) {
 
     private var camera: Camera? = null // For API 21/22
     private val cameraId: String? = try { cameraManager?.cameraIdList?.getOrNull(0) } catch (e: Exception) { null }
-    private var currentIntensity: Double = 1.0
     private val strobeJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Default + strobeJob)
     private var activeStrobeJob: Job? = null
-    private val strobeInterval = MutableStateFlow<Long?>(null)
+    private var nextStrobeCycle = 0L
+    private var currentStrobeCycleInterval = 0L
 
     // Mutex ensures that Strobe and Intensity calls dont overlap.
     private val hardwareMutex = Mutex()
     private var isHardwareOn = false
+
+    data class FlashState constructor(
+        val intensity: Double = 0.0,
+        val interval: Long = 0,
+        val dutycycle: Double = 0.5
+    )
+
+    private val flashState = MutableStateFlow<FlashState>(FlashState(0.0, 0, 0.5))
+
 
     var isOverheated: Boolean = false
         set(value) {
@@ -69,9 +79,9 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
             } else {
                 val id = cameraId ?: return@withLock
                 if (enabled) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && currentIntensity > 0) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && flashState.value.intensity > 0) {
                         cameraManager?.turnOnTorchWithStrengthLevel(id,
-                            (currentIntensity * maxIntensityLevel).roundToInt()
+                            (flashState.value.intensity * maxIntensityLevel).roundToInt()
                         )
                     } else {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -123,17 +133,44 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
 
         activeStrobeJob = scope.launch {
             try {
-                strobeInterval.collectLatest { interval ->
-                    if (interval == null) {
+                flashState.collectLatest { state ->
+                    if (!(state.intensity > 0.0)) {
                         performToggle(false)
+                        return@collectLatest
+                    } else if (state.interval == 0L) {
+                        performToggle(true)
                         return@collectLatest
                     }
 
+                    //If neither of the both above applied, we are strobing
+                    var currentCycle = if (currentStrobeCycleInterval > 0)
+                        (1.0 - (nextStrobeCycle - SystemClock.uptimeMillis()).toDouble()/currentStrobeCycleInterval.toDouble())
+                    else 1.0
+                    if (currentCycle > 1)
+                        currentCycle -= 1.0
+                    currentCycle.coerceIn(0.0, 1.0)
+                    if (currentStrobeCycleInterval > 0)
+
+
+                    if (currentStrobeCycleInterval != state.interval) {
+                        nextStrobeCycle = SystemClock.uptimeMillis() - (currentCycle * state.interval).roundToLong()
+                        currentStrobeCycleInterval = state.interval
+                    }
+
+                    performToggle(currentCycle < state.dutycycle) //Set intensity immediately
+
                     while (isActive) {
-                        performToggle(true)
-                        delay(interval / 2)
-                        performToggle(false)
-                        delay(interval / 2)
+                        val cycleDelay = nextStrobeCycle - SystemClock.uptimeMillis()
+                        if (cycleDelay > 0) {
+                            delay(cycleDelay)
+                            performToggle(true)
+                        }
+                        val dutyCycleDelay = (nextStrobeCycle + (state.interval * state.dutycycle) - SystemClock.uptimeMillis()).roundToLong()
+                        if (dutyCycleDelay > 0) {
+                            delay(dutyCycleDelay)
+                            performToggle(false)
+                        }
+                        nextStrobeCycle += state.interval
                     }
                 }
             } finally {
@@ -144,8 +181,11 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
         }
     }
 
-    fun updateRate(rate: Double) {
-        strobeInterval.value = if (rate <= 0) null else ((1.0 / rate) * 1000).toLong().coerceAtLeast(33L)
+    fun updateFlashState(intensity: Double, frequency: Double, dutycycle: Double) {
+        val interval = if (frequency > 0) ((1.0 / frequency) * 1000).toLong().coerceAtLeast(33L) else 0
+        val newState = FlashState(intensity, interval, dutycycle)
+        if (newState != flashState.value)
+            flashState.value = newState
     }
 
     fun release() {
@@ -155,20 +195,11 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
     }
 
     fun stopStrobe() {
-        strobeInterval.value = null
+        flashState.value = FlashState(0.0, 0, 0.5)
         activeStrobeJob?.cancel()
         activeStrobeJob = null
     }
 
-    fun setIntensity(level: Double) {
-
-        this.currentIntensity = level.coerceIn(0.0, 1.0)
-        // If strobe is running, the loop will pick up the new intensity on the next toggle.
-        // Otherwise, apply it now.
-        if (activeStrobeJob == null || activeStrobeJob?.isActive == false) {
-            scope.launch { performToggle(true) }
-        }
-    }
 
     fun turnOfFlashLight(){
         stopStrobe()

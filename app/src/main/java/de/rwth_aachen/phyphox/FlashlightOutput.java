@@ -17,7 +17,9 @@ import java.util.ArrayList;
 public class FlashlightOutput {
     private FlashLightManager flashLightManager;
     private CameraManager cameraManager;
-    private ArrayList<FlashlightController> controllers = new ArrayList<>();
+    DataInput intensityInput = null;
+    DataInput frequencyInput = null;
+    DataInput dutyCycleInput = null;
 
     private final Context context;
     private BroadcastReceiver batteryReceiver;
@@ -61,16 +63,24 @@ public class FlashlightOutput {
         return null;
     }
 
-    public void start(boolean restart){
+    public void start(){
         if (!receiverRegistered && context != null) {
             context.registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
             receiverRegistered = true;
         }
-        for(FlashlightController flashlightController: controllers){
-            if(restart){
-                flashlightController.start();
-            }
-        }
+        if (flashLightManager == null)
+            return;
+
+        updateState();
+        flashLightManager.startStrobeLoop();
+    }
+
+    public void updateState() {
+        double intensity = intensityInput != null ? intensityInput.getValue() : 1.0;
+        double frequency = frequencyInput != null ? frequencyInput.getValue() : 0.0;
+        double dutycycle = dutyCycleInput != null ? dutyCycleInput.getValue() : 0.5;
+
+        flashLightManager.updateFlashState(intensity, frequency, dutycycle);
     }
 
     public void stop(){
@@ -82,49 +92,11 @@ public class FlashlightOutput {
             receiverRegistered = false;
         }
 
-        for(FlashlightController flashlightController: controllers){
-            if(flashlightController.isActive()){
-                flashlightController.stop();
-            }
-        }
+        flashLightManager.stopStrobe();
     }
 
-    public boolean hasStrobeController() {
-        for (FlashlightController controller : controllers) {
-            if (controller instanceof FlashLightStrobe) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean isStrobeActiveWithFrequency() {
-        for (FlashlightController controller : controllers) {
-            if (controller instanceof FlashLightStrobe) {
-                FlashLightStrobe strobe = (FlashLightStrobe) controller;
-
-                if (strobe.dataInput != null && strobe.dataInput.getValue() > 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean isStrobeUsingBuffer() {
-        for (FlashlightController controller : controllers) {
-            if (controller instanceof FlashLightStrobe) {
-                FlashLightStrobe strobe = (FlashLightStrobe) controller;
-                if (strobe.dataInput != null && strobe.dataInput.isBuffer) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void attachController(FlashlightController controller){
-        this.controllers.add(controller);
+    public boolean usesStrobe() {
+        return frequencyInput != null && (frequencyInput.isBuffer || frequencyInput.getValue() > 0);
     }
 
     private void notifyUserOfOverheat() {
@@ -138,88 +110,6 @@ public class FlashlightOutput {
                     .show();
         } else {
             Toast.makeText(context, context.getString(R.string.device_heating_serious), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public abstract class FlashlightController {
-
-        public abstract boolean isActive();
-        public abstract void start();
-
-        public abstract void stop();
-    }
-
-    public class FlashLightStrobe extends FlashlightController {
-
-        DataInput dataInput;
-        boolean strobeActive = false;
-
-        FlashLightStrobe(DataInput input){
-            this.dataInput = input;
-        }
-
-        @Override
-        public void start() {
-            if (flashLightManager == null) return;
-            double frequency = dataInput.getValue();
-            if (frequency > 0) {
-                flashLightManager.updateRate(frequency);
-                flashLightManager.startStrobeLoop();
-                strobeActive = true;
-            } else {
-                stop();
-            }
-        }
-
-        @Override
-        public boolean isActive() { return strobeActive; }
-
-        @Override
-        public void stop() {
-            flashLightManager.stopStrobe();
-            strobeActive = false;
-
-        }
-
-    }
-
-    public class FlashLightIntensity extends FlashlightController {
-
-        DataInput dataInput;
-        public boolean flashLightActive = false;
-
-        FlashLightIntensity(DataInput input){
-            this.dataInput = input;
-        }
-
-        @Override
-        public void start() {
-            if (flashLightManager == null) return;
-
-            double intensity = dataInput.getValue();
-            if (intensity == 0) {
-                flashLightManager.turnOfFlashLight();
-                flashLightActive = false;
-                return;
-            }
-
-            if (intensity > 0) {
-                flashLightManager.setIntensity(intensity);
-            } else {
-                flashLightManager.setIntensity(1);
-            }
-            flashLightActive = true;
-        }
-
-        @Override
-        public boolean isActive() { return flashLightActive; }
-
-        @Override
-        public void stop() {
-            if (flashLightManager != null) {
-                flashLightManager.turnOfFlashLight();
-                flashLightActive = false;
-            }
         }
     }
 }

@@ -328,10 +328,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 experiment.depthInput.stopCameras();
 
-            if (experiment.flashlightOutput != null ){
-               experiment.flashlightOutput.stop();
-            }
-
         }
     }
 
@@ -453,8 +449,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         if (!photosensitivityWarningDismissed &&
                 experiment.flashlightOutput != null &&
-                experiment.flashlightOutput.hasStrobeController() &&
-                (experiment.flashlightOutput.isStrobeActiveWithFrequency() || experiment.flashlightOutput.isStrobeUsingBuffer())) {
+                experiment.flashlightOutput.usesStrobe()) {
 
 
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);

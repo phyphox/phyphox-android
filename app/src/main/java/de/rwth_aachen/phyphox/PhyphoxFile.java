@@ -380,8 +380,6 @@ public abstract class PhyphoxFile {
     private static class FlashlightBlockParser extends xmlBlockParser {
         FlashlightOutput flashlightOutput;
 
-        FlashlightOutput.FlashlightController flashlightController = null;
-
         FlashlightBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, FlashlightOutput flashlightOutput) {
             super(xpp, experiment, parent);
             this.flashlightOutput = flashlightOutput;
@@ -419,11 +417,15 @@ public abstract class PhyphoxFile {
                     }
                     switch (parameter){
                         case "intensity": {
-                            flashlightController = flashlightOutput.new FlashLightIntensity(input);
+                            flashlightOutput.intensityInput = input;
                             break;
                         }
                         case "frequency":{
-                            flashlightController = flashlightOutput.new FlashLightStrobe(input);
+                            flashlightOutput.frequencyInput = input;
+                            break;
+                        }
+                        case "dutycycle":{
+                            flashlightOutput.dutyCycleInput = input;
                             break;
                         }
                         default: throw new PhyphoxFile.phyphoxFileException("Unexpected flashlight input parameter.");
@@ -433,13 +435,6 @@ public abstract class PhyphoxFile {
                 }
                 default:
                     throw new phyphoxFileException("Unexpected tag \"" + tag + "\"", xpp.getLineNumber());
-            }
-        }
-
-        @Override
-        protected void processEndTag(String tag) {
-            if(flashlightOutput != null){
-                flashlightOutput.attachController(flashlightController);
             }
         }
     }
