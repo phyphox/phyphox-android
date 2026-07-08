@@ -453,7 +453,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
 
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            photosensitivityWarningDismissed = prefs.getBoolean(PREF_PHOTOSENSITIVITY_DISMISSED, false);
+            photosensitivityWarningDismissed = false; //prefs.getBoolean(PREF_PHOTOSENSITIVITY_DISMISSED, false);
+            // For now we ignore the stored dismissal state as this can easily disable the warning forever during a first test after installation, while it should probably be shown again when the user revisits the app after a few years. Until we have a better idea, we will show it each time.
 
             if(!photosensitivityWarningDismissed){
                 showPhotosensitivityWarning();
@@ -957,9 +958,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     photosensitivityWarningDismissed = true;
                     showInitialDialogs();
                 })
-                .setPositiveButton(R.string.dont_remind, (dialog, id) -> {
-                    savePhotosensitivityDismissed();
-                    showInitialDialogs();
+                .setPositiveButton(R.string.ok, (dialog, id) -> {
+                    //savePhotosensitivityDismissed(); // Disabled as we currently show the dialog every time
                 });
 
         AlertDialog dialog = builder.create();

@@ -106,7 +106,6 @@
     <string name="deactivate_all">Deactivate all</string>
     <string name="warning_photosensitivity">Photosensitivity Warning</string>
     <string name="warning_photosensitivity_message">This experiment may produces high-frequency light pulses. It may trigger discomfort or seizures for individuals with photosensitive epilepsy. \n\nAvoid staring directly at the light source.</string>
-    <string name="dont_remind">OK and do not remind me</string>
     <string name="device_overheating">Device Overheating</string>
     <string name="device_heating_serious">The device is getting very warm. The flashlight has been turned off to cool down.</string>
 
