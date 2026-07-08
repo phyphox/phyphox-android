@@ -18,10 +18,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
-
+    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
     <application android:name="de.rwth_aachen.phyphox.App"
         android:allowBackup="true"

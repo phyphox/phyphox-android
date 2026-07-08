@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import android.app.Activity;
+import android.content.Context;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.media.AudioFormat;
@@ -11,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.camera.core.CameraControl;
 import androidx.collection.ArraySet;
 
 import org.w3c.dom.Attr;
@@ -121,6 +123,8 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     boolean appendAudioInput = false; //Append audio input on start of analysis cycle instead of replacing old data
     boolean forceAudioRecordingCompatibilityFormat = false; //Some Xiaomi device do not properly work with ENCODING_PCM_FLOAT if the Google Assistent voice trigger is enabled. This forces the use of the good old 16bit int format
 
+    //Parameters for flash light
+    public FlashlightOutput flashlightOutput = null;
     //Network connections
     List<NetworkConnection> networkConnections = new ArrayList<>();
 
@@ -273,6 +277,11 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
                 return; //Too soon. Nothing to do
             }
         }
+
+        if(flashlightOutput != null){
+            flashlightOutput.start(newUserInput);
+        }
+
         newUserInput = false;
 
         if (measuring) {
@@ -308,6 +317,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             dataLock.unlock();
         }
         cycle++;
+
 
         //Play audio
         if (measuring && audioOutput != null) {
@@ -410,6 +420,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             cameraInput.stop();
 
+
         for (NetworkConnection networkConnection : networkConnections)
             networkConnection.stop();
 
@@ -466,6 +477,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         if (cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             cameraInput.start();
+
 
 
         //Playback

@@ -81,6 +81,11 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     @Transient var analyzingOpenGLRenderer: AnalyzingOpenGLRenderer? = null
 
+    interface OnCameraReadyListener {
+        fun onReady(camera: Camera?)
+        fun onFailure(error: Throwable)
+    }
+
     @SuppressLint("UnsafeOptInUsageError")
     fun setUpPreviewUseCase(cameraSelector: CameraSelector): Preview.Builder? {
         lifecycleOwner?.let { lifecycleOwner ->
@@ -116,21 +121,24 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         return null
     }
 
-    fun startCameraFromProvider(lifecycleOwner: LifecycleOwner, application: Application) {
+    fun startCameraFromProvider(lifecycleOwner: LifecycleOwner, application: Application,  listener: OnCameraReadyListener) {
         this.lifecycleOwner = lifecycleOwner
         cameraProviderListenableFuture = ProcessCameraProvider.getInstance(application)
 
         cameraProviderListenableFuture.addListener({
             try {
                 cameraProvider = cameraProviderListenableFuture.get()
-                (cameraProvider as ProcessCameraProvider?)?.let {
+                cameraProvider?.let {
                     it.unbindAll()
                     startCamera()
+                    listener.onReady(camera)
                 }
             } catch (e: ExecutionException) {
                 e.printStackTrace()
+                listener.onFailure(e.cause ?: e)
             } catch (e: InterruptedException) {
                 e.printStackTrace()
+                listener.onFailure(e)
             }
         }, ContextCompat.getMainExecutor(application))
 

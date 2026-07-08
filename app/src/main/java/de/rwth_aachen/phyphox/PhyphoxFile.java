@@ -377,6 +377,73 @@ public abstract class PhyphoxFile {
         }
     }
 
+    private static class FlashlightBlockParser extends xmlBlockParser {
+        FlashlightOutput flashlightOutput;
+
+        FlashlightOutput.FlashlightController flashlightController = null;
+
+        FlashlightBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, FlashlightOutput flashlightOutput) {
+            super(xpp, experiment, parent);
+            this.flashlightOutput = flashlightOutput;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            // Handle nested tags like <input> for strobe rate modulation if desired
+            switch (tag.toLowerCase()) {
+                case "input": {
+                    String parameter = getStringAttribute("parameter");
+
+                    DataInput input;
+                    String type = getStringAttribute("type");
+                    if (type == null)
+                        type = "buffer";
+
+                    if (type.equals("buffer")) {
+                        String bufferName = getText();
+                        DataBuffer buffer = experiment.getBuffer(bufferName);
+                        if (buffer == null) {
+                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                        }
+                        input = new DataInput(buffer, false);
+                    } else if(type.equals("value")){
+                        double value;
+                        try {
+                            value = Double.valueOf(getText());
+                        } catch (NumberFormatException e) {
+                            throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
+                        }
+                        input = new DataInput(value);
+                    } else {
+                        throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
+                    }
+                    switch (parameter){
+                        case "intensity": {
+                            flashlightController = flashlightOutput.new FlashLightIntensity(input);
+                            break;
+                        }
+                        case "frequency":{
+                            flashlightController = flashlightOutput.new FlashLightStrobe(input);
+                            break;
+                        }
+                        default: throw new PhyphoxFile.phyphoxFileException("Unexpected flashlight input parameter.");
+                    }
+
+                    break;
+                }
+                default:
+                    throw new phyphoxFileException("Unexpected tag \"" + tag + "\"", xpp.getLineNumber());
+            }
+        }
+
+        @Override
+        protected void processEndTag(String tag) {
+            if(flashlightOutput != null){
+                flashlightOutput.attachController(flashlightController);
+            }
+        }
+    }
+
     //Blockparser for AudioOutput plugin section
     private static class AudioOutputPluginBlockParser extends xmlBlockParser {
         AudioOutput audioOutput;
@@ -3394,6 +3461,14 @@ public abstract class PhyphoxFile {
                         experiment.bluetoothOutputs.add(b);
                     }
                     break;
+                }
+                case "flashlight":{
+                    CameraManager cameraManager =  (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ? (CameraManager) parent.getSystemService(Context.CAMERA_SERVICE) : null;
+                    FlashlightOutput flashlightOutput = new FlashlightOutput(parent, cameraManager);
+                    (new FlashlightBlockParser(xpp, experiment, parent, flashlightOutput)).process();
+                    experiment.flashlightOutput = flashlightOutput;
+                    break;
+
                 }
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
