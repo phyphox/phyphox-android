@@ -182,7 +182,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
     }
 
     fun updateFlashState(intensity: Double, frequency: Double, dutycycle: Double) {
-        val interval = if (frequency > 0) ((1.0 / frequency) * 1000).toLong().coerceAtLeast(33L) else 0
+        val interval = if (frequency > 0) ((1.0 / frequency) * 1000).toLong().coerceAtLeast(1L) else 0
         val newState = FlashState(intensity, interval, dutycycle)
         if (newState != flashState.value)
             flashState.value = newState
